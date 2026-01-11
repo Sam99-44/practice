@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Dashboard | Practice Online</title>
+  <style>
+    body{font-family:Arial; background:#f6f7fb; margin:0;}
+    .wrap{max-width:1000px; margin:0 auto; padding:20px;}
+    .top{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
+    .btn{background:#111827; color:#fff; padding:10px 12px; border:none; border-radius:10px; cursor:pointer; text-decoration:none;}
+    .btn2{background:#fff; color:#111827; border:1px solid #ddd;}
+    .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; margin-top:14px;}
+    .card{background:#fff; border:1px solid #e6e6e6; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.06);}
+    h1{margin:0;}
+    .big{font-size:28px; font-weight:bold; margin-top:6px;}
+    .muted{color:#555;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>Admin Dashboard</h1>
+        <p class="muted" id="who"></p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btn btn2" href="admin-quiz.html">Add Quiz</a>
+        <a class="btn btn2" href="learner-quizzes.html">Learner View</a>
+        <button class="btn" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="muted">Total Users</div>
+        <div class="big" id="totalUsers">-</div>
+      </div>
+      <div class="card">
+        <div class="muted">Total Quizzes</div>
+        <div class="big" id="totalQuizzes">-</div>
+      </div>
+      <div class="card">
+        <div class="muted">Quizzes by Grade</div>
+        <div id="byGrade" class="muted" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <p id="msg" class="muted" style="margin-top:14px;"></p>
+  </div>
+
+  <script>
+    const API = "http://localhost:5000";
+    const token = localStorage.getItem("token");
+
+    function logout(){
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      window.location.href = "login.html";
+    }
+
+    (async () => {
+      if (!token) return window.location.href = "login.html";
+
+      // Check role
+      const meRes = await fetch(`${API}/api/auth/me`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+
+      const me = await meRes.json().catch(()=>null);
+      if (!meRes.ok || !me || me.role !== "admin") {
+        alert("Admin only");
+        return window.location.href = "learner-quizzes.html";
+      }
+
+      document.getElementById("who").textContent = `Logged in as: ${me.username} (admin)`;
+
+      // Load stats
+      const res = await fetch(`${API}/api/admin/stats`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+
+      const data = await res.json().catch(()=>null);
+      if (!res.ok || !data) {
+        document.getElementById("msg").textContent = "Could not load stats.";
+        return;
+      }
+
+      document.getElementById("totalUsers").textContent = data.totalUsers;
+      document.getElementById("totalQuizzes").textContent = data.totalQuizzes;
+
+      document.getElementById("byGrade").innerHTML =
+        (data.quizzesByGrade || []).map(x => `Grade ${x.grade}: ${x.count}`).join("<br>") || "No data";
+    })();
+  </script>
+</body>
+</html>

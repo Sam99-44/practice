@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin | Add Quiz</title>
+  <style>
+    body{font-family:Arial; padding:20px; max-width:900px; margin:auto; background:#f6f7fb;}
+    .card{background:#fff; border:1px solid #e6e6e6; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.06);}
+    input, textarea, select{width:100%; padding:10px; margin:8px 0; border-radius:10px; border:1px solid #ddd; outline:none;}
+    button{padding:10px 14px; cursor:pointer; border:none; border-radius:10px;}
+    .btn{background:#111827; color:#fff;}
+    .btn:disabled{opacity:0.6; cursor:not-allowed;}
+    .btn2{background:#fff; border:1px solid #ddd; color:#111827;}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+    .msg{margin-top:10px;}
+    .topbar{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+    .muted{color:#555;}
+    .error{color:#b91c1c;}
+    .ok{color:#065f46;}
+    a.btn2{display:inline-block; padding:10px 12px; border-radius:10px; text-decoration:none;}
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div>
+      <h2 style="margin:0;">Practice Online – Admin (Add Quiz)</h2>
+      <div class="muted" id="who">Checking login...</div>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a class="btn2" href="admin-dashboard.html">Dashboard</a>
+      <a class="btn2" href="learner-quizzes.html">Learner View</a>
+      <button class="btn" id="logoutBtn">Logout</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>Grade</label>
+        <select id="grade">
+          <option value="">Select Grade</option>
+          <option value="8">Grade 8</option>
+          <option value="9">Grade 9</option>
+          <option value="10">Grade 10</option>
+          <option value="11">Grade 11</option>
+          <option value="12">Grade 12</option>
+        </select>
+      </div>
+      <div>
+        <label>Topic</label>
+        <input id="topic" placeholder="e.g. Integers" />
+      </div>
+    </div>
+
+    <label>Quiz Title</label>
+    <input id="title" placeholder="e.g. Integers Quiz 1" />
+
+    <label>Questions (JSON)</label>
+    <textarea id="questions" rows="12" placeholder='Paste JSON here'></textarea>
+
+    <button class="btn" id="saveBtn" disabled>Save Quiz</button>
+    <p class="msg muted" id="msg"></p>
+  </div>
+
+  <script>
+    const API = "http://localhost:5000";
+
+    const msg = document.getElementById("msg");
+    const who = document.getElementById("who");
+    const saveBtn = document.getElementById("saveBtn");
+
+    function setMsg(text, type="muted"){
+      msg.className = "msg " + type;
+      msg.textContent = text;
+    }
+
+    function logout(){
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      window.location.href = "login.html";
+    }
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+
+    // ---- ADMIN LOCK ----
+    (async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return window.location.href = "login.html";
+
+      const meRes = await fetch(`${API}/api/auth/me`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+
+      const me = await meRes.json().catch(() => null);
+
+      if (!meRes.ok || !me) {
+        alert("Session expired. Please login again.");
+        return logout();
+      }
+
+      if (me.role !== "admin") {
+        alert("Admin only");
+        return window.location.href = "learner-quizzes.html";
+      }
+
+      who.textContent = `Logged in as: ${me.username} (admin)`;
+      saveBtn.disabled = false; //  unlock only for admin
+      setMsg("Ready to add a quiz.", "ok");
+    })();
+
+    // ---- SAVE QUIZ ----
+    saveBtn.addEventListener("click", async () => {
+      const token = localStorage.getItem("token"); //  read fresh
+      if (!token) {
+        setMsg(" You are not logged in. Please login again.", "error");
+        return logout();
+      }
+
+      const grade = Number(document.getElementById("grade").value);
+      const title = document.getElementById("title").value.trim();
+      const topic = document.getElementById("topic").value.trim();
+
+      if (!grade || !title) {
+        setMsg(" Please select grade and enter title.", "error");
+        return;
+      }
+
+      let questions;
+      try {
+        questions = JSON.parse(document.getElementById("questions").value);
+      } catch (e) {
+        setMsg(" Questions JSON is not valid.", "error");
+        return;
+      }
+
+      saveBtn.disabled = true;
+      setMsg("Saving quiz...", "muted");
+
+      const res = await fetch(`${API}/api/quizzes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ grade, title, topic, questions })
+      });
+
+      const data = await res.json().catch(()=>({}));
+
+      if (res.ok) {
+        setMsg(" Quiz saved!", "ok");
+        document.getElementById("title").value = "";
+        document.getElementById("topic").value = "";
+        document.getElementById("questions").value = "";
+      } else {
+        setMsg(" Error: " + (data.message || "Could not save quiz"), "error");
+      }
+
+      saveBtn.disabled = false;
+    });
+  </script>
+</body>
+</html>

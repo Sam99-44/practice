@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>About Us | Practice Online</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --border:#e6e6e6;
+      --text:#0f172a;
+      --muted:#475569;
+      --accent:#0b3c5d;
+      --accent-soft:#e7eef5;
+      --radius:14px;
+      --shadow:0 6px 18px rgba(0,0,0,0.06);
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:Inter,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    .wrap{max-width:1000px; margin:0 auto; padding:24px;}
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:12px;
+      flex-wrap:wrap;
+      gap:12px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .logo{
+      width:38px;
+      height:38px;
+      border-radius:10px;
+      background:var(--accent);
+      color:white;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      font-size:16px;
+      flex:0 0 auto;
+    }
+
+    .brand span{
+      display:block;
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    /* NAV (desktop) */
+    .nav{
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
+
+    .nav a{
+      text-decoration:none;
+      font-size:14px;
+      color:var(--text);
+      padding:6px 8px;
+      border-radius:8px;
+      transition:background 0.2s;
+    }
+
+    .nav a:hover{ background:var(--accent-soft); }
+    .nav a.active{ font-weight:600; color:var(--accent); }
+
+    .nav .nav-btn{
+      background:var(--accent);
+      color:white;
+      padding:8px 12px;
+      border-radius:10px;
+    }
+
+    .nav .logout{
+      background:var(--accent);
+      color:white;
+      border:none;
+      padding:8px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-size:14px;
+    }
+
+    /* Mobile menu button */
+    .menu-btn{
+      display:none;
+      border:1px solid var(--border);
+      background:var(--card);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:10px;
+      cursor:pointer;
+    }
+
+    /* Mobile dropdown panel */
+    .mobile-menu{
+      display:none;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:10px;
+      margin-bottom:16px;
+    }
+
+    .mobile-menu a,
+    .mobile-menu button{
+      width:100%;
+      display:block;
+      text-align:left;
+      padding:10px 12px;
+      border-radius:10px;
+      border:none;
+      background:transparent;
+      color:var(--text);
+      text-decoration:none;
+      cursor:pointer;
+      font-size:14px;
+    }
+
+    .mobile-menu a:hover,
+    .mobile-menu button:hover{
+      background:var(--accent-soft);
+    }
+
+    .mobile-menu a.active{ font-weight:600; color:var(--accent); }
+
+    .mobile-menu .logout{
+      background:var(--accent);
+      color:white;
+    }
+
+    /* Responsive rules */
+    @media (max-width: 720px){
+      .nav{ display:none; }
+      .menu-btn{ display:inline-flex; }
+      .mobile-menu.open{ display:block; }
+    }
+
+    h1{font-size:28px; margin:0 0 12px 0;}
+    h2{font-size:20px; margin-top:24px;}
+
+    p{line-height:1.7; color:var(--muted);}
+
+    .hero{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:28px;
+      box-shadow:var(--shadow);
+      margin-bottom:20px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+    }
+
+    @media(max-width:800px){
+      .grid{grid-template-columns:1fr;}
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:20px;
+      box-shadow:var(--shadow);
+    }
+
+    ul{
+      padding-left:18px;
+      color:var(--muted);
+      line-height:1.7;
+    }
+
+    .contact{
+      background:var(--accent-soft);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:18px;
+      margin-top:20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:12px;
+    }
+
+    footer{
+      margin-top:24px;
+      text-align:center;
+      font-size:13px;
+      color:#64748b;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">PO</div>
+        <div>
+          <strong>Practice Online</strong>
+          <span>Grades 8–12 Mathematics</span>
+        </div>
+      </div>
+
+      <!-- Desktop Nav -->
+      <nav class="nav" id="desktopNav">
+        <a href="learner-quizzes.html">Practice</a>
+        <a href="about.html" class="active">About</a>
+
+        <a href="login.html" data-guest>Login</a>
+        <a href="register.html" class="nav-btn" data-guest>Register</a>
+
+        <a href="admin-quiz.html" data-admin>Admin</a>
+        <button class="logout" type="button" id="logoutBtn" data-auth>Logout</button>
+      </nav>
+
+      <!-- Mobile Menu Button -->
+      <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu">Menu</button>
+    </div>
+
+    <!-- Mobile Menu Panel -->
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="learner-quizzes.html">Practice</a>
+      <a href="about.html" class="active">About</a>
+
+      <a href="login.html" data-guest>Login</a>
+      <a href="register.html" data-guest>Register</a>
+
+      <a href="admin-quiz.html" data-admin>Admin</a>
+      <button class="logout" type="button" id="logoutBtnMobile" data-auth>Logout</button>
+    </div>
+
+    <!-- CONTENT -->
+    <section class="hero">
+      <h1>About Practice Online</h1>
+      <p>
+        Practice Online is a learning platform designed to help learners in Grades 8 to 12 improve
+        their Mathematics through regular practice, online tests, and exam-style assessments.
+      </p>
+      <p>
+        Our aim is to make quality Maths practice simple, accessible, and effective for learners at all levels.
+      </p>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>What We Offer</h2>
+        <ul>
+          <li>Grade-based Mathematics practice quizzes</li>
+          <li>Topic-based online tests</li>
+          <li>Timed exams for exam preparation</li>
+          <li>Instant feedback and scoring</li>
+          <li>Curriculum-aligned questions</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Our Purpose</h2>
+        <p>
+          Mathematics improves through consistent practice and assessment.
+          Practice Online provides learners with a focused digital space to practice, write tests,
+          and prepare for examinations in a structured and supportive way.
+        </p>
+      </div>
+    </section>
+
+    <section class="contact">
+      <div>
+        <strong>Contact</strong><br />
+        <span style="color:var(--muted)">For questions or feedback, email us:</span>
+      </div>
+      <div><strong>support@practiceonline.co.za</strong></div>
+    </section>
+
+    <footer>
+      © <span id="year"></span> Practice Online. All rights reserved.
+    </footer>
+
+  </div>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // Mobile menu toggle
+    const menuBtn = document.getElementById("menuBtn");
+    const mobileMenu = document.getElementById("mobileMenu");
+
+    menuBtn?.addEventListener("click", () => {
+      mobileMenu.classList.toggle("open");
+    });
+
+    // Close menu after clicking a link (mobile)
+    mobileMenu?.addEventListener("click", (e) => {
+      if (e.target.tagName === "A") mobileMenu.classList.remove("open");
+    });
+
+    // Logout
+    function logout(){
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      window.location.href = "login.html";
+    }
+    document.getElementById("logoutBtn")?.addEventListener("click", logout);
+    document.getElementById("logoutBtnMobile")?.addEventListener("click", logout);
+
+    // Show/hide nav items based on login and role
+    async function setupNav(){
+      const token = localStorage.getItem("token");
+      const authEls = document.querySelectorAll("[data-auth]");
+      const guestEls = document.querySelectorAll("[data-guest]");
+      const adminEls = document.querySelectorAll("[data-admin]");
+
+      // hide admin links by default
+      adminEls.forEach(el => el.style.display = "none");
+
+      if (!token) {
+        authEls.forEach(el => el.style.display = "none");
+        guestEls.forEach(el => el.style.display = "");
+        return;
+      }
+
+      // logged in
+      authEls.forEach(el => el.style.display = "");
+      guestEls.forEach(el => el.style.display = "none");
+
+      // check role
+      try{
+        const API = "http://localhost:5000";
+        const res = await fetch(`${API}/api/auth/me`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const me = await res.json().catch(()=>null);
+        if (res.ok && me && me.role === "admin") {
+          adminEls.forEach(el => el.style.display = "");
+        }
+      }catch(e){}
+    }
+
+    setupNav();
+  </script>
+</body>
+</html>
