@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 
-import Quiz from "./models/quiz.js";
+import Quiz from "./models/Quiz.js";
 import User from "./models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -365,3 +365,4 @@ mongoose
     app.listen(PORT, () => console.log(`Server on http://localhost:${PORT}`));
   })
   .catch((err) => console.error("Mongo error:", err.message));
+
