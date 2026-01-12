@@ -64,12 +64,6 @@
     }
     .nav a:hover{ background:var(--accent-soft); }
     .nav a.active{ font-weight:600; color:var(--accent); }
-    .nav .nav-btn{
-      background:var(--accent);
-      color:white;
-      padding:8px 12px;
-      border-radius:10px;
-    }
     .nav .logout{
       background:var(--accent);
       color:white;
@@ -221,7 +215,7 @@
 
       <!-- Desktop Nav -->
       <nav class="nav">
-        <a href="learner-quizzes.html" class="active">Practice</a>
+        <a href="learner-quizzes.html" class="active" data-auth>Practice</a>
         <a href="about.html">About</a>
 
         <a href="admin-quiz.html" data-admin>Admin</a>
@@ -234,7 +228,7 @@
 
     <!-- Mobile Menu Panel -->
     <div class="mobile-menu" id="mobileMenu">
-      <a href="learner-quizzes.html" class="active">Practice</a>
+      <a href="learner-quizzes.html" class="active" data-auth>Practice</a>
       <a href="about.html">About</a>
 
       <a href="admin-quiz.html" data-admin>Admin</a>
@@ -267,49 +261,13 @@
 
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
-    const API = "http://localhost:5000";
 
-    // Mobile menu toggle
-    const menuBtn = document.getElementById("menuBtn");
-    const mobileMenu = document.getElementById("mobileMenu");
-    menuBtn?.addEventListener("click", () => mobileMenu.classList.toggle("open"));
-    mobileMenu?.addEventListener("click", (e) => {
-      if (e.target.tagName === "A") mobileMenu.classList.remove("open");
-    });
+    // ✅ Render backend
+    const API = "https://practice-backend-msgn.onrender.com";
 
-    // Logout
-    function logout(){
-      localStorage.removeItem("token");
-      localStorage.removeItem("username");
-      window.location.href = "login.html";
-    }
-    document.getElementById("logoutBtn")?.addEventListener("click", logout);
-    document.getElementById("logoutBtnMobile")?.addEventListener("click", logout);
-
-    // Welcome text + admin visibility
-    async function setupUserUI(){
-      const username = localStorage.getItem("username") || "Learner";
-      document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
-
-      // Hide admin by default
-      const adminEls = document.querySelectorAll("[data-admin]");
-      adminEls.forEach(el => el.style.display = "none");
-
-      // Check role
-      try{
-        const res = await fetch(`${API}/api/auth/me`, {
-          headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
-        });
-        const me = await res.json().catch(()=>null);
-
-        if (!res.ok || !me) return;
-
-        if (me.role === "admin") {
-          adminEls.forEach(el => el.style.display = "");
-        }
-      }catch(e){}
-    }
-    setupUserUI();
+    // Welcome text
+    const username = localStorage.getItem("username") || "Learner";
+    document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
 
     // Quiz loading
     const gradeSelect = document.getElementById("gradeSelect");
@@ -348,17 +306,17 @@
               <div class="quiz-card">
                 <div class="quiz-top">
                   <h3>${escapeHtml(q.title)}</h3>
-                  <span class="badge">${q.questions.length} questions</span>
+                  <span class="badge">${(q.questions?.length || 0)} questions</span>
                 </div>
                 <p class="muted" style="margin:8px 0 0 0;"><b>Topic:</b> ${escapeHtml(q.topic || "-")}</p>
-                <a class="start-link" href="attempt.html?quizId=${q._id}">Start quiz</a>
+                <a class="start-link" href="attempt.html?quizId=${encodeURIComponent(q._id)}">Start quiz</a>
               </div>
             `).join("")}
           </div>
         `;
       } catch (err) {
         status.textContent = "";
-        quizList.innerHTML = `<p class="error">Could not load quizzes. Make sure backend is running.</p>`;
+        quizList.innerHTML = `<p class="error">Could not load quizzes. Please try again.</p>`;
       }
     }
 
@@ -371,5 +329,8 @@
         .replaceAll("'","&#039;");
     }
   </script>
+
+  <!-- ✅ Shared navigation + logout + admin visibility -->
+  <script src="nav.js"></script>
 </body>
 </html>
