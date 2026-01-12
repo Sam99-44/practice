@@ -1,10 +1,12 @@
 <script>
-  //  Render backend
+document.addEventListener("DOMContentLoaded", () => {
+  // ✅ Render backend
   const API = "https://practice-backend-msgn.onrender.com";
 
   const params = new URLSearchParams(window.location.search);
   const quizId = params.get("quizId");
 
+  // Elements (now safe because DOM is loaded)
   const quizTitle = document.getElementById("quizTitle");
   const quizInfo = document.getElementById("quizInfo");
   const questionsDiv = document.getElementById("questions");
@@ -16,21 +18,32 @@
   let quizData = null;
   let isSubmitted = false;
 
+  // ✅ Basic guard: if elements missing, show clear error
+  if (!quizTitle || !questionsDiv || !submitBtn || !msgEl) {
+    document.body.innerHTML = "<h2 style='padding:20px;color:#b91c1c'>Page HTML missing required elements.</h2>";
+    return;
+  }
+
   // Welcome line
   const username = localStorage.getItem("username") || "Learner";
-  document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
+  const welcomeSub = document.getElementById("welcomeSub");
+  if (welcomeSub) welcomeSub.textContent = `Welcome, ${username}`;
 
   if (!quizId) {
     quizTitle.textContent = "Quiz not found";
     msgEl.textContent = "Missing quizId in the URL.";
     msgEl.className = "error";
     submitBtn.disabled = true;
-  } else {
-    loadQuiz();
+    return;
   }
+
+  loadQuiz();
 
   async function loadQuiz() {
     try {
+      msgEl.textContent = "Loading quiz...";
+      msgEl.className = "muted";
+
       const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`);
       if (!res.ok) throw new Error("Quiz not found");
 
@@ -46,36 +59,46 @@
       metaPill.textContent = `${count} questions`;
 
       renderQuestions(quizData.questions || []);
+
+      msgEl.textContent = "";
     } catch (err) {
+      console.error("loadQuiz error:", err);
       quizTitle.textContent = "Quiz not found";
-      msgEl.textContent = "Could not load this quiz.";
+      msgEl.textContent = "Could not load this quiz. Check the quizId and backend.";
       msgEl.className = "error";
       submitBtn.disabled = true;
     }
   }
 
-  // ✅ UPDATED: supports q.imageUrl
+  // ✅ UPDATED: supports q.imageUrl safely
   function renderQuestions(questions) {
-    questionsDiv.innerHTML = questions.map((q, idx) => `
-      <div class="q" data-qindex="${idx}">
-        <h3>${idx + 1}. ${escapeHtml(q.text)}</h3>
+    questionsDiv.innerHTML = questions.map((q, idx) => {
+      const safeText = escapeHtml(q.text ?? "");
+      const safeImage = q.imageUrl ? escapeAttr(q.imageUrl) : "";
 
-        ${q.imageUrl ? `
-          <img
-            src="${q.imageUrl}"
-            alt="Question image"
-            style="max-width:100%; margin:10px 0; border-radius:12px; border:1px solid #e6e6e6;"
-          />
-        ` : ""}
+      return `
+        <div class="q" data-qindex="${idx}">
+          <h3>${idx + 1}. ${safeText}</h3>
 
-        ${(q.options || []).map((opt, j) => `
-          <label class="opt">
-            <input type="radio" name="q${idx}" value="${j}">
-            ${escapeHtml(opt)}
-          </label>
-        `).join("")}
-      </div>
-    `).join("");
+          ${safeImage ? `
+            <img
+              src="${safeImage}"
+              alt="Question image"
+              loading="lazy"
+              onerror="this.style.display='none';"
+              style="max-width:100%; margin:10px 0; border-radius:12px; border:1px solid #e6e6e6;"
+            />
+          ` : ""}
+
+          ${(q.options || []).map((opt, j) => `
+            <label class="opt">
+              <input type="radio" name="q${idx}" value="${j}">
+              ${escapeHtml(opt)}
+            </label>
+          `).join("")}
+        </div>
+      `;
+    }).join("");
   }
 
   submitBtn.addEventListener("click", () => {
@@ -145,4 +168,14 @@
       .replaceAll('"',"&quot;")
       .replaceAll("'","&#039;");
   }
+
+  // ✅ for attributes like src=""
+  function escapeAttr(str) {
+    return String(str)
+      .replaceAll("&","&amp;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;");
+  }
+});
 </script>
