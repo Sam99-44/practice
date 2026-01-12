@@ -50,6 +50,7 @@
     }
     .brand span{display:block; font-size:13px; color:var(--muted);}
 
+    /* NAV (desktop) */
     .nav{display:flex; align-items:center; gap:14px;}
     .nav a{
       text-decoration:none;
@@ -77,6 +78,7 @@
       font-size:14px;
     }
 
+    /* Mobile */
     .menu-btn{
       display:none;
       border:1px solid var(--border);
@@ -122,6 +124,7 @@
       .mobile-menu.open{ display:block; }
     }
 
+    /* Login card */
     .center{
       display:grid;
       place-items:center;
@@ -174,6 +177,7 @@
     }
     .links a{color:var(--accent); text-decoration:none;}
     .links a:hover{text-decoration:underline;}
+
     footer{
       margin-top:24px;
       text-align:center;
@@ -183,93 +187,178 @@
   </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="topbar">
-    <div class="brand">
-      <div class="logo">PO</div>
-      <div>
-        <strong>Practice Online</strong>
-        <span>Grades 8–12 Mathematics</span>
+  <div class="wrap">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">PO</div>
+        <div>
+          <strong>Practice Online</strong>
+          <span>Grades 8–12 Mathematics</span>
+        </div>
       </div>
+
+      <!-- Desktop Nav -->
+      <nav class="nav">
+        <a href="about.html">About</a>
+        <a href="login.html" class="active" data-guest>Login</a>
+        <a href="register.html" class="nav-btn" data-guest>Register</a>
+
+        <a href="learner-quizzes.html" data-auth>Practice</a>
+        <a href="admin-quiz.html" data-admin>Admin</a>
+        <button class="logout" type="button" id="logoutBtn" data-auth>Logout</button>
+      </nav>
+
+      <!-- Mobile menu button -->
+      <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu">Menu</button>
     </div>
-    <nav class="nav">
+
+    <!-- Mobile Menu Panel -->
+    <div class="mobile-menu" id="mobileMenu">
       <a href="about.html">About</a>
       <a href="login.html" class="active" data-guest>Login</a>
-      <a href="register.html" class="nav-btn" data-guest>Register</a>
+      <a href="register.html" data-guest>Register</a>
+
       <a href="learner-quizzes.html" data-auth>Practice</a>
       <a href="admin-quiz.html" data-admin>Admin</a>
-      <button class="logout" id="logoutBtn" data-auth>Logout</button>
-    </nav>
-    <button class="menu-btn" id="menuBtn">Menu</button>
-  </div>
+      <button class="logout" type="button" id="logoutBtnMobile" data-auth>Logout</button>
+    </div>
 
-  <div class="center">
-    <div class="card">
-      <h1>Login</h1>
-      <p class="sub">Enter your username and password to continue.</p>
-      <label>Username</label>
-      <input id="username" />
-      <label>Password</label>
-      <input id="password" type="password" />
-      <button class="btn" id="loginBtn">Login</button>
-      <p class="msg" id="msg"></p>
-      <div class="links">
-        <a href="register.html">Create an account</a>
-        <a href="forgot-password.html">Forgot password?</a>
+    <!-- LOGIN CARD -->
+    <div class="center">
+      <div class="card">
+        <h1>Login</h1>
+        <p class="sub">Enter your username and password to continue.</p>
+
+        <label>Username</label>
+        <input id="username" placeholder="e.g. sam" autocomplete="username" />
+
+        <label>Password</label>
+        <input id="password" type="password" placeholder="Your password" autocomplete="current-password" />
+
+        <button class="btn" id="loginBtn" type="button">Login</button>
+        <p class="msg" id="msg"></p>
+
+        <div class="links">
+          <a href="register.html">Create an account</a>
+          <a href="forgot-password.html">Forgot password?</a>
+        </div>
       </div>
     </div>
+
+    <footer>
+      © <span id="year"></span> Practice Online. All rights reserved.
+    </footer>
   </div>
 
-  <footer>© <span id="year"></span> Practice Online</footer>
-</div>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
 
-<script>
-document.getElementById("year").textContent = new Date().getFullYear();
+    // ✅ IMPORTANT: Use Render backend (not localhost)
+    const API = "https://practice-backend-msgn.onrender.com";
 
-const API = "https://practice-backend-msgn.onrender.com";
+    // Mobile menu toggle
+    const menuBtn = document.getElementById("menuBtn");
+    const mobileMenu = document.getElementById("mobileMenu");
+    menuBtn?.addEventListener("click", () => mobileMenu.classList.toggle("open"));
+    mobileMenu?.addEventListener("click", (e) => {
+      if (e.target.tagName === "A") mobileMenu.classList.remove("open");
+    });
 
-const msg = document.getElementById("msg");
-const loginBtn = document.getElementById("loginBtn");
+    // Logout
+    function logout(){
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      window.location.href = "login.html";
+    }
+    document.getElementById("logoutBtn")?.addEventListener("click", logout);
+    document.getElementById("logoutBtnMobile")?.addEventListener("click", logout);
 
-function setMsg(text, type=""){
-  msg.className = "msg " + type;
-  msg.textContent = text;
-}
+    // Show/hide nav items based on login and role
+    async function setupNav(){
+      const token = localStorage.getItem("token");
+      const authEls = document.querySelectorAll("[data-auth]");
+      const guestEls = document.querySelectorAll("[data-guest]");
+      const adminEls = document.querySelectorAll("[data-admin]");
+      adminEls.forEach(el => el.style.display = "none");
 
-async function login(){
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value;
+      if (!token) {
+        authEls.forEach(el => el.style.display = "none");
+        guestEls.forEach(el => el.style.display = "");
+        return;
+      }
 
-  if (!username || !password) {
-    setMsg("Please enter username and password.", "error");
-    return;
-  }
+      authEls.forEach(el => el.style.display = "");
+      guestEls.forEach(el => el.style.display = "none");
 
-  loginBtn.disabled = true;
-  setMsg("Logging in...");
+      try{
+        const res = await fetch(`${API}/api/auth/me`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const me = await res.json().catch(()=>null);
+        if (res.ok && me && me.role === "admin") {
+          adminEls.forEach(el => el.style.display = "");
+        }
+      }catch(e){}
+    }
+    setupNav();
 
-  const res = await fetch(`${API}/api/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
-  });
+    // Login
+    const msg = document.getElementById("msg");
+    const loginBtn = document.getElementById("loginBtn");
 
-  const data = await res.json().catch(()=> ({}));
+    function setMsg(text, type=""){
+      msg.className = "msg " + type;
+      msg.textContent = text;
+    }
 
-  if(res.ok && data.token){
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("username", data.username || username);
-    window.location.href = "learner-quizzes.html";
-  } else {
-    setMsg(data.message || "Login failed.", "error");
-    loginBtn.disabled = false;
-  }
-}
+    async function login(){
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
 
-loginBtn.addEventListener("click", login);
-document.getElementById("password").addEventListener("keydown", e => {
-  if(e.key === "Enter") login();
-});
-</script>
+      if (!username || !password) {
+        setMsg("Please enter username and password.", "error");
+        return;
+      }
+
+      loginBtn.disabled = true;
+      setMsg("Logging in...");
+
+      try {
+        const res = await fetch(`${API}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json().catch(()=> ({}));
+
+        if(res.ok && data.token){
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("username", data.username || username);
+
+          window.location.href = "learner-quizzes.html";
+        } else {
+          setMsg(data.message || "Login failed.", "error");
+          loginBtn.disabled = false;
+        }
+      } catch (err) {
+        setMsg("Network error. Please try again.", "error");
+        loginBtn.disabled = false;
+      }
+    }
+
+    loginBtn.addEventListener("click", login);
+
+    // Press Enter to login
+    document.getElementById("password").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") login();
+    });
+  </script>
+
+  <!-- ✅ Optional: if you want shared nav logic, keep this -->
+  <!-- If nav.js already handles nav + logout, you can remove duplicated nav code above. -->
+  <!-- <script src="nav.js"></script> -->
 </body>
 </html>
