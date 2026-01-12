@@ -31,7 +31,7 @@
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <a class="btn2" href="admin-dashboard.html">Dashboard</a>
       <a class="btn2" href="learner-quizzes.html">Learner View</a>
-      <button class="btn" id="logoutBtn">Logout</button>
+      <button class="btn" id="logoutBtn" data-auth>Logout</button>
     </div>
   </div>
 
@@ -65,7 +65,8 @@
   </div>
 
   <script>
-    const API = "http://localhost:5000";
+    // ✅ Render backend
+    const API = "https://practice-backend-msgn.onrender.com";
 
     const msg = document.getElementById("msg");
     const who = document.getElementById("who");
@@ -76,27 +77,28 @@
       msg.textContent = text;
     }
 
-    function logout(){
-      localStorage.removeItem("token");
-      localStorage.removeItem("username");
-      window.location.href = "login.html";
-    }
-    document.getElementById("logoutBtn").addEventListener("click", logout);
-
     // ---- ADMIN LOCK ----
     (async () => {
       const token = localStorage.getItem("token");
       if (!token) return window.location.href = "login.html";
 
-      const meRes = await fetch(`${API}/api/auth/me`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
+      let meRes;
+      try{
+        meRes = await fetch(`${API}/api/auth/me`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+      } catch (e) {
+        setMsg("Network error. Please refresh and try again.", "error");
+        return;
+      }
 
       const me = await meRes.json().catch(() => null);
 
       if (!meRes.ok || !me) {
         alert("Session expired. Please login again.");
-        return logout();
+        localStorage.removeItem("token");
+        localStorage.removeItem("username");
+        return window.location.href = "login.html";
       }
 
       if (me.role !== "admin") {
@@ -105,24 +107,21 @@
       }
 
       who.textContent = `Logged in as: ${me.username} (admin)`;
-      saveBtn.disabled = false; //  unlock only for admin
+      saveBtn.disabled = false;
       setMsg("Ready to add a quiz.", "ok");
     })();
 
     // ---- SAVE QUIZ ----
     saveBtn.addEventListener("click", async () => {
-      const token = localStorage.getItem("token"); //  read fresh
-      if (!token) {
-        setMsg(" You are not logged in. Please login again.", "error");
-        return logout();
-      }
+      const token = localStorage.getItem("token");
+      if (!token) return window.location.href = "login.html";
 
       const grade = Number(document.getElementById("grade").value);
       const title = document.getElementById("title").value.trim();
       const topic = document.getElementById("topic").value.trim();
 
       if (!grade || !title) {
-        setMsg(" Please select grade and enter title.", "error");
+        setMsg("Please select grade and enter title.", "error");
         return;
       }
 
@@ -130,35 +129,42 @@
       try {
         questions = JSON.parse(document.getElementById("questions").value);
       } catch (e) {
-        setMsg(" Questions JSON is not valid.", "error");
+        setMsg("Questions JSON is not valid.", "error");
         return;
       }
 
       saveBtn.disabled = true;
       setMsg("Saving quiz...", "muted");
 
-      const res = await fetch(`${API}/api/quizzes`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ grade, title, topic, questions })
-      });
+      try {
+        const res = await fetch(`${API}/api/quizzes`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ grade, title, topic, questions })
+        });
 
-      const data = await res.json().catch(()=>({}));
+        const data = await res.json().catch(()=>({}));
 
-      if (res.ok) {
-        setMsg(" Quiz saved!", "ok");
-        document.getElementById("title").value = "";
-        document.getElementById("topic").value = "";
-        document.getElementById("questions").value = "";
-      } else {
-        setMsg(" Error: " + (data.message || "Could not save quiz"), "error");
+        if (res.ok) {
+          setMsg("✅ Quiz saved!", "ok");
+          document.getElementById("title").value = "";
+          document.getElementById("topic").value = "";
+          document.getElementById("questions").value = "";
+        } else {
+          setMsg("❌ Error: " + (data.message || "Could not save quiz"), "error");
+        }
+      } catch (e) {
+        setMsg("Network error while saving. Please try again.", "error");
       }
 
       saveBtn.disabled = false;
     });
   </script>
+
+  <!-- ✅ Shared nav + logout (optional) -->
+  <script src="nav.js"></script>
 </body>
 </html>
