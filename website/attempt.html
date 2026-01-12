@@ -1,12 +1,32 @@
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  // ✅ Render backend
   const API = "https://practice-backend-msgn.onrender.com";
+
+  const requiredIds = [
+    "quizTitle",
+    "quizInfo",
+    "questions",
+    "submitBtn",
+    "result",
+    "msg",
+    "metaPill",
+    "welcomeSub"
+  ];
+
+  const missing = requiredIds.filter(id => !document.getElementById(id));
+  if (missing.length > 0) {
+    document.body.innerHTML = `
+      <div style="padding:40px;font-family:Arial;color:#b91c1c">
+        <h2>Page HTML missing required elements.</h2>
+        <p>Missing IDs: ${missing.join(", ")}</p>
+        <p>Fix: Check that attempt.html contains all required elements.</p>
+      </div>
+    `;
+    throw new Error("Missing required HTML elements: " + missing.join(", "));
+  }
 
   const params = new URLSearchParams(window.location.search);
   const quizId = params.get("quizId");
 
-  // Elements (now safe because DOM is loaded)
   const quizTitle = document.getElementById("quizTitle");
   const quizInfo = document.getElementById("quizInfo");
   const questionsDiv = document.getElementById("questions");
@@ -15,35 +35,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const msgEl = document.getElementById("msg");
   const metaPill = document.getElementById("metaPill");
 
+  const username = localStorage.getItem("username") || "Learner";
+  document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
+
   let quizData = null;
   let isSubmitted = false;
-
-  // ✅ Basic guard: if elements missing, show clear error
-  if (!quizTitle || !questionsDiv || !submitBtn || !msgEl) {
-    document.body.innerHTML = "<h2 style='padding:20px;color:#b91c1c'>Page HTML missing required elements.</h2>";
-    return;
-  }
-
-  // Welcome line
-  const username = localStorage.getItem("username") || "Learner";
-  const welcomeSub = document.getElementById("welcomeSub");
-  if (welcomeSub) welcomeSub.textContent = `Welcome, ${username}`;
 
   if (!quizId) {
     quizTitle.textContent = "Quiz not found";
     msgEl.textContent = "Missing quizId in the URL.";
     msgEl.className = "error";
     submitBtn.disabled = true;
-    return;
+  } else {
+    loadQuiz();
   }
-
-  loadQuiz();
 
   async function loadQuiz() {
     try {
-      msgEl.textContent = "Loading quiz...";
-      msgEl.className = "muted";
-
       const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`);
       if (!res.ok) throw new Error("Quiz not found");
 
@@ -59,52 +67,37 @@ document.addEventListener("DOMContentLoaded", () => {
       metaPill.textContent = `${count} questions`;
 
       renderQuestions(quizData.questions || []);
-
-      msgEl.textContent = "";
     } catch (err) {
-      console.error("loadQuiz error:", err);
       quizTitle.textContent = "Quiz not found";
-      msgEl.textContent = "Could not load this quiz. Check the quizId and backend.";
+      msgEl.textContent = "Could not load this quiz.";
       msgEl.className = "error";
       submitBtn.disabled = true;
     }
   }
 
-  // ✅ UPDATED: supports q.imageUrl safely
   function renderQuestions(questions) {
-    questionsDiv.innerHTML = questions.map((q, idx) => {
-      const safeText = escapeHtml(q.text ?? "");
-      const safeImage = q.imageUrl ? escapeAttr(q.imageUrl) : "";
+    questionsDiv.innerHTML = questions.map((q, idx) => `
+      <div class="q">
+        <h3>${idx + 1}. ${escapeHtml(q.text)}</h3>
 
-      return `
-        <div class="q" data-qindex="${idx}">
-          <h3>${idx + 1}. ${safeText}</h3>
+        ${q.imageUrl ? `
+          <img src="${q.imageUrl}" style="max-width:100%;margin:10px 0;border-radius:12px;border:1px solid #e6e6e6;">
+        ` : ""}
 
-          ${safeImage ? `
-            <img
-              src="${safeImage}"
-              alt="Question image"
-              loading="lazy"
-              onerror="this.style.display='none';"
-              style="max-width:100%; margin:10px 0; border-radius:12px; border:1px solid #e6e6e6;"
-            />
-          ` : ""}
-
-          ${(q.options || []).map((opt, j) => `
-            <label class="opt">
-              <input type="radio" name="q${idx}" value="${j}">
-              ${escapeHtml(opt)}
-            </label>
-          `).join("")}
-        </div>
-      `;
-    }).join("");
+        ${(q.options || []).map((opt, j) => `
+          <label class="opt">
+            <input type="radio" name="q${idx}" value="${j}">
+            ${escapeHtml(opt)}
+          </label>
+        `).join("")}
+      </div>
+    `).join("");
   }
 
   submitBtn.addEventListener("click", () => {
     if (!quizData || isSubmitted) return;
 
-    const total = (quizData.questions || []).length;
+    const total = quizData.questions.length;
     let score = 0;
     let answered = 0;
 
@@ -112,8 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const chosen = document.querySelector(`input[name="q${idx}"]:checked`);
       const options = document.querySelectorAll(`input[name="q${idx}"]`);
 
-      // reset styles
-      options.forEach((opt) => {
+      options.forEach(opt => {
         const label = opt.closest("label");
         label.style.border = "1px solid #ddd";
         label.style.background = "#fff";
@@ -121,7 +113,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (chosen) answered++;
 
-      // paint correct answer green
       options.forEach((opt, j) => {
         if (j === q.correctIndex) {
           const label = opt.closest("label");
@@ -130,22 +121,18 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
 
-      // paint chosen wrong red
-      if (chosen) {
-        if (Number(chosen.value) === q.correctIndex) {
-          score++;
-        } else {
-          const wrongLabel = chosen.closest("label");
-          wrongLabel.style.border = "1px solid #dc2626";
-          wrongLabel.style.background = "#fee2e2";
-        }
+      if (chosen && Number(chosen.value) !== q.correctIndex) {
+        const wrongLabel = chosen.closest("label");
+        wrongLabel.style.border = "1px solid #dc2626";
+        wrongLabel.style.background = "#fee2e2";
+      } else if (chosen) {
+        score++;
       }
     });
 
     if (answered < total) {
       msgEl.textContent = `Please answer all questions (${answered}/${total}).`;
       msgEl.className = "error";
-      resultEl.textContent = "";
       return;
     }
 
@@ -155,9 +142,8 @@ document.addEventListener("DOMContentLoaded", () => {
     msgEl.className = "ok";
 
     isSubmitted = true;
-    submitBtn.textContent = "Submitted";
     submitBtn.disabled = true;
-    document.querySelectorAll("input[type=radio]").forEach(r => r.disabled = true);
+    submitBtn.textContent = "Submitted";
   });
 
   function escapeHtml(str) {
@@ -168,14 +154,4 @@ document.addEventListener("DOMContentLoaded", () => {
       .replaceAll('"',"&quot;")
       .replaceAll("'","&#039;");
   }
-
-  // ✅ for attributes like src=""
-  function escapeAttr(str) {
-    return String(str)
-      .replaceAll("&","&amp;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;");
-  }
-});
 </script>
