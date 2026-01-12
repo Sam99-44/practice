@@ -15,6 +15,7 @@
     h1{margin:0;}
     .big{font-size:28px; font-weight:bold; margin-top:6px;}
     .muted{color:#555;}
+    .error{color:#b91c1c;}
   </style>
 </head>
 <body>
@@ -27,7 +28,7 @@
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <a class="btn btn2" href="admin-quiz.html">Add Quiz</a>
         <a class="btn btn2" href="learner-quizzes.html">Learner View</a>
-        <button class="btn" onclick="logout()">Logout</button>
+        <button class="btn" id="logoutBtn" data-auth>Logout</button>
       </div>
     </div>
 
@@ -50,7 +51,8 @@
   </div>
 
   <script>
-    const API = "http://localhost:5000";
+    // ✅ Render backend
+    const API = "https://practice-backend-msgn.onrender.com";
     const token = localStorage.getItem("token");
 
     function logout(){
@@ -59,13 +61,22 @@
       window.location.href = "login.html";
     }
 
+    document.getElementById("logoutBtn")?.addEventListener("click", logout);
+
     (async () => {
       if (!token) return window.location.href = "login.html";
 
       // Check role
-      const meRes = await fetch(`${API}/api/auth/me`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
+      let meRes;
+      try{
+        meRes = await fetch(`${API}/api/auth/me`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+      } catch (e) {
+        document.getElementById("msg").textContent = "Network error. Please refresh.";
+        document.getElementById("msg").className = "error";
+        return;
+      }
 
       const me = await meRes.json().catch(()=>null);
       if (!meRes.ok || !me || me.role !== "admin") {
@@ -76,22 +87,33 @@
       document.getElementById("who").textContent = `Logged in as: ${me.username} (admin)`;
 
       // Load stats
-      const res = await fetch(`${API}/api/admin/stats`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
+      let res;
+      try{
+        res = await fetch(`${API}/api/admin/stats`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+      } catch (e) {
+        document.getElementById("msg").textContent = "Network error loading stats.";
+        document.getElementById("msg").className = "error";
+        return;
+      }
 
       const data = await res.json().catch(()=>null);
       if (!res.ok || !data) {
         document.getElementById("msg").textContent = "Could not load stats.";
+        document.getElementById("msg").className = "error";
         return;
       }
 
-      document.getElementById("totalUsers").textContent = data.totalUsers;
-      document.getElementById("totalQuizzes").textContent = data.totalQuizzes;
+      document.getElementById("totalUsers").textContent = data.totalUsers ?? "-";
+      document.getElementById("totalQuizzes").textContent = data.totalQuizzes ?? "-";
 
       document.getElementById("byGrade").innerHTML =
         (data.quizzesByGrade || []).map(x => `Grade ${x.grade}: ${x.count}`).join("<br>") || "No data";
     })();
   </script>
+
+  <!-- ✅ shared nav (optional but recommended) -->
+  <script src="nav.js"></script>
 </body>
 </html>
