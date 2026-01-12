@@ -304,7 +304,16 @@
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
 
-    const API = "http://localhost:5000";
+    // ✅ Your deployed backend (Render)
+    const API = "https://practice-backend-msgn.onrender.com";
+
+    // Mobile menu toggle
+    const menuBtn = document.getElementById("menuBtn");
+    const mobileMenu = document.getElementById("mobileMenu");
+    menuBtn?.addEventListener("click", () => mobileMenu.classList.toggle("open"));
+    mobileMenu?.addEventListener("click", (e) => {
+      if (e.target.tagName === "A") mobileMenu.classList.remove("open");
+    });
 
     // show/hide password
     const toggleBtn = document.getElementById("toggleBtn");
@@ -360,25 +369,30 @@
       btn.disabled = true;
       setMsg("Creating account...");
 
-      const res = await fetch(`${API}/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, grade, password })
-      });
+      try {
+        const res = await fetch(`${API}/api/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, email, grade, password })
+        });
 
-      const data = await res.json().catch(()=> ({}));
+        const data = await res.json().catch(()=> ({}));
 
-      if(res.ok){
-        setMsg("Account created. Redirecting to login...", "ok");
-        setTimeout(() => window.location.href = "login.html", 900);
-      } else {
-        setMsg(data.message || "Could not register.", "error");
+        if(res.ok){
+          setMsg("Account created. Redirecting to login...", "ok");
+          setTimeout(() => window.location.href = "login.html", 900);
+        } else {
+          setMsg(data.message || "Could not register.", "error");
+          btn.disabled = false;
+        }
+      } catch (err) {
+        setMsg("Network error. Please try again.", "error");
         btn.disabled = false;
       }
     });
   </script>
 
-  <!-- ✅ This activates the shared navigation logic -->
+  <!-- ✅ Shared navigation logic -->
   <script src="nav.js"></script>
 </body>
 </html>
