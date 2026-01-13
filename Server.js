@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 
 import Quiz from "./models/Quiz.js";
 import User from "./models/User.js";
-import Result from "./models/Result.js"; // ✅ NEW
+import Result from "./models/Result.js";
 
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -17,6 +17,10 @@ import { getTransporter } from "./utils/mailer.js";
 dotenv.config();
 
 const app = express();
+
+/* ------------------ MIDDLEWARE ------------------ */
+
+// If you ever get CORS issues, replace cors() with a stricter config.
 app.use(cors());
 app.use(express.json());
 
@@ -43,6 +47,9 @@ function authRequired(req, res, next) {
   if (!token) return res.status(401).json({ message: "Missing token" });
 
   try {
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ message: "JWT_SECRET missing in environment" });
+    }
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded; // { userId, username }
     next();
@@ -64,7 +71,7 @@ async function adminOnly(req, res, next) {
 
 /* ------------------ AUTH ROUTES ------------------ */
 
-// Register (username + email + grade + password) + welcome email
+// Register
 app.post("/api/auth/register", async (req, res) => {
   try {
     const { username, email, grade, password } = req.body;
@@ -82,11 +89,9 @@ app.post("/api/auth/register", async (req, res) => {
     }
 
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail);
-    if (!emailOk) {
-      return res.status(400).json({ message: "Invalid email address" });
-    }
+    if (!emailOk) return res.status(400).json({ message: "Invalid email address" });
 
-    if (password.length < 6) {
+    if (String(password).length < 6) {
       return res.status(400).json({ message: "Password must be 6+ characters" });
     }
 
@@ -103,17 +108,14 @@ app.post("/api/auth/register", async (req, res) => {
       email: cleanEmail,
       grade: g,
       passwordHash
-      // role defaults to learner
     });
 
-    // ✅ Welcome email (safe + logs)
+    // Welcome email (optional)
     try {
       if (!smtpReady()) {
         console.log("SMTP not configured - skipping welcome email");
       } else {
-        console.log("Sending welcome email to:", cleanEmail);
         const transporter = getTransporter();
-
         await transporter.sendMail({
           from: process.env.SMTP_USER,
           to: cleanEmail,
@@ -127,15 +129,13 @@ You have successfully registered for Grade ${g} Mathematics.
 Login here:
 ${process.env.APP_URL}/login.html
 
-Good luck with your learning!
+Good luck!
 
 — Practice Online Team`
         });
-
-        console.log("Welcome email sent ✅");
       }
     } catch (mailErr) {
-      console.error("Welcome email failed ❌:", mailErr.message);
+      console.error("Welcome email failed:", mailErr.message);
     }
 
     res.status(201).json({ message: "Account created" });
@@ -144,7 +144,7 @@ Good luck with your learning!
   }
 });
 
-// Login (username + password)
+// Login
 app.post("/api/auth/login", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -157,7 +157,7 @@ app.post("/api/auth/login", async (req, res) => {
     if (!ok) return res.status(401).json({ message: "Invalid login" });
 
     if (!process.env.JWT_SECRET) {
-      return res.status(500).json({ message: "JWT_SECRET missing in .env" });
+      return res.status(500).json({ message: "JWT_SECRET missing in environment" });
     }
 
     const token = jwt.sign(
@@ -203,16 +203,10 @@ app.post("/api/auth/forgot-password", async (req, res) => {
     user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
     await user.save();
 
-    const resetLink = `${process.env.APP_URL}/reset-password.html?token=${token}&email=${encodeURIComponent(
-      cleanEmail
-    )}`;
+    const resetLink = `${process.env.APP_URL}/reset-password.html?token=${token}&email=${encodeURIComponent(cleanEmail)}`;
 
-    if (!smtpReady()) {
-      console.log("SMTP not configured - skipping reset email");
-      return res.json(genericMsg);
-    }
+    if (!smtpReady()) return res.json(genericMsg);
 
-    console.log("Sending reset email to:", cleanEmail);
     const transporter = getTransporter();
     await transporter.sendMail({
       from: process.env.SMTP_USER,
@@ -220,7 +214,6 @@ app.post("/api/auth/forgot-password", async (req, res) => {
       subject: "Practice Online - Reset your password",
       text: `Reset your password using this link (expires in 15 minutes):\n\n${resetLink}`
     });
-    console.log("Reset email sent ✅");
 
     return res.json(genericMsg);
   } catch (err) {
@@ -235,7 +228,7 @@ app.post("/api/auth/reset-password", async (req, res) => {
     if (!token || !email || !newPassword) {
       return res.status(400).json({ message: "Missing token, email or newPassword" });
     }
-    if (newPassword.length < 6) {
+    if (String(newPassword).length < 6) {
       return res.status(400).json({ message: "Password must be 6+ characters" });
     }
 
@@ -248,9 +241,7 @@ app.post("/api/auth/reset-password", async (req, res) => {
       resetPasswordExpires: { $gt: new Date() }
     });
 
-    if (!user) {
-      return res.status(400).json({ message: "Invalid or expired reset link" });
-    }
+    if (!user) return res.status(400).json({ message: "Invalid or expired reset link" });
 
     user.passwordHash = await bcrypt.hash(newPassword, 10);
     user.resetPasswordTokenHash = null;
@@ -295,44 +286,52 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   }
 });
 
-/* ------------------ ✅ RESULTS ROUTES (NEW) ------------------ */
+/* ------------------ RESULTS ROUTES ------------------ */
 
-// Check if current user already attempted a quiz
+// Check if current user already attempted quiz
 app.get("/api/results/mine/:quizId", authRequired, async (req, res) => {
   try {
     const { quizId } = req.params;
-    const existing = await Result.findOne({ userId: req.user.userId, quizId });
-    return res.json({ attempted: Boolean(existing), result: existing || null });
+    const existing = await Result.findOne({ userId: req.user.userId, quizId })
+      .select("_id score total percent createdAt quizTitle grade topic");
+
+    res.json({ attempted: Boolean(existing), result: existing || null });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(400).json({ message: "Invalid quiz id" });
   }
 });
 
-// Save result (one attempt only)
+// Save result (ONE attempt only)
 app.post("/api/results", authRequired, async (req, res) => {
   try {
-    const { quizId, quizTitle, grade, topic, score, total, percent, answers } = req.body;
+    const { quizId, quizTitle, grade, topic, score, total, answers } = req.body;
 
-    if (!quizId || score == null || total == null || percent == null) {
-      return res.status(400).json({ message: "Missing required fields" });
+    if (!quizId) return res.status(400).json({ message: "quizId is required" });
+
+    const s = Number(score);
+    const t = Number(total);
+    if (!Number.isFinite(s) || !Number.isFinite(t) || t <= 0) {
+      return res.status(400).json({ message: "score and total must be numbers and total > 0" });
     }
+    if (s < 0 || s > t) return res.status(400).json({ message: "Invalid score" });
+
+    const percent = Math.round((s / t) * 100);
 
     const doc = await Result.create({
       userId: req.user.userId,
-      username: req.user.username,
+      username: req.user.username, // keep if your Result model includes it
       quizId,
       quizTitle: quizTitle || "",
       grade: grade ?? null,
       topic: topic || "",
-      score,
-      total,
+      score: s,
+      total: t,
       percent,
       answers: Array.isArray(answers) ? answers : []
     });
 
-    res.json({ ok: true, resultId: doc._id });
+    res.status(201).json({ ok: true, resultId: doc._id });
   } catch (err) {
-    // duplicate key => already attempted
     if (err?.code === 11000) {
       return res.status(409).json({ message: "You already attempted this quiz." });
     }
@@ -340,7 +339,7 @@ app.post("/api/results", authRequired, async (req, res) => {
   }
 });
 
-// List my results (for later page)
+// List my results
 app.get("/api/results/mine", authRequired, async (req, res) => {
   try {
     const results = await Result.find({ userId: req.user.userId })
@@ -359,6 +358,7 @@ app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
     const totalUsers = await User.countDocuments();
     const totalLearners = await User.countDocuments({ role: "learner" });
     const totalQuizzes = await Quiz.countDocuments();
+    const totalResults = await Result.countDocuments();
 
     const quizzesByGradeAgg = await Quiz.aggregate([
       { $group: { _id: "$grade", count: { $sum: 1 } } },
@@ -375,36 +375,10 @@ app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
       totalUsers,
       totalLearners,
       totalQuizzes,
+      totalResults,
       quizzesByGrade: quizzesByGradeAgg.map((x) => ({ grade: x._id, count: x.count })),
-      learnersByGrade: learnersByGradeAgg.map((x) => ({ grade: x._id, count: x.count })),
-      totalResults: await Result.countDocuments() // ✅ optional extra stat
+      learnersByGrade: learnersByGradeAgg.map((x) => ({ grade: x._id, count: x.count }))
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Admin-only test email endpoint
-app.get("/api/admin/test-email", authRequired, adminOnly, async (req, res) => {
-  try {
-    if (!smtpReady()) {
-      return res.status(400).json({
-        message: "SMTP not configured. Add SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and APP_URL to .env"
-      });
-    }
-
-    const to = (req.query.to || "").trim();
-    if (!to) return res.status(400).json({ message: "Use ?to=your@email.com" });
-
-    const transporter = getTransporter();
-    await transporter.sendMail({
-      from: process.env.SMTP_USER,
-      to,
-      subject: "Practice Online - Test Email ✅",
-      text: "If you received this email, SMTP is working correctly."
-    });
-
-    res.json({ message: "Test email sent ✅" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
