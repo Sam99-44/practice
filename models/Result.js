@@ -1,35 +1,22 @@
+// models/Result.js
 import mongoose from "mongoose";
 
-const AnswerSchema = new mongoose.Schema(
-  {
-    qIndex: Number,
-    chosenIndex: Number,   // null if not answered
-    correctIndex: Number,
-    isCorrect: Boolean
-  },
-  { _id: false }
-);
-
-const ResultSchema = new mongoose.Schema(
+const resultSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    username: { type: String, required: true },
-
     quizId: { type: mongoose.Schema.Types.ObjectId, ref: "Quiz", required: true },
-    quizTitle: { type: String, default: "" },
-    grade: { type: Number, default: null },
-    topic: { type: String, default: "" },
 
     score: { type: Number, required: true },
     total: { type: Number, required: true },
     percent: { type: Number, required: true },
 
-    answers: { type: [AnswerSchema], default: [] }
+    // optional: store answers chosen by the learner (useful for review)
+    answers: { type: [Number], default: [] }
   },
   { timestamps: true }
 );
 
-// ✅ ONE ATTEMPT PER USER PER QUIZ
-ResultSchema.index({ userId: 1, quizId: 1 }, { unique: true });
+// ✅ One attempt only (unique per user per quiz)
+resultSchema.index({ userId: 1, quizId: 1 }, { unique: true });
 
-export default mongoose.model("Result", ResultSchema);
+export default mongoose.model("Result", resultSchema);
