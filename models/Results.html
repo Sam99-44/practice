@@ -3,9 +3,9 @@ import mongoose from "mongoose";
 const AnswerSchema = new mongoose.Schema(
   {
     qIndex: Number,
-    chosenIndex: Number,     // null if unanswered
+    chosenIndex: Number,   // null if not answered
     correctIndex: Number,
-    isCorrect: Boolean,
+    isCorrect: Boolean
   },
   { _id: false }
 );
@@ -24,12 +24,12 @@ const ResultSchema = new mongoose.Schema(
     total: { type: Number, required: true },
     percent: { type: Number, required: true },
 
-    answers: { type: [AnswerSchema], default: [] },
+    answers: { type: [AnswerSchema], default: [] }
   },
   { timestamps: true }
 );
 
-//  ONE ATTEMPT PER USER PER QUIZ
+// ✅ ONE ATTEMPT PER USER PER QUIZ
 ResultSchema.index({ userId: 1, quizId: 1 }, { unique: true });
 
 export default mongoose.model("Result", ResultSchema);
