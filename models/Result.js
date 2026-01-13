@@ -1,6 +1,16 @@
 // models/Result.js
 import mongoose from "mongoose";
 
+const answerSchema = new mongoose.Schema(
+  {
+    qIndex: { type: Number, required: true },
+    chosenIndex: { type: Number, default: null },
+    correctIndex: { type: Number, required: true },
+    isCorrect: { type: Boolean, required: true }
+  },
+  { _id: false }
+);
+
 const resultSchema = new mongoose.Schema(
   {
     // 🔐 Who attempted
@@ -16,7 +26,7 @@ const resultSchema = new mongoose.Schema(
       trim: true
     },
 
-    // 📝 What quiz
+    // 📝 Quiz info
     quizId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Quiz",
@@ -41,41 +51,23 @@ const resultSchema = new mongoose.Schema(
     },
 
     // 📊 Result
-    score: {
-      type: Number,
-      required: true,
-      min: 0
-    },
-    total: {
-      type: Number,
-      required: true,
-      min: 1
-    },
-    percent: {
-      type: Number,
-      required: true,
-      min: 0,
-      max: 100
-    },
+    score: { type: Number, required: true, min: 0 },
+    total: { type: Number, required: true, min: 1 },
+    percent: { type: Number, required: true, min: 0, max: 100 },
 
-    // 🧠 Learner answers (index = question index, value = chosen option)
+    // 🧠 Learner answers (FULL DETAIL)
     answers: {
-      type: [Number],
+      type: [answerSchema],
       default: []
     }
   },
-  {
-    timestamps: true
-  }
+  { timestamps: true }
 );
 
-// 🚫 ONE attempt per user per quiz (hard rule)
-resultSchema.index(
-  { userId: 1, quizId: 1 },
-  { unique: true }
-);
+// 🚫 ONE attempt only
+resultSchema.index({ userId: 1, quizId: 1 }, { unique: true });
 
-// ⚡ Useful query index (admin + learner dashboards)
+// ⚡ Dashboard queries
 resultSchema.index({ createdAt: -1 });
 
 export default mongoose.model("Result", resultSchema);
