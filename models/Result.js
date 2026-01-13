@@ -25,16 +25,18 @@ const resultSchema = new mongoose.Schema(
     },
     quizTitle: {
       type: String,
+      trim: true,
       default: ""
     },
     grade: {
       type: Number,
       min: 8,
       max: 12,
-      default: null
+      required: true
     },
     topic: {
       type: String,
+      trim: true,
       default: ""
     },
 
@@ -56,7 +58,7 @@ const resultSchema = new mongoose.Schema(
       max: 100
     },
 
-    // 🧠 Learner answers (optional but useful)
+    // 🧠 Learner answers (index = question index, value = chosen option)
     answers: {
       type: [Number],
       default: []
@@ -67,10 +69,13 @@ const resultSchema = new mongoose.Schema(
   }
 );
 
-// 🚫 Enforce ONE attempt per user per quiz
+// 🚫 ONE attempt per user per quiz (hard rule)
 resultSchema.index(
   { userId: 1, quizId: 1 },
   { unique: true }
 );
+
+// ⚡ Useful query index (admin + learner dashboards)
+resultSchema.index({ createdAt: -1 });
 
 export default mongoose.model("Result", resultSchema);
