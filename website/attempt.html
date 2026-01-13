@@ -1,367 +1,281 @@
-// server.js
-import express from "express";
-import mongoose from "mongoose";
-import cors from "cors";
-import dotenv from "dotenv";
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Attempt Quiz | Practice Online</title>
 
-import Quiz from "./models/Quiz.js";
-import User from "./models/User.js";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-import crypto from "crypto";
-import { getTransporter } from "./utils/mailer.js";
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --border:#e6e6e6;
+      --text:#0f172a;
+      --muted:#475569;
+      --accent:#0b3c5d;
+      --accent-soft:#e7eef5;
+      --radius:14px;
+      --shadow:0 6px 18px rgba(0,0,0,0.06);
+      --error:#b91c1c;
+      --ok:#065f46;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:Inter,Arial,sans-serif; background:var(--bg); color:var(--text);}
+    .wrap{max-width:1000px; margin:0 auto; padding:24px;}
+    .error{color:var(--error);}
+    .ok{color:var(--ok);}
+    .muted{color:var(--muted);}
 
-dotenv.config();
+    .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:12px;}
+    .brand{display:flex; align-items:center; gap:10px;}
+    .logo{width:38px; height:38px; border-radius:10px; background:var(--accent); color:white; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px;}
+    .brand span{display:block; font-size:13px; color:var(--muted);}
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+    .nav{display:flex; align-items:center; gap:14px;}
+    .nav a{text-decoration:none; font-size:14px; color:var(--text); padding:6px 8px; border-radius:8px; transition:background 0.2s;}
+    .nav a:hover{ background:var(--accent-soft); }
+    .nav .nav-btn{background:var(--accent); color:white; padding:8px 12px; border-radius:10px;}
+    .nav .logout{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:10px; cursor:pointer; font-size:14px;}
 
-app.get("/", (req, res) => res.send("Practice Online API running"));
-
-/* ------------------ HELPERS ------------------ */
-
-function smtpReady() {
-  return Boolean(
-    process.env.SMTP_HOST &&
-      process.env.SMTP_PORT &&
-      process.env.SMTP_USER &&
-      process.env.SMTP_PASS &&
-      process.env.APP_URL
-  );
-}
-
-/* ------------------ AUTH MIDDLEWARE ------------------ */
-
-function authRequired(req, res, next) {
-  const header = req.headers.authorization || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
-
-  if (!token) return res.status(401).json({ message: "Missing token" });
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // { userId, username }
-    next();
-  } catch {
-    return res.status(401).json({ message: "Invalid token" });
-  }
-}
-
-async function adminOnly(req, res, next) {
-  try {
-    const user = await User.findById(req.user.userId).select("role username");
-    if (!user) return res.status(401).json({ message: "User not found" });
-    if (user.role !== "admin") return res.status(403).json({ message: "Admin only" });
-    next();
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-}
-
-/* ------------------ AUTH ROUTES ------------------ */
-
-// Register (username + email + grade + password) + welcome email
-app.post("/api/auth/register", async (req, res) => {
-  try {
-    const { username, email, grade, password } = req.body;
-
-    if (!username || !email || !grade || !password) {
-      return res.status(400).json({ message: "Username, email, grade and password are required" });
+    .menu-btn{display:none; border:1px solid var(--border); background:var(--card); color:var(--text); padding:10px 12px; border-radius:10px; cursor:pointer;}
+    .mobile-menu{display:none; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:10px; margin-bottom:16px;}
+    .mobile-menu a,.mobile-menu button{width:100%; display:block; text-align:left; padding:10px 12px; border-radius:10px; border:none; background:transparent; color:var(--text); text-decoration:none; cursor:pointer; font-size:14px;}
+    .mobile-menu a:hover,.mobile-menu button:hover{ background:var(--accent-soft); }
+    .mobile-menu .logout{background:var(--accent); color:white;}
+    @media (max-width: 720px){
+      .nav{ display:none; }
+      .menu-btn{ display:inline-flex; }
+      .mobile-menu.open{ display:block; }
     }
 
-    const cleanUsername = username.trim();
-    const cleanEmail = email.trim().toLowerCase();
-    const g = Number(grade);
+    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);}
+    .quiz-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:10px;}
+    h1{margin:0; font-size:22px;}
+    .pill{font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid #cfe9ff; background:#eef7ff; color:#0b3c5d; white-space:nowrap;}
 
-    if (!Number.isFinite(g) || g < 8 || g > 12) {
-      return res.status(400).json({ message: "Grade must be between 8 and 12" });
+    .q{margin-top:14px; padding-top:14px; border-top:1px solid #eee;}
+    .q h3{margin:0 0 10px 0; font-size:16px;}
+    .opt{display:block; padding:10px; border:1px solid #ddd; border-radius:10px; margin-bottom:8px; cursor:pointer; background:#fff; user-select:none;}
+    .opt input{margin-right:10px;}
+
+    .footerbar{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:14px; flex-wrap:wrap;}
+    .btn{background:var(--accent); color:#fff; padding:10px 12px; border:none; border-radius:10px; cursor:pointer; font-size:14px; font-weight:600;}
+    .btn:disabled{opacity:0.7; cursor:not-allowed;}
+    .score{font-weight:700;}
+    #msg{margin-top:10px;}
+  </style>
+
+  <script>
+    // protect page (must be logged in)
+    const t = localStorage.getItem("token");
+    if (!t) window.location.href = "login.html";
+  </script>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">PO</div>
+        <div>
+          <strong>Practice Online</strong>
+          <span id="welcomeSub">Attempt Quiz</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="learner-quizzes.html" class="nav-btn">Back to Practice</a>
+        <a href="about.html">About</a>
+        <a href="admin-quiz.html" data-admin>Admin</a>
+        <button class="logout" type="button" id="logoutBtn" data-auth>Logout</button>
+      </nav>
+
+      <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu">Menu</button>
+    </div>
+
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="learner-quizzes.html">Back to Practice</a>
+      <a href="about.html">About</a>
+      <a href="admin-quiz.html" data-admin>Admin</a>
+      <button class="logout" type="button" id="logoutBtnMobile" data-auth>Logout</button>
+    </div>
+
+    <div class="card">
+      <div class="quiz-head">
+        <div>
+          <h1 id="quizTitle">Loading...</h1>
+          <p class="muted" id="quizInfo" style="margin:6px 0 0 0;"></p>
+        </div>
+        <div id="metaPill" class="pill" style="display:none;">Quiz</div>
+      </div>
+
+      <div id="questions"></div>
+
+      <div class="footerbar">
+        <button class="btn" id="submitBtn">Submit</button>
+        <span class="score" id="result"></span>
+      </div>
+
+      <p id="msg"></p>
+    </div>
+
+  </div>
+
+  <!-- shared nav must load first -->
+  <script src="nav.js"></script>
+
+  <script>
+    // Use nav.js API if available, else fallback
+    const API = window.API || "https://practice-backend-msgn.onrender.com";
+
+    const params = new URLSearchParams(window.location.search);
+    const quizId = params.get("quizId");
+
+    const quizTitle = document.getElementById("quizTitle");
+    const quizInfo = document.getElementById("quizInfo");
+    const questionsDiv = document.getElementById("questions");
+    const submitBtn = document.getElementById("submitBtn");
+    const resultEl = document.getElementById("result");
+    const msgEl = document.getElementById("msg");
+    const metaPill = document.getElementById("metaPill");
+
+    let quizData = null;
+    let isSubmitted = false;
+
+    const username = localStorage.getItem("username") || "Learner";
+    document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
+
+    if (!quizId) {
+      quizTitle.textContent = "Quiz not found";
+      msgEl.textContent = "Missing quizId in the URL.";
+      msgEl.className = "error";
+      submitBtn.disabled = true;
+    } else {
+      loadQuiz();
     }
 
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail);
-    if (!emailOk) {
-      return res.status(400).json({ message: "Invalid email address" });
+    async function loadQuiz() {
+      try {
+        const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`);
+        if (!res.ok) throw new Error("Quiz not found");
+
+        quizData = await res.json();
+
+        quizTitle.textContent = escapeHtml(quizData.title || "Quiz");
+        const topic = quizData.topic ? escapeHtml(quizData.topic) : "Maths";
+        const grade = quizData.grade ?? "-";
+        const count = (quizData.questions || []).length;
+
+        quizInfo.textContent = `Grade ${grade} • ${topic} • ${count} questions`;
+        metaPill.style.display = "inline-block";
+        metaPill.textContent = `${count} questions`;
+
+        renderQuestions(quizData.questions || []);
+      } catch (err) {
+        quizTitle.textContent = "Quiz not found";
+        msgEl.textContent = "Could not load this quiz.";
+        msgEl.className = "error";
+        submitBtn.disabled = true;
+      }
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be 6+ characters" });
+    function renderQuestions(questions) {
+      questionsDiv.innerHTML = questions.map((q, idx) => `
+        <div class="q" data-qindex="${idx}">
+          <h3>${idx + 1}. ${escapeHtml(q.text || "")}</h3>
+
+          ${q.imageUrl ? `
+            <img
+              src="${escapeAttr(q.imageUrl)}"
+              alt="Question image"
+              style="max-width:100%; margin:10px 0; border-radius:12px; border:1px solid #e6e6e6;"
+            />
+          ` : ""}
+
+          ${(q.options || []).map((opt, j) => `
+            <label class="opt">
+              <input type="radio" name="q${idx}" value="${j}">
+              ${escapeHtml(opt)}
+            </label>
+          `).join("")}
+        </div>
+      `).join("");
     }
 
-    const usernameExists = await User.findOne({ username: cleanUsername });
-    if (usernameExists) return res.status(409).json({ message: "Username already taken" });
+    submitBtn.addEventListener("click", () => {
+      if (!quizData || isSubmitted) return;
 
-    const emailExists = await User.findOne({ email: cleanEmail });
-    if (emailExists) return res.status(409).json({ message: "Email already registered" });
+      const total = (quizData.questions || []).length;
+      let score = 0;
+      let answered = 0;
 
-    const passwordHash = await bcrypt.hash(password, 10);
+      quizData.questions.forEach((q, idx) => {
+        const chosen = document.querySelector(`input[name="q${idx}"]:checked`);
+        const options = document.querySelectorAll(`input[name="q${idx}"]`);
 
-    await User.create({
-      username: cleanUsername,
-      email: cleanEmail,
-      grade: g,
-      passwordHash
-      // role defaults to learner
-    });
-
-    // ✅ Welcome email (safe + logs)
-    try {
-      if (!smtpReady()) {
-        console.log("SMTP not configured - skipping welcome email");
-      } else {
-        console.log("Sending welcome email to:", cleanEmail);
-        const transporter = getTransporter();
-
-        await transporter.sendMail({
-          from: process.env.SMTP_USER,
-          to: cleanEmail,
-          subject: "Welcome to Practice Online 🎉",
-          text: `Hi ${cleanUsername},
-
-Welcome to Practice Online!
-
-You have successfully registered for Grade ${g} Mathematics.
-
-Login here:
-${process.env.APP_URL}/login.html
-
-Good luck with your learning!
-
-— Practice Online Team`
+        options.forEach((opt) => {
+          const label = opt.closest("label");
+          label.style.border = "1px solid #ddd";
+          label.style.background = "#fff";
         });
 
-        console.log("Welcome email sent ✅");
-      }
-    } catch (mailErr) {
-      console.error("Welcome email failed ❌:", mailErr.message);
-    }
+        if (chosen) answered++;
 
-    res.status(201).json({ message: "Account created" });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+        options.forEach((opt, j) => {
+          if (j === q.correctIndex) {
+            const label = opt.closest("label");
+            label.style.border = "1px solid #16a34a";
+            label.style.background = "#dcfce7";
+          }
+        });
 
-// Login (username + password)
-app.post("/api/auth/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-
-    const cleanUsername = (username || "").trim();
-    const user = await User.findOne({ username: cleanUsername });
-    if (!user) return res.status(401).json({ message: "Invalid login" });
-
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) return res.status(401).json({ message: "Invalid login" });
-
-    if (!process.env.JWT_SECRET) {
-      return res.status(500).json({ message: "JWT_SECRET missing in .env" });
-    }
-
-    const token = jwt.sign(
-      { userId: user._id, username: user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    res.json({ token, username: user.username });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Current user
-app.get("/api/auth/me", authRequired, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId).select("username role email grade createdAt");
-    if (!user) return res.status(401).json({ message: "User not found" });
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-/* ------------------ FORGOT PASSWORD ------------------ */
-
-// Forgot password (send reset link)
-app.post("/api/auth/forgot-password", async (req, res) => {
-  try {
-    const { email } = req.body;
-    const cleanEmail = (email || "").trim().toLowerCase();
-
-    // same response always
-    const genericMsg = { message: "If that email exists, a reset link was sent." };
-    if (!cleanEmail) return res.json(genericMsg);
-
-    const user = await User.findOne({ email: cleanEmail });
-    if (!user) return res.json(genericMsg);
-
-    const token = crypto.randomBytes(32).toString("hex");
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-
-    user.resetPasswordTokenHash = tokenHash;
-    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
-    await user.save();
-
-    const resetLink = `${process.env.APP_URL}/reset-password.html?token=${token}&email=${encodeURIComponent(
-      cleanEmail
-    )}`;
-
-    // ✅ send email only if SMTP ready
-    if (!smtpReady()) {
-      console.log("SMTP not configured - skipping reset email");
-      return res.json(genericMsg);
-    }
-
-    console.log("Sending reset email to:", cleanEmail);
-    const transporter = getTransporter();
-    await transporter.sendMail({
-      from: process.env.SMTP_USER,
-      to: cleanEmail,
-      subject: "Practice Online - Reset your password",
-      text: `Reset your password using this link (expires in 15 minutes):\n\n${resetLink}`
-    });
-    console.log("Reset email sent ✅");
-
-    return res.json(genericMsg);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Reset password
-app.post("/api/auth/reset-password", async (req, res) => {
-  try {
-    const { token, email, newPassword } = req.body;
-
-    if (!token || !email || !newPassword) {
-      return res.status(400).json({ message: "Missing token, email or newPassword" });
-    }
-    if (newPassword.length < 6) {
-      return res.status(400).json({ message: "Password must be 6+ characters" });
-    }
-
-    const cleanEmail = email.trim().toLowerCase();
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-
-    const user = await User.findOne({
-      email: cleanEmail,
-      resetPasswordTokenHash: tokenHash,
-      resetPasswordExpires: { $gt: new Date() }
-    });
-
-    if (!user) {
-      return res.status(400).json({ message: "Invalid or expired reset link" });
-    }
-
-    user.passwordHash = await bcrypt.hash(newPassword, 10);
-    user.resetPasswordTokenHash = null;
-    user.resetPasswordExpires = null;
-    await user.save();
-
-    res.json({ message: "Password updated. Please login." });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-/* ------------------ QUIZ ROUTES ------------------ */
-
-app.get("/api/quizzes", async (req, res) => {
-  try {
-    const grade = Number(req.query.grade);
-    const filter = Number.isFinite(grade) ? { grade } : {};
-    const quizzes = await Quiz.find(filter).sort({ createdAt: -1 });
-    res.json(quizzes);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-app.get("/api/quizzes/:id", async (req, res) => {
-  try {
-    const quiz = await Quiz.findById(req.params.id);
-    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
-    res.json(quiz);
-  } catch {
-    res.status(400).json({ message: "Invalid quiz id" });
-  }
-});
-
-app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
-  try {
-    const quiz = await Quiz.create(req.body);
-    res.status(201).json(quiz);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-/* ------------------ ADMIN DASHBOARD ROUTES ------------------ */
-
-app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
-  try {
-    const totalUsers = await User.countDocuments();
-    const totalLearners = await User.countDocuments({ role: "learner" });
-    const totalQuizzes = await Quiz.countDocuments();
-
-    const quizzesByGradeAgg = await Quiz.aggregate([
-      { $group: { _id: "$grade", count: { $sum: 1 } } },
-      { $sort: { _id: 1 } }
-    ]);
-
-    const learnersByGradeAgg = await User.aggregate([
-      { $match: { role: "learner" } },
-      { $group: { _id: "$grade", count: { $sum: 1 } } },
-      { $sort: { _id: 1 } }
-    ]);
-
-    res.json({
-      totalUsers,
-      totalLearners,
-      totalQuizzes,
-      quizzesByGrade: quizzesByGradeAgg.map((x) => ({ grade: x._id, count: x.count })),
-      learnersByGrade: learnersByGradeAgg.map((x) => ({ grade: x._id, count: x.count }))
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// ✅ Admin-only test email endpoint
-app.get("/api/admin/test-email", authRequired, adminOnly, async (req, res) => {
-  try {
-    if (!smtpReady()) {
-      return res.status(400).json({
-        message: "SMTP not configured. Add SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and APP_URL to .env"
+        if (chosen) {
+          if (Number(chosen.value) === q.correctIndex) {
+            score++;
+          } else {
+            const wrongLabel = chosen.closest("label");
+            wrongLabel.style.border = "1px solid #dc2626";
+            wrongLabel.style.background = "#fee2e2";
+          }
+        }
       });
-    }
 
-    const to = (req.query.to || "").trim();
-    if (!to) return res.status(400).json({ message: "Use ?to=your@email.com" });
+      if (answered < total) {
+        msgEl.textContent = `Please answer all questions (${answered}/${total}).`;
+        msgEl.className = "error";
+        resultEl.textContent = "";
+        return;
+      }
 
-    const transporter = getTransporter();
-    await transporter.sendMail({
-      from: process.env.SMTP_USER,
-      to,
-      subject: "Practice Online - Test Email ✅",
-      text: "If you received this email, SMTP is working correctly."
+      const percent = Math.round((score / total) * 100);
+      resultEl.textContent = `Score: ${score}/${total} (${percent}%)`;
+      msgEl.textContent = "Submitted.";
+      msgEl.className = "ok";
+
+      isSubmitted = true;
+      submitBtn.textContent = "Submitted";
+      submitBtn.disabled = true;
+      document.querySelectorAll("input[type=radio]").forEach(r => r.disabled = true);
     });
 
-    res.json({ message: "Test email sent ✅" });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
 
-/* ------------------ DATABASE CONNECTION ------------------ */
-
-const PORT = process.env.PORT || 5000;
-
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("MongoDB connected");
-    app.listen(PORT, () => console.log(`Server on http://localhost:${PORT}`));
-  })
-  .catch((err) => console.error("Mongo error:", err.message));
+    // safe for attributes like src=""
+    function escapeAttr(str) {
+      return String(str).replaceAll('"', "&quot;");
+    }
+  </script>
+</body>
+</html>
