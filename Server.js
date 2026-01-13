@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 
 import Quiz from "./models/Quiz.js";
 import User from "./models/User.js";
+import Result from "./models/Result.js"; // ✅ NEW
+
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -183,13 +185,11 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 
 /* ------------------ FORGOT PASSWORD ------------------ */
 
-// Forgot password (send reset link)
 app.post("/api/auth/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
     const cleanEmail = (email || "").trim().toLowerCase();
 
-    // same response always
     const genericMsg = { message: "If that email exists, a reset link was sent." };
     if (!cleanEmail) return res.json(genericMsg);
 
@@ -207,7 +207,6 @@ app.post("/api/auth/forgot-password", async (req, res) => {
       cleanEmail
     )}`;
 
-    // ✅ send email only if SMTP ready
     if (!smtpReady()) {
       console.log("SMTP not configured - skipping reset email");
       return res.json(genericMsg);
@@ -229,7 +228,6 @@ app.post("/api/auth/forgot-password", async (req, res) => {
   }
 });
 
-// Reset password
 app.post("/api/auth/reset-password", async (req, res) => {
   try {
     const { token, email, newPassword } = req.body;
@@ -297,6 +295,63 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   }
 });
 
+/* ------------------ ✅ RESULTS ROUTES (NEW) ------------------ */
+
+// Check if current user already attempted a quiz
+app.get("/api/results/mine/:quizId", authRequired, async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    const existing = await Result.findOne({ userId: req.user.userId, quizId });
+    return res.json({ attempted: Boolean(existing), result: existing || null });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Save result (one attempt only)
+app.post("/api/results", authRequired, async (req, res) => {
+  try {
+    const { quizId, quizTitle, grade, topic, score, total, percent, answers } = req.body;
+
+    if (!quizId || score == null || total == null || percent == null) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const doc = await Result.create({
+      userId: req.user.userId,
+      username: req.user.username,
+      quizId,
+      quizTitle: quizTitle || "",
+      grade: grade ?? null,
+      topic: topic || "",
+      score,
+      total,
+      percent,
+      answers: Array.isArray(answers) ? answers : []
+    });
+
+    res.json({ ok: true, resultId: doc._id });
+  } catch (err) {
+    // duplicate key => already attempted
+    if (err?.code === 11000) {
+      return res.status(409).json({ message: "You already attempted this quiz." });
+    }
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// List my results (for later page)
+app.get("/api/results/mine", authRequired, async (req, res) => {
+  try {
+    const results = await Result.find({ userId: req.user.userId })
+      .sort({ createdAt: -1 })
+      .limit(200);
+    res.json(results);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 /* ------------------ ADMIN DASHBOARD ROUTES ------------------ */
 
 app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
@@ -321,14 +376,15 @@ app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
       totalLearners,
       totalQuizzes,
       quizzesByGrade: quizzesByGradeAgg.map((x) => ({ grade: x._id, count: x.count })),
-      learnersByGrade: learnersByGradeAgg.map((x) => ({ grade: x._id, count: x.count }))
+      learnersByGrade: learnersByGradeAgg.map((x) => ({ grade: x._id, count: x.count })),
+      totalResults: await Result.countDocuments() // ✅ optional extra stat
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// ✅ Admin-only test email endpoint
+// Admin-only test email endpoint
 app.get("/api/admin/test-email", authRequired, adminOnly, async (req, res) => {
   try {
     if (!smtpReady()) {
@@ -365,4 +421,3 @@ mongoose
     app.listen(PORT, () => console.log(`Server on http://localhost:${PORT}`));
   })
   .catch((err) => console.error("Mongo error:", err.message));
-
