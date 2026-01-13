@@ -19,6 +19,13 @@
     .error{color:#b91c1c;}
     .ok{color:#065f46;}
     a.btn2{display:inline-block; padding:10px 12px; border-radius:10px; text-decoration:none;}
+
+    /* ✅ Question builder */
+    .qcard{border:1px solid #e6e6e6; border-radius:12px; padding:12px; margin-top:12px; background:#fff;}
+    .qhead{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
+    .smallbtn{border:1px solid #ddd; background:#fff; color:#111827; padding:8px 10px; border-radius:10px;}
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    hr{border:none; border-top:1px solid #eee; margin:14px 0;}
   </style>
 </head>
 <body>
@@ -48,36 +55,74 @@
           <option value="12">Grade 12</option>
         </select>
       </div>
+
       <div>
         <label>Topic</label>
-        <input id="topic" placeholder="e.g. Integers" />
+        <!-- ✅ Dropdown topics -->
+        <select id="topic">
+          <option value="">Select Topic</option>
+          <option>Integers</option>
+          <option>Algebra</option>
+          <option>Geometry</option>
+          <option>Trigonometry</option>
+          <option>Functions</option>
+          <option>Sequences</option>
+          <option>Probability</option>
+          <option>Statistics</option>
+        </select>
       </div>
     </div>
 
     <label>Quiz Title</label>
     <input id="title" placeholder="e.g. Integers Quiz 1" />
 
-    <label>Questions (JSON)</label>
-    <textarea id="questions" rows="12" placeholder='Paste JSON here'></textarea>
+    <hr>
+
+    <div class="qhead">
+      <h3 style="margin:0;">Questions (4 options A–D)</h3>
+      <button class="smallbtn" id="addQuestionBtn" type="button">+ Add Question</button>
+    </div>
+
+    <div id="questionsWrap"></div>
+
+    <hr>
 
     <button class="btn" id="saveBtn" disabled>Save Quiz</button>
     <p class="msg muted" id="msg"></p>
   </div>
 
+  <!-- ✅ Shared nav (API + logout helper) -->
+  <script src="nav.js"></script>
+
   <script>
-    // ✅ Render backend
-    const API = "https://practice-backend-msgn.onrender.com";
+    // ✅ Use nav.js API if available, else fallback
+    const API = window.API || "https://practice-backend-msgn.onrender.com";
 
     const msg = document.getElementById("msg");
     const who = document.getElementById("who");
     const saveBtn = document.getElementById("saveBtn");
+
+    const gradeEl = document.getElementById("grade");
+    const topicEl = document.getElementById("topic");
+    const titleEl = document.getElementById("title");
+
+    const addQuestionBtn = document.getElementById("addQuestionBtn");
+    const questionsWrap = document.getElementById("questionsWrap");
 
     function setMsg(text, type="muted"){
       msg.className = "msg " + type;
       msg.textContent = text;
     }
 
-    // ---- ADMIN LOCK ----
+    function logout(){
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("me_cache");
+      window.location.href = "login.html";
+    }
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+
+    // -------------------- Admin lock --------------------
     (async () => {
       const token = localStorage.getItem("token");
       if (!token) return window.location.href = "login.html";
@@ -87,7 +132,7 @@
         meRes = await fetch(`${API}/api/auth/me`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
-      } catch (e) {
+      } catch {
         setMsg("Network error. Please refresh and try again.", "error");
         return;
       }
@@ -96,9 +141,7 @@
 
       if (!meRes.ok || !me) {
         alert("Session expired. Please login again.");
-        localStorage.removeItem("token");
-        localStorage.removeItem("username");
-        return window.location.href = "login.html";
+        return logout();
       }
 
       if (me.role !== "admin") {
@@ -111,32 +154,117 @@
       setMsg("Ready to add a quiz.", "ok");
     })();
 
-    // ---- SAVE QUIZ ----
+    // -------------------- Question builder (A–D) --------------------
+    let qCount = 0;
+
+    function questionCardHtml(id){
+      return `
+        <div class="qcard" data-qid="${id}">
+          <div class="qhead">
+            <b>Question ${id}</b>
+            <button type="button" class="smallbtn removeBtn">Remove</button>
+          </div>
+
+          <label>Question Text</label>
+          <input class="qText" placeholder="Type your question here" />
+
+          <label>Image URL (optional)</label>
+          <input class="qImage" placeholder="https://res.cloudinary.com/...png" />
+
+          <div class="grid2">
+            <div>
+              <label>Option A</label>
+              <input class="optA" placeholder="A" />
+            </div>
+            <div>
+              <label>Option B</label>
+              <input class="optB" placeholder="B" />
+            </div>
+            <div>
+              <label>Option C</label>
+              <input class="optC" placeholder="C" />
+            </div>
+            <div>
+              <label>Option D</label>
+              <input class="optD" placeholder="D" />
+            </div>
+          </div>
+
+          <label>Correct Answer</label>
+          <select class="correct">
+            <option value="0">A</option>
+            <option value="1">B</option>
+            <option value="2">C</option>
+            <option value="3">D</option>
+          </select>
+        </div>
+      `;
+    }
+
+    function addQuestion(){
+      qCount += 1;
+      questionsWrap.insertAdjacentHTML("beforeend", questionCardHtml(qCount));
+    }
+
+    addQuestionBtn.addEventListener("click", addQuestion);
+
+    questionsWrap.addEventListener("click", (e) => {
+      if (e.target.classList.contains("removeBtn")) {
+        e.target.closest(".qcard").remove();
+      }
+    });
+
+    // start with 1 question
+    addQuestion();
+
+    function collectQuestions(){
+      const cards = [...questionsWrap.querySelectorAll(".qcard")];
+      if (cards.length === 0) throw new Error("Add at least 1 question.");
+
+      const questions = [];
+
+      for (const card of cards) {
+        const text = card.querySelector(".qText").value.trim();
+        const imageUrl = card.querySelector(".qImage").value.trim();
+        const A = card.querySelector(".optA").value.trim();
+        const B = card.querySelector(".optB").value.trim();
+        const C = card.querySelector(".optC").value.trim();
+        const D = card.querySelector(".optD").value.trim();
+        const correctIndex = Number(card.querySelector(".correct").value);
+
+        if (!text) throw new Error("Please fill in all question texts.");
+        if (!A || !B || !C || !D) throw new Error("Please fill in all options A–D for every question.");
+
+        questions.push({
+          text,
+          imageUrl: imageUrl || undefined,
+          options: [A, B, C, D],
+          correctIndex
+        });
+      }
+
+      return questions;
+    }
+
+    // -------------------- Save quiz --------------------
     saveBtn.addEventListener("click", async () => {
       const token = localStorage.getItem("token");
       if (!token) return window.location.href = "login.html";
 
-      const grade = Number(document.getElementById("grade").value);
-      const title = document.getElementById("title").value.trim();
-      const topic = document.getElementById("topic").value.trim();
+      const grade = Number(gradeEl.value);
+      const title = titleEl.value.trim();
+      const topic = topicEl.value.trim();
 
-      if (!grade || !title) {
-        setMsg("Please select grade and enter title.", "error");
-        return;
-      }
+      try{
+        if (!grade) return setMsg("Please select grade.", "error");
+        if (!topic) return setMsg("Please select topic.", "error");
+        if (!title) return setMsg("Please enter quiz title.", "error");
 
-      let questions;
-      try {
-        questions = JSON.parse(document.getElementById("questions").value);
-      } catch (e) {
-        setMsg("Questions JSON is not valid.", "error");
-        return;
-      }
+        const questions = collectQuestions();
 
-      saveBtn.disabled = true;
-      setMsg("Saving quiz...", "muted");
+        saveBtn.disabled = true;
+        setMsg("Saving quiz...", "muted");
 
-      try {
         const res = await fetch(`${API}/api/quizzes`, {
           method: "POST",
           headers: {
@@ -150,21 +278,23 @@
 
         if (res.ok) {
           setMsg("✅ Quiz saved!", "ok");
-          document.getElementById("title").value = "";
-          document.getElementById("topic").value = "";
-          document.getElementById("questions").value = "";
+          titleEl.value = "";
+          gradeEl.value = "";
+          topicEl.value = "";
+
+          // reset questions
+          questionsWrap.innerHTML = "";
+          qCount = 0;
+          addQuestion();
         } else {
           setMsg("❌ Error: " + (data.message || "Could not save quiz"), "error");
         }
-      } catch (e) {
-        setMsg("Network error while saving. Please try again.", "error");
+      } catch (err){
+        setMsg(err.message || "Something went wrong.", "error");
+      } finally {
+        saveBtn.disabled = false;
       }
-
-      saveBtn.disabled = false;
     });
   </script>
-
-  <!-- ✅ Shared nav + logout (optional) -->
-  <script src="nav.js"></script>
 </body>
 </html>
