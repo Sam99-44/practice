@@ -1,452 +1,163 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Attempt Quiz | Practice Online</title>
+<script>
+  const API = window.API || "https://practice-backend-msgn.onrender.com";
+  const token = localStorage.getItem("token");
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  const params = new URLSearchParams(window.location.search);
+  const quizId = params.get("quizId");
 
-  <style>
-    :root{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --border:#e6e6e6;
-      --text:#0f172a;
-      --muted:#475569;
-      --accent:#0b3c5d;
-      --accent-soft:#e7eef5;
-      --radius:14px;
-      --shadow:0 6px 18px rgba(0,0,0,0.06);
-      --error:#b91c1c;
-      --ok:#065f46;
+  const quizTitle = document.getElementById("quizTitle");
+  const quizInfo = document.getElementById("quizInfo");
+  const questionsDiv = document.getElementById("questions");
+  const submitBtn = document.getElementById("submitBtn");
+  const resultEl = document.getElementById("result");
+  const msgEl = document.getElementById("msg");
+  const metaPill = document.getElementById("metaPill");
+  const lockBox = document.getElementById("lockBox");
+
+  let quizData = null;
+  let isSubmitted = false;
+  let alreadyAttempted = false;
+  let previousResult = null;
+
+  // ✅ username is REQUIRED by backend
+  const username = localStorage.getItem("username") || "Learner";
+  document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
+
+  if (!quizId) {
+    quizTitle.textContent = "Quiz not found";
+    msgEl.textContent = "Missing quizId in the URL.";
+    msgEl.className = "error";
+    submitBtn.disabled = true;
+  } else {
+    start();
+  }
+
+  async function start() {
+    await checkAttemptStatus();
+    await loadQuiz();
+    if (alreadyAttempted && previousResult) {
+      lockQuizWithPreviousResult(previousResult);
     }
-    *{box-sizing:border-box}
-    body{margin:0; font-family:Inter,Arial,sans-serif; background:var(--bg); color:var(--text);}
-    .wrap{max-width:1000px; margin:0 auto; padding:24px;}
-    .error{color:var(--error);}
-    .ok{color:var(--ok);}
-    .muted{color:var(--muted);}
+  }
 
-    .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:12px;}
-    .brand{display:flex; align-items:center; gap:10px;}
-    .logo{width:38px; height:38px; border-radius:10px; background:var(--accent); color:white; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px;}
-    .brand span{display:block; font-size:13px; color:var(--muted);}
-
-    .nav{display:flex; align-items:center; gap:14px;}
-    .nav a{text-decoration:none; font-size:14px; color:var(--text); padding:6px 8px; border-radius:8px; transition:background 0.2s;}
-    .nav a:hover{ background:var(--accent-soft); }
-    .nav .nav-btn{background:var(--accent); color:white; padding:8px 12px; border-radius:10px;}
-    .nav .logout{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:10px; cursor:pointer; font-size:14px;}
-
-    .menu-btn{display:none; border:1px solid var(--border); background:var(--card); color:var(--text); padding:10px 12px; border-radius:10px; cursor:pointer;}
-    .mobile-menu{display:none; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:10px; margin-bottom:16px;}
-    .mobile-menu a,.mobile-menu button{width:100%; display:block; text-align:left; padding:10px 12px; border-radius:10px; border:none; background:transparent; color:var(--text); text-decoration:none; cursor:pointer; font-size:14px;}
-    .mobile-menu a:hover,.mobile-menu button:hover{ background:var(--accent-soft); }
-    .mobile-menu .logout{background:var(--accent); color:white;}
-    @media (max-width: 720px){
-      .nav{ display:none; }
-      .menu-btn{ display:inline-flex; }
-      .mobile-menu.open{ display:block; }
-    }
-
-    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);}
-    .quiz-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:10px;}
-    h1{margin:0; font-size:22px;}
-    .pill{font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid #cfe9ff; background:#eef7ff; color:#0b3c5d; white-space:nowrap;}
-
-    .q{margin-top:14px; padding-top:14px; border-top:1px solid #eee;}
-    .q h3{margin:0 0 10px 0; font-size:16px;}
-    .opt{display:block; padding:10px; border:1px solid #ddd; border-radius:10px; margin-bottom:8px; cursor:pointer; background:#fff; user-select:none;}
-    .opt input{margin-right:10px;}
-
-    .footerbar{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:14px; flex-wrap:wrap;}
-    .btn{background:var(--accent); color:#fff; padding:10px 12px; border:none; border-radius:10px; cursor:pointer; font-size:14px; font-weight:600;}
-    .btn2{background:#fff; color:var(--text); border:1px solid #ddd;}
-    .btn:disabled{opacity:0.7; cursor:not-allowed;}
-    .score{font-weight:700;}
-    #msg{margin-top:10px;}
-
-    .lockbox{
-      margin-top:12px;
-      padding:12px;
-      border-radius:12px;
-      border:1px solid #fde68a;
-      background:#fffbeb;
-      color:#92400e;
-    }
-  </style>
-
-  <script>
-    // protect page (must be logged in)
-    const t = localStorage.getItem("token");
-    if (!t) window.location.href = "login.html";
-  </script>
-</head>
-
-<body>
-  <div class="wrap">
-
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo">PO</div>
-        <div>
-          <strong>Practice Online</strong>
-          <span id="welcomeSub">Attempt Quiz</span>
-        </div>
-      </div>
-
-      <nav class="nav">
-        <a href="learner-quizzes.html" class="nav-btn">Back to Practice</a>
-        <a href="about.html">About</a>
-        <a href="admin-quiz.html" data-admin>Admin</a>
-        <button class="logout" type="button" id="logoutBtn" data-auth>Logout</button>
-      </nav>
-
-      <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu">Menu</button>
-    </div>
-
-    <div class="mobile-menu" id="mobileMenu">
-      <a href="learner-quizzes.html">Back to Practice</a>
-      <a href="about.html">About</a>
-      <a href="admin-quiz.html" data-admin>Admin</a>
-      <button class="logout" type="button" id="logoutBtnMobile" data-auth>Logout</button>
-    </div>
-
-    <div class="card">
-      <div class="quiz-head">
-        <div>
-          <h1 id="quizTitle">Loading...</h1>
-          <p class="muted" id="quizInfo" style="margin:6px 0 0 0;"></p>
-        </div>
-        <div id="metaPill" class="pill" style="display:none;">Quiz</div>
-      </div>
-
-      <div id="lockBox" class="lockbox" style="display:none;"></div>
-
-      <div id="questions"></div>
-
-      <div class="footerbar">
-        <button class="btn" id="submitBtn">Submit</button>
-        <span class="score" id="result"></span>
-      </div>
-
-      <p id="msg"></p>
-    </div>
-
-  </div>
-
-  <!-- shared nav must load first -->
-  <script src="nav.js"></script>
-
-  <script>
-    const API = window.API || "https://practice-backend-msgn.onrender.com";
-    const token = localStorage.getItem("token");
-
-    const params = new URLSearchParams(window.location.search);
-    const quizId = params.get("quizId");
-
-    const quizTitle = document.getElementById("quizTitle");
-    const quizInfo = document.getElementById("quizInfo");
-    const questionsDiv = document.getElementById("questions");
-    const submitBtn = document.getElementById("submitBtn");
-    const resultEl = document.getElementById("result");
-    const msgEl = document.getElementById("msg");
-    const metaPill = document.getElementById("metaPill");
-    const lockBox = document.getElementById("lockBox");
-
-    let quizData = null;
-    let isSubmitted = false;
-    let alreadyAttempted = false;
-    let previousResult = null;
-
-    const username = localStorage.getItem("username") || "Learner";
-    document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
-
-    if (!quizId) {
-      quizTitle.textContent = "Quiz not found";
-      msgEl.textContent = "Missing quizId in the URL.";
-      msgEl.className = "error";
-      submitBtn.disabled = true;
-    } else {
-      start();
-    }
-
-    async function start(){
-      // 1) check attempt status
-      await checkAttemptStatus();
-      // 2) load quiz (still load so we can display questions + images, but lock if attempted)
-      await loadQuiz();
-      // 3) if attempted, lock
-      if (alreadyAttempted && previousResult) {
-        lockQuizWithPreviousResult(previousResult);
-      }
-    }
-
-    async function checkAttemptStatus(){
-      try{
-        const res = await fetch(`${API}/api/results/mine/${encodeURIComponent(quizId)}`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-
-        const data = await res.json().catch(()=>null);
-        if (!res.ok || !data) return;
-
-        alreadyAttempted = Boolean(data.attempted);
-        previousResult = data.result || null;
-      }catch(e){
-        // if fails, allow attempt (do nothing)
-      }
-    }
-
-    async function loadQuiz() {
-      try {
-        const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`);
-        if (!res.ok) throw new Error("Quiz not found");
-
-        quizData = await res.json();
-
-        quizTitle.textContent = escapeHtml(quizData.title || "Quiz");
-        const topic = quizData.topic ? escapeHtml(quizData.topic) : "Maths";
-        const grade = quizData.grade ?? "-";
-        const count = (quizData.questions || []).length;
-
-        quizInfo.textContent = `Grade ${grade} • ${topic} • ${count} questions`;
-        metaPill.style.display = "inline-block";
-        metaPill.textContent = `${count} questions`;
-
-        renderQuestions(quizData.questions || []);
-      } catch (err) {
-        quizTitle.textContent = "Quiz not found";
-        msgEl.textContent = "Could not load this quiz.";
-        msgEl.className = "error";
-        submitBtn.disabled = true;
-      }
-    }
-
-    function renderQuestions(questions) {
-      questionsDiv.innerHTML = questions.map((q, idx) => `
-        <div class="q" data-qindex="${idx}">
-          <h3>${idx + 1}. ${escapeHtml(q.text || "")}</h3>
-
-          ${q.imageUrl ? `
-            <img
-              src="${escapeAttr(q.imageUrl)}"
-              alt="Question image"
-              style="max-width:100%; margin:10px 0; border-radius:12px; border:1px solid #e6e6e6;"
-            />
-          ` : ""}
-
-          ${(q.options || []).map((opt, j) => `
-            <label class="opt">
-              <input type="radio" name="q${idx}" value="${j}">
-              ${escapeHtml(opt)}
-            </label>
-          `).join("")}
-        </div>
-      `).join("");
-    }
-
-    function lockQuizWithPreviousResult(r){
-      // Show message
-      lockBox.style.display = "block";
-      const dt = r.createdAt ? new Date(r.createdAt).toLocaleString() : "";
-      lockBox.innerHTML = `
-        <b>One attempt only.</b> You already submitted this quiz.
-        <div style="margin-top:6px;">
-          <b>Your score:</b> ${r.score}/${r.total} (${r.percent}%)
-          ${dt ? `<div class="muted" style="margin-top:4px;">Submitted: ${dt}</div>` : ""}
-        </div>
-      `;
-
-      // Disable all inputs + submit
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Already Submitted";
-      isSubmitted = true;
-
-      document.querySelectorAll("input[type=radio]").forEach(radio => radio.disabled = true);
-
-      // Paint correct answers + your selected answers (if stored)
-      try{
-        const questions = quizData?.questions || [];
-        questions.forEach((q, idx) => {
-          const options = document.querySelectorAll(`input[name="q${idx}"]`);
-          const saved = (r.answers || []).find(a => a.qIndex === idx);
-          const chosenIndex = saved ? saved.chosenIndex : null;
-
-          options.forEach((opt, j) => {
-            const label = opt.closest("label");
-            // correct green
-            if (j === q.correctIndex) {
-              label.style.border = "1px solid #16a34a";
-              label.style.background = "#dcfce7";
-            }
-            // chosen wrong red
-            if (chosenIndex !== null && j === chosenIndex && j !== q.correctIndex) {
-              label.style.border = "1px solid #dc2626";
-              label.style.background = "#fee2e2";
-            }
-            // check the chosen option
-            if (chosenIndex !== null && j === chosenIndex) opt.checked = true;
-          });
-        });
-
-        resultEl.textContent = `Score: ${r.score}/${r.total} (${r.percent}%)`;
-        msgEl.textContent = "This quiz is locked because you already attempted it.";
-        msgEl.className = "ok";
-      }catch(e){}
-    }
-
-    submitBtn.addEventListener("click", async () => {
-      if (!quizData || isSubmitted) return;
-
-      // If backend says already attempted, block
-      if (alreadyAttempted) {
-        msgEl.textContent = "You already attempted this quiz.";
-        msgEl.className = "error";
-        return;
-      }
-
-      const total = (quizData.questions || []).length;
-      let score = 0;
-      let answered = 0;
-
-      const answersToSave = [];
-
-      quizData.questions.forEach((q, idx) => {
-        const chosen = document.querySelector(`input[name="q${idx}"]:checked`);
-        const options = document.querySelectorAll(`input[name="q${idx}"]`);
-
-        // reset styles
-        options.forEach((opt) => {
-          const label = opt.closest("label");
-          label.style.border = "1px solid #ddd";
-          label.style.background = "#fff";
-        });
-
-        if (chosen) answered++;
-
-        // paint correct green
-        options.forEach((opt, j) => {
-          if (j === q.correctIndex) {
-            const label = opt.closest("label");
-            label.style.border = "1px solid #16a34a";
-            label.style.background = "#dcfce7";
-          }
-        });
-
-        // chosen handling
-        let chosenIndex = null;
-        if (chosen) chosenIndex = Number(chosen.value);
-
-        const isCorrect = chosenIndex !== null && chosenIndex === q.correctIndex;
-        if (isCorrect) score++;
-
-        // paint wrong chosen red
-        if (chosenIndex !== null && chosenIndex !== q.correctIndex) {
-          const wrongLabel = chosen.closest("label");
-          wrongLabel.style.border = "1px solid #dc2626";
-          wrongLabel.style.background = "#fee2e2";
-        }
-
-        answersToSave.push({
-          qIndex: idx,
-          chosenIndex,
-          correctIndex: q.correctIndex,
-          isCorrect
-        });
+  async function checkAttemptStatus() {
+    try {
+      const res = await fetch(`${API}/api/results/mine/${quizId}`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
+      const data = await res.json();
+      alreadyAttempted = data.attempted;
+      previousResult = data.result;
+    } catch {}
+  }
 
-      if (answered < total) {
-        msgEl.textContent = `Please answer all questions (${answered}/${total}).`;
-        msgEl.className = "error";
-        resultEl.textContent = "";
-        return;
-      }
+  async function loadQuiz() {
+    const res = await fetch(`${API}/api/quizzes/${quizId}`);
+    quizData = await res.json();
 
-      const percent = Math.round((score / total) * 100);
+    quizTitle.textContent = quizData.title;
+    quizInfo.textContent = `Grade ${quizData.grade} • ${quizData.topic}`;
+    metaPill.style.display = "inline-block";
+    metaPill.textContent = `${quizData.questions.length} questions`;
 
-      // Disable while saving
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Saving...";
-      msgEl.textContent = "Saving your result...";
-      msgEl.className = "muted";
+    renderQuestions(quizData.questions);
+  }
 
-      // ✅ Save result to MongoDB
-      try{
-        const payload = {
-          quizId,
-          quizTitle: quizData.title || "",
-          grade: quizData.grade ?? null,
-          topic: quizData.topic || "",
-          score,
-          total,
-          percent,
-          answers: answersToSave
-        };
+  function renderQuestions(questions) {
+    questionsDiv.innerHTML = questions.map((q, i) => `
+      <div class="q">
+        <h3>${i + 1}. ${q.text}</h3>
 
-        const res = await fetch(`${API}/api/results`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
-        });
+        ${q.imageUrl ? `<img src="${q.imageUrl}" style="max-width:100%;margin:10px 0;border-radius:12px;">` : ""}
 
-        const data = await res.json().catch(()=>({}));
+        ${q.options.map((o, j) => `
+          <label class="opt">
+            <input type="radio" name="q${i}" value="${j}"> ${o}
+          </label>
+        `).join("")}
+      </div>
+    `).join("");
+  }
 
-        if (!res.ok) {
-          // If already attempted (409), lock immediately
-          if (res.status === 409) {
-            alreadyAttempted = true;
-            msgEl.textContent = data.message || "You already attempted this quiz.";
-            msgEl.className = "error";
-            submitBtn.textContent = "Already Submitted";
-            return;
-          }
-          throw new Error(data.message || "Could not save result");
-        }
+  function lockQuizWithPreviousResult(r) {
+    lockBox.style.display = "block";
+    lockBox.innerHTML = `
+      <b>One attempt only.</b><br>
+      Score: ${r.score}/${r.total} (${r.percent}%)
+    `;
 
-        // Success
-        resultEl.textContent = `Score: ${score}/${total} (${percent}%)`;
-        msgEl.textContent = "Submitted and saved ✅";
-        msgEl.className = "ok";
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Already Submitted";
+    document.querySelectorAll("input[type=radio]").forEach(r => r.disabled = true);
+  }
 
-        isSubmitted = true;
-        alreadyAttempted = true;
+  submitBtn.addEventListener("click", async () => {
+    if (isSubmitted || alreadyAttempted) return;
 
-        submitBtn.textContent = "Submitted";
-        document.querySelectorAll("input[type=radio]").forEach(r => r.disabled = true);
+    let score = 0;
+    const total = quizData.questions.length;
+    const answers = [];
 
-      } catch (e){
-        // If save failed, still show score but warn user
-        resultEl.textContent = `Score: ${score}/${total} (${percent}%)`;
-        msgEl.textContent = "Submitted, but could not save result. Please try again later.";
-        msgEl.className = "error";
+    quizData.questions.forEach((q, i) => {
+      const chosen = document.querySelector(`input[name="q${i}"]:checked`);
+      const chosenIndex = chosen ? Number(chosen.value) : null;
 
-        // allow retry save (but not re-attempt)
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Retry Save";
-        // do not set isSubmitted true? we should lock anyway to prevent double attempt
-        isSubmitted = true;
-        document.querySelectorAll("input[type=radio]").forEach(r => r.disabled = true);
-      }
+      if (chosenIndex === q.correctIndex) score++;
+
+      answers.push({
+        qIndex: i,
+        chosenIndex,
+        correctIndex: q.correctIndex,
+        isCorrect: chosenIndex === q.correctIndex
+      });
     });
 
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
+    if (answers.some(a => a.chosenIndex === null)) {
+      msgEl.textContent = "Please answer all questions.";
+      msgEl.className = "error";
+      return;
     }
-    function escapeAttr(str) {
-      return String(str).replaceAll('"', "&quot;");
+
+    const percent = Math.round((score / total) * 100);
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Saving...";
+
+    // ✅ FIXED PAYLOAD (username added)
+    const payload = {
+      quizId,
+      username,               // ✅ REQUIRED
+      quizTitle: quizData.title,
+      grade: quizData.grade,
+      topic: quizData.topic,
+      score,
+      total,
+      percent,
+      answers
+    };
+
+    try {
+      const res = await fetch(`${API}/api/results`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error();
+
+      resultEl.textContent = `Score: ${score}/${total} (${percent}%)`;
+      msgEl.textContent = "Submitted and saved ✅";
+      msgEl.className = "ok";
+      submitBtn.textContent = "Submitted";
+      isSubmitted = true;
+    } catch {
+      msgEl.textContent = "Submitted, but could not save result.";
+      msgEl.className = "error";
+      submitBtn.textContent = "Retry Save";
+      submitBtn.disabled = false;
     }
-  </script>
-</body>
-</html>
+  });
+</script>
