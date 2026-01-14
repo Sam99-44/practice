@@ -8,8 +8,9 @@ const UserSchema = new mongoose.Schema(
     role: { type: String, enum: ["learner", "admin"], default: "learner" },
     grade: { type: Number, required: true, min: 8, max: 12 },
 
-    premium: { type: Boolean, default: false },              // already added
-    premiumActivatedAt: { type: Date, default: null },       // ✅ ADD THIS
+    premium: { type: Boolean, default: false },              
+    premiumActivatedAt: { type: Date, default: null },   
+    premiumExpiresAt: { type: Date, default: null }, 
 
     resetPasswordTokenHash: { type: String, default: null },
     resetPasswordExpires: { type: Date, default: null }
@@ -18,3 +19,4 @@ const UserSchema = new mongoose.Schema(
 );
 
 export default mongoose.model("User", UserSchema);
+
