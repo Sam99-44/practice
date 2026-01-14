@@ -23,8 +23,8 @@ router.post("/create", (req, res) => {
       merchant_id: process.env.PAYFAST_MERCHANT_ID,
       merchant_key: process.env.PAYFAST_MERCHANT_KEY,
 
-      return_url: `${process.env.BASE_URL}/payment-success.html`,
-      cancel_url: `${process.env.BASE_URL}/payment-cancel.html`,
+      return_url: `${process.env.APP_URL}/payment-success.html`,
+      cancel_url: `${process.env.APP_URL}/payment-cancel.html`,
       notify_url: `${process.env.API_BASE_URL}/api/payfast/itn`,
 
       m_payment_id: orderId,
