@@ -21,6 +21,7 @@
       --radius:14px;
       --shadow:0 6px 18px rgba(0,0,0,0.06);
       --error:#b91c1c;
+      --ok:#065f46;
     }
 
     *{box-sizing:border-box}
@@ -31,7 +32,7 @@
       color:var(--text);
     }
 
-    .wrap{max-width:1000px; margin:0 auto; padding:24px;}
+    .wrap{max-width:1100px; margin:0 auto; padding:24px;}
 
     /* Topbar */
     .topbar{
@@ -132,8 +133,9 @@
     h1{margin:0; font-size:20px;}
     .muted{color:var(--muted); line-height:1.6;}
     .error{color:var(--error);}
+    .ok{color:var(--ok);}
 
-    select, input[type="text"]{
+    select{
       padding:10px;
       border-radius:10px;
       border:1px solid #ddd;
@@ -142,61 +144,20 @@
       font-size:14px;
       outline:none;
       margin-top:8px;
-      background:#fff;
     }
 
-    footer{
-      margin-top:24px;
-      text-align:center;
-      font-size:13px;
-      color:#64748b;
-    }
-
-    /* Topic blocks + quiz squares */
-    .controls{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:flex-end;
-      margin-top:12px;
-    }
-    .controls .group{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-    .btn{
-      background:var(--accent);
-      color:#fff;
-      border:none;
-      padding:10px 12px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:600;
-      font-size:14px;
-    }
-    .btn2{
-      background:#fff;
-      color:var(--text);
-      border:1px solid #ddd;
-      padding:10px 12px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:600;
-      font-size:14px;
-    }
-
-    .topic-wrap{
-      margin-top:14px;
+    /* TOPICS LAYOUT */
+    .topics-wrap{
+      margin-top:16px;
       display:flex;
       flex-direction:column;
       gap:14px;
     }
 
-    .topic-card{
-      background:#fff;
+    .topic-block{
       border:1px solid var(--border);
       border-radius:var(--radius);
+      background:#fff;
       padding:14px;
     }
 
@@ -209,21 +170,13 @@
       margin-bottom:10px;
     }
 
-    .topic-left{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
     .topic-title{
       margin:0;
       font-size:16px;
-      font-weight:800;
-      color:var(--accent);
+      font-weight:700;
     }
 
-    .topic-sub{
+    .topic-badge{
       font-size:12px;
       padding:6px 10px;
       border-radius:999px;
@@ -233,63 +186,74 @@
       white-space:nowrap;
     }
 
-    .toggle{
-      display:inline-flex;
-      gap:8px;
-      align-items:center;
-      border:1px solid #ddd;
-      background:#fff;
-      padding:8px 10px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:700;
-      font-size:13px;
-    }
-    .toggle:hover{ background:var(--accent-soft); }
-
     .quiz-squares{
-      display:flex;
-      flex-wrap:wrap;
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(64px, 1fr));
       gap:10px;
+      max-width:100%;
     }
 
     .quiz-square{
-      width:64px;
-      height:64px;
-      border-radius:14px;
+      position:relative;
       border:1px solid var(--border);
-      background:#f8fafc;
+      border-radius:12px;
+      background:#fff;
+      height:64px;
       display:flex;
       flex-direction:column;
       align-items:center;
       justify-content:center;
       cursor:pointer;
-      user-select:none;
-      font-weight:800;
       transition:transform .08s, background .2s, border-color .2s;
-      position:relative;
+      user-select:none;
     }
-
     .quiz-square:hover{
       transform:translateY(-1px);
-      background:#eef7ff;
+      background:var(--accent-soft);
       border-color:#cfe9ff;
     }
-
     .quiz-square .num{
+      font-weight:800;
       font-size:16px;
       line-height:1;
     }
-
     .quiz-square .qcount{
-      margin-top:6px;
       font-size:11px;
-      font-weight:700;
       color:var(--muted);
-      line-height:1;
+      margin-top:4px;
     }
 
-    .hidden{ display:none !important; }
+    /* Attempted styling */
+    .quiz-square.attempted{
+      background:#ecfdf5;
+      border-color:#86efac;
+    }
+    .quiz-square.attempted:hover{
+      background:#dcfce7;
+      border-color:#4ade80;
+    }
+    .tick{
+      position:absolute;
+      top:6px;
+      right:6px;
+      width:18px;
+      height:18px;
+      border-radius:999px;
+      background:#16a34a;
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:12px;
+      font-weight:900;
+    }
+
+    footer{
+      margin-top:24px;
+      text-align:center;
+      font-size:13px;
+      color:#64748b;
+    }
   </style>
 
   <script>
@@ -316,7 +280,6 @@
       <nav class="nav">
         <a href="learner-quizzes.html" class="active" data-auth>Practice</a>
         <a href="about.html">About</a>
-
         <a href="admin-quiz.html" data-admin>Admin</a>
         <button class="logout" type="button" id="logoutBtn" data-auth>Logout</button>
       </nav>
@@ -329,7 +292,6 @@
     <div class="mobile-menu" id="mobileMenu">
       <a href="learner-quizzes.html" class="active" data-auth>Practice</a>
       <a href="about.html">About</a>
-
       <a href="admin-quiz.html" data-admin>Admin</a>
       <button class="logout" type="button" id="logoutBtnMobile" data-auth>Logout</button>
     </div>
@@ -337,37 +299,19 @@
     <!-- CONTENT -->
     <div class="card">
       <h1>Select Grade</h1>
-      <p class="muted" style="margin:6px 0 0 0;">Choose your grade to view quizzes.</p>
+      <p class="muted" style="margin:6px 0 0 0;">Pick your grade. Quizzes are grouped by <b>Topic</b> with numbered boxes.</p>
 
-      <div class="controls">
-        <div class="group">
-          <label class="muted" style="font-size:12px;">Grade</label>
-          <select id="gradeSelect">
-            <option value="">Choose grade</option>
-            <option value="8">Grade 8</option>
-            <option value="9">Grade 9</option>
-            <option value="10">Grade 10</option>
-            <option value="11">Grade 11</option>
-            <option value="12">Grade 12</option>
-          </select>
-        </div>
-
-        <div class="group" style="flex:1; min-width:220px;">
-          <label class="muted" style="font-size:12px;">Search topic</label>
-          <input id="topicSearch" type="text" placeholder="Type a topic name..." disabled />
-        </div>
-
-        <div class="group">
-          <label class="muted" style="font-size:12px;">Actions</label>
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn2" id="expandAllBtn" type="button" disabled>Expand all</button>
-            <button class="btn2" id="collapseAllBtn" type="button" disabled>Collapse all</button>
-          </div>
-        </div>
-      </div>
+      <select id="gradeSelect">
+        <option value="">Choose grade</option>
+        <option value="8">Grade 8</option>
+        <option value="9">Grade 9</option>
+        <option value="10">Grade 10</option>
+        <option value="11">Grade 11</option>
+        <option value="12">Grade 12</option>
+      </select>
 
       <p id="status" class="muted" style="margin-top:12px;"></p>
-      <div id="quizList"></div>
+      <div id="topics"></div>
     </div>
 
     <footer>
@@ -376,198 +320,130 @@
 
   </div>
 
+  <!-- nav.js first -->
+  <script src="nav.js"></script>
+
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
 
-    // ✅ Backend URL
-    const API = "https://practice-backend-msgn.onrender.com";
+    // ✅ Render backend
+    const API = window.API || "https://practice-backend-msgn.onrender.com";
+    const token = localStorage.getItem("token");
 
     // Welcome text
     const username = localStorage.getItem("username") || "Learner";
     document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
 
+    // UI refs
     const gradeSelect = document.getElementById("gradeSelect");
     const status = document.getElementById("status");
-    const quizList = document.getElementById("quizList");
+    const topicsRoot = document.getElementById("topics");
 
-    const topicSearch = document.getElementById("topicSearch");
-    const expandAllBtn = document.getElementById("expandAllBtn");
-    const collapseAllBtn = document.getElementById("collapseAllBtn");
-
-    let lastTopics = []; // store for search
-    let topicOpenState = {}; // remember expanded/collapsed per topic
+    // Attempted map (quizId -> result)
+    let attemptedByQuizId = {}; // { quizId: {score,total,percent,createdAt,...} }
 
     gradeSelect.addEventListener("change", loadQuizzes);
-    topicSearch.addEventListener("input", () => applyTopicFilter(topicSearch.value));
 
-    expandAllBtn.addEventListener("click", () => setAllTopics(true));
-    collapseAllBtn.addEventListener("click", () => setAllTopics(false));
+    async function loadMyResultsMap(){
+      attemptedByQuizId = {};
+      try{
+        const res = await fetch(`${API}/api/results/mine`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!res.ok) return;
 
-    function setControlsEnabled(on){
-      topicSearch.disabled = !on;
-      expandAllBtn.disabled = !on;
-      collapseAllBtn.disabled = !on;
+        const results = await res.json().catch(()=>[]);
+        (results || []).forEach(r => {
+          if (r && r.quizId) attemptedByQuizId[String(r.quizId)] = r;
+        });
+      }catch(e){
+        // if it fails, we simply won't show attempted ticks
+      }
     }
 
     async function loadQuizzes() {
       const grade = gradeSelect.value;
 
-      quizList.innerHTML = "";
+      topicsRoot.innerHTML = "";
       status.textContent = "";
-
-      setControlsEnabled(false);
-      topicSearch.value = "";
 
       if (!grade) return;
 
       status.textContent = "Loading quizzes...";
 
       try {
-        const res = await fetch(`${API}/api/quizzes?grade=${grade}`);
+        const res = await fetch(`${API}/api/quizzes?grade=${encodeURIComponent(grade)}`);
         if (!res.ok) throw new Error("Failed to load quizzes");
 
         const quizzes = await res.json();
 
-        if (!quizzes.length) {
+        // ✅ load my results so we can show ✓ attempted
+        await loadMyResultsMap();
+
+        if (!Array.isArray(quizzes) || quizzes.length === 0) {
           status.textContent = "";
-          quizList.innerHTML = `<p class="muted">No quizzes yet for Grade ${grade}.</p>`;
+          topicsRoot.innerHTML = `<p class="muted">No quizzes yet for Grade ${escapeHtml(grade)}.</p>`;
           return;
         }
 
-        // ✅ Group by topic
+        // Group by topic
         const byTopic = {};
-        for (const q of quizzes) {
+        quizzes.forEach(q => {
           const topic = (q.topic || "General").trim() || "General";
           if (!byTopic[topic]) byTopic[topic] = [];
           byTopic[topic].push(q);
-        }
+        });
 
-        // Sort topics A-Z
-        const topics = Object.keys(byTopic).sort((a, b) => a.localeCompare(b));
+        // Sort topics and quizzes
+        const topicNames = Object.keys(byTopic).sort((a,b)=>a.localeCompare(b));
+        topicNames.forEach(t => {
+          byTopic[t].sort((a,b)=>String(a.title||"").localeCompare(String(b.title||"")));
+        });
 
-        // Sort quizzes inside each topic by createdAt (stable numbering)
-        for (const t of topics) {
-          byTopic[t].sort((a, b) => {
-            const da = new Date(a.createdAt || 0).getTime();
-            const db = new Date(b.createdAt || 0).getTime();
-            return da - db;
-          });
-        }
-
-        lastTopics = topics;
         status.textContent = "";
-
-        // Default: expand all (first load)
-        for (const t of topics) {
-          if (typeof topicOpenState[t] !== "boolean") topicOpenState[t] = true;
-        }
-
-        renderTopics(byTopic, topics);
-        setControlsEnabled(true);
-
-      } catch (err) {
-        status.textContent = "";
-        quizList.innerHTML = `<p class="error">Could not load quizzes. Please try again.</p>`;
-      }
-    }
-
-    function renderTopics(byTopic, topics){
-      quizList.innerHTML = `
-        <div class="topic-wrap">
-          ${topics.map(topic => {
-            const list = byTopic[topic] || [];
-            const open = topicOpenState[topic] !== false; // default true
-
-            return `
-              <div class="topic-card" data-topic-card="${escapeAttr(topic)}">
-                <div class="topic-head">
-                  <div class="topic-left">
-                    <h3 class="topic-title" data-topic-title>${escapeHtml(topic)}</h3>
-                    <span class="topic-sub">${list.length} quizzes</span>
+        topicsRoot.innerHTML = `
+          <div class="topics-wrap">
+            ${topicNames.map(topicName => {
+              const list = byTopic[topicName];
+              return `
+                <div class="topic-block">
+                  <div class="topic-head">
+                    <h2 class="topic-title">${escapeHtml(topicName)}</h2>
+                    <span class="topic-badge">${list.length} quiz${list.length === 1 ? "" : "zes"}</span>
                   </div>
 
-                  <button
-                    class="toggle"
-                    type="button"
-                    data-toggle="${escapeAttr(topic)}"
-                    aria-expanded="${open ? "true" : "false"}">
-                    ${open ? "Collapse" : "Expand"}
-                  </button>
+                  <div class="quiz-squares">
+                    ${list.map((q, i) => {
+                      const qCount = (q.questions && q.questions.length) ? q.questions.length : 0;
+
+                      const r = attemptedByQuizId[String(q._id)];
+                      const attempted = Boolean(r);
+
+                      const tip = attempted
+                        ? `Attempted • ${r.score}/${r.total} (${r.percent}%)`
+                        : (q.title || "Quiz");
+
+                      return `
+                        <div
+                          class="quiz-square ${attempted ? "attempted" : ""}"
+                          title="${escapeAttr(tip)}"
+                          onclick="window.location.href='attempt.html?quizId=${encodeURIComponent(q._id)}'">
+                          ${attempted ? `<div class="tick">✓</div>` : ""}
+                          <div class="num">${i + 1}</div>
+                          <div class="qcount">${qCount}Q</div>
+                        </div>
+                      `;
+                    }).join("")}
+                  </div>
                 </div>
-
-                <div class="quiz-squares ${open ? "" : "hidden"}" data-topic-body="${escapeAttr(topic)}">
-                  ${list.map((q, i) => {
-                    const qCount = (q.questions && q.questions.length) ? q.questions.length : 0;
-                    return `
-                      <div
-                        class="quiz-square"
-                        title="${escapeAttr(q.title || "Quiz")}"
-                        onclick="window.location.href='attempt.html?quizId=${encodeURIComponent(q._id)}'">
-                        <div class="num">${i + 1}</div>
-                        <div class="qcount">${qCount}Q</div>
-                      </div>
-                    `;
-                  }).join("")}
-                </div>
-              </div>
-            `;
-          }).join("")}
-        </div>
-      `;
-
-      // attach toggle listeners
-      document.querySelectorAll("[data-toggle]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const topic = btn.getAttribute("data-toggle");
-          const body = document.querySelector(`[data-topic-body="${cssEscape(topic)}"]`);
-          if (!body) return;
-
-          const nowOpen = body.classList.contains("hidden"); // if hidden -> open it
-          body.classList.toggle("hidden");
-
-          topicOpenState[topic] = nowOpen; // true if opened
-          btn.textContent = nowOpen ? "Collapse" : "Expand";
-          btn.setAttribute("aria-expanded", nowOpen ? "true" : "false");
-        });
-      });
-
-      // apply current search filter (if any)
-      applyTopicFilter(topicSearch.value);
-    }
-
-    function applyTopicFilter(query){
-      const q = (query || "").trim().toLowerCase();
-
-      document.querySelectorAll("[data-topic-card]").forEach(card => {
-        const titleEl = card.querySelector("[data-topic-title]");
-        const topicName = (titleEl?.textContent || "").toLowerCase();
-
-        const match = !q || topicName.includes(q);
-        card.classList.toggle("hidden", !match);
-      });
-    }
-
-    function setAllTopics(open){
-      document.querySelectorAll("[data-topic-card]").forEach(card => {
-        const btn = card.querySelector("[data-toggle]");
-        const topic = btn?.getAttribute("data-toggle");
-        if (!topic) return;
-
-        const body = card.querySelector(`[data-topic-body="${cssEscape(topic)}"]`);
-        if (!body) return;
-
-        if (open) {
-          body.classList.remove("hidden");
-          btn.textContent = "Collapse";
-          btn.setAttribute("aria-expanded", "true");
-          topicOpenState[topic] = true;
-        } else {
-          body.classList.add("hidden");
-          btn.textContent = "Expand";
-          btn.setAttribute("aria-expanded", "false");
-          topicOpenState[topic] = false;
-        }
-      });
+              `;
+            }).join("")}
+          </div>
+        `;
+      } catch (err) {
+        status.textContent = "";
+        topicsRoot.innerHTML = `<p class="error">Could not load quizzes. Please try again.</p>`;
+      }
     }
 
     function escapeHtml(str) {
@@ -582,14 +458,6 @@
     function escapeAttr(str) {
       return String(str).replaceAll('"', "&quot;");
     }
-
-    // for querySelector attribute with special chars
-    function cssEscape(str){
-      return String(str).replaceAll('"','\\"');
-    }
   </script>
-
-  <!-- ✅ Shared navigation + logout + admin visibility -->
-  <script src="nav.js"></script>
 </body>
 </html>
