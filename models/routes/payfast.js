@@ -5,45 +5,82 @@ import { generateSignature } from "../utils/payfast.js";
 const router = express.Router();
 
 router.post("/create", (req, res) => {
-  const { amount, item_name, orderId, email } = req.body;
+  try {
+    const { amount, item_name, orderId, email } = req.body;
 
-  const isSandbox = process.env.PAYFAST_MODE !== "live";
-  const host = isSandbox ? "sandbox.payfast.co.za" : "www.payfast.co.za";
+    if (!amount || !item_name || !orderId || !email) {
+      return res.status(400).json({ message: "Missing payment fields" });
+    }
 
-  const data = {
-    merchant_id: process.env.PAYFAST_MERCHANT_ID,
-    merchant_key: process.env.PAYFAST_MERCHANT_KEY,
+    const isSandbox = process.env.PAYFAST_MODE !== "live";
+    const host = isSandbox ? "sandbox.payfast.co.za" : "www.payfast.co.za";
 
-    return_url: `${process.env.BASE_URL}/payment-success.html`,
-    cancel_url: `${process.env.BASE_URL}/payment-cancel.html`,
-    notify_url: `${process.env.API_BASE_URL}/api/payfast/itn`,
+    if (!process.env.PAYFAST_MERCHANT_ID || !process.env.PAYFAST_MERCHANT_KEY) {
+      return res.status(500).json({ message: "PayFast not configured on server" });
+    }
 
-    m_payment_id: orderId,
-    amount: Number(amount).toFixed(2),
-    item_name,
-    email_address: email
-  };
+    const data = {
+      merchant_id: process.env.PAYFAST_MERCHANT_ID,
+      merchant_key: process.env.PAYFAST_MERCHANT_KEY,
 
-  data.signature = generateSignature(data, process.env.PAYFAST_PASSPHRASE);
+      return_url: `${process.env.BASE_URL}/payment-success.html`,
+      cancel_url: `${process.env.BASE_URL}/payment-cancel.html`,
+      notify_url: `${process.env.API_BASE_URL}/api/payfast/itn`,
 
-  res.json({
-    processUrl: `https://${host}/eng/process`,
-    data
-  });
+      m_payment_id: orderId,
+      amount: Number(amount).toFixed(2),
+      item_name,
+      email_address: email
+    };
+
+    data.signature = generateSignature(data, process.env.PAYFAST_PASSPHRASE);
+
+    res.json({
+      processUrl: `https://${host}/eng/process`,
+      data
+    });
+  } catch (err) {
+    console.error("PayFast create error:", err.message);
+    res.status(500).json({ message: "Failed to create payment" });
+  }
 });
 
 router.post("/itn", (req, res) => {
-  const received = req.body.signature;
-  const data = { ...req.body };
-  delete data.signature;
+  try {
+    const receivedSignature = req.body.signature;
+    if (!receivedSignature) return res.status(400).send("Missing signature");
 
-  const calculated = generateSignature(data, process.env.PAYFAST_PASSPHRASE);
+    const data = { ...req.body };
+    delete data.signature;
 
-  if (received !== calculated) return res.status(400).send("Invalid signature");
+    const calculated = generateSignature(data, process.env.PAYFAST_PASSPHRASE);
 
-  console.log("✅ Payment verified:", data.m_payment_id);
+    if (receivedSignature !== calculated) {
+      console.warn("❌ PayFast invalid signature:", data.m_payment_id);
+      return res.status(400).send("Invalid signature");
+    }
 
-  res.status(200).send("OK");
+    if (data.payment_status !== "COMPLETE") {
+      console.log("ℹ️ PayFast payment not complete:", data.payment_status, data.m_payment_id);
+      return res.status(200).send("Ignored");
+    }
+
+    console.log("✅ PayFast payment confirmed:", {
+      order: data.m_payment_id,
+      amount: data.amount_gross,
+      payer: data.email_address
+    });
+
+    // TODO:
+    // 1. Find order in DB by m_payment_id
+    // 2. Mark as paid
+    // 3. Unlock premium access
+
+    res.status(200).send("OK");
+  } catch (err) {
+    console.error("PayFast ITN error:", err.message);
+    res.status(500).send("Server error");
+  }
 });
 
 export default router;
