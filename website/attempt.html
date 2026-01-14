@@ -133,6 +133,8 @@
     // Use nav.js API if available, else fallback
     const API = window.API || "https://practice-backend-msgn.onrender.com";
 
+    const token = localStorage.getItem("token"); // ✅ use token for protected routes
+
     const params = new URLSearchParams(window.location.search);
     const quizId = params.get("quizId");
 
@@ -161,7 +163,34 @@
 
     async function loadQuiz() {
       try {
-        const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`);
+        const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`, {
+          headers: {
+            Authorization: "Bearer " + token // ✅ required now
+          }
+        });
+
+        // ✅ If premium expired or not paid, backend returns 403
+        if (res.status === 403) {
+          msgEl.className = "error";
+          msgEl.textContent = "Your premium access has expired. Please pay R95 to continue.";
+          quizTitle.textContent = "Premium expired";
+
+          // redirect to payment page after a short moment (optional)
+          setTimeout(() => {
+            window.location.href = "payment.html";
+          }, 1200);
+
+          submitBtn.disabled = true;
+          return;
+        }
+
+        // If token invalid / expired
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          window.location.href = "login.html";
+          return;
+        }
+
         if (!res.ok) throw new Error("Quiz not found");
 
         quizData = await res.json();
