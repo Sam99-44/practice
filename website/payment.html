@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pay - Practice Online</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 24px; max-width: 820px; margin: auto; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 18px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    label { font-weight: 600; display: block; margin: 8px 0 6px; }
+    input { padding: 10px; width: 100%; border: 1px solid #ccc; border-radius: 10px; }
+    button { padding: 12px 16px; border: 0; border-radius: 10px; cursor: pointer; font-weight: 700; }
+    .small { color: #666; font-size: 14px; line-height: 1.4; }
+    .error { color: #b00020; font-size: 14px; margin-top: 10px; }
+    .ok { color: #006400; font-size: 14px; margin-top: 10px; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px; }
+    a { text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <h1>Upgrade to Premium</h1>
+    <a href="index.html">← Home</a>
+  </div>
+
+  <p class="small">
+    Pay securely using PayFast. You will be redirected to PayFast to complete your payment.
+  </p>
+
+  <div class="card">
+
+    <div class="row">
+      <div>
+        <label for="itemName">Item name</label>
+        <input id="itemName" value="Premium Access" />
+      </div>
+
+      <div>
+        <label for="amount">Amount (ZAR)</label>
+        <input id="amount" type="number" step="0.01" value="99.99" />
+      </div>
+    </div>
+
+    <label for="email">Your email</label>
+    <input id="email" type="email" placeholder="student@email.com" />
+
+    <p class="small">
+      After payment, you will return to <b>Practice Online</b>. Your access is activated after PayFast confirms the payment on our server.
+    </p>
+
+    <button onclick="payNow()">Pay Now</button>
+
+    <div id="msg" class="error"></div>
+    <div id="ok" class="ok"></div>
+  </div>
+
+  <script>
+    // ✅ Your URLs
+    const APP_URL = "https://practiceonline.netlify.app";
+    const API_URL = "https://practice-backend-msgn.onrender.com";
+
+    function setError(text) {
+      document.getElementById("msg").textContent = text || "";
+      document.getElementById("ok").textContent = "";
+    }
+    function setOk(text) {
+      document.getElementById("ok").textContent = text || "";
+      document.getElementById("msg").textContent = "";
+    }
+
+    async function payNow() {
+      setError("");
+
+      const item_name = document.getElementById("itemName").value.trim();
+      const amountVal = document.getElementById("amount").value;
+      const amount = Number(amountVal);
+      const email = document.getElementById("email").value.trim();
+
+      if (!item_name) return setError("Please enter an item name.");
+      if (!Number.isFinite(amount) || amount <= 0) return setError("Please enter a valid amount.");
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError("Please enter a valid email.");
+
+      // Simple order id (later you can use MongoDB order id)
+      const orderId = "ORDER_" + Date.now();
+
+      try {
+        setOk("Preparing your payment...");
+
+        const res = await fetch(`${API_URL}/api/payfast/create`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount, item_name, orderId, email })
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.message || "Payment setup failed");
+        }
+
+        const { processUrl, data } = await res.json();
+
+        // Build form and auto-submit to PayFast
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = processUrl;
+
+        Object.entries(data).forEach(([k, v]) => {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = k;
+          input.value = v;
+          form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+
+      } catch (err) {
+        setError(err.message || "Something went wrong.");
+      }
+    }
+  </script>
+
+</body>
+</html>
