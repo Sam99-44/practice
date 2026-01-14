@@ -1,4 +1,4 @@
-// server.js
+// Server.js
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -10,50 +10,44 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 import crypto from "crypto";
-import { getTransporter } from "./utils/mailer.js";
+import { getTransporter, verifySmtp } from "./utils/mailer.js";
 
 dotenv.config();
 
 const app = express();
 
-/* ------------------ CORS (FIX) ------------------ */
-/**
- * Allow Netlify frontend to call backend.
- * Put your Netlify URL in APP_URL (you already have it).
- */
-const allowedOrigins = [
-  process.env.APP_URL, // e.g. https://practiceonline.netlify.app
-  "http://localhost:5173",
-  "http://localhost:3000"
+/* ------------------ CORS ------------------ */
+// Allow your Netlify site + localhost (for testing)
+const ALLOWED_ORIGINS = [
+  process.env.APP_URL,                  // https://practiceonline.netlify.app
+  "http://localhost:3000",
+  "http://localhost:5500",
+  "http://127.0.0.1:5500"
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, cb) => {
-      // allow non-browser tools (curl/postman) with no origin
+      // allow server-to-server calls or curl (no origin)
       if (!origin) return cb(null, true);
-
-      if (allowedOrigins.includes(origin)) return cb(null, true);
-
-      return cb(new Error(`CORS blocked for origin: ${origin}`));
+      if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+      return cb(new Error(`CORS blocked for origin: ${origin}`), false);
     },
     credentials: true
   })
 );
 
-// Handle preflight requests
-app.options("*", cors());
-
 app.use(express.json());
 
-/* ------------------ HEALTH + ROOT ------------------ */
-app.get("/", (req, res) => res.send("Practice Online API running"));
-
+/* ------------------ HEALTH ------------------ */
 app.get("/api/health", (req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
 });
 
+app.get("/", (req, res) => res.send("Practice Online API running"));
+
 /* ------------------ HELPERS ------------------ */
+
 function smtpReady() {
   return Boolean(
     process.env.SMTP_HOST &&
@@ -65,6 +59,7 @@ function smtpReady() {
 }
 
 /* ------------------ AUTH MIDDLEWARE ------------------ */
+
 function authRequired(req, res, next) {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
@@ -111,9 +106,7 @@ app.post("/api/auth/register", async (req, res) => {
     }
 
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail);
-    if (!emailOk) {
-      return res.status(400).json({ message: "Invalid email address" });
-    }
+    if (!emailOk) return res.status(400).json({ message: "Invalid email address" });
 
     if (password.length < 6) {
       return res.status(400).json({ message: "Password must be 6+ characters" });
@@ -134,11 +127,9 @@ app.post("/api/auth/register", async (req, res) => {
       passwordHash
     });
 
-    // Welcome email (do not fail register if email fails)
-    try {
-      if (!smtpReady()) {
-        console.log("SMTP not configured - skipping welcome email");
-      } else {
+    // Welcome email (don’t fail registration if email fails)
+    if (smtpReady()) {
+      try {
         const transporter = getTransporter();
         await transporter.sendMail({
           from: process.env.SMTP_USER,
@@ -155,10 +146,11 @@ ${process.env.APP_URL}/login.html
 
 — Practice Online Team`
         });
-        console.log("Welcome email sent ✅");
+      } catch (mailErr) {
+        console.error("Welcome email failed:", mailErr?.message || mailErr);
       }
-    } catch (mailErr) {
-      console.error("Welcome email failed ❌:", mailErr);
+    } else {
+      console.log("SMTP not configured - skipping welcome email");
     }
 
     res.status(201).json({ message: "Account created" });
@@ -195,7 +187,7 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-// Me
+// Current user
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select("username role email grade createdAt");
@@ -208,7 +200,7 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 
 /* ------------------ FORGOT PASSWORD ------------------ */
 
-// Forgot password (send reset link)
+// Forgot password
 app.post("/api/auth/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
@@ -227,9 +219,7 @@ app.post("/api/auth/forgot-password", async (req, res) => {
     user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
     await user.save();
 
-    const resetLink = `${process.env.APP_URL}/reset-password.html?token=${token}&email=${encodeURIComponent(
-      cleanEmail
-    )}`;
+    const resetLink = `${process.env.APP_URL}/reset-password.html?token=${token}&email=${encodeURIComponent(cleanEmail)}`;
 
     if (!smtpReady()) {
       console.log("SMTP not configured - skipping reset email");
@@ -242,12 +232,11 @@ app.post("/api/auth/forgot-password", async (req, res) => {
         from: process.env.SMTP_USER,
         to: cleanEmail,
         subject: "Practice Online - Reset your password",
-        text: `Reset your password using this link (expires in 15 minutes):\n\n${resetLink}`
+        text: `Reset your password (expires in 15 minutes):\n\n${resetLink}`
       });
-      console.log("Reset email sent ✅");
     } catch (mailErr) {
-      console.error("Reset email failed ❌:", mailErr);
-      // still return generic (security)
+      console.error("Reset email failed:", mailErr?.message || mailErr);
+      // still return generic message
     }
 
     return res.json(genericMsg);
@@ -277,9 +266,7 @@ app.post("/api/auth/reset-password", async (req, res) => {
       resetPasswordExpires: { $gt: new Date() }
     });
 
-    if (!user) {
-      return res.status(400).json({ message: "Invalid or expired reset link" });
-    }
+    if (!user) return res.status(400).json({ message: "Invalid or expired reset link" });
 
     user.passwordHash = await bcrypt.hash(newPassword, 10);
     user.resetPasswordTokenHash = null;
@@ -293,6 +280,7 @@ app.post("/api/auth/reset-password", async (req, res) => {
 });
 
 /* ------------------ QUIZ ROUTES ------------------ */
+
 app.get("/api/quizzes", async (req, res) => {
   try {
     const grade = Number(req.query.grade);
@@ -323,7 +311,8 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   }
 });
 
-/* ------------------ ADMIN ROUTES ------------------ */
+/* ------------------ ADMIN ------------------ */
+
 app.get("/api/admin/test-email", authRequired, adminOnly, async (req, res) => {
   try {
     if (!smtpReady()) {
@@ -345,25 +334,32 @@ app.get("/api/admin/test-email", authRequired, adminOnly, async (req, res) => {
 
     res.json({ message: "Test email sent ✅" });
   } catch (err) {
+    // This will show the REAL reason (timeout, auth fail, etc.)
     res.status(500).json({ message: err.message });
   }
 });
 
-/* ------------------ ERROR HANDLER (CORS) ------------------ */
-app.use((err, req, res, next) => {
-  if (String(err?.message || "").startsWith("CORS blocked")) {
-    return res.status(403).json({ message: err.message });
-  }
-  next(err);
-});
+/* ------------------ DATABASE + START ------------------ */
 
-/* ------------------ DB + START ------------------ */
 const PORT = process.env.PORT || 5000;
 
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => {
+  .then(async () => {
     console.log("MongoDB connected");
+
+    // Optional: verify SMTP on startup (helps you see errors in Render logs)
+    if (smtpReady()) {
+      try {
+        await verifySmtp();
+        console.log("SMTP verified ✅");
+      } catch (e) {
+        console.error("SMTP verify failed ❌:", e?.message || e);
+      }
+    } else {
+      console.log("SMTP not configured (missing vars) - emails disabled");
+    }
+
     app.listen(PORT, () => console.log(`Server on http://localhost:${PORT}`));
   })
   .catch((err) => console.error("Mongo error:", err.message));
