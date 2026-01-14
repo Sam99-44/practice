@@ -1,0 +1,49 @@
+// routes/payfast.js
+import express from "express";
+import { generateSignature } from "../utils/payfast.js";
+
+const router = express.Router();
+
+router.post("/create", (req, res) => {
+  const { amount, item_name, orderId, email } = req.body;
+
+  const isSandbox = process.env.PAYFAST_MODE !== "live";
+  const host = isSandbox ? "sandbox.payfast.co.za" : "www.payfast.co.za";
+
+  const data = {
+    merchant_id: process.env.PAYFAST_MERCHANT_ID,
+    merchant_key: process.env.PAYFAST_MERCHANT_KEY,
+
+    return_url: `${process.env.BASE_URL}/payment-success.html`,
+    cancel_url: `${process.env.BASE_URL}/payment-cancel.html`,
+    notify_url: `${process.env.API_BASE_URL}/api/payfast/itn`,
+
+    m_payment_id: orderId,
+    amount: Number(amount).toFixed(2),
+    item_name,
+    email_address: email
+  };
+
+  data.signature = generateSignature(data, process.env.PAYFAST_PASSPHRASE);
+
+  res.json({
+    processUrl: `https://${host}/eng/process`,
+    data
+  });
+});
+
+router.post("/itn", (req, res) => {
+  const received = req.body.signature;
+  const data = { ...req.body };
+  delete data.signature;
+
+  const calculated = generateSignature(data, process.env.PAYFAST_PASSPHRASE);
+
+  if (received !== calculated) return res.status(400).send("Invalid signature");
+
+  console.log("✅ Payment verified:", data.m_payment_id);
+
+  res.status(200).send("OK");
+});
+
+export default router;
