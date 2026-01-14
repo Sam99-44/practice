@@ -382,6 +382,8 @@
     // ✅ Backend URL
     const API = "https://practice-backend-msgn.onrender.com";
 
+    const token = localStorage.getItem("token"); // ✅ token for protected routes
+
     // Welcome text
     const username = localStorage.getItem("username") || "Learner";
     document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
@@ -423,7 +425,32 @@
       status.textContent = "Loading quizzes...";
 
       try {
-        const res = await fetch(`${API}/api/quizzes?grade=${grade}`);
+        const res = await fetch(`${API}/api/quizzes?grade=${grade}`, {
+          headers: {
+            Authorization: "Bearer " + token // ✅ required now
+          }
+        });
+
+        // ✅ premium expired / not paid
+        if (res.status === 403) {
+          status.className = "error";
+          status.textContent = "Your premium access has expired. Please pay R95 to continue.";
+
+          // Redirect to payment page (optional)
+          setTimeout(() => {
+            window.location.href = "payment.html";
+          }, 1200);
+
+          return;
+        }
+
+        // ✅ token invalid
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          window.location.href = "login.html";
+          return;
+        }
+
         if (!res.ok) throw new Error("Failed to load quizzes");
 
         const quizzes = await res.json();
@@ -455,6 +482,7 @@
         }
 
         lastTopics = topics;
+        status.className = "muted";
         status.textContent = "";
 
         // Default: expand all (first load)
@@ -466,6 +494,7 @@
         setControlsEnabled(true);
 
       } catch (err) {
+        status.className = "error";
         status.textContent = "";
         quizList.innerHTML = `<p class="error">Could not load quizzes. Please try again.</p>`;
       }
