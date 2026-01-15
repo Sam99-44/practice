@@ -380,7 +380,7 @@
           <span class="muted" id="premiumSub"></span>
         </div>
         <div class="actions">
-          <a class="paybtn" href="payment.html" id="premiumPayBtn">Go to Subscription</a>
+          <a class="paybtn" href="payment.html">Go to Subscription</a>
           <a class="paybtn2" href="payment.html">Renew</a>
         </div>
       </div>
@@ -422,14 +422,17 @@
 
   </div>
 
+  <!-- ✅ Shared navigation + logout + admin visibility -->
+  <script src="nav.js"></script>
+
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
 
-    // ✅ Backend URL
-    const API = "https://practice-backend-msgn.onrender.com";
+    // ✅ Backend URL (use nav.js if it sets window.API)
+    const API = window.API || "https://practice-backend-msgn.onrender.com";
 
-    // ✅ token (already checked above)
-    const token2 = localStorage.getItem("token");
+    // ✅ token
+    const token = localStorage.getItem("token");
 
     // Welcome text
     const username = localStorage.getItem("username") || "Learner";
@@ -461,11 +464,11 @@
       collapseAllBtn.disabled = !on;
     }
 
-    // ✅ Check premium status and show banner
+    // ✅ Check premium status (admins are allowed; learners see banner)
     (async function checkPremium(){
       try {
         const res = await fetch(`${API}/api/auth/me`, {
-          headers: { Authorization: "Bearer " + token2 }
+          headers: { Authorization: "Bearer " + token }
         });
 
         if (res.status === 401) {
@@ -478,13 +481,16 @@
 
         const u = await res.json();
 
-        // Show banner for learners (optional). If you want banner for all, remove role check.
+        // Admin should not pay and should not see banner
         if (u.role === "admin") return;
 
         premiumBanner.classList.remove("hidden");
 
-        if (u.premium && u.premiumExpiresAt) {
-          const exp = new Date(u.premiumExpiresAt);
+        const hasPremium = Boolean(u.premium);
+        const expRaw = u.premiumExpiresAt;
+
+        if (hasPremium && expRaw) {
+          const exp = new Date(expRaw);
           premiumTitle.className = "ok";
           premiumTitle.textContent = "✅ Subscription active";
           premiumSub.textContent = `Expires on: ${exp.toLocaleString()}`;
@@ -514,25 +520,35 @@
 
       try {
         const res = await fetch(`${API}/api/quizzes?grade=${grade}`, {
-          headers: { Authorization: "Bearer " + token2 }
+          headers: { Authorization: "Bearer " + token }
         });
 
-        // premium expired / not paid
-        if (res.status === 403) {
-          status.className = "error";
-          status.textContent = "Your premium access has expired. Redirecting to payment...";
-
-          setTimeout(() => {
-            window.location.href = "payment.html";
-          }, 1200);
-
-          return;
-        }
-
-        // token invalid
         if (res.status === 401) {
           localStorage.removeItem("token");
           window.location.href = "login.html";
+          return;
+        }
+
+        // If premium expired: only redirect learners. Admin is allowed.
+        if (res.status === 403) {
+          // try to see role quickly
+          try {
+            const me = await fetch(`${API}/api/auth/me`, {
+              headers: { Authorization: "Bearer " + token }
+            });
+            if (me.ok) {
+              const u = await me.json();
+              if (u.role !== "admin") {
+                status.className = "error";
+                status.textContent = "Your premium access has expired. Redirecting to payment...";
+                setTimeout(() => window.location.href = "payment.html", 1200);
+                return;
+              }
+            }
+          } catch {}
+          // fallback: if we can't confirm role, still show message but don't auto-redirect
+          status.className = "error";
+          status.textContent = "Access blocked (subscription required).";
           return;
         }
 
@@ -547,7 +563,6 @@
           return;
         }
 
-        // Group by topic
         const byTopic = {};
         for (const q of quizzes) {
           const topic = (q.topic || "General").trim() || "General";
@@ -696,8 +711,5 @@
       return String(str).replaceAll('"','\\"');
     }
   </script>
-
-  <!-- ✅ Shared navigation + logout + admin visibility -->
-  <script src="nav.js"></script>
 </body>
 </html>
