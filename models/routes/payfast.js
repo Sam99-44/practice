@@ -1,7 +1,7 @@
 // routes/payfast.js
 import express from "express";
 import { generateSignature } from "../utils/payfast.js";
-import User from "../models/User.js"; // ✅ ADD
+import User from "../models/User.js";
 
 const router = express.Router();
 
@@ -46,7 +46,7 @@ router.post("/create", (req, res) => {
   }
 });
 
-// ✅ ITN: unlock premium (>= R95) + set 30-day expiry
+// ✅ ITN: unlock premium (>= R95) + set/extend 30-day expiry
 router.post("/itn", async (req, res) => {
   try {
     const receivedSignature = req.body.signature;
@@ -67,11 +67,9 @@ router.post("/itn", async (req, res) => {
       return res.status(200).send("Ignored");
     }
 
-    // PayFast sends amount_gross as a string
     const paid = Number(String(data.amount_gross || "0").replace(",", "."));
     if (!Number.isFinite(paid)) return res.status(400).send("Invalid amount");
 
-    // ✅ Only unlock if R95 or more
     const MIN_PREMIUM = 95.0;
     if (paid < MIN_PREMIUM) {
       console.log(`ℹ️ Payment below threshold (paid ${paid}) order:`, data.m_payment_id);
@@ -87,11 +85,9 @@ router.post("/itn", async (req, res) => {
       return res.status(200).send("User not found");
     }
 
-    // ✅ Set/extend premium expiry by 30 days
     const now = new Date();
     const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
-    // If user pays early, extend from current expiry; otherwise start now
     const base =
       user.premiumExpiresAt && user.premiumExpiresAt > now
         ? user.premiumExpiresAt
