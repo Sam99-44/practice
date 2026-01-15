@@ -41,7 +41,6 @@
   </style>
 
   <script>
-    // must be logged in
     const token = localStorage.getItem("token");
     if (!token) window.location.href = "login.html";
   </script>
@@ -87,8 +86,8 @@
     const payBtn = document.getElementById("payBtn");
 
     let userEmail = null;
+    let userId = null;
 
-    // Load user info (email + premium status)
     (async function init(){
       try {
         const res = await fetch(`${API}/api/auth/me`, {
@@ -104,12 +103,21 @@
         if (!res.ok) throw new Error("Failed to load user");
 
         const u = await res.json();
+
+        userId = u._id;
         const username = localStorage.getItem("username") || u.username || "Learner";
         userEmail = (u.email || "").toLowerCase();
-
         welcomeEl.textContent = `Welcome, ${username} (${userEmail})`;
 
-        // Show current premium status
+        // ✅ Admin should not pay
+        if (u.role === "admin") {
+          statusEl.className = "ok";
+          statusEl.textContent = "✅ You are an admin. You don’t need a subscription.";
+          payBtn.disabled = true;
+          payBtn.style.display = "none";
+          return;
+        }
+
         if (u.premium && u.premiumExpiresAt) {
           const exp = new Date(u.premiumExpiresAt);
           statusEl.className = "ok";
@@ -133,10 +141,9 @@
       msgEl.textContent = "Creating payment…";
 
       try {
-        if (!userEmail) throw new Error("Missing email");
+        if (!userEmail || !userId) throw new Error("Missing user info");
 
-        // simple unique order id
-        const orderId = "PO-" + Date.now();
+        const orderId = `PO-${userId}-${Date.now()}`;
 
         const payload = {
           amount: 95.00,
@@ -149,7 +156,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token // safe to include (even if backend doesn’t use it)
+            Authorization: "Bearer " + token
           },
           body: JSON.stringify(payload)
         });
@@ -161,7 +168,6 @@
 
         const { processUrl, data } = await res.json();
 
-        // Build & submit PayFast form
         const form = document.createElement("form");
         form.method = "POST";
         form.action = processUrl;
