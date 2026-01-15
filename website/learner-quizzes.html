@@ -21,6 +21,7 @@
       --radius:14px;
       --shadow:0 6px 18px rgba(0,0,0,0.06);
       --error:#b91c1c;
+      --ok:#065f46;
     }
 
     *{box-sizing:border-box}
@@ -132,6 +133,7 @@
     h1{margin:0; font-size:20px;}
     .muted{color:var(--muted); line-height:1.6;}
     .error{color:var(--error);}
+    .ok{color:var(--ok);}
 
     select, input[type="text"]{
       padding:10px;
@@ -164,16 +166,6 @@
       display:flex;
       flex-direction:column;
       gap:6px;
-    }
-    .btn{
-      background:var(--accent);
-      color:#fff;
-      border:none;
-      padding:10px 12px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:600;
-      font-size:14px;
     }
     .btn2{
       background:#fff;
@@ -290,6 +282,46 @@
     }
 
     .hidden{ display:none !important; }
+
+    /* Premium banner */
+    .premium-banner{
+      margin-top:12px;
+      padding:12px;
+      border-radius:12px;
+      border:1px solid #e6e6e6;
+      background:#f8fafc;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .premium-banner .left{display:flex; flex-direction:column; gap:4px;}
+    .premium-banner .actions{display:flex; gap:10px; flex-wrap:wrap;}
+    .paybtn{
+      background:var(--accent);
+      color:#fff;
+      border:none;
+      padding:10px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:14px;
+      text-decoration:none;
+      display:inline-block;
+    }
+    .paybtn2{
+      background:#fff;
+      color:var(--text);
+      border:1px solid #ddd;
+      padding:10px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:14px;
+      text-decoration:none;
+      display:inline-block;
+    }
   </style>
 
   <script>
@@ -315,6 +347,7 @@
       <!-- Desktop Nav -->
       <nav class="nav">
         <a href="learner-quizzes.html" class="active" data-auth>Practice</a>
+        <a href="payment.html" data-auth>Subscription</a>
         <a href="about.html">About</a>
 
         <a href="admin-quiz.html" data-admin>Admin</a>
@@ -328,6 +361,7 @@
     <!-- Mobile Menu Panel -->
     <div class="mobile-menu" id="mobileMenu">
       <a href="learner-quizzes.html" class="active" data-auth>Practice</a>
+      <a href="payment.html" data-auth>Subscription</a>
       <a href="about.html">About</a>
 
       <a href="admin-quiz.html" data-admin>Admin</a>
@@ -338,6 +372,18 @@
     <div class="card">
       <h1>Select Grade</h1>
       <p class="muted" style="margin:6px 0 0 0;">Choose your grade to view quizzes.</p>
+
+      <!-- ✅ Premium status banner -->
+      <div id="premiumBanner" class="premium-banner hidden">
+        <div class="left">
+          <strong id="premiumTitle">Checking subscription…</strong>
+          <span class="muted" id="premiumSub"></span>
+        </div>
+        <div class="actions">
+          <a class="paybtn" href="payment.html" id="premiumPayBtn">Go to Subscription</a>
+          <a class="paybtn2" href="payment.html">Renew</a>
+        </div>
+      </div>
 
       <div class="controls">
         <div class="group">
@@ -382,7 +428,8 @@
     // ✅ Backend URL
     const API = "https://practice-backend-msgn.onrender.com";
 
-    const token = localStorage.getItem("token"); // ✅ token for protected routes
+    // ✅ token (already checked above)
+    const token2 = localStorage.getItem("token");
 
     // Welcome text
     const username = localStorage.getItem("username") || "Learner";
@@ -396,8 +443,11 @@
     const expandAllBtn = document.getElementById("expandAllBtn");
     const collapseAllBtn = document.getElementById("collapseAllBtn");
 
-    let lastTopics = []; // store for search
-    let topicOpenState = {}; // remember expanded/collapsed per topic
+    const premiumBanner = document.getElementById("premiumBanner");
+    const premiumTitle = document.getElementById("premiumTitle");
+    const premiumSub = document.getElementById("premiumSub");
+
+    let topicOpenState = {};
 
     gradeSelect.addEventListener("change", loadQuizzes);
     topicSearch.addEventListener("input", () => applyTopicFilter(topicSearch.value));
@@ -411,6 +461,43 @@
       collapseAllBtn.disabled = !on;
     }
 
+    // ✅ Check premium status and show banner
+    (async function checkPremium(){
+      try {
+        const res = await fetch(`${API}/api/auth/me`, {
+          headers: { Authorization: "Bearer " + token2 }
+        });
+
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          window.location.href = "login.html";
+          return;
+        }
+
+        if (!res.ok) return;
+
+        const u = await res.json();
+
+        // Show banner for learners (optional). If you want banner for all, remove role check.
+        if (u.role === "admin") return;
+
+        premiumBanner.classList.remove("hidden");
+
+        if (u.premium && u.premiumExpiresAt) {
+          const exp = new Date(u.premiumExpiresAt);
+          premiumTitle.className = "ok";
+          premiumTitle.textContent = "✅ Subscription active";
+          premiumSub.textContent = `Expires on: ${exp.toLocaleString()}`;
+        } else {
+          premiumTitle.className = "error";
+          premiumTitle.textContent = "❌ Subscription not active";
+          premiumSub.textContent = "Pay R95 to unlock 30 days of access.";
+        }
+      } catch {
+        // no-op
+      }
+    })();
+
     async function loadQuizzes() {
       const grade = gradeSelect.value;
 
@@ -422,21 +509,19 @@
 
       if (!grade) return;
 
+      status.className = "muted";
       status.textContent = "Loading quizzes...";
 
       try {
         const res = await fetch(`${API}/api/quizzes?grade=${grade}`, {
-          headers: {
-            Authorization: "Bearer " + token // ✅ required now
-          }
+          headers: { Authorization: "Bearer " + token2 }
         });
 
-        // ✅ premium expired / not paid
+        // premium expired / not paid
         if (res.status === 403) {
           status.className = "error";
-          status.textContent = "Your premium access has expired. Please pay R95 to continue.";
+          status.textContent = "Your premium access has expired. Redirecting to payment...";
 
-          // Redirect to payment page (optional)
           setTimeout(() => {
             window.location.href = "payment.html";
           }, 1200);
@@ -444,7 +529,7 @@
           return;
         }
 
-        // ✅ token invalid
+        // token invalid
         if (res.status === 401) {
           localStorage.removeItem("token");
           window.location.href = "login.html";
@@ -456,12 +541,13 @@
         const quizzes = await res.json();
 
         if (!quizzes.length) {
+          status.className = "muted";
           status.textContent = "";
           quizList.innerHTML = `<p class="muted">No quizzes yet for Grade ${grade}.</p>`;
           return;
         }
 
-        // ✅ Group by topic
+        // Group by topic
         const byTopic = {};
         for (const q of quizzes) {
           const topic = (q.topic || "General").trim() || "General";
@@ -469,10 +555,8 @@
           byTopic[topic].push(q);
         }
 
-        // Sort topics A-Z
         const topics = Object.keys(byTopic).sort((a, b) => a.localeCompare(b));
 
-        // Sort quizzes inside each topic by createdAt (stable numbering)
         for (const t of topics) {
           byTopic[t].sort((a, b) => {
             const da = new Date(a.createdAt || 0).getTime();
@@ -481,11 +565,9 @@
           });
         }
 
-        lastTopics = topics;
         status.className = "muted";
         status.textContent = "";
 
-        // Default: expand all (first load)
         for (const t of topics) {
           if (typeof topicOpenState[t] !== "boolean") topicOpenState[t] = true;
         }
@@ -505,7 +587,7 @@
         <div class="topic-wrap">
           ${topics.map(topic => {
             const list = byTopic[topic] || [];
-            const open = topicOpenState[topic] !== false; // default true
+            const open = topicOpenState[topic] !== false;
 
             return `
               <div class="topic-card" data-topic-card="${escapeAttr(topic)}">
@@ -544,23 +626,21 @@
         </div>
       `;
 
-      // attach toggle listeners
       document.querySelectorAll("[data-toggle]").forEach(btn => {
         btn.addEventListener("click", () => {
           const topic = btn.getAttribute("data-toggle");
           const body = document.querySelector(`[data-topic-body="${cssEscape(topic)}"]`);
           if (!body) return;
 
-          const nowOpen = body.classList.contains("hidden"); // if hidden -> open it
+          const nowOpen = body.classList.contains("hidden");
           body.classList.toggle("hidden");
 
-          topicOpenState[topic] = nowOpen; // true if opened
+          topicOpenState[topic] = nowOpen;
           btn.textContent = nowOpen ? "Collapse" : "Expand";
           btn.setAttribute("aria-expanded", nowOpen ? "true" : "false");
         });
       });
 
-      // apply current search filter (if any)
       applyTopicFilter(topicSearch.value);
     }
 
@@ -612,7 +692,6 @@
       return String(str).replaceAll('"', "&quot;");
     }
 
-    // for querySelector attribute with special chars
     function cssEscape(str){
       return String(str).replaceAll('"','\\"');
     }
