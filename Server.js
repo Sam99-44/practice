@@ -6,15 +6,14 @@ import dotenv from "dotenv";
 
 import Quiz from "./models/Quiz.js";
 import User from "./models/User.js";
-
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 import crypto from "crypto";
 import { getTransporter, verifySmtp } from "./utils/mailer.js";
 
-// ✅ ADD THIS (PayFast routes)
-import payfastRoutes from "./routes/payfast.js";
+// ✅ PayFast routes (your current folder structure: routes/routes/payfast.js)
+import payfastRoutes from "./routes/routes/payfast.js";
 
 dotenv.config();
 
@@ -39,10 +38,14 @@ app.use(
   })
 );
 
+/* ------------------ BODY PARSERS ------------------ */
+// JSON for normal API
 app.use(express.json());
-app.use(express.urlencoded({ extended: false })); // ✅ for PayFast ITN
 
-/* ------------------ HEALTH ------------------ */
+// ✅ PayFast ITN is usually "application/x-www-form-urlencoded"
+app.use(express.urlencoded({ extended: false }));
+
+/* ------------------ ROUTES ------------------ */
 app.get("/api/health", (req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
 });
@@ -69,7 +72,7 @@ function authRequired(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    req.user = decoded; // { userId, username }
     next();
   } catch {
     return res.status(401).json({ message: "Invalid token" });
@@ -94,12 +97,12 @@ async function premiumRequired(req, res, next) {
     );
     if (!user) return res.status(401).json({ message: "User not found" });
 
-    // Admin never pays
+    // ✅ Admin never pays
     if (user.role === "admin") return next();
 
     const now = new Date();
 
-    // Auto-expire premium
+    // ✅ auto-expire premium
     if (user.premium && user.premiumExpiresAt && user.premiumExpiresAt <= now) {
       user.premium = false;
       user.premiumActivatedAt = null;
@@ -119,34 +122,39 @@ async function premiumRequired(req, res, next) {
   }
 }
 
-/* ------------------ PAYFAST ROUTES ------------------ */
-// ✅ ADD THIS LINE (so /api/payfast/create and /api/payfast/itn works)
-app.use("/api/payfast", payfastRoutes);
-
 /* ------------------ AUTH ROUTES ------------------ */
 
 // Register
 app.post("/api/auth/register", async (req, res) => {
   try {
     const { username, email, grade, password } = req.body;
-    if (!username || !email || !grade || !password)
+
+    if (!username || !email || !grade || !password) {
       return res.status(400).json({ message: "All fields required" });
+    }
 
     const cleanUsername = username.trim();
     const cleanEmail = email.trim().toLowerCase();
     const g = Number(grade);
 
-    if (!Number.isFinite(g) || g < 8 || g > 12)
+    if (!Number.isFinite(g) || g < 8 || g > 12) {
       return res.status(400).json({ message: "Grade must be 8–12" });
+    }
 
-    if (password.length < 6)
-      return res.status(400).json({ message: "Password too short" });
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail);
+    if (!emailOk) return res.status(400).json({ message: "Invalid email address" });
 
-    if (await User.findOne({ username: cleanUsername }))
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be 6+ characters" });
+    }
+
+    if (await User.findOne({ username: cleanUsername })) {
       return res.status(409).json({ message: "Username already taken" });
+    }
 
-    if (await User.findOne({ email: cleanEmail }))
+    if (await User.findOne({ email: cleanEmail })) {
       return res.status(409).json({ message: "Email already registered" });
+    }
 
     const passwordHash = await bcrypt.hash(password, 10);
 
@@ -156,6 +164,21 @@ app.post("/api/auth/register", async (req, res) => {
       grade: g,
       passwordHash
     });
+
+    // optional welcome email
+    if (smtpReady()) {
+      try {
+        const transporter = getTransporter();
+        await transporter.sendMail({
+          from: process.env.SMTP_USER,
+          to: cleanEmail,
+          subject: "Welcome to Practice Online 🎉",
+          text: `Hi ${cleanUsername},\n\nWelcome to Practice Online!\n\nLogin here:\n${process.env.APP_URL}/login.html\n\n— Practice Online Team`
+        });
+      } catch (e) {
+        console.error("Welcome email failed:", e?.message || e);
+      }
+    }
 
     res.status(201).json({ message: "Account created" });
   } catch (err) {
@@ -167,6 +190,7 @@ app.post("/api/auth/register", async (req, res) => {
 app.post("/api/auth/login", async (req, res) => {
   try {
     const { username, password } = req.body;
+
     const user = await User.findOne({ username: (username || "").trim() });
     if (!user) return res.status(401).json({ message: "Invalid login" });
 
@@ -198,8 +222,12 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
   }
 });
 
+/* ------------------ PAYFAST ROUTES ------------------ */
+app.use("/api/payfast", payfastRoutes);
+
 /* ------------------ QUIZ ROUTES ------------------ */
 
+// ✅ premium-protected
 app.get("/api/quizzes", authRequired, premiumRequired, async (req, res) => {
   try {
     const grade = Number(req.query.grade);
@@ -211,6 +239,7 @@ app.get("/api/quizzes", authRequired, premiumRequired, async (req, res) => {
   }
 });
 
+// ✅ premium-protected
 app.get("/api/quizzes/:id", authRequired, premiumRequired, async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id);
@@ -221,6 +250,7 @@ app.get("/api/quizzes/:id", authRequired, premiumRequired, async (req, res) => {
   }
 });
 
+// ✅ admin only to create quizzes
 app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   try {
     const quiz = await Quiz.create(req.body);
@@ -231,7 +261,6 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
 });
 
 /* ------------------ DATABASE + START ------------------ */
-
 const PORT = process.env.PORT || 5000;
 
 mongoose
