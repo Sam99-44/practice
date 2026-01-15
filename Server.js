@@ -4,12 +4,12 @@ import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 
-import Quiz from "./models/Quiz.js";
-import User from "./models/User.js";
-import payfastRoutes from "./routes/payfast.js";
-
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+
+import Quiz from "./models/Quiz.js";
+import User from "./models/User.js";
+import payfastRoutes from "./routes/payfast.js"; // ✅ CORRECT PATH
 
 import { verifySmtp } from "./utils/mailer.js";
 
@@ -17,11 +17,9 @@ dotenv.config();
 
 const app = express();
 
-/* ------------------ MIDDLEWARE ------------------ */
-
-// CORS
+/* ------------------ CORS ------------------ */
 const ALLOWED_ORIGINS = [
-  process.env.APP_URL, // https://practiceonline.netlify.app
+  process.env.APP_URL,
   "http://localhost:3000",
   "http://localhost:5500",
   "http://127.0.0.1:5500"
@@ -38,27 +36,23 @@ app.use(
   })
 );
 
-// Needed for PayFast ITN
-app.use(express.urlencoded({ extended: false }));
+/* ------------------ BODY PARSERS ------------------ */
 app.use(express.json());
+app.use(express.urlencoded({ extended: false })); // ✅ PayFast ITN
 
 /* ------------------ ROUTES ------------------ */
-
-// PayFast routes (VERY IMPORTANT)
-app.use("/api/payfast", payfastRoutes);
+app.use("/api/payfast", payfastRoutes); // ✅ MUST BE HERE
 
 /* ------------------ HEALTH ------------------ */
+app.get("/", (req, res) => {
+  res.send("Practice Online API running");
+});
 
 app.get("/api/health", (req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
 });
 
-app.get("/", (req, res) => {
-  res.send("Practice Online API running");
-});
-
-/* ------------------ AUTH HELPERS ------------------ */
-
+/* ------------------ AUTH MIDDLEWARE ------------------ */
 function authRequired(req, res, next) {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
@@ -66,8 +60,7 @@ function authRequired(req, res, next) {
   if (!token) return res.status(401).json({ message: "Missing token" });
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // { userId, username }
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
     next();
   } catch {
     return res.status(401).json({ message: "Invalid token" });
@@ -76,25 +69,21 @@ function authRequired(req, res, next) {
 
 async function adminOnly(req, res, next) {
   const user = await User.findById(req.user.userId).select("role");
-  if (!user) return res.status(401).json({ message: "User not found" });
-  if (user.role !== "admin") return res.status(403).json({ message: "Admin only" });
+  if (!user || user.role !== "admin") {
+    return res.status(403).json({ message: "Admin only" });
+  }
   next();
 }
 
 async function premiumRequired(req, res, next) {
-  const user = await User.findById(req.user.userId).select(
-    "role premium premiumExpiresAt premiumActivatedAt"
-  );
-
+  const user = await User.findById(req.user.userId);
   if (!user) return res.status(401).json({ message: "User not found" });
 
-  // Admin never pays
   if (user.role === "admin") return next();
 
   const now = new Date();
 
-  // Auto-expire premium
-  if (user.premium && user.premiumExpiresAt && user.premiumExpiresAt <= now) {
+  if (user.premium && user.premiumExpiresAt <= now) {
     user.premium = false;
     user.premiumActivatedAt = null;
     user.premiumExpiresAt = null;
@@ -103,7 +92,7 @@ async function premiumRequired(req, res, next) {
 
   if (!user.premium) {
     return res.status(403).json({
-      message: "Premium required. Please pay R95 to continue."
+      message: "Premium required. Please pay R95."
     });
   }
 
@@ -111,87 +100,58 @@ async function premiumRequired(req, res, next) {
 }
 
 /* ------------------ AUTH ROUTES ------------------ */
-
-// Register
 app.post("/api/auth/register", async (req, res) => {
-  try {
-    const { username, email, grade, password } = req.body;
+  const { username, email, password, grade } = req.body;
 
-    if (!username || !email || !grade || !password) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be 6+ characters" });
-    }
-
-    const cleanEmail = email.toLowerCase().trim();
-    const cleanUsername = username.trim();
-    const g = Number(grade);
-
-    if (!Number.isFinite(g) || g < 8 || g > 12) {
-      return res.status(400).json({ message: "Grade must be between 8 and 12" });
-    }
-
-    if (await User.findOne({ username: cleanUsername }))
-      return res.status(409).json({ message: "Username already taken" });
-
-    if (await User.findOne({ email: cleanEmail }))
-      return res.status(409).json({ message: "Email already registered" });
-
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    await User.create({
-      username: cleanUsername,
-      email: cleanEmail,
-      grade: g,
-      passwordHash
-    });
-
-    res.status(201).json({ message: "Account created" });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  if (!username || !email || !password || !grade) {
+    return res.status(400).json({ message: "All fields required" });
   }
+
+  if (await User.findOne({ email: email.toLowerCase() })) {
+    return res.status(409).json({ message: "Email already exists" });
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  await User.create({
+    username,
+    email: email.toLowerCase(),
+    passwordHash,
+    grade
+  });
+
+  res.status(201).json({ message: "Account created" });
 });
 
-// Login
 app.post("/api/auth/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
+  const { username, password } = req.body;
 
-    const user = await User.findOne({ username: (username || "").trim() });
-    if (!user) return res.status(401).json({ message: "Invalid login" });
+  const user = await User.findOne({ username });
+  if (!user) return res.status(401).json({ message: "Invalid login" });
 
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) return res.status(401).json({ message: "Invalid login" });
+  const ok = await bcrypt.compare(password, user.passwordHash);
+  if (!ok) return res.status(401).json({ message: "Invalid login" });
 
-    const token = jwt.sign(
-      { userId: user._id, username: user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    res.json({ token, username: user.username });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Current user
-app.get("/api/auth/me", authRequired, async (req, res) => {
-  const user = await User.findById(req.user.userId).select(
-    "username email role grade premium premiumActivatedAt premiumExpiresAt createdAt"
+  const token = jwt.sign(
+    { userId: user._id, username: user.username },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
   );
 
-  if (!user) return res.status(401).json({ message: "User not found" });
+  res.json({ token, username: user.username });
+});
+
+app.get("/api/auth/me", authRequired, async (req, res) => {
+  const user = await User.findById(req.user.userId).select(
+    "username email role grade premium premiumExpiresAt createdAt"
+  );
   res.json(user);
 });
 
 /* ------------------ QUIZ ROUTES ------------------ */
-
 app.get("/api/quizzes", authRequired, premiumRequired, async (req, res) => {
   const grade = Number(req.query.grade);
-  const filter = Number.isFinite(grade) ? { grade } : {};
+  const filter = grade ? { grade } : {};
   const quizzes = await Quiz.find(filter).sort({ createdAt: -1 });
   res.json(quizzes);
 });
@@ -207,9 +167,8 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   res.status(201).json(quiz);
 });
 
-/* ------------------ DATABASE + START ------------------ */
-
-const PORT = process.env.PORT || 10000;
+/* ------------------ START SERVER ------------------ */
+const PORT = process.env.PORT || 5000;
 
 mongoose
   .connect(process.env.MONGO_URI)
@@ -220,11 +179,11 @@ mongoose
       await verifySmtp();
       console.log("SMTP verified ✅");
     } catch {
-      console.log("SMTP not configured / skipped");
+      console.log("SMTP not available");
     }
 
-    app.listen(PORT, () =>
+    app.listen(PORT, "0.0.0.0", () =>
       console.log(`Server running on port ${PORT}`)
     );
   })
-  .catch((err) => console.error("Mongo error:", err.message));
+  .catch(err => console.error("Mongo error:", err.message));
