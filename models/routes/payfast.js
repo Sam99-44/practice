@@ -1,7 +1,6 @@
 // routes/payfast.js
 import express from "express";
 import { generateSignature } from "../utils/payfast.js";
-import User from "../models/User.js";
 
 const router = express.Router();
 
@@ -46,8 +45,7 @@ router.post("/create", (req, res) => {
   }
 });
 
-// ✅ ITN: unlock premium (>= R95) + set/extend 30-day expiry
-router.post("/itn", async (req, res) => {
+router.post("/itn", (req, res) => {
   try {
     const receivedSignature = req.body.signature;
     if (!receivedSignature) return res.status(400).send("Missing signature");
@@ -67,49 +65,21 @@ router.post("/itn", async (req, res) => {
       return res.status(200).send("Ignored");
     }
 
-    const paid = Number(String(data.amount_gross || "0").replace(",", "."));
-    if (!Number.isFinite(paid)) return res.status(400).send("Invalid amount");
-
-    const MIN_PREMIUM = 95.0;
-    if (paid < MIN_PREMIUM) {
-      console.log(`ℹ️ Payment below threshold (paid ${paid}) order:`, data.m_payment_id);
-      return res.status(200).send("Below threshold");
-    }
-
-    const email = (data.email_address || "").trim().toLowerCase();
-    if (!email) return res.status(400).send("Missing email");
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      console.warn("⚠️ Payment for unknown user:", email, "order:", data.m_payment_id);
-      return res.status(200).send("User not found");
-    }
-
-    const now = new Date();
-    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-
-    const base =
-      user.premiumExpiresAt && user.premiumExpiresAt > now
-        ? user.premiumExpiresAt
-        : now;
-
-    user.premium = true;
-    user.premiumActivatedAt = now;
-    user.premiumExpiresAt = new Date(base.getTime() + THIRTY_DAYS_MS);
-
-    await user.save();
-
-    console.log("🎉 Premium updated:", {
-      email,
-      paid,
+    console.log("✅ PayFast payment confirmed:", {
       order: data.m_payment_id,
-      expires: user.premiumExpiresAt.toISOString()
+      amount: data.amount_gross,
+      payer: data.email_address
     });
 
-    return res.status(200).send("OK");
+    // TODO:
+    // 1. Find order in DB by m_payment_id
+    // 2. Mark as paid
+    // 3. Unlock premium access
+
+    res.status(200).send("OK");
   } catch (err) {
     console.error("PayFast ITN error:", err.message);
-    return res.status(500).send("Server error");
+    res.status(500).send("Server error");
   }
 });
 
