@@ -7,52 +7,28 @@ import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-import Quiz from "./models/Quiz.js";
 import User from "./models/User.js";
-import payfastRoutes from "./routes/payfast.js"; // ✅ CORRECT PATH
-
-import { verifySmtp } from "./utils/mailer.js";
+import Quiz from "./models/Quiz.js";
+import payfastRoutes from "./routes/payfast.js"; // ✅ CORRECT
 
 dotenv.config();
 
 const app = express();
 
-/* ------------------ CORS ------------------ */
-const ALLOWED_ORIGINS = [
-  process.env.APP_URL,
-  "http://localhost:3000",
-  "http://localhost:5500",
-  "http://127.0.0.1:5500"
-].filter(Boolean);
+/* ------------------ MIDDLEWARE ------------------ */
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 app.use(
   cors({
-    origin: (origin, cb) => {
-      if (!origin) return cb(null, true);
-      if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-      return cb(new Error(`CORS blocked for origin: ${origin}`), false);
-    },
-    credentials: true
+    origin: "*"
   })
 );
 
-/* ------------------ BODY PARSERS ------------------ */
-app.use(express.json());
-app.use(express.urlencoded({ extended: false })); // ✅ PayFast ITN
-
 /* ------------------ ROUTES ------------------ */
-app.use("/api/payfast", payfastRoutes); // ✅ MUST BE HERE
+app.use("/api/payfast", payfastRoutes);
 
-/* ------------------ HEALTH ------------------ */
-app.get("/", (req, res) => {
-  res.send("Practice Online API running");
-});
-
-app.get("/api/health", (req, res) => {
-  res.json({ ok: true, time: new Date().toISOString() });
-});
-
-/* ------------------ AUTH MIDDLEWARE ------------------ */
+/* ------------------ AUTH HELPERS ------------------ */
 function authRequired(req, res, next) {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
@@ -67,62 +43,28 @@ function authRequired(req, res, next) {
   }
 }
 
-async function adminOnly(req, res, next) {
-  const user = await User.findById(req.user.userId).select("role");
-  if (!user || user.role !== "admin") {
-    return res.status(403).json({ message: "Admin only" });
-  }
-  next();
-}
-
 async function premiumRequired(req, res, next) {
   const user = await User.findById(req.user.userId);
-  if (!user) return res.status(401).json({ message: "User not found" });
 
+  if (!user) return res.status(401).json({ message: "User not found" });
   if (user.role === "admin") return next();
 
   const now = new Date();
 
   if (user.premium && user.premiumExpiresAt <= now) {
     user.premium = false;
-    user.premiumActivatedAt = null;
     user.premiumExpiresAt = null;
     await user.save();
   }
 
   if (!user.premium) {
-    return res.status(403).json({
-      message: "Premium required. Please pay R95."
-    });
+    return res.status(403).json({ message: "Premium required" });
   }
 
   next();
 }
 
-/* ------------------ AUTH ROUTES ------------------ */
-app.post("/api/auth/register", async (req, res) => {
-  const { username, email, password, grade } = req.body;
-
-  if (!username || !email || !password || !grade) {
-    return res.status(400).json({ message: "All fields required" });
-  }
-
-  if (await User.findOne({ email: email.toLowerCase() })) {
-    return res.status(409).json({ message: "Email already exists" });
-  }
-
-  const passwordHash = await bcrypt.hash(password, 10);
-
-  await User.create({
-    username,
-    email: email.toLowerCase(),
-    passwordHash,
-    grade
-  });
-
-  res.status(201).json({ message: "Account created" });
-});
-
+/* ------------------ AUTH ------------------ */
 app.post("/api/auth/login", async (req, res) => {
   const { username, password } = req.body;
 
@@ -143,47 +85,26 @@ app.post("/api/auth/login", async (req, res) => {
 
 app.get("/api/auth/me", authRequired, async (req, res) => {
   const user = await User.findById(req.user.userId).select(
-    "username email role grade premium premiumExpiresAt createdAt"
+    "username email role premium premiumExpiresAt"
   );
   res.json(user);
 });
 
-/* ------------------ QUIZ ROUTES ------------------ */
+/* ------------------ QUIZZES ------------------ */
 app.get("/api/quizzes", authRequired, premiumRequired, async (req, res) => {
-  const grade = Number(req.query.grade);
-  const filter = grade ? { grade } : {};
-  const quizzes = await Quiz.find(filter).sort({ createdAt: -1 });
+  const quizzes = await Quiz.find().sort({ createdAt: -1 });
   res.json(quizzes);
 });
 
-app.get("/api/quizzes/:id", authRequired, premiumRequired, async (req, res) => {
-  const quiz = await Quiz.findById(req.params.id);
-  if (!quiz) return res.status(404).json({ message: "Quiz not found" });
-  res.json(quiz);
-});
-
-app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
-  const quiz = await Quiz.create(req.body);
-  res.status(201).json(quiz);
-});
-
-/* ------------------ START SERVER ------------------ */
-const PORT = process.env.PORT || 5000;
+/* ------------------ START ------------------ */
+const PORT = process.env.PORT || 10000;
 
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(async () => {
+  .then(() => {
     console.log("MongoDB connected");
-
-    try {
-      await verifySmtp();
-      console.log("SMTP verified ✅");
-    } catch {
-      console.log("SMTP not available");
-    }
-
     app.listen(PORT, "0.0.0.0", () =>
       console.log(`Server running on port ${PORT}`)
     );
   })
-  .catch(err => console.error("Mongo error:", err.message));
+  .catch(err => console.error(err));
