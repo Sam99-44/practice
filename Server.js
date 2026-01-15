@@ -6,11 +6,15 @@ import dotenv from "dotenv";
 
 import Quiz from "./models/Quiz.js";
 import User from "./models/User.js";
+
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 import crypto from "crypto";
 import { getTransporter, verifySmtp } from "./utils/mailer.js";
+
+// ✅ ADD THIS (PayFast routes)
+import payfastRoutes from "./routes/payfast.js";
 
 dotenv.config();
 
@@ -36,7 +40,7 @@ app.use(
 );
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: false })); // for PayFast ITN
+app.use(express.urlencoded({ extended: false })); // ✅ for PayFast ITN
 
 /* ------------------ HEALTH ------------------ */
 app.get("/api/health", (req, res) => {
@@ -46,7 +50,6 @@ app.get("/api/health", (req, res) => {
 app.get("/", (req, res) => res.send("Practice Online API running"));
 
 /* ------------------ HELPERS ------------------ */
-
 function smtpReady() {
   return Boolean(
     process.env.SMTP_HOST &&
@@ -58,7 +61,6 @@ function smtpReady() {
 }
 
 /* ------------------ AUTH MIDDLEWARE ------------------ */
-
 function authRequired(req, res, next) {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
@@ -97,6 +99,7 @@ async function premiumRequired(req, res, next) {
 
     const now = new Date();
 
+    // Auto-expire premium
     if (user.premium && user.premiumExpiresAt && user.premiumExpiresAt <= now) {
       user.premium = false;
       user.premiumActivatedAt = null;
@@ -115,6 +118,10 @@ async function premiumRequired(req, res, next) {
     res.status(500).json({ message: err.message });
   }
 }
+
+/* ------------------ PAYFAST ROUTES ------------------ */
+// ✅ ADD THIS LINE (so /api/payfast/create and /api/payfast/itn works)
+app.use("/api/payfast", payfastRoutes);
 
 /* ------------------ AUTH ROUTES ------------------ */
 
@@ -243,6 +250,6 @@ mongoose
       console.log("SMTP not configured - emails disabled");
     }
 
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    app.listen(PORT, "0.0.0.0", () => console.log(`Server running on port ${PORT}`));
   })
   .catch((err) => console.error("Mongo error:", err.message));
