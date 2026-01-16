@@ -24,347 +24,186 @@
     }
 
     *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
-    .wrap{max-width:1000px;margin:0 auto;padding:24px}
+    body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text);}
+    .wrap{max-width:1000px;margin:0 auto;padding:24px;}
 
-    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:12px}
-    .brand{display:flex;align-items:center;gap:10px}
-    .logo{width:38px;height:38px;border-radius:10px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
-    .brand span{display:block;font-size:13px;color:var(--muted)}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:12px;}
+    .brand{display:flex;align-items:center;gap:10px;}
+    .logo{width:38px;height:38px;border-radius:10px;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;}
+    .brand span{font-size:13px;color:var(--muted);}
 
-    .nav{display:flex;align-items:center;gap:14px}
-    .nav a{text-decoration:none;font-size:14px;color:var(--text);padding:6px 8px;border-radius:8px;transition:background .2s}
-    .nav a:hover{background:var(--accent-soft)}
-    .nav a.active{font-weight:600;color:var(--accent)}
-    .nav .logout{background:var(--accent);color:#fff;border:none;padding:8px 12px;border-radius:10px;cursor:pointer;font-size:14px}
+    .nav{display:flex;gap:14px;align-items:center;}
+    .nav a{text-decoration:none;color:var(--text);padding:6px 8px;border-radius:8px;}
+    .nav a.active{font-weight:600;color:var(--accent);}
+    .nav .logout{background:var(--accent);color:white;border:none;padding:8px 12px;border-radius:10px;cursor:pointer;}
 
-    .menu-btn{display:none;border:1px solid var(--border);background:var(--card);color:var(--text);padding:10px 12px;border-radius:10px;cursor:pointer}
-    .mobile-menu{display:none;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px;margin-bottom:16px}
-    .mobile-menu a,.mobile-menu button{width:100%;display:block;text-align:left;padding:10px 12px;border-radius:10px;border:none;background:transparent;color:var(--text);text-decoration:none;cursor:pointer;font-size:14px}
-    .mobile-menu a:hover,.mobile-menu button:hover{background:var(--accent-soft)}
-    .mobile-menu a.active{font-weight:600;color:var(--accent)}
-    .mobile-menu .logout{background:var(--accent);color:#fff}
-    @media (max-width:720px){
-      .nav{display:none}
-      .menu-btn{display:inline-flex}
-      .mobile-menu.open{display:block}
-    }
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);}
+    h1{margin:0;font-size:20px;}
+    .muted{color:var(--muted);}
+    .error{color:var(--error);}
 
-    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
-    h1{margin:0;font-size:20px}
-    .muted{color:var(--muted);line-height:1.6}
-    .error{color:var(--error)}
+    select,input{padding:10px;border-radius:10px;border:1px solid #ddd;}
+    .controls{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;}
+    .btn2{background:#fff;border:1px solid #ddd;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:600;}
 
-    select,input[type="text"]{
-      padding:10px;border-radius:10px;border:1px solid #ddd;width:260px;max-width:100%;
-      font-size:14px;outline:none;margin-top:8px;background:#fff
-    }
+    .topic-wrap{margin-top:16px;display:flex;flex-direction:column;gap:14px;}
+    .topic-card{border:1px solid var(--border);border-radius:14px;padding:14px;background:#fff;}
+    .topic-head{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+    .topic-title{font-size:16px;font-weight:800;color:var(--accent);}
+    .toggle{border:1px solid #ddd;background:#fff;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:700;}
 
-    footer{margin-top:24px;text-align:center;font-size:13px;color:#64748b}
-
-    .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:12px}
-    .controls .group{display:flex;flex-direction:column;gap:6px}
-    .btn2{background:#fff;color:var(--text);border:1px solid #ddd;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px}
-
-    .topic-wrap{margin-top:14px;display:flex;flex-direction:column;gap:14px}
-    .topic-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px}
-    .topic-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-    .topic-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-    .topic-title{margin:0;font-size:16px;font-weight:800;color:var(--accent)}
-    .topic-sub{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid #cfe9ff;background:#eef7ff;color:#0b3c5d;white-space:nowrap}
-    .toggle{display:inline-flex;gap:8px;align-items:center;border:1px solid #ddd;background:#fff;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px}
-    .toggle:hover{background:var(--accent-soft)}
-
-    .quiz-squares{display:flex;flex-wrap:wrap;gap:10px}
-    .quiz-square{
-      width:64px;height:64px;border-radius:14px;border:1px solid var(--border);background:#f8fafc;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;user-select:none;
-      font-weight:800;transition:transform .08s, background .2s, border-color .2s
-    }
-    .quiz-square:hover{transform:translateY(-1px);background:#eef7ff;border-color:#cfe9ff}
-    .quiz-square .num{font-size:16px;line-height:1}
-    .quiz-square .qcount{margin-top:6px;font-size:11px;font-weight:700;color:var(--muted);line-height:1}
-    .hidden{display:none !important}
+    .quiz-squares{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+    .quiz-square{width:64px;height:64px;border-radius:14px;border:1px solid var(--border);background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-weight:800;}
+    .quiz-square:hover{background:#eef7ff;}
+    .hidden{display:none!important;}
   </style>
 
   <script>
+    /* ✅ TOKEN DECLARED ONCE */
     const authToken = localStorage.getItem("token");
     if (!authToken) window.location.href = "login.html";
   </script>
 </head>
 
 <body>
-  <div class="wrap">
+<div class="wrap">
 
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo">PO</div>
-        <div>
-          <strong>Practice Online</strong>
-          <span id="welcomeSub">Grades 8–12 Mathematics</span>
-        </div>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">PO</div>
+      <div>
+        <strong>Practice Online</strong>
+        <span id="welcomeSub"></span>
       </div>
-
-      <nav class="nav">
-        <a href="learner-quizzes.html" class="active" data-auth>Practice</a>
-        <a href="about.html">About</a>
-        <a href="admin-quiz.html" data-admin>Admin</a>
-        <button class="logout" type="button" id="logoutBtn" data-auth>Logout</button>
-      </nav>
-
-      <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu">Menu</button>
     </div>
 
-    <div class="mobile-menu" id="mobileMenu">
-      <a href="learner-quizzes.html" class="active" data-auth>Practice</a>
+    <nav class="nav">
+      <a class="active">Practice</a>
       <a href="about.html">About</a>
       <a href="admin-quiz.html" data-admin>Admin</a>
-      <button class="logout" type="button" id="logoutBtnMobile" data-auth>Logout</button>
-    </div>
-
-    <div class="card">
-      <h1>Select Grade</h1>
-      <p class="muted" style="margin:6px 0 0 0;">Choose your grade to view quizzes.</p>
-
-      <div class="controls">
-        <div class="group">
-          <label class="muted" style="font-size:12px;">Grade</label>
-          <select id="gradeSelect">
-            <option value="">Choose grade</option>
-            <option value="8">Grade 8</option>
-            <option value="9">Grade 9</option>
-            <option value="10">Grade 10</option>
-            <option value="11">Grade 11</option>
-            <option value="12">Grade 12</option>
-          </select>
-        </div>
-
-        <div class="group" style="flex:1; min-width:220px;">
-          <label class="muted" style="font-size:12px;">Search topic</label>
-          <input id="topicSearch" type="text" placeholder="Type a topic name..." disabled />
-        </div>
-
-        <div class="group">
-          <label class="muted" style="font-size:12px;">Actions</label>
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn2" id="expandAllBtn" type="button" disabled>Expand all</button>
-            <button class="btn2" id="collapseAllBtn" type="button" disabled>Collapse all</button>
-          </div>
-        </div>
-      </div>
-
-      <p id="status" class="muted" style="margin-top:12px;"></p>
-      <div id="quizList"></div>
-    </div>
-
-    <footer>© <span id="year"></span> Practice Online. All rights reserved.</footer>
+      <button class="logout" id="logoutBtn">Logout</button>
+    </nav>
   </div>
 
-  <script src="nav.js"></script>
+  <div class="card">
+    <h1>Select Grade</h1>
+    <p class="muted">Choose your grade to view quizzes.</p>
 
-  <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
+    <div class="controls">
+      <select id="gradeSelect">
+        <option value="">Choose grade</option>
+        <option value="8">Grade 8</option>
+        <option value="9">Grade 9</option>
+        <option value="10">Grade 10</option>
+        <option value="11">Grade 11</option>
+        <option value="12">Grade 12</option>
+      </select>
 
-    const API = window.API || "https://practice-backend-msgn.onrender.com";
-    const authToken = localStorage.getItem("token");
+      <input id="topicSearch" placeholder="Search topic…" disabled />
 
-    const username = localStorage.getItem("username") || "Learner";
-    document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
+      <button class="btn2" id="expandAllBtn" disabled>Expand all</button>
+      <button class="btn2" id="collapseAllBtn" disabled>Collapse all</button>
+    </div>
 
-    const gradeSelect = document.getElementById("gradeSelect");
-    const status = document.getElementById("status");
-    const quizList = document.getElementById("quizList");
+    <p id="status" class="muted"></p>
+    <div id="quizList"></div>
+  </div>
 
-    const topicSearch = document.getElementById("topicSearch");
-    const expandAllBtn = document.getElementById("expandAllBtn");
-    const collapseAllBtn = document.getElementById("collapseAllBtn");
+</div>
 
-    let topicOpenState = {};
-    let lastByTopic = null;
-    let lastTopics = null;
+<script>
+  const API = "https://practice-backend-msgn.onrender.com";
 
-    gradeSelect.addEventListener("change", loadQuizzes);
-    topicSearch.addEventListener("input", () => applyTopicFilter(topicSearch.value));
-    expandAllBtn.addEventListener("click", () => setAllTopics(true));
-    collapseAllBtn.addEventListener("click", () => setAllTopics(false));
+  document.getElementById("welcomeSub").textContent =
+    "Welcome, " + (localStorage.getItem("username") || "Learner");
 
-    function setControlsEnabled(on){
-      topicSearch.disabled = !on;
-      expandAllBtn.disabled = !on;
-      collapseAllBtn.disabled = !on;
+  document.getElementById("logoutBtn").onclick = () => {
+    localStorage.clear();
+    window.location.href = "login.html";
+  };
+
+  const gradeSelect = document.getElementById("gradeSelect");
+  const quizList = document.getElementById("quizList");
+  const status = document.getElementById("status");
+  const topicSearch = document.getElementById("topicSearch");
+  const expandAllBtn = document.getElementById("expandAllBtn");
+  const collapseAllBtn = document.getElementById("collapseAllBtn");
+
+  let topicOpen = {};
+
+  gradeSelect.onchange = loadQuizzes;
+  topicSearch.oninput = () => filterTopics(topicSearch.value);
+  expandAllBtn.onclick = () => toggleAll(true);
+  collapseAllBtn.onclick = () => toggleAll(false);
+
+  async function loadQuizzes(){
+    const grade = gradeSelect.value;
+    if (!grade) return;
+
+    status.textContent = "Loading quizzes...";
+    quizList.innerHTML = "";
+
+    const res = await fetch(`${API}/api/quizzes?grade=${grade}`, {
+      headers:{ Authorization:`Bearer ${authToken}` }
+    });
+
+    const quizzes = await res.json();
+
+    if (!quizzes.length){
+      status.textContent = "No quizzes found.";
+      return;
     }
 
-    async function loadQuizzes() {
-      const grade = gradeSelect.value;
-      quizList.innerHTML = "";
-      status.textContent = "";
+    const byTopic = {};
+    quizzes.forEach(q=>{
+      const t = q.topic || "General";
+      (byTopic[t] ||= []).push(q);
+      topicOpen[t] = true;
+    });
 
-      setControlsEnabled(false);
-      topicSearch.value = "";
+    render(byTopic);
+    topicSearch.disabled = expandAllBtn.disabled = collapseAllBtn.disabled = false;
+    status.textContent = "";
+  }
 
-      if (!grade) return;
+  function render(byTopic){
+    quizList.innerHTML = `
+      <div class="topic-wrap">
+        ${Object.keys(byTopic).map(t=>`
+          <div class="topic-card" data-topic="${t}">
+            <div class="topic-head">
+              <div class="topic-title">${t}</div>
+              <button class="toggle" onclick="toggleTopic('${t}')">
+                ${topicOpen[t] ? "Collapse" : "Expand"}
+              </button>
+            </div>
+            <div class="quiz-squares ${topicOpen[t] ? "" : "hidden"}">
+              ${byTopic[t].map((q,i)=>`
+                <div class="quiz-square"
+                  onclick="location.href='attempt.html?quizId=${q._id}'">
+                  ${i+1}
+                </div>`).join("")}
+            </div>
+          </div>`).join("")}
+      </div>`;
+  }
 
-      status.className = "muted";
-      status.textContent = "Loading quizzes...";
+  function toggleTopic(t){
+    topicOpen[t] = !topicOpen[t];
+    loadQuizzes();
+  }
 
-      try {
-        const res = await fetch(`${API}/api/quizzes?grade=${grade}`, {
-          headers: { Authorization: "Bearer " + authToken }
-        });
+  function toggleAll(open){
+    Object.keys(topicOpen).forEach(t=>topicOpen[t]=open);
+    loadQuizzes();
+  }
 
-        if (res.status === 401) {
-          localStorage.removeItem("token");
-          window.location.href = "login.html";
-          return;
-        }
-
-        const quizzes = await res.json().catch(() => []);
-
-        if (!res.ok) {
-          status.className = "error";
-          status.textContent = `Failed to load quizzes (HTTP ${res.status}).`;
-          return;
-        }
-
-        if (!Array.isArray(quizzes) || quizzes.length === 0) {
-          status.className = "muted";
-          status.textContent = "";
-          quizList.innerHTML = `<p class="muted">No quizzes yet for Grade ${grade}.</p>`;
-          return;
-        }
-
-        const byTopic = {};
-        for (const q of quizzes) {
-          const topic = (q.topic || "General").trim() || "General";
-          if (!byTopic[topic]) byTopic[topic] = [];
-          byTopic[topic].push(q);
-        }
-
-        const topics = Object.keys(byTopic).sort((a,b)=>a.localeCompare(b));
-        for (const t of topics) {
-          byTopic[t].sort((a,b)=>{
-            const da = new Date(a.createdAt || 0).getTime();
-            const db = new Date(b.createdAt || 0).getTime();
-            return da - db;
-          });
-          if (typeof topicOpenState[t] !== "boolean") topicOpenState[t] = true;
-        }
-
-        lastByTopic = byTopic;
-        lastTopics = topics;
-
-        status.textContent = "";
-        renderTopics(byTopic, topics);
-        setControlsEnabled(true);
-
-      } catch {
-        status.className = "error";
-        status.textContent = "Could not load quizzes. Please try again.";
-      }
-    }
-
-    function renderTopics(byTopic, topics){
-      quizList.innerHTML = `
-        <div class="topic-wrap">
-          ${topics.map(topic => {
-            const list = byTopic[topic] || [];
-            const open = topicOpenState[topic] !== false;
-
-            return `
-              <div class="topic-card" data-topic-card="${escapeAttr(topic)}">
-                <div class="topic-head">
-                  <div class="topic-left">
-                    <h3 class="topic-title" data-topic-title>${escapeHtml(topic)}</h3>
-                    <span class="topic-sub">${list.length} quizzes</span>
-                  </div>
-
-                  <button class="toggle" type="button"
-                    data-toggle="${escapeAttr(topic)}"
-                    aria-expanded="${open ? "true" : "false"}">
-                    ${open ? "Collapse" : "Expand"}
-                  </button>
-                </div>
-
-                <div class="quiz-squares ${open ? "" : "hidden"}" data-topic-body="${escapeAttr(topic)}">
-                  ${list.map((q, i) => {
-                    const qCount = (q.questions && q.questions.length) ? q.questions.length : 0;
-                    return `
-                      <div class="quiz-square"
-                        title="${escapeAttr(q.title || "Quiz")}"
-                        onclick="window.location.href='attempt.html?quizId=${encodeURIComponent(q._id)}'">
-                        <div class="num">${i + 1}</div>
-                        <div class="qcount">${qCount}Q</div>
-                      </div>
-                    `;
-                  }).join("")}
-                </div>
-              </div>
-            `;
-          }).join("")}
-        </div>
-      `;
-
-      document.querySelectorAll("[data-toggle]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const topic = btn.getAttribute("data-toggle");
-          const body = document.querySelector(`[data-topic-body="${cssEscape(topic)}"]`);
-          if (!body) return;
-
-          const nowOpen = body.classList.contains("hidden");
-          body.classList.toggle("hidden");
-
-          topicOpenState[topic] = nowOpen;
-          btn.textContent = nowOpen ? "Collapse" : "Expand";
-          btn.setAttribute("aria-expanded", nowOpen ? "true" : "false");
-        });
-      });
-
-      applyTopicFilter(topicSearch.value);
-    }
-
-    function applyTopicFilter(query){
-      const q = (query || "").trim().toLowerCase();
-      document.querySelectorAll("[data-topic-card]").forEach(card => {
-        const titleEl = card.querySelector("[data-topic-title]");
-        const topicName = (titleEl?.textContent || "").toLowerCase();
-        const match = !q || topicName.includes(q);
-        card.classList.toggle("hidden", !match);
-      });
-    }
-
-    function setAllTopics(open){
-      document.querySelectorAll("[data-topic-card]").forEach(card => {
-        const btn = card.querySelector("[data-toggle]");
-        const topic = btn?.getAttribute("data-toggle");
-        if (!topic) return;
-
-        const body = card.querySelector(`[data-topic-body="${cssEscape(topic)}"]`);
-        if (!body) return;
-
-        if (open) {
-          body.classList.remove("hidden");
-          btn.textContent = "Collapse";
-          btn.setAttribute("aria-expanded", "true");
-          topicOpenState[topic] = true;
-        } else {
-          body.classList.add("hidden");
-          btn.textContent = "Expand";
-          btn.setAttribute("aria-expanded", "false");
-          topicOpenState[topic] = false;
-        }
-      });
-    }
-
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-    function escapeAttr(str) { return String(str).replaceAll('"', "&quot;"); }
-    function cssEscape(str){ return String(str).replaceAll('"','\\"'); }
-  </script>
+  function filterTopics(q){
+    q = q.toLowerCase();
+    document.querySelectorAll("[data-topic]").forEach(card=>{
+      card.classList.toggle("hidden", !card.dataset.topic.toLowerCase().includes(q));
+    });
+  }
+</script>
 </body>
 </html>
