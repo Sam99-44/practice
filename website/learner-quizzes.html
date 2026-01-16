@@ -1,575 +1,211 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Practice | Practice Online</title>
+// Server.js
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+import Quiz from "./models/Quiz.js";
+import User from "./models/User.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
-  <style>
-    :root{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --border:#e6e6e6;
-      --text:#0f172a;
-      --muted:#475569;
-      --accent:#0b3c5d;
-      --accent-soft:#e7eef5;
-      --radius:14px;
-      --shadow:0 6px 18px rgba(0,0,0,0.06);
-      --error:#b91c1c;
+dotenv.config();
+
+const app = express();
+
+/* ------------------ CORS ------------------ */
+const ALLOWED_ORIGINS = [
+  process.env.APP_URL, // e.g. https://practiceonline.netlify.app
+  "http://localhost:3000",
+  "http://localhost:5500",
+  "http://127.0.0.1:5500"
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true);
+      if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+      return cb(new Error(`CORS blocked for origin: ${origin}`), false);
+    },
+    credentials: true
+  })
+);
+
+app.use(express.json());
+
+/* ------------------ HEALTH ------------------ */
+app.get("/api/health", (req, res) => {
+  res.json({ ok: true, time: new Date().toISOString() });
+});
+
+app.get("/", (req, res) => res.send("Practice Online API running"));
+
+/* ------------------ AUTH MIDDLEWARE ------------------ */
+function authRequired(req, res, next) {
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+
+  if (!token) return res.status(401).json({ message: "Missing token" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // { userId, username }
+    next();
+  } catch {
+    return res.status(401).json({ message: "Invalid token" });
+  }
+}
+
+async function adminOnly(req, res, next) {
+  try {
+    const user = await User.findById(req.user.userId).select("role username");
+    if (!user) return res.status(401).json({ message: "User not found" });
+    if (user.role !== "admin") return res.status(403).json({ message: "Admin only" });
+    next();
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+/* ------------------ AUTH ROUTES ------------------ */
+
+// Register
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    const { username, email, grade, password } = req.body;
+
+    if (!username || !email || !grade || !password) {
+      return res.status(400).json({ message: "Username, email, grade and password are required" });
     }
 
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Inter,Arial,sans-serif;
-      background:var(--bg);
-      color:var(--text);
+    const cleanUsername = username.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const g = Number(grade);
+
+    if (!Number.isFinite(g) || g < 8 || g > 12) {
+      return res.status(400).json({ message: "Grade must be between 8 and 12" });
     }
 
-    .wrap{max-width:1000px; margin:0 auto; padding:24px;}
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail);
+    if (!emailOk) return res.status(400).json({ message: "Invalid email address" });
 
-    .topbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:12px;
-      flex-wrap:wrap;
-      gap:12px;
-    }
-    .brand{display:flex; align-items:center; gap:10px;}
-    .logo{
-      width:38px; height:38px; border-radius:10px;
-      background:var(--accent); color:white;
-      display:flex; align-items:center; justify-content:center;
-      font-weight:700; font-size:16px;
-      flex:0 0 auto;
-    }
-    .brand span{display:block; font-size:13px; color:var(--muted);}
-
-    .nav{display:flex; align-items:center; gap:14px;}
-    .nav a{
-      text-decoration:none;
-      font-size:14px;
-      color:var(--text);
-      padding:6px 8px;
-      border-radius:8px;
-      transition:background 0.2s;
-    }
-    .nav a:hover{ background:var(--accent-soft); }
-    .nav a.active{ font-weight:600; color:var(--accent); }
-    .nav .logout{
-      background:var(--accent);
-      color:white;
-      border:none;
-      padding:8px 12px;
-      border-radius:10px;
-      cursor:pointer;
-      font-size:14px;
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be 6+ characters" });
     }
 
-    .menu-btn{
-      display:none;
-      border:1px solid var(--border);
-      background:var(--card);
-      color:var(--text);
-      padding:10px 12px;
-      border-radius:10px;
-      cursor:pointer;
-    }
-    .mobile-menu{
-      display:none;
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:10px;
-      margin-bottom:16px;
-    }
-    .mobile-menu a,
-    .mobile-menu button{
-      width:100%;
-      display:block;
-      text-align:left;
-      padding:10px 12px;
-      border-radius:10px;
-      border:none;
-      background:transparent;
-      color:var(--text);
-      text-decoration:none;
-      cursor:pointer;
-      font-size:14px;
-    }
-    .mobile-menu a:hover,
-    .mobile-menu button:hover{ background:var(--accent-soft); }
-    .mobile-menu a.active{ font-weight:600; color:var(--accent); }
-    .mobile-menu .logout{
-      background:var(--accent);
-      color:white;
-    }
-    @media (max-width: 720px){
-      .nav{ display:none; }
-      .menu-btn{ display:inline-flex; }
-      .mobile-menu.open{ display:block; }
+    const usernameExists = await User.findOne({ username: cleanUsername });
+    if (usernameExists) return res.status(409).json({ message: "Username already taken" });
+
+    const emailExists = await User.findOne({ email: cleanEmail });
+    if (emailExists) return res.status(409).json({ message: "Email already registered" });
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    await User.create({
+      username: cleanUsername,
+      email: cleanEmail,
+      grade: g,
+      passwordHash
+    });
+
+    res.status(201).json({ message: "Account created" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Login
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    const cleanUsername = (username || "").trim();
+    const user = await User.findOne({ username: cleanUsername });
+    if (!user) return res.status(401).json({ message: "Invalid login" });
+
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) return res.status(401).json({ message: "Invalid login" });
+
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ message: "JWT_SECRET missing in env" });
     }
 
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      padding:18px;
-      box-shadow:var(--shadow);
+    const token = jwt.sign(
+      { userId: user._id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({ token, username: user.username });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Current user
+app.get("/api/auth/me", authRequired, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select("username role email grade createdAt");
+    if (!user) return res.status(401).json({ message: "User not found" });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+/* ------------------ QUIZ ROUTES ------------------ */
+
+// ✅ List quizzes (fix: grade can be stored as number OR string)
+app.get("/api/quizzes", authRequired, async (req, res) => {
+  try {
+    const gradeRaw = req.query.grade;
+    let filter = {};
+
+    // Supports: grade=12 and grade stored in Mongo as 12 OR "12"
+    if (gradeRaw !== undefined && gradeRaw !== "") {
+      const g = Number(gradeRaw);
+      filter = Number.isFinite(g)
+        ? { $or: [{ grade: g }, { grade: String(g) }] }
+        : { grade: gradeRaw };
     }
 
-    h1{margin:0; font-size:20px;}
-    .muted{color:var(--muted); line-height:1.6;}
-    .error{color:var(--error);}
-
-    select, input[type="text"]{
-      padding:10px;
-      border-radius:10px;
-      border:1px solid #ddd;
-      width:260px;
-      max-width:100%;
-      font-size:14px;
-      outline:none;
-      margin-top:8px;
-      background:#fff;
-    }
-
-    footer{
-      margin-top:24px;
-      text-align:center;
-      font-size:13px;
-      color:#64748b;
-    }
-
-    .controls{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:flex-end;
-      margin-top:12px;
-    }
-    .controls .group{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-    .btn2{
-      background:#fff;
-      color:var(--text);
-      border:1px solid #ddd;
-      padding:10px 12px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:600;
-      font-size:14px;
-    }
-
-    .topic-wrap{
-      margin-top:14px;
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-    }
-
-    .topic-card{
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      padding:14px;
-    }
-
-    .topic-head{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-
-    .topic-left{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
-    .topic-title{
-      margin:0;
-      font-size:16px;
-      font-weight:800;
-      color:var(--accent);
-    }
-
-    .topic-sub{
-      font-size:12px;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid #cfe9ff;
-      background:#eef7ff;
-      color:#0b3c5d;
-      white-space:nowrap;
-    }
-
-    .toggle{
-      display:inline-flex;
-      gap:8px;
-      align-items:center;
-      border:1px solid #ddd;
-      background:#fff;
-      padding:8px 10px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:700;
-      font-size:13px;
-    }
-    .toggle:hover{ background:var(--accent-soft); }
-
-    .quiz-squares{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-    }
-
-    .quiz-square{
-      width:64px;
-      height:64px;
-      border-radius:14px;
-      border:1px solid var(--border);
-      background:#f8fafc;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-      user-select:none;
-      font-weight:800;
-      transition:transform .08s, background .2s, border-color .2s;
-      position:relative;
-    }
-
-    .quiz-square:hover{
-      transform:translateY(-1px);
-      background:#eef7ff;
-      border-color:#cfe9ff;
-    }
-
-    .quiz-square .num{
-      font-size:16px;
-      line-height:1;
-    }
-
-    .quiz-square .qcount{
-      margin-top:6px;
-      font-size:11px;
-      font-weight:700;
-      color:var(--muted);
-      line-height:1;
-    }
-
-    .hidden{ display:none !important; }
-  </style>
-
-  <script>
-    // must be logged in
-    const token = localStorage.getItem("token");
-    if (!token) window.location.href = "login.html";
-  </script>
-</head>
-
-<body>
-  <div class="wrap">
-
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo">PO</div>
-        <div>
-          <strong>Practice Online</strong>
-          <span id="welcomeSub">Grades 8–12 Mathematics</span>
-        </div>
-      </div>
-
-      <nav class="nav">
-        <a href="learner-quizzes.html" class="active" data-auth>Practice</a>
-        <a href="about.html">About</a>
-        <a href="admin-quiz.html" data-admin>Admin</a>
-        <button class="logout" type="button" id="logoutBtn" data-auth>Logout</button>
-      </nav>
-
-      <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu">Menu</button>
-    </div>
-
-    <div class="mobile-menu" id="mobileMenu">
-      <a href="learner-quizzes.html" class="active" data-auth>Practice</a>
-      <a href="about.html">About</a>
-      <a href="admin-quiz.html" data-admin>Admin</a>
-      <button class="logout" type="button" id="logoutBtnMobile" data-auth>Logout</button>
-    </div>
-
-    <div class="card">
-      <h1>Select Grade</h1>
-      <p class="muted" style="margin:6px 0 0 0;">Choose your grade to view quizzes.</p>
-
-      <div class="controls">
-        <div class="group">
-          <label class="muted" style="font-size:12px;">Grade</label>
-          <select id="gradeSelect">
-            <option value="">Choose grade</option>
-            <option value="8">Grade 8</option>
-            <option value="9">Grade 9</option>
-            <option value="10">Grade 10</option>
-            <option value="11">Grade 11</option>
-            <option value="12">Grade 12</option>
-          </select>
-        </div>
-
-        <div class="group" style="flex:1; min-width:220px;">
-          <label class="muted" style="font-size:12px;">Search topic</label>
-          <input id="topicSearch" type="text" placeholder="Type a topic name..." disabled />
-        </div>
-
-        <div class="group">
-          <label class="muted" style="font-size:12px;">Actions</label>
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn2" id="expandAllBtn" type="button" disabled>Expand all</button>
-            <button class="btn2" id="collapseAllBtn" type="button" disabled>Collapse all</button>
-          </div>
-        </div>
-      </div>
-
-      <p id="status" class="muted" style="margin-top:12px;"></p>
-      <div id="quizList"></div>
-    </div>
-
-    <footer>
-      © <span id="year"></span> Practice Online. All rights reserved.
-    </footer>
-
-  </div>
-
-  <script src="nav.js"></script>
-
-  <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
-
-    // backend URL
-    const API = window.API || "https://practice-backend-msgn.onrender.com";
-    const token = localStorage.getItem("token");
-
-    // Welcome text
-    const username = localStorage.getItem("username") || "Learner";
-    document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
-
-    const gradeSelect = document.getElementById("gradeSelect");
-    const status = document.getElementById("status");
-    const quizList = document.getElementById("quizList");
-
-    const topicSearch = document.getElementById("topicSearch");
-    const expandAllBtn = document.getElementById("expandAllBtn");
-    const collapseAllBtn = document.getElementById("collapseAllBtn");
-
-    let topicOpenState = {};
-
-    gradeSelect.addEventListener("change", loadQuizzes);
-    topicSearch.addEventListener("input", () => applyTopicFilter(topicSearch.value));
-    expandAllBtn.addEventListener("click", () => setAllTopics(true));
-    collapseAllBtn.addEventListener("click", () => setAllTopics(false));
-
-    function setControlsEnabled(on){
-      topicSearch.disabled = !on;
-      expandAllBtn.disabled = !on;
-      collapseAllBtn.disabled = !on;
-    }
-
-    async function loadQuizzes() {
-      const grade = gradeSelect.value;
-
-      quizList.innerHTML = "";
-      status.textContent = "";
-
-      setControlsEnabled(false);
-      topicSearch.value = "";
-
-      if (!grade) return;
-
-      status.className = "muted";
-      status.textContent = "Loading quizzes...";
-
-      try {
-        const res = await fetch(`${API}/api/quizzes?grade=${grade}`, {
-          headers: { Authorization: "Bearer " + token }
-        });
-
-        if (res.status === 401) {
-          localStorage.removeItem("token");
-          window.location.href = "login.html";
-          return;
-        }
-
-        const text = await res.text(); // helpful for debugging
-        if (!res.ok) {
-          status.className = "error";
-          status.textContent = `Failed to load quizzes (HTTP ${res.status}).`;
-          quizList.innerHTML = `<pre class="muted" style="white-space:pre-wrap">${escapeHtml(text)}</pre>`;
-          return;
-        }
-
-        const quizzes = JSON.parse(text);
-
-        if (!Array.isArray(quizzes) || quizzes.length === 0) {
-          status.className = "muted";
-          status.textContent = "";
-          quizList.innerHTML = `<p class="muted">No quizzes yet for Grade ${grade}.</p>`;
-          return;
-        }
-
-        // Group by topic
-        const byTopic = {};
-        for (const q of quizzes) {
-          const topic = (q.topic || "General").trim() || "General";
-          if (!byTopic[topic]) byTopic[topic] = [];
-          byTopic[topic].push(q);
-        }
-
-        const topics = Object.keys(byTopic).sort((a, b) => a.localeCompare(b));
-
-        // Stable ordering for quiz numbers
-        for (const t of topics) {
-          byTopic[t].sort((a, b) => {
-            const da = new Date(a.createdAt || 0).getTime();
-            const db = new Date(b.createdAt || 0).getTime();
-            return da - db;
-          });
-        }
-
-        status.className = "muted";
-        status.textContent = "";
-
-        for (const t of topics) {
-          if (typeof topicOpenState[t] !== "boolean") topicOpenState[t] = true;
-        }
-
-        renderTopics(byTopic, topics);
-        setControlsEnabled(true);
-
-      } catch (err) {
-        status.className = "error";
-        status.textContent = "Could not load quizzes. Please try again.";
-      }
-    }
-
-    function renderTopics(byTopic, topics){
-      quizList.innerHTML = `
-        <div class="topic-wrap">
-          ${topics.map(topic => {
-            const list = byTopic[topic] || [];
-            const open = topicOpenState[topic] !== false;
-
-            return `
-              <div class="topic-card" data-topic-card="${escapeAttr(topic)}">
-                <div class="topic-head">
-                  <div class="topic-left">
-                    <h3 class="topic-title" data-topic-title>${escapeHtml(topic)}</h3>
-                    <span class="topic-sub">${list.length} quizzes</span>
-                  </div>
-
-                  <button class="toggle" type="button"
-                    data-toggle="${escapeAttr(topic)}"
-                    aria-expanded="${open ? "true" : "false"}">
-                    ${open ? "Collapse" : "Expand"}
-                  </button>
-                </div>
-
-                <div class="quiz-squares ${open ? "" : "hidden"}" data-topic-body="${escapeAttr(topic)}">
-                  ${list.map((q, i) => {
-                    const qCount = (q.questions && q.questions.length) ? q.questions.length : 0;
-                    return `
-                      <div class="quiz-square"
-                        title="${escapeAttr(q.title || "Quiz")}"
-                        onclick="window.location.href='attempt.html?quizId=${encodeURIComponent(q._id)}'">
-                        <div class="num">${i + 1}</div>
-                        <div class="qcount">${qCount}Q</div>
-                      </div>
-                    `;
-                  }).join("")}
-                </div>
-              </div>
-            `;
-          }).join("")}
-        </div>
-      `;
-
-      document.querySelectorAll("[data-toggle]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const topic = btn.getAttribute("data-toggle");
-          const body = document.querySelector(`[data-topic-body="${cssEscape(topic)}"]`);
-          if (!body) return;
-
-          const nowOpen = body.classList.contains("hidden");
-          body.classList.toggle("hidden");
-
-          topicOpenState[topic] = nowOpen;
-          btn.textContent = nowOpen ? "Collapse" : "Expand";
-          btn.setAttribute("aria-expanded", nowOpen ? "true" : "false");
-        });
-      });
-
-      applyTopicFilter(topicSearch.value);
-    }
-
-    function applyTopicFilter(query){
-      const q = (query || "").trim().toLowerCase();
-      document.querySelectorAll("[data-topic-card]").forEach(card => {
-        const titleEl = card.querySelector("[data-topic-title]");
-        const topicName = (titleEl?.textContent || "").toLowerCase();
-        card.classList.toggle("hidden", !!q && !topicName.includes(q));
-      });
-    }
-
-    function setAllTopics(open){
-      document.querySelectorAll("[data-topic-card]").forEach(card => {
-        const btn = card.querySelector("[data-toggle]");
-        const topic = btn?.getAttribute("data-toggle");
-        if (!topic) return;
-
-        const body = card.querySelector(`[data-topic-body="${cssEscape(topic)}"]`);
-        if (!body) return;
-
-        if (open) {
-          body.classList.remove("hidden");
-          btn.textContent = "Collapse";
-          btn.setAttribute("aria-expanded", "true");
-          topicOpenState[topic] = true;
-        } else {
-          body.classList.add("hidden");
-          btn.textContent = "Expand";
-          btn.setAttribute("aria-expanded", "false");
-          topicOpenState[topic] = false;
-        }
-      });
-    }
-
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-    function escapeAttr(str) {
-      return String(str).replaceAll('"', "&quot;");
-    }
-    function cssEscape(str){
-      return String(str).replaceAll('"','\\"');
-    }
-  </script>
-</body>
-</html>
+    const quizzes = await Quiz.find(filter).sort({ createdAt: -1 });
+    res.json(quizzes);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ✅ Get single quiz
+app.get("/api/quizzes/:id", authRequired, async (req, res) => {
+  try {
+    const quiz = await Quiz.findById(req.params.id);
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+    res.json(quiz);
+  } catch {
+    res.status(400).json({ message: "Invalid quiz id" });
+  }
+});
+
+// ✅ Admin creates quiz
+app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
+  try {
+    const quiz = await Quiz.create(req.body);
+    res.status(201).json(quiz);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+/* ------------------ DATABASE + START ------------------ */
+
+const PORT = process.env.PORT || 5000;
+
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("MongoDB connected");
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  })
+  .catch((err) => console.error("Mongo error:", err.message));
