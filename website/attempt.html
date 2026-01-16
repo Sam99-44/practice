@@ -90,7 +90,6 @@
 
       <nav class="nav">
         <a href="learner-quizzes.html" class="nav-btn">Back to Practice</a>
-        <a href="payment.html" data-auth>Subscription</a>
         <a href="about.html">About</a>
         <a href="admin-quiz.html" data-admin>Admin</a>
         <button class="logout" type="button" id="logoutBtn" data-auth>Logout</button>
@@ -101,7 +100,6 @@
 
     <div class="mobile-menu" id="mobileMenu">
       <a href="learner-quizzes.html">Back to Practice</a>
-      <a href="payment.html" data-auth>Subscription</a>
       <a href="about.html">About</a>
       <a href="admin-quiz.html" data-admin>Admin</a>
       <button class="logout" type="button" id="logoutBtnMobile" data-auth>Logout</button>
@@ -135,7 +133,7 @@
     // Use nav.js API if available, else fallback
     const API = window.API || "https://practice-backend-msgn.onrender.com";
 
-    const token = localStorage.getItem("token"); // ✅ use token for protected routes
+    const token = localStorage.getItem("token");
 
     const params = new URLSearchParams(window.location.search);
     const quizId = params.get("quizId");
@@ -166,24 +164,10 @@
     async function loadQuiz() {
       try {
         const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`, {
-          headers: {
-            Authorization: "Bearer " + token
-          }
+          headers: { Authorization: "Bearer " + token }
         });
 
-        if (res.status === 403) {
-          msgEl.className = "error";
-          msgEl.textContent = "Your premium access has expired. Please pay R95 to continue.";
-          quizTitle.textContent = "Premium expired";
-
-          setTimeout(() => {
-            window.location.href = "payment.html";
-          }, 1200);
-
-          submitBtn.disabled = true;
-          return;
-        }
-
+        // If token invalid / expired
         if (res.status === 401) {
           localStorage.removeItem("token");
           window.location.href = "login.html";
