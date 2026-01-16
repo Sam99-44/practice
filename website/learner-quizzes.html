@@ -10,566 +10,115 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    :root{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --border:#e6e6e6;
-      --text:#0f172a;
-      --muted:#475569;
-      --accent:#0b3c5d;
-      --accent-soft:#e7eef5;
-      --radius:14px;
-      --shadow:0 6px 18px rgba(0,0,0,0.06);
-      --error:#b91c1c;
+    body{margin:0;font-family:Inter,Arial,sans-serif;background:#f6f7fb;color:#0f172a}
+    .wrap{max-width:1000px;margin:0 auto;padding:24px}
+    .card{background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:18px}
+    .topic{margin-top:14px}
+    .topic h3{margin-bottom:8px;color:#0b3c5d}
+    .grid{display:flex;gap:10px;flex-wrap:wrap}
+    .quiz{
+      width:64px;height:64px;border-radius:14px;border:1px solid #ddd;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      cursor:pointer;background:#f8fafc;font-weight:700
     }
-
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Inter,Arial,sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
-
-    .wrap{max-width:1000px; margin:0 auto; padding:24px;}
-
-    .topbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:12px;
-      flex-wrap:wrap;
-      gap:12px;
-    }
-    .brand{display:flex; align-items:center; gap:10px;}
-    .logo{
-      width:38px; height:38px; border-radius:10px;
-      background:var(--accent); color:white;
-      display:flex; align-items:center; justify-content:center;
-      font-weight:700; font-size:16px;
-      flex:0 0 auto;
-    }
-    .brand span{display:block; font-size:13px; color:var(--muted);}
-
-    .nav{display:flex; align-items:center; gap:14px;}
-    .nav a{
-      text-decoration:none;
-      font-size:14px;
-      color:var(--text);
-      padding:6px 8px;
-      border-radius:8px;
-      transition:background 0.2s;
-    }
-    .nav a:hover{ background:var(--accent-soft); }
-    .nav a.active{ font-weight:600; color:var(--accent); }
-    .nav .logout{
-      background:var(--accent);
-      color:white;
-      border:none;
-      padding:8px 12px;
-      border-radius:10px;
-      cursor:pointer;
-      font-size:14px;
-    }
-
-    .menu-btn{
-      display:none;
-      border:1px solid var(--border);
-      background:var(--card);
-      color:var(--text);
-      padding:10px 12px;
-      border-radius:10px;
-      cursor:pointer;
-    }
-    .mobile-menu{
-      display:none;
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:10px;
-      margin-bottom:16px;
-    }
-    .mobile-menu a,
-    .mobile-menu button{
-      width:100%;
-      display:block;
-      text-align:left;
-      padding:10px 12px;
-      border-radius:10px;
-      border:none;
-      background:transparent;
-      color:var(--text);
-      text-decoration:none;
-      cursor:pointer;
-      font-size:14px;
-    }
-    .mobile-menu a:hover,
-    .mobile-menu button:hover{ background:var(--accent-soft); }
-    .mobile-menu a.active{ font-weight:600; color:var(--accent); }
-    .mobile-menu .logout{
-      background:var(--accent);
-      color:white;
-    }
-    @media (max-width: 720px){
-      .nav{ display:none; }
-      .menu-btn{ display:inline-flex; }
-      .mobile-menu.open{ display:block; }
-    }
-
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      padding:18px;
-      box-shadow:var(--shadow);
-    }
-
-    h1{margin:0; font-size:20px;}
-    .muted{color:var(--muted); line-height:1.6;}
-    .error{color:var(--error);}
-
-    select, input[type="text"]{
-      padding:10px;
-      border-radius:10px;
-      border:1px solid #ddd;
-      width:260px;
-      max-width:100%;
-      font-size:14px;
-      outline:none;
-      margin-top:8px;
-      background:#fff;
-    }
-
-    footer{
-      margin-top:24px;
-      text-align:center;
-      font-size:13px;
-      color:#64748b;
-    }
-
-    .controls{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:flex-end;
-      margin-top:12px;
-    }
-    .controls .group{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-    .btn2{
-      background:#fff;
-      color:var(--text);
-      border:1px solid #ddd;
-      padding:10px 12px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:600;
-      font-size:14px;
-    }
-
-    .topic-wrap{
-      margin-top:14px;
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-    }
-
-    .topic-card{
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      padding:14px;
-    }
-
-    .topic-head{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-
-    .topic-left{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
-    .topic-title{
-      margin:0;
-      font-size:16px;
-      font-weight:800;
-      color:var(--accent);
-    }
-
-    .topic-sub{
-      font-size:12px;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid #cfe9ff;
-      background:#eef7ff;
-      color:#0b3c5d;
-      white-space:nowrap;
-    }
-
-    .toggle{
-      display:inline-flex;
-      gap:8px;
-      align-items:center;
-      border:1px solid #ddd;
-      background:#fff;
-      padding:8px 10px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:700;
-      font-size:13px;
-    }
-    .toggle:hover{ background:var(--accent-soft); }
-
-    .quiz-squares{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-    }
-
-    .quiz-square{
-      width:64px;
-      height:64px;
-      border-radius:14px;
-      border:1px solid var(--border);
-      background:#f8fafc;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-      user-select:none;
-      font-weight:800;
-      transition:transform .08s, background .2s, border-color .2s;
-      position:relative;
-    }
-
-    .quiz-square:hover{
-      transform:translateY(-1px);
-      background:#eef7ff;
-      border-color:#cfe9ff;
-    }
-
-    .quiz-square .num{
-      font-size:16px;
-      line-height:1;
-    }
-
-    .quiz-square .qcount{
-      margin-top:6px;
-      font-size:11px;
-      font-weight:700;
-      color:var(--muted);
-      line-height:1;
-    }
-
-    .hidden{ display:none !important; }
+    .quiz:hover{background:#eef7ff}
+    select{padding:10px;border-radius:10px;border:1px solid #ddd}
+    .muted{color:#475569}
+    .error{color:#b91c1c}
   </style>
 
   <script>
-    // must be logged in
-    const token = localStorage.getItem("token");
-    if (!token) window.location.href = "login.html";
+    const authToken = localStorage.getItem("token");
+    if (!authToken) window.location.href = "login.html";
   </script>
 </head>
 
 <body>
-  <div class="wrap">
+<div class="wrap">
+  <div class="card">
+    <h2>Select Grade</h2>
 
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo">PO</div>
-        <div>
-          <strong>Practice Online</strong>
-          <span id="welcomeSub">Grades 8–12 Mathematics</span>
-        </div>
-      </div>
+    <select id="gradeSelect">
+      <option value="">Choose grade</option>
+      <option value="8">Grade 8</option>
+      <option value="9">Grade 9</option>
+      <option value="10">Grade 10</option>
+      <option value="11">Grade 11</option>
+      <option value="12">Grade 12</option>
+    </select>
 
-      <nav class="nav">
-        <a href="learner-quizzes.html" class="active" data-auth>Practice</a>
-        <a href="about.html">About</a>
-        <a href="admin-quiz.html" data-admin>Admin</a>
-        <button class="logout" type="button" id="logoutBtn" data-auth>Logout</button>
-      </nav>
-
-      <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu">Menu</button>
-    </div>
-
-    <div class="mobile-menu" id="mobileMenu">
-      <a href="learner-quizzes.html" class="active" data-auth>Practice</a>
-      <a href="about.html">About</a>
-      <a href="admin-quiz.html" data-admin>Admin</a>
-      <button class="logout" type="button" id="logoutBtnMobile" data-auth>Logout</button>
-    </div>
-
-    <div class="card">
-      <h1>Select Grade</h1>
-      <p class="muted" style="margin:6px 0 0 0;">Choose your grade to view quizzes.</p>
-
-      <div class="controls">
-        <div class="group">
-          <label class="muted" style="font-size:12px;">Grade</label>
-          <select id="gradeSelect">
-            <option value="">Choose grade</option>
-            <option value="8">Grade 8</option>
-            <option value="9">Grade 9</option>
-            <option value="10">Grade 10</option>
-            <option value="11">Grade 11</option>
-            <option value="12">Grade 12</option>
-          </select>
-        </div>
-
-        <div class="group" style="flex:1; min-width:220px;">
-          <label class="muted" style="font-size:12px;">Search topic</label>
-          <input id="topicSearch" type="text" placeholder="Type a topic name..." disabled />
-        </div>
-
-        <div class="group">
-          <label class="muted" style="font-size:12px;">Actions</label>
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn2" id="expandAllBtn" type="button" disabled>Expand all</button>
-            <button class="btn2" id="collapseAllBtn" type="button" disabled>Collapse all</button>
-          </div>
-        </div>
-      </div>
-
-      <p id="status" class="muted" style="margin-top:12px;"></p>
-      <div id="quizList"></div>
-    </div>
-
-    <footer>
-      © <span id="year"></span> Practice Online. All rights reserved.
-    </footer>
-
+    <p id="status" class="muted"></p>
+    <div id="quizList"></div>
   </div>
+</div>
 
-  <script src="nav.js"></script>
+<script>
+  const API = "https://practice-backend-msgn.onrender.com";
+  const gradeSelect = document.getElementById("gradeSelect");
+  const quizList = document.getElementById("quizList");
+  const status = document.getElementById("status");
 
-  <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
+  gradeSelect.addEventListener("change", loadQuizzes);
 
-    // backend URL
-    const API = window.API || "https://practice-backend-msgn.onrender.com";
-    const token = localStorage.getItem("token");
+  async function loadQuizzes() {
+    const grade = gradeSelect.value;
+    quizList.innerHTML = "";
+    status.textContent = "";
 
-    // Welcome text
-    const username = localStorage.getItem("username") || "Learner";
-    document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
+    if (!grade) return;
 
-    const gradeSelect = document.getElementById("gradeSelect");
-    const status = document.getElementById("status");
-    const quizList = document.getElementById("quizList");
+    status.textContent = "Loading quizzes...";
 
-    const topicSearch = document.getElementById("topicSearch");
-    const expandAllBtn = document.getElementById("expandAllBtn");
-    const collapseAllBtn = document.getElementById("collapseAllBtn");
+    try {
+      const res = await fetch(`${API}/api/quizzes?grade=${grade}`, {
+        headers: { Authorization: "Bearer " + authToken }
+      });
 
-    let topicOpenState = {};
+      if (!res.ok) {
+        status.className = "error";
+        status.textContent = "Failed to load quizzes";
+        return;
+      }
 
-    gradeSelect.addEventListener("change", loadQuizzes);
-    topicSearch.addEventListener("input", () => applyTopicFilter(topicSearch.value));
-    expandAllBtn.addEventListener("click", () => setAllTopics(true));
-    collapseAllBtn.addEventListener("click", () => setAllTopics(false));
-
-    function setControlsEnabled(on){
-      topicSearch.disabled = !on;
-      expandAllBtn.disabled = !on;
-      collapseAllBtn.disabled = !on;
-    }
-
-    async function loadQuizzes() {
-      const grade = gradeSelect.value;
-
-      quizList.innerHTML = "";
+      const quizzes = await res.json();
       status.textContent = "";
 
-      setControlsEnabled(false);
-      topicSearch.value = "";
-
-      if (!grade) return;
-
-      status.className = "muted";
-      status.textContent = "Loading quizzes...";
-
-      try {
-        const res = await fetch(`${API}/api/quizzes?grade=${grade}`, {
-          headers: { Authorization: "Bearer " + token }
-        });
-
-        if (res.status === 401) {
-          localStorage.removeItem("token");
-          window.location.href = "login.html";
-          return;
-        }
-
-        const text = await res.text(); // helpful for debugging
-        if (!res.ok) {
-          status.className = "error";
-          status.textContent = `Failed to load quizzes (HTTP ${res.status}).`;
-          quizList.innerHTML = `<pre class="muted" style="white-space:pre-wrap">${escapeHtml(text)}</pre>`;
-          return;
-        }
-
-        const quizzes = JSON.parse(text);
-
-        if (!Array.isArray(quizzes) || quizzes.length === 0) {
-          status.className = "muted";
-          status.textContent = "";
-          quizList.innerHTML = `<p class="muted">No quizzes yet for Grade ${grade}.</p>`;
-          return;
-        }
-
-        // Group by topic
-        const byTopic = {};
-        for (const q of quizzes) {
-          const topic = (q.topic || "General").trim() || "General";
-          if (!byTopic[topic]) byTopic[topic] = [];
-          byTopic[topic].push(q);
-        }
-
-        const topics = Object.keys(byTopic).sort((a, b) => a.localeCompare(b));
-
-        // Stable ordering for quiz numbers
-        for (const t of topics) {
-          byTopic[t].sort((a, b) => {
-            const da = new Date(a.createdAt || 0).getTime();
-            const db = new Date(b.createdAt || 0).getTime();
-            return da - db;
-          });
-        }
-
-        status.className = "muted";
-        status.textContent = "";
-
-        for (const t of topics) {
-          if (typeof topicOpenState[t] !== "boolean") topicOpenState[t] = true;
-        }
-
-        renderTopics(byTopic, topics);
-        setControlsEnabled(true);
-
-      } catch (err) {
-        status.className = "error";
-        status.textContent = "Could not load quizzes. Please try again.";
+      if (!quizzes.length) {
+        quizList.innerHTML = `<p class="muted">No quizzes for Grade ${grade}</p>`;
+        return;
       }
-    }
 
-    function renderTopics(byTopic, topics){
-      quizList.innerHTML = `
-        <div class="topic-wrap">
-          ${topics.map(topic => {
-            const list = byTopic[topic] || [];
-            const open = topicOpenState[topic] !== false;
+      const byTopic = {};
+      quizzes.forEach(q => {
+        const t = q.topic || "General";
+        byTopic[t] ??= [];
+        byTopic[t].push(q);
+      });
 
-            return `
-              <div class="topic-card" data-topic-card="${escapeAttr(topic)}">
-                <div class="topic-head">
-                  <div class="topic-left">
-                    <h3 class="topic-title" data-topic-title>${escapeHtml(topic)}</h3>
-                    <span class="topic-sub">${list.length} quizzes</span>
-                  </div>
+      Object.keys(byTopic).forEach(topic => {
+        const div = document.createElement("div");
+        div.className = "topic";
 
-                  <button class="toggle" type="button"
-                    data-toggle="${escapeAttr(topic)}"
-                    aria-expanded="${open ? "true" : "false"}">
-                    ${open ? "Collapse" : "Expand"}
-                  </button>
-                </div>
-
-                <div class="quiz-squares ${open ? "" : "hidden"}" data-topic-body="${escapeAttr(topic)}">
-                  ${list.map((q, i) => {
-                    const qCount = (q.questions && q.questions.length) ? q.questions.length : 0;
-                    return `
-                      <div class="quiz-square"
-                        title="${escapeAttr(q.title || "Quiz")}"
-                        onclick="window.location.href='attempt.html?quizId=${encodeURIComponent(q._id)}'">
-                        <div class="num">${i + 1}</div>
-                        <div class="qcount">${qCount}Q</div>
-                      </div>
-                    `;
-                  }).join("")}
-                </div>
+        div.innerHTML = `
+          <h3>${topic}</h3>
+          <div class="grid">
+            ${byTopic[topic].map((q,i)=>`
+              <div class="quiz"
+                onclick="location.href='attempt.html?quizId=${q._id}'">
+                <div>${i+1}</div>
+                <small>${q.questions.length}Q</small>
               </div>
-            `;
-          }).join("")}
-        </div>
-      `;
-
-      document.querySelectorAll("[data-toggle]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const topic = btn.getAttribute("data-toggle");
-          const body = document.querySelector(`[data-topic-body="${cssEscape(topic)}"]`);
-          if (!body) return;
-
-          const nowOpen = body.classList.contains("hidden");
-          body.classList.toggle("hidden");
-
-          topicOpenState[topic] = nowOpen;
-          btn.textContent = nowOpen ? "Collapse" : "Expand";
-          btn.setAttribute("aria-expanded", nowOpen ? "true" : "false");
-        });
+            `).join("")}
+          </div>
+        `;
+        quizList.appendChild(div);
       });
 
-      applyTopicFilter(topicSearch.value);
+    } catch (err) {
+      status.className = "error";
+      status.textContent = "Network error";
     }
-
-    function applyTopicFilter(query){
-      const q = (query || "").trim().toLowerCase();
-      document.querySelectorAll("[data-topic-card]").forEach(card => {
-        const titleEl = card.querySelector("[data-topic-title]");
-        const topicName = (titleEl?.textContent || "").toLowerCase();
-        card.classList.toggle("hidden", !!q && !topicName.includes(q));
-      });
-    }
-
-    function setAllTopics(open){
-      document.querySelectorAll("[data-topic-card]").forEach(card => {
-        const btn = card.querySelector("[data-toggle]");
-        const topic = btn?.getAttribute("data-toggle");
-        if (!topic) return;
-
-        const body = card.querySelector(`[data-topic-body="${cssEscape(topic)}"]`);
-        if (!body) return;
-
-        if (open) {
-          body.classList.remove("hidden");
-          btn.textContent = "Collapse";
-          btn.setAttribute("aria-expanded", "true");
-          topicOpenState[topic] = true;
-        } else {
-          body.classList.add("hidden");
-          btn.textContent = "Expand";
-          btn.setAttribute("aria-expanded", "false");
-          topicOpenState[topic] = false;
-        }
-      });
-    }
-
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-    function escapeAttr(str) {
-      return String(str).replaceAll('"', "&quot;");
-    }
-    function cssEscape(str){
-      return String(str).replaceAll('"','\\"');
-    }
-  </script>
+  }
+</script>
 </body>
 </html>
