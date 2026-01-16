@@ -21,7 +21,6 @@
       --radius:14px;
       --shadow:0 6px 18px rgba(0,0,0,0.06);
       --error:#b91c1c;
-      --ok:#065f46;
     }
 
     *{box-sizing:border-box}
@@ -34,7 +33,6 @@
 
     .wrap{max-width:1000px; margin:0 auto; padding:24px;}
 
-    /* Topbar */
     .topbar{
       display:flex;
       justify-content:space-between;
@@ -53,7 +51,6 @@
     }
     .brand span{display:block; font-size:13px; color:var(--muted);}
 
-    /* Desktop nav */
     .nav{display:flex; align-items:center; gap:14px;}
     .nav a{
       text-decoration:none;
@@ -75,7 +72,6 @@
       font-size:14px;
     }
 
-    /* Mobile */
     .menu-btn{
       display:none;
       border:1px solid var(--border);
@@ -121,7 +117,6 @@
       .mobile-menu.open{ display:block; }
     }
 
-    /* Page card */
     .card{
       background:var(--card);
       border:1px solid var(--border);
@@ -133,7 +128,6 @@
     h1{margin:0; font-size:20px;}
     .muted{color:var(--muted); line-height:1.6;}
     .error{color:var(--error);}
-    .ok{color:var(--ok);}
 
     select, input[type="text"]{
       padding:10px;
@@ -154,7 +148,6 @@
       color:#64748b;
     }
 
-    /* Topic blocks + quiz squares */
     .controls{
       display:flex;
       gap:10px;
@@ -282,50 +275,10 @@
     }
 
     .hidden{ display:none !important; }
-
-    /* Premium banner */
-    .premium-banner{
-      margin-top:12px;
-      padding:12px;
-      border-radius:12px;
-      border:1px solid #e6e6e6;
-      background:#f8fafc;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-    .premium-banner .left{display:flex; flex-direction:column; gap:4px;}
-    .premium-banner .actions{display:flex; gap:10px; flex-wrap:wrap;}
-    .paybtn{
-      background:var(--accent);
-      color:#fff;
-      border:none;
-      padding:10px 12px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:700;
-      font-size:14px;
-      text-decoration:none;
-      display:inline-block;
-    }
-    .paybtn2{
-      background:#fff;
-      color:var(--text);
-      border:1px solid #ddd;
-      padding:10px 12px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:700;
-      font-size:14px;
-      text-decoration:none;
-      display:inline-block;
-    }
   </style>
 
   <script>
-    // Protect this page (must be logged in)
+    // must be logged in
     const token = localStorage.getItem("token");
     if (!token) window.location.href = "login.html";
   </script>
@@ -334,7 +287,6 @@
 <body>
   <div class="wrap">
 
-    <!-- TOP BAR -->
     <div class="topbar">
       <div class="brand">
         <div class="logo">PO</div>
@@ -344,46 +296,26 @@
         </div>
       </div>
 
-      <!-- Desktop Nav -->
       <nav class="nav">
         <a href="learner-quizzes.html" class="active" data-auth>Practice</a>
-        <a href="payment.html" data-auth>Subscription</a>
         <a href="about.html">About</a>
-
         <a href="admin-quiz.html" data-admin>Admin</a>
         <button class="logout" type="button" id="logoutBtn" data-auth>Logout</button>
       </nav>
 
-      <!-- Mobile Menu Button -->
       <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu">Menu</button>
     </div>
 
-    <!-- Mobile Menu Panel -->
     <div class="mobile-menu" id="mobileMenu">
       <a href="learner-quizzes.html" class="active" data-auth>Practice</a>
-      <a href="payment.html" data-auth>Subscription</a>
       <a href="about.html">About</a>
-
       <a href="admin-quiz.html" data-admin>Admin</a>
       <button class="logout" type="button" id="logoutBtnMobile" data-auth>Logout</button>
     </div>
 
-    <!-- CONTENT -->
     <div class="card">
       <h1>Select Grade</h1>
       <p class="muted" style="margin:6px 0 0 0;">Choose your grade to view quizzes.</p>
-
-      <!-- ✅ Premium status banner -->
-      <div id="premiumBanner" class="premium-banner hidden">
-        <div class="left">
-          <strong id="premiumTitle">Checking subscription…</strong>
-          <span class="muted" id="premiumSub"></span>
-        </div>
-        <div class="actions">
-          <a class="paybtn" href="payment.html">Go to Subscription</a>
-          <a class="paybtn2" href="payment.html">Renew</a>
-        </div>
-      </div>
 
       <div class="controls">
         <div class="group">
@@ -422,16 +354,13 @@
 
   </div>
 
-  <!-- ✅ Shared navigation + logout + admin visibility -->
   <script src="nav.js"></script>
 
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
 
-    // ✅ Backend URL (use nav.js if it sets window.API)
+    // backend URL
     const API = window.API || "https://practice-backend-msgn.onrender.com";
-
-    // ✅ token
     const token = localStorage.getItem("token");
 
     // Welcome text
@@ -446,15 +375,10 @@
     const expandAllBtn = document.getElementById("expandAllBtn");
     const collapseAllBtn = document.getElementById("collapseAllBtn");
 
-    const premiumBanner = document.getElementById("premiumBanner");
-    const premiumTitle = document.getElementById("premiumTitle");
-    const premiumSub = document.getElementById("premiumSub");
-
     let topicOpenState = {};
 
     gradeSelect.addEventListener("change", loadQuizzes);
     topicSearch.addEventListener("input", () => applyTopicFilter(topicSearch.value));
-
     expandAllBtn.addEventListener("click", () => setAllTopics(true));
     collapseAllBtn.addEventListener("click", () => setAllTopics(false));
 
@@ -463,46 +387,6 @@
       expandAllBtn.disabled = !on;
       collapseAllBtn.disabled = !on;
     }
-
-    // ✅ Check premium status (admins are allowed; learners see banner)
-    (async function checkPremium(){
-      try {
-        const res = await fetch(`${API}/api/auth/me`, {
-          headers: { Authorization: "Bearer " + token }
-        });
-
-        if (res.status === 401) {
-          localStorage.removeItem("token");
-          window.location.href = "login.html";
-          return;
-        }
-
-        if (!res.ok) return;
-
-        const u = await res.json();
-
-        // Admin should not pay and should not see banner
-        if (u.role === "admin") return;
-
-        premiumBanner.classList.remove("hidden");
-
-        const hasPremium = Boolean(u.premium);
-        const expRaw = u.premiumExpiresAt;
-
-        if (hasPremium && expRaw) {
-          const exp = new Date(expRaw);
-          premiumTitle.className = "ok";
-          premiumTitle.textContent = "✅ Subscription active";
-          premiumSub.textContent = `Expires on: ${exp.toLocaleString()}`;
-        } else {
-          premiumTitle.className = "error";
-          premiumTitle.textContent = "❌ Subscription not active";
-          premiumSub.textContent = "Pay R95 to unlock 30 days of access.";
-        }
-      } catch {
-        // no-op
-      }
-    })();
 
     async function loadQuizzes() {
       const grade = gradeSelect.value;
@@ -529,40 +413,24 @@
           return;
         }
 
-        // If premium expired: only redirect learners. Admin is allowed.
-        if (res.status === 403) {
-          // try to see role quickly
-          try {
-            const me = await fetch(`${API}/api/auth/me`, {
-              headers: { Authorization: "Bearer " + token }
-            });
-            if (me.ok) {
-              const u = await me.json();
-              if (u.role !== "admin") {
-                status.className = "error";
-                status.textContent = "Your premium access has expired. Redirecting to payment...";
-                setTimeout(() => window.location.href = "payment.html", 1200);
-                return;
-              }
-            }
-          } catch {}
-          // fallback: if we can't confirm role, still show message but don't auto-redirect
+        const text = await res.text(); // helpful for debugging
+        if (!res.ok) {
           status.className = "error";
-          status.textContent = "Access blocked (subscription required).";
+          status.textContent = `Failed to load quizzes (HTTP ${res.status}).`;
+          quizList.innerHTML = `<pre class="muted" style="white-space:pre-wrap">${escapeHtml(text)}</pre>`;
           return;
         }
 
-        if (!res.ok) throw new Error("Failed to load quizzes");
+        const quizzes = JSON.parse(text);
 
-        const quizzes = await res.json();
-
-        if (!quizzes.length) {
+        if (!Array.isArray(quizzes) || quizzes.length === 0) {
           status.className = "muted";
           status.textContent = "";
           quizList.innerHTML = `<p class="muted">No quizzes yet for Grade ${grade}.</p>`;
           return;
         }
 
+        // Group by topic
         const byTopic = {};
         for (const q of quizzes) {
           const topic = (q.topic || "General").trim() || "General";
@@ -572,6 +440,7 @@
 
         const topics = Object.keys(byTopic).sort((a, b) => a.localeCompare(b));
 
+        // Stable ordering for quiz numbers
         for (const t of topics) {
           byTopic[t].sort((a, b) => {
             const da = new Date(a.createdAt || 0).getTime();
@@ -592,8 +461,7 @@
 
       } catch (err) {
         status.className = "error";
-        status.textContent = "";
-        quizList.innerHTML = `<p class="error">Could not load quizzes. Please try again.</p>`;
+        status.textContent = "Could not load quizzes. Please try again.";
       }
     }
 
@@ -612,9 +480,7 @@
                     <span class="topic-sub">${list.length} quizzes</span>
                   </div>
 
-                  <button
-                    class="toggle"
-                    type="button"
+                  <button class="toggle" type="button"
                     data-toggle="${escapeAttr(topic)}"
                     aria-expanded="${open ? "true" : "false"}">
                     ${open ? "Collapse" : "Expand"}
@@ -625,8 +491,7 @@
                   ${list.map((q, i) => {
                     const qCount = (q.questions && q.questions.length) ? q.questions.length : 0;
                     return `
-                      <div
-                        class="quiz-square"
+                      <div class="quiz-square"
                         title="${escapeAttr(q.title || "Quiz")}"
                         onclick="window.location.href='attempt.html?quizId=${encodeURIComponent(q._id)}'">
                         <div class="num">${i + 1}</div>
@@ -661,13 +526,10 @@
 
     function applyTopicFilter(query){
       const q = (query || "").trim().toLowerCase();
-
       document.querySelectorAll("[data-topic-card]").forEach(card => {
         const titleEl = card.querySelector("[data-topic-title]");
         const topicName = (titleEl?.textContent || "").toLowerCase();
-
-        const match = !q || topicName.includes(q);
-        card.classList.toggle("hidden", !match);
+        card.classList.toggle("hidden", !!q && !topicName.includes(q));
       });
     }
 
@@ -702,15 +564,12 @@
         .replaceAll('"',"&quot;")
         .replaceAll("'","&#039;");
     }
-
     function escapeAttr(str) {
       return String(str).replaceAll('"', "&quot;");
     }
-
     function cssEscape(str){
       return String(str).replaceAll('"','\\"');
     }
   </script>
 </body>
 </html>
-
