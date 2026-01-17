@@ -68,10 +68,17 @@
     .btn2{background:#fff; color:var(--text); padding:10px 12px; border:1px solid #ddd; border-radius:10px; cursor:pointer; font-size:14px; font-weight:700;}
     .score{font-weight:700;}
     #msg{margin-top:10px;}
+
+    .lockBox{
+      border:1px dashed #ddd;
+      background:#fafafa;
+      padding:14px;
+      border-radius:12px;
+      margin-top:10px;
+    }
   </style>
 
   <script>
-    // protect page (must be logged in)
     const authToken = localStorage.getItem("token");
     if (!authToken) window.location.href = "login.html";
   </script>
@@ -117,6 +124,13 @@
         <div id="metaPill" class="pill" style="display:none;">Quiz</div>
       </div>
 
+      <div id="lockNotice" class="lockBox hidden">
+        <b class="error">This quiz is locked.</b>
+        <div class="muted" style="margin-top:6px;">
+          You already attempted this quiz. You can only attempt once.
+        </div>
+      </div>
+
       <div id="questions"></div>
 
       <div class="footerbar">
@@ -150,10 +164,12 @@
     const msgEl = document.getElementById("msg");
     const metaPill = document.getElementById("metaPill");
     const viewResultsBtn = document.getElementById("viewResultsBtn");
+    const lockNotice = document.getElementById("lockNotice");
 
     let quizData = null;
     let isSubmitted = false;
     let isSaving = false;
+    let isLocked = false;
 
     const username = localStorage.getItem("username") || "Learner";
     document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
@@ -162,16 +178,69 @@
       window.location.href = "results.html";
     });
 
+    document.getElementById("logoutBtn").onclick = () => {
+      localStorage.clear();
+      window.location.href = "login.html";
+    };
+
     if (!quizId) {
       quizTitle.textContent = "Quiz not found";
       msgEl.textContent = "Missing quizId in the URL.";
       msgEl.className = "error";
       submitBtn.disabled = true;
     } else {
-      loadQuiz();
+      init();
     }
 
-    async function loadQuiz() {
+    async function init(){
+      // 1) Check lock first
+      const attempted = await alreadyAttempted(quizId);
+      if (attempted) {
+        lockQuizUI();
+        // still load quiz title/info (optional)
+        await loadQuiz(true);
+        return;
+      }
+
+      // 2) Not attempted -> load quiz normally
+      await loadQuiz(false);
+    }
+
+    async function alreadyAttempted(qid){
+      try{
+        const res = await fetch(`${API}/api/results/my`, {
+          headers: { Authorization: "Bearer " + token }
+        });
+
+        if (res.status === 401) {
+          localStorage.clear();
+          window.location.href = "login.html";
+          return true;
+        }
+
+        if (!res.ok) return false;
+
+        const results = await res.json();
+        if (!Array.isArray(results)) return false;
+
+        return results.some(r => String(r.quizId) === String(qid));
+      } catch {
+        return false;
+      }
+    }
+
+    function lockQuizUI(){
+      isLocked = true;
+      lockNotice.classList.remove("hidden");
+      questionsDiv.innerHTML = "";
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Locked";
+      msgEl.className = "error";
+      msgEl.textContent = "You already attempted this quiz. It is locked.";
+      viewResultsBtn.disabled = false;
+    }
+
+    async function loadQuiz(lockedMode) {
       try {
         const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`, {
           headers: { Authorization: "Bearer " + token }
@@ -196,7 +265,9 @@
         metaPill.style.display = "inline-block";
         metaPill.textContent = `${count} questions`;
 
-        renderQuestions(quizData.questions || []);
+        if (!lockedMode) {
+          renderQuestions(quizData.questions || []);
+        }
       } catch (err) {
         quizTitle.textContent = "Quiz not found";
         msgEl.textContent = "Could not load this quiz.";
@@ -229,7 +300,7 @@
     }
 
     submitBtn.addEventListener("click", async () => {
-      if (!quizData || isSubmitted || isSaving) return;
+      if (!quizData || isSubmitted || isSaving || isLocked) return;
 
       const total = (quizData.questions || []).length;
       let score = 0;
@@ -239,7 +310,6 @@
         const chosen = document.querySelector(`input[name="q${idx}"]:checked`);
         const options = document.querySelectorAll(`input[name="q${idx}"]`);
 
-        // reset styles
         options.forEach((opt) => {
           const label = opt.closest("label");
           label.style.border = "1px solid #ddd";
@@ -248,7 +318,6 @@
 
         if (chosen) answered++;
 
-        // highlight correct
         options.forEach((opt, j) => {
           if (j === q.correctIndex) {
             const label = opt.closest("label");
@@ -257,7 +326,6 @@
           }
         });
 
-        // highlight wrong
         if (chosen) {
           if (Number(chosen.value) === q.correctIndex) {
             score++;
@@ -280,7 +348,6 @@
       const status = percent >= 50 ? "PASS" : "FAIL";
 
       resultEl.textContent = `Score: ${percent}% • ${status}`;
-
       msgEl.textContent = "Saving your result…";
       msgEl.className = "muted";
 
@@ -289,21 +356,14 @@
       submitBtn.disabled = true;
       document.querySelectorAll("input[type=radio]").forEach(r => r.disabled = true);
 
-      // ✅ Save to backend (results history + completed mark)
       await saveResult({ score, total, percent, status });
     });
 
-    async function saveResult({ score, total, percent }) {
+    async function saveResult({ score, total, percent, status }) {
       isSaving = true;
 
       try {
-        const payload = {
-          quizId,
-          score,
-          total,
-          percent,
-          status
-        };
+        const payload = { quizId, score, total, percent, status };
 
         const res = await fetch(`${API}/api/results`, {
           method: "POST",
@@ -314,14 +374,21 @@
           body: JSON.stringify(payload)
         });
 
-        // If your backend returns 409 (already exists), we treat it as OK.
         if (res.status === 401) {
           localStorage.clear();
           window.location.href = "login.html";
           return;
         }
 
-        if (!res.ok && res.status !== 409) {
+        // ✅ If already attempted, backend will return 409 (because of unique index)
+        if (res.status === 409) {
+          msgEl.className = "error";
+          msgEl.textContent = "You already attempted this quiz. It is now locked.";
+          viewResultsBtn.disabled = false;
+          return;
+        }
+
+        if (!res.ok) {
           const txt = await res.text().catch(()=>"");
           throw new Error(txt || `Failed to save result (HTTP ${res.status})`);
         }
@@ -339,10 +406,9 @@
           }
         } catch {}
       } catch (err) {
-        // Result saving failed (quiz can still be done)
         msgEl.className = "error";
         msgEl.textContent = "Saved on screen, but could not save to history. " + (err.message || "");
-        viewResultsBtn.disabled = false; // still let them go
+        viewResultsBtn.disabled = false;
       } finally {
         isSaving = false;
       }
