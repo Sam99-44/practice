@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 
 import Quiz from "./models/Quiz.js";
 import User from "./models/User.js";
+import Result from "./models/Result.js"; // ✅ ADD
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -156,13 +157,12 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 
 /* ------------------ QUIZ ROUTES ------------------ */
 
-// ✅ List quizzes (fix: grade can be stored as number OR string)
+// ✅ List quizzes (grade can be stored as number OR string)
 app.get("/api/quizzes", authRequired, async (req, res) => {
   try {
     const gradeRaw = req.query.grade;
     let filter = {};
 
-    // Supports: grade=12 and grade stored in Mongo as 12 OR "12"
     if (gradeRaw !== undefined && gradeRaw !== "") {
       const g = Number(gradeRaw);
       filter = Number.isFinite(g)
@@ -195,6 +195,59 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
     res.status(201).json(quiz);
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+});
+
+/* ------------------ RESULTS ROUTES (NEW) ------------------ */
+
+// ✅ Save a result (called when learner submits)
+// body: { quizId, score, total }  (percent is calculated on server)
+app.post("/api/results", authRequired, async (req, res) => {
+  try {
+    const { quizId, score, total } = req.body;
+
+    if (!quizId) return res.status(400).json({ message: "quizId is required" });
+
+    const s = Number(score);
+    const t = Number(total);
+
+    if (!Number.isFinite(s) || !Number.isFinite(t) || t <= 0 || s < 0) {
+      return res.status(400).json({ message: "Invalid score/total" });
+    }
+
+    // Fetch quiz to store snapshot fields
+    const quiz = await Quiz.findById(quizId).select("title topic grade");
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+
+    const percent = Math.max(0, Math.min(100, Math.round((s / t) * 100)));
+
+    const saved = await Result.create({
+      userId: req.user.userId,
+      quizId: quiz._id,
+      grade: Number(quiz.grade) || null,
+      topic: String(quiz.topic || ""),
+      title: String(quiz.title || ""),
+      score: s,
+      total: t,
+      percent
+    });
+
+    res.status(201).json(saved);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ✅ Get my results (for results.html)
+app.get("/api/results/my", authRequired, async (req, res) => {
+  try {
+    const results = await Result.find({ userId: req.user.userId })
+      .sort({ createdAt: -1 })
+      .populate("quizId", "title topic grade");
+
+    res.json(results);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
