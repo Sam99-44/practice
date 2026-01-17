@@ -65,14 +65,15 @@
     .footerbar{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:14px; flex-wrap:wrap;}
     .btn{background:var(--accent); color:#fff; padding:10px 12px; border:none; border-radius:10px; cursor:pointer; font-size:14px; font-weight:600;}
     .btn:disabled{opacity:0.7; cursor:not-allowed;}
+    .btn2{background:#fff; color:var(--text); padding:10px 12px; border:1px solid #ddd; border-radius:10px; cursor:pointer; font-size:14px; font-weight:700;}
     .score{font-weight:700;}
     #msg{margin-top:10px;}
   </style>
 
   <script>
     // protect page (must be logged in)
-    const t = localStorage.getItem("token");
-    if (!t) window.location.href = "login.html";
+    const authToken = localStorage.getItem("token");
+    if (!authToken) window.location.href = "login.html";
   </script>
 </head>
 
@@ -90,6 +91,7 @@
 
       <nav class="nav">
         <a href="learner-quizzes.html" class="nav-btn">Back to Practice</a>
+        <a href="results.html">Results</a>
         <a href="about.html">About</a>
         <a href="admin-quiz.html" data-admin>Admin</a>
         <button class="logout" type="button" id="logoutBtn" data-auth>Logout</button>
@@ -100,6 +102,7 @@
 
     <div class="mobile-menu" id="mobileMenu">
       <a href="learner-quizzes.html">Back to Practice</a>
+      <a href="results.html">Results</a>
       <a href="about.html">About</a>
       <a href="admin-quiz.html" data-admin>Admin</a>
       <button class="logout" type="button" id="logoutBtnMobile" data-auth>Logout</button>
@@ -121,18 +124,19 @@
         <span class="score" id="result"></span>
       </div>
 
+      <div class="footerbar" style="margin-top:10px;">
+        <button class="btn2" id="viewResultsBtn" type="button" disabled>View Results</button>
+      </div>
+
       <p id="msg"></p>
     </div>
 
   </div>
 
-  <!-- shared nav must load first -->
   <script src="nav.js"></script>
 
   <script>
-    // Use nav.js API if available, else fallback
     const API = window.API || "https://practice-backend-msgn.onrender.com";
-
     const token = localStorage.getItem("token");
 
     const params = new URLSearchParams(window.location.search);
@@ -145,12 +149,18 @@
     const resultEl = document.getElementById("result");
     const msgEl = document.getElementById("msg");
     const metaPill = document.getElementById("metaPill");
+    const viewResultsBtn = document.getElementById("viewResultsBtn");
 
     let quizData = null;
     let isSubmitted = false;
+    let isSaving = false;
 
     const username = localStorage.getItem("username") || "Learner";
     document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
+
+    viewResultsBtn.addEventListener("click", () => {
+      window.location.href = "results.html";
+    });
 
     if (!quizId) {
       quizTitle.textContent = "Quiz not found";
@@ -167,9 +177,8 @@
           headers: { Authorization: "Bearer " + token }
         });
 
-        // If token invalid / expired
         if (res.status === 401) {
-          localStorage.removeItem("token");
+          localStorage.clear();
           window.location.href = "login.html";
           return;
         }
@@ -219,8 +228,8 @@
       `).join("");
     }
 
-    submitBtn.addEventListener("click", () => {
-      if (!quizData || isSubmitted) return;
+    submitBtn.addEventListener("click", async () => {
+      if (!quizData || isSubmitted || isSaving) return;
 
       const total = (quizData.questions || []).length;
       let score = 0;
@@ -230,6 +239,7 @@
         const chosen = document.querySelector(`input[name="q${idx}"]:checked`);
         const options = document.querySelectorAll(`input[name="q${idx}"]`);
 
+        // reset styles
         options.forEach((opt) => {
           const label = opt.closest("label");
           label.style.border = "1px solid #ddd";
@@ -238,6 +248,7 @@
 
         if (chosen) answered++;
 
+        // highlight correct
         options.forEach((opt, j) => {
           if (j === q.correctIndex) {
             const label = opt.closest("label");
@@ -246,6 +257,7 @@
           }
         });
 
+        // highlight wrong
         if (chosen) {
           if (Number(chosen.value) === q.correctIndex) {
             score++;
@@ -266,14 +278,71 @@
 
       const percent = Math.round((score / total) * 100);
       resultEl.textContent = `Score: ${score}/${total} (${percent}%)`;
-      msgEl.textContent = "Submitted.";
-      msgEl.className = "ok";
+      msgEl.textContent = "Saving your result…";
+      msgEl.className = "muted";
 
       isSubmitted = true;
       submitBtn.textContent = "Submitted";
       submitBtn.disabled = true;
       document.querySelectorAll("input[type=radio]").forEach(r => r.disabled = true);
+
+      // ✅ Save to backend (results history + completed mark)
+      await saveResult({ score, total, percent });
     });
+
+    async function saveResult({ score, total, percent }) {
+      isSaving = true;
+
+      try {
+        const payload = {
+          quizId,
+          score,
+          total,
+          percent
+        };
+
+        const res = await fetch(`${API}/api/results`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token
+          },
+          body: JSON.stringify(payload)
+        });
+
+        // If your backend returns 409 (already exists), we treat it as OK.
+        if (res.status === 401) {
+          localStorage.clear();
+          window.location.href = "login.html";
+          return;
+        }
+
+        if (!res.ok && res.status !== 409) {
+          const txt = await res.text().catch(()=>"");
+          throw new Error(txt || `Failed to save result (HTTP ${res.status})`);
+        }
+
+        msgEl.className = "ok";
+        msgEl.textContent = "✅ Result saved. You can view your results history.";
+        viewResultsBtn.disabled = false;
+
+        // Optional: mark locally for the list page
+        try {
+          const done = JSON.parse(localStorage.getItem("completed_quizzes") || "[]");
+          if (!done.includes(quizId)) {
+            done.push(quizId);
+            localStorage.setItem("completed_quizzes", JSON.stringify(done));
+          }
+        } catch {}
+      } catch (err) {
+        // Result saving failed (quiz can still be done)
+        msgEl.className = "error";
+        msgEl.textContent = "Saved on screen, but could not save to history. " + (err.message || "");
+        viewResultsBtn.disabled = false; // still let them go
+      } finally {
+        isSaving = false;
+      }
+    }
 
     function escapeHtml(str) {
       return String(str)
