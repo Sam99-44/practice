@@ -1,21 +1,46 @@
-// models/Result.js
 import mongoose from "mongoose";
 
-const ResultSchema = new mongoose.Schema(
+const resultSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    quizId: { type: mongoose.Schema.Types.ObjectId, ref: "Quiz", required: true, index: true },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
 
-    // Snapshot fields (helpful if quiz changes later)
-    grade: { type: Number, min: 8, max: 12, default: null },
-    topic: { type: String, default: "" },
-    title: { type: String, default: "" },
+    quizId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Quiz",
+      required: true
+    },
 
-    score: { type: Number, required: true, min: 0 },
-    total: { type: Number, required: true, min: 1 },
-    percent: { type: Number, required: true, min: 0, max: 100 }
+    score: {
+      type: Number,
+      required: true,
+      min: 0
+    },
+
+    total: {
+      type: Number,
+      required: true,
+      min: 1
+    },
+
+    percent: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 100
+    },
+
+    // ✅ NEW FIELD
+    status: {
+      type: String,
+      enum: ["PASS", "FAIL"],
+      required: true
+    }
   },
   { timestamps: true }
 );
 
-export default mongoose.model("Result", ResultSchema);
+export default mongoose.model("Result", resultSchema);
