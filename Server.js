@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import Quiz from "./models/Quiz.js";
 import User from "./models/User.js";
 import Result from "./models/Result.js"; // ✅ ADD
+
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -16,7 +17,7 @@ const app = express();
 
 /* ------------------ CORS ------------------ */
 const ALLOWED_ORIGINS = [
-  process.env.APP_URL, // e.g. https://practiceonline.netlify.app
+  process.env.APP_URL,
   "http://localhost:3000",
   "http://localhost:5500",
   "http://127.0.0.1:5500"
@@ -157,7 +158,6 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 
 /* ------------------ QUIZ ROUTES ------------------ */
 
-// ✅ List quizzes (grade can be stored as number OR string)
 app.get("/api/quizzes", authRequired, async (req, res) => {
   try {
     const gradeRaw = req.query.grade;
@@ -177,7 +177,6 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
   }
 });
 
-// ✅ Get single quiz
 app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id);
@@ -188,7 +187,6 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   }
 });
 
-// ✅ Admin creates quiz
 app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   try {
     const quiz = await Quiz.create(req.body);
@@ -198,52 +196,52 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   }
 });
 
-/* ------------------ RESULTS ROUTES (NEW) ------------------ */
+/* ------------------ ✅ RESULTS ROUTES ------------------ */
 
-// ✅ Save a result (called when learner submits)
-// body: { quizId, score, total }  (percent is calculated on server)
+// Save result (learner)
 app.post("/api/results", authRequired, async (req, res) => {
   try {
     const { quizId, score, total } = req.body;
 
-    if (!quizId) return res.status(400).json({ message: "quizId is required" });
+    if (!quizId || score === undefined || total === undefined) {
+      return res.status(400).json({ message: "quizId, score, total are required" });
+    }
+
+    const quiz = await Quiz.findById(quizId).select("grade topic title");
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
 
     const s = Number(score);
     const t = Number(total);
 
-    if (!Number.isFinite(s) || !Number.isFinite(t) || t <= 0 || s < 0) {
+    if (!Number.isFinite(s) || !Number.isFinite(t) || t <= 0) {
       return res.status(400).json({ message: "Invalid score/total" });
     }
 
-    // Fetch quiz to store snapshot fields
-    const quiz = await Quiz.findById(quizId).select("title topic grade");
-    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
-
-    const percent = Math.max(0, Math.min(100, Math.round((s / t) * 100)));
+    const percent = Math.round((s / t) * 100);
 
     const saved = await Result.create({
       userId: req.user.userId,
       quizId: quiz._id,
-      grade: Number(quiz.grade) || null,
-      topic: String(quiz.topic || ""),
-      title: String(quiz.title || ""),
+      grade: Number(quiz.grade),
+      topic: quiz.topic || "",
+      title: quiz.title || "",
       score: s,
       total: t,
       percent
     });
 
-    res.status(201).json(saved);
+    res.status(201).json({ message: "Result saved", resultId: saved._id });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// ✅ Get my results (for results.html)
+// Get my results history
 app.get("/api/results/my", authRequired, async (req, res) => {
   try {
     const results = await Result.find({ userId: req.user.userId })
       .sort({ createdAt: -1 })
-      .populate("quizId", "title topic grade");
+      .limit(200);
 
     res.json(results);
   } catch (err) {
