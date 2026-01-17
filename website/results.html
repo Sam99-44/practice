@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>My Results | Practice Online</title>
+  <title>Results | Practice Online</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
@@ -15,171 +17,283 @@
       --text:#0f172a;
       --muted:#475569;
       --accent:#0b3c5d;
+      --accent-soft:#e7eef5;
       --radius:14px;
       --shadow:0 6px 18px rgba(0,0,0,0.06);
-      --ok:#065f46;
       --error:#b91c1c;
+      --ok:#065f46;
     }
-
     *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Inter,Arial,sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
+    body{margin:0; font-family:Inter,Arial,sans-serif; background:var(--bg); color:var(--text);}
+    .wrap{max-width:1100px; margin:0 auto; padding:24px;}
 
-    .wrap{max-width:1000px;margin:0 auto;padding:24px;}
+    .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:12px;}
+    .brand{display:flex; align-items:center; gap:10px;}
+    .logo{width:38px; height:38px; border-radius:10px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800;}
+    .brand span{display:block; font-size:13px; color:var(--muted);}
 
-    .topbar{
+    .nav{display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+    .nav a{text-decoration:none; font-size:14px; color:var(--text); padding:6px 8px; border-radius:8px;}
+    .nav a:hover{ background:var(--accent-soft); }
+    .nav a.active{ font-weight:700; color:var(--accent); }
+    .nav .btn{background:var(--accent); color:#fff; padding:8px 12px; border-radius:10px; border:none; cursor:pointer; font-size:14px; font-weight:700;}
+
+    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);}
+    h1{margin:0; font-size:22px;}
+    .muted{color:var(--muted);}
+    .error{color:var(--error);}
+    .ok{color:var(--ok);}
+
+    .controls{
       display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:16px;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
       gap:10px;
+      flex-wrap:wrap;
+      align-items:flex-end;
+      margin-top:14px;
+      margin-bottom:10px;
     }
-
-    .logo{
-      width:38px;
-      height:38px;
+    .controls .group{display:flex; flex-direction:column; gap:6px;}
+    select,input{
+      padding:10px;
       border-radius:10px;
-      background:var(--accent);
-      color:white;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:700;
+      border:1px solid #ddd;
+      background:#fff;
+      min-width:220px;
+      font-size:14px;
+      outline:none;
     }
-
-    .nav a{
-      text-decoration:none;
-      color:var(--text);
-      margin-right:10px;
-      font-weight:500;
-    }
-
-    .nav .logout{
-      background:var(--accent);
-      color:white;
-      border:none;
-      padding:8px 12px;
+    .btn2{
+      background:#fff;
+      border:1px solid #ddd;
+      padding:10px 12px;
       border-radius:10px;
       cursor:pointer;
-    }
-
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:18px;
-    }
-
-    h1{margin:0 0 12px 0;font-size:22px;}
-
-    table{
-      width:100%;
-      border-collapse:collapse;
-      margin-top:10px;
-    }
-
-    th, td{
-      padding:10px;
-      border-bottom:1px solid #eee;
-      text-align:left;
+      font-weight:700;
       font-size:14px;
     }
 
-    th{
-      background:#f1f5f9;
-      font-weight:600;
+    table{width:100%; border-collapse:collapse; margin-top:10px;}
+    th, td{padding:10px; border-bottom:1px solid #eee; text-align:left; font-size:14px;}
+    th{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;}
+    .pill{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid #cfe9ff;
+      background:#eef7ff;
+      color:#0b3c5d;
+      font-size:12px;
+      font-weight:700;
+      white-space:nowrap;
+    }
+    .scorepill{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid #e6e6e6;
+      background:#f8fafc;
+      font-size:12px;
+      font-weight:800;
+      white-space:nowrap;
     }
 
-    .score-good{color:var(--ok);font-weight:700;}
-    .score-bad{color:var(--error);font-weight:700;}
-    .muted{color:var(--muted);}
-
     .empty{
-      padding:20px;
-      text-align:center;
-      color:var(--muted);
+      padding:14px;
+      border:1px dashed #ddd;
+      border-radius:12px;
+      background:#fafafa;
+      margin-top:12px;
     }
   </style>
 
   <script>
-    const token = localStorage.getItem("token");
-    if (!token) window.location.href = "login.html";
+    // must be logged in
+    const authToken = localStorage.getItem("token");
+    if (!authToken) window.location.href = "login.html";
   </script>
 </head>
 
 <body>
-<div class="wrap">
+  <div class="wrap">
 
-  <div class="topbar">
-    <div class="brand">
-      <div class="logo">PO</div>
-      <div>
-        <strong>Practice Online</strong><br>
-        <span class="muted">My Results</span>
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">PO</div>
+        <div>
+          <strong>Practice Online</strong>
+          <span id="welcomeSub">Results</span>
+        </div>
       </div>
+
+      <nav class="nav">
+        <a href="learner-quizzes.html">Back to Practice</a>
+        <a href="results.html" class="active">Results</a>
+        <a href="about.html">About</a>
+        <a href="admin-quiz.html" data-admin>Admin</a>
+        <button class="btn" id="logoutBtn" type="button">Logout</button>
+      </nav>
     </div>
 
-    <div class="nav">
-      <a href="learner-quizzes.html">Practice</a>
-      <a href="about.html">About</a>
-      <button class="logout" id="logoutBtn">Logout</button>
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+        <div>
+          <h1>Your Results</h1>
+          <p class="muted" style="margin:6px 0 0 0;">Your quiz history will show here.</p>
+        </div>
+        <div>
+          <span class="pill" id="countPill">Loading…</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="group">
+          <label class="muted" style="font-size:12px;">Grade</label>
+          <select id="gradeFilter">
+            <option value="">All grades</option>
+            <option value="8">Grade 8</option>
+            <option value="9">Grade 9</option>
+            <option value="10">Grade 10</option>
+            <option value="11">Grade 11</option>
+            <option value="12">Grade 12</option>
+          </select>
+        </div>
+
+        <div class="group" style="flex:1; min-width:240px;">
+          <label class="muted" style="font-size:12px;">Search topic/title</label>
+          <input id="searchBox" placeholder="Type e.g. Algebra..." />
+        </div>
+
+        <div class="group">
+          <label class="muted" style="font-size:12px;">Actions</label>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn2" id="refreshBtn" type="button">Refresh</button>
+            <button class="btn2" id="clearBtn" type="button">Clear filters</button>
+          </div>
+        </div>
+      </div>
+
+      <p id="status" class="muted" style="margin:6px 0 0 0;"></p>
+
+      <div id="tableWrap"></div>
     </div>
+
   </div>
 
-  <div class="card">
-    <h1>Results History</h1>
-    <p class="muted">All quizzes you have completed.</p>
+  <script src="nav.js"></script>
 
-    <div id="resultsWrap"></div>
-  </div>
+  <script>
+    const API = window.API || "https://practice-backend-msgn.onrender.com";
+    const token = localStorage.getItem("token");
 
-</div>
+    const username = localStorage.getItem("username") || "Learner";
+    document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
 
-<script>
-  const API = "https://practice-backend-msgn.onrender.com";
-  const token = localStorage.getItem("token");
-  const wrap = document.getElementById("resultsWrap");
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.clear();
+      window.location.href = "login.html";
+    });
 
-  document.getElementById("logoutBtn").onclick = () => {
-    localStorage.clear();
-    window.location.href = "login.html";
-  };
+    const gradeFilter = document.getElementById("gradeFilter");
+    const searchBox = document.getElementById("searchBox");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const clearBtn = document.getElementById("clearBtn");
 
-  loadResults();
+    const statusEl = document.getElementById("status");
+    const tableWrap = document.getElementById("tableWrap");
+    const countPill = document.getElementById("countPill");
 
-  async function loadResults(){
-    wrap.innerHTML = "<p class='muted'>Loading results...</p>";
+    let allResults = [];
 
-    try{
-      const res = await fetch(`${API}/api/results/my`, {
-        headers:{ Authorization:`Bearer ${token}` }
-      });
+    gradeFilter.addEventListener("change", render);
+    searchBox.addEventListener("input", render);
 
-      if(res.status === 401){
-        localStorage.clear();
-        return window.location.href = "login.html";
+    refreshBtn.addEventListener("click", loadResults);
+    clearBtn.addEventListener("click", () => {
+      gradeFilter.value = "";
+      searchBox.value = "";
+      render();
+    });
+
+    loadResults();
+
+    async function loadResults(){
+      statusEl.className = "muted";
+      statusEl.textContent = "Loading results…";
+      tableWrap.innerHTML = "";
+      countPill.textContent = "Loading…";
+
+      try{
+        const res = await fetch(`${API}/api/results/my`, {
+          headers: { Authorization: "Bearer " + token }
+        });
+
+        if (res.status === 401) {
+          localStorage.clear();
+          window.location.href = "login.html";
+          return;
+        }
+
+        if (!res.ok) {
+          const txt = await res.text().catch(()=> "");
+          throw new Error(txt || `Request failed (HTTP ${res.status})`);
+        }
+
+        const data = await res.json();
+        allResults = Array.isArray(data) ? data : [];
+
+        statusEl.textContent = "";
+        render();
+      } catch (err){
+        statusEl.className = "error";
+        statusEl.textContent = "Could not load results: " + (err.message || "");
+        countPill.textContent = "0 results";
+
+        tableWrap.innerHTML = `
+          <div class="empty">
+            <div class="error"><b>Results not showing.</b></div>
+            <div class="muted" style="margin-top:6px;">
+              Open DevTools → Network → refresh this page → check the request:
+              <br><b>GET /api/results/my</b>
+              <br>Common causes: backend not redeployed, wrong API URL, or CORS blocked.
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function render(){
+      const grade = gradeFilter.value;
+      const q = (searchBox.value || "").trim().toLowerCase();
+
+      let list = [...allResults];
+
+      if (grade) {
+        list = list.filter(r => String(r.grade ?? "") === String(grade));
       }
 
-      const results = await res.json();
+      if (q) {
+        list = list.filter(r => {
+          const t = String(r.topic || "").toLowerCase();
+          const title = String(r.title || "").toLowerCase();
+          return t.includes(q) || title.includes(q);
+        });
+      }
 
-      if(!results.length){
-        wrap.innerHTML = `<div class="empty">No results yet. Complete a quiz to see your history.</div>`;
+      countPill.textContent = `${list.length} result${list.length === 1 ? "" : "s"}`;
+
+      if (list.length === 0) {
+        tableWrap.innerHTML = `
+          <div class="empty">
+            <b>No results found.</b>
+            <div class="muted" style="margin-top:6px;">
+              If you just submitted a quiz, click <b>Refresh</b>.
+            </div>
+          </div>
+        `;
         return;
       }
 
-      wrap.innerHTML = `
+      tableWrap.innerHTML = `
         <table>
           <thead>
             <tr>
@@ -191,28 +305,37 @@
             </tr>
           </thead>
           <tbody>
-            ${results.map(r=>{
-              const good = r.percent >= 50;
+            ${list.map(r => {
+              const d = r.createdAt ? new Date(r.createdAt) : null;
+              const dateStr = d ? d.toLocaleString() : "-";
+              const gradeStr = r.grade ?? "-";
+              const topicStr = escapeHtml(r.topic || "General");
+              const titleStr = escapeHtml(r.title || "Quiz");
+              const scoreStr = `${r.score}/${r.total} (${r.percent}%)`;
+
               return `
                 <tr>
-                  <td>${new Date(r.createdAt).toLocaleDateString()}</td>
-                  <td>Grade ${r.grade ?? "-"}</td>
-                  <td>${r.topic || "-"}</td>
-                  <td>${r.title || "Quiz"}</td>
-                  <td class="${good ? "score-good" : "score-bad"}">
-                    ${r.score}/${r.total} (${r.percent}%)
-                  </td>
+                  <td>${escapeHtml(dateStr)}</td>
+                  <td><span class="pill">Grade ${escapeHtml(String(gradeStr))}</span></td>
+                  <td>${topicStr}</td>
+                  <td>${titleStr}</td>
+                  <td><span class="scorepill">${escapeHtml(scoreStr)}</span></td>
                 </tr>
               `;
             }).join("")}
           </tbody>
         </table>
       `;
-    }catch(err){
-      wrap.innerHTML = `<p class="score-bad">Failed to load results.</p>`;
     }
-  }
-</script>
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+  </script>
 </body>
 </html>
-
