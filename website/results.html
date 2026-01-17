@@ -1,1 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My Results | Practice Online</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --border:#e6e6e6;
+      --text:#0f172a;
+      --muted:#475569;
+      --accent:#0b3c5d;
+      --radius:14px;
+      --shadow:0 6px 18px rgba(0,0,0,0.06);
+      --ok:#065f46;
+      --error:#b91c1c;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    .wrap{max-width:1000px;margin:0 auto;padding:24px;}
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:16px;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .logo{
+      width:38px;
+      height:38px;
+      border-radius:10px;
+      background:var(--accent);
+      color:white;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+    }
+
+    .nav a{
+      text-decoration:none;
+      color:var(--text);
+      margin-right:10px;
+      font-weight:500;
+    }
+
+    .nav .logout{
+      background:var(--accent);
+      color:white;
+      border:none;
+      padding:8px 12px;
+      border-radius:10px;
+      cursor:pointer;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+
+    h1{margin:0 0 12px 0;font-size:22px;}
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+    }
+
+    th, td{
+      padding:10px;
+      border-bottom:1px solid #eee;
+      text-align:left;
+      font-size:14px;
+    }
+
+    th{
+      background:#f1f5f9;
+      font-weight:600;
+    }
+
+    .score-good{color:var(--ok);font-weight:700;}
+    .score-bad{color:var(--error);font-weight:700;}
+    .muted{color:var(--muted);}
+
+    .empty{
+      padding:20px;
+      text-align:center;
+      color:var(--muted);
+    }
+  </style>
+
+  <script>
+    const token = localStorage.getItem("token");
+    if (!token) window.location.href = "login.html";
+  </script>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">PO</div>
+      <div>
+        <strong>Practice Online</strong><br>
+        <span class="muted">My Results</span>
+      </div>
+    </div>
+
+    <div class="nav">
+      <a href="learner-quizzes.html">Practice</a>
+      <a href="about.html">About</a>
+      <button class="logout" id="logoutBtn">Logout</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h1>Results History</h1>
+    <p class="muted">All quizzes you have completed.</p>
+
+    <div id="resultsWrap"></div>
+  </div>
+
+</div>
+
+<script>
+  const API = "https://practice-backend-msgn.onrender.com";
+  const token = localStorage.getItem("token");
+  const wrap = document.getElementById("resultsWrap");
+
+  document.getElementById("logoutBtn").onclick = () => {
+    localStorage.clear();
+    window.location.href = "login.html";
+  };
+
+  loadResults();
+
+  async function loadResults(){
+    wrap.innerHTML = "<p class='muted'>Loading results...</p>";
+
+    try{
+      const res = await fetch(`${API}/api/results/my`, {
+        headers:{ Authorization:`Bearer ${token}` }
+      });
+
+      if(res.status === 401){
+        localStorage.clear();
+        return window.location.href = "login.html";
+      }
+
+      const results = await res.json();
+
+      if(!results.length){
+        wrap.innerHTML = `<div class="empty">No results yet. Complete a quiz to see your history.</div>`;
+        return;
+      }
+
+      wrap.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Grade</th>
+              <th>Topic</th>
+              <th>Quiz</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${results.map(r=>{
+              const good = r.percent >= 50;
+              return `
+                <tr>
+                  <td>${new Date(r.createdAt).toLocaleDateString()}</td>
+                  <td>Grade ${r.grade ?? "-"}</td>
+                  <td>${r.topic || "-"}</td>
+                  <td>${r.title || "Quiz"}</td>
+                  <td class="${good ? "score-good" : "score-bad"}">
+                    ${r.score}/${r.total} (${r.percent}%)
+                  </td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      `;
+    }catch(err){
+      wrap.innerHTML = `<p class="score-bad">Failed to load results.</p>`;
+    }
+  }
+</script>
+</body>
+</html>
 
