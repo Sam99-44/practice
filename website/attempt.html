@@ -277,7 +277,10 @@
       }
 
       const percent = Math.round((score / total) * 100);
-      resultEl.textContent = `Score: ${score}/${total} (${percent}%)`;
+      const status = percent >= 50 ? "PASS" : "FAIL";
+
+      resultEl.textContent = `Score: ${percent}% • ${status}`;
+
       msgEl.textContent = "Saving your result…";
       msgEl.className = "muted";
 
@@ -287,7 +290,7 @@
       document.querySelectorAll("input[type=radio]").forEach(r => r.disabled = true);
 
       // ✅ Save to backend (results history + completed mark)
-      await saveResult({ score, total, percent });
+      await saveResult({ score, total, percent, status });
     });
 
     async function saveResult({ score, total, percent }) {
@@ -298,7 +301,8 @@
           quizId,
           score,
           total,
-          percent
+          percent,
+          status
         };
 
         const res = await fetch(`${API}/api/results`, {
