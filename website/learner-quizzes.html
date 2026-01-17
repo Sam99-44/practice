@@ -32,9 +32,10 @@
     .logo{width:38px;height:38px;border-radius:10px;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;}
     .brand span{font-size:13px;color:var(--muted);}
 
-    .nav{display:flex;gap:14px;align-items:center;}
+    .nav{display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
     .nav a{text-decoration:none;color:var(--text);padding:6px 8px;border-radius:8px;}
     .nav a.active{font-weight:600;color:var(--accent);}
+    .nav a:hover{background:var(--accent-soft);}
     .nav .logout{background:var(--accent);color:white;border:none;padding:8px 12px;border-radius:10px;cursor:pointer;}
 
     .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);}
@@ -42,24 +43,47 @@
     .muted{color:var(--muted);}
     .error{color:var(--error);}
 
-    select,input{padding:10px;border-radius:10px;border:1px solid #ddd;}
-    .controls{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;}
+    select,input{padding:10px;border-radius:10px;border:1px solid #ddd;min-width:220px;}
+    .controls{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;align-items:center;}
     .btn2{background:#fff;border:1px solid #ddd;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:600;}
+    .btn2:disabled{opacity:.6;cursor:not-allowed;}
 
     .topic-wrap{margin-top:16px;display:flex;flex-direction:column;gap:14px;}
     .topic-card{border:1px solid var(--border);border-radius:14px;padding:14px;background:#fff;}
-    .topic-head{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+    .topic-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
     .topic-title{font-size:16px;font-weight:800;color:var(--accent);}
     .toggle{border:1px solid #ddd;background:#fff;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:700;}
+    .toggle:hover{background:var(--accent-soft);}
 
     .quiz-squares{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
-    .quiz-square{width:64px;height:64px;border-radius:14px;border:1px solid var(--border);background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-weight:800;}
-    .quiz-square:hover{background:#eef7ff;}
+    .quiz-square{
+      width:64px;height:64px;border-radius:14px;border:1px solid var(--border);
+      background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      cursor:pointer;font-weight:800;position:relative;
+      transition:transform .08s, background .2s, border-color .2s;
+      user-select:none;
+    }
+    .quiz-square:hover{background:#eef7ff;transform:translateY(-1px);border-color:#cfe9ff;}
+
+    /* ✅ Completed mark */
+    .quiz-square.done{
+      border-color:#86efac;
+      background:#f0fdf4;
+    }
+    .quiz-square.done::after{
+      content:"✓";
+      position:absolute;
+      top:6px;right:10px;
+      font-size:14px;
+      font-weight:900;
+      color:#166534;
+    }
+
     .hidden{display:none!important;}
   </style>
 
   <script>
-    /* ✅ TOKEN DECLARED ONCE */
+    // ✅ TOKEN DECLARED ONCE
     const authToken = localStorage.getItem("token");
     if (!authToken) window.location.href = "login.html";
   </script>
@@ -78,7 +102,8 @@
     </div>
 
     <nav class="nav">
-      <a class="active">Practice</a>
+      <a class="active" href="learner-quizzes.html">Practice</a>
+      <a href="results.html">Results</a>
       <a href="about.html">About</a>
       <a href="admin-quiz.html" data-admin>Admin</a>
       <button class="logout" id="logoutBtn">Logout</button>
@@ -101,8 +126,8 @@
 
       <input id="topicSearch" placeholder="Search topic…" disabled />
 
-      <button class="btn2" id="expandAllBtn" disabled>Expand all</button>
-      <button class="btn2" id="collapseAllBtn" disabled>Collapse all</button>
+      <button class="btn2" id="expandAllBtn" disabled type="button">Expand all</button>
+      <button class="btn2" id="collapseAllBtn" disabled type="button">Collapse all</button>
     </div>
 
     <p id="status" class="muted"></p>
@@ -129,81 +154,190 @@
   const expandAllBtn = document.getElementById("expandAllBtn");
   const collapseAllBtn = document.getElementById("collapseAllBtn");
 
+  // State
   let topicOpen = {};
+  let cachedByTopic = null;      // { topic: [quizzes] }
+  let cachedTopics = [];         // [topic names]
+  let completedSet = new Set();  // quizIds that have results
 
-  gradeSelect.onchange = loadQuizzes;
-  topicSearch.oninput = () => filterTopics(topicSearch.value);
-  expandAllBtn.onclick = () => toggleAll(true);
-  collapseAllBtn.onclick = () => toggleAll(false);
+  gradeSelect.addEventListener("change", loadQuizzes);
+  topicSearch.addEventListener("input", () => filterTopics(topicSearch.value));
+  expandAllBtn.addEventListener("click", () => toggleAll(true));
+  collapseAllBtn.addEventListener("click", () => toggleAll(false));
+
+  async function loadCompletedResults(){
+    try{
+      const res = await fetch(`${API}/api/results/my`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      if (!res.ok) return;
+
+      const results = await res.json();
+
+      completedSet = new Set(
+        results
+          .map(r => (r.quizId && r.quizId._id) ? r.quizId._id : r.quizId)
+          .filter(Boolean)
+      );
+    } catch {
+      // ignore
+    }
+  }
 
   async function loadQuizzes(){
     const grade = gradeSelect.value;
-    if (!grade) return;
+    if (!grade){
+      quizList.innerHTML = "";
+      status.textContent = "";
+      topicSearch.disabled = true;
+      expandAllBtn.disabled = true;
+      collapseAllBtn.disabled = true;
+      return;
+    }
 
     status.textContent = "Loading quizzes...";
     quizList.innerHTML = "";
 
-    const res = await fetch(`${API}/api/quizzes?grade=${grade}`, {
-      headers:{ Authorization:`Bearer ${authToken}` }
-    });
+    // Load completed results once (so we can mark done ✓)
+    await loadCompletedResults();
 
-    const quizzes = await res.json();
-
-    if (!quizzes.length){
-      status.textContent = "No quizzes found.";
+    let res;
+    try{
+      res = await fetch(`${API}/api/quizzes?grade=${encodeURIComponent(grade)}`, {
+        headers:{ Authorization:`Bearer ${authToken}` }
+      });
+    } catch {
+      status.className = "error";
+      status.textContent = "Network error. Please refresh.";
       return;
     }
 
+    if (res.status === 401) {
+      localStorage.clear();
+      window.location.href = "login.html";
+      return;
+    }
+
+    const quizzes = await res.json().catch(()=>[]);
+    if (!Array.isArray(quizzes) || quizzes.length === 0){
+      status.textContent = "No quizzes found.";
+      cachedByTopic = null;
+      cachedTopics = [];
+      return;
+    }
+
+    // Group by topic (cache)
     const byTopic = {};
     quizzes.forEach(q=>{
-      const t = q.topic || "General";
+      const t = (q.topic || "General").trim() || "General";
       (byTopic[t] ||= []).push(q);
-      topicOpen[t] = true;
+      if (typeof topicOpen[t] !== "boolean") topicOpen[t] = true;
     });
 
-    render(byTopic);
-    topicSearch.disabled = expandAllBtn.disabled = collapseAllBtn.disabled = false;
+    // Sort topics & keep stable numbering
+    const topics = Object.keys(byTopic).sort((a,b)=>a.localeCompare(b));
+    topics.forEach(t=>{
+      byTopic[t].sort((a,b)=>{
+        const da = new Date(a.createdAt || 0).getTime();
+        const db = new Date(b.createdAt || 0).getTime();
+        return da - db;
+      });
+    });
+
+    cachedByTopic = byTopic;
+    cachedTopics = topics;
+
+    render(); // draw from cache (no extra fetch)
+    topicSearch.disabled = false;
+    expandAllBtn.disabled = false;
+    collapseAllBtn.disabled = false;
     status.textContent = "";
+    filterTopics(topicSearch.value); // keep filter if user typed
   }
 
-  function render(byTopic){
+  function render(){
+    if (!cachedByTopic) return;
+
     quizList.innerHTML = `
       <div class="topic-wrap">
-        ${Object.keys(byTopic).map(t=>`
-          <div class="topic-card" data-topic="${t}">
-            <div class="topic-head">
-              <div class="topic-title">${t}</div>
-              <button class="toggle" onclick="toggleTopic('${t}')">
-                ${topicOpen[t] ? "Collapse" : "Expand"}
-              </button>
-            </div>
-            <div class="quiz-squares ${topicOpen[t] ? "" : "hidden"}">
-              ${byTopic[t].map((q,i)=>`
-                <div class="quiz-square"
-                  onclick="location.href='attempt.html?quizId=${q._id}'">
-                  ${i+1}
-                </div>`).join("")}
-            </div>
-          </div>`).join("")}
-      </div>`;
-  }
+        ${cachedTopics.map(t=>{
+          const list = cachedByTopic[t] || [];
+          const open = topicOpen[t] !== false;
 
-  function toggleTopic(t){
-    topicOpen[t] = !topicOpen[t];
-    loadQuizzes();
+          return `
+            <div class="topic-card" data-topic="${escapeAttr(t)}">
+              <div class="topic-head">
+                <div class="topic-title">${escapeHtml(t)}</div>
+                <button class="toggle" type="button" data-toggle="${escapeAttr(t)}">
+                  ${open ? "Collapse" : "Expand"}
+                </button>
+              </div>
+
+              <div class="quiz-squares ${open ? "" : "hidden"}" data-body="${escapeAttr(t)}">
+                ${list.map((q,i)=>`
+                  <div class="quiz-square ${completedSet.has(q._id) ? "done" : ""}"
+                    title="${escapeAttr(q.title || "Quiz")}"
+                    data-quizid="${escapeAttr(q._id)}"
+                    onclick="location.href='attempt.html?quizId=${encodeURIComponent(q._id)}'">
+                    ${i+1}
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+
+    // Bind toggle buttons (no re-fetch)
+    document.querySelectorAll("[data-toggle]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const t = btn.getAttribute("data-toggle");
+        topicOpen[t] = !(topicOpen[t] !== false); // flip
+        // update UI only
+        const body = document.querySelector(`[data-body="${cssEscape(t)}"]`);
+        if (body) body.classList.toggle("hidden", topicOpen[t] === false);
+        btn.textContent = (topicOpen[t] === false) ? "Expand" : "Collapse";
+      });
+    });
   }
 
   function toggleAll(open){
-    Object.keys(topicOpen).forEach(t=>topicOpen[t]=open);
-    loadQuizzes();
+    Object.keys(topicOpen).forEach(t => topicOpen[t] = open);
+
+    // Update UI only (no re-fetch)
+    document.querySelectorAll("[data-body]").forEach(body=>{
+      body.classList.toggle("hidden", !open);
+    });
+    document.querySelectorAll("[data-toggle]").forEach(btn=>{
+      btn.textContent = open ? "Collapse" : "Expand";
+    });
   }
 
   function filterTopics(q){
-    q = q.toLowerCase();
+    q = (q || "").trim().toLowerCase();
     document.querySelectorAll("[data-topic]").forEach(card=>{
-      card.classList.toggle("hidden", !card.dataset.topic.toLowerCase().includes(q));
+      const topic = (card.getAttribute("data-topic") || "").toLowerCase();
+      const match = !q || topic.includes(q);
+      card.classList.toggle("hidden", !match);
     });
   }
+
+  function escapeHtml(str){
+    return String(str)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+  function escapeAttr(str){
+    return String(str).replaceAll('"',"&quot;");
+  }
+  function cssEscape(str){
+    return String(str).replaceAll('"','\\"');
+  }
 </script>
+
 </body>
 </html>
