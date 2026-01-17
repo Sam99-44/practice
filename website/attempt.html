@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Results | Practice Online</title>
+  <title>Attempt Quiz | Practice Online</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,10 +25,10 @@
     }
     *{box-sizing:border-box}
     body{margin:0; font-family:Inter,Arial,sans-serif; background:var(--bg); color:var(--text);}
-    .wrap{max-width:1100px; margin:0 auto; padding:24px;}
-    .muted{color:var(--muted);}
+    .wrap{max-width:1000px; margin:0 auto; padding:24px;}
     .error{color:var(--error);}
     .ok{color:var(--ok);}
+    .muted{color:var(--muted);}
 
     .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:12px;}
     .brand{display:flex; align-items:center; gap:10px;}
@@ -38,7 +38,7 @@
     .nav{display:flex; align-items:center; gap:14px;}
     .nav a{text-decoration:none; font-size:14px; color:var(--text); padding:6px 8px; border-radius:8px; transition:background 0.2s;}
     .nav a:hover{ background:var(--accent-soft); }
-    .nav a.active{ font-weight:700; color:var(--accent); }
+    .nav .nav-btn{background:var(--accent); color:white; padding:8px 12px; border-radius:10px;}
     .nav .logout{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:10px; cursor:pointer; font-size:14px;}
 
     .menu-btn{display:none; border:1px solid var(--border); background:var(--card); color:var(--text); padding:10px 12px; border-radius:10px; cursor:pointer;}
@@ -53,67 +53,27 @@
     }
 
     .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);}
+    .quiz-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:10px;}
     h1{margin:0; font-size:22px;}
     .pill{font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid #cfe9ff; background:#eef7ff; color:#0b3c5d; white-space:nowrap;}
 
-    .controls{display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-top:12px;}
-    .group{display:flex; flex-direction:column; gap:6px;}
-    select,input{
-      padding:10px;
-      border-radius:10px;
-      border:1px solid #ddd;
-      background:#fff;
-      font-size:14px;
-      outline:none;
-      width:220px;
-      max-width:100%;
-    }
-    .btn{
-      background:var(--accent);
-      color:#fff;
-      border:none;
-      padding:10px 12px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:700;
-      font-size:14px;
-    }
-    .btn2{
-      background:#fff;
-      color:var(--text);
-      border:1px solid #ddd;
-      padding:10px 12px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:700;
-      font-size:14px;
-    }
+    .q{margin-top:14px; padding-top:14px; border-top:1px solid #eee;}
+    .q h3{margin:0 0 10px 0; font-size:16px;}
+    .opt{display:block; padding:10px; border:1px solid #ddd; border-radius:10px; margin-bottom:8px; cursor:pointer; background:#fff; user-select:none;}
+    .opt input{margin-right:10px;}
 
-    table{width:100%; border-collapse:collapse; margin-top:14px; overflow:hidden; border-radius:12px; border:1px solid #eee;}
-    th,td{padding:10px 10px; border-bottom:1px solid #eee; text-align:left; font-size:14px; vertical-align:top;}
-    th{background:#f8fafc; color:#0f172a; font-size:13px;}
-    tr:hover td{background:#fbfdff;}
-    .tag{
-      display:inline-block; font-size:12px; font-weight:700;
-      padding:4px 8px; border-radius:999px; border:1px solid #ddd; background:#fff;
-    }
-    .tag.ok{border-color:#bbf7d0; background:#dcfce7;}
-    .tag.bad{border-color:#fecaca; background:#fee2e2;}
-
-    .summary{
-      display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;
-      padding:12px; border:1px solid #eee; border-radius:12px; background:#fafafa;
-    }
-    .summary .box{min-width:180px;}
-    .summary .big{font-size:18px; font-weight:800;}
-
-    footer{margin-top:20px; text-align:center; font-size:13px; color:#64748b;}
+    .footerbar{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:14px; flex-wrap:wrap;}
+    .btn{background:var(--accent); color:#fff; padding:10px 12px; border:none; border-radius:10px; cursor:pointer; font-size:14px; font-weight:600;}
+    .btn:disabled{opacity:0.7; cursor:not-allowed;}
+    .btn2{background:#fff; color:var(--text); padding:10px 12px; border:1px solid #ddd; border-radius:10px; cursor:pointer; font-size:14px; font-weight:700;}
+    .score{font-weight:700;}
+    #msg{margin-top:10px;}
   </style>
 
   <script>
-    // must be logged in
-    const token = localStorage.getItem("token");
-    if (!token) window.location.href = "login.html";
+    // protect page (must be logged in)
+    const authToken = localStorage.getItem("token");
+    if (!authToken) window.location.href = "login.html";
   </script>
 </head>
 
@@ -125,16 +85,16 @@
         <div class="logo">PO</div>
         <div>
           <strong>Practice Online</strong>
-          <span id="welcomeSub">Results</span>
+          <span id="welcomeSub">Attempt Quiz</span>
         </div>
       </div>
 
       <nav class="nav">
         <a href="learner-quizzes.html" class="nav-btn">Back to Practice</a>
-        <a href="results.html" class="active">Results</a>
+        <a href="results.html">Results</a>
         <a href="about.html">About</a>
         <a href="admin-quiz.html" data-admin>Admin</a>
-        <button class="logout" type="button" id="logoutBtn">Logout</button>
+        <button class="logout" type="button" id="logoutBtn" data-auth>Logout</button>
       </nav>
 
       <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu">Menu</button>
@@ -142,258 +102,246 @@
 
     <div class="mobile-menu" id="mobileMenu">
       <a href="learner-quizzes.html">Back to Practice</a>
-      <a href="results.html" class="active">Results</a>
+      <a href="results.html">Results</a>
       <a href="about.html">About</a>
       <a href="admin-quiz.html" data-admin>Admin</a>
-      <button class="logout" type="button" id="logoutBtnMobile">Logout</button>
+      <button class="logout" type="button" id="logoutBtnMobile" data-auth>Logout</button>
     </div>
 
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+      <div class="quiz-head">
         <div>
-          <h1>Your Results</h1>
-          <p class="muted" style="margin:6px 0 0 0;">This shows your quiz history.</p>
+          <h1 id="quizTitle">Loading...</h1>
+          <p class="muted" id="quizInfo" style="margin:6px 0 0 0;"></p>
         </div>
-        <div class="pill" id="countPill" style="display:none;"></div>
+        <div id="metaPill" class="pill" style="display:none;">Quiz</div>
       </div>
 
-      <div class="summary" id="summary" style="display:none;">
-        <div class="box">
-          <div class="muted">Attempts</div>
-          <div class="big" id="sumAttempts">0</div>
-        </div>
-        <div class="box">
-          <div class="muted">Unique quizzes</div>
-          <div class="big" id="sumQuizzes">0</div>
-        </div>
-        <div class="box">
-          <div class="muted">Average %</div>
-          <div class="big" id="sumAvg">0%</div>
-        </div>
-        <div class="box">
-          <div class="muted">Best %</div>
-          <div class="big" id="sumBest">0%</div>
-        </div>
+      <div id="questions"></div>
+
+      <div class="footerbar">
+        <button class="btn" id="submitBtn">Submit</button>
+        <span class="score" id="result"></span>
       </div>
 
-      <div class="controls">
-        <div class="group">
-          <label class="muted" style="font-size:12px;">Grade</label>
-          <select id="gradeFilter">
-            <option value="">All</option>
-            <option value="8">Grade 8</option>
-            <option value="9">Grade 9</option>
-            <option value="10">Grade 10</option>
-            <option value="11">Grade 11</option>
-            <option value="12">Grade 12</option>
-          </select>
-        </div>
-
-        <div class="group" style="flex:1; min-width:240px;">
-          <label class="muted" style="font-size:12px;">Search</label>
-          <input id="search" type="text" placeholder="Search topic or title..." />
-        </div>
-
-        <div class="group">
-          <label class="muted" style="font-size:12px;">Actions</label>
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn2" id="refreshBtn" type="button">Refresh</button>
-          </div>
-        </div>
+      <div class="footerbar" style="margin-top:10px;">
+        <button class="btn2" id="viewResultsBtn" type="button" disabled>View Results</button>
       </div>
 
-      <p id="status" class="muted" style="margin-top:12px;"></p>
-
-      <div id="tableWrap"></div>
+      <p id="msg"></p>
     </div>
 
-    <footer>
-      © <span id="year"></span> Practice Online. All rights reserved.
-    </footer>
   </div>
 
   <script src="nav.js"></script>
 
   <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
-
     const API = window.API || "https://practice-backend-msgn.onrender.com";
     const token = localStorage.getItem("token");
+
+    const params = new URLSearchParams(window.location.search);
+    const quizId = params.get("quizId");
+
+    const quizTitle = document.getElementById("quizTitle");
+    const quizInfo = document.getElementById("quizInfo");
+    const questionsDiv = document.getElementById("questions");
+    const submitBtn = document.getElementById("submitBtn");
+    const resultEl = document.getElementById("result");
+    const msgEl = document.getElementById("msg");
+    const metaPill = document.getElementById("metaPill");
+    const viewResultsBtn = document.getElementById("viewResultsBtn");
+
+    let quizData = null;
+    let isSubmitted = false;
+    let isSaving = false;
 
     const username = localStorage.getItem("username") || "Learner";
     document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
 
-    // logout
-    function logout(){
-      localStorage.clear();
-      window.location.href = "login.html";
+    viewResultsBtn.addEventListener("click", () => {
+      window.location.href = "results.html";
+    });
+
+    if (!quizId) {
+      quizTitle.textContent = "Quiz not found";
+      msgEl.textContent = "Missing quizId in the URL.";
+      msgEl.className = "error";
+      submitBtn.disabled = true;
+    } else {
+      loadQuiz();
     }
-    document.getElementById("logoutBtn").addEventListener("click", logout);
-    document.getElementById("logoutBtnMobile").addEventListener("click", logout);
 
-    // mobile menu
-    const menuBtn = document.getElementById("menuBtn");
-    const mobileMenu = document.getElementById("mobileMenu");
-    menuBtn.addEventListener("click", ()=> mobileMenu.classList.toggle("open"));
-
-    const statusEl = document.getElementById("status");
-    const tableWrap = document.getElementById("tableWrap");
-    const countPill = document.getElementById("countPill");
-
-    const gradeFilter = document.getElementById("gradeFilter");
-    const searchEl = document.getElementById("search");
-    const refreshBtn = document.getElementById("refreshBtn");
-
-    const summary = document.getElementById("summary");
-    const sumAttempts = document.getElementById("sumAttempts");
-    const sumQuizzes = document.getElementById("sumQuizzes");
-    const sumAvg = document.getElementById("sumAvg");
-    const sumBest = document.getElementById("sumBest");
-
-    let allResults = [];
-
-    gradeFilter.addEventListener("change", render);
-    searchEl.addEventListener("input", render);
-    refreshBtn.addEventListener("click", loadResults);
-
-    loadResults();
-
-    async function loadResults(){
-      statusEl.className = "muted";
-      statusEl.textContent = "Loading results...";
-      tableWrap.innerHTML = "";
-      countPill.style.display = "none";
-      summary.style.display = "none";
-
-      try{
-        const res = await fetch(`${API}/api/results/my`, {
+    async function loadQuiz() {
+      try {
+        const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`, {
           headers: { Authorization: "Bearer " + token }
         });
 
         if (res.status === 401) {
-          logout();
+          localStorage.clear();
+          window.location.href = "login.html";
           return;
         }
 
-        if (!res.ok) {
-          const txt = await res.text().catch(()=> "");
-          throw new Error(txt || `Failed to load results (HTTP ${res.status})`);
-        }
+        if (!res.ok) throw new Error("Quiz not found");
 
-        const data = await res.json();
-        allResults = Array.isArray(data) ? data : [];
+        quizData = await res.json();
 
-        // ✅ keep "completed_quizzes" in sync (helps learner-quizzes page)
-        try{
-          const done = new Set(JSON.parse(localStorage.getItem("completed_quizzes") || "[]"));
-          allResults.forEach(r => { if (r.quizId) done.add(String(r.quizId)); });
-          localStorage.setItem("completed_quizzes", JSON.stringify([...done]));
-        } catch {}
+        quizTitle.textContent = escapeHtml(quizData.title || "Quiz");
+        const topic = quizData.topic ? escapeHtml(quizData.topic) : "Maths";
+        const grade = quizData.grade ?? "-";
+        const count = (quizData.questions || []).length;
 
-        if (allResults.length === 0) {
-          statusEl.className = "muted";
-          statusEl.textContent = "No results yet. Attempt a quiz and your history will show here.";
-          return;
-        }
+        quizInfo.textContent = `Grade ${grade} • ${topic} • ${count} questions`;
+        metaPill.style.display = "inline-block";
+        metaPill.textContent = `${count} questions`;
 
-        // summary
-        const attempts = allResults.length;
-        const uniqueQuizzes = new Set(allResults.map(r => String(r.quizId))).size;
-        const percents = allResults.map(r => Number(r.percent)).filter(n => Number.isFinite(n));
-        const avg = percents.length ? Math.round(percents.reduce((a,b)=>a+b,0) / percents.length) : 0;
-        const best = percents.length ? Math.max(...percents) : 0;
-
-        sumAttempts.textContent = String(attempts);
-        sumQuizzes.textContent = String(uniqueQuizzes);
-        sumAvg.textContent = `${avg}%`;
-        sumBest.textContent = `${best}%`;
-        summary.style.display = "flex";
-
-        countPill.style.display = "inline-block";
-        countPill.textContent = `${attempts} attempt${attempts === 1 ? "" : "s"}`;
-
-        statusEl.textContent = "";
-        render();
-      } catch(err){
-        statusEl.className = "error";
-        statusEl.textContent = "Could not load results. " + (err.message || "");
+        renderQuestions(quizData.questions || []);
+      } catch (err) {
+        quizTitle.textContent = "Quiz not found";
+        msgEl.textContent = "Could not load this quiz.";
+        msgEl.className = "error";
+        submitBtn.disabled = true;
       }
     }
 
-    function render(){
-      if (!allResults.length) return;
+    function renderQuestions(questions) {
+      questionsDiv.innerHTML = questions.map((q, idx) => `
+        <div class="q" data-qindex="${idx}">
+          <h3>${idx + 1}. ${escapeHtml(q.text || "")}</h3>
 
-      const gradeVal = gradeFilter.value.trim();
-      const q = searchEl.value.trim().toLowerCase();
+          ${q.imageUrl ? `
+            <img
+              src="${escapeAttr(q.imageUrl)}"
+              alt="Question image"
+              style="max-width:100%; margin:10px 0; border-radius:12px; border:1px solid #e6e6e6;"
+            />
+          ` : ""}
 
-      const filtered = allResults.filter(r => {
-        if (gradeVal && String(r.grade) !== gradeVal) return false;
+          ${(q.options || []).map((opt, j) => `
+            <label class="opt">
+              <input type="radio" name="q${idx}" value="${j}">
+              ${escapeHtml(opt)}
+            </label>
+          `).join("")}
+        </div>
+      `).join("");
+    }
 
-        if (q) {
-          const topic = String(r.topic || "").toLowerCase();
-          const title = String(r.title || "").toLowerCase();
-          if (!topic.includes(q) && !title.includes(q)) return false;
+    submitBtn.addEventListener("click", async () => {
+      if (!quizData || isSubmitted || isSaving) return;
+
+      const total = (quizData.questions || []).length;
+      let score = 0;
+      let answered = 0;
+
+      quizData.questions.forEach((q, idx) => {
+        const chosen = document.querySelector(`input[name="q${idx}"]:checked`);
+        const options = document.querySelectorAll(`input[name="q${idx}"]`);
+
+        // reset styles
+        options.forEach((opt) => {
+          const label = opt.closest("label");
+          label.style.border = "1px solid #ddd";
+          label.style.background = "#fff";
+        });
+
+        if (chosen) answered++;
+
+        // highlight correct
+        options.forEach((opt, j) => {
+          if (j === q.correctIndex) {
+            const label = opt.closest("label");
+            label.style.border = "1px solid #16a34a";
+            label.style.background = "#dcfce7";
+          }
+        });
+
+        // highlight wrong
+        if (chosen) {
+          if (Number(chosen.value) === q.correctIndex) {
+            score++;
+          } else {
+            const wrongLabel = chosen.closest("label");
+            wrongLabel.style.border = "1px solid #dc2626";
+            wrongLabel.style.background = "#fee2e2";
+          }
         }
-        return true;
       });
 
-      if (filtered.length === 0) {
-        tableWrap.innerHTML = `<p class="muted" style="margin-top:12px;">No results match your filter.</p>`;
+      if (answered < total) {
+        msgEl.textContent = `Please answer all questions (${answered}/${total}).`;
+        msgEl.className = "error";
+        resultEl.textContent = "";
         return;
       }
 
-      tableWrap.innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th style="width:140px;">Date</th>
-              <th style="width:90px;">Grade</th>
-              <th style="width:180px;">Topic</th>
-              <th>Quiz</th>
-              <th style="width:120px;">Score</th>
-              <th style="width:110px;">Percent</th>
-              <th style="width:120px;">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${filtered.map(r => {
-              const dt = r.createdAt ? new Date(r.createdAt) : null;
-              const dateStr = dt ? dt.toLocaleString() : "-";
+      const percent = Math.round((score / total) * 100);
+      resultEl.textContent = `Score: ${score}/${total} (${percent}%)`;
+      msgEl.textContent = "Saving your result…";
+      msgEl.className = "muted";
 
-              const percent = Number(r.percent);
-              const pctText = Number.isFinite(percent) ? `${percent}%` : "-";
-              const tagClass = Number.isFinite(percent) && percent >= 50 ? "ok" : "bad";
+      isSubmitted = true;
+      submitBtn.textContent = "Submitted";
+      submitBtn.disabled = true;
+      document.querySelectorAll("input[type=radio]").forEach(r => r.disabled = true);
 
-              const topic = escapeHtml(r.topic || "General");
-              const title = escapeHtml(r.title || "Quiz");
-              const grade = escapeHtml(String(r.grade ?? "-"));
+      // ✅ Save to backend (results history + completed mark)
+      await saveResult({ score, total, percent });
+    });
 
-              const score = `${escapeHtml(String(r.score ?? "-"))}/${escapeHtml(String(r.total ?? "-"))}`;
+    async function saveResult({ score, total, percent }) {
+      isSaving = true;
 
-              // Attempt again
-              const quizId = r.quizId ? String(r.quizId) : "";
-              const attemptLink = quizId ? `attempt.html?quizId=${encodeURIComponent(quizId)}` : "";
+      try {
+        const payload = {
+          quizId,
+          score,
+          total,
+          percent
+        };
 
-              return `
-                <tr>
-                  <td>${escapeHtml(dateStr)}</td>
-                  <td>Grade ${grade}</td>
-                  <td>${topic}</td>
-                  <td>${title}</td>
-                  <td>${score}</td>
-                  <td><span class="tag ${tagClass}">${pctText}</span></td>
-                  <td>
-                    ${attemptLink
-                      ? `<a class="btn2" href="${attemptLink}" style="text-decoration:none; display:inline-block;">Retry</a>`
-                      : `<span class="muted">-</span>`
-                    }
-                  </td>
-                </tr>
-              `;
-            }).join("")}
-          </tbody>
-        </table>
-      `;
+        const res = await fetch(`${API}/api/results`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token
+          },
+          body: JSON.stringify(payload)
+        });
+
+        // If your backend returns 409 (already exists), we treat it as OK.
+        if (res.status === 401) {
+          localStorage.clear();
+          window.location.href = "login.html";
+          return;
+        }
+
+        if (!res.ok && res.status !== 409) {
+          const txt = await res.text().catch(()=>"");
+          throw new Error(txt || `Failed to save result (HTTP ${res.status})`);
+        }
+
+        msgEl.className = "ok";
+        msgEl.textContent = "✅ Result saved. You can view your results history.";
+        viewResultsBtn.disabled = false;
+
+        // Optional: mark locally for the list page
+        try {
+          const done = JSON.parse(localStorage.getItem("completed_quizzes") || "[]");
+          if (!done.includes(quizId)) {
+            done.push(quizId);
+            localStorage.setItem("completed_quizzes", JSON.stringify(done));
+          }
+        } catch {}
+      } catch (err) {
+        // Result saving failed (quiz can still be done)
+        msgEl.className = "error";
+        msgEl.textContent = "Saved on screen, but could not save to history. " + (err.message || "");
+        viewResultsBtn.disabled = false; // still let them go
+      } finally {
+        isSaving = false;
+      }
     }
 
     function escapeHtml(str) {
@@ -403,6 +351,10 @@
         .replaceAll(">","&gt;")
         .replaceAll('"',"&quot;")
         .replaceAll("'","&#039;");
+    }
+
+    function escapeAttr(str) {
+      return String(str).replaceAll('"', "&quot;");
     }
   </script>
 </body>
