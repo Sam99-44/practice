@@ -1,1 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Edit Assessment | Admin</title>
+
+  <style>
+    body{font-family:Arial; background:#f6f7fb; margin:0;}
+    .wrap{max-width:900px; margin:0 auto; padding:20px;}
+    .card{background:#fff; border:1px solid #e6e6e6; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.06);}
+    h1{margin-top:0}
+    label{font-weight:700; font-size:13px;}
+    input,select{width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; margin-top:6px;}
+    button{padding:10px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:700;}
+    .btn{background:#111827; color:#fff;}
+    .btn2{background:#fff; border:1px solid #ddd;}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+    .muted{color:#555;}
+    .error{color:#b91c1c;}
+    .ok{color:#065f46;}
+
+    .qcard{border:1px solid #ddd; border-radius:12px; padding:12px; margin-top:12px;}
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    .smallBtn{padding:6px 10px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer;}
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+    <h1>Edit Assessment</h1>
+    <div>
+      <a href="admin-dashboard.html" class="btn2">Back</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>Grade</label>
+        <select id="grade">
+          <option value="8">Grade 8</option>
+          <option value="9">Grade 9</option>
+          <option value="10">Grade 10</option>
+          <option value="11">Grade 11</option>
+          <option value="12">Grade 12</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Time Limit (minutes)</label>
+        <input id="timeLimit" type="number" min="1" placeholder="e.g. 20" />
+      </div>
+    </div>
+
+    <label>Topic</label>
+    <input id="topic" />
+
+    <label>Assessment Title</label>
+    <input id="title" />
+
+    <hr>
+
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <b>Questions</b>
+      <button class="smallBtn" id="addQ">+ Add Question</button>
+    </div>
+
+    <div id="questionsWrap"></div>
+
+    <hr>
+
+    <button class="btn" id="saveBtn">Save Changes</button>
+    <p id="msg" class="muted"></p>
+  </div>
+</div>
+
+<script>
+  const API = "https://practice-backend-msgn.onrender.com";
+  const token = localStorage.getItem("token");
+  const quizId = new URLSearchParams(window.location.search).get("quizId");
+
+  const gradeEl = document.getElementById("grade");
+  const topicEl = document.getElementById("topic");
+  const titleEl = document.getElementById("title");
+  const timeEl = document.getElementById("timeLimit");
+  const questionsWrap = document.getElementById("questionsWrap");
+  const msgEl = document.getElementById("msg");
+
+  if (!token || !quizId) {
+    window.location.href = "admin-dashboard.html";
+  }
+
+  function setMsg(t, c="muted"){ msgEl.className=c; msgEl.textContent=t; }
+
+  function qHtml(q={}, i){
+    return `
+      <div class="qcard">
+        <label>Question ${i+1}</label>
+        <input class="qText" value="${q.text||""}">
+
+        <div class="grid2">
+          <input class="opt" value="${q.options?.[0]||""}" placeholder="A">
+          <input class="opt" value="${q.options?.[1]||""}" placeholder="B">
+          <input class="opt" value="${q.options?.[2]||""}" placeholder="C">
+          <input class="opt" value="${q.options?.[3]||""}" placeholder="D">
+        </div>
+
+        <label>Correct Answer</label>
+        <select class="correct">
+          <option value="0">A</option>
+          <option value="1">B</option>
+          <option value="2">C</option>
+          <option value="3">D</option>
+        </select>
+
+        <button class="smallBtn remove">Remove</button>
+      </div>
+    `;
+  }
+
+  function collectQuestions(){
+    return [...questionsWrap.querySelectorAll(".qcard")].map(card=>{
+      const text = card.querySelector(".qText").value.trim();
+      const opts = [...card.querySelectorAll(".opt")].map(o=>o.value.trim());
+      const correctIndex = Number(card.querySelector(".correct").value);
+      return { text, options: opts, correctIndex };
+    });
+  }
+
+  document.getElementById("addQ").onclick = ()=>{
+    questionsWrap.insertAdjacentHTML("beforeend", qHtml({}, questionsWrap.children.length));
+  };
+
+  questionsWrap.addEventListener("click", e=>{
+    if(e.target.classList.contains("remove")){
+      e.target.closest(".qcard").remove();
+    }
+  });
+
+  async function loadQuiz(){
+    const res = await fetch(`${API}/api/quizzes/${quizId}`, {
+      headers:{ Authorization:`Bearer ${token}` }
+    });
+    const q = await res.json();
+
+    gradeEl.value = q.grade;
+    topicEl.value = q.topic;
+    titleEl.value = q.title;
+    timeEl.value = q.timeLimitMinutes || "";
+
+    q.questions.forEach((qq,i)=>{
+      questionsWrap.insertAdjacentHTML("beforeend", qHtml(qq,i));
+      questionsWrap.lastElementChild.querySelector(".correct").value = qq.correctIndex;
+    });
+  }
+
+  document.getElementById("saveBtn").onclick = async ()=>{
+    setMsg("Saving...");
+    const body = {
+      grade:Number(gradeEl.value),
+      topic:topicEl.value.trim(),
+      title:titleEl.value.trim(),
+      timeLimitMinutes:Number(timeEl.value||0),
+      questions:collectQuestions()
+    };
+
+    const res = await fetch(`${API}/api/quizzes/${quizId}`,{
+      method:"PUT",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization:`Bearer ${token}`
+      },
+      body:JSON.stringify(body)
+    });
+
+    if(res.ok){
+      setMsg("✅ Assessment updated","ok");
+    } else {
+      setMsg("❌ Update failed","error");
+    }
+  };
+
+  loadQuiz();
+</script>
+</body>
+</html>
 
