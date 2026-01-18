@@ -3,187 +3,514 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Edit Assessment | Admin</title>
+  <title>Edit Assessment | Practice Online</title>
 
   <style>
-    body{font-family:Arial; background:#f6f7fb; margin:0;}
-    .wrap{max-width:900px; margin:0 auto; padding:20px;}
+    body{font-family:Arial; padding:20px; max-width:1000px; margin:auto; background:#f6f7fb;}
     .card{background:#fff; border:1px solid #e6e6e6; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.06);}
-    h1{margin-top:0}
-    label{font-weight:700; font-size:13px;}
-    input,select{width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; margin-top:6px;}
-    button{padding:10px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:700;}
+    input, textarea, select{width:100%; padding:10px; margin:8px 0; border-radius:10px; border:1px solid #ddd; outline:none;}
+    button{padding:10px 14px; cursor:pointer; border:none; border-radius:10px; font-weight:700;}
     .btn{background:#111827; color:#fff;}
-    .btn2{background:#fff; border:1px solid #ddd;}
-    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+    .btn2{background:#fff; border:1px solid #ddd; color:#111827;}
+    .danger{background:#b91c1c; color:#fff;}
+    .warn{background:#b45309; color:#fff;}
+    .ok{color:#065f46;}
     .muted{color:#555;}
     .error{color:#b91c1c;}
-    .ok{color:#065f46;}
-
-    .qcard{border:1px solid #ddd; border-radius:12px; padding:12px; margin-top:12px;}
+    .topbar{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+    .qcard{border:1px solid #e6e6e6; border-radius:12px; padding:12px; margin-top:12px; background:#fff;}
+    .qhead{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
+    .smallbtn{border:1px solid #ddd; background:#fff; color:#111827; padding:8px 10px; border-radius:10px; font-weight:700;}
     .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
-    .smallBtn{padding:6px 10px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer;}
+    hr{border:none; border-top:1px solid #eee; margin:14px 0;}
+    .pill{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid #cfe9ff;
+      background:#eef7ff;
+      color:#0b3c5d;
+      font-size:12px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .pill.red{border-color:#fecaca; background:#fff1f2; color:#b91c1c;}
+    .pill.green{border-color:#bbf7d0; background:#f0fdf4; color:#065f46;}
+    .actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    .disabledBox{opacity:.6; pointer-events:none;}
   </style>
+
+  <script>
+    if (!localStorage.getItem("token")) window.location.href = "login.html";
+  </script>
 </head>
-
 <body>
-<div class="wrap">
 
-  <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-    <h1>Edit Assessment</h1>
+  <div class="topbar">
     <div>
-      <a href="admin-dashboard.html" class="btn2">Back</a>
+      <h2 style="margin:0;">Admin – Edit Assessment</h2>
+      <div class="muted" id="who">Checking login...</div>
+    </div>
+    <div class="actions">
+      <a class="btn2" href="admin-dashboard.html" style="text-decoration:none; display:inline-block;">Dashboard</a>
+      <a class="btn2" href="admin-quiz.html" style="text-decoration:none; display:inline-block;">Add Assessment</a>
+      <a class="btn2" href="learner-quizzes.html" style="text-decoration:none; display:inline-block;">Learner View</a>
+      <button class="btn" id="logoutBtn" type="button">Logout</button>
     </div>
   </div>
 
   <div class="card">
     <div class="row">
       <div>
-        <label>Grade</label>
-        <select id="grade">
-          <option value="8">Grade 8</option>
-          <option value="9">Grade 9</option>
-          <option value="10">Grade 10</option>
-          <option value="11">Grade 11</option>
-          <option value="12">Grade 12</option>
+        <label>Select Assessment (filter)</label>
+        <select id="assessmentSelect">
+          <option value="">Loading…</option>
         </select>
       </div>
-
       <div>
-        <label>Time Limit (minutes)</label>
-        <input id="timeLimit" type="number" min="1" placeholder="e.g. 20" />
+        <label>Status</label>
+        <div id="freezePill" class="pill">—</div>
       </div>
     </div>
 
-    <label>Topic</label>
-    <input id="topic" />
-
-    <label>Assessment Title</label>
-    <input id="title" />
-
-    <hr>
-
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <b>Questions</b>
-      <button class="smallBtn" id="addQ">+ Add Question</button>
+    <div class="actions" style="margin-top:6px;">
+      <button class="warn" id="freezeBtn" type="button" disabled>Freeze</button>
+      <button class="danger" id="deleteBtn" type="button" disabled>Delete</button>
+      <span class="muted" id="msg"></span>
     </div>
 
-    <div id="questionsWrap"></div>
-
     <hr>
 
-    <button class="btn" id="saveBtn">Save Changes</button>
-    <p id="msg" class="muted"></p>
-  </div>
-</div>
-
-<script>
-  const API = "https://practice-backend-msgn.onrender.com";
-  const token = localStorage.getItem("token");
-  const quizId = new URLSearchParams(window.location.search).get("quizId");
-
-  const gradeEl = document.getElementById("grade");
-  const topicEl = document.getElementById("topic");
-  const titleEl = document.getElementById("title");
-  const timeEl = document.getElementById("timeLimit");
-  const questionsWrap = document.getElementById("questionsWrap");
-  const msgEl = document.getElementById("msg");
-
-  if (!token || !quizId) {
-    window.location.href = "admin-dashboard.html";
-  }
-
-  function setMsg(t, c="muted"){ msgEl.className=c; msgEl.textContent=t; }
-
-  function qHtml(q={}, i){
-    return `
-      <div class="qcard">
-        <label>Question ${i+1}</label>
-        <input class="qText" value="${q.text||""}">
-
-        <div class="grid2">
-          <input class="opt" value="${q.options?.[0]||""}" placeholder="A">
-          <input class="opt" value="${q.options?.[1]||""}" placeholder="B">
-          <input class="opt" value="${q.options?.[2]||""}" placeholder="C">
-          <input class="opt" value="${q.options?.[3]||""}" placeholder="D">
+    <div id="editArea" class="disabledBox">
+      <div class="row">
+        <div>
+          <label>Grade</label>
+          <select id="grade">
+            <option value="">Select Grade</option>
+            <option value="8">Grade 8</option>
+            <option value="9">Grade 9</option>
+            <option value="10">Grade 10</option>
+            <option value="11">Grade 11</option>
+            <option value="12">Grade 12</option>
+          </select>
         </div>
 
-        <label>Correct Answer</label>
-        <select class="correct">
-          <option value="0">A</option>
-          <option value="1">B</option>
-          <option value="2">C</option>
-          <option value="3">D</option>
-        </select>
-
-        <button class="smallBtn remove">Remove</button>
+        <div>
+          <label>Topic</label>
+          <input id="topic" placeholder="e.g. Algebra" />
+        </div>
       </div>
-    `;
-  }
 
-  function collectQuestions(){
-    return [...questionsWrap.querySelectorAll(".qcard")].map(card=>{
-      const text = card.querySelector(".qText").value.trim();
-      const opts = [...card.querySelectorAll(".opt")].map(o=>o.value.trim());
-      const correctIndex = Number(card.querySelector(".correct").value);
-      return { text, options: opts, correctIndex };
-    });
-  }
+      <label>Assessment Title</label>
+      <input id="title" placeholder="e.g. Algebra Assessment 1" />
 
-  document.getElementById("addQ").onclick = ()=>{
-    questionsWrap.insertAdjacentHTML("beforeend", qHtml({}, questionsWrap.children.length));
-  };
+      <label>Time Limit (minutes)</label>
+      <input id="timeLimitMinutes" type="number" min="1" max="180" placeholder="e.g. 20" />
 
-  questionsWrap.addEventListener("click", e=>{
-    if(e.target.classList.contains("remove")){
-      e.target.closest(".qcard").remove();
+      <hr>
+
+      <div class="qhead">
+        <h3 style="margin:0;">Questions (4 options A–D)</h3>
+        <button class="smallbtn" id="addQuestionBtn" type="button">+ Add Question</button>
+      </div>
+
+      <div id="questionsWrap"></div>
+
+      <hr>
+
+      <button class="btn" id="saveBtn" type="button">Save Changes</button>
+    </div>
+  </div>
+
+  <script>
+    const API = window.API || "https://practice-backend-msgn.onrender.com";
+    const token = localStorage.getItem("token");
+
+    const who = document.getElementById("who");
+    const msg = document.getElementById("msg");
+
+    const assessmentSelect = document.getElementById("assessmentSelect");
+    const freezeBtn = document.getElementById("freezeBtn");
+    const deleteBtn = document.getElementById("deleteBtn");
+    const freezePill = document.getElementById("freezePill");
+
+    const editArea = document.getElementById("editArea");
+    const gradeEl = document.getElementById("grade");
+    const topicEl = document.getElementById("topic");
+    const titleEl = document.getElementById("title");
+    const timeLimitEl = document.getElementById("timeLimitMinutes");
+
+    const saveBtn = document.getElementById("saveBtn");
+    const addQuestionBtn = document.getElementById("addQuestionBtn");
+    const questionsWrap = document.getElementById("questionsWrap");
+
+    let currentQuiz = null;
+
+    function setMsg(t, cls="muted"){
+      msg.className = cls;
+      msg.textContent = t;
     }
-  });
 
-  async function loadQuiz(){
-    const res = await fetch(`${API}/api/quizzes/${quizId}`, {
-      headers:{ Authorization:`Bearer ${token}` }
-    });
-    const q = await res.json();
-
-    gradeEl.value = q.grade;
-    topicEl.value = q.topic;
-    titleEl.value = q.title;
-    timeEl.value = q.timeLimitMinutes || "";
-
-    q.questions.forEach((qq,i)=>{
-      questionsWrap.insertAdjacentHTML("beforeend", qHtml(qq,i));
-      questionsWrap.lastElementChild.querySelector(".correct").value = qq.correctIndex;
-    });
-  }
-
-  document.getElementById("saveBtn").onclick = async ()=>{
-    setMsg("Saving...");
-    const body = {
-      grade:Number(gradeEl.value),
-      topic:topicEl.value.trim(),
-      title:titleEl.value.trim(),
-      timeLimitMinutes:Number(timeEl.value||0),
-      questions:collectQuestions()
-    };
-
-    const res = await fetch(`${API}/api/quizzes/${quizId}`,{
-      method:"PUT",
-      headers:{
-        "Content-Type":"application/json",
-        Authorization:`Bearer ${token}`
-      },
-      body:JSON.stringify(body)
-    });
-
-    if(res.ok){
-      setMsg("✅ Assessment updated","ok");
-    } else {
-      setMsg("❌ Update failed","error");
+    function logout(){
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("me_cache");
+      window.location.href = "login.html";
     }
-  };
+    document.getElementById("logoutBtn").addEventListener("click", logout);
 
-  loadQuiz();
-</script>
+    function cleanSpaces(s){
+      return String(s || "").trim().replace(/\s+/g, " ");
+    }
+
+    function questionCardHtml(i, q){
+      const text = cleanSpaces(q?.text);
+      const imageUrl = cleanSpaces(q?.imageUrl);
+      const opts = Array.isArray(q?.options) ? q.options : ["","","",""];
+      const correctIndex = Number.isFinite(Number(q?.correctIndex)) ? Number(q.correctIndex) : 0;
+
+      return `
+        <div class="qcard" data-index="${i}">
+          <div class="qhead">
+            <b>Question ${i + 1}</b>
+            <button type="button" class="smallbtn removeBtn">Remove</button>
+          </div>
+
+          <label>Question Text</label>
+          <input class="qText" value="${escapeAttr(text)}" placeholder="Type your question here" />
+
+          <label>Image URL (optional)</label>
+          <input class="qImage" value="${escapeAttr(imageUrl)}" placeholder="https://..." />
+
+          <div class="grid2">
+            <div><label>Option A</label><input class="optA" value="${escapeAttr(opts[0] || "")}" /></div>
+            <div><label>Option B</label><input class="optB" value="${escapeAttr(opts[1] || "")}" /></div>
+            <div><label>Option C</label><input class="optC" value="${escapeAttr(opts[2] || "")}" /></div>
+            <div><label>Option D</label><input class="optD" value="${escapeAttr(opts[3] || "")}" /></div>
+          </div>
+
+          <label>Correct Answer</label>
+          <select class="correct">
+            <option value="0" ${correctIndex===0?"selected":""}>A</option>
+            <option value="1" ${correctIndex===1?"selected":""}>B</option>
+            <option value="2" ${correctIndex===2?"selected":""}>C</option>
+            <option value="3" ${correctIndex===3?"selected":""}>D</option>
+          </select>
+        </div>
+      `;
+    }
+
+    function escapeAttr(str){
+      return String(str || "").replaceAll('"', "&quot;");
+    }
+
+    async function requireAdmin(){
+      const meRes = await fetch(`${API}/api/auth/me`, {
+        headers: { Authorization: "Bearer " + token }
+      });
+      const me = await meRes.json().catch(()=>null);
+
+      if (!meRes.ok || !me) {
+        alert("Session expired. Please login again.");
+        logout(); return false;
+      }
+      if (me.role !== "admin") {
+        alert("Admin only");
+        window.location.href = "learner-quizzes.html";
+        return false;
+      }
+      who.textContent = `Logged in as: ${me.username} (admin)`;
+      return true;
+    }
+
+    function setFrozenUI(isFrozen){
+      if (isFrozen) {
+        freezePill.textContent = "FROZEN";
+        freezePill.className = "pill red";
+        freezeBtn.textContent = "Unfreeze";
+        // Block editing + deleting while frozen (recommended)
+        editArea.classList.add("disabledBox");
+        deleteBtn.disabled = true;
+      } else {
+        freezePill.textContent = "ACTIVE";
+        freezePill.className = "pill green";
+        freezeBtn.textContent = "Freeze";
+        editArea.classList.remove("disabledBox");
+        deleteBtn.disabled = false;
+      }
+      freezeBtn.disabled = false;
+      saveBtn.disabled = isFrozen;
+      addQuestionBtn.disabled = isFrozen;
+    }
+
+    async function loadAssessments(){
+      assessmentSelect.innerHTML = `<option value="">Loading…</option>`;
+      setMsg("Loading assessments…", "muted");
+      freezeBtn.disabled = true;
+      deleteBtn.disabled = true;
+      editArea.classList.add("disabledBox");
+
+      const res = await fetch(`${API}/api/quizzes`, {
+        headers: { Authorization: "Bearer " + token }
+      });
+
+      if (res.status === 401) return logout();
+      const list = await res.json().catch(()=>[]);
+      const quizzes = Array.isArray(list) ? list : [];
+
+      if (quizzes.length === 0) {
+        assessmentSelect.innerHTML = `<option value="">No assessments found</option>`;
+        setMsg("No assessments to edit.", "muted");
+        return;
+      }
+
+      assessmentSelect.innerHTML =
+        `<option value="">Select assessment</option>` +
+        quizzes.map(q => {
+          const label = `Grade ${q.grade} • ${q.topic || "General"} • ${q.title || "Assessment"}`;
+          return `<option value="${escapeAttr(q._id)}">${escapeHtml(label)}</option>`;
+        }).join("");
+
+      setMsg("Select an assessment to edit.", "ok");
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    async function loadAssessmentById(id){
+      setMsg("Loading assessment…", "muted");
+      freezeBtn.disabled = true;
+      deleteBtn.disabled = true;
+      editArea.classList.add("disabledBox");
+      questionsWrap.innerHTML = "";
+
+      const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`, {
+        headers: { Authorization: "Bearer " + token }
+      });
+      if (res.status === 401) return logout();
+
+      if (!res.ok) {
+        setMsg("Could not load assessment.", "error");
+        return;
+      }
+
+      currentQuiz = await res.json();
+
+      gradeEl.value = String(currentQuiz.grade ?? "");
+      topicEl.value = cleanSpaces(currentQuiz.topic || "");
+      titleEl.value = cleanSpaces(currentQuiz.title || "");
+      timeLimitEl.value = String(currentQuiz.timeLimitMinutes ?? 10);
+
+      const qs = Array.isArray(currentQuiz.questions) ? currentQuiz.questions : [];
+      questionsWrap.innerHTML = qs.length
+        ? qs.map((q, i) => questionCardHtml(i, q)).join("")
+        : questionCardHtml(0, { text:"", imageUrl:"", options:["","","",""], correctIndex:0 });
+
+      setFrozenUI(!!currentQuiz.isFrozen);
+      setMsg("Loaded. You can edit (unless frozen).", "ok");
+    }
+
+    function collectQuestions(){
+      const cards = [...questionsWrap.querySelectorAll(".qcard")];
+      if (cards.length === 0) throw new Error("Add at least 1 question.");
+
+      const questions = [];
+
+      for (const card of cards) {
+        const text = cleanSpaces(card.querySelector(".qText").value);
+        const imageUrl = cleanSpaces(card.querySelector(".qImage").value);
+
+        const A = cleanSpaces(card.querySelector(".optA").value);
+        const B = cleanSpaces(card.querySelector(".optB").value);
+        const C = cleanSpaces(card.querySelector(".optC").value);
+        const D = cleanSpaces(card.querySelector(".optD").value);
+
+        const correctIndex = Number(card.querySelector(".correct").value);
+
+        if (!text) throw new Error("Please fill in all question texts.");
+        if (!A || !B || !C || !D) throw new Error("Please fill in all options A–D.");
+
+        questions.push({
+          text,
+          imageUrl: imageUrl || "",
+          options: [A, B, C, D],
+          correctIndex
+        });
+      }
+
+      return questions;
+    }
+
+    addQuestionBtn.addEventListener("click", () => {
+      if (!currentQuiz) return;
+      const i = questionsWrap.querySelectorAll(".qcard").length;
+      questionsWrap.insertAdjacentHTML("beforeend", questionCardHtml(i, { text:"", imageUrl:"", options:["","","",""], correctIndex:0 }));
+    });
+
+    questionsWrap.addEventListener("click", (e) => {
+      if (e.target.classList.contains("removeBtn")) {
+        e.target.closest(".qcard").remove();
+      }
+    });
+
+    saveBtn.addEventListener("click", async () => {
+      if (!currentQuiz) return;
+
+      if (currentQuiz.isFrozen) {
+        return setMsg("This assessment is frozen. Unfreeze to edit.", "error");
+      }
+
+      try{
+        const grade = Number(gradeEl.value);
+        const topic = cleanSpaces(topicEl.value);
+        const title = cleanSpaces(titleEl.value);
+        const timeLimitMinutes = Number(timeLimitEl.value);
+
+        if (!grade) return setMsg("Select grade.", "error");
+        if (!topic) return setMsg("Enter topic.", "error");
+        if (!title) return setMsg("Enter title.", "error");
+        if (!Number.isFinite(timeLimitMinutes) || timeLimitMinutes < 1 || timeLimitMinutes > 180) {
+          return setMsg("Time limit must be 1–180 minutes.", "error");
+        }
+
+        const questions = collectQuestions();
+
+        setMsg("Saving changes…", "muted");
+        const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token
+          },
+          body: JSON.stringify({ grade, topic, title, timeLimitMinutes, questions })
+        });
+
+        const data = await res.json().catch(()=>({}));
+
+        if (!res.ok) return setMsg(data.message || "Could not save.", "error");
+
+        currentQuiz = data;
+        setMsg("✅ Saved.", "ok");
+        await loadAssessments(); // refresh list labels
+        assessmentSelect.value = currentQuiz._id;
+      } catch(err){
+        setMsg(err.message || "Could not save.", "error");
+      }
+    });
+
+    freezeBtn.addEventListener("click", async () => {
+      if (!currentQuiz) return;
+
+      const nextFrozen = !currentQuiz.isFrozen;
+
+      const ok = confirm(nextFrozen
+        ? "Freeze this assessment? (Editing will be blocked)"
+        : "Unfreeze this assessment? (Editing will be allowed)"
+      );
+      if (!ok) return;
+
+      setMsg(nextFrozen ? "Freezing…" : "Unfreezing…", "muted");
+
+      const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token
+        },
+        body: JSON.stringify({
+          isFrozen: nextFrozen,
+          frozenAt: nextFrozen ? new Date().toISOString() : null
+        })
+      });
+
+      const data = await res.json().catch(()=>({}));
+
+      if (!res.ok) return setMsg(data.message || "Could not update freeze state.", "error");
+
+      currentQuiz = data;
+      setFrozenUI(!!currentQuiz.isFrozen);
+      setMsg(currentQuiz.isFrozen ? "✅ Assessment frozen." : "✅ Assessment unfrozen.", "ok");
+      await loadAssessments();
+      assessmentSelect.value = currentQuiz._id;
+    });
+
+    deleteBtn.addEventListener("click", async () => {
+      if (!currentQuiz) return;
+
+      if (currentQuiz.isFrozen) {
+        return setMsg("Unfreeze before deleting (safer).", "error");
+      }
+
+      const ok = confirm("Delete this assessment permanently?");
+      if (!ok) return;
+
+      setMsg("Deleting…", "muted");
+
+      const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
+        method: "DELETE",
+        headers: { Authorization: "Bearer " + token }
+      });
+
+      const data = await res.json().catch(()=>({}));
+
+      if (!res.ok) return setMsg(data.message || "Could not delete.", "error");
+
+      setMsg("✅ Deleted.", "ok");
+      currentQuiz = null;
+
+      gradeEl.value = "";
+      topicEl.value = "";
+      titleEl.value = "";
+      timeLimitEl.value = "";
+
+      questionsWrap.innerHTML = "";
+      freezeBtn.disabled = true;
+      deleteBtn.disabled = true;
+      editArea.classList.add("disabledBox");
+
+      await loadAssessments();
+      assessmentSelect.value = "";
+      freezePill.textContent = "—";
+      freezePill.className = "pill";
+    });
+
+    assessmentSelect.addEventListener("change", () => {
+      const id = assessmentSelect.value;
+      if (!id) {
+        currentQuiz = null;
+        setMsg("Select an assessment to edit.", "muted");
+        freezeBtn.disabled = true;
+        deleteBtn.disabled = true;
+        editArea.classList.add("disabledBox");
+        freezePill.textContent = "—";
+        freezePill.className = "pill";
+        return;
+      }
+      loadAssessmentById(id);
+    });
+
+    // Boot
+    (async () => {
+      const ok = await requireAdmin();
+      if (!ok) return;
+
+      await loadAssessments();
+
+      // If URL has ?quizId=...
+      const qp = new URLSearchParams(window.location.search);
+      const quizId = qp.get("quizId");
+      if (quizId) {
+        assessmentSelect.value = quizId;
+        loadAssessmentById(quizId);
+      }
+    })();
+  </script>
 </body>
 </html>
