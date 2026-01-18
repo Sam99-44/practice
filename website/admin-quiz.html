@@ -20,7 +20,6 @@
     .ok{color:#065f46;}
     a.btn2{display:inline-block; padding:10px 12px; border-radius:10px; text-decoration:none;}
 
-    /* ✅ Question builder */
     .qcard{border:1px solid #e6e6e6; border-radius:12px; padding:12px; margin-top:12px; background:#fff;}
     .qhead{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
     .smallbtn{border:1px solid #ddd; background:#fff; color:#111827; padding:8px 10px; border-radius:10px;}
@@ -58,7 +57,6 @@
 
       <div>
         <label>Topic</label>
-        <!-- ✅ Dropdown topics -->
         <select id="topic">
           <option value="">Select Topic</option>
           <option>Integers</option>
@@ -91,11 +89,9 @@
     <p class="msg muted" id="msg"></p>
   </div>
 
-  <!-- ✅ Shared nav (API + logout helper) -->
   <script src="nav.js"></script>
 
   <script>
-    // ✅ Use nav.js API if available, else fallback
     const API = window.API || "https://practice-backend-msgn.onrender.com";
 
     const msg = document.getElementById("msg");
@@ -121,6 +117,18 @@
       window.location.href = "login.html";
     }
     document.getElementById("logoutBtn").addEventListener("click", logout);
+
+    // ✅ Normalize: trim, remove extra spaces
+    function cleanSpaces(s){
+      return String(s || "").trim().replace(/\s+/g, " ");
+    }
+
+    // ✅ Title Case: "trigonometry basics" -> "Trigonometry Basics"
+    function toTitleCase(s){
+      const t = cleanSpaces(s).toLowerCase();
+      if (!t) return "";
+      return t.replace(/\b\w/g, c => c.toUpperCase());
+    }
 
     // -------------------- Admin lock --------------------
     (async () => {
@@ -214,7 +222,6 @@
       }
     });
 
-    // start with 1 question
     addQuestion();
 
     function collectQuestions(){
@@ -224,12 +231,14 @@
       const questions = [];
 
       for (const card of cards) {
-        const text = card.querySelector(".qText").value.trim();
-        const imageUrl = card.querySelector(".qImage").value.trim();
-        const A = card.querySelector(".optA").value.trim();
-        const B = card.querySelector(".optB").value.trim();
-        const C = card.querySelector(".optC").value.trim();
-        const D = card.querySelector(".optD").value.trim();
+        const text = cleanSpaces(card.querySelector(".qText").value);
+        const imageUrl = cleanSpaces(card.querySelector(".qImage").value);
+
+        const A = cleanSpaces(card.querySelector(".optA").value);
+        const B = cleanSpaces(card.querySelector(".optB").value);
+        const C = cleanSpaces(card.querySelector(".optC").value);
+        const D = cleanSpaces(card.querySelector(".optD").value);
+
         const correctIndex = Number(card.querySelector(".correct").value);
 
         if (!text) throw new Error("Please fill in all question texts.");
@@ -252,8 +261,10 @@
       if (!token) return window.location.href = "login.html";
 
       const grade = Number(gradeEl.value);
-      const title = titleEl.value.trim();
-      const topic = topicEl.value.trim();
+
+      // ✅ normalize
+      const topic = toTitleCase(topicEl.value);
+      const title = toTitleCase(titleEl.value);
 
       try{
         if (!grade) return setMsg("Please select grade.", "error");
@@ -282,7 +293,6 @@
           gradeEl.value = "";
           topicEl.value = "";
 
-          // reset questions
           questionsWrap.innerHTML = "";
           qCount = 0;
           addQuestion();
