@@ -1,1 +1,149 @@
 
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Review Attempt | Practice Online</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#f6f7fb; --card:#fff; --border:#e6e6e6; --text:#0f172a; --muted:#475569;
+      --accent:#0b3c5d; --radius:14px; --shadow:0 6px 18px rgba(0,0,0,0.06);
+      --ok:#065f46; --bad:#b91c1c;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:Inter,Arial,sans-serif; background:var(--bg); color:var(--text);}
+    .wrap{max-width:1000px; margin:0 auto; padding:24px;}
+    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);}
+    .muted{color:var(--muted);}
+    .top{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:flex-start;}
+    .btn{background:var(--accent); color:#fff; border:none; border-radius:10px; padding:10px 12px; cursor:pointer; font-weight:700;}
+    .pill{display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #dbeafe; background:#eff6ff; font-weight:800;}
+    .q{margin-top:14px; padding-top:14px; border-top:1px solid #eee;}
+    .opt{padding:10px; border:1px solid #ddd; border-radius:10px; margin-top:8px;}
+    .correct{border-color:#16a34a; background:#dcfce7;}
+    .chosenWrong{border-color:#dc2626; background:#fee2e2;}
+    .chosenRight{border-color:#16a34a; background:#dcfce7;}
+  </style>
+
+  <script>
+    if (!localStorage.getItem("token")) window.location.href = "login.html";
+  </script>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="top">
+      <div>
+        <h2 style="margin:0;" id="title">Review Attempt</h2>
+        <div class="muted" id="meta"></div>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn" onclick="location.href='results.html'">Back to Results</button>
+        <button class="btn" onclick="location.href='learner-quizzes.html'">Practice</button>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <span class="pill" id="scorePill">Loading…</span>
+    </div>
+
+    <div id="list"></div>
+    <p class="muted" id="msg" style="margin-top:12px;"></p>
+  </div>
+</div>
+
+<script>
+  const API = window.API || "https://practice-backend-msgn.onrender.com";
+  const token = localStorage.getItem("token");
+  const resultId = new URLSearchParams(window.location.search).get("resultId");
+
+  const titleEl = document.getElementById("title");
+  const metaEl = document.getElementById("meta");
+  const scorePill = document.getElementById("scorePill");
+  const list = document.getElementById("list");
+  const msg = document.getElementById("msg");
+
+  if (!resultId) {
+    msg.textContent = "Missing resultId in the URL.";
+  } else {
+    load();
+  }
+
+  function clean(s){ return String(s||"").trim().replace(/\s+/g," "); }
+
+  async function load(){
+    try{
+      const res = await fetch(`${API}/api/results/${encodeURIComponent(resultId)}`, {
+        headers: { Authorization: "Bearer " + token }
+      });
+
+      if (res.status === 401) { localStorage.clear(); location.href="login.html"; return; }
+      if (!res.ok) throw new Error("Could not load attempt.");
+
+      const r = await res.json();
+
+      titleEl.textContent = clean(r.title || "Review Attempt");
+      metaEl.textContent = `Grade ${r.grade ?? "-"} • ${clean(r.topic || "General")} • ${new Date(r.createdAt).toLocaleString()}`;
+
+      scorePill.textContent = `Score: ${r.score}/${r.total} (${r.percent}%) • ${r.status}`;
+      scorePill.style.borderColor = r.status === "PASS" ? "#86efac" : "#fecaca";
+      scorePill.style.background = r.status === "PASS" ? "#dcfce7" : "#fee2e2";
+
+      const answers = Array.isArray(r.answers) ? r.answers : [];
+      list.innerHTML = answers.map((a, i) => renderQuestion(a, i)).join("");
+
+      msg.textContent = r.timeTakenSeconds ? `Time taken: ${formatTime(r.timeTakenSeconds)}` : "";
+    } catch(e){
+      msg.textContent = e.message || "Error loading attempt.";
+    }
+  }
+
+  function renderQuestion(a, idx){
+    const qText = clean(a.questionText || `Question ${idx+1}`);
+    const opts = Array.isArray(a.options) ? a.options : [];
+    const chosen = Number(a.chosenIndex);
+    const correct = Number(a.correctIndex);
+
+    return `
+      <div class="q">
+        <b>${idx+1}. ${escapeHtml(qText)}</b>
+        ${opts.map((o, j) => {
+          const isCorrect = j === correct;
+          const isChosen = j === chosen;
+
+          let cls = "opt";
+          if (isCorrect) cls += " correct";
+          if (isChosen && isCorrect) cls += " chosenRight";
+          if (isChosen && !isCorrect) cls += " chosenWrong";
+
+          const tag = isCorrect ? " (Correct)" : isChosen ? " (Chosen)" : "";
+          return `<div class="${cls}">${escapeHtml(clean(o))}${tag}</div>`;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  function formatTime(sec){
+    const m = Math.floor(sec/60);
+    const s = sec%60;
+    return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+</script>
+</body>
+</html>
