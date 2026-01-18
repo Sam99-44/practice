@@ -96,14 +96,14 @@
       font-weight:700;
       white-space:nowrap;
     }
-    .scorepill{
+    .markspill{
       display:inline-block;
       padding:4px 10px;
       border-radius:999px;
       border:1px solid #e6e6e6;
       background:#f8fafc;
       font-size:12px;
-      font-weight:800;
+      font-weight:900;
       white-space:nowrap;
     }
 
@@ -308,7 +308,7 @@
               <th>Grade</th>
               <th>Topic</th>
               <th>Quiz</th>
-              <th>Score</th>
+              <th>Marks</th>
               <th>Review</th>
             </tr>
           </thead>
@@ -319,7 +319,11 @@
               const gradeStr = r.grade ?? "-";
               const topicStr = escapeHtml(r.topic || "General");
               const titleStr = escapeHtml(r.title || "Quiz");
-              const scoreStr = `${r.score}/${r.total} (${r.percent}%)`;
+
+              const pct = Number(r.percent);
+              const safePct = Number.isFinite(pct) ? pct : 0;
+              const marksStr = `${safePct}%`;
+
               const id = r._id ? String(r._id) : "";
 
               return `
@@ -328,7 +332,7 @@
                   <td><span class="pill">Grade ${escapeHtml(String(gradeStr))}</span></td>
                   <td>${topicStr}</td>
                   <td>${titleStr}</td>
-                  <td><span class="scorepill">${escapeHtml(scoreStr)}</span></td>
+                  <td><span class="markspill">${escapeHtml(marksStr)}</span></td>
                   <td>
                     ${id ? `<button class="smallBtn" data-review="${escapeHtml(id)}">Review</button>` : `<span class="muted">—</span>`}
                   </td>
