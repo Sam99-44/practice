@@ -22,6 +22,7 @@
       --shadow:0 6px 18px rgba(0,0,0,0.06);
       --error:#b91c1c;
       --ok:#065f46;
+      --warn:#b45309;
     }
     *{box-sizing:border-box}
     body{margin:0; font-family:Inter,Arial,sans-serif; background:var(--bg); color:var(--text);}
@@ -35,7 +36,7 @@
     .brand{display:flex; align-items:center; gap:10px;}
     .logo{width:38px; height:38px; border-radius:10px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700;}
 
-    .nav{display:flex; gap:12px;}
+    .nav{display:flex; gap:12px; align-items:center;}
     .nav a,.nav button{
       text-decoration:none;
       font-size:14px;
@@ -50,6 +51,23 @@
 
     .card{background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);}
     h1{margin:0 0 6px 0;}
+
+    .metaRow{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;}
+    .timerBox{
+      border:1px solid #dbeafe;
+      background:#eff6ff;
+      color:#1e3a8a;
+      padding:8px 12px;
+      border-radius:999px;
+      font-weight:800;
+      font-size:14px;
+      white-space:nowrap;
+    }
+    .timerBox.warn{
+      border-color:#fed7aa;
+      background:#fff7ed;
+      color:var(--warn);
+    }
 
     .q{margin-top:16px; padding-top:16px; border-top:1px solid #eee;}
     .opt{display:block; padding:10px; border:1px solid #ddd; border-radius:10px; margin-bottom:8px; cursor:pointer;}
@@ -88,8 +106,15 @@
   </div>
 
   <div class="card">
-    <h1 id="quizTitle">Loading…</h1>
-    <p class="muted" id="quizInfo"></p>
+    <div class="metaRow">
+      <div>
+        <h1 id="quizTitle">Loading…</h1>
+        <p class="muted" id="quizInfo" style="margin:6px 0 0 0;"></p>
+      </div>
+
+      <!-- ✅ TIMER -->
+      <div id="timerBox" class="timerBox hidden">Time: 00:00</div>
+    </div>
 
     <div id="lockNotice" class="lockBox hidden">
       <b class="error">This quiz is locked.</b>
@@ -120,6 +145,16 @@
   const msgEl = document.getElementById("msg");
   const lockNotice = document.getElementById("lockNotice");
 
+  // Timer UI
+  const timerBox = document.getElementById("timerBox");
+  let timerInterval = null;
+  let quizEndAtMs = null;
+  let quizData = null;
+  let submitted = false;
+
+  // Keys per quiz (refresh-safe)
+  const END_KEY = `quiz_end_${quizId}`;
+
   document.getElementById("logoutBtn").onclick = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
@@ -133,6 +168,10 @@
     loadQuiz();
   }
 
+  function cleanSpaces(s){
+    return String(s || "").trim().replace(/\s+/g, " ");
+  }
+
   async function loadQuiz() {
     const res = await fetch(`${API}/api/quizzes/${quizId}`, {
       headers: { Authorization: "Bearer " + token }
@@ -144,39 +183,115 @@
       return;
     }
 
-    const quiz = await res.json();
-    quizTitle.textContent = quiz.title;
-    quizInfo.textContent = `Grade ${quiz.grade} • ${quiz.topic}`;
+    quizData = await res.json();
 
-    questionsDiv.innerHTML = quiz.questions.map((q, i) => `
+    quizTitle.textContent = cleanSpaces(quizData.title || "Quiz");
+    quizInfo.textContent = `Grade ${quizData.grade ?? "-"} • ${cleanSpaces(quizData.topic || "General")}`;
+
+    questionsDiv.innerHTML = (quizData.questions || []).map((q, i) => `
       <div class="q">
-        <b>${i + 1}. ${q.text}</b>
-        ${q.options.map((o, j) => `
+        <b>${i + 1}. ${cleanSpaces(q.text)}</b>
+        ${(q.options || []).map((o, j) => `
           <label class="opt">
-            <input type="radio" name="q${i}" value="${j}"> ${o}
+            <input type="radio" name="q${i}" value="${j}"> ${cleanSpaces(o)}
           </label>
         `).join("")}
       </div>
     `).join("");
 
-    submitBtn.onclick = () => submitQuiz(quiz);
+    // ✅ Start timer AFTER quiz loads (so we know question count)
+    startTimerForQuiz((quizData.questions || []).length);
+
+    submitBtn.onclick = () => submitQuiz("manual");
   }
 
-  async function submitQuiz(quiz) {
+  // ✅ Timer rule: 1 minute per question, min 5 min, max 30 min
+  function calcSeconds(totalQuestions){
+    const perQ = 60; // 1 minute each
+    const raw = totalQuestions * perQ;
+    return clamp(raw, 5 * 60, 30 * 60);
+  }
+  function clamp(n, min, max){
+    return Math.max(min, Math.min(max, n));
+  }
+
+  function startTimerForQuiz(totalQuestions){
+    // If we already saved an end time (refresh), use it.
+    const savedEnd = Number(localStorage.getItem(END_KEY));
+    const now = Date.now();
+
+    if (savedEnd && savedEnd > now) {
+      quizEndAtMs = savedEnd;
+    } else {
+      const secs = calcSeconds(totalQuestions);
+      quizEndAtMs = now + secs * 1000;
+      localStorage.setItem(END_KEY, String(quizEndAtMs));
+    }
+
+    timerBox.classList.remove("hidden");
+
+    // initial paint + tick
+    tickTimer();
+    clearInterval(timerInterval);
+    timerInterval = setInterval(tickTimer, 1000);
+  }
+
+  function tickTimer(){
+    if (!quizEndAtMs || submitted) return;
+
+    const now = Date.now();
+    const remainingMs = quizEndAtMs - now;
+
+    if (remainingMs <= 0) {
+      timerBox.textContent = "Time: 00:00";
+      timerBox.classList.add("warn");
+      clearInterval(timerInterval);
+      timerInterval = null;
+
+      // Auto-submit when time ends
+      msgEl.className = "error";
+      msgEl.textContent = "⏱️ Time is up! Submitting your answers…";
+      submitQuiz("auto");
+      return;
+    }
+
+    const remainingSec = Math.ceil(remainingMs / 1000);
+    const mm = String(Math.floor(remainingSec / 60)).padStart(2, "0");
+    const ss = String(remainingSec % 60).padStart(2, "0");
+    timerBox.textContent = `Time: ${mm}:${ss}`;
+
+    // Warn at 1 minute
+    if (remainingSec <= 60) timerBox.classList.add("warn");
+  }
+
+  async function submitQuiz(mode){
+    if (!quizData || submitted) return;
+
+    const total = (quizData.questions || []).length;
     let score = 0;
     let answered = 0;
 
-    quiz.questions.forEach((q, i) => {
+    quizData.questions.forEach((q, i) => {
       const chosen = document.querySelector(`input[name="q${i}"]:checked`);
       if (chosen) answered++;
       if (chosen && Number(chosen.value) === q.correctIndex) score++;
     });
 
-    if (answered < quiz.questions.length) {
+    // Only force "answer all" when user clicks manually.
+    // If auto-submit, we allow partial.
+    if (mode === "manual" && answered < total) {
       msgEl.className = "error";
-      msgEl.textContent = "Please answer all questions before submitting.";
+      msgEl.textContent = `Please answer all questions (${answered}/${total}) before submitting.`;
       return;
     }
+
+    submitted = true;
+    submitBtn.disabled = true;
+
+    // stop timer + clear saved end time
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+    localStorage.removeItem(END_KEY);
 
     const res = await fetch(`${API}/api/results`, {
       method: "POST",
@@ -187,7 +302,7 @@
       body: JSON.stringify({
         quizId,
         score,
-        total: quiz.questions.length
+        total
       })
     });
 
@@ -195,15 +310,24 @@
       lockNotice.classList.remove("hidden");
       msgEl.className = "error";
       msgEl.textContent = "You already attempted this quiz.";
-      submitBtn.disabled = true;
       return;
     }
 
+    if (!res.ok) {
+      msgEl.className = "error";
+      msgEl.textContent = "Could not save result. Please try again.";
+      return;
+    }
+
+    const percent = Math.round((score / total) * 100);
     msgEl.className = "ok";
-    msgEl.textContent = "✅ Result saved successfully!";
-    submitBtn.disabled = true;
+    msgEl.textContent = `✅ Submitted! Score: ${score}/${total} (${percent}%).`;
+
     viewResultsBtn.disabled = false;
     viewResultsBtn.onclick = () => window.location.href = "results.html";
+
+    // disable all radios after submit
+    document.querySelectorAll("input[type=radio]").forEach(el => el.disabled = true);
   }
 </script>
 </body>
