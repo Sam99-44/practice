@@ -45,7 +45,7 @@
     .nav .primary{background:var(--accent); color:#fff; border:none;}
 
     h1{margin:0 0 4px 0; font-size:22px;}
-    .pillRow{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;}
+    .pillRow{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; align-items:center;}
     .pill{
       display:inline-block;
       padding:4px 10px;
@@ -57,7 +57,7 @@
       font-weight:800;
       white-space:nowrap;
     }
-    .scorepill{
+    .markspill{
       display:inline-block;
       padding:4px 10px;
       border-radius:999px;
@@ -79,15 +79,29 @@
       margin-bottom:8px;
       background:#fff;
     }
-    .opt.correct{
-      border-color:var(--green);
-      background:var(--greenBg);
-    }
-    .opt.wrong{
-      border-color:var(--red);
-      background:var(--redBg);
-    }
+    .opt.correct{ border-color:var(--green); background:var(--greenBg); }
+    .opt.wrong{ border-color:var(--red); background:var(--redBg); }
     .opt input{margin-right:10px;}
+
+    .controlsRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:12px;
+      margin-bottom:10px;
+    }
+    .jumpGroup{display:flex; flex-direction:column; gap:6px;}
+    select{
+      padding:10px;
+      border-radius:10px;
+      border:1px solid #ddd;
+      background:#fff;
+      min-width:220px;
+      font-size:14px;
+      outline:none;
+    }
 
     .footerRow{
       display:flex;
@@ -163,11 +177,20 @@
     <div class="pillRow">
       <span class="pill" id="gradePill">Grade -</span>
       <span class="pill" id="topicPill">Topic -</span>
-      <span class="scorepill" id="scorePill">Score -</span>
+      <span class="markspill" id="marksPill">Marks: -</span>
     </div>
 
     <div class="qBox">
-      <div class="muted" id="qCounter"></div>
+      <div class="controlsRow">
+        <div class="muted" id="qCounter"></div>
+
+        <!-- ✅ Jump to Question -->
+        <div class="jumpGroup">
+          <label class="muted" style="font-size:12px;">Jump to question</label>
+          <select id="jumpSelect"></select>
+        </div>
+      </div>
+
       <p class="qTitle" id="qText"></p>
       <div id="opts"></div>
 
@@ -187,14 +210,13 @@
 <script>
   const API = window.API || "https://practice-backend-msgn.onrender.com";
   const token = localStorage.getItem("token");
-
   const resultId = new URLSearchParams(window.location.search).get("resultId");
 
   const titleEl = document.getElementById("title");
   const subtitleEl = document.getElementById("subtitle");
   const gradePill = document.getElementById("gradePill");
   const topicPill = document.getElementById("topicPill");
-  const scorePill = document.getElementById("scorePill");
+  const marksPill = document.getElementById("marksPill");
 
   const qCounter = document.getElementById("qCounter");
   const qText = document.getElementById("qText");
@@ -204,6 +226,7 @@
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
   const err = document.getElementById("err");
+  const jumpSelect = document.getElementById("jumpSelect");
 
   let answers = [];
   let idx = 0;
@@ -252,13 +275,30 @@
       subtitleEl.textContent = "Review your attempt question by question.";
       gradePill.textContent = `Grade ${r.grade ?? "-"}`;
       topicPill.textContent = `Topic: ${cleanSpaces(r.topic || "General")}`;
-      scorePill.textContent = `Score: ${r.score}/${r.total} (${r.percent}%)`;
+
+      // ✅ Marks as percentage only
+      const pct = Number(r.percent);
+      const safePct = Number.isFinite(pct) ? pct : 0;
+      marksPill.textContent = `Marks: ${safePct}%`;
 
       answers = Array.isArray(r.answers) ? r.answers : [];
       if (answers.length === 0) {
         showErr("No saved answers found for this attempt.");
         return;
       }
+
+      // ✅ build jump dropdown
+      jumpSelect.innerHTML = answers.map((_, i) =>
+        `<option value="${i}">Question ${i + 1}</option>`
+      ).join("");
+
+      jumpSelect.addEventListener("change", () => {
+        const v = Number(jumpSelect.value);
+        if (Number.isFinite(v) && v >= 0 && v < answers.length) {
+          idx = v;
+          renderQuestion();
+        }
+      });
 
       idx = 0;
       renderQuestion();
@@ -273,6 +313,7 @@
     const a = answers[idx];
 
     qCounter.textContent = `Question ${idx + 1} of ${answers.length}`;
+    jumpSelect.value = String(idx);
     qText.textContent = cleanSpaces(a.questionText || "");
 
     const options = Array.isArray(a.options) ? a.options : [];
@@ -284,8 +325,8 @@
       const isChosen = i === chosen;
 
       // ✅ Colour rules:
-      // - Correct option is always green
-      // - If chosen is wrong, chosen option becomes red
+      // - Correct option is green always
+      // - If chosen is wrong, chosen option is red
       let cls = "";
       if (isCorrect) cls = "correct";
       if (isChosen && !isCorrect) cls = "wrong";
@@ -298,7 +339,6 @@
       `;
     }).join("");
 
-    // ✅ Only show correct answer at bottom
     const correctText = options[correct] ?? "";
     onlyCorrect.textContent = `Correct answer: ${letter(correct)}. ${cleanSpaces(correctText)}`;
 
@@ -314,7 +354,6 @@
     if (idx < answers.length - 1) { idx++; renderQuestion(); }
   });
 
-  // keyboard support
   window.addEventListener("keydown", (e) => {
     if (e.key === "ArrowLeft") prevBtn.click();
     if (e.key === "ArrowRight") nextBtn.click();
