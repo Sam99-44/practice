@@ -207,6 +207,55 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   }
 });
 
+// ✅ UPDATE quiz (admin only)
+app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid quiz id" });
+    }
+
+    // Only allow these fields to be updated
+    const allowed = (({ grade, title, topic, questions, timeLimitMinutes }) => ({
+      grade,
+      title,
+      topic,
+      questions,
+      timeLimitMinutes,
+    }))(req.body);
+
+    const updated = await Quiz.findByIdAndUpdate(id, allowed, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updated) return res.status(404).json({ message: "Quiz not found" });
+
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// ✅ DELETE quiz (admin only)
+app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid quiz id" });
+    }
+
+    const deleted = await Quiz.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ message: "Quiz not found" });
+
+    res.json({ message: "Quiz deleted" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 /* ------------------ RESULTS ROUTES ------------------ */
 
 // ✅ Save result (ONE attempt per quiz) + save answers snapshot
@@ -238,7 +287,7 @@ app.post("/api/results", authRequired, async (req, res) => {
     const exists = await Result.findOne({ userId: req.user.userId, quizId });
     if (exists) return res.status(409).json({ message: "Quiz already attempted" });
 
-    // ✅ Build safe snapshot answers (never trust client fully)
+    // Build safe snapshot answers (never trust client fully)
     const quizQuestions = Array.isArray(quiz.questions) ? quiz.questions : [];
     const incoming = Array.isArray(answers) ? answers : [];
 
@@ -291,7 +340,7 @@ app.post("/api/results", authRequired, async (req, res) => {
   }
 });
 
-// ✅ Get my results (list)
+// Get my results (list)
 app.get("/api/results/my", authRequired, async (req, res) => {
   try {
     const results = await Result.find({ userId: req.user.userId })
@@ -304,7 +353,7 @@ app.get("/api/results/my", authRequired, async (req, res) => {
   }
 });
 
-// ✅ NEW: Get one result with answers (for review page)
+// Get one result with answers (for review page)
 app.get("/api/results/:id", authRequired, async (req, res) => {
   try {
     const { id } = req.params;
