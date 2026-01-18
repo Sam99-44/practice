@@ -186,7 +186,11 @@
     quizData = await res.json();
 
     quizTitle.textContent = cleanSpaces(quizData.title || "Quiz");
-    quizInfo.textContent = `Grade ${quizData.grade ?? "-"} • ${cleanSpaces(quizData.topic || "General")}`;
+
+    // ✅ show time in the info line
+    const mins = Number(quizData.timeLimitMinutes || 0);
+    const timeStr = mins > 0 ? ` • Time ${mins} min` : "";
+    quizInfo.textContent = `Grade ${quizData.grade ?? "-"} • ${cleanSpaces(quizData.topic || "General")}${timeStr}`;
 
     questionsDiv.innerHTML = (quizData.questions || []).map((q, i) => `
       <div class="q">
@@ -199,38 +203,41 @@
       </div>
     `).join("");
 
-    // ✅ Start timer AFTER quiz loads (so we know question count)
-    startTimerForQuiz((quizData.questions || []).length);
+    // ✅ Start timer using quiz.timeLimitMinutes (fallback to question rule if missing)
+    startTimerWithQuiz(quizData);
 
     submitBtn.onclick = () => submitQuiz("manual");
   }
 
-  // ✅ Timer rule: 1 minute per question, min 5 min, max 30 min
-  function calcSeconds(totalQuestions){
-    const perQ = 60; // 1 minute each
-    const raw = totalQuestions * perQ;
-    return clamp(raw, 5 * 60, 30 * 60);
-  }
-  function clamp(n, min, max){
-    return Math.max(min, Math.min(max, n));
+  // fallback rule if no timeLimitMinutes: 1 minute per question, min 5, max 30
+  function calcFallbackSeconds(totalQuestions){
+    const raw = totalQuestions * 60;
+    return Math.max(5 * 60, Math.min(raw, 30 * 60));
   }
 
-  function startTimerForQuiz(totalQuestions){
-    // If we already saved an end time (refresh), use it.
-    const savedEnd = Number(localStorage.getItem(END_KEY));
+  function startTimerWithQuiz(quiz){
     const now = Date.now();
+    const savedEnd = Number(localStorage.getItem(END_KEY));
 
+    // ✅ Use stored end time if user refreshed
     if (savedEnd && savedEnd > now) {
       quizEndAtMs = savedEnd;
     } else {
-      const secs = calcSeconds(totalQuestions);
+      const mins = Number(quiz.timeLimitMinutes || 0);
+      const totalQuestions = (quiz.questions || []).length;
+
+      let secs;
+      if (Number.isFinite(mins) && mins > 0) {
+        secs = mins * 60; // ✅ dynamic per quiz
+      } else {
+        secs = calcFallbackSeconds(totalQuestions);
+      }
+
       quizEndAtMs = now + secs * 1000;
       localStorage.setItem(END_KEY, String(quizEndAtMs));
     }
 
     timerBox.classList.remove("hidden");
-
-    // initial paint + tick
     tickTimer();
     clearInterval(timerInterval);
     timerInterval = setInterval(tickTimer, 1000);
@@ -248,7 +255,6 @@
       clearInterval(timerInterval);
       timerInterval = null;
 
-      // Auto-submit when time ends
       msgEl.className = "error";
       msgEl.textContent = "⏱️ Time is up! Submitting your answers…";
       submitQuiz("auto");
@@ -260,7 +266,6 @@
     const ss = String(remainingSec % 60).padStart(2, "0");
     timerBox.textContent = `Time: ${mm}:${ss}`;
 
-    // Warn at 1 minute
     if (remainingSec <= 60) timerBox.classList.add("warn");
   }
 
@@ -277,8 +282,6 @@
       if (chosen && Number(chosen.value) === q.correctIndex) score++;
     });
 
-    // Only force "answer all" when user clicks manually.
-    // If auto-submit, we allow partial.
     if (mode === "manual" && answered < total) {
       msgEl.className = "error";
       msgEl.textContent = `Please answer all questions (${answered}/${total}) before submitting.`;
@@ -288,7 +291,6 @@
     submitted = true;
     submitBtn.disabled = true;
 
-    // stop timer + clear saved end time
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = null;
     localStorage.removeItem(END_KEY);
@@ -299,11 +301,7 @@
         "Content-Type": "application/json",
         Authorization: "Bearer " + token
       },
-      body: JSON.stringify({
-        quizId,
-        score,
-        total
-      })
+      body: JSON.stringify({ quizId, score, total })
     });
 
     if (res.status === 409) {
@@ -326,7 +324,6 @@
     viewResultsBtn.disabled = false;
     viewResultsBtn.onclick = () => window.location.href = "results.html";
 
-    // disable all radios after submit
     document.querySelectorAll("input[type=radio]").forEach(el => el.disabled = true);
   }
 </script>
