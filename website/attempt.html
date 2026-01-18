@@ -29,6 +29,7 @@
     .error{color:var(--error);}
     .ok{color:var(--ok);}
     .muted{color:var(--muted);}
+    .hidden{display:none;} /* ✅ FIX */
 
     .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:12px;}
     .brand{display:flex; align-items:center; gap:10px;}
@@ -178,10 +179,14 @@
       window.location.href = "results.html";
     });
 
-    document.getElementById("logoutBtn").onclick = () => {
-      localStorage.clear();
+    // ✅ Safer logout (don’t wipe everything)
+    function logout(){
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
       window.location.href = "login.html";
-    };
+    }
+    document.getElementById("logoutBtn")?.addEventListener("click", logout);
+    document.getElementById("logoutBtnMobile")?.addEventListener("click", logout);
 
     if (!quizId) {
       quizTitle.textContent = "Quiz not found";
@@ -193,16 +198,12 @@
     }
 
     async function init(){
-      // 1) Check lock first
       const attempted = await alreadyAttempted(quizId);
       if (attempted) {
         lockQuizUI();
-        // still load quiz title/info (optional)
         await loadQuiz(true);
         return;
       }
-
-      // 2) Not attempted -> load quiz normally
       await loadQuiz(false);
     }
 
@@ -213,8 +214,7 @@
         });
 
         if (res.status === 401) {
-          localStorage.clear();
-          window.location.href = "login.html";
+          logout();
           return true;
         }
 
@@ -247,8 +247,7 @@
         });
 
         if (res.status === 401) {
-          localStorage.clear();
-          window.location.href = "login.html";
+          logout();
           return;
         }
 
@@ -375,12 +374,10 @@
         });
 
         if (res.status === 401) {
-          localStorage.clear();
-          window.location.href = "login.html";
+          logout();
           return;
         }
 
-        // ✅ If already attempted, backend will return 409 (because of unique index)
         if (res.status === 409) {
           msgEl.className = "error";
           msgEl.textContent = "You already attempted this quiz. It is now locked.";
@@ -397,7 +394,6 @@
         msgEl.textContent = "✅ Result saved. You can view your results history.";
         viewResultsBtn.disabled = false;
 
-        // Optional: mark locally for the list page
         try {
           const done = JSON.parse(localStorage.getItem("completed_quizzes") || "[]");
           if (!done.includes(quizId)) {
