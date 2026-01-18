@@ -254,7 +254,7 @@ app.post("/api/results", authRequired, async (req, res) => {
       quizId,
       grade: Number(quiz.grade),
       topic: quiz.topic || "General",
-      title: quiz.title || "Assessment",
+      title: quiz.title || "Quiz",
       score: s,
       total: t,
       percent,
@@ -298,4 +298,5 @@ mongoose
     app.listen(PORT, () => console.log(`Server running on ${PORT}`));
   })
   .catch((err) => console.error("Mongo error:", err.message));
+
 
