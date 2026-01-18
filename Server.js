@@ -215,39 +215,59 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
 
 /* ------------------ RESULTS ROUTES ------------------ */
 
-// Save result (ONE attempt per quiz)
+// ✅ Save result (ONE attempt per quiz) + SAVE ANSWERS SNAPSHOT
 app.post("/api/results", authRequired, async (req, res) => {
   try {
-    const { quizId, score, total } = req.body;
+    const { quizId, answers, timeTakenSeconds } = req.body;
 
-    if (!quizId || score === undefined || total === undefined) {
-      return res.status(400).json({ message: "quizId, score, total required" });
+    if (!quizId) {
+      return res.status(400).json({ message: "quizId required" });
     }
 
     if (!mongoose.Types.ObjectId.isValid(quizId)) {
       return res.status(400).json({ message: "Invalid quizId" });
     }
 
-    const quiz = await Quiz.findById(quizId).select("grade topic title");
+    const quiz = await Quiz.findById(quizId);
     if (!quiz) return res.status(404).json({ message: "Quiz not found" });
 
-    const s = Number(score);
-    const t = Number(total);
-    if (!Number.isFinite(s) || !Number.isFinite(t) || t <= 0) {
-      return res.status(400).json({ message: "Invalid score/total" });
+    // 🔒 lock attempt
+    const exists = await Result.findOne({ userId: req.user.userId, quizId });
+    if (exists) return res.status(409).json({ message: "Quiz already attempted" });
+
+    const questions = quiz.questions || [];
+    const total = questions.length;
+
+    if (!Array.isArray(answers) || answers.length !== total) {
+      return res.status(400).json({ message: `answers must have ${total} items` });
     }
 
-    const percent = Math.round((s / t) * 100);
-    const status = percent >= 50 ? "PASS" : "FAIL";
+    // Build snapshot + score
+    let score = 0;
 
-    const exists = await Result.findOne({
-      userId: req.user.userId,
-      quizId,
+    const savedAnswers = answers.map((a, i) => {
+      const chosenIndex = Number(a?.chosenIndex);
+      if (!Number.isFinite(chosenIndex) || chosenIndex < 0) {
+        throw new Error(`Invalid chosenIndex at question ${i + 1}`);
+      }
+
+      const q = questions[i];
+      const correctIndex = Number(q.correctIndex);
+      const isCorrect = chosenIndex === correctIndex;
+      if (isCorrect) score++;
+
+      return {
+        questionIndex: i,
+        chosenIndex,
+        correctIndex,
+        isCorrect,
+        questionText: q.text || "",
+        options: Array.isArray(q.options) ? q.options : [],
+      };
     });
 
-    if (exists) {
-      return res.status(409).json({ message: "Quiz already attempted" });
-    }
+    const percent = Math.round((score / total) * 100);
+    const status = percent >= 50 ? "PASS" : "FAIL";
 
     const saved = await Result.create({
       userId: req.user.userId,
@@ -255,10 +275,12 @@ app.post("/api/results", authRequired, async (req, res) => {
       grade: Number(quiz.grade),
       topic: quiz.topic || "General",
       title: quiz.title || "Quiz",
-      score: s,
-      total: t,
+      score,
+      total,
       percent,
       status,
+      answers: savedAnswers,
+      timeTakenSeconds: Number(timeTakenSeconds) || 0,
     });
 
     res.status(201).json({
@@ -271,11 +293,11 @@ app.post("/api/results", authRequired, async (req, res) => {
     if (err.code === 11000) {
       return res.status(409).json({ message: "Quiz already attempted" });
     }
-    res.status(500).json({ message: err.message });
+    res.status(400).json({ message: err.message });
   }
 });
 
-// Get my results
+// ✅ Get my results
 app.get("/api/results/my", authRequired, async (req, res) => {
   try {
     const results = await Result.find({ userId: req.user.userId })
@@ -283,6 +305,29 @@ app.get("/api/results/my", authRequired, async (req, res) => {
       .limit(200);
 
     res.json(results);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ✅ Get ONE result by id (for review page)
+app.get("/api/results/:id", authRequired, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid result id" });
+    }
+
+    const r = await Result.findById(id);
+    if (!r) return res.status(404).json({ message: "Result not found" });
+
+    // Only owner can view (simple + safe)
+    if (String(r.userId) !== String(req.user.userId)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    res.json(r);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -298,5 +343,3 @@ mongoose
     app.listen(PORT, () => console.log(`Server running on ${PORT}`));
   })
   .catch((err) => console.error("Mongo error:", err.message));
-
-
