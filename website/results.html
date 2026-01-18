@@ -83,8 +83,9 @@
     }
 
     table{width:100%; border-collapse:collapse; margin-top:10px;}
-    th, td{padding:10px; border-bottom:1px solid #eee; text-align:left; font-size:14px; vertical-align:middle;}
+    th, td{padding:10px; border-bottom:1px solid #eee; text-align:left; font-size:14px;}
     th{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;}
+
     .pill{
       display:inline-block;
       padding:4px 10px;
@@ -94,17 +95,24 @@
       color:#0b3c5d;
       font-size:12px;
       font-weight:700;
-      white-space:nowrap;
     }
-    .markspill{
-      display:inline-block;
+
+    /* ✅ Marks colours */
+    .marks-pass{
+      background:#dcfce7;
+      border:1px solid #16a34a;
+      color:#065f46;
+      font-weight:900;
       padding:4px 10px;
       border-radius:999px;
-      border:1px solid #e6e6e6;
-      background:#f8fafc;
-      font-size:12px;
+    }
+    .marks-fail{
+      background:#fee2e2;
+      border:1px solid #dc2626;
+      color:#7f1d1d;
       font-weight:900;
-      white-space:nowrap;
+      padding:4px 10px;
+      border-radius:999px;
     }
 
     .empty{
@@ -123,242 +131,99 @@
 </head>
 
 <body>
-  <div class="wrap">
+<div class="wrap">
 
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo">PO</div>
-        <div>
-          <strong>Practice Online</strong>
-          <span id="welcomeSub">Results</span>
-        </div>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">PO</div>
+      <div>
+        <strong>Practice Online</strong>
+        <span id="welcomeSub">Results</span>
       </div>
-
-      <nav class="nav">
-        <a href="learner-quizzes.html">Back to Practice</a>
-        <a href="results.html" class="active">Results</a>
-        <a href="about.html">About</a>
-        <a href="admin-quiz.html" data-admin>Admin</a>
-        <button class="btn" id="logoutBtn" type="button">Logout</button>
-      </nav>
     </div>
 
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
-        <div>
-          <h1>Your Results</h1>
-          <p class="muted" style="margin:6px 0 0 0;">Your quiz history will show here.</p>
-        </div>
-        <div>
-          <span class="pill" id="countPill">Loading…</span>
-        </div>
-      </div>
-
-      <div class="controls">
-        <div class="group">
-          <label class="muted" style="font-size:12px;">Grade</label>
-          <select id="gradeFilter">
-            <option value="">All grades</option>
-            <option value="8">Grade 8</option>
-            <option value="9">Grade 9</option>
-            <option value="10">Grade 10</option>
-            <option value="11">Grade 11</option>
-            <option value="12">Grade 12</option>
-          </select>
-        </div>
-
-        <div class="group" style="flex:1; min-width:240px;">
-          <label class="muted" style="font-size:12px;">Search topic/title</label>
-          <input id="searchBox" placeholder="Type e.g. Algebra..." />
-        </div>
-
-        <div class="group">
-          <label class="muted" style="font-size:12px;">Actions</label>
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn2" id="refreshBtn" type="button">Refresh</button>
-            <button class="btn2" id="clearBtn" type="button">Clear filters</button>
-          </div>
-        </div>
-      </div>
-
-      <p id="status" class="muted" style="margin:6px 0 0 0;"></p>
-
-      <div id="tableWrap"></div>
-    </div>
-
+    <nav class="nav">
+      <a href="learner-quizzes.html">Back to Practice</a>
+      <a href="results.html" class="active">Results</a>
+      <a href="about.html">About</a>
+      <a href="admin-quiz.html" data-admin>Admin</a>
+      <button class="btn" id="logoutBtn">Logout</button>
+    </nav>
   </div>
 
-  <script src="nav.js"></script>
+  <div class="card">
+    <h1>Your Results</h1>
+    <p class="muted">Your assessment history will show here.</p>
 
-  <script>
-    const API = window.API || "https://practice-backend-msgn.onrender.com";
-    const token = localStorage.getItem("token");
+    <div id="tableWrap"></div>
+  </div>
 
-    const username = localStorage.getItem("username") || "Learner";
-    document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
+</div>
 
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("username");
-      window.location.href = "login.html";
+<script>
+  const API = window.API || "https://practice-backend-msgn.onrender.com";
+  const token = localStorage.getItem("token");
+
+  document.getElementById("logoutBtn").onclick = () => {
+    localStorage.removeItem("token");
+    window.location.href = "login.html";
+  };
+
+  loadResults();
+
+  async function loadResults(){
+    const res = await fetch(`${API}/api/results/my`, {
+      headers:{ Authorization:"Bearer "+token }
     });
 
-    const gradeFilter = document.getElementById("gradeFilter");
-    const searchBox = document.getElementById("searchBox");
-    const refreshBtn = document.getElementById("refreshBtn");
-    const clearBtn = document.getElementById("clearBtn");
+    const data = await res.json();
 
-    const statusEl = document.getElementById("status");
-    const tableWrap = document.getElementById("tableWrap");
-    const countPill = document.getElementById("countPill");
-
-    let allResults = [];
-
-    gradeFilter.addEventListener("change", render);
-    searchBox.addEventListener("input", render);
-
-    refreshBtn.addEventListener("click", loadResults);
-    clearBtn.addEventListener("click", () => {
-      gradeFilter.value = "";
-      searchBox.value = "";
-      render();
-    });
-
-    loadResults();
-
-    async function loadResults(){
-      statusEl.className = "muted";
-      statusEl.textContent = "Loading results…";
-      tableWrap.innerHTML = "";
-      countPill.textContent = "Loading…";
-
-      try{
-        const res = await fetch(`${API}/api/results/my`, {
-          headers: { Authorization: "Bearer " + token }
-        });
-
-        if (res.status === 401) {
-          localStorage.removeItem("token");
-          window.location.href = "login.html";
-          return;
-        }
-
-        if (!res.ok) {
-          const txt = await res.text().catch(()=> "");
-          throw new Error(txt || `Request failed (HTTP ${res.status})`);
-        }
-
-        const data = await res.json();
-        allResults = Array.isArray(data) ? data : [];
-
-        statusEl.textContent = "";
-        render();
-      } catch (err){
-        statusEl.className = "error";
-        statusEl.textContent = "Could not load results: " + (err.message || "");
-        countPill.textContent = "0 results";
-
-        tableWrap.innerHTML = `
-          <div class="empty">
-            <div class="error"><b>Results not showing.</b></div>
-            <div class="muted" style="margin-top:6px;">
-              Open DevTools → Network → refresh this page → check:
-              <br><b>GET /api/results/my</b>
-            </div>
-          </div>
-        `;
-      }
+    if (!data.length){
+      document.getElementById("tableWrap").innerHTML = `
+        <div class="empty">No results found.</div>`;
+      return;
     }
 
-    function render(){
-      const grade = gradeFilter.value;
-      const q = (searchBox.value || "").trim().toLowerCase();
-
-      let list = [...allResults];
-
-      if (grade) list = list.filter(r => String(r.grade ?? "") === String(grade));
-
-      if (q) {
-        list = list.filter(r => {
-          const t = String(r.topic || "").toLowerCase();
-          const title = String(r.title || "").toLowerCase();
-          return t.includes(q) || title.includes(q);
-        });
-      }
-
-      countPill.textContent = `${list.length} result${list.length === 1 ? "" : "s"}`;
-
-      if (list.length === 0) {
-        tableWrap.innerHTML = `
-          <div class="empty">
-            <b>No results found.</b>
-            <div class="muted" style="margin-top:6px;">
-              If you just submitted a quiz, click <b>Refresh</b>.
-            </div>
-          </div>
-        `;
-        return;
-      }
-
-      tableWrap.innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Grade</th>
-              <th>Topic</th>
-              <th>Quiz</th>
-              <th>Marks</th>
-              <th>Review</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${list.map(r => {
-              const d = r.createdAt ? new Date(r.createdAt) : null;
-              const dateStr = d ? d.toLocaleString() : "-";
-              const gradeStr = r.grade ?? "-";
-              const topicStr = escapeHtml(r.topic || "General");
-              const titleStr = escapeHtml(r.title || "Quiz");
-
-              const pct = Number(r.percent);
-              const safePct = Number.isFinite(pct) ? pct : 0;
-              const marksStr = `${safePct}%`;
-
-              const id = r._id ? String(r._id) : "";
-
-              return `
-                <tr>
-                  <td>${escapeHtml(dateStr)}</td>
-                  <td><span class="pill">Grade ${escapeHtml(String(gradeStr))}</span></td>
-                  <td>${topicStr}</td>
-                  <td>${titleStr}</td>
-                  <td><span class="markspill">${escapeHtml(marksStr)}</span></td>
-                  <td>
-                    ${id ? `<button class="smallBtn" data-review="${escapeHtml(id)}">Review</button>` : `<span class="muted">—</span>`}
-                  </td>
-                </tr>
-              `;
-            }).join("")}
-          </tbody>
-        </table>
-      `;
-
-      tableWrap.querySelectorAll("[data-review]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const id = btn.getAttribute("data-review");
-          window.location.href = `review.html?resultId=${encodeURIComponent(id)}`;
-        });
-      });
-    }
-
-    function escapeHtml(str){
-      return String(str)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-  </script>
+    document.getElementById("tableWrap").innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Grade</th>
+            <th>Topic</th>
+            <th>Assessment</th>
+            <th>Marks</th>
+            <th>Review</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map(r=>{
+            const d = new Date(r.createdAt).toLocaleString();
+            const pass = r.percent >= 50;
+            return `
+              <tr>
+                <td>${d}</td>
+                <td><span class="pill">Grade ${r.grade}</span></td>
+                <td>${r.topic}</td>
+                <td>${r.title}</td>
+                <td>
+                  <span class="${pass ? "marks-pass" : "marks-fail"}">
+                    ${r.percent}%
+                  </span>
+                </td>
+                <td>
+                  <button class="smallBtn"
+                    onclick="location.href='review.html?resultId=${r._id}'">
+                    Review
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+</script>
 </body>
 </html>
