@@ -243,8 +243,8 @@ app.post("/api/results", authRequired, async (req, res) => {
     const incoming = Array.isArray(answers) ? answers : [];
 
     const snapshotAnswers = incoming
-      .filter(a => a && Number.isFinite(Number(a.questionIndex)))
-      .map(a => {
+      .filter((a) => a && Number.isFinite(Number(a.questionIndex)))
+      .map((a) => {
         const qi = Number(a.questionIndex);
         const chosen = Number(a.chosenIndex);
 
@@ -255,7 +255,8 @@ app.post("/api/results", authRequired, async (req, res) => {
           questionIndex: qi,
           chosenIndex: Number.isFinite(chosen) ? chosen : -1,
           correctIndex: Number.isFinite(correct) ? correct : -1,
-          isCorrect: Number.isFinite(chosen) && Number.isFinite(correct) ? chosen === correct : false,
+          isCorrect:
+            Number.isFinite(chosen) && Number.isFinite(correct) ? chosen === correct : false,
           questionText: q?.text || "",
           options: Array.isArray(q?.options) ? q.options : [],
         };
