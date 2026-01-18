@@ -1,46 +1,24 @@
 import mongoose from "mongoose";
 
-const resultSchema = new mongoose.Schema(
+const ResultSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true
-    },
+    userId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "User" },
+    quizId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "Quiz" },
 
-    quizId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Quiz",
-      required: true
-    },
+    // ✅ These are needed for your Results table
+    grade: { type: Number, required: true },
+    topic: { type: String, default: "General", trim: true },
+    title: { type: String, default: "Quiz", trim: true },
 
-    score: {
-      type: Number,
-      required: true,
-      min: 0
-    },
-
-    total: {
-      type: Number,
-      required: true,
-      min: 1
-    },
-
-    percent: {
-      type: Number,
-      required: true,
-      min: 0,
-      max: 100
-    },
-
-    // ✅ NEW FIELD
-    status: {
-      type: String,
-      enum: ["PASS", "FAIL"],
-      required: true
-    }
+    score: { type: Number, required: true },
+    total: { type: Number, required: true },
+    percent: { type: Number, required: true },
+    status: { type: String, required: true },
   },
   { timestamps: true }
 );
 
-export default mongoose.model("Result", resultSchema);
+// ✅ One attempt per quiz per user
+ResultSchema.index({ userId: 1, quizId: 1 }, { unique: true });
+
+export default mongoose.model("Result", ResultSchema);
