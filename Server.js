@@ -1,427 +1,300 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Attempt Quiz | Practice Online</title>
+// Server.js
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+import Quiz from "./models/Quiz.js";
+import User from "./models/User.js";
+import Result from "./models/Result.js";
 
-  <style>
-    :root{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --border:#e6e6e6;
-      --text:#0f172a;
-      --muted:#475569;
-      --accent:#0b3c5d;
-      --accent-soft:#e7eef5;
-      --radius:14px;
-      --shadow:0 6px 18px rgba(0,0,0,0.06);
-      --error:#b91c1c;
-      --ok:#065f46;
+dotenv.config();
+
+const app = express();
+app.use(express.json());
+
+/* ------------------ CORS ------------------ */
+const ALLOWED_ORIGINS = [
+  process.env.APP_URL, // e.g. https://practiceonline.netlify.app
+  "http://localhost:3000",
+  "http://localhost:5500",
+  "http://127.0.0.1:5500",
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      // allow requests like curl/postman (no origin)
+      if (!origin) return cb(null, true);
+
+      // allow explicit list
+      if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+
+      // ✅ allow Netlify sites (including deploy previews)
+      if (origin.endsWith(".netlify.app")) return cb(null, true);
+
+      return cb(new Error(`CORS blocked: ${origin}`), false);
+    },
+    credentials: true,
+  })
+);
+
+// ✅ handle preflight
+app.options("*", cors());
+
+// ✅ clearer CORS error responses
+app.use((err, req, res, next) => {
+  if (err?.message?.startsWith("CORS blocked")) {
+    return res.status(403).json({ message: err.message });
+  }
+  next(err);
+});
+
+/* ------------------ HEALTH ------------------ */
+app.get("/", (req, res) => res.send("Practice Online API running"));
+app.get("/api/health", (req, res) =>
+  res.json({ ok: true, time: new Date().toISOString() })
+);
+
+/* ------------------ AUTH MIDDLEWARE ------------------ */
+function authRequired(req, res, next) {
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+
+  if (!token) return res.status(401).json({ message: "Missing token" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // { userId, username }
+    next();
+  } catch {
+    res.status(401).json({ message: "Invalid token" });
+  }
+}
+
+async function adminOnly(req, res, next) {
+  try {
+    const user = await User.findById(req.user.userId).select("role");
+    if (!user) return res.status(401).json({ message: "User not found" });
+    if (user.role !== "admin") return res.status(403).json({ message: "Admin only" });
+    next();
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+/* ------------------ AUTH ROUTES ------------------ */
+
+// Register
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    const { username, email, grade, password } = req.body;
+
+    if (!username || !email || !grade || !password) {
+      return res.status(400).json({ message: "All fields required" });
     }
-    *{box-sizing:border-box}
-    body{margin:0; font-family:Inter,Arial,sans-serif; background:var(--bg); color:var(--text);}
-    .wrap{max-width:1000px; margin:0 auto; padding:24px;}
-    .error{color:var(--error);}
-    .ok{color:var(--ok);}
-    .muted{color:var(--muted);}
-    .hidden{display:none;} /* ✅ FIX */
 
-    .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:12px;}
-    .brand{display:flex; align-items:center; gap:10px;}
-    .logo{width:38px; height:38px; border-radius:10px; background:var(--accent); color:white; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px;}
-    .brand span{display:block; font-size:13px; color:var(--muted);}
-
-    .nav{display:flex; align-items:center; gap:14px;}
-    .nav a{text-decoration:none; font-size:14px; color:var(--text); padding:6px 8px; border-radius:8px; transition:background 0.2s;}
-    .nav a:hover{ background:var(--accent-soft); }
-    .nav .nav-btn{background:var(--accent); color:white; padding:8px 12px; border-radius:10px;}
-    .nav .logout{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:10px; cursor:pointer; font-size:14px;}
-
-    .menu-btn{display:none; border:1px solid var(--border); background:var(--card); color:var(--text); padding:10px 12px; border-radius:10px; cursor:pointer;}
-    .mobile-menu{display:none; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:10px; margin-bottom:16px;}
-    .mobile-menu a,.mobile-menu button{width:100%; display:block; text-align:left; padding:10px 12px; border-radius:10px; border:none; background:transparent; color:var(--text); text-decoration:none; cursor:pointer; font-size:14px;}
-    .mobile-menu a:hover,.mobile-menu button:hover{ background:var(--accent-soft); }
-    .mobile-menu .logout{background:var(--accent); color:white;}
-    @media (max-width: 720px){
-      .nav{ display:none; }
-      .menu-btn{ display:inline-flex; }
-      .mobile-menu.open{ display:block; }
+    const g = Number(grade);
+    if (!Number.isFinite(g) || g < 8 || g > 12) {
+      return res.status(400).json({ message: "Grade must be 8–12" });
     }
 
-    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);}
-    .quiz-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:10px;}
-    h1{margin:0; font-size:22px;}
-    .pill{font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid #cfe9ff; background:#eef7ff; color:#0b3c5d; white-space:nowrap;}
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!emailOk) return res.status(400).json({ message: "Invalid email" });
 
-    .q{margin-top:14px; padding-top:14px; border-top:1px solid #eee;}
-    .q h3{margin:0 0 10px 0; font-size:16px;}
-    .opt{display:block; padding:10px; border:1px solid #ddd; border-radius:10px; margin-bottom:8px; cursor:pointer; background:#fff; user-select:none;}
-    .opt input{margin-right:10px;}
-
-    .footerbar{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:14px; flex-wrap:wrap;}
-    .btn{background:var(--accent); color:#fff; padding:10px 12px; border:none; border-radius:10px; cursor:pointer; font-size:14px; font-weight:600;}
-    .btn:disabled{opacity:0.7; cursor:not-allowed;}
-    .btn2{background:#fff; color:var(--text); padding:10px 12px; border:1px solid #ddd; border-radius:10px; cursor:pointer; font-size:14px; font-weight:700;}
-    .score{font-weight:700;}
-    #msg{margin-top:10px;}
-
-    .lockBox{
-      border:1px dashed #ddd;
-      background:#fafafa;
-      padding:14px;
-      border-radius:12px;
-      margin-top:10px;
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password too short" });
     }
-  </style>
 
-  <script>
-    const authToken = localStorage.getItem("token");
-    if (!authToken) window.location.href = "login.html";
-  </script>
-</head>
+    if (await User.findOne({ username })) {
+      return res.status(409).json({ message: "Username taken" });
+    }
 
-<body>
-  <div class="wrap">
+    if (await User.findOne({ email })) {
+      return res.status(409).json({ message: "Email exists" });
+    }
 
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo">PO</div>
-        <div>
-          <strong>Practice Online</strong>
-          <span id="welcomeSub">Attempt Quiz</span>
-        </div>
-      </div>
+    const passwordHash = await bcrypt.hash(password, 10);
 
-      <nav class="nav">
-        <a href="learner-quizzes.html" class="nav-btn">Back to Practice</a>
-        <a href="results.html">Results</a>
-        <a href="about.html">About</a>
-        <a href="admin-quiz.html" data-admin>Admin</a>
-        <button class="logout" type="button" id="logoutBtn" data-auth>Logout</button>
-      </nav>
-
-      <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu">Menu</button>
-    </div>
-
-    <div class="mobile-menu" id="mobileMenu">
-      <a href="learner-quizzes.html">Back to Practice</a>
-      <a href="results.html">Results</a>
-      <a href="about.html">About</a>
-      <a href="admin-quiz.html" data-admin>Admin</a>
-      <button class="logout" type="button" id="logoutBtnMobile" data-auth>Logout</button>
-    </div>
-
-    <div class="card">
-      <div class="quiz-head">
-        <div>
-          <h1 id="quizTitle">Loading...</h1>
-          <p class="muted" id="quizInfo" style="margin:6px 0 0 0;"></p>
-        </div>
-        <div id="metaPill" class="pill" style="display:none;">Quiz</div>
-      </div>
-
-      <div id="lockNotice" class="lockBox hidden">
-        <b class="error">This quiz is locked.</b>
-        <div class="muted" style="margin-top:6px;">
-          You already attempted this quiz. You can only attempt once.
-        </div>
-      </div>
-
-      <div id="questions"></div>
-
-      <div class="footerbar">
-        <button class="btn" id="submitBtn">Submit</button>
-        <span class="score" id="result"></span>
-      </div>
-
-      <div class="footerbar" style="margin-top:10px;">
-        <button class="btn2" id="viewResultsBtn" type="button" disabled>View Results</button>
-      </div>
-
-      <p id="msg"></p>
-    </div>
-
-  </div>
-
-  <script src="nav.js"></script>
-
-  <script>
-    const API = window.API || "https://practice-backend-msgn.onrender.com";
-    const token = localStorage.getItem("token");
-
-    const params = new URLSearchParams(window.location.search);
-    const quizId = params.get("quizId");
-
-    const quizTitle = document.getElementById("quizTitle");
-    const quizInfo = document.getElementById("quizInfo");
-    const questionsDiv = document.getElementById("questions");
-    const submitBtn = document.getElementById("submitBtn");
-    const resultEl = document.getElementById("result");
-    const msgEl = document.getElementById("msg");
-    const metaPill = document.getElementById("metaPill");
-    const viewResultsBtn = document.getElementById("viewResultsBtn");
-    const lockNotice = document.getElementById("lockNotice");
-
-    let quizData = null;
-    let isSubmitted = false;
-    let isSaving = false;
-    let isLocked = false;
-
-    const username = localStorage.getItem("username") || "Learner";
-    document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
-
-    viewResultsBtn.addEventListener("click", () => {
-      window.location.href = "results.html";
+    await User.create({
+      username,
+      email,
+      grade: g,
+      passwordHash,
     });
 
-    // ✅ Safer logout (don’t wipe everything)
-    function logout(){
-      localStorage.removeItem("token");
-      localStorage.removeItem("username");
-      window.location.href = "login.html";
-    }
-    document.getElementById("logoutBtn")?.addEventListener("click", logout);
-    document.getElementById("logoutBtnMobile")?.addEventListener("click", logout);
+    res.status(201).json({ message: "Account created" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-    if (!quizId) {
-      quizTitle.textContent = "Quiz not found";
-      msgEl.textContent = "Missing quizId in the URL.";
-      msgEl.className = "error";
-      submitBtn.disabled = true;
-    } else {
-      init();
-    }
+// Login
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
 
-    async function init(){
-      const attempted = await alreadyAttempted(quizId);
-      if (attempted) {
-        lockQuizUI();
-        await loadQuiz(true);
-        return;
-      }
-      await loadQuiz(false);
-    }
+    const user = await User.findOne({ username });
+    if (!user) return res.status(401).json({ message: "Invalid login" });
 
-    async function alreadyAttempted(qid){
-      try{
-        const res = await fetch(`${API}/api/results/my`, {
-          headers: { Authorization: "Bearer " + token }
-        });
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) return res.status(401).json({ message: "Invalid login" });
 
-        if (res.status === 401) {
-          logout();
-          return true;
-        }
+    const token = jwt.sign(
+      { userId: user._id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
-        if (!res.ok) return false;
+    res.json({ token, username: user.username });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-        const results = await res.json();
-        if (!Array.isArray(results)) return false;
+// ✅ Me (used by nav + admin checks)
+app.get("/api/auth/me", authRequired, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select("username role grade email");
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-        return results.some(r => String(r.quizId) === String(qid));
-      } catch {
-        return false;
-      }
-    }
+    res.json({
+      username: user.username,
+      role: user.role || "learner",
+      grade: user.grade,
+      email: user.email,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-    function lockQuizUI(){
-      isLocked = true;
-      lockNotice.classList.remove("hidden");
-      questionsDiv.innerHTML = "";
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Locked";
-      msgEl.className = "error";
-      msgEl.textContent = "You already attempted this quiz. It is locked.";
-      viewResultsBtn.disabled = false;
-    }
+/* ------------------ QUIZ ROUTES ------------------ */
 
-    async function loadQuiz(lockedMode) {
-      try {
-        const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`, {
-          headers: { Authorization: "Bearer " + token }
-        });
+// List quizzes (optional grade filter)
+app.get("/api/quizzes", authRequired, async (req, res) => {
+  try {
+    const grade = req.query.grade;
+    const filter = grade ? { grade: Number(grade) } : {};
+    const quizzes = await Quiz.find(filter).sort({ createdAt: -1 });
+    res.json(quizzes);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-        if (res.status === 401) {
-          logout();
-          return;
-        }
+// ✅ Get quiz by id (needed by attempt.html)
+app.get("/api/quizzes/:id", authRequired, async (req, res) => {
+  try {
+    const { id } = req.params;
 
-        if (!res.ok) throw new Error("Quiz not found");
-
-        quizData = await res.json();
-
-        quizTitle.textContent = escapeHtml(quizData.title || "Quiz");
-        const topic = quizData.topic ? escapeHtml(quizData.topic) : "Maths";
-        const grade = quizData.grade ?? "-";
-        const count = (quizData.questions || []).length;
-
-        quizInfo.textContent = `Grade ${grade} • ${topic} • ${count} questions`;
-        metaPill.style.display = "inline-block";
-        metaPill.textContent = `${count} questions`;
-
-        if (!lockedMode) {
-          renderQuestions(quizData.questions || []);
-        }
-      } catch (err) {
-        quizTitle.textContent = "Quiz not found";
-        msgEl.textContent = "Could not load this quiz.";
-        msgEl.className = "error";
-        submitBtn.disabled = true;
-      }
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid quiz id" });
     }
 
-    function renderQuestions(questions) {
-      questionsDiv.innerHTML = questions.map((q, idx) => `
-        <div class="q" data-qindex="${idx}">
-          <h3>${idx + 1}. ${escapeHtml(q.text || "")}</h3>
+    const quiz = await Quiz.findById(id);
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
 
-          ${q.imageUrl ? `
-            <img
-              src="${escapeAttr(q.imageUrl)}"
-              alt="Question image"
-              style="max-width:100%; margin:10px 0; border-radius:12px; border:1px solid #e6e6e6;"
-            />
-          ` : ""}
+    res.json(quiz);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-          ${(q.options || []).map((opt, j) => `
-            <label class="opt">
-              <input type="radio" name="q${idx}" value="${j}">
-              ${escapeHtml(opt)}
-            </label>
-          `).join("")}
-        </div>
-      `).join("");
+// Create quiz (admin only)
+app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
+  try {
+    const quiz = await Quiz.create(req.body);
+    res.status(201).json(quiz);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+/* ------------------ RESULTS ROUTES ------------------ */
+
+// Save result (ONE attempt per quiz)
+app.post("/api/results", authRequired, async (req, res) => {
+  try {
+    const { quizId, score, total } = req.body;
+
+    if (!quizId || score === undefined || total === undefined) {
+      return res.status(400).json({ message: "quizId, score, total required" });
     }
 
-    submitBtn.addEventListener("click", async () => {
-      if (!quizData || isSubmitted || isSaving || isLocked) return;
+    if (!mongoose.Types.ObjectId.isValid(quizId)) {
+      return res.status(400).json({ message: "Invalid quizId" });
+    }
 
-      const total = (quizData.questions || []).length;
-      let score = 0;
-      let answered = 0;
+    const quiz = await Quiz.findById(quizId).select("grade topic title");
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
 
-      quizData.questions.forEach((q, idx) => {
-        const chosen = document.querySelector(`input[name="q${idx}"]:checked`);
-        const options = document.querySelectorAll(`input[name="q${idx}"]`);
+    const s = Number(score);
+    const t = Number(total);
+    if (!Number.isFinite(s) || !Number.isFinite(t) || t <= 0) {
+      return res.status(400).json({ message: "Invalid score/total" });
+    }
 
-        options.forEach((opt) => {
-          const label = opt.closest("label");
-          label.style.border = "1px solid #ddd";
-          label.style.background = "#fff";
-        });
+    const percent = Math.round((s / t) * 100);
+    const status = percent >= 50 ? "PASS" : "FAIL";
 
-        if (chosen) answered++;
-
-        options.forEach((opt, j) => {
-          if (j === q.correctIndex) {
-            const label = opt.closest("label");
-            label.style.border = "1px solid #16a34a";
-            label.style.background = "#dcfce7";
-          }
-        });
-
-        if (chosen) {
-          if (Number(chosen.value) === q.correctIndex) {
-            score++;
-          } else {
-            const wrongLabel = chosen.closest("label");
-            wrongLabel.style.border = "1px solid #dc2626";
-            wrongLabel.style.background = "#fee2e2";
-          }
-        }
-      });
-
-      if (answered < total) {
-        msgEl.textContent = `Please answer all questions (${answered}/${total}).`;
-        msgEl.className = "error";
-        resultEl.textContent = "";
-        return;
-      }
-
-      const percent = Math.round((score / total) * 100);
-      const status = percent >= 50 ? "PASS" : "FAIL";
-
-      resultEl.textContent = `Score: ${percent}% • ${status}`;
-      msgEl.textContent = "Saving your result…";
-      msgEl.className = "muted";
-
-      isSubmitted = true;
-      submitBtn.textContent = "Submitted";
-      submitBtn.disabled = true;
-      document.querySelectorAll("input[type=radio]").forEach(r => r.disabled = true);
-
-      await saveResult({ score, total, percent, status });
+    const exists = await Result.findOne({
+      userId: req.user.userId,
+      quizId,
     });
 
-    async function saveResult({ score, total, percent, status }) {
-      isSaving = true;
-
-      try {
-        const payload = { quizId, score, total, percent, status };
-
-        const res = await fetch(`${API}/api/results`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (res.status === 401) {
-          logout();
-          return;
-        }
-
-        if (res.status === 409) {
-          msgEl.className = "error";
-          msgEl.textContent = "You already attempted this quiz. It is now locked.";
-          viewResultsBtn.disabled = false;
-          return;
-        }
-
-        if (!res.ok) {
-          const txt = await res.text().catch(()=>"");
-          throw new Error(txt || `Failed to save result (HTTP ${res.status})`);
-        }
-
-        msgEl.className = "ok";
-        msgEl.textContent = "✅ Result saved. You can view your results history.";
-        viewResultsBtn.disabled = false;
-
-        try {
-          const done = JSON.parse(localStorage.getItem("completed_quizzes") || "[]");
-          if (!done.includes(quizId)) {
-            done.push(quizId);
-            localStorage.setItem("completed_quizzes", JSON.stringify(done));
-          }
-        } catch {}
-      } catch (err) {
-        msgEl.className = "error";
-        msgEl.textContent = "Saved on screen, but could not save to history. " + (err.message || "");
-        viewResultsBtn.disabled = false;
-      } finally {
-        isSaving = false;
-      }
+    if (exists) {
+      return res.status(409).json({ message: "Quiz already attempted" });
     }
 
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
+    const saved = await Result.create({
+      userId: req.user.userId,
+      quizId,
+      grade: Number(quiz.grade),
+      topic: quiz.topic || "General",
+      title: quiz.title || "Quiz",
+      score: s,
+      total: t,
+      percent,
+      status,
+    });
 
-    function escapeAttr(str) {
-      return String(str).replaceAll('"', "&quot;");
+    res.status(201).json({
+      message: "Result saved",
+      percent,
+      status,
+      resultId: saved._id,
+    });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ message: "Quiz already attempted" });
     }
-  </script>
-</body>
-</html>
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Get my results
+app.get("/api/results/my", authRequired, async (req, res) => {
+  try {
+    const results = await Result.find({ userId: req.user.userId })
+      .sort({ createdAt: -1 })
+      .limit(200);
+
+    res.json(results);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+/* ------------------ DB + START ------------------ */
+const PORT = process.env.PORT || 5000;
+
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("MongoDB connected");
+    app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+  })
+  .catch((err) => console.error("Mongo error:", err.message));
