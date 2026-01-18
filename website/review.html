@@ -17,44 +17,35 @@
       --text:#0f172a;
       --muted:#475569;
       --accent:#0b3c5d;
-      --accent-soft:#e7eef5;
       --radius:14px;
       --shadow:0 6px 18px rgba(0,0,0,0.06);
-      --error:#b91c1c;
-      --ok:#065f46;
+
+      --green:#16a34a;
+      --greenBg:#dcfce7;
+      --red:#dc2626;
+      --redBg:#fee2e2;
     }
     *{box-sizing:border-box}
     body{margin:0; font-family:Inter,Arial,sans-serif; background:var(--bg); color:var(--text);}
     .wrap{max-width:1000px; margin:0 auto; padding:24px;}
+    .muted{color:var(--muted);}
+    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);}
 
-    .topbar{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px;}
+    .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:12px; flex-wrap:wrap;}
     .brand{display:flex; align-items:center; gap:10px;}
     .logo{width:38px; height:38px; border-radius:10px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800;}
-    .brand span{display:block; font-size:13px; color:var(--muted);}
-
-    .nav{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+    .nav{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
     .nav a,.nav button{
-      text-decoration:none;
-      font-size:14px;
-      padding:8px 12px;
-      border-radius:10px;
-      border:1px solid #ddd;
-      background:#fff;
-      cursor:pointer;
+      text-decoration:none; font-size:14px;
+      padding:8px 12px; border-radius:10px;
+      border:none; cursor:pointer;
+      background:#fff; color:var(--text); border:1px solid #ddd;
       font-weight:700;
-      color:var(--text);
     }
-    .nav a:hover,.nav button:hover{ background:var(--accent-soft); border-color:transparent; }
-    .nav .primary{ background:var(--accent); color:#fff; border:none; }
-    .nav .primary:hover{ opacity:.95; }
+    .nav .primary{background:var(--accent); color:#fff; border:none;}
 
-    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);}
-    h1{margin:0; font-size:22px;}
-    .muted{color:var(--muted);}
-    .error{color:var(--error);}
-    .ok{color:var(--ok);}
-
-    .metaRow{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-top:8px;}
+    h1{margin:0 0 4px 0; font-size:22px;}
+    .pillRow{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;}
     .pill{
       display:inline-block;
       padding:4px 10px;
@@ -66,36 +57,46 @@
       font-weight:800;
       white-space:nowrap;
     }
-    .pill.ok{ border-color:#bbf7d0; background:#ecfdf5; color:#065f46; }
-    .pill.bad{ border-color:#fecaca; background:#fef2f2; color:#b91c1c; }
-
-    .qbox{margin-top:14px; padding-top:14px; border-top:1px solid #eee;}
-    .qtitle{font-size:16px; font-weight:800; margin:0 0 10px 0; line-height:1.45;}
-    .opt{
-      border:1px solid #ddd;
-      border-radius:12px;
-      padding:10px 12px;
-      margin-bottom:10px;
-      background:#fff;
-      display:flex;
-      gap:10px;
-      align-items:flex-start;
-    }
-    .tag{
+    .scorepill{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid #e6e6e6;
+      background:#f8fafc;
       font-size:12px;
       font-weight:900;
-      padding:3px 8px;
-      border-radius:999px;
-      border:1px solid #e5e7eb;
-      background:#f8fafc;
       white-space:nowrap;
     }
-    .opt.correct{ border-color:#16a34a; background:#ecfdf5; }
-    .opt.chosenWrong{ border-color:#dc2626; background:#fef2f2; }
-    .opt.chosenCorrect{ border-color:#16a34a; background:#ecfdf5; }
-    .opt .text{flex:1;}
 
-    .footerBar{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px;}
+    .qBox{margin-top:14px; padding-top:14px; border-top:1px solid #eee;}
+    .qTitle{font-weight:800; margin:0 0 10px 0; font-size:16px;}
+
+    .opt{
+      display:block;
+      padding:10px;
+      border:1px solid #ddd;
+      border-radius:10px;
+      margin-bottom:8px;
+      background:#fff;
+    }
+    .opt.correct{
+      border-color:var(--green);
+      background:var(--greenBg);
+    }
+    .opt.wrong{
+      border-color:var(--red);
+      background:var(--redBg);
+    }
+    .opt input{margin-right:10px;}
+
+    .footerRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
     .btn{
       background:var(--accent);
       color:#fff;
@@ -104,7 +105,6 @@
       border-radius:10px;
       cursor:pointer;
       font-weight:800;
-      font-size:14px;
     }
     .btn:disabled{opacity:.6; cursor:not-allowed;}
     .btn2{
@@ -114,17 +114,27 @@
       border-radius:10px;
       cursor:pointer;
       font-weight:800;
-      font-size:14px;
     }
-    .btn2:hover{ background:var(--accent-soft); border-color:transparent; }
 
-    .small{font-size:13px;}
+    .onlyCorrect{
+      margin-top:14px;
+      padding-top:14px;
+      border-top:1px solid #eee;
+      font-weight:900;
+    }
+
+    .errorBox{
+      margin-top:12px;
+      padding:14px;
+      border:1px dashed #ddd;
+      border-radius:12px;
+      background:#fafafa;
+    }
   </style>
 
   <script>
-    if (!localStorage.getItem("token")) {
-      window.location.href = "login.html";
-    }
+    const t = localStorage.getItem("token");
+    if (!t) window.location.href = "login.html";
   </script>
 </head>
 
@@ -136,42 +146,41 @@
       <div class="logo">PO</div>
       <div>
         <strong>Practice Online</strong>
-        <span id="subTitle">Review Attempt</span>
+        <div class="muted" id="welcomeSub">Review Attempt</div>
       </div>
     </div>
 
     <div class="nav">
       <a href="results.html">Back to Results</a>
-      <a href="learner-quizzes.html">Practice</a>
       <button class="primary" id="logoutBtn" type="button">Logout</button>
     </div>
   </div>
 
   <div class="card">
-    <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-      <div>
-        <h1 id="title">Loading…</h1>
-        <div class="muted" id="metaLine" style="margin-top:6px;">Please wait…</div>
-      </div>
-      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start;">
-        <span class="pill" id="progressPill">0/0</span>
-        <span class="pill" id="scorePill">Score</span>
+    <h1 id="title">Loading…</h1>
+    <div class="muted" id="subtitle"></div>
+
+    <div class="pillRow">
+      <span class="pill" id="gradePill">Grade -</span>
+      <span class="pill" id="topicPill">Topic -</span>
+      <span class="scorepill" id="scorePill">Score -</span>
+    </div>
+
+    <div class="qBox">
+      <div class="muted" id="qCounter"></div>
+      <p class="qTitle" id="qText"></p>
+      <div id="opts"></div>
+
+      <!-- ✅ Only correct answer at the bottom -->
+      <div class="onlyCorrect" id="onlyCorrect"></div>
+
+      <div class="footerRow">
+        <button class="btn2" id="prevBtn" type="button">Previous</button>
+        <button class="btn2" id="nextBtn" type="button">Next</button>
       </div>
     </div>
 
-    <div class="qbox" id="qbox"></div>
-
-    <div class="footerBar">
-      <button class="btn2" id="prevBtn" type="button">← Previous</button>
-
-      <div class="muted small" id="hint">
-        Tip: Green = correct. Red = your wrong choice.
-      </div>
-
-      <button class="btn" id="nextBtn" type="button">Next →</button>
-    </div>
-
-    <p id="msg" class="muted" style="margin-top:12px;"></p>
+    <div id="err" class="errorBox" style="display:none;"></div>
   </div>
 </div>
 
@@ -179,21 +188,24 @@
   const API = window.API || "https://practice-backend-msgn.onrender.com";
   const token = localStorage.getItem("token");
 
-  const params = new URLSearchParams(location.search);
-  const resultId = params.get("resultId");
+  const resultId = new URLSearchParams(window.location.search).get("resultId");
 
   const titleEl = document.getElementById("title");
-  const metaLine = document.getElementById("metaLine");
-  const qbox = document.getElementById("qbox");
-  const progressPill = document.getElementById("progressPill");
+  const subtitleEl = document.getElementById("subtitle");
+  const gradePill = document.getElementById("gradePill");
+  const topicPill = document.getElementById("topicPill");
   const scorePill = document.getElementById("scorePill");
-  const msgEl = document.getElementById("msg");
-  const subTitle = document.getElementById("subTitle");
+
+  const qCounter = document.getElementById("qCounter");
+  const qText = document.getElementById("qText");
+  const opts = document.getElementById("opts");
+  const onlyCorrect = document.getElementById("onlyCorrect");
 
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
+  const err = document.getElementById("err");
 
-  let result = null;
+  let answers = [];
   let idx = 0;
 
   document.getElementById("logoutBtn").onclick = () => {
@@ -203,10 +215,7 @@
   };
 
   if (!resultId) {
-    titleEl.textContent = "Review not available";
-    metaLine.textContent = "Missing resultId in the URL. Open from Results page.";
-    msgEl.className = "error";
-    msgEl.textContent = "Example: review.html?resultId=YOUR_RESULT_ID";
+    showErr("Missing resultId in the URL.");
   } else {
     loadResult();
   }
@@ -214,6 +223,103 @@
   function cleanSpaces(s){
     return String(s || "").trim().replace(/\s+/g, " ");
   }
+
+  function showErr(message){
+    err.style.display = "block";
+    err.textContent = message;
+  }
+
+  async function loadResult(){
+    try{
+      const res = await fetch(`${API}/api/results/${encodeURIComponent(resultId)}`, {
+        headers: { Authorization: "Bearer " + token }
+      });
+
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        window.location.href = "login.html";
+        return;
+      }
+
+      if (!res.ok) {
+        const txt = await res.text().catch(()=> "");
+        throw new Error(txt || `Request failed (HTTP ${res.status})`);
+      }
+
+      const r = await res.json();
+
+      titleEl.textContent = cleanSpaces(r.title || "Quiz Review");
+      subtitleEl.textContent = "Review your attempt question by question.";
+      gradePill.textContent = `Grade ${r.grade ?? "-"}`;
+      topicPill.textContent = `Topic: ${cleanSpaces(r.topic || "General")}`;
+      scorePill.textContent = `Score: ${r.score}/${r.total} (${r.percent}%)`;
+
+      answers = Array.isArray(r.answers) ? r.answers : [];
+      if (answers.length === 0) {
+        showErr("No saved answers found for this attempt.");
+        return;
+      }
+
+      idx = 0;
+      renderQuestion();
+    } catch(e){
+      showErr("Could not load review: " + (e.message || ""));
+    }
+  }
+
+  function letter(i){ return ["A","B","C","D","E","F"][i] || String(i+1); }
+
+  function renderQuestion(){
+    const a = answers[idx];
+
+    qCounter.textContent = `Question ${idx + 1} of ${answers.length}`;
+    qText.textContent = cleanSpaces(a.questionText || "");
+
+    const options = Array.isArray(a.options) ? a.options : [];
+    const chosen = Number(a.chosenIndex);
+    const correct = Number(a.correctIndex);
+
+    opts.innerHTML = options.map((opt, i) => {
+      const isCorrect = i === correct;
+      const isChosen = i === chosen;
+
+      // ✅ Colour rules:
+      // - Correct option is always green
+      // - If chosen is wrong, chosen option becomes red
+      let cls = "";
+      if (isCorrect) cls = "correct";
+      if (isChosen && !isCorrect) cls = "wrong";
+
+      return `
+        <label class="opt ${cls}">
+          <input type="radio" disabled ${isChosen ? "checked" : ""}>
+          ${letter(i)}. ${escapeHtml(cleanSpaces(opt))}
+        </label>
+      `;
+    }).join("");
+
+    // ✅ Only show correct answer at bottom
+    const correctText = options[correct] ?? "";
+    onlyCorrect.textContent = `Correct answer: ${letter(correct)}. ${cleanSpaces(correctText)}`;
+
+    prevBtn.disabled = idx === 0;
+    nextBtn.disabled = idx === answers.length - 1;
+  }
+
+  prevBtn.addEventListener("click", () => {
+    if (idx > 0) { idx--; renderQuestion(); }
+  });
+
+  nextBtn.addEventListener("click", () => {
+    if (idx < answers.length - 1) { idx++; renderQuestion(); }
+  });
+
+  // keyboard support
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft") prevBtn.click();
+    if (e.key === "ArrowRight") nextBtn.click();
+  });
+
   function escapeHtml(str){
     return String(str)
       .replaceAll("&","&amp;")
@@ -222,138 +328,6 @@
       .replaceAll('"',"&quot;")
       .replaceAll("'","&#039;");
   }
-
-  async function loadResult(){
-    try{
-      msgEl.className = "muted";
-      msgEl.textContent = "Loading attempt…";
-
-      const res = await fetch(`${API}/api/results/${encodeURIComponent(resultId)}`, {
-        headers: { Authorization: "Bearer " + token }
-      });
-
-      if (res.status === 401) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("username");
-        window.location.href = "login.html";
-        return;
-      }
-
-      if (!res.ok) {
-        const t = await res.text().catch(()=> "");
-        throw new Error(t || `Request failed (HTTP ${res.status})`);
-      }
-
-      result = await res.json();
-
-      const quizTitle = cleanSpaces(result.title || "Quiz");
-      const topic = cleanSpaces(result.topic || "General");
-      const grade = result.grade ?? "-";
-
-      subTitle.textContent = `Welcome, ${localStorage.getItem("username") || "Learner"}`;
-      titleEl.textContent = quizTitle;
-
-      const timeStr = result.timeTakenSeconds ? ` • Time used ${Math.round(result.timeTakenSeconds/60)} min` : "";
-      metaLine.textContent = `Grade ${grade} • ${topic}${timeStr}`;
-
-      const pct = Number(result.percent ?? 0);
-      const status = result.status || (pct >= 50 ? "PASS" : "FAIL");
-      scorePill.textContent = `${result.score}/${result.total} (${pct}%) • ${status}`;
-      scorePill.className = "pill " + (status === "PASS" ? "ok" : "bad");
-
-      const answers = Array.isArray(result.answers) ? result.answers : [];
-      if (answers.length === 0) {
-        msgEl.className = "error";
-        msgEl.textContent = "No answers were saved for this attempt (answers array is empty).";
-        qbox.innerHTML = "";
-        prevBtn.disabled = true;
-        nextBtn.disabled = true;
-        return;
-      }
-
-      idx = 0;
-      render();
-      msgEl.textContent = "";
-    } catch(err){
-      msgEl.className = "error";
-      msgEl.textContent = "Could not load attempt: " + (err.message || "");
-    }
-  }
-
-  function render(){
-    const answers = result.answers || [];
-    const total = answers.length;
-    idx = Math.max(0, Math.min(idx, total - 1));
-
-    const a = answers[idx];
-    const qText = cleanSpaces(a.questionText || `Question ${a.questionIndex + 1}`);
-    const opts = Array.isArray(a.options) ? a.options : [];
-
-    progressPill.textContent = `${idx + 1}/${total}`;
-
-    prevBtn.disabled = idx === 0;
-    nextBtn.disabled = idx === total - 1;
-
-    const chosen = Number.isFinite(Number(a.chosenIndex)) ? Number(a.chosenIndex) : -1;
-    const correct = Number.isFinite(Number(a.correctIndex)) ? Number(a.correctIndex) : -1;
-
-    qbox.innerHTML = `
-      <div class="muted small" style="margin-bottom:8px;">
-        Question ${idx + 1} • ${a.isCorrect ? '<span class="ok"><b>Correct</b></span>' : '<span class="error"><b>Wrong</b></span>'}
-      </div>
-      <div class="qtitle">${escapeHtml(qText)}</div>
-
-      ${(opts.length ? opts : ["(No options saved)"]).map((o, j) => {
-        const isCorrect = j === correct;
-        const isChosen = j === chosen;
-
-        let cls = "opt";
-        let badge = "";
-
-        if (isCorrect) {
-          cls += " correct";
-          badge = `<span class="tag">Correct</span>`;
-        }
-        if (isChosen && isCorrect) {
-          cls += " chosenCorrect";
-          badge = `<span class="tag">Your choice ✓</span>`;
-        }
-        if (isChosen && !isCorrect) {
-          cls += " chosenWrong";
-          badge = `<span class="tag">Your choice</span>`;
-        }
-
-        return `
-          <div class="${cls}">
-            ${badge ? badge : `<span class="tag">Option</span>`}
-            <div class="text">${escapeHtml(cleanSpaces(o))}</div>
-          </div>
-        `;
-      }).join("")}
-
-      <div class="muted small" style="margin-top:10px;">
-        Your answer: <b>${chosen >= 0 ? String.fromCharCode(65 + chosen) : "Not answered"}</b>
-        &nbsp;•&nbsp;
-        Correct answer: <b>${correct >= 0 ? String.fromCharCode(65 + correct) : "-"}</b>
-      </div>
-    `;
-  }
-
-  prevBtn.addEventListener("click", () => {
-    idx -= 1;
-    render();
-  });
-
-  nextBtn.addEventListener("click", () => {
-    idx += 1;
-    render();
-  });
-
-  // Keyboard support
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowLeft" && idx > 0) { idx--; render(); }
-    if (e.key === "ArrowRight" && result?.answers && idx < result.answers.length - 1) { idx++; render(); }
-  });
 </script>
 </body>
 </html>
