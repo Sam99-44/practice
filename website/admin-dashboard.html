@@ -6,16 +6,32 @@
   <title>Admin Dashboard | Practice Online</title>
   <style>
     body{font-family:Arial; background:#f6f7fb; margin:0;}
-    .wrap{max-width:1000px; margin:0 auto; padding:20px;}
+    .wrap{max-width:1100px; margin:0 auto; padding:20px;}
     .top{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
-    .btn{background:#111827; color:#fff; padding:10px 12px; border:none; border-radius:10px; cursor:pointer; text-decoration:none;}
+    .btn{background:#111827; color:#fff; padding:10px 12px; border:none; border-radius:10px; cursor:pointer; text-decoration:none; font-weight:700;}
     .btn2{background:#fff; color:#111827; border:1px solid #ddd;}
+    .btnDanger{background:#b91c1c;}
     .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; margin-top:14px;}
     .card{background:#fff; border:1px solid #e6e6e6; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.06);}
     h1{margin:0;}
     .big{font-size:28px; font-weight:bold; margin-top:6px;}
     .muted{color:#555;}
     .error{color:#b91c1c;}
+    .ok{color:#065f46;}
+
+    .panel{margin-top:16px;}
+    table{width:100%; border-collapse:collapse; margin-top:10px; background:#fff; border:1px solid #e6e6e6; border-radius:14px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.06);}
+    th,td{padding:10px; border-bottom:1px solid #eee; text-align:left; font-size:14px; vertical-align:middle;}
+    th{font-size:12px; color:#555; text-transform:uppercase; letter-spacing:.04em; background:#fafafa;}
+    tr:last-child td{border-bottom:none;}
+    .pill{display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid #cfe9ff; background:#eef7ff; color:#0b3c5d; font-size:12px; font-weight:800; white-space:nowrap;}
+    .smallBtn{padding:7px 10px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:800; font-size:12px;}
+    .smallDanger{border-color:#fecaca; background:#fee2e2; color:#991b1b;}
+    .rowBtns{display:flex; gap:8px; flex-wrap:wrap;}
+    .empty{padding:14px; border:1px dashed #ddd; border-radius:12px; background:#fafafa; margin-top:12px;}
+    input,select{padding:10px; border-radius:10px; border:1px solid #ddd; outline:none; background:#fff; font-size:14px;}
+    .filters{display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-top:10px;}
+    .filters .group{display:flex; flex-direction:column; gap:6px;}
   </style>
 </head>
 <body>
@@ -26,9 +42,9 @@
         <p class="muted" id="who"></p>
       </div>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <a class="btn btn2" href="admin-quiz.html">Add Quiz</a>
+        <a class="btn btn2" href="admin-quiz.html">Add Assessment</a>
         <a class="btn btn2" href="learner-quizzes.html">Learner View</a>
-        <button class="btn" id="logoutBtn" data-auth>Logout</button>
+        <button class="btn" id="logoutBtn">Logout</button>
       </div>
     </div>
 
@@ -38,43 +54,103 @@
         <div class="big" id="totalUsers">-</div>
       </div>
       <div class="card">
-        <div class="muted">Total Quizzes</div>
+        <div class="muted">Total Assessments</div>
         <div class="big" id="totalQuizzes">-</div>
       </div>
       <div class="card">
-        <div class="muted">Quizzes by Grade</div>
+        <div class="muted">Assessments by Grade</div>
         <div id="byGrade" class="muted" style="margin-top:10px;"></div>
       </div>
     </div>
 
     <p id="msg" class="muted" style="margin-top:14px;"></p>
+
+    <!-- ✅ LIST + EDIT/DELETE -->
+    <div class="panel">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
+          <div>
+            <b>Manage Assessments</b>
+            <div class="muted" style="margin-top:6px;">Edit or remove assessments here.</div>
+          </div>
+          <button class="btn btn2" id="refreshBtn" type="button">Refresh List</button>
+        </div>
+
+        <div class="filters">
+          <div class="group">
+            <label class="muted" style="font-size:12px;">Grade</label>
+            <select id="gradeFilter">
+              <option value="">All grades</option>
+              <option value="8">Grade 8</option>
+              <option value="9">Grade 9</option>
+              <option value="10">Grade 10</option>
+              <option value="11">Grade 11</option>
+              <option value="12">Grade 12</option>
+            </select>
+          </div>
+
+          <div class="group" style="flex:1; min-width:240px;">
+            <label class="muted" style="font-size:12px;">Search topic/title</label>
+            <input id="searchBox" placeholder="Type e.g. Algebra..." />
+          </div>
+        </div>
+
+        <div id="listWrap"></div>
+      </div>
+    </div>
   </div>
 
   <script>
-    // ✅ Render backend
     const API = "https://practice-backend-msgn.onrender.com";
     const token = localStorage.getItem("token");
+
+    const whoEl = document.getElementById("who");
+    const msgEl = document.getElementById("msg");
+
+    const totalUsersEl = document.getElementById("totalUsers");
+    const totalQuizzesEl = document.getElementById("totalQuizzes");
+    const byGradeEl = document.getElementById("byGrade");
+
+    const listWrap = document.getElementById("listWrap");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const gradeFilter = document.getElementById("gradeFilter");
+    const searchBox = document.getElementById("searchBox");
+
+    let allQuizzes = [];
 
     function logout(){
       localStorage.removeItem("token");
       localStorage.removeItem("username");
+      localStorage.removeItem("me_cache");
       window.location.href = "login.html";
     }
 
-    document.getElementById("logoutBtn")?.addEventListener("click", logout);
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+
+    function setMsg(text, type="muted"){
+      msgEl.className = type;
+      msgEl.textContent = text;
+    }
+
+    refreshBtn.addEventListener("click", () => {
+      loadQuizzes();
+      loadStats();
+    });
+
+    gradeFilter.addEventListener("change", renderList);
+    searchBox.addEventListener("input", renderList);
 
     (async () => {
       if (!token) return window.location.href = "login.html";
 
-      // Check role
+      // Admin check
       let meRes;
       try{
         meRes = await fetch(`${API}/api/auth/me`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
-      } catch (e) {
-        document.getElementById("msg").textContent = "Network error. Please refresh.";
-        document.getElementById("msg").className = "error";
+      } catch {
+        setMsg("Network error. Please refresh.", "error");
         return;
       }
 
@@ -84,36 +160,176 @@
         return window.location.href = "learner-quizzes.html";
       }
 
-      document.getElementById("who").textContent = `Logged in as: ${me.username} (admin)`;
+      whoEl.textContent = `Logged in as: ${me.username} (admin)`;
 
-      // Load stats
-      let res;
+      // Load both
+      loadStats();
+      loadQuizzes();
+    })();
+
+    async function loadStats(){
       try{
-        res = await fetch(`${API}/api/admin/stats`, {
+        const res = await fetch(`${API}/api/admin/stats`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
-      } catch (e) {
-        document.getElementById("msg").textContent = "Network error loading stats.";
-        document.getElementById("msg").className = "error";
+
+        const data = await res.json().catch(()=>null);
+        if (!res.ok || !data) {
+          setMsg("Could not load stats.", "error");
+          return;
+        }
+
+        totalUsersEl.textContent = data.totalUsers ?? "-";
+        totalQuizzesEl.textContent = data.totalQuizzes ?? "-";
+        byGradeEl.innerHTML =
+          (data.quizzesByGrade || []).map(x => `Grade ${x.grade}: ${x.count}`).join("<br>") || "No data";
+
+      } catch {
+        setMsg("Network error loading stats.", "error");
+      }
+    }
+
+    async function loadQuizzes(){
+      listWrap.innerHTML = `<div class="empty">Loading assessments…</div>`;
+
+      try{
+        const res = await fetch(`${API}/api/quizzes`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (res.status === 401) return logout();
+
+        const data = await res.json().catch(()=>[]);
+        allQuizzes = Array.isArray(data) ? data : [];
+        renderList();
+      } catch {
+        listWrap.innerHTML = `<div class="empty"><b class="error">Could not load assessments.</b></div>`;
+      }
+    }
+
+    function renderList(){
+      const grade = gradeFilter.value;
+      const q = (searchBox.value || "").trim().toLowerCase();
+
+      let list = [...allQuizzes];
+
+      if (grade) list = list.filter(x => String(x.grade ?? "") === String(grade));
+
+      if (q) {
+        list = list.filter(x => {
+          const t = String(x.topic || "").toLowerCase();
+          const title = String(x.title || "").toLowerCase();
+          return t.includes(q) || title.includes(q);
+        });
+      }
+
+      if (list.length === 0) {
+        listWrap.innerHTML = `
+          <div class="empty">
+            <b>No assessments found.</b>
+            <div class="muted" style="margin-top:6px;">Try changing the filters.</div>
+          </div>
+        `;
         return;
       }
 
-      const data = await res.json().catch(()=>null);
-      if (!res.ok || !data) {
-        document.getElementById("msg").textContent = "Could not load stats.";
-        document.getElementById("msg").className = "error";
-        return;
-      }
+      listWrap.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Grade</th>
+              <th>Topic</th>
+              <th>Assessment</th>
+              <th>Questions</th>
+              <th>Time</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list.map(x => {
+              const id = String(x._id || "");
+              const gradeStr = x.grade ?? "-";
+              const topicStr = escapeHtml(x.topic || "General");
+              const titleStr = escapeHtml(x.title || "Assessment");
+              const qCount = Array.isArray(x.questions) ? x.questions.length : 0;
+              const mins = Number(x.timeLimitMinutes || 0);
+              const timeStr = mins > 0 ? `${mins} min` : "—";
 
-      document.getElementById("totalUsers").textContent = data.totalUsers ?? "-";
-      document.getElementById("totalQuizzes").textContent = data.totalQuizzes ?? "-";
+              return `
+                <tr>
+                  <td><span class="pill">Grade ${escapeHtml(String(gradeStr))}</span></td>
+                  <td>${topicStr}</td>
+                  <td>${titleStr}</td>
+                  <td>${qCount}</td>
+                  <td>${escapeHtml(timeStr)}</td>
+                  <td>
+                    <div class="rowBtns">
+                      <button class="smallBtn" data-edit="${escapeHtml(id)}">Edit</button>
+                      <button class="smallBtn smallDanger" data-del="${escapeHtml(id)}">Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      `;
 
-      document.getElementById("byGrade").innerHTML =
-        (data.quizzesByGrade || []).map(x => `Grade ${x.grade}: ${x.count}`).join("<br>") || "No data";
-    })();
+      // events
+      listWrap.querySelectorAll("[data-edit]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-edit");
+          window.location.href = `edit-assessment.html?quizId=${encodeURIComponent(id)}`;
+        });
+      });
+
+      listWrap.querySelectorAll("[data-del]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-del");
+          if (!id) return;
+
+          const ok = confirm("Are you sure you want to delete this assessment? This cannot be undone.");
+          if (!ok) return;
+
+          btn.disabled = true;
+          btn.textContent = "Deleting...";
+
+          try{
+            const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`, {
+              method: "DELETE",
+              headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            const data = await res.json().catch(()=>({}));
+
+            if (!res.ok) {
+              alert(data.message || "Delete failed");
+              btn.disabled = false;
+              btn.textContent = "Delete";
+              return;
+            }
+
+            // remove from list locally
+            allQuizzes = allQuizzes.filter(qz => String(qz._id) !== String(id));
+            renderList();
+            loadStats();
+          } catch {
+            alert("Network error deleting assessment.");
+            btn.disabled = false;
+            btn.textContent = "Delete";
+          }
+        });
+      });
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
   </script>
-
-  <!-- ✅ shared nav (optional but recommended) -->
-  <script src="nav.js"></script>
 </body>
 </html>
