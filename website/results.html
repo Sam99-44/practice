@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Results | Practice Online</title>
+  <title>Review | Practice Online</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,107 +20,163 @@
       --accent-soft:#e7eef5;
       --radius:14px;
       --shadow:0 6px 18px rgba(0,0,0,0.06);
-      --error:#b91c1c;
-      --ok:#065f46;
+      --red:#dc2626;
+      --red-bg:#fee2e2;
+      --green:#16a34a;
+      --green-bg:#dcfce7;
     }
     *{box-sizing:border-box}
     body{margin:0; font-family:Inter,Arial,sans-serif; background:var(--bg); color:var(--text);}
-    .wrap{max-width:1100px; margin:0 auto; padding:24px;}
+    .wrap{max-width:1000px; margin:0 auto; padding:24px;}
 
-    .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:12px;}
+    .topbar{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px;}
     .brand{display:flex; align-items:center; gap:10px;}
     .logo{width:38px; height:38px; border-radius:10px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800;}
     .brand span{display:block; font-size:13px; color:var(--muted);}
 
-    .nav{display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
-    .nav a{text-decoration:none; font-size:14px; color:var(--text); padding:6px 8px; border-radius:8px;}
-    .nav a:hover{ background:var(--accent-soft); }
-    .nav a.active{ font-weight:700; color:var(--accent); }
-    .nav .btn{background:var(--accent); color:#fff; padding:8px 12px; border-radius:10px; border:none; cursor:pointer; font-size:14px; font-weight:700;}
+    .nav{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+    .nav a,.nav button{
+      text-decoration:none;
+      font-size:14px;
+      padding:8px 12px;
+      border-radius:10px;
+      border:none;
+      cursor:pointer;
+      background:#fff;
+      border:1px solid #ddd;
+      color:var(--text);
+      font-weight:700;
+    }
+    .nav .primary{
+      background:var(--accent);
+      color:#fff;
+      border:none;
+    }
 
-    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+
     h1{margin:0; font-size:22px;}
     .muted{color:var(--muted);}
-    .error{color:var(--error);}
-    .ok{color:var(--ok);}
-
-    .controls{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:flex-end;
-      margin-top:14px;
-      margin-bottom:10px;
-    }
-    .controls .group{display:flex; flex-direction:column; gap:6px;}
-    select,input{
-      padding:10px;
-      border-radius:10px;
-      border:1px solid #ddd;
-      background:#fff;
-      min-width:220px;
-      font-size:14px;
-      outline:none;
-    }
-    .btn2{
-      background:#fff;
-      border:1px solid #ddd;
-      padding:10px 12px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:700;
-      font-size:14px;
-    }
-    .smallBtn{
-      background:#fff;
-      border:1px solid #ddd;
-      padding:6px 10px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:800;
-      font-size:12px;
-      white-space:nowrap;
-    }
-
-    table{width:100%; border-collapse:collapse; margin-top:10px;}
-    th, td{padding:10px; border-bottom:1px solid #eee; text-align:left; font-size:14px;}
-    th{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;}
+    .row{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-top:8px;}
 
     .pill{
       display:inline-block;
-      padding:4px 10px;
+      padding:6px 12px;
       border-radius:999px;
-      border:1px solid #cfe9ff;
-      background:#eef7ff;
-      color:#0b3c5d;
-      font-size:12px;
-      font-weight:700;
+      font-weight:900;
+      font-size:13px;
+      white-space:nowrap;
+      border:1px solid #ddd;
+      background:#f8fafc;
     }
-
-    /* ✅ Marks colours */
-    .marks-pass{
-      background:#dcfce7;
-      border:1px solid #16a34a;
+    .pill.pass{
+      border-color:var(--green);
+      background:var(--green-bg);
       color:#065f46;
-      font-weight:900;
-      padding:4px 10px;
-      border-radius:999px;
     }
-    .marks-fail{
-      background:#fee2e2;
-      border:1px solid #dc2626;
+    .pill.fail{
+      border-color:var(--red);
+      background:var(--red-bg);
       color:#7f1d1d;
-      font-weight:900;
-      padding:4px 10px;
-      border-radius:999px;
     }
 
-    .empty{
-      padding:14px;
+    .qbox{margin-top:16px; padding-top:16px; border-top:1px solid #eee;}
+    .qtitle{font-weight:900; margin:0 0 10px 0; font-size:16px;}
+
+    .opt{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding:10px;
+      border:1px solid #ddd;
+      border-radius:12px;
+      margin-bottom:8px;
+      background:#fff;
+    }
+    .opt .letter{
+      width:28px; height:28px; border-radius:8px;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:900;
+      border:1px solid #ddd;
+      background:#f8fafc;
+      flex:0 0 auto;
+    }
+
+    /* ✅ Correct option highlight */
+    .opt.correct{
+      border-color:var(--green);
+      background:var(--green-bg);
+    }
+    .opt.correct .letter{
+      border-color:var(--green);
+      background:#bbf7d0;
+    }
+
+    /* ✅ Wrong chosen highlight */
+    .opt.wrong{
+      border-color:var(--red);
+      background:var(--red-bg);
+    }
+    .opt.wrong .letter{
+      border-color:var(--red);
+      background:#fecaca;
+    }
+
+    .footer{
+      margin-top:14px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      background:var(--accent);
+      color:#fff;
+      border:none;
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:900;
+    }
+    .btn:disabled{
+      opacity:.6;
+      cursor:not-allowed;
+    }
+    .btn2{
+      background:#fff;
+      color:var(--text);
+      border:1px solid #ddd;
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:900;
+    }
+
+    .answerBox{
+      margin-top:12px;
+      padding:12px;
+      border-radius:12px;
+      border:1px solid #e6e6e6;
+      background:#f8fafc;
+      font-weight:800;
+    }
+
+    .error{
+      padding:12px;
       border:1px dashed #ddd;
       border-radius:12px;
       background:#fafafa;
       margin-top:12px;
+      color:#b91c1c;
+      font-weight:800;
     }
   </style>
 
@@ -138,24 +194,36 @@
       <div class="logo">PO</div>
       <div>
         <strong>Practice Online</strong>
-        <span id="welcomeSub">Results</span>
+        <span class="muted">Assessment Review</span>
       </div>
     </div>
 
-    <nav class="nav">
-      <a href="learner-quizzes.html">Back to Practice</a>
-      <a href="results.html" class="active">Results</a>
-      <a href="about.html">About</a>
-      <a href="admin-quiz.html" data-admin>Admin</a>
-      <button class="btn" id="logoutBtn">Logout</button>
-    </nav>
+    <div class="nav">
+      <a href="results.html">Back to Results</a>
+      <button class="primary" id="logoutBtn">Logout</button>
+    </div>
   </div>
 
   <div class="card">
-    <h1>Your Results</h1>
-    <p class="muted">Your assessment history will show here.</p>
+    <h1 id="title">Loading…</h1>
 
-    <div id="tableWrap"></div>
+    <div class="row">
+      <div class="muted" id="meta">Loading…</div>
+      <div id="marksPill" class="pill">Marks</div>
+    </div>
+
+    <div class="qbox" id="qbox"></div>
+
+    <div class="footer">
+      <button class="btn2" id="prevBtn">Previous</button>
+      <div class="muted" id="counter">Question 1</div>
+      <button class="btn2" id="nextBtn">Next</button>
+    </div>
+
+    <!-- ✅ Bottom: Correct answer only -->
+    <div class="answerBox" id="correctAnswerBox"></div>
+
+    <div id="errBox" class="error" style="display:none;"></div>
   </div>
 
 </div>
@@ -163,66 +231,138 @@
 <script>
   const API = window.API || "https://practice-backend-msgn.onrender.com";
   const token = localStorage.getItem("token");
+  const resultId = new URLSearchParams(window.location.search).get("resultId");
+
+  const titleEl = document.getElementById("title");
+  const metaEl = document.getElementById("meta");
+  const marksPill = document.getElementById("marksPill");
+
+  const qbox = document.getElementById("qbox");
+  const counterEl = document.getElementById("counter");
+
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+
+  const correctAnswerBox = document.getElementById("correctAnswerBox");
+  const errBox = document.getElementById("errBox");
 
   document.getElementById("logoutBtn").onclick = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("username");
     window.location.href = "login.html";
   };
 
-  loadResults();
+  let result = null;
+  let idx = 0;
 
-  async function loadResults(){
-    const res = await fetch(`${API}/api/results/my`, {
-      headers:{ Authorization:"Bearer "+token }
-    });
+  if (!resultId) {
+    showError("Missing resultId in the URL.");
+  } else {
+    loadResult();
+  }
 
-    const data = await res.json();
+  function showError(msg){
+    errBox.style.display = "block";
+    errBox.textContent = msg;
+  }
 
-    if (!data.length){
-      document.getElementById("tableWrap").innerHTML = `
-        <div class="empty">No results found.</div>`;
-      return;
+  function esc(s){
+    return String(s || "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  async function loadResult(){
+    try{
+      const res = await fetch(`${API}/api/results/${encodeURIComponent(resultId)}`, {
+        headers: { Authorization: "Bearer " + token }
+      });
+
+      if (res.status === 401){
+        localStorage.removeItem("token");
+        window.location.href = "login.html";
+        return;
+      }
+
+      if (!res.ok){
+        const t = await res.text().catch(()=> "");
+        throw new Error(t || `Request failed (HTTP ${res.status})`);
+      }
+
+      result = await res.json();
+
+      const assessmentTitle = result.title || "Assessment";
+      titleEl.textContent = assessmentTitle;
+
+      const dateStr = result.createdAt ? new Date(result.createdAt).toLocaleString() : "-";
+      metaEl.textContent = `Grade ${result.grade ?? "-"} • ${result.topic || "General"} • ${dateStr}`;
+
+      // ✅ Marks shown as percentage only
+      const percent = Number(result.percent || 0);
+      const pass = percent >= 50;
+
+      marksPill.textContent = `Marks: ${percent}%`;
+      marksPill.classList.toggle("pass", pass);
+      marksPill.classList.toggle("fail", !pass);
+
+      const answers = Array.isArray(result.answers) ? result.answers : [];
+      if (answers.length === 0){
+        showError("No saved answers found for this assessment.");
+        return;
+      }
+
+      idx = 0;
+      renderQuestion();
+
+      prevBtn.onclick = () => { idx--; renderQuestion(); };
+      nextBtn.onclick = () => { idx++; renderQuestion(); };
+
+    } catch (e){
+      showError("Could not load review: " + (e.message || ""));
     }
+  }
 
-    document.getElementById("tableWrap").innerHTML = `
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Grade</th>
-            <th>Topic</th>
-            <th>Assessment</th>
-            <th>Marks</th>
-            <th>Review</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${data.map(r=>{
-            const d = new Date(r.createdAt).toLocaleString();
-            const pass = r.percent >= 50;
-            return `
-              <tr>
-                <td>${d}</td>
-                <td><span class="pill">Grade ${r.grade}</span></td>
-                <td>${r.topic}</td>
-                <td>${r.title}</td>
-                <td>
-                  <span class="${pass ? "marks-pass" : "marks-fail"}">
-                    ${r.percent}%
-                  </span>
-                </td>
-                <td>
-                  <button class="smallBtn"
-                    onclick="location.href='review.html?resultId=${r._id}'">
-                    Review
-                  </button>
-                </td>
-              </tr>
-            `;
-          }).join("")}
-        </tbody>
-      </table>
+  function renderQuestion(){
+    const answers = result.answers;
+    idx = Math.max(0, Math.min(idx, answers.length - 1));
+
+    const a = answers[idx];
+    const opts = Array.isArray(a.options) ? a.options : [];
+    const correctIndex = Number(a.correctIndex);
+    const chosenIndex = Number(a.chosenIndex);
+
+    counterEl.textContent = `Question ${idx + 1} of ${answers.length}`;
+
+    // Disable buttons at ends
+    prevBtn.disabled = idx === 0;
+    nextBtn.disabled = idx === answers.length - 1;
+
+    const letters = ["A","B","C","D","E","F"];
+
+    qbox.innerHTML = `
+      <div class="qtitle">${idx + 1}. ${esc(a.questionText || "")}</div>
+      ${opts.map((opt, i) => {
+        const isCorrect = i === correctIndex;
+        const isWrongChosen = (i === chosenIndex) && (chosenIndex !== correctIndex);
+
+        const cls = isCorrect ? "opt correct" : (isWrongChosen ? "opt wrong" : "opt");
+
+        return `
+          <div class="${cls}">
+            <div class="letter">${letters[i] || (i+1)}</div>
+            <div>${esc(opt)}</div>
+          </div>
+        `;
+      }).join("")}
     `;
+
+    // ✅ Bottom: Correct answer only
+    const correctText = opts[correctIndex] ?? "";
+    const correctLetter = letters[correctIndex] ?? "";
+    correctAnswerBox.innerHTML = `Correct Answer: ${correctLetter ? `<b>${esc(correctLetter)}</b>. ` : ""}<b>${esc(correctText)}</b>`;
   }
 </script>
 </body>
