@@ -69,6 +69,12 @@
           <option>Statistics</option>
         </select>
       </div>
+
+      <!-- ✅ NEW: time limit -->
+      <div>
+        <label>Time Limit (minutes)</label>
+        <input id="timeLimit" type="number" min="1" max="180" value="10" placeholder="e.g. 10" />
+      </div>
     </div>
 
     <label>Quiz Title</label>
@@ -100,6 +106,7 @@
 
     const gradeEl = document.getElementById("grade");
     const topicEl = document.getElementById("topic");
+    const timeLimitEl = document.getElementById("timeLimit"); // ✅ NEW
     const titleEl = document.getElementById("title");
 
     const addQuestionBtn = document.getElementById("addQuestionBtn");
@@ -123,7 +130,7 @@
       return String(s || "").trim().replace(/\s+/g, " ");
     }
 
-    // ✅ Title Case: "trigonometry basics" -> "Trigonometry Basics"
+    // ✅ Title Case
     function toTitleCase(s){
       const t = cleanSpaces(s).toLowerCase();
       if (!t) return "";
@@ -266,10 +273,17 @@
       const topic = toTitleCase(topicEl.value);
       const title = toTitleCase(titleEl.value);
 
+      // ✅ NEW: time limit
+      const timeLimitMinutes = Number(timeLimitEl.value);
+
       try{
         if (!grade) return setMsg("Please select grade.", "error");
         if (!topic) return setMsg("Please select topic.", "error");
         if (!title) return setMsg("Please enter quiz title.", "error");
+
+        if (!Number.isFinite(timeLimitMinutes) || timeLimitMinutes < 1 || timeLimitMinutes > 180) {
+          return setMsg("Please enter a valid time limit (1–180 minutes).", "error");
+        }
 
         const questions = collectQuestions();
 
@@ -282,7 +296,7 @@
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify({ grade, title, topic, questions })
+          body: JSON.stringify({ grade, title, topic, timeLimitMinutes, questions })
         });
 
         const data = await res.json().catch(()=>({}));
@@ -292,6 +306,7 @@
           titleEl.value = "";
           gradeEl.value = "";
           topicEl.value = "";
+          timeLimitEl.value = "10"; // ✅ reset default
 
           questionsWrap.innerHTML = "";
           qCount = 0;
