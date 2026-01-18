@@ -26,25 +26,19 @@ const ALLOWED_ORIGINS = [
 app.use(
   cors({
     origin: (origin, cb) => {
-      // allow requests like curl/postman (no origin)
       if (!origin) return cb(null, true);
-
-      // allow explicit list
       if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-
-      // ✅ allow Netlify sites (including deploy previews)
       if (origin.endsWith(".netlify.app")) return cb(null, true);
-
       return cb(new Error(`CORS blocked: ${origin}`), false);
     },
     credentials: true,
   })
 );
 
-// ✅ handle preflight
+// handle preflight
 app.options("*", cors());
 
-// ✅ clearer CORS error responses
+// clearer CORS error
 app.use((err, req, res, next) => {
   if (err?.message?.startsWith("CORS blocked")) {
     return res.status(403).json({ message: err.message });
@@ -154,7 +148,7 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-// ✅ Me (used by nav + admin checks)
+// Me
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select("username role grade email");
@@ -173,7 +167,7 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 
 /* ------------------ QUIZ ROUTES ------------------ */
 
-// List quizzes (optional grade filter)
+// List quizzes
 app.get("/api/quizzes", authRequired, async (req, res) => {
   try {
     const grade = req.query.grade;
@@ -185,7 +179,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
   }
 });
 
-// ✅ Get quiz by id (needed by attempt.html)
+// Get quiz by id
 app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   try {
     const { id } = req.params;
@@ -203,7 +197,7 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   }
 });
 
-// Create quiz (admin only)
+// Create quiz
 app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   try {
     const quiz = await Quiz.create(req.body);
@@ -215,59 +209,60 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
 
 /* ------------------ RESULTS ROUTES ------------------ */
 
-// ✅ Save result (ONE attempt per quiz) + SAVE ANSWERS SNAPSHOT
+// ✅ Save result (ONE attempt per quiz) + save answers snapshot
 app.post("/api/results", authRequired, async (req, res) => {
   try {
-    const { quizId, answers, timeTakenSeconds } = req.body;
+    const { quizId, score, total, answers, timeTakenSeconds } = req.body;
 
-    if (!quizId) {
-      return res.status(400).json({ message: "quizId required" });
+    if (!quizId || score === undefined || total === undefined) {
+      return res.status(400).json({ message: "quizId, score, total required" });
     }
 
     if (!mongoose.Types.ObjectId.isValid(quizId)) {
       return res.status(400).json({ message: "Invalid quizId" });
     }
 
-    const quiz = await Quiz.findById(quizId);
+    const quiz = await Quiz.findById(quizId).select("grade topic title questions");
     if (!quiz) return res.status(404).json({ message: "Quiz not found" });
 
-    // 🔒 lock attempt
+    const s = Number(score);
+    const t = Number(total);
+    if (!Number.isFinite(s) || !Number.isFinite(t) || t <= 0) {
+      return res.status(400).json({ message: "Invalid score/total" });
+    }
+
+    const percent = Math.round((s / t) * 100);
+    const status = percent >= 50 ? "PASS" : "FAIL";
+
+    // lock attempt
     const exists = await Result.findOne({ userId: req.user.userId, quizId });
     if (exists) return res.status(409).json({ message: "Quiz already attempted" });
 
-    const questions = quiz.questions || [];
-    const total = questions.length;
+    // ✅ Build safe snapshot answers (never trust client fully)
+    const quizQuestions = Array.isArray(quiz.questions) ? quiz.questions : [];
+    const incoming = Array.isArray(answers) ? answers : [];
 
-    if (!Array.isArray(answers) || answers.length !== total) {
-      return res.status(400).json({ message: `answers must have ${total} items` });
-    }
+    const snapshotAnswers = incoming
+      .filter(a => a && Number.isFinite(Number(a.questionIndex)))
+      .map(a => {
+        const qi = Number(a.questionIndex);
+        const chosen = Number(a.chosenIndex);
 
-    // Build snapshot + score
-    let score = 0;
+        const q = quizQuestions[qi];
+        const correct = q ? Number(q.correctIndex) : -1;
 
-    const savedAnswers = answers.map((a, i) => {
-      const chosenIndex = Number(a?.chosenIndex);
-      if (!Number.isFinite(chosenIndex) || chosenIndex < 0) {
-        throw new Error(`Invalid chosenIndex at question ${i + 1}`);
-      }
+        return {
+          questionIndex: qi,
+          chosenIndex: Number.isFinite(chosen) ? chosen : -1,
+          correctIndex: Number.isFinite(correct) ? correct : -1,
+          isCorrect: Number.isFinite(chosen) && Number.isFinite(correct) ? chosen === correct : false,
+          questionText: q?.text || "",
+          options: Array.isArray(q?.options) ? q.options : [],
+        };
+      });
 
-      const q = questions[i];
-      const correctIndex = Number(q.correctIndex);
-      const isCorrect = chosenIndex === correctIndex;
-      if (isCorrect) score++;
-
-      return {
-        questionIndex: i,
-        chosenIndex,
-        correctIndex,
-        isCorrect,
-        questionText: q.text || "",
-        options: Array.isArray(q.options) ? q.options : [],
-      };
-    });
-
-    const percent = Math.round((score / total) * 100);
-    const status = percent >= 50 ? "PASS" : "FAIL";
+    const tSec = Number(timeTakenSeconds);
+    const safeTimeTakenSeconds = Number.isFinite(tSec) && tSec >= 0 ? tSec : 0;
 
     const saved = await Result.create({
       userId: req.user.userId,
@@ -275,12 +270,12 @@ app.post("/api/results", authRequired, async (req, res) => {
       grade: Number(quiz.grade),
       topic: quiz.topic || "General",
       title: quiz.title || "Quiz",
-      score,
-      total,
+      score: s,
+      total: t,
       percent,
       status,
-      answers: savedAnswers,
-      timeTakenSeconds: Number(timeTakenSeconds) || 0,
+      answers: snapshotAnswers,
+      timeTakenSeconds: safeTimeTakenSeconds,
     });
 
     res.status(201).json({
@@ -290,14 +285,12 @@ app.post("/api/results", authRequired, async (req, res) => {
       resultId: saved._id,
     });
   } catch (err) {
-    if (err.code === 11000) {
-      return res.status(409).json({ message: "Quiz already attempted" });
-    }
-    res.status(400).json({ message: err.message });
+    if (err.code === 11000) return res.status(409).json({ message: "Quiz already attempted" });
+    res.status(500).json({ message: err.message });
   }
 });
 
-// ✅ Get my results
+// ✅ Get my results (list)
 app.get("/api/results/my", authRequired, async (req, res) => {
   try {
     const results = await Result.find({ userId: req.user.userId })
@@ -310,7 +303,7 @@ app.get("/api/results/my", authRequired, async (req, res) => {
   }
 });
 
-// ✅ Get ONE result by id (for review page)
+// ✅ NEW: Get one result with answers (for review page)
 app.get("/api/results/:id", authRequired, async (req, res) => {
   try {
     const { id } = req.params;
@@ -319,15 +312,18 @@ app.get("/api/results/:id", authRequired, async (req, res) => {
       return res.status(400).json({ message: "Invalid result id" });
     }
 
-    const r = await Result.findById(id);
-    if (!r) return res.status(404).json({ message: "Result not found" });
+    const result = await Result.findById(id);
+    if (!result) return res.status(404).json({ message: "Result not found" });
 
-    // Only owner can view (simple + safe)
-    if (String(r.userId) !== String(req.user.userId)) {
-      return res.status(403).json({ message: "Forbidden" });
+    // only owner (or admin) can view
+    if (String(result.userId) !== String(req.user.userId)) {
+      const me = await User.findById(req.user.userId).select("role");
+      if (!me || me.role !== "admin") {
+        return res.status(403).json({ message: "Not allowed" });
+      }
     }
 
-    res.json(r);
+    res.json(result);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
