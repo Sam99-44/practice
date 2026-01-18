@@ -152,8 +152,13 @@
   let quizData = null;
   let submitted = false;
 
+  // ✅ timing
+  let startedAtMs = Date.now();  // set after quiz loads
+  let timeTakenSeconds = 0;
+
   // Keys per quiz (refresh-safe)
   const END_KEY = `quiz_end_${quizId}`;
+  const START_KEY = `quiz_start_${quizId}`;
 
   document.getElementById("logoutBtn").onclick = () => {
     localStorage.removeItem("token");
@@ -217,6 +222,16 @@
 
   function startTimerWithQuiz(quiz){
     const now = Date.now();
+
+    // ✅ Refresh safe start time
+    const savedStart = Number(localStorage.getItem(START_KEY));
+    if (savedStart && savedStart > 0) {
+      startedAtMs = savedStart;
+    } else {
+      startedAtMs = now;
+      localStorage.setItem(START_KEY, String(startedAtMs));
+    }
+
     const savedEnd = Number(localStorage.getItem(END_KEY));
 
     // ✅ Use stored end time if user refreshed
@@ -269,6 +284,16 @@
     if (remainingSec <= 60) timerBox.classList.add("warn");
   }
 
+  // ✅ Collect chosen answers as array of {questionIndex, chosenIndex}
+  function collectAnswers(){
+    const questions = quizData?.questions || [];
+    return questions.map((q, i) => {
+      const chosen = document.querySelector(`input[name="q${i}"]:checked`);
+      const chosenIndex = chosen ? Number(chosen.value) : -1; // -1 means not answered
+      return { questionIndex: i, chosenIndex };
+    });
+  }
+
   async function submitQuiz(mode){
     if (!quizData || submitted) return;
 
@@ -276,12 +301,18 @@
     let score = 0;
     let answered = 0;
 
+    // answers array (for saving)
+    const answers = collectAnswers();
+
+    // scoring + answered count
     quizData.questions.forEach((q, i) => {
-      const chosen = document.querySelector(`input[name="q${i}"]:checked`);
-      if (chosen) answered++;
-      if (chosen && Number(chosen.value) === q.correctIndex) score++;
+      const chosenIndex = answers[i]?.chosenIndex ?? -1;
+      if (chosenIndex >= 0) answered++;
+      if (chosenIndex >= 0 && chosenIndex === q.correctIndex) score++;
     });
 
+    // Only force "answer all" when user clicks manually.
+    // If auto-submit, we allow partial.
     if (mode === "manual" && answered < total) {
       msgEl.className = "error";
       msgEl.textContent = `Please answer all questions (${answered}/${total}) before submitting.`;
@@ -291,9 +322,16 @@
     submitted = true;
     submitBtn.disabled = true;
 
+    // stop timer + clear saved end time
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = null;
+
+    // ✅ compute time taken
+    timeTakenSeconds = Math.max(0, Math.round((Date.now() - startedAtMs) / 1000));
+
+    // clear refresh keys
     localStorage.removeItem(END_KEY);
+    localStorage.removeItem(START_KEY);
 
     const res = await fetch(`${API}/api/results`, {
       method: "POST",
@@ -301,7 +339,11 @@
         "Content-Type": "application/json",
         Authorization: "Bearer " + token
       },
-      body: JSON.stringify({ quizId, score, total })
+      body: JSON.stringify({
+        quizId,
+        answers,               // ✅ NEW
+        timeTakenSeconds       // ✅ NEW
+      })
     });
 
     if (res.status === 409) {
@@ -311,19 +353,23 @@
       return;
     }
 
+    const data = await res.json().catch(()=> ({}));
+
     if (!res.ok) {
       msgEl.className = "error";
-      msgEl.textContent = "Could not save result. Please try again.";
+      msgEl.textContent = data.message || "Could not save result. Please try again.";
       return;
     }
 
-    const percent = Math.round((score / total) * 100);
+    const percent = Number(data.percent ?? Math.round((score / total) * 100));
+
     msgEl.className = "ok";
-    msgEl.textContent = `✅ Submitted! Score: ${score}/${total} (${percent}%).`;
+    msgEl.textContent = `✅ Submitted! Score: ${score}/${total} (${percent}%). Time: ${Math.floor(timeTakenSeconds/60)}m ${timeTakenSeconds%60}s`;
 
     viewResultsBtn.disabled = false;
     viewResultsBtn.onclick = () => window.location.href = "results.html";
 
+    // disable all radios after submit
     document.querySelectorAll("input[type=radio]").forEach(el => el.disabled = true);
   }
 </script>
