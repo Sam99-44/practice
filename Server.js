@@ -167,7 +167,7 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 
 /* ------------------ QUIZ ROUTES ------------------ */
 
-// List quizzes
+// List quizzes (learners/admin)
 app.get("/api/quizzes", authRequired, async (req, res) => {
   try {
     const grade = req.query.grade;
@@ -179,7 +179,31 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
   }
 });
 
-// Get quiz by id
+// ✅ Admin: list/filter quizzes for edit page dropdown
+// /api/admin/quizzes?grade=10&q=algebra&frozen=true|false
+app.get("/api/admin/quizzes", authRequired, adminOnly, async (req, res) => {
+  try {
+    const { grade, q, frozen } = req.query;
+
+    const filter = {};
+    if (grade) filter.grade = Number(grade);
+
+    if (frozen === "true") filter.isFrozen = true;
+    if (frozen === "false") filter.isFrozen = false;
+
+    if (q) {
+      const rx = new RegExp(String(q).trim(), "i");
+      filter.$or = [{ title: rx }, { topic: rx }];
+    }
+
+    const quizzes = await Quiz.find(filter).sort({ createdAt: -1 });
+    res.json(quizzes);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Get quiz by id (blocked if frozen for learners)
 app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   try {
     const { id } = req.params;
@@ -191,13 +215,20 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
     const quiz = await Quiz.findById(id);
     if (!quiz) return res.status(404).json({ message: "Quiz not found" });
 
+    // ✅ learners cannot access frozen quizzes
+    if (quiz.isFrozen) {
+      const me = await User.findById(req.user.userId).select("role");
+      const isAdmin = me && me.role === "admin";
+      if (!isAdmin) return res.status(403).json({ message: "Quiz is frozen" });
+    }
+
     res.json(quiz);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// Create quiz
+// Create quiz (admin only)
 app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   try {
     const quiz = await Quiz.create(req.body);
@@ -238,6 +269,32 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   }
 });
 
+// ✅ FREEZE / UNFREEZE quiz (admin only)
+app.patch("/api/quizzes/:id/freeze", authRequired, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid quiz id" });
+    }
+
+    const { frozen } = req.body; // true/false
+    const isFrozen = Boolean(frozen);
+
+    const updated = await Quiz.findByIdAndUpdate(
+      id,
+      { isFrozen, frozenAt: isFrozen ? new Date() : null },
+      { new: true }
+    );
+
+    if (!updated) return res.status(404).json({ message: "Quiz not found" });
+
+    res.json({ message: "Updated", isFrozen: updated.isFrozen, quiz: updated });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // ✅ DELETE quiz (admin only)
 app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
@@ -258,7 +315,7 @@ app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
 
 /* ------------------ RESULTS ROUTES ------------------ */
 
-// ✅ Save result (ONE attempt per quiz) + save answers snapshot
+// Save result (ONE attempt per quiz) + save answers snapshot
 app.post("/api/results", authRequired, async (req, res) => {
   try {
     const { quizId, score, total, answers, timeTakenSeconds } = req.body;
@@ -271,8 +328,13 @@ app.post("/api/results", authRequired, async (req, res) => {
       return res.status(400).json({ message: "Invalid quizId" });
     }
 
-    const quiz = await Quiz.findById(quizId).select("grade topic title questions");
+    const quiz = await Quiz.findById(quizId).select("grade topic title questions isFrozen");
     if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+
+    // ✅ block attempts if frozen
+    if (quiz.isFrozen) {
+      return res.status(403).json({ message: "Quiz is frozen" });
+    }
 
     const s = Number(score);
     const t = Number(total);
