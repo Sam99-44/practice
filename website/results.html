@@ -71,9 +71,19 @@
       font-weight:700;
       font-size:14px;
     }
+    .smallBtn{
+      background:#fff;
+      border:1px solid #ddd;
+      padding:6px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:800;
+      font-size:12px;
+      white-space:nowrap;
+    }
 
     table{width:100%; border-collapse:collapse; margin-top:10px;}
-    th, td{padding:10px; border-bottom:1px solid #eee; text-align:left; font-size:14px;}
+    th, td{padding:10px; border-bottom:1px solid #eee; text-align:left; font-size:14px; vertical-align:middle;}
     th{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;}
     .pill{
       display:inline-block;
@@ -107,7 +117,6 @@
   </style>
 
   <script>
-    // must be logged in
     const authToken = localStorage.getItem("token");
     if (!authToken) window.location.href = "login.html";
   </script>
@@ -189,7 +198,8 @@
     document.getElementById("welcomeSub").textContent = `Welcome, ${username}`;
 
     document.getElementById("logoutBtn").addEventListener("click", () => {
-      localStorage.clear();
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
       window.location.href = "login.html";
     });
 
@@ -228,7 +238,7 @@
         });
 
         if (res.status === 401) {
-          localStorage.clear();
+          localStorage.removeItem("token");
           window.location.href = "login.html";
           return;
         }
@@ -252,9 +262,8 @@
           <div class="empty">
             <div class="error"><b>Results not showing.</b></div>
             <div class="muted" style="margin-top:6px;">
-              Open DevTools → Network → refresh this page → check the request:
+              Open DevTools → Network → refresh this page → check:
               <br><b>GET /api/results/my</b>
-              <br>Common causes: backend not redeployed, wrong API URL, or CORS blocked.
             </div>
           </div>
         `;
@@ -267,9 +276,7 @@
 
       let list = [...allResults];
 
-      if (grade) {
-        list = list.filter(r => String(r.grade ?? "") === String(grade));
-      }
+      if (grade) list = list.filter(r => String(r.grade ?? "") === String(grade));
 
       if (q) {
         list = list.filter(r => {
@@ -302,6 +309,7 @@
               <th>Topic</th>
               <th>Quiz</th>
               <th>Score</th>
+              <th>Review</th>
             </tr>
           </thead>
           <tbody>
@@ -312,6 +320,7 @@
               const topicStr = escapeHtml(r.topic || "General");
               const titleStr = escapeHtml(r.title || "Quiz");
               const scoreStr = `${r.score}/${r.total} (${r.percent}%)`;
+              const id = r._id ? String(r._id) : "";
 
               return `
                 <tr>
@@ -320,12 +329,23 @@
                   <td>${topicStr}</td>
                   <td>${titleStr}</td>
                   <td><span class="scorepill">${escapeHtml(scoreStr)}</span></td>
+                  <td>
+                    ${id ? `<button class="smallBtn" data-review="${escapeHtml(id)}">Review</button>` : `<span class="muted">—</span>`}
+                  </td>
                 </tr>
               `;
             }).join("")}
           </tbody>
         </table>
       `;
+
+      // ✅ attach events
+      tableWrap.querySelectorAll("[data-review]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-review");
+          window.location.href = `review.html?resultId=${encodeURIComponent(id)}`;
+        });
+      });
     }
 
     function escapeHtml(str){
