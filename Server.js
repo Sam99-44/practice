@@ -35,7 +35,6 @@ app.use(
   })
 );
 
-// handle preflight
 app.options("*", cors());
 
 // clearer CORS error
@@ -165,9 +164,35 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
   }
 });
 
+/* ------------------ ADMIN ROUTES ------------------ */
+
+// ✅ Admin stats (correct counts)
+app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
+  try {
+    const [totalUsers, totalAssessments, quizzesByGrade] = await Promise.all([
+      User.countDocuments({}),
+      Quiz.countDocuments({}),
+      Quiz.aggregate([
+        { $group: { _id: "$grade", count: { $sum: 1 } } },
+        { $sort: { _id: 1 } },
+        { $project: { _id: 0, grade: "$_id", count: 1 } },
+      ]),
+    ]);
+
+    res.json({
+      totalUsers,
+      totalQuizzes: totalAssessments, // keep frontend compatibility
+      totalAssessments,
+      quizzesByGrade,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 /* ------------------ QUIZ ROUTES ------------------ */
 
-// List quizzes (learners/admin)
+// List quizzes
 app.get("/api/quizzes", authRequired, async (req, res) => {
   try {
     const grade = req.query.grade;
@@ -179,31 +204,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
   }
 });
 
-// ✅ Admin: list/filter quizzes for edit page dropdown
-// /api/admin/quizzes?grade=10&q=algebra&frozen=true|false
-app.get("/api/admin/quizzes", authRequired, adminOnly, async (req, res) => {
-  try {
-    const { grade, q, frozen } = req.query;
-
-    const filter = {};
-    if (grade) filter.grade = Number(grade);
-
-    if (frozen === "true") filter.isFrozen = true;
-    if (frozen === "false") filter.isFrozen = false;
-
-    if (q) {
-      const rx = new RegExp(String(q).trim(), "i");
-      filter.$or = [{ title: rx }, { topic: rx }];
-    }
-
-    const quizzes = await Quiz.find(filter).sort({ createdAt: -1 });
-    res.json(quizzes);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Get quiz by id (blocked if frozen for learners)
+// Get quiz by id
 app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   try {
     const { id } = req.params;
@@ -215,20 +216,13 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
     const quiz = await Quiz.findById(id);
     if (!quiz) return res.status(404).json({ message: "Quiz not found" });
 
-    // ✅ learners cannot access frozen quizzes
-    if (quiz.isFrozen) {
-      const me = await User.findById(req.user.userId).select("role");
-      const isAdmin = me && me.role === "admin";
-      if (!isAdmin) return res.status(403).json({ message: "Quiz is frozen" });
-    }
-
     res.json(quiz);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// Create quiz (admin only)
+// Create quiz
 app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   try {
     const quiz = await Quiz.create(req.body);
@@ -238,7 +232,7 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   }
 });
 
-// ✅ UPDATE quiz (admin only)
+// ✅ Update quiz (admin only) + supports freeze fields
 app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
@@ -247,13 +241,23 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
       return res.status(400).json({ message: "Invalid quiz id" });
     }
 
-    // Only allow these fields to be updated
-    const allowed = (({ grade, title, topic, questions, timeLimitMinutes }) => ({
+    // Only allow safe fields
+    const allowed = (({
       grade,
       title,
       topic,
       questions,
       timeLimitMinutes,
+      isFrozen,
+      frozenAt,
+    }) => ({
+      grade,
+      title,
+      topic,
+      questions,
+      timeLimitMinutes,
+      isFrozen,
+      frozenAt,
     }))(req.body);
 
     const updated = await Quiz.findByIdAndUpdate(id, allowed, {
@@ -269,33 +273,7 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   }
 });
 
-// ✅ FREEZE / UNFREEZE quiz (admin only)
-app.patch("/api/quizzes/:id/freeze", authRequired, adminOnly, async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid quiz id" });
-    }
-
-    const { frozen } = req.body; // true/false
-    const isFrozen = Boolean(frozen);
-
-    const updated = await Quiz.findByIdAndUpdate(
-      id,
-      { isFrozen, frozenAt: isFrozen ? new Date() : null },
-      { new: true }
-    );
-
-    if (!updated) return res.status(404).json({ message: "Quiz not found" });
-
-    res.json({ message: "Updated", isFrozen: updated.isFrozen, quiz: updated });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// ✅ DELETE quiz (admin only)
+// ✅ Delete quiz (admin only)
 app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
@@ -315,7 +293,7 @@ app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
 
 /* ------------------ RESULTS ROUTES ------------------ */
 
-// Save result (ONE attempt per quiz) + save answers snapshot
+// Save result + snapshot answers
 app.post("/api/results", authRequired, async (req, res) => {
   try {
     const { quizId, score, total, answers, timeTakenSeconds } = req.body;
@@ -328,13 +306,8 @@ app.post("/api/results", authRequired, async (req, res) => {
       return res.status(400).json({ message: "Invalid quizId" });
     }
 
-    const quiz = await Quiz.findById(quizId).select("grade topic title questions isFrozen");
+    const quiz = await Quiz.findById(quizId).select("grade topic title questions");
     if (!quiz) return res.status(404).json({ message: "Quiz not found" });
-
-    // ✅ block attempts if frozen
-    if (quiz.isFrozen) {
-      return res.status(403).json({ message: "Quiz is frozen" });
-    }
 
     const s = Number(score);
     const t = Number(total);
@@ -345,11 +318,9 @@ app.post("/api/results", authRequired, async (req, res) => {
     const percent = Math.round((s / t) * 100);
     const status = percent >= 50 ? "PASS" : "FAIL";
 
-    // lock attempt
     const exists = await Result.findOne({ userId: req.user.userId, quizId });
     if (exists) return res.status(409).json({ message: "Quiz already attempted" });
 
-    // Build safe snapshot answers (never trust client fully)
     const quizQuestions = Array.isArray(quiz.questions) ? quiz.questions : [];
     const incoming = Array.isArray(answers) ? answers : [];
 
@@ -402,7 +373,7 @@ app.post("/api/results", authRequired, async (req, res) => {
   }
 });
 
-// Get my results (list)
+// Get my results
 app.get("/api/results/my", authRequired, async (req, res) => {
   try {
     const results = await Result.find({ userId: req.user.userId })
@@ -415,7 +386,7 @@ app.get("/api/results/my", authRequired, async (req, res) => {
   }
 });
 
-// Get one result with answers (for review page)
+// Get one result with answers (review)
 app.get("/api/results/:id", authRequired, async (req, res) => {
   try {
     const { id } = req.params;
@@ -427,7 +398,6 @@ app.get("/api/results/:id", authRequired, async (req, res) => {
     const result = await Result.findById(id);
     if (!result) return res.status(404).json({ message: "Result not found" });
 
-    // only owner (or admin) can view
     if (String(result.userId) !== String(req.user.userId)) {
       const me = await User.findById(req.user.userId).select("role");
       if (!me || me.role !== "admin") {
