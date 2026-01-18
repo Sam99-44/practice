@@ -112,7 +112,6 @@
         <p class="muted" id="quizInfo" style="margin:6px 0 0 0;"></p>
       </div>
 
-      <!-- ✅ TIMER -->
       <div id="timerBox" class="timerBox hidden">Time: 00:00</div>
     </div>
 
@@ -145,20 +144,15 @@
   const msgEl = document.getElementById("msg");
   const lockNotice = document.getElementById("lockNotice");
 
-  // Timer UI
+  // Timer
   const timerBox = document.getElementById("timerBox");
   let timerInterval = null;
   let quizEndAtMs = null;
   let quizData = null;
   let submitted = false;
 
-  // ✅ timing
-  let startedAtMs = Date.now();  // set after quiz loads
-  let timeTakenSeconds = 0;
-
-  // Keys per quiz (refresh-safe)
+  // Refresh-safe end-time key per quiz
   const END_KEY = `quiz_end_${quizId}`;
-  const START_KEY = `quiz_start_${quizId}`;
 
   document.getElementById("logoutBtn").onclick = () => {
     localStorage.removeItem("token");
@@ -192,7 +186,6 @@
 
     quizTitle.textContent = cleanSpaces(quizData.title || "Quiz");
 
-    // ✅ show time in the info line
     const mins = Number(quizData.timeLimitMinutes || 0);
     const timeStr = mins > 0 ? ` • Time ${mins} min` : "";
     quizInfo.textContent = `Grade ${quizData.grade ?? "-"} • ${cleanSpaces(quizData.topic || "General")}${timeStr}`;
@@ -208,13 +201,11 @@
       </div>
     `).join("");
 
-    // ✅ Start timer using quiz.timeLimitMinutes (fallback to question rule if missing)
     startTimerWithQuiz(quizData);
-
     submitBtn.onclick = () => submitQuiz("manual");
   }
 
-  // fallback rule if no timeLimitMinutes: 1 minute per question, min 5, max 30
+  // fallback: 1 min per question (min 5, max 30)
   function calcFallbackSeconds(totalQuestions){
     const raw = totalQuestions * 60;
     return Math.max(5 * 60, Math.min(raw, 30 * 60));
@@ -222,19 +213,8 @@
 
   function startTimerWithQuiz(quiz){
     const now = Date.now();
-
-    // ✅ Refresh safe start time
-    const savedStart = Number(localStorage.getItem(START_KEY));
-    if (savedStart && savedStart > 0) {
-      startedAtMs = savedStart;
-    } else {
-      startedAtMs = now;
-      localStorage.setItem(START_KEY, String(startedAtMs));
-    }
-
     const savedEnd = Number(localStorage.getItem(END_KEY));
 
-    // ✅ Use stored end time if user refreshed
     if (savedEnd && savedEnd > now) {
       quizEndAtMs = savedEnd;
     } else {
@@ -242,11 +222,8 @@
       const totalQuestions = (quiz.questions || []).length;
 
       let secs;
-      if (Number.isFinite(mins) && mins > 0) {
-        secs = mins * 60; // ✅ dynamic per quiz
-      } else {
-        secs = calcFallbackSeconds(totalQuestions);
-      }
+      if (Number.isFinite(mins) && mins > 0) secs = mins * 60;
+      else secs = calcFallbackSeconds(totalQuestions);
 
       quizEndAtMs = now + secs * 1000;
       localStorage.setItem(END_KEY, String(quizEndAtMs));
@@ -261,8 +238,7 @@
   function tickTimer(){
     if (!quizEndAtMs || submitted) return;
 
-    const now = Date.now();
-    const remainingMs = quizEndAtMs - now;
+    const remainingMs = quizEndAtMs - Date.now();
 
     if (remainingMs <= 0) {
       timerBox.textContent = "Time: 00:00";
@@ -284,14 +260,33 @@
     if (remainingSec <= 60) timerBox.classList.add("warn");
   }
 
-  // ✅ Collect chosen answers as array of {questionIndex, chosenIndex}
-  function collectAnswers(){
-    const questions = quizData?.questions || [];
-    return questions.map((q, i) => {
+  function getTimeTakenSeconds(){
+    // timeLimitMinutes (if set) -> compute from end time
+    const mins = Number(quizData?.timeLimitMinutes || 0);
+    const totalQuestions = (quizData?.questions || []).length;
+    const totalSec = (Number.isFinite(mins) && mins > 0)
+      ? mins * 60
+      : calcFallbackSeconds(totalQuestions);
+
+    const now = Date.now();
+    const remainingSec = quizEndAtMs ? Math.max(0, Math.ceil((quizEndAtMs - now) / 1000)) : 0;
+    const taken = totalSec - remainingSec;
+    return Math.max(0, taken);
+  }
+
+  function buildAnswersPayload(){
+    // Only store answered questions
+    const answers = [];
+    (quizData.questions || []).forEach((q, i) => {
       const chosen = document.querySelector(`input[name="q${i}"]:checked`);
-      const chosenIndex = chosen ? Number(chosen.value) : -1; // -1 means not answered
-      return { questionIndex: i, chosenIndex };
+      if (chosen) {
+        answers.push({
+          questionIndex: i,
+          chosenIndex: Number(chosen.value)
+        });
+      }
     });
+    return answers;
   }
 
   async function submitQuiz(mode){
@@ -301,18 +296,12 @@
     let score = 0;
     let answered = 0;
 
-    // answers array (for saving)
-    const answers = collectAnswers();
-
-    // scoring + answered count
     quizData.questions.forEach((q, i) => {
-      const chosenIndex = answers[i]?.chosenIndex ?? -1;
-      if (chosenIndex >= 0) answered++;
-      if (chosenIndex >= 0 && chosenIndex === q.correctIndex) score++;
+      const chosen = document.querySelector(`input[name="q${i}"]:checked`);
+      if (chosen) answered++;
+      if (chosen && Number(chosen.value) === q.correctIndex) score++;
     });
 
-    // Only force "answer all" when user clicks manually.
-    // If auto-submit, we allow partial.
     if (mode === "manual" && answered < total) {
       msgEl.className = "error";
       msgEl.textContent = `Please answer all questions (${answered}/${total}) before submitting.`;
@@ -322,16 +311,19 @@
     submitted = true;
     submitBtn.disabled = true;
 
-    // stop timer + clear saved end time
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = null;
 
-    // ✅ compute time taken
-    timeTakenSeconds = Math.max(0, Math.round((Date.now() - startedAtMs) / 1000));
-
-    // clear refresh keys
+    const timeTakenSeconds = getTimeTakenSeconds();
     localStorage.removeItem(END_KEY);
-    localStorage.removeItem(START_KEY);
+
+    const payload = {
+      quizId,
+      score,
+      total,
+      answers: buildAnswersPayload(),
+      timeTakenSeconds
+    };
 
     const res = await fetch(`${API}/api/results`, {
       method: "POST",
@@ -339,11 +331,7 @@
         "Content-Type": "application/json",
         Authorization: "Bearer " + token
       },
-      body: JSON.stringify({
-        quizId,
-        answers,               // ✅ NEW
-        timeTakenSeconds       // ✅ NEW
-      })
+      body: JSON.stringify(payload)
     });
 
     if (res.status === 409) {
@@ -353,23 +341,19 @@
       return;
     }
 
-    const data = await res.json().catch(()=> ({}));
-
     if (!res.ok) {
       msgEl.className = "error";
-      msgEl.textContent = data.message || "Could not save result. Please try again.";
+      msgEl.textContent = "Could not save attempt. Please try again.";
       return;
     }
 
-    const percent = Number(data.percent ?? Math.round((score / total) * 100));
-
+    const percent = Math.round((score / total) * 100);
     msgEl.className = "ok";
-    msgEl.textContent = `✅ Submitted! Score: ${score}/${total} (${percent}%). Time: ${Math.floor(timeTakenSeconds/60)}m ${timeTakenSeconds%60}s`;
+    msgEl.textContent = `✅ Submitted! Score: ${score}/${total} (${percent}%). Time taken: ${timeTakenSeconds}s`;
 
     viewResultsBtn.disabled = false;
     viewResultsBtn.onclick = () => window.location.href = "results.html";
 
-    // disable all radios after submit
     document.querySelectorAll("input[type=radio]").forEach(el => el.disabled = true);
   }
 </script>
