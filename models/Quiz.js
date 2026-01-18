@@ -28,6 +28,10 @@ const QuizSchema = new mongoose.Schema(
     // ✅ NEW: time limit per quiz (minutes)
     timeLimitMinutes: { type: Number, default: 10, min: 1, max: 180 },
 
+    // ✅ NEW: freeze assessment (admin can freeze/unfreeze)
+    isFrozen: { type: Boolean, default: false },
+    frozenAt: { type: Date, default: null },
+
     questions: { type: [QuestionSchema], default: [] },
   },
   { timestamps: true }
