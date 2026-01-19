@@ -79,11 +79,35 @@
       color:#166534;
     }
 
+    /* ✅ Frozen assessment (locked) */
+    .quiz-square.frozen{
+      cursor:not-allowed;
+      opacity:.75;
+      background:#f8fafc;
+      border-color:#e5e7eb;
+      transform:none !important;
+    }
+    .quiz-square.frozen:hover{
+      background:#f8fafc;
+      border-color:#e5e7eb;
+    }
+    .quiz-square.frozen::before{
+      content:"🔒";
+      position:absolute;
+      top:6px;left:10px;
+      font-size:14px;
+    }
+    .quiz-square .smallTag{
+      font-size:10px;
+      font-weight:900;
+      margin-top:2px;
+      color:#64748b;
+    }
+
     .hidden{display:none!important;}
   </style>
 
   <script>
-    // ✅ TOKEN DECLARED ONCE
     const authToken = localStorage.getItem("token");
     if (!authToken) window.location.href = "login.html";
   </script>
@@ -112,7 +136,7 @@
 
   <div class="card">
     <h1>Select Grade</h1>
-    <p class="muted">Choose your grade to view quizzes.</p>
+    <p class="muted">Choose your grade to view assessments.</p>
 
     <div class="controls">
       <select id="gradeSelect">
@@ -195,10 +219,10 @@
       return;
     }
 
-    status.textContent = "Loading quizzes...";
+    status.className = "muted";
+    status.textContent = "Loading assessments...";
     quizList.innerHTML = "";
 
-    // Load completed results once (so we can mark done ✓)
     await loadCompletedResults();
 
     let res;
@@ -220,13 +244,15 @@
 
     const quizzes = await res.json().catch(()=>[]);
     if (!Array.isArray(quizzes) || quizzes.length === 0){
-      status.textContent = "No quizzes found.";
+      status.textContent = "No assessments found.";
       cachedByTopic = null;
       cachedTopics = [];
+      topicSearch.disabled = true;
+      expandAllBtn.disabled = true;
+      collapseAllBtn.disabled = true;
       return;
     }
 
-    // Group by topic (cache)
     const byTopic = {};
     quizzes.forEach(q=>{
       const t = (q.topic || "General").trim() || "General";
@@ -234,7 +260,6 @@
       if (typeof topicOpen[t] !== "boolean") topicOpen[t] = true;
     });
 
-    // Sort topics & keep stable numbering
     const topics = Object.keys(byTopic).sort((a,b)=>a.localeCompare(b));
     topics.forEach(t=>{
       byTopic[t].sort((a,b)=>{
@@ -247,12 +272,12 @@
     cachedByTopic = byTopic;
     cachedTopics = topics;
 
-    render(); // draw from cache (no extra fetch)
+    render();
     topicSearch.disabled = false;
     expandAllBtn.disabled = false;
     collapseAllBtn.disabled = false;
     status.textContent = "";
-    filterTopics(topicSearch.value); // keep filter if user typed
+    filterTopics(topicSearch.value);
   }
 
   function render(){
@@ -274,14 +299,25 @@
               </div>
 
               <div class="quiz-squares ${open ? "" : "hidden"}" data-body="${escapeAttr(t)}">
-                ${list.map((q,i)=>`
-                  <div class="quiz-square ${completedSet.has(q._id) ? "done" : ""}"
-                    title="${escapeAttr(q.title || "Quiz")}"
-                    data-quizid="${escapeAttr(q._id)}"
-                    onclick="location.href='attempt.html?quizId=${encodeURIComponent(q._id)}'">
-                    ${i+1}
-                  </div>
-                `).join("")}
+                ${list.map((q,i)=>{
+                  const isFrozen = !!q.isFrozen;
+                  const isDone = completedSet.has(q._id);
+                  const cls = `quiz-square ${isDone ? "done" : ""} ${isFrozen ? "frozen" : ""}`.trim();
+
+                  const tip = isFrozen
+                    ? `Frozen: you can't attempt this assessment right now`
+                    : `Assessment: ${q.title || "Assessment"}`;
+
+                  return `
+                    <div class="${cls}"
+                      title="${escapeAttr(tip)}"
+                      data-quizid="${escapeAttr(q._id)}"
+                      data-frozen="${isFrozen ? "1" : "0"}">
+                      ${i+1}
+                      ${isFrozen ? `<div class="smallTag">Frozen</div>` : ``}
+                    </div>
+                  `;
+                }).join("")}
               </div>
             </div>
           `;
@@ -289,15 +325,31 @@
       </div>
     `;
 
-    // Bind toggle buttons (no re-fetch)
+    // Toggle buttons
     document.querySelectorAll("[data-toggle]").forEach(btn=>{
       btn.addEventListener("click", ()=>{
         const t = btn.getAttribute("data-toggle");
-        topicOpen[t] = !(topicOpen[t] !== false); // flip
-        // update UI only
+        topicOpen[t] = !(topicOpen[t] !== false);
+
         const body = document.querySelector(`[data-body="${cssEscape(t)}"]`);
         if (body) body.classList.toggle("hidden", topicOpen[t] === false);
         btn.textContent = (topicOpen[t] === false) ? "Expand" : "Collapse";
+      });
+    });
+
+    // Click handler for squares (blocks frozen)
+    quizList.querySelectorAll(".quiz-square").forEach(sq=>{
+      sq.addEventListener("click", ()=>{
+        const frozen = sq.getAttribute("data-frozen") === "1";
+        const id = sq.getAttribute("data-quizid");
+        if (!id) return;
+
+        if (frozen) {
+          alert("This assessment is frozen. Please try again later.");
+          return;
+        }
+
+        window.location.href = `attempt.html?quizId=${encodeURIComponent(id)}`;
       });
     });
   }
@@ -305,7 +357,6 @@
   function toggleAll(open){
     Object.keys(topicOpen).forEach(t => topicOpen[t] = open);
 
-    // Update UI only (no re-fetch)
     document.querySelectorAll("[data-body]").forEach(body=>{
       body.classList.toggle("hidden", !open);
     });
