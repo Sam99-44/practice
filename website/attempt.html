@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Attempt Quiz | Practice Online</title>
+  <title>Attempt Assessment | Practice Online</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,11 +32,11 @@
     .muted{color:var(--muted);}
     .hidden{display:none;}
 
-    .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+    .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:12px;}
     .brand{display:flex; align-items:center; gap:10px;}
     .logo{width:38px; height:38px; border-radius:10px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700;}
 
-    .nav{display:flex; gap:12px; align-items:center;}
+    .nav{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
     .nav a,.nav button{
       text-decoration:none;
       font-size:14px;
@@ -71,12 +71,37 @@
 
     .q{margin-top:16px; padding-top:16px; border-top:1px solid #eee;}
     .opt{display:block; padding:10px; border:1px solid #ddd; border-radius:10px; margin-bottom:8px; cursor:pointer;}
+    .opt.disabled{opacity:.7; cursor:not-allowed;}
+    .opt input{margin-right:8px;}
 
     .btn{background:var(--accent); color:#fff; padding:10px 14px; border:none; border-radius:10px; cursor:pointer;}
     .btn:disabled{opacity:.6; cursor:not-allowed;}
     .btn2{background:#fff; border:1px solid #ddd; padding:10px 14px; border-radius:10px; cursor:pointer;}
 
     .lockBox{border:1px dashed #ddd; background:#fafafa; padding:14px; border-radius:12px; margin-top:10px;}
+
+    .pill{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:12px;
+      border:1px solid #e5e7eb;
+      background:#f8fafc;
+      color:#334155;
+      white-space:nowrap;
+    }
+    .pill.red{border-color:#fecaca; background:#fff1f2; color:#b91c1c;}
+    .pill.green{border-color:#bbf7d0; background:#f0fdf4; color:#065f46;}
+
+    .frozenBanner{
+      border:1px solid #fecaca;
+      background:#fff1f2;
+      color:#991b1b;
+      padding:12px;
+      border-radius:12px;
+      margin-top:12px;
+    }
   </style>
 
   <script>
@@ -94,7 +119,7 @@
       <div class="logo">PO</div>
       <div>
         <strong>Practice Online</strong>
-        <span class="muted" id="welcomeSub">Attempt Quiz</span>
+        <span class="muted" id="welcomeSub">Attempt Assessment</span>
       </div>
     </div>
 
@@ -110,14 +135,24 @@
       <div>
         <h1 id="quizTitle">Loading…</h1>
         <p class="muted" id="quizInfo" style="margin:6px 0 0 0;"></p>
+        <div id="freezePill" class="pill hidden" style="margin-top:8px;">—</div>
       </div>
 
       <div id="timerBox" class="timerBox hidden">Time: 00:00</div>
     </div>
 
+    <!-- already attempted -->
     <div id="lockNotice" class="lockBox hidden">
-      <b class="error">This quiz is locked.</b>
-      <div class="muted">You already attempted this quiz.</div>
+      <b class="error">This assessment is locked.</b>
+      <div class="muted">You already attempted this assessment.</div>
+    </div>
+
+    <!-- frozen -->
+    <div id="frozenNotice" class="frozenBanner hidden">
+      <b>🔒 This assessment is frozen.</b>
+      <div class="muted" style="margin-top:4px;">
+        You can see it, but you can’t attempt it right now. Please try again later.
+      </div>
     </div>
 
     <div id="questions"></div>
@@ -143,6 +178,8 @@
   const viewResultsBtn = document.getElementById("viewResultsBtn");
   const msgEl = document.getElementById("msg");
   const lockNotice = document.getElementById("lockNotice");
+  const frozenNotice = document.getElementById("frozenNotice");
+  const freezePill = document.getElementById("freezePill");
 
   // Timer
   const timerBox = document.getElementById("timerBox");
@@ -150,6 +187,7 @@
   let quizEndAtMs = null;
   let quizData = null;
   let submitted = false;
+  let blocked = false; // frozen or locked
 
   // Refresh-safe end-time key per quiz
   const END_KEY = `quiz_end_${quizId}`;
@@ -161,7 +199,7 @@
   };
 
   if (!quizId) {
-    quizTitle.textContent = "Quiz not found";
+    quizTitle.textContent = "Assessment not found";
     submitBtn.disabled = true;
   } else {
     loadQuiz();
@@ -171,24 +209,58 @@
     return String(s || "").trim().replace(/\s+/g, " ");
   }
 
+  function setFreezeUI(isFrozen){
+    freezePill.classList.remove("hidden");
+    if (isFrozen){
+      freezePill.textContent = "FROZEN";
+      freezePill.className = "pill red";
+    } else {
+      freezePill.textContent = "ACTIVE";
+      freezePill.className = "pill green";
+    }
+  }
+
+  function disableAllInputs(){
+    document.querySelectorAll("input[type=radio]").forEach(el => el.disabled = true);
+    document.querySelectorAll(".opt").forEach(el => el.classList.add("disabled"));
+  }
+
+  function stopTimerAndClearKey(){
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+    timerBox.classList.add("hidden");
+    localStorage.removeItem(END_KEY);
+  }
+
   async function loadQuiz() {
-    const res = await fetch(`${API}/api/quizzes/${quizId}`, {
+    // reset UI
+    msgEl.className = "muted";
+    msgEl.textContent = "";
+    lockNotice.classList.add("hidden");
+    frozenNotice.classList.add("hidden");
+    blocked = false;
+
+    const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`, {
       headers: { Authorization: "Bearer " + token }
     });
 
     if (!res.ok) {
-      quizTitle.textContent = "Quiz not found";
+      quizTitle.textContent = "Assessment not found";
       submitBtn.disabled = true;
       return;
     }
 
     quizData = await res.json();
 
-    quizTitle.textContent = cleanSpaces(quizData.title || "Quiz");
+    quizTitle.textContent = cleanSpaces(quizData.title || "Assessment");
 
     const mins = Number(quizData.timeLimitMinutes || 0);
     const timeStr = mins > 0 ? ` • Time ${mins} min` : "";
     quizInfo.textContent = `Grade ${quizData.grade ?? "-"} • ${cleanSpaces(quizData.topic || "General")}${timeStr}`;
+
+    // ✅ Show freeze status + block attempt if frozen
+    const isFrozen = !!quizData.isFrozen;
+    setFreezeUI(isFrozen);
 
     questionsDiv.innerHTML = (quizData.questions || []).map((q, i) => `
       <div class="q">
@@ -201,6 +273,19 @@
       </div>
     `).join("");
 
+    // If frozen: show notice, disable UI, stop timer, block submit
+    if (isFrozen){
+      frozenNotice.classList.remove("hidden");
+      blocked = true;
+      submitBtn.disabled = true;
+      viewResultsBtn.disabled = true;
+      disableAllInputs();
+      stopTimerAndClearKey();
+      return;
+    }
+
+    // not frozen -> normal
+    submitBtn.disabled = false;
     startTimerWithQuiz(quizData);
     submitBtn.onclick = () => submitQuiz("manual");
   }
@@ -236,7 +321,7 @@
   }
 
   function tickTimer(){
-    if (!quizEndAtMs || submitted) return;
+    if (!quizEndAtMs || submitted || blocked) return;
 
     const remainingMs = quizEndAtMs - Date.now();
 
@@ -261,7 +346,6 @@
   }
 
   function getTimeTakenSeconds(){
-    // timeLimitMinutes (if set) -> compute from end time
     const mins = Number(quizData?.timeLimitMinutes || 0);
     const totalQuestions = (quizData?.questions || []).length;
     const totalSec = (Number.isFinite(mins) && mins > 0)
@@ -275,7 +359,6 @@
   }
 
   function buildAnswersPayload(){
-    // Only store answered questions
     const answers = [];
     (quizData.questions || []).forEach((q, i) => {
       const chosen = document.querySelector(`input[name="q${i}"]:checked`);
@@ -290,7 +373,19 @@
   }
 
   async function submitQuiz(mode){
-    if (!quizData || submitted) return;
+    if (!quizData || submitted || blocked) return;
+
+    // ✅ extra safety: if quiz became frozen mid-attempt, block submit
+    if (quizData.isFrozen){
+      frozenNotice.classList.remove("hidden");
+      msgEl.className = "error";
+      msgEl.textContent = "This assessment is frozen. You can’t submit now.";
+      submitBtn.disabled = true;
+      disableAllInputs();
+      stopTimerAndClearKey();
+      blocked = true;
+      return;
+    }
 
     const total = (quizData.questions || []).length;
     let score = 0;
@@ -337,7 +432,9 @@
     if (res.status === 409) {
       lockNotice.classList.remove("hidden");
       msgEl.className = "error";
-      msgEl.textContent = "You already attempted this quiz.";
+      msgEl.textContent = "You already attempted this assessment.";
+      blocked = true;
+      disableAllInputs();
       return;
     }
 
@@ -349,12 +446,12 @@
 
     const percent = Math.round((score / total) * 100);
     msgEl.className = "ok";
-    msgEl.textContent = `✅ Submitted! Score: ${score}/${total} (${percent}%). Time taken: ${timeTakenSeconds}s`;
+    msgEl.textContent = `✅ Submitted! Marks: ${percent}%. Time taken: ${timeTakenSeconds}s`;
 
     viewResultsBtn.disabled = false;
     viewResultsBtn.onclick = () => window.location.href = "results.html";
 
-    document.querySelectorAll("input[type=radio]").forEach(el => el.disabled = true);
+    disableAllInputs();
   }
 </script>
 </body>
