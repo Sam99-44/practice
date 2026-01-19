@@ -4,19 +4,133 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Admin Dashboard | Practice Online</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
-    body{font-family:Arial; background:#f6f7fb; margin:0;}
-    .wrap{max-width:1000px; margin:0 auto; padding:20px;}
-    .top{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
-    .btn{background:#111827; color:#fff; padding:10px 12px; border:none; border-radius:10px; cursor:pointer; text-decoration:none; font-weight:700;}
-    .btn2{background:#fff; color:#111827; border:1px solid #ddd;}
-    .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; margin-top:14px;}
-    .card{background:#fff; border:1px solid #e6e6e6; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.06);}
-    h1{margin:0;}
-    .big{font-size:28px; font-weight:bold; margin-top:6px;}
-    .muted{color:#555;}
-    .error{color:#b91c1c;}
-    .ok{color:#065f46;}
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --border:#e6e6e6;
+      --text:#0f172a;
+      --muted:#475569;
+      --accent:#0b3c5d;
+      --accent-soft:#e7eef5;
+      --radius:14px;
+      --shadow:0 6px 18px rgba(0,0,0,0.06);
+      --error:#b91c1c;
+      --ok:#065f46;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text);}
+    .wrap{max-width:1100px;margin:0 auto;padding:20px;}
+
+    .top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+
+    .title h1{margin:0;font-size:22px;}
+    .title p{margin:6px 0 0 0;}
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    .btn{
+      background:var(--accent);
+      color:#fff;
+      padding:10px 12px;
+      border:none;
+      border-radius:12px;
+      cursor:pointer;
+      text-decoration:none;
+      font-weight:700;
+      font-size:14px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .btn2{
+      background:#fff;
+      color:var(--text);
+      border:1px solid #ddd;
+    }
+    .btn:active{transform:translateY(1px);}
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+      gap:14px;
+      margin-top:14px;
+    }
+    @media (max-width: 900px){
+      .grid{grid-template-columns:repeat(2, minmax(0, 1fr));}
+    }
+    @media (max-width: 560px){
+      .grid{grid-template-columns:1fr;}
+      .actions{justify-content:flex-start;}
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:16px;
+      box-shadow:var(--shadow);
+      min-width:0;
+    }
+
+    .muted{color:var(--muted);}
+    .error{color:var(--error);}
+    .ok{color:var(--ok);}
+
+    .big{
+      font-size:30px;
+      font-weight:800;
+      margin-top:6px;
+      letter-spacing:-0.02em;
+    }
+
+    .byGradeList{
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .rowItem{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border:1px solid #eee;
+      border-radius:12px;
+      background:#fafafa;
+      font-size:14px;
+    }
+    .pill{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid #cfe9ff;
+      background:#eef7ff;
+      color:var(--accent);
+      font-size:12px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+
+    #msg{margin-top:14px;}
   </style>
 
   <script>
@@ -24,17 +138,20 @@
     if (!authToken) window.location.href = "login.html";
   </script>
 </head>
+
 <body>
   <div class="wrap">
     <div class="top">
-      <div>
+      <div class="title">
         <h1>Admin Dashboard</h1>
         <p class="muted" id="who">Checking login...</p>
       </div>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+
+      <div class="actions">
         <a class="btn btn2" href="admin-quiz.html">Add Assessment</a>
         <a class="btn btn2" href="edit-assessment.html">Edit / Freeze / Delete</a>
         <a class="btn btn2" href="learner-quizzes.html">Learner View</a>
+        <button class="btn btn2" id="refreshBtn" type="button">Refresh</button>
         <button class="btn" id="logoutBtn" type="button">Logout</button>
       </div>
     </div>
@@ -44,17 +161,19 @@
         <div class="muted">Total Users</div>
         <div class="big" id="totalUsers">-</div>
       </div>
+
       <div class="card">
         <div class="muted">Total Assessments</div>
         <div class="big" id="totalAssessments">-</div>
       </div>
+
       <div class="card">
         <div class="muted">Assessments by Grade</div>
-        <div id="byGrade" class="muted" style="margin-top:10px;">-</div>
+        <div id="byGrade" class="byGradeList muted" style="margin-top:10px;">-</div>
       </div>
     </div>
 
-    <p id="msg" class="muted" style="margin-top:14px;"></p>
+    <p id="msg" class="muted"></p>
   </div>
 
   <script>
@@ -67,56 +186,97 @@
       localStorage.removeItem("me_cache");
       window.location.href = "login.html";
     }
+
     document.getElementById("logoutBtn").addEventListener("click", logout);
+    document.getElementById("refreshBtn").addEventListener("click", () => loadStats(true));
 
-    (async () => {
-      if (!token) return logout();
+    function setMsg(text, cls="muted"){
+      const el = document.getElementById("msg");
+      el.className = cls;
+      el.textContent = text;
+    }
 
-      // ✅ Check admin
-      const meRes = await fetch(`${API}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+    function safeNum(x){
+      const n = Number(x);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function renderByGrade(list){
+      const el = document.getElementById("byGrade");
+      const by = Array.isArray(list) ? list : [];
+
+      if (!by.length){
+        el.innerHTML = `<div class="muted">No data</div>`;
+        return;
+      }
+
+      el.innerHTML = by.map(x => `
+        <div class="rowItem">
+          <span class="pill">Grade ${safeNum(x.grade)}</span>
+          <b>${safeNum(x.count)}</b>
+        </div>
+      `).join("");
+    }
+
+    async function requireAdmin(){
+      let meRes;
+      try{
+        meRes = await fetch(`${API}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch {
+        setMsg("Network error. Please refresh.", "error");
+        return false;
+      }
 
       const me = await meRes.json().catch(()=>null);
-      if (!meRes.ok || !me) return logout();
+      if (!meRes.ok || !me) { logout(); return false; }
 
       if (me.role !== "admin") {
         alert("Admin only");
         window.location.href = "learner-quizzes.html";
-        return;
+        return false;
       }
 
       document.getElementById("who").textContent = `Logged in as: ${me.username} (admin)`;
+      return true;
+    }
 
-      // ✅ Load stats
-      const msg = document.getElementById("msg");
-      msg.className = "muted";
-      msg.textContent = "Loading stats...";
+    async function loadStats(showToast){
+      setMsg("Loading stats...", "muted");
 
-      const res = await fetch(`${API}/api/admin/stats`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      const data = await res.json().catch(()=>null);
-
-      if (!res.ok || !data) {
-        msg.className = "error";
-        msg.textContent = "Could not load stats.";
+      let res;
+      try{
+        res = await fetch(`${API}/api/admin/stats`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch {
+        setMsg("Network error loading stats.", "error");
         return;
       }
 
-      document.getElementById("totalUsers").textContent = data.totalUsers ?? 0;
-      document.getElementById("totalAssessments").textContent =
-        (data.totalAssessments ?? data.totalQuizzes ?? 0);
+      const data = await res.json().catch(()=>null);
+      if (!res.ok || !data){
+        setMsg("Could not load stats.", "error");
+        return;
+      }
 
-      const by = Array.isArray(data.quizzesByGrade) ? data.quizzesByGrade : [];
-      document.getElementById("byGrade").innerHTML =
-        by.length
-          ? by.map(x => `Grade ${x.grade}: <b>${x.count}</b>`).join("<br>")
-          : "No data";
+      document.getElementById("totalUsers").textContent = safeNum(data.totalUsers);
 
-      msg.className = "ok";
-      msg.textContent = "✅ Stats loaded.";
+      // ✅ Use totalAssessments if present, fallback to totalQuizzes
+      const totalAssessments = (data.totalAssessments != null) ? data.totalAssessments : data.totalQuizzes;
+      document.getElementById("totalAssessments").textContent = safeNum(totalAssessments);
+
+      renderByGrade(data.quizzesByGrade);
+
+      setMsg(showToast ? "✅ Stats refreshed." : "✅ Stats loaded.", "ok");
+    }
+
+    (async () => {
+      if (!token) return logout();
+      const ok = await requireAdmin();
+      if (!ok) return;
+      await loadStats(false);
     })();
   </script>
 
