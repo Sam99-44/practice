@@ -257,7 +257,6 @@ app.get("/api/admin/attempts", authRequired, adminOnly, async (req, res) => {
       if (to) q.createdAt.$lte = new Date(String(to));
     }
 
-    // username filter
     if (username) {
       const users = await User.find({
         username: { $regex: String(username), $options: "i" },
@@ -404,7 +403,7 @@ app.post("/api/results", authRequired, async (req, res) => {
     );
     if (!quiz) return res.status(404).json({ message: "Assessment not found" });
 
-    // ✅ block attempt if unavailable
+    // block if unavailable
     const availability = isQuizAvailableForLearner(quiz);
     if (!availability.ok) {
       return res.status(403).json({
@@ -412,7 +411,7 @@ app.post("/api/results", authRequired, async (req, res) => {
       });
     }
 
-    // one attempt
+    // one attempt only
     const exists = await Result.findOne({ userId: req.user.userId, quizId });
     if (exists) return res.status(409).json({ message: "Assessment already attempted" });
 
@@ -428,19 +427,16 @@ app.post("/api/results", authRequired, async (req, res) => {
         const qi = Number(a.questionIndex);
         const q = quizQuestions[qi];
 
-        const type = q?.type || "mcq";
+        const type = (q?.type || "mcq").toLowerCase();
 
         // MCQ
         const chosenIndex = Number.isFinite(Number(a.chosenIndex))
           ? Number(a.chosenIndex)
           : -1;
 
-        // TEXT
-        const chosenText = clean(a.chosenText);
+        // ✅ TEXT (match attempt.html payload)
+        const textAnswer = clean(a.textAnswer);
 
-        let isCorrect = false;
-
-        // correct snapshot fields
         const correctIndex =
           type === "mcq" && Number.isFinite(Number(q?.correctIndex))
             ? Number(q.correctIndex)
@@ -448,8 +444,9 @@ app.post("/api/results", authRequired, async (req, res) => {
 
         const correctText = type === "text" ? clean(q?.correctText) : "";
 
+        let isCorrect = false;
         if (type === "text") {
-          isCorrect = isCorrectTextAnswer(q || {}, chosenText);
+          isCorrect = isCorrectTextAnswer(q || {}, textAnswer);
         } else {
           isCorrect =
             chosenIndex !== -1 &&
@@ -465,11 +462,11 @@ app.post("/api/results", authRequired, async (req, res) => {
 
           // chosen
           chosenIndex,
-          chosenText,
+          textAnswer, // ✅ saved learner typed answer
 
           // correct
           correctIndex,
-          correctText,
+          correctText, // ✅ saved correct answer for review
 
           isCorrect,
 
