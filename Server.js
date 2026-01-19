@@ -37,6 +37,7 @@ app.use(
 
 app.options("*", cors());
 
+// clearer CORS error
 app.use((err, req, res, next) => {
   if (err?.message?.startsWith("CORS blocked")) {
     return res.status(403).json({ message: err.message });
@@ -92,6 +93,51 @@ function isQuizAvailableForLearner(quiz) {
   }
 
   return { ok: true };
+}
+
+function clean(s) {
+  return String(s ?? "").trim();
+}
+function norm(s) {
+  return clean(s).replace(/\s+/g, " ");
+}
+
+// ✅ typed-answer correctness
+function isCorrectTextAnswer(q, typedRaw) {
+  const typed = norm(typedRaw);
+  const correct = norm(q?.correctText);
+
+  if (!typed || !correct) return false;
+
+  const mode = q?.answerMode || "case-insensitive";
+
+  if (mode === "exact") {
+    return typed === correct;
+  }
+
+  if (mode === "number") {
+    const a = Number(typed);
+    const b = Number(correct);
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
+
+    const roundTo = q?.roundTo;
+    const tol =
+      Number.isFinite(Number(q?.tolerance)) && q.tolerance !== null
+        ? Number(q.tolerance)
+        : 0;
+
+    if (Number.isFinite(Number(roundTo)) && roundTo !== null) {
+      const p = 10 ** Number(roundTo);
+      const ar = Math.round(a * p) / p;
+      const br = Math.round(b * p) / p;
+      return Math.abs(ar - br) <= tol;
+    }
+
+    return Math.abs(a - b) <= tol;
+  }
+
+  // default: case-insensitive
+  return typed.toLowerCase() === correct.toLowerCase();
 }
 
 /* ------------------ AUTH ROUTES ------------------ */
@@ -205,20 +251,11 @@ app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
 // ✅ Admin attempts audit (filters)
 app.get("/api/admin/attempts", authRequired, adminOnly, async (req, res) => {
   try {
-    const {
-      grade,
-      topic,
-      title,
-      username,
-      from,
-      to,
-      limit = "200",
-    } = req.query;
+    const { grade, topic, title, username, from, to, limit = "200" } = req.query;
 
     const q = {};
 
     if (grade) q.grade = Number(grade);
-
     if (topic) q.topic = { $regex: String(topic), $options: "i" };
     if (title) q.title = { $regex: String(title), $options: "i" };
 
@@ -228,13 +265,13 @@ app.get("/api/admin/attempts", authRequired, adminOnly, async (req, res) => {
       if (to) q.createdAt.$lte = new Date(String(to));
     }
 
-    // If username filter: find matching users first
-    let userIds = null;
+    // username filter
     if (username) {
       const users = await User.find({
         username: { $regex: String(username), $options: "i" },
       }).select("_id");
-      userIds = users.map(u => u._id);
+
+      const userIds = users.map((u) => u._id);
       q.userId = { $in: userIds.length ? userIds : [new mongoose.Types.ObjectId()] };
     }
 
@@ -254,7 +291,7 @@ app.get("/api/admin/attempts", authRequired, adminOnly, async (req, res) => {
 
 /* ------------------ QUIZ ROUTES ------------------ */
 
-// List quizzes (learners can still SEE all; attempt page will block if unavailable)
+// List quizzes (learners can still SEE all)
 app.get("/api/quizzes", authRequired, async (req, res) => {
   try {
     const grade = req.query.grade;
@@ -266,7 +303,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
   }
 });
 
-// Get quiz by id (returns quiz; learners will be blocked at submit/start if unavailable)
+// Get quiz by id
 app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   try {
     const { id } = req.params;
@@ -294,7 +331,7 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   }
 });
 
-// Update quiz (admin only) + freeze + schedule + instructions
+// Update quiz (admin only)
 app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
@@ -360,15 +397,14 @@ app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
 
 /* ------------------ RESULTS ROUTES ------------------ */
 
-// Save result + snapshot answers (BLOCK if assessment unavailable)
+// ✅ Save result + snapshot answers (MCQ + typed) + BLOCK if unavailable
 app.post("/api/results", authRequired, async (req, res) => {
   try {
-    const { quizId, score, total, answers, timeTakenSeconds } = req.body;
+    const { quizId, answers, timeTakenSeconds } = req.body;
 
-    if (!quizId || score === undefined || total === undefined) {
-      return res.status(400).json({ message: "quizId, score, total required" });
+    if (!quizId) {
+      return res.status(400).json({ message: "quizId required" });
     }
-
     if (!mongoose.Types.ObjectId.isValid(quizId)) {
       return res.status(400).json({ message: "Invalid quizId" });
     }
@@ -378,7 +414,7 @@ app.post("/api/results", authRequired, async (req, res) => {
     );
     if (!quiz) return res.status(404).json({ message: "Assessment not found" });
 
-    // ✅ block attempt if unavailable (professional message)
+    // ✅ block attempt if unavailable
     const availability = isQuizAvailableForLearner(quiz);
     if (!availability.ok) {
       return res.status(403).json({
@@ -386,40 +422,57 @@ app.post("/api/results", authRequired, async (req, res) => {
       });
     }
 
-    const s = Number(score);
-    const t = Number(total);
-    if (!Number.isFinite(s) || !Number.isFinite(t) || t <= 0) {
-      return res.status(400).json({ message: "Invalid score/total" });
-    }
-
-    const percent = Math.round((s / t) * 100);
-    const status = percent >= 50 ? "PASS" : "FAIL";
-
+    // one attempt
     const exists = await Result.findOne({ userId: req.user.userId, quizId });
     if (exists) return res.status(409).json({ message: "Assessment already attempted" });
 
     const quizQuestions = Array.isArray(quiz.questions) ? quiz.questions : [];
     const incoming = Array.isArray(answers) ? answers : [];
 
+    let score = 0;
+    const total = quizQuestions.length;
+
     const snapshotAnswers = incoming
       .filter((a) => a && Number.isFinite(Number(a.questionIndex)))
       .map((a) => {
         const qi = Number(a.questionIndex);
-        const chosen = Number(a.chosenIndex);
-
         const q = quizQuestions[qi];
-        const correct = q ? Number(q.correctIndex) : -1;
+
+        const type = q?.type || "mcq";
+
+        const chosenIndex = Number.isFinite(Number(a.chosenIndex)) ? Number(a.chosenIndex) : -1;
+        const textAnswer = clean(a.textAnswer);
+
+        let correctIndex = -1;
+        let isCorrect = false;
+
+        if (type === "text") {
+          isCorrect = isCorrectTextAnswer(q || {}, textAnswer);
+        } else {
+          correctIndex = Number.isFinite(Number(q?.correctIndex)) ? Number(q.correctIndex) : -1;
+          isCorrect =
+            chosenIndex !== -1 &&
+            correctIndex !== -1 &&
+            Number(chosenIndex) === Number(correctIndex);
+        }
+
+        if (isCorrect) score++;
 
         return {
           questionIndex: qi,
-          chosenIndex: Number.isFinite(chosen) ? chosen : -1,
-          correctIndex: Number.isFinite(correct) ? correct : -1,
-          isCorrect:
-            Number.isFinite(chosen) && Number.isFinite(correct) ? chosen === correct : false,
+          type,
+          chosenIndex,
+          correctIndex,
+          textAnswer,
+          isCorrect,
           questionText: q?.text || "",
+          hint: q?.hint || "",
           options: Array.isArray(q?.options) ? q.options : [],
         };
       });
+
+    const percent = total > 0 ? Math.round((score / total) * 100) : 0;
+    const status = percent >= 50 ? "PASS" : "FAIL";
 
     const tSec = Number(timeTakenSeconds);
     const safeTimeTakenSeconds = Number.isFinite(tSec) && tSec >= 0 ? tSec : 0;
@@ -430,8 +483,8 @@ app.post("/api/results", authRequired, async (req, res) => {
       grade: Number(quiz.grade),
       topic: quiz.topic || "General",
       title: quiz.title || "Assessment",
-      score: s,
-      total: t,
+      score,
+      total,
       percent,
       status,
       answers: snapshotAnswers,
@@ -443,9 +496,12 @@ app.post("/api/results", authRequired, async (req, res) => {
       percent,
       status,
       resultId: saved._id,
+      score,
+      total,
     });
   } catch (err) {
-    if (err.code === 11000) return res.status(409).json({ message: "Assessment already attempted" });
+    if (err.code === 11000)
+      return res.status(409).json({ message: "Assessment already attempted" });
     res.status(500).json({ message: err.message });
   }
 });
