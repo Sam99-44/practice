@@ -35,10 +35,8 @@ app.use(
   })
 );
 
-// handle preflight
 app.options("*", cors());
 
-// clearer CORS error
 app.use((err, req, res, next) => {
   if (err?.message?.startsWith("CORS blocked")) {
     return res.status(403).json({ message: err.message });
@@ -79,9 +77,24 @@ async function adminOnly(req, res, next) {
   }
 }
 
-/* ------------------ AUTH ROUTES ------------------ */
+/* ------------------ HELPERS ------------------ */
+function isQuizAvailableForLearner(quiz) {
+  const now = new Date();
 
-// Register
+  if (quiz.isFrozen) return { ok: false, reason: "unavailable" };
+
+  if (quiz.availableFrom && now < new Date(quiz.availableFrom)) {
+    return { ok: false, reason: "unavailable" };
+  }
+
+  if (quiz.availableUntil && now > new Date(quiz.availableUntil)) {
+    return { ok: false, reason: "unavailable" };
+  }
+
+  return { ok: true };
+}
+
+/* ------------------ AUTH ROUTES ------------------ */
 app.post("/api/auth/register", async (req, res) => {
   try {
     const { username, email, grade, password } = req.body;
@@ -125,7 +138,6 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 
-// Login
 app.post("/api/auth/login", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -148,7 +160,6 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-// Me
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select("username role grade email");
@@ -182,7 +193,7 @@ app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
 
     res.json({
       totalUsers,
-      totalQuizzes: totalAssessments, // keep frontend compatibility
+      totalQuizzes: totalAssessments, // compatibility
       totalAssessments,
       quizzesByGrade,
     });
@@ -191,9 +202,59 @@ app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
   }
 });
 
+// ✅ Admin attempts audit (filters)
+app.get("/api/admin/attempts", authRequired, adminOnly, async (req, res) => {
+  try {
+    const {
+      grade,
+      topic,
+      title,
+      username,
+      from,
+      to,
+      limit = "200",
+    } = req.query;
+
+    const q = {};
+
+    if (grade) q.grade = Number(grade);
+
+    if (topic) q.topic = { $regex: String(topic), $options: "i" };
+    if (title) q.title = { $regex: String(title), $options: "i" };
+
+    if (from || to) {
+      q.createdAt = {};
+      if (from) q.createdAt.$gte = new Date(String(from));
+      if (to) q.createdAt.$lte = new Date(String(to));
+    }
+
+    // If username filter: find matching users first
+    let userIds = null;
+    if (username) {
+      const users = await User.find({
+        username: { $regex: String(username), $options: "i" },
+      }).select("_id");
+      userIds = users.map(u => u._id);
+      q.userId = { $in: userIds.length ? userIds : [new mongoose.Types.ObjectId()] };
+    }
+
+    const lim = Math.max(1, Math.min(Number(limit) || 200, 1000));
+
+    const results = await Result.find(q)
+      .sort({ createdAt: -1 })
+      .limit(lim)
+      .populate("userId", "username grade")
+      .select("userId quizId grade topic title score total percent status timeTakenSeconds createdAt");
+
+    res.json(results);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 /* ------------------ QUIZ ROUTES ------------------ */
 
-// List quizzes
+// List quizzes (learners can still SEE all; attempt page will block if unavailable)
 app.get("/api/quizzes", authRequired, async (req, res) => {
   try {
     const grade = req.query.grade;
@@ -205,7 +266,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
   }
 });
 
-// Get quiz by id
+// Get quiz by id (returns quiz; learners will be blocked at submit/start if unavailable)
 app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   try {
     const { id } = req.params;
@@ -223,7 +284,7 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   }
 });
 
-// Create quiz (admin only)
+// Create quiz
 app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   try {
     const quiz = await Quiz.create(req.body);
@@ -233,7 +294,7 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   }
 });
 
-// ✅ Update quiz (admin only) + supports freeze fields
+// Update quiz (admin only) + freeze + schedule + instructions
 app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
@@ -242,23 +303,28 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
       return res.status(400).json({ message: "Invalid quiz id" });
     }
 
-    // Only allow safe fields
     const allowed = (({
       grade,
       title,
       topic,
       questions,
       timeLimitMinutes,
+      instructions,
       isFrozen,
       frozenAt,
+      availableFrom,
+      availableUntil,
     }) => ({
       grade,
       title,
       topic,
       questions,
       timeLimitMinutes,
+      instructions,
       isFrozen,
       frozenAt,
+      availableFrom,
+      availableUntil,
     }))(req.body);
 
     const updated = await Quiz.findByIdAndUpdate(id, allowed, {
@@ -274,7 +340,7 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   }
 });
 
-// ✅ Delete quiz (admin only)
+// Delete quiz (admin only)
 app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
@@ -294,7 +360,7 @@ app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
 
 /* ------------------ RESULTS ROUTES ------------------ */
 
-// Save result + snapshot answers
+// Save result + snapshot answers (BLOCK if assessment unavailable)
 app.post("/api/results", authRequired, async (req, res) => {
   try {
     const { quizId, score, total, answers, timeTakenSeconds } = req.body;
@@ -307,8 +373,18 @@ app.post("/api/results", authRequired, async (req, res) => {
       return res.status(400).json({ message: "Invalid quizId" });
     }
 
-    const quiz = await Quiz.findById(quizId).select("grade topic title questions");
-    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+    const quiz = await Quiz.findById(quizId).select(
+      "grade topic title questions isFrozen frozenAt availableFrom availableUntil"
+    );
+    if (!quiz) return res.status(404).json({ message: "Assessment not found" });
+
+    // ✅ block attempt if unavailable (professional message)
+    const availability = isQuizAvailableForLearner(quiz);
+    if (!availability.ok) {
+      return res.status(403).json({
+        message: "This assessment is currently unavailable. Please check back later.",
+      });
+    }
 
     const s = Number(score);
     const t = Number(total);
@@ -320,7 +396,7 @@ app.post("/api/results", authRequired, async (req, res) => {
     const status = percent >= 50 ? "PASS" : "FAIL";
 
     const exists = await Result.findOne({ userId: req.user.userId, quizId });
-    if (exists) return res.status(409).json({ message: "Quiz already attempted" });
+    if (exists) return res.status(409).json({ message: "Assessment already attempted" });
 
     const quizQuestions = Array.isArray(quiz.questions) ? quiz.questions : [];
     const incoming = Array.isArray(answers) ? answers : [];
@@ -353,7 +429,7 @@ app.post("/api/results", authRequired, async (req, res) => {
       quizId,
       grade: Number(quiz.grade),
       topic: quiz.topic || "General",
-      title: quiz.title || "Quiz",
+      title: quiz.title || "Assessment",
       score: s,
       total: t,
       percent,
@@ -369,7 +445,7 @@ app.post("/api/results", authRequired, async (req, res) => {
       resultId: saved._id,
     });
   } catch (err) {
-    if (err.code === 11000) return res.status(409).json({ message: "Quiz already attempted" });
+    if (err.code === 11000) return res.status(409).json({ message: "Assessment already attempted" });
     res.status(500).json({ message: err.message });
   }
 });
