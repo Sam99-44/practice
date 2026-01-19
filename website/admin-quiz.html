@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin | Add Quiz</title>
+  <title>Admin | Add Assessment</title>
+
   <style>
-    body{font-family:Arial; padding:20px; max-width:900px; margin:auto; background:#f6f7fb;}
+    body{font-family:Arial; padding:20px; max-width:980px; margin:auto; background:#f6f7fb;}
     .card{background:#fff; border:1px solid #e6e6e6; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.06);}
     input, textarea, select{width:100%; padding:10px; margin:8px 0; border-radius:10px; border:1px solid #ddd; outline:none;}
-    button{padding:10px 14px; cursor:pointer; border:none; border-radius:10px;}
+    button{padding:10px 14px; cursor:pointer; border:none; border-radius:10px; font-weight:700;}
     .btn{background:#111827; color:#fff;}
     .btn:disabled{opacity:0.6; cursor:not-allowed;}
     .btn2{background:#fff; border:1px solid #ddd; color:#111827;}
@@ -22,22 +23,28 @@
 
     .qcard{border:1px solid #e6e6e6; border-radius:12px; padding:12px; margin-top:12px; background:#fff;}
     .qhead{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
-    .smallbtn{border:1px solid #ddd; background:#fff; color:#111827; padding:8px 10px; border-radius:10px;}
+    .smallbtn{border:1px solid #ddd; background:#fff; color:#111827; padding:8px 10px; border-radius:10px; font-weight:700;}
     .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
     hr{border:none; border-top:1px solid #eee; margin:14px 0;}
+    .pill{display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid #cfe9ff; background:#eef7ff; color:#0b3c5d; font-size:12px; font-weight:800;}
+    .tiny{font-size:12px;}
+    .hide{display:none !important;}
   </style>
 </head>
+
 <body>
 
   <div class="topbar">
     <div>
-      <h2 style="margin:0;">Practice Online – Admin (Add Quiz)</h2>
+      <h2 style="margin:0;">Practice Online – Admin (Add Assessment)</h2>
       <div class="muted" id="who">Checking login...</div>
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <a class="btn2" href="admin-dashboard.html">Dashboard</a>
+      <a class="btn2" href="edit-assessment.html">Edit / Freeze</a>
       <a class="btn2" href="learner-quizzes.html">Learner View</a>
-      <button class="btn" id="logoutBtn" data-auth>Logout</button>
+      <button class="btn" id="logoutBtn" type="button">Logout</button>
     </div>
   </div>
 
@@ -56,46 +63,40 @@
       </div>
 
       <div>
-        <label>Topic</label>
-        <select id="topic">
-          <option value="">Select Topic</option>
-          <option>Integers</option>
-          <option>Algebra</option>
-          <option>Geometry</option>
-          <option>Trigonometry</option>
-          <option>Functions</option>
-          <option>Sequences</option>
-          <option>Probability</option>
-          <option>Statistics</option>
-        </select>
+        <label>Topic (type it)</label>
+        <input id="topic" placeholder="e.g. Algebra" />
       </div>
 
-      <!-- ✅ NEW: time limit -->
       <div>
         <label>Time Limit (minutes)</label>
         <input id="timeLimit" type="number" min="1" max="180" value="10" placeholder="e.g. 10" />
       </div>
     </div>
 
-    <label>Quiz Title</label>
-    <input id="title" placeholder="e.g. Integers Quiz 1" />
+    <label>Assessment Title</label>
+    <input id="title" placeholder="e.g. Algebra Assessment 1" />
 
     <hr>
 
     <div class="qhead">
-      <h3 style="margin:0;">Questions (4 options A–D)</h3>
-      <button class="smallbtn" id="addQuestionBtn" type="button">+ Add Question</button>
+      <div>
+        <h3 style="margin:0;">Questions</h3>
+        <div class="muted tiny">You can add Multiple Choice or Typed Answer questions.</div>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="smallbtn" id="addMcqBtn" type="button">+ Add MCQ</button>
+        <button class="smallbtn" id="addTextBtn" type="button">+ Add Typed Answer</button>
+      </div>
     </div>
 
     <div id="questionsWrap"></div>
 
     <hr>
 
-    <button class="btn" id="saveBtn" disabled>Save Quiz</button>
+    <button class="btn" id="saveBtn" disabled type="button">Save Assessment</button>
     <p class="msg muted" id="msg"></p>
   </div>
-
-  <script src="nav.js"></script>
 
   <script>
     const API = window.API || "https://practice-backend-msgn.onrender.com";
@@ -106,10 +107,11 @@
 
     const gradeEl = document.getElementById("grade");
     const topicEl = document.getElementById("topic");
-    const timeLimitEl = document.getElementById("timeLimit"); // ✅ NEW
+    const timeLimitEl = document.getElementById("timeLimit");
     const titleEl = document.getElementById("title");
 
-    const addQuestionBtn = document.getElementById("addQuestionBtn");
+    const addMcqBtn = document.getElementById("addMcqBtn");
+    const addTextBtn = document.getElementById("addTextBtn");
     const questionsWrap = document.getElementById("questionsWrap");
 
     function setMsg(text, type="muted"){
@@ -125,16 +127,18 @@
     }
     document.getElementById("logoutBtn").addEventListener("click", logout);
 
-    // ✅ Normalize: trim, remove extra spaces
     function cleanSpaces(s){
       return String(s || "").trim().replace(/\s+/g, " ");
     }
 
-    // ✅ Title Case
     function toTitleCase(s){
       const t = cleanSpaces(s).toLowerCase();
       if (!t) return "";
       return t.replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function escapeAttr(str){
+      return String(str || "").replaceAll('"', "&quot;");
     }
 
     // -------------------- Admin lock --------------------
@@ -166,47 +170,41 @@
 
       who.textContent = `Logged in as: ${me.username} (admin)`;
       saveBtn.disabled = false;
-      setMsg("Ready to add a quiz.", "ok");
+      setMsg("Ready to add an assessment.", "ok");
     })();
 
-    // -------------------- Question builder (A–D) --------------------
+    // -------------------- Question cards --------------------
     let qCount = 0;
 
-    function questionCardHtml(id){
+    function mcqCardHtml(id){
       return `
-        <div class="qcard" data-qid="${id}">
+        <div class="qcard" data-type="mcq">
           <div class="qhead">
-            <b>Question ${id}</b>
+            <div>
+              <b>Question ${id}</b>
+              <span class="pill">MCQ</span>
+            </div>
             <button type="button" class="smallbtn removeBtn">Remove</button>
           </div>
 
           <label>Question Text</label>
           <input class="qText" placeholder="Type your question here" />
 
+          <label>Hint (optional)</label>
+          <input class="qHint" placeholder="e.g. Use BODMAS" />
+
           <label>Image URL (optional)</label>
-          <input class="qImage" placeholder="https://res.cloudinary.com/...png" />
+          <input class="qImage" placeholder="https://..." />
 
           <div class="grid2">
-            <div>
-              <label>Option A</label>
-              <input class="optA" placeholder="A" />
-            </div>
-            <div>
-              <label>Option B</label>
-              <input class="optB" placeholder="B" />
-            </div>
-            <div>
-              <label>Option C</label>
-              <input class="optC" placeholder="C" />
-            </div>
-            <div>
-              <label>Option D</label>
-              <input class="optD" placeholder="D" />
-            </div>
+            <div><label>Option A</label><input class="optA" placeholder="A" /></div>
+            <div><label>Option B</label><input class="optB" placeholder="B" /></div>
+            <div><label>Option C</label><input class="optC" placeholder="C" /></div>
+            <div><label>Option D</label><input class="optD" placeholder="D" /></div>
           </div>
 
           <label>Correct Answer</label>
-          <select class="correct">
+          <select class="correctIndex">
             <option value="0">A</option>
             <option value="1">B</option>
             <option value="2">C</option>
@@ -216,12 +214,77 @@
       `;
     }
 
-    function addQuestion(){
-      qCount += 1;
-      questionsWrap.insertAdjacentHTML("beforeend", questionCardHtml(qCount));
+    function textCardHtml(id){
+      return `
+        <div class="qcard" data-type="text">
+          <div class="qhead">
+            <div>
+              <b>Question ${id}</b>
+              <span class="pill">Typed Answer</span>
+            </div>
+            <button type="button" class="smallbtn removeBtn">Remove</button>
+          </div>
+
+          <label>Question Text</label>
+          <input class="qText" placeholder="Type your question here" />
+
+          <label>Hint (recommended)</label>
+          <input class="qHint" placeholder="e.g. Round to 2 decimal places" />
+
+          <div class="grid2">
+            <div>
+              <label>Correct Answer (what you expect learners to type)</label>
+              <input class="correctText" placeholder="e.g. 3.14" />
+            </div>
+            <div>
+              <label>Check Mode</label>
+              <select class="textMode">
+                <option value="exact">Exact (case-insensitive)</option>
+                <option value="contains">Contains (answer is inside learner text)</option>
+                <option value="number_tolerance">Number (tolerance)</option>
+              </select>
+              <div class="muted tiny">Use “Number (tolerance)” for calculations.</div>
+            </div>
+          </div>
+
+          <div class="grid2 tolRow hide">
+            <div>
+              <label>Tolerance (only for Number mode)</label>
+              <input class="tolerance" type="number" step="0.0001" placeholder="e.g. 0.01" />
+              <div class="muted tiny">Example: correct = 3.14, tolerance 0.01 accepts 3.13 to 3.15</div>
+            </div>
+            <div>
+              <label>Image URL (optional)</label>
+              <input class="qImage" placeholder="https://..." />
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div>
+              <label>Image URL (optional)</label>
+              <input class="qImage2" placeholder="https://..." />
+            </div>
+            <div class="muted tiny" style="padding-top:30px;">
+              Learners will type the answer in a text box.
+            </div>
+          </div>
+        </div>
+      `;
     }
 
-    addQuestionBtn.addEventListener("click", addQuestion);
+    function addMcq(){
+      qCount += 1;
+      questionsWrap.insertAdjacentHTML("beforeend", mcqCardHtml(qCount));
+    }
+
+    function addText(){
+      qCount += 1;
+      questionsWrap.insertAdjacentHTML("beforeend", textCardHtml(qCount));
+      wireTextModeForLastCard();
+    }
+
+    addMcqBtn.addEventListener("click", addMcq);
+    addTextBtn.addEventListener("click", addText);
 
     questionsWrap.addEventListener("click", (e) => {
       if (e.target.classList.contains("removeBtn")) {
@@ -229,7 +292,28 @@
       }
     });
 
-    addQuestion();
+    function wireTextModeForLastCard(){
+      const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='text']")];
+      const last = cards[cards.length - 1];
+      if (!last) return;
+
+      const modeSel = last.querySelector(".textMode");
+      const tolRow = last.querySelector(".tolRow");
+      const tolInput = last.querySelector(".tolerance");
+
+      const update = () => {
+        const mode = modeSel.value;
+        const showTol = mode === "number_tolerance";
+        tolRow.classList.toggle("hide", !showTol);
+        if (!showTol) tolInput.value = "";
+      };
+
+      modeSel.addEventListener("change", update);
+      update();
+    }
+
+    // start with one MCQ by default
+    addMcq();
 
     function collectQuestions(){
       const cards = [...questionsWrap.querySelectorAll(".qcard")];
@@ -238,48 +322,79 @@
       const questions = [];
 
       for (const card of cards) {
-        const text = cleanSpaces(card.querySelector(".qText").value);
-        const imageUrl = cleanSpaces(card.querySelector(".qImage").value);
+        const type = card.getAttribute("data-type") || "mcq";
+        const text = cleanSpaces(card.querySelector(".qText")?.value);
 
-        const A = cleanSpaces(card.querySelector(".optA").value);
-        const B = cleanSpaces(card.querySelector(".optB").value);
-        const C = cleanSpaces(card.querySelector(".optC").value);
-        const D = cleanSpaces(card.querySelector(".optD").value);
-
-        const correctIndex = Number(card.querySelector(".correct").value);
+        const hint = cleanSpaces(card.querySelector(".qHint")?.value || "");
+        const imageUrl =
+          cleanSpaces(card.querySelector(".qImage")?.value || "") ||
+          cleanSpaces(card.querySelector(".qImage2")?.value || "");
 
         if (!text) throw new Error("Please fill in all question texts.");
-        if (!A || !B || !C || !D) throw new Error("Please fill in all options A–D for every question.");
 
-        questions.push({
-          text,
-          imageUrl: imageUrl || undefined,
-          options: [A, B, C, D],
-          correctIndex
-        });
+        if (type === "text") {
+          const correctText = cleanSpaces(card.querySelector(".correctText")?.value);
+          const textAnswerMode = card.querySelector(".textMode")?.value || "exact";
+          const toleranceRaw = cleanSpaces(card.querySelector(".tolerance")?.value);
+
+          if (!correctText) throw new Error("Please enter the correct answer for every typed question.");
+
+          let numberTolerance = null;
+          if (textAnswerMode === "number_tolerance") {
+            const tol = Number(toleranceRaw);
+            if (!Number.isFinite(tol) || tol < 0) {
+              throw new Error("Please enter a valid tolerance (0 or more) for Number mode.");
+            }
+            numberTolerance = tol;
+          }
+
+          questions.push({
+            type: "text",
+            text,
+            hint: hint || "",
+            imageUrl: imageUrl || "",
+            correctText,
+            textAnswerMode,
+            numberTolerance
+          });
+
+        } else {
+          const A = cleanSpaces(card.querySelector(".optA")?.value);
+          const B = cleanSpaces(card.querySelector(".optB")?.value);
+          const C = cleanSpaces(card.querySelector(".optC")?.value);
+          const D = cleanSpaces(card.querySelector(".optD")?.value);
+          const correctIndex = Number(card.querySelector(".correctIndex")?.value);
+
+          if (!A || !B || !C || !D) throw new Error("Please fill in all options A–D for every MCQ question.");
+
+          questions.push({
+            type: "mcq",
+            text,
+            hint: hint || "",
+            imageUrl: imageUrl || "",
+            options: [A, B, C, D],
+            correctIndex
+          });
+        }
       }
 
       return questions;
     }
 
-    // -------------------- Save quiz --------------------
+    // -------------------- Save assessment --------------------
     saveBtn.addEventListener("click", async () => {
       const token = localStorage.getItem("token");
       if (!token) return window.location.href = "login.html";
 
       const grade = Number(gradeEl.value);
-
-      // ✅ normalize
       const topic = toTitleCase(topicEl.value);
       const title = toTitleCase(titleEl.value);
-
-      // ✅ NEW: time limit
       const timeLimitMinutes = Number(timeLimitEl.value);
 
       try{
         if (!grade) return setMsg("Please select grade.", "error");
-        if (!topic) return setMsg("Please select topic.", "error");
-        if (!title) return setMsg("Please enter quiz title.", "error");
+        if (!topic) return setMsg("Please enter topic.", "error");
+        if (!title) return setMsg("Please enter assessment title.", "error");
 
         if (!Number.isFinite(timeLimitMinutes) || timeLimitMinutes < 1 || timeLimitMinutes > 180) {
           return setMsg("Please enter a valid time limit (1–180 minutes).", "error");
@@ -288,7 +403,7 @@
         const questions = collectQuestions();
 
         saveBtn.disabled = true;
-        setMsg("Saving quiz...", "muted");
+        setMsg("Saving assessment...", "muted");
 
         const res = await fetch(`${API}/api/quizzes`, {
           method: "POST",
@@ -302,17 +417,17 @@
         const data = await res.json().catch(()=>({}));
 
         if (res.ok) {
-          setMsg("✅ Quiz saved!", "ok");
+          setMsg("✅ Assessment saved!", "ok");
           titleEl.value = "";
           gradeEl.value = "";
           topicEl.value = "";
-          timeLimitEl.value = "10"; // ✅ reset default
+          timeLimitEl.value = "10";
 
           questionsWrap.innerHTML = "";
           qCount = 0;
-          addQuestion();
+          addMcq();
         } else {
-          setMsg("❌ Error: " + (data.message || "Could not save quiz"), "error");
+          setMsg("❌ Error: " + (data.message || "Could not save assessment"), "error");
         }
       } catch (err){
         setMsg(err.message || "Something went wrong.", "error");
@@ -321,5 +436,6 @@
       }
     });
   </script>
+
 </body>
 </html>
