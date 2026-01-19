@@ -21,6 +21,8 @@
       --radius:14px;
       --shadow:0 6px 18px rgba(0,0,0,0.06);
       --error:#b91c1c;
+      --warn:#b45309;
+      --ok:#065f46;
     }
 
     *{box-sizing:border-box}
@@ -55,15 +57,33 @@
     .toggle{border:1px solid #ddd;background:#fff;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:700;}
     .toggle:hover{background:var(--accent-soft);}
 
-    .quiz-squares{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+    .quiz-squares{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+
     .quiz-square{
       width:64px;height:64px;border-radius:14px;border:1px solid var(--border);
-      background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      background:#f8fafc;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
       cursor:pointer;font-weight:800;position:relative;
       transition:transform .08s, background .2s, border-color .2s;
       user-select:none;
+      padding-top:2px;
     }
     .quiz-square:hover{background:#eef7ff;transform:translateY(-1px);border-color:#cfe9ff;}
+
+    /* ✅ Icon inside tile */
+    .quiz-square .icon{
+      position:absolute;
+      top:8px;
+      left:10px;
+      font-size:14px;
+      line-height:1;
+      opacity:.95;
+    }
 
     /* ✅ Completed mark */
     .quiz-square.done{
@@ -79,23 +99,17 @@
       color:#166534;
     }
 
-    /* ✅ Frozen assessment (locked) */
-    .quiz-square.frozen{
+    /* ✅ Unavailable (frozen) - PROFESSIONAL */
+    .quiz-square.unavailable{
       cursor:not-allowed;
-      opacity:.75;
+      opacity:.78;
       background:#f8fafc;
       border-color:#e5e7eb;
       transform:none !important;
     }
-    .quiz-square.frozen:hover{
+    .quiz-square.unavailable:hover{
       background:#f8fafc;
       border-color:#e5e7eb;
-    }
-    .quiz-square.frozen::before{
-      content:"🔒";
-      position:absolute;
-      top:6px;left:10px;
-      font-size:14px;
     }
     .quiz-square .smallTag{
       font-size:10px;
@@ -105,6 +119,46 @@
     }
 
     .hidden{display:none!important;}
+
+    /* ✅ Professional notice (instead of alert) */
+    .notice{
+      margin-top:12px;
+      padding:12px 14px;
+      border-radius:12px;
+      border:1px solid #e6e6e6;
+      background:#fff;
+      box-shadow:var(--shadow);
+    }
+    .notice.warn{
+      border-color:#fed7aa;
+      background:#fff7ed;
+      color:#7c2d12;
+    }
+    .notice .title{font-weight:900;margin-bottom:4px;}
+    .notice .text{color:#7c2d12;}
+    .notice .mutedText{color:#9a3412;}
+    .notice .closeRow{margin-top:10px;display:flex;justify-content:flex-end;}
+    .notice button{
+      border:1px solid #ddd;
+      background:#fff;
+      padding:8px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:700;
+    }
+    .notice button:hover{background:var(--accent-soft);}
+
+    /* ✅ Mobile responsiveness */
+    @media (max-width:520px){
+      .wrap{padding:16px;}
+      select,input{min-width:0;width:100%;}
+      .controls{gap:10px;}
+      .quiz-square{
+        width:58px;height:58px;
+        border-radius:14px;
+      }
+      .quiz-square .icon{top:7px;left:9px;}
+    }
   </style>
 
   <script>
@@ -155,6 +209,17 @@
     </div>
 
     <p id="status" class="muted"></p>
+
+    <!-- ✅ Professional notice (no alerts) -->
+    <div id="notice" class="notice warn hidden" role="status" aria-live="polite">
+      <div class="title">Assessment unavailable</div>
+      <div class="text">This assessment is currently unavailable. Please try again later.</div>
+      <div class="mutedText" id="noticeMeta" style="margin-top:4px;"></div>
+      <div class="closeRow">
+        <button type="button" id="closeNoticeBtn">Close</button>
+      </div>
+    </div>
+
     <div id="quizList"></div>
   </div>
 
@@ -177,6 +242,15 @@
   const topicSearch = document.getElementById("topicSearch");
   const expandAllBtn = document.getElementById("expandAllBtn");
   const collapseAllBtn = document.getElementById("collapseAllBtn");
+
+  // Notice
+  const notice = document.getElementById("notice");
+  const noticeMeta = document.getElementById("noticeMeta");
+  const closeNoticeBtn = document.getElementById("closeNoticeBtn");
+  closeNoticeBtn.addEventListener("click", () => {
+    notice.classList.add("hidden");
+    noticeMeta.textContent = "";
+  });
 
   // State
   let topicOpen = {};
@@ -216,12 +290,14 @@
       topicSearch.disabled = true;
       expandAllBtn.disabled = true;
       collapseAllBtn.disabled = true;
+      notice.classList.add("hidden");
       return;
     }
 
     status.className = "muted";
     status.textContent = "Loading assessments...";
     quizList.innerHTML = "";
+    notice.classList.add("hidden");
 
     await loadCompletedResults();
 
@@ -300,21 +376,31 @@
 
               <div class="quiz-squares ${open ? "" : "hidden"}" data-body="${escapeAttr(t)}">
                 ${list.map((q,i)=>{
-                  const isFrozen = !!q.isFrozen;
+                  const isUnavailable = !!q.isFrozen; // backend flag
                   const isDone = completedSet.has(q._id);
-                  const cls = `quiz-square ${isDone ? "done" : ""} ${isFrozen ? "frozen" : ""}`.trim();
 
-                  const tip = isFrozen
-                    ? `Frozen: you can't attempt this assessment right now`
+                  const cls = `quiz-square ${isDone ? "done" : ""} ${isUnavailable ? "unavailable" : ""}`.trim();
+
+                  // ✅ Icons (simple, clean, works on mobile & desktop)
+                  // - done: ✓ already handled
+                  // - unavailable: ⏸ (pause) professional
+                  const icon = isUnavailable ? "⏸" : "📝";
+
+                  // Professional tooltip
+                  const tip = isUnavailable
+                    ? `Unavailable: this assessment cannot be started right now`
                     : `Assessment: ${q.title || "Assessment"}`;
 
                   return `
                     <div class="${cls}"
                       title="${escapeAttr(tip)}"
                       data-quizid="${escapeAttr(q._id)}"
-                      data-frozen="${isFrozen ? "1" : "0"}">
+                      data-title="${escapeAttr(q.title || "Assessment")}"
+                      data-topic="${escapeAttr(q.topic || "General")}"
+                      data-unavailable="${isUnavailable ? "1" : "0"}">
+                      <span class="icon" aria-hidden="true">${icon}</span>
                       ${i+1}
-                      ${isFrozen ? `<div class="smallTag">Frozen</div>` : ``}
+                      ${isUnavailable ? `<div class="smallTag">Unavailable</div>` : ``}
                     </div>
                   `;
                 }).join("")}
@@ -337,15 +423,21 @@
       });
     });
 
-    // Click handler for squares (blocks frozen)
+    // Click handler for squares (blocks unavailable)
     quizList.querySelectorAll(".quiz-square").forEach(sq=>{
       sq.addEventListener("click", ()=>{
-        const frozen = sq.getAttribute("data-frozen") === "1";
+        const unavailable = sq.getAttribute("data-unavailable") === "1";
         const id = sq.getAttribute("data-quizid");
         if (!id) return;
 
-        if (frozen) {
-          alert("This assessment is frozen. Please try again later.");
+        if (unavailable) {
+          const title = sq.getAttribute("data-title") || "Assessment";
+          const topic = sq.getAttribute("data-topic") || "General";
+
+          notice.classList.remove("hidden");
+          noticeMeta.textContent = `Topic: ${topic} • ${title}`;
+          // scroll notice into view (nice on mobile)
+          notice.scrollIntoView({ behavior: "smooth", block: "nearest" });
           return;
         }
 
