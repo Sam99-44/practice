@@ -82,9 +82,36 @@
       white-space:nowrap;
     }
 
-    table{width:100%; border-collapse:collapse; margin-top:10px;}
-    th, td{padding:10px; border-bottom:1px solid #eee; text-align:left; font-size:14px;}
-    th{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;}
+    /* ✅ Desktop table */
+    .tableWrap{
+      width:100%;
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      margin-top:12px;
+    }
+    table.resultsTable{
+      width:100%;
+      border-collapse:collapse;
+      min-width:780px; /* enables horizontal scroll if needed */
+    }
+    .resultsTable th, .resultsTable td{
+      padding:10px;
+      border-bottom:1px solid #eee;
+      text-align:left;
+      font-size:14px;
+      vertical-align:top;
+      white-space:nowrap;
+    }
+    .resultsTable th{
+      font-size:12px;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      background:#f8fafc;
+    }
 
     .pill{
       display:inline-block;
@@ -105,6 +132,7 @@
       font-weight:900;
       padding:4px 10px;
       border-radius:999px;
+      display:inline-block;
     }
     .marks-fail{
       background:#fee2e2;
@@ -113,6 +141,7 @@
       font-weight:900;
       padding:4px 10px;
       border-radius:999px;
+      display:inline-block;
     }
 
     .empty{
@@ -121,6 +150,54 @@
       border-radius:12px;
       background:#fafafa;
       margin-top:12px;
+    }
+
+    /* ✅ Phone view: rows become cards */
+    @media (max-width: 640px){
+      .wrap{padding:16px;}
+      .card{padding:14px;}
+
+      .tableWrap{
+        border:none;
+        background:transparent;
+        overflow:visible;
+      }
+
+      table.resultsTable{
+        min-width:0;
+        border-collapse:separate;
+        border-spacing:0 10px; /* spacing between cards */
+      }
+
+      .resultsTable thead{display:none;}
+
+      .resultsTable tbody tr{
+        display:block;
+        background:#fff;
+        border:1px solid var(--border);
+        border-radius:14px;
+        padding:12px;
+        box-shadow:var(--shadow);
+      }
+
+      .resultsTable tbody td{
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+        gap:12px;
+        padding:8px 0;
+        border:none;
+        white-space:normal;
+      }
+
+      .resultsTable tbody td::before{
+        content: attr(data-label);
+        font-weight:800;
+        color:var(--muted);
+        min-width:110px;
+      }
+
+      .smallBtn{width:100%;}
     }
   </style>
 
@@ -174,53 +251,67 @@
       headers:{ Authorization:"Bearer "+token }
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(()=>[]);
 
-    if (!data.length){
-      document.getElementById("tableWrap").innerHTML = `
-        <div class="empty">No results found.</div>`;
+    if (!Array.isArray(data) || data.length === 0){
+      document.getElementById("tableWrap").innerHTML =
+        `<div class="empty">No results found.</div>`;
       return;
     }
 
     document.getElementById("tableWrap").innerHTML = `
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Grade</th>
-            <th>Topic</th>
-            <th>Assessment</th>
-            <th>Marks</th>
-            <th>Review</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${data.map(r=>{
-            const d = new Date(r.createdAt).toLocaleString();
-            const pass = r.percent >= 50;
-            return `
-              <tr>
-                <td>${d}</td>
-                <td><span class="pill">Grade ${r.grade}</span></td>
-                <td>${r.topic}</td>
-                <td>${r.title}</td>
-                <td>
-                  <span class="${pass ? "marks-pass" : "marks-fail"}">
-                    ${r.percent}%
-                  </span>
-                </td>
-                <td>
-                  <button class="smallBtn"
-                    onclick="location.href='review.html?resultId=${r._id}'">
-                    Review
-                  </button>
-                </td>
-              </tr>
-            `;
-          }).join("")}
-        </tbody>
-      </table>
+      <div class="tableWrap">
+        <table class="resultsTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Grade</th>
+              <th>Topic</th>
+              <th>Assessment</th>
+              <th>Marks</th>
+              <th>Review</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map(r=>{
+              const d = r.createdAt ? new Date(r.createdAt).toLocaleString() : "-";
+              const pass = Number(r.percent) >= 50;
+              const grade = r.grade ?? "-";
+              const topic = r.topic || "General";
+              const title = r.title || "Assessment";
+              const percent = Number.isFinite(Number(r.percent)) ? `${Number(r.percent)}%` : "-";
+              const rid = r._id;
+
+              return `
+                <tr>
+                  <td data-label="Date">${escapeHtml(d)}</td>
+                  <td data-label="Grade"><span class="pill">Grade ${escapeHtml(String(grade))}</span></td>
+                  <td data-label="Topic">${escapeHtml(topic)}</td>
+                  <td data-label="Assessment">${escapeHtml(title)}</td>
+                  <td data-label="Marks">
+                    <span class="${pass ? "marks-pass" : "marks-fail"}">${escapeHtml(percent)}</span>
+                  </td>
+                  <td data-label="Review">
+                    <button class="smallBtn" onclick="location.href='review.html?resultId=${encodeURIComponent(rid)}'">
+                      Review
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
     `;
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
   }
 </script>
 </body>
