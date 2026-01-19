@@ -9,6 +9,7 @@
     body{font-family:Arial; padding:20px; max-width:1000px; margin:auto; background:#f6f7fb;}
     .card{background:#fff; border:1px solid #e6e6e6; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.06);}
     input, textarea, select{width:100%; padding:10px; margin:8px 0; border-radius:10px; border:1px solid #ddd; outline:none;}
+    textarea{min-height:90px; resize:vertical;}
     button{padding:10px 14px; cursor:pointer; border:none; border-radius:10px; font-weight:700;}
     .btn{background:#111827; color:#fff;}
     .btn2{background:#fff; border:1px solid #ddd; color:#111827;}
@@ -40,6 +41,7 @@
     .actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
     .disabledBox{opacity:.6; pointer-events:none;}
     .tiny{font-size:12px;}
+    .note{font-size:12px; color:#64748b; margin-top:-4px;}
   </style>
 
   <script>
@@ -50,7 +52,7 @@
 
   <div class="topbar">
     <div>
-      <h2 style="margin:0;">Admin – Edit / Freeze Assessment</h2>
+      <h2 style="margin:0;">Admin – Edit / Availability</h2>
       <div class="muted" id="who">Checking login...</div>
     </div>
     <div class="actions">
@@ -63,7 +65,7 @@
 
   <div class="card">
 
-    <!-- ✅ NEW: Search + Grade filter -->
+    <!-- Search + Grade filter -->
     <div class="row">
       <div>
         <label>Filter by Grade</label>
@@ -91,13 +93,14 @@
         </select>
       </div>
       <div>
-        <label>Status</label>
+        <label>Availability</label>
         <div id="freezePill" class="pill">—</div>
+        <div class="note" id="availabilityNote"></div>
       </div>
     </div>
 
     <div class="actions" style="margin-top:6px;">
-      <button class="warn" id="freezeBtn" type="button" disabled>Freeze</button>
+      <button class="warn" id="freezeBtn" type="button" disabled>Make Unavailable</button>
       <button class="danger" id="deleteBtn" type="button" disabled>Delete</button>
       <span class="muted" id="msg"></span>
     </div>
@@ -126,6 +129,25 @@
 
       <label>Assessment Title</label>
       <input id="title" placeholder="e.g. Algebra Assessment 1" />
+
+      <label>Instructions (shown before starting)</label>
+      <textarea id="instructions" placeholder="Example:
+• Answer all questions.
+• No calculator.
+• Time limit applies."></textarea>
+
+      <div class="row">
+        <div>
+          <label>Available From (optional)</label>
+          <input id="availableFrom" type="datetime-local" />
+          <div class="note">If set, learners can only attempt after this date/time.</div>
+        </div>
+        <div>
+          <label>Available Until (optional)</label>
+          <input id="availableUntil" type="datetime-local" />
+          <div class="note">If set, learners can only attempt before this date/time.</div>
+        </div>
+      </div>
 
       <label>Time Limit (minutes)</label>
       <input id="timeLimitMinutes" type="number" min="1" max="180" placeholder="e.g. 20" />
@@ -159,11 +181,15 @@
     const freezeBtn = document.getElementById("freezeBtn");
     const deleteBtn = document.getElementById("deleteBtn");
     const freezePill = document.getElementById("freezePill");
+    const availabilityNote = document.getElementById("availabilityNote");
 
     const editArea = document.getElementById("editArea");
     const gradeEl = document.getElementById("grade");
     const topicEl = document.getElementById("topic");
     const titleEl = document.getElementById("title");
+    const instructionsEl = document.getElementById("instructions");
+    const availableFromEl = document.getElementById("availableFrom");
+    const availableUntilEl = document.getElementById("availableUntil");
     const timeLimitEl = document.getElementById("timeLimitMinutes");
 
     const saveBtn = document.getElementById("saveBtn");
@@ -171,7 +197,7 @@
     const questionsWrap = document.getElementById("questionsWrap");
 
     let currentQuiz = null;
-    let allQuizzes = []; // ✅ NEW: cache all quizzes for filtering
+    let allQuizzes = [];
 
     function setMsg(t, cls="muted"){
       msg.className = cls;
@@ -200,6 +226,63 @@
     }
     function escapeAttr(str){
       return String(str || "").replaceAll('"', "&quot;");
+    }
+
+    function pad2(n){ return String(n).padStart(2,"0"); }
+
+    // Convert ISO string -> datetime-local value (local time)
+    function isoToLocalInput(iso){
+      if (!iso) return "";
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return "";
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    }
+
+    // Convert datetime-local value -> ISO string
+    function localInputToIso(val){
+      if (!val) return null;
+      const d = new Date(val);
+      if (isNaN(d.getTime())) return null;
+      return d.toISOString();
+    }
+
+    function isUnavailable(q){
+      const now = new Date();
+      if (q?.isFrozen) return true;
+
+      const from = q?.availableFrom ? new Date(q.availableFrom) : null;
+      const until = q?.availableUntil ? new Date(q.availableUntil) : null;
+
+      if (from && now < from) return true;
+      if (until && now > until) return true;
+
+      return false;
+    }
+
+    function availabilitySummary(q){
+      if (!q) return { label:"—", cls:"pill", note:"" };
+
+      const now = new Date();
+      const from = q.availableFrom ? new Date(q.availableFrom) : null;
+      const until = q.availableUntil ? new Date(q.availableUntil) : null;
+
+      if (q.isFrozen) {
+        return { label:"UNAVAILABLE", cls:"pill red", note:"Manually set to unavailable." };
+      }
+
+      if (from && now < from) {
+        return { label:"SCHEDULED", cls:"pill", note:`Available from ${from.toLocaleString()}` };
+      }
+
+      if (until && now > until) {
+        return { label:"CLOSED", cls:"pill red", note:`Closed since ${until.toLocaleString()}` };
+      }
+
+      if (until) {
+        return { label:"AVAILABLE", cls:"pill green", note:`Available until ${until.toLocaleString()}` };
+      }
+
+      return { label:"AVAILABLE", cls:"pill green", note:"No schedule set." };
     }
 
     function questionCardHtml(i, q){
@@ -258,26 +341,37 @@
       return true;
     }
 
-    function setFrozenUI(isFrozen){
-      if (isFrozen) {
-        freezePill.textContent = "FROZEN";
-        freezePill.className = "pill red";
-        freezeBtn.textContent = "Unfreeze";
+    function setAvailabilityUI(q){
+      const a = availabilitySummary(q);
+      freezePill.textContent = a.label;
+      freezePill.className = a.cls;
+      availabilityNote.textContent = a.note || "";
+
+      // Button wording
+      if (q?.isFrozen) {
+        freezeBtn.textContent = "Make Available";
+      } else {
+        freezeBtn.textContent = "Make Unavailable";
+      }
+
+      freezeBtn.disabled = false;
+
+      // While unavailable (frozen), block editing + delete (safer)
+      const unavailable = !!q?.isFrozen;
+      if (unavailable) {
         editArea.classList.add("disabledBox");
         deleteBtn.disabled = true;
+        saveBtn.disabled = true;
+        addQuestionBtn.disabled = true;
       } else {
-        freezePill.textContent = "ACTIVE";
-        freezePill.className = "pill green";
-        freezeBtn.textContent = "Freeze";
         editArea.classList.remove("disabledBox");
         deleteBtn.disabled = false;
+        saveBtn.disabled = false;
+        addQuestionBtn.disabled = false;
       }
-      freezeBtn.disabled = false;
-      saveBtn.disabled = isFrozen;
-      addQuestionBtn.disabled = isFrozen;
     }
 
-    // ✅ NEW: render dropdown based on filters
+    // Render dropdown based on filters
     function renderDropdown(){
       const g = (gradeFilter.value || "").trim();
       const q = (searchBox.value || "").trim().toLowerCase();
@@ -300,7 +394,8 @@
       assessmentSelect.innerHTML =
         `<option value="">Select assessment</option>` +
         filtered.map(x => {
-          const label = `Grade ${x.grade} • ${x.topic || "General"} • ${x.title || "Assessment"}${x.isFrozen ? " (FROZEN)" : ""}`;
+          const unavailable = isUnavailable(x);
+          const label = `Grade ${x.grade} • ${x.topic || "General"} • ${x.title || "Assessment"}${unavailable ? " • Unavailable" : ""}`;
           return `<option value="${escapeAttr(x._id)}">${escapeHtml(label)}</option>`;
         }).join("");
     }
@@ -352,15 +447,19 @@
       gradeEl.value = String(currentQuiz.grade ?? "");
       topicEl.value = cleanSpaces(currentQuiz.topic || "");
       titleEl.value = cleanSpaces(currentQuiz.title || "");
+      instructionsEl.value = String(currentQuiz.instructions || "");
       timeLimitEl.value = String(currentQuiz.timeLimitMinutes ?? 10);
+
+      availableFromEl.value = isoToLocalInput(currentQuiz.availableFrom);
+      availableUntilEl.value = isoToLocalInput(currentQuiz.availableUntil);
 
       const qs = Array.isArray(currentQuiz.questions) ? currentQuiz.questions : [];
       questionsWrap.innerHTML = qs.length
         ? qs.map((q, i) => questionCardHtml(i, q)).join("")
         : questionCardHtml(0, { text:"", imageUrl:"", options:["","","",""], correctIndex:0 });
 
-      setFrozenUI(!!currentQuiz.isFrozen);
-      setMsg("Loaded. You can edit (unless frozen).", "ok");
+      setAvailabilityUI(currentQuiz);
+      setMsg("Loaded.", "ok");
     }
 
     function collectQuestions(){
@@ -397,7 +496,9 @@
     addQuestionBtn.addEventListener("click", () => {
       if (!currentQuiz) return;
       const i = questionsWrap.querySelectorAll(".qcard").length;
-      questionsWrap.insertAdjacentHTML("beforeend", questionCardHtml(i, { text:"", imageUrl:"", options:["","","",""], correctIndex:0 }));
+      questionsWrap.insertAdjacentHTML("beforeend",
+        questionCardHtml(i, { text:"", imageUrl:"", options:["","","",""], correctIndex:0 })
+      );
     });
 
     questionsWrap.addEventListener("click", (e) => {
@@ -410,20 +511,32 @@
       if (!currentQuiz) return;
 
       if (currentQuiz.isFrozen) {
-        return setMsg("This assessment is frozen. Unfreeze to edit.", "error");
+        return setMsg("This assessment is currently unavailable. Make it available to edit.", "error");
       }
 
       try{
         const grade = Number(gradeEl.value);
         const topic = cleanSpaces(topicEl.value);
         const title = cleanSpaces(titleEl.value);
+        const instructions = String(instructionsEl.value || "");
         const timeLimitMinutes = Number(timeLimitEl.value);
+
+        const availableFrom = localInputToIso(availableFromEl.value);
+        const availableUntil = localInputToIso(availableUntilEl.value);
 
         if (!grade) return setMsg("Select grade.", "error");
         if (!topic) return setMsg("Enter topic.", "error");
         if (!title) return setMsg("Enter title.", "error");
         if (!Number.isFinite(timeLimitMinutes) || timeLimitMinutes < 1 || timeLimitMinutes > 180) {
           return setMsg("Time limit must be 1–180 minutes.", "error");
+        }
+
+        if (availableFrom && availableUntil) {
+          const a = new Date(availableFrom).getTime();
+          const b = new Date(availableUntil).getTime();
+          if (Number.isFinite(a) && Number.isFinite(b) && b <= a) {
+            return setMsg("Available Until must be after Available From.", "error");
+          }
         }
 
         const questions = collectQuestions();
@@ -435,7 +548,16 @@
             "Content-Type": "application/json",
             Authorization: "Bearer " + token
           },
-          body: JSON.stringify({ grade, topic, title, timeLimitMinutes, questions })
+          body: JSON.stringify({
+            grade,
+            topic,
+            title,
+            instructions,
+            timeLimitMinutes,
+            availableFrom,
+            availableUntil,
+            questions
+          })
         });
 
         const data = await res.json().catch(()=>({}));
@@ -458,12 +580,12 @@
       const nextFrozen = !currentQuiz.isFrozen;
 
       const ok = confirm(nextFrozen
-        ? "Freeze this assessment? (Learners will see it but cannot attempt)"
-        : "Unfreeze this assessment? (Learners can attempt again)"
+        ? "Make this assessment unavailable? Learners will see it, but cannot attempt."
+        : "Make this assessment available? Learners can attempt if schedule allows."
       );
       if (!ok) return;
 
-      setMsg(nextFrozen ? "Freezing…" : "Unfreezing…", "muted");
+      setMsg(nextFrozen ? "Updating availability…" : "Updating availability…", "muted");
 
       const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
         method: "PUT",
@@ -479,11 +601,11 @@
 
       const data = await res.json().catch(()=>({}));
 
-      if (!res.ok) return setMsg(data.message || "Could not update freeze state.", "error");
+      if (!res.ok) return setMsg(data.message || "Could not update availability.", "error");
 
       currentQuiz = data;
-      setFrozenUI(!!currentQuiz.isFrozen);
-      setMsg(currentQuiz.isFrozen ? "✅ Assessment frozen." : "✅ Assessment unfrozen.", "ok");
+      setAvailabilityUI(currentQuiz);
+      setMsg(nextFrozen ? "✅ Set to unavailable." : "✅ Set to available.", "ok");
 
       await loadAssessments();
       assessmentSelect.value = currentQuiz._id;
@@ -493,7 +615,7 @@
       if (!currentQuiz) return;
 
       if (currentQuiz.isFrozen) {
-        return setMsg("Unfreeze before deleting (safer).", "error");
+        return setMsg("Make it available before deleting (safer).", "error");
       }
 
       const ok = confirm("Delete this assessment permanently?");
@@ -516,6 +638,9 @@
       gradeEl.value = "";
       topicEl.value = "";
       titleEl.value = "";
+      instructionsEl.value = "";
+      availableFromEl.value = "";
+      availableUntilEl.value = "";
       timeLimitEl.value = "";
 
       questionsWrap.innerHTML = "";
@@ -527,6 +652,7 @@
       assessmentSelect.value = "";
       freezePill.textContent = "—";
       freezePill.className = "pill";
+      availabilityNote.textContent = "";
     });
 
     assessmentSelect.addEventListener("change", () => {
@@ -539,12 +665,13 @@
         editArea.classList.add("disabledBox");
         freezePill.textContent = "—";
         freezePill.className = "pill";
+        availabilityNote.textContent = "";
         return;
       }
       loadAssessmentById(id);
     });
 
-    // ✅ NEW: filter handlers
+    // Filter handlers
     gradeFilter.addEventListener("change", () => {
       renderDropdown();
       assessmentSelect.value = "";
