@@ -17,6 +17,7 @@
       --text:#0f172a;
       --muted:#475569;
       --accent:#0b3c5d;
+      --accent-soft:#e7eef5;
       --radius:14px;
       --shadow:0 6px 18px rgba(0,0,0,0.06);
 
@@ -69,8 +70,19 @@
     }
 
     .qBox{margin-top:14px; padding-top:14px; border-top:1px solid #eee;}
-    .qTitle{font-weight:800; margin:0 0 10px 0; font-size:16px;}
+    .qTitle{font-weight:800; margin:0 0 10px 0; font-size:16px; line-height:1.35;}
+    .hint{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:var(--accent-soft);
+      border:1px solid #cfe9ff;
+      color:#0b3c5d;
+      font-size:13px;
+      font-weight:600;
+    }
 
+    /* MCQ options */
     .opt{
       display:block;
       padding:10px;
@@ -78,10 +90,41 @@
       border-radius:10px;
       margin-bottom:8px;
       background:#fff;
+      line-height:1.35;
+      word-break:break-word;
     }
     .opt.correct{ border-color:var(--green); background:var(--greenBg); }
     .opt.wrong{ border-color:var(--red); background:var(--redBg); }
     .opt input{margin-right:10px;}
+
+    /* Typed answer box */
+    .answerGrid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    .answerCard{
+      border:1px solid #e6e6e6;
+      border-radius:12px;
+      padding:12px;
+      background:#fff;
+      min-width:0;
+    }
+    .answerCard .label{
+      font-size:12px;
+      font-weight:800;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      margin-bottom:6px;
+    }
+    .answerCard .value{
+      font-weight:800;
+      word-break:break-word;
+    }
+    .answerCard.good{border-color:var(--green); background:var(--greenBg);}
+    .answerCard.bad{border-color:var(--red); background:var(--redBg);}
 
     .controlsRow{
       display:flex;
@@ -111,16 +154,6 @@
       flex-wrap:wrap;
       margin-top:14px;
     }
-    .btn{
-      background:var(--accent);
-      color:#fff;
-      padding:10px 14px;
-      border:none;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:800;
-    }
-    .btn:disabled{opacity:.6; cursor:not-allowed;}
     .btn2{
       background:#fff;
       border:1px solid #ddd;
@@ -129,12 +162,15 @@
       cursor:pointer;
       font-weight:800;
     }
+    .btn2:disabled{opacity:.6; cursor:not-allowed;}
 
     .onlyCorrect{
       margin-top:14px;
       padding-top:14px;
       border-top:1px solid #eee;
       font-weight:900;
+      line-height:1.35;
+      word-break:break-word;
     }
 
     .errorBox{
@@ -143,6 +179,14 @@
       border:1px dashed #ddd;
       border-radius:12px;
       background:#fafafa;
+    }
+
+    /* Mobile */
+    @media (max-width:700px){
+      .wrap{padding:16px;}
+      select{min-width:100%;}
+      .answerGrid{grid-template-columns:1fr;}
+      .footerRow{justify-content:flex-start;}
     }
   </style>
 
@@ -184,17 +228,21 @@
       <div class="controlsRow">
         <div class="muted" id="qCounter"></div>
 
-        <!-- ✅ Jump to Question -->
         <div class="jumpGroup">
-          <label class="muted" style="font-size:12px;"></label>
+          <label class="muted" style="font-size:12px;">Jump to question</label>
           <select id="jumpSelect"></select>
         </div>
       </div>
 
       <p class="qTitle" id="qText"></p>
-      <div id="opts"></div>
 
-      <!-- ✅ Only correct answer at the bottom -->
+      <!-- Hint -->
+      <div id="hintBox" class="hint hidden"></div>
+
+      <!-- Dynamic body (MCQ or typed) -->
+      <div id="body"></div>
+
+      <!-- Only correct answer -->
       <div class="onlyCorrect" id="onlyCorrect"></div>
 
       <div class="footerRow">
@@ -220,8 +268,9 @@
 
   const qCounter = document.getElementById("qCounter");
   const qText = document.getElementById("qText");
-  const opts = document.getElementById("opts");
+  const body = document.getElementById("body");
   const onlyCorrect = document.getElementById("onlyCorrect");
+  const hintBox = document.getElementById("hintBox");
 
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
@@ -271,12 +320,11 @@
 
       const r = await res.json();
 
-      titleEl.textContent = cleanSpaces(r.title || "Quiz Review");
+      titleEl.textContent = cleanSpaces(r.title || "Assessment Review");
       subtitleEl.textContent = "Review your attempt question by question.";
       gradePill.textContent = `Grade ${r.grade ?? "-"}`;
       topicPill.textContent = `Topic: ${cleanSpaces(r.topic || "General")}`;
 
-      // ✅ Marks as percentage only
       const pct = Number(r.percent);
       const safePct = Number.isFinite(pct) ? pct : 0;
       marksPill.textContent = `Marks: ${safePct}%`;
@@ -287,10 +335,11 @@
         return;
       }
 
-      // ✅ build jump dropdown
-      jumpSelect.innerHTML = answers.map((_, i) =>
-        `<option value="${i}">Question ${i + 1}</option>`
-      ).join("");
+      jumpSelect.innerHTML = answers.map((a, i) => {
+        const type = String(a.type || "mcq").toLowerCase();
+        const tag = type === "text" ? " (Typed)" : "";
+        return `<option value="${i}">Question ${i + 1}${tag}</option>`;
+      }).join("");
 
       jumpSelect.addEventListener("change", () => {
         const v = Number(jumpSelect.value);
@@ -311,36 +360,73 @@
 
   function renderQuestion(){
     const a = answers[idx];
+    const type = String(a.type || "mcq").toLowerCase();
 
     qCounter.textContent = `Question ${idx + 1} of ${answers.length}`;
     jumpSelect.value = String(idx);
     qText.textContent = cleanSpaces(a.questionText || "");
 
-    const options = Array.isArray(a.options) ? a.options : [];
-    const chosen = Number(a.chosenIndex);
-    const correct = Number(a.correctIndex);
+    // Hint
+    const hint = cleanSpaces(a.hint || "");
+    if (hint) {
+      hintBox.classList.remove("hidden");
+      hintBox.textContent = "Hint: " + hint;
+    } else {
+      hintBox.classList.add("hidden");
+      hintBox.textContent = "";
+    }
 
-    opts.innerHTML = options.map((opt, i) => {
-      const isCorrect = i === correct;
-      const isChosen = i === chosen;
+    body.innerHTML = "";
+    onlyCorrect.textContent = "";
 
-      // ✅ Colour rules:
-      // - Correct option is green always
-      // - If chosen is wrong, chosen option is red
-      let cls = "";
-      if (isCorrect) cls = "correct";
-      if (isChosen && !isCorrect) cls = "wrong";
+    if (type === "text") {
+      const userAns = cleanSpaces(a.textAnswer || "");
+      const isCorrect = !!a.isCorrect;
 
-      return `
-        <label class="opt ${cls}">
-          <input type="radio" disabled ${isChosen ? "checked" : ""}>
-          ${letter(i)}. ${escapeHtml(cleanSpaces(opt))}
-        </label>
+      // Note: correctText is NOT stored in snapshot by default.
+      // So we show a professional message unless you decide to store it later.
+      body.innerHTML = `
+        <div class="answerGrid">
+          <div class="answerCard ${isCorrect ? "good" : "bad"}">
+            <div class="label">Your Answer</div>
+            <div class="value">${escapeHtml(userAns || "No answer")}</div>
+          </div>
+
+          <div class="answerCard">
+            <div class="label">Result</div>
+            <div class="value">${isCorrect ? "Correct" : "Incorrect"}</div>
+          </div>
+        </div>
       `;
-    }).join("");
 
-    const correctText = options[correct] ?? "";
-    onlyCorrect.textContent = `Correct answer: ${letter(correct)}. ${cleanSpaces(correctText)}`;
+      onlyCorrect.textContent =
+        "Correct answer: Not shown for typed questions (ask your teacher/admin if needed).";
+
+    } else {
+      // MCQ
+      const options = Array.isArray(a.options) ? a.options : [];
+      const chosen = Number(a.chosenIndex);
+      const correct = Number(a.correctIndex);
+
+      body.innerHTML = options.map((opt, i) => {
+        const isCorrect = i === correct;
+        const isChosen = i === chosen;
+
+        let cls = "";
+        if (isCorrect) cls = "correct";
+        if (isChosen && !isCorrect) cls = "wrong";
+
+        return `
+          <label class="opt ${cls}">
+            <input type="radio" disabled ${isChosen ? "checked" : ""}>
+            ${letter(i)}. ${escapeHtml(cleanSpaces(opt))}
+          </label>
+        `;
+      }).join("");
+
+      const correctText = options[correct] ?? "";
+      onlyCorrect.textContent = `Correct answer: ${letter(correct)}. ${cleanSpaces(correctText)}`;
+    }
 
     prevBtn.disabled = idx === 0;
     nextBtn.disabled = idx === answers.length - 1;
