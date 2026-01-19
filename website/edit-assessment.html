@@ -39,6 +39,7 @@
     .pill.green{border-color:#bbf7d0; background:#f0fdf4; color:#065f46;}
     .actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
     .disabledBox{opacity:.6; pointer-events:none;}
+    .tiny{font-size:12px;}
   </style>
 
   <script>
@@ -49,7 +50,7 @@
 
   <div class="topbar">
     <div>
-      <h2 style="margin:0;">Admin – Edit Assessment</h2>
+      <h2 style="margin:0;">Admin – Edit / Freeze Assessment</h2>
       <div class="muted" id="who">Checking login...</div>
     </div>
     <div class="actions">
@@ -61,9 +62,30 @@
   </div>
 
   <div class="card">
+
+    <!-- ✅ NEW: Search + Grade filter -->
     <div class="row">
       <div>
-        <label>Select Assessment (filter)</label>
+        <label>Filter by Grade</label>
+        <select id="gradeFilter">
+          <option value="">All grades</option>
+          <option value="8">Grade 8</option>
+          <option value="9">Grade 9</option>
+          <option value="10">Grade 10</option>
+          <option value="11">Grade 11</option>
+          <option value="12">Grade 12</option>
+        </select>
+      </div>
+      <div>
+        <label>Search topic or assessment title</label>
+        <input id="searchBox" placeholder="Type e.g. Algebra or Trig..." />
+        <div class="muted tiny">This filters the dropdown list below.</div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:6px;">
+      <div>
+        <label>Select Assessment</label>
         <select id="assessmentSelect">
           <option value="">Loading…</option>
         </select>
@@ -130,7 +152,10 @@
     const who = document.getElementById("who");
     const msg = document.getElementById("msg");
 
+    const gradeFilter = document.getElementById("gradeFilter");
+    const searchBox = document.getElementById("searchBox");
     const assessmentSelect = document.getElementById("assessmentSelect");
+
     const freezeBtn = document.getElementById("freezeBtn");
     const deleteBtn = document.getElementById("deleteBtn");
     const freezePill = document.getElementById("freezePill");
@@ -146,6 +171,7 @@
     const questionsWrap = document.getElementById("questionsWrap");
 
     let currentQuiz = null;
+    let allQuizzes = []; // ✅ NEW: cache all quizzes for filtering
 
     function setMsg(t, cls="muted"){
       msg.className = cls;
@@ -162,6 +188,18 @@
 
     function cleanSpaces(s){
       return String(s || "").trim().replace(/\s+/g, " ");
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+    function escapeAttr(str){
+      return String(str || "").replaceAll('"', "&quot;");
     }
 
     function questionCardHtml(i, q){
@@ -201,10 +239,6 @@
       `;
     }
 
-    function escapeAttr(str){
-      return String(str || "").replaceAll('"', "&quot;");
-    }
-
     async function requireAdmin(){
       const meRes = await fetch(`${API}/api/auth/me`, {
         headers: { Authorization: "Bearer " + token }
@@ -229,7 +263,6 @@
         freezePill.textContent = "FROZEN";
         freezePill.className = "pill red";
         freezeBtn.textContent = "Unfreeze";
-        // Block editing + deleting while frozen (recommended)
         editArea.classList.add("disabledBox");
         deleteBtn.disabled = true;
       } else {
@@ -242,6 +275,34 @@
       freezeBtn.disabled = false;
       saveBtn.disabled = isFrozen;
       addQuestionBtn.disabled = isFrozen;
+    }
+
+    // ✅ NEW: render dropdown based on filters
+    function renderDropdown(){
+      const g = (gradeFilter.value || "").trim();
+      const q = (searchBox.value || "").trim().toLowerCase();
+
+      const filtered = allQuizzes.filter(x => {
+        const matchGrade = !g || String(x.grade) === String(g);
+        if (!matchGrade) return false;
+
+        if (!q) return true;
+        const topic = String(x.topic || "General").toLowerCase();
+        const title = String(x.title || "Assessment").toLowerCase();
+        return topic.includes(q) || title.includes(q);
+      });
+
+      if (filtered.length === 0) {
+        assessmentSelect.innerHTML = `<option value="">No match found</option>`;
+        return;
+      }
+
+      assessmentSelect.innerHTML =
+        `<option value="">Select assessment</option>` +
+        filtered.map(x => {
+          const label = `Grade ${x.grade} • ${x.topic || "General"} • ${x.title || "Assessment"}${x.isFrozen ? " (FROZEN)" : ""}`;
+          return `<option value="${escapeAttr(x._id)}">${escapeHtml(label)}</option>`;
+        }).join("");
     }
 
     async function loadAssessments(){
@@ -257,31 +318,16 @@
 
       if (res.status === 401) return logout();
       const list = await res.json().catch(()=>[]);
-      const quizzes = Array.isArray(list) ? list : [];
+      allQuizzes = Array.isArray(list) ? list : [];
 
-      if (quizzes.length === 0) {
+      if (allQuizzes.length === 0) {
         assessmentSelect.innerHTML = `<option value="">No assessments found</option>`;
         setMsg("No assessments to edit.", "muted");
         return;
       }
 
-      assessmentSelect.innerHTML =
-        `<option value="">Select assessment</option>` +
-        quizzes.map(q => {
-          const label = `Grade ${q.grade} • ${q.topic || "General"} • ${q.title || "Assessment"}`;
-          return `<option value="${escapeAttr(q._id)}">${escapeHtml(label)}</option>`;
-        }).join("");
-
-      setMsg("Select an assessment to edit.", "ok");
-    }
-
-    function escapeHtml(str){
-      return String(str)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
+      renderDropdown();
+      setMsg("Use filter/search, then select an assessment.", "ok");
     }
 
     async function loadAssessmentById(id){
@@ -398,7 +444,8 @@
 
         currentQuiz = data;
         setMsg("✅ Saved.", "ok");
-        await loadAssessments(); // refresh list labels
+
+        await loadAssessments();
         assessmentSelect.value = currentQuiz._id;
       } catch(err){
         setMsg(err.message || "Could not save.", "error");
@@ -411,8 +458,8 @@
       const nextFrozen = !currentQuiz.isFrozen;
 
       const ok = confirm(nextFrozen
-        ? "Freeze this assessment? (Editing will be blocked)"
-        : "Unfreeze this assessment? (Editing will be allowed)"
+        ? "Freeze this assessment? (Learners will see it but cannot attempt)"
+        : "Unfreeze this assessment? (Learners can attempt again)"
       );
       if (!ok) return;
 
@@ -437,6 +484,7 @@
       currentQuiz = data;
       setFrozenUI(!!currentQuiz.isFrozen);
       setMsg(currentQuiz.isFrozen ? "✅ Assessment frozen." : "✅ Assessment unfrozen.", "ok");
+
       await loadAssessments();
       assessmentSelect.value = currentQuiz._id;
     });
@@ -496,20 +544,21 @@
       loadAssessmentById(id);
     });
 
+    // ✅ NEW: filter handlers
+    gradeFilter.addEventListener("change", () => {
+      renderDropdown();
+      assessmentSelect.value = "";
+    });
+    searchBox.addEventListener("input", () => {
+      renderDropdown();
+      assessmentSelect.value = "";
+    });
+
     // Boot
     (async () => {
       const ok = await requireAdmin();
       if (!ok) return;
-
       await loadAssessments();
-
-      // If URL has ?quizId=...
-      const qp = new URLSearchParams(window.location.search);
-      const quizId = qp.get("quizId");
-      if (quizId) {
-        assessmentSelect.value = quizId;
-        loadAssessmentById(quizId);
-      }
     })();
   </script>
 </body>
