@@ -35,6 +35,7 @@ app.use(
   })
 );
 
+// handle preflight
 app.options("*", cors());
 
 // clearer CORS error
@@ -222,7 +223,7 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   }
 });
 
-// Create quiz
+// Create quiz (admin only)
 app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   try {
     const quiz = await Quiz.create(req.body);
