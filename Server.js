@@ -1,4 +1,4 @@
-// Server.js
+// server.js
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -102,41 +102,33 @@ function norm(s) {
   return clean(s).replace(/\s+/g, " ");
 }
 
-// ✅ typed-answer correctness
+/* ✅ Typed-answer correctness (supports: exact / contains / number_tolerance) */
 function isCorrectTextAnswer(q, typedRaw) {
   const typed = norm(typedRaw);
   const correct = norm(q?.correctText);
 
   if (!typed || !correct) return false;
 
-  const mode = q?.answerMode || "case-insensitive";
+  const mode = q?.textAnswerMode || "exact";
 
-  if (mode === "exact") {
-    return typed === correct;
+  if (mode === "contains") {
+    return typed.toLowerCase().includes(correct.toLowerCase());
   }
 
-  if (mode === "number") {
+  if (mode === "number_tolerance") {
     const a = Number(typed);
     const b = Number(correct);
     if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
 
-    const roundTo = q?.roundTo;
     const tol =
-      Number.isFinite(Number(q?.tolerance)) && q.tolerance !== null
-        ? Number(q.tolerance)
+      Number.isFinite(Number(q?.numberTolerance)) && q.numberTolerance !== null
+        ? Number(q.numberTolerance)
         : 0;
-
-    if (Number.isFinite(Number(roundTo)) && roundTo !== null) {
-      const p = 10 ** Number(roundTo);
-      const ar = Math.round(a * p) / p;
-      const br = Math.round(b * p) / p;
-      return Math.abs(ar - br) <= tol;
-    }
 
     return Math.abs(a - b) <= tol;
   }
 
-  // default: case-insensitive
+  // exact (case-insensitive)
   return typed.toLowerCase() === correct.toLowerCase();
 }
 
@@ -291,7 +283,7 @@ app.get("/api/admin/attempts", authRequired, adminOnly, async (req, res) => {
 
 /* ------------------ QUIZ ROUTES ------------------ */
 
-// List quizzes (learners can still SEE all)
+// List quizzes
 app.get("/api/quizzes", authRequired, async (req, res) => {
   try {
     const grade = req.query.grade;
@@ -402,9 +394,7 @@ app.post("/api/results", authRequired, async (req, res) => {
   try {
     const { quizId, answers, timeTakenSeconds } = req.body;
 
-    if (!quizId) {
-      return res.status(400).json({ message: "quizId required" });
-    }
+    if (!quizId) return res.status(400).json({ message: "quizId required" });
     if (!mongoose.Types.ObjectId.isValid(quizId)) {
       return res.status(400).json({ message: "Invalid quizId" });
     }
@@ -440,16 +430,27 @@ app.post("/api/results", authRequired, async (req, res) => {
 
         const type = q?.type || "mcq";
 
-        const chosenIndex = Number.isFinite(Number(a.chosenIndex)) ? Number(a.chosenIndex) : -1;
-        const textAnswer = clean(a.textAnswer);
+        // MCQ
+        const chosenIndex = Number.isFinite(Number(a.chosenIndex))
+          ? Number(a.chosenIndex)
+          : -1;
 
-        let correctIndex = -1;
+        // TEXT
+        const chosenText = clean(a.chosenText);
+
         let isCorrect = false;
 
+        // correct snapshot fields
+        const correctIndex =
+          type === "mcq" && Number.isFinite(Number(q?.correctIndex))
+            ? Number(q.correctIndex)
+            : -1;
+
+        const correctText = type === "text" ? clean(q?.correctText) : "";
+
         if (type === "text") {
-          isCorrect = isCorrectTextAnswer(q || {}, textAnswer);
+          isCorrect = isCorrectTextAnswer(q || {}, chosenText);
         } else {
-          correctIndex = Number.isFinite(Number(q?.correctIndex)) ? Number(q.correctIndex) : -1;
           isCorrect =
             chosenIndex !== -1 &&
             correctIndex !== -1 &&
@@ -461,13 +462,21 @@ app.post("/api/results", authRequired, async (req, res) => {
         return {
           questionIndex: qi,
           type,
+
+          // chosen
           chosenIndex,
+          chosenText,
+
+          // correct
           correctIndex,
-          textAnswer,
+          correctText,
+
           isCorrect,
+
+          // snapshots
           questionText: q?.text || "",
-          hint: q?.hint || "",
           options: Array.isArray(q?.options) ? q.options : [],
+          hint: q?.hint || "",
         };
       });
 
@@ -500,8 +509,9 @@ app.post("/api/results", authRequired, async (req, res) => {
       total,
     });
   } catch (err) {
-    if (err.code === 11000)
+    if (err.code === 11000) {
       return res.status(409).json({ message: "Assessment already attempted" });
+    }
     res.status(500).json({ message: err.message });
   }
 });
