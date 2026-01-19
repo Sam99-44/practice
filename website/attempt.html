@@ -80,7 +80,15 @@
       margin:10px 0 12px 0;
     }
 
-    .opt{display:block; padding:10px; border:1px solid #ddd; border-radius:10px; margin-bottom:8px; cursor:pointer;}
+    .opt{
+      display:block;
+      padding:10px;
+      border:1px solid #ddd;
+      border-radius:10px;
+      margin-bottom:8px;
+      cursor:pointer;
+      background:#fff;
+    }
     .opt.disabled{opacity:.7; cursor:not-allowed;}
     .opt input{margin-right:8px;}
 
@@ -184,12 +192,10 @@
       <div class="muted">You already attempted this assessment.</div>
     </div>
 
-    <!-- unavailable (frozen/scheduled) -->
+    <!-- unavailable (frozen/scheduled/server-blocked) -->
     <div id="unavailableNotice" class="notice red hidden">
       <b>This assessment is currently unavailable.</b>
-      <div class="muted" style="margin-top:4px;">
-        Please check back later.
-      </div>
+      <div class="muted" style="margin-top:4px;">Please check back later.</div>
     </div>
 
     <div id="questions"></div>
@@ -311,13 +317,13 @@
     const timeStr = mins > 0 ? ` • Time ${mins} min` : "";
     quizInfo.textContent = `Grade ${quizData.grade ?? "-"} • ${cleanSpaces(quizData.topic || "General")}${timeStr}`;
 
-    // ✅ Availability (professional)
+    // Availability (professional)
     const unavailable = isUnavailableBySchedule(quizData);
     setPillAvailable(!unavailable);
 
     // Render questions (MCQ + TEXT)
     questionsDiv.innerHTML = (quizData.questions || []).map((q, i) => {
-      const type = (q.type || "mcq").toLowerCase();
+      const type = String(q.type || "mcq").toLowerCase();
       const hint = cleanSpaces(q.hint || "");
       const img = cleanSpaces(q.imageUrl || "");
 
@@ -328,7 +334,7 @@
           <div class="q">
             <b>${i + 1}. ${escapeHtml(cleanSpaces(q.text))}</b>
             ${imageHtml}
-            <input class="textAnswer" id="txt${i}" placeholder="Type your answer here" />
+            <input class="textAnswer" id="txt${i}" placeholder="Type your answer here" autocomplete="off" />
             ${hint ? `<div class="hint">Hint: ${escapeHtml(hint)}</div>` : ``}
           </div>
         `;
@@ -350,7 +356,7 @@
       `;
     }).join("");
 
-    // If unavailable: show notice, disable, stop timer, block submit
+    // If unavailable: block UI
     if (unavailable){
       unavailableNotice.classList.remove("hidden");
       blocked = true;
@@ -361,7 +367,6 @@
       return;
     }
 
-    // normal
     submitBtn.disabled = false;
     startTimerWithQuiz(quizData);
     submitBtn.onclick = () => submitQuiz("manual");
@@ -392,6 +397,7 @@
     }
 
     timerBox.classList.remove("hidden");
+    timerBox.classList.remove("warn");
     tickTimer();
     clearInterval(timerInterval);
     timerInterval = setInterval(tickTimer, 1000);
@@ -438,21 +444,20 @@
   function buildAnswersPayload(){
     const answers = [];
     (quizData.questions || []).forEach((q, i) => {
-      const type = (q.type || "mcq").toLowerCase();
+      const type = String(q.type || "mcq").toLowerCase();
 
       if (type === "text") {
         const inp = document.getElementById(`txt${i}`);
         const val = inp ? cleanSpaces(inp.value) : "";
-        if (val) {
-          answers.push({ questionIndex: i, textAnswer: val });
-        }
+        answers.push({ questionIndex: i, textAnswer: val });
         return;
       }
 
       const chosen = document.querySelector(`input[name="q${i}"]:checked`);
-      if (chosen) {
-        answers.push({ questionIndex: i, chosenIndex: Number(chosen.value) });
-      }
+      answers.push({
+        questionIndex: i,
+        chosenIndex: chosen ? Number(chosen.value) : -1
+      });
     });
     return answers;
   }
@@ -460,7 +465,7 @@
   function countAnswered(){
     let answered = 0;
     (quizData.questions || []).forEach((q, i) => {
-      const type = (q.type || "mcq").toLowerCase();
+      const type = String(q.type || "mcq").toLowerCase();
 
       if (type === "text") {
         const inp = document.getElementById(`txt${i}`);
@@ -476,18 +481,6 @@
 
   async function submitQuiz(mode){
     if (!quizData || submitted || blocked) return;
-
-    // If became unavailable mid-attempt (frozen/schedule), block and stop
-    if (isUnavailableBySchedule(quizData)){
-      unavailableNotice.classList.remove("hidden");
-      msgEl.className = "error";
-      msgEl.textContent = "This assessment is currently unavailable. You cannot submit right now.";
-      submitBtn.disabled = true;
-      disableAllInputs();
-      stopTimerAndClearKey();
-      blocked = true;
-      return;
-    }
 
     const total = (quizData.questions || []).length;
     const answered = countAnswered();
@@ -507,7 +500,7 @@
     const timeTakenSeconds = getTimeTakenSeconds();
     localStorage.removeItem(END_KEY);
 
-    // ✅ NEW payload (server calculates score/percent)
+    // Server calculates score/percent now
     const payload = {
       quizId,
       answers: buildAnswersPayload(),
@@ -548,6 +541,8 @@
       const data = await res.json().catch(()=>({}));
       msgEl.className = "error";
       msgEl.textContent = data.message || "Could not save attempt. Please try again.";
+      submitted = false;
+      submitBtn.disabled = false;
       return;
     }
 
@@ -574,7 +569,7 @@
       .replaceAll("'","&#039;");
   }
   function escapeAttr(str){
-    return String(str).replaceAll('"',"&quot;");
+    return String(str || "").replaceAll('"',"&quot;");
   }
 </script>
 </body>
