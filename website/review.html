@@ -30,6 +30,7 @@
     body{margin:0; font-family:Inter,Arial,sans-serif; background:var(--bg); color:var(--text);}
     .wrap{max-width:1000px; margin:0 auto; padding:24px;}
     .muted{color:var(--muted);}
+    .hidden{display:none;}
     .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);}
 
     .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:12px; flex-wrap:wrap;}
@@ -97,7 +98,7 @@
     .opt.wrong{ border-color:var(--red); background:var(--redBg); }
     .opt input{margin-right:10px;}
 
-    /* Typed answer box */
+    /* Typed answer cards */
     .answerGrid{
       display:grid;
       grid-template-columns:1fr 1fr;
@@ -181,7 +182,6 @@
       background:#fafafa;
     }
 
-    /* Mobile */
     @media (max-width:700px){
       .wrap{padding:16px;}
       select{min-width:100%;}
@@ -236,13 +236,10 @@
 
       <p class="qTitle" id="qText"></p>
 
-      <!-- Hint -->
       <div id="hintBox" class="hint hidden"></div>
 
-      <!-- Dynamic body (MCQ or typed) -->
       <div id="body"></div>
 
-      <!-- Only correct answer -->
       <div class="onlyCorrect" id="onlyCorrect"></div>
 
       <div class="footerRow">
@@ -380,11 +377,11 @@
     onlyCorrect.textContent = "";
 
     if (type === "text") {
-      const userAns = cleanSpaces(a.textAnswer || "");
+      // ✅ support both possible field names
+      const userAns = cleanSpaces(a.textAnswer || a.chosenText || "");
+      const correctAns = cleanSpaces(a.correctText || "");
       const isCorrect = !!a.isCorrect;
 
-      // Note: correctText is NOT stored in snapshot by default.
-      // So we show a professional message unless you decide to store it later.
       body.innerHTML = `
         <div class="answerGrid">
           <div class="answerCard ${isCorrect ? "good" : "bad"}">
@@ -392,15 +389,14 @@
             <div class="value">${escapeHtml(userAns || "No answer")}</div>
           </div>
 
-          <div class="answerCard">
-            <div class="label">Result</div>
-            <div class="value">${isCorrect ? "Correct" : "Incorrect"}</div>
+          <div class="answerCard good">
+            <div class="label">Correct Answer</div>
+            <div class="value">${escapeHtml(correctAns || "Not saved")}</div>
           </div>
         </div>
       `;
 
-      onlyCorrect.textContent =
-        "Correct answer: Not shown for typed questions (ask your teacher/admin if needed).";
+      onlyCorrect.textContent = `Result: ${isCorrect ? "Correct" : "Incorrect"}`;
 
     } else {
       // MCQ
