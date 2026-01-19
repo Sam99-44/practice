@@ -21,8 +21,6 @@
       --radius:14px;
       --shadow:0 6px 18px rgba(0,0,0,0.06);
       --error:#b91c1c;
-      --warn:#b45309;
-      --ok:#065f46;
     }
 
     *{box-sizing:border-box}
@@ -57,35 +55,17 @@
     .toggle{border:1px solid #ddd;background:#fff;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:700;}
     .toggle:hover{background:var(--accent-soft);}
 
-    .quiz-squares{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:10px;
-    }
-
+    .quiz-squares{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
     .quiz-square{
       width:64px;height:64px;border-radius:14px;border:1px solid var(--border);
-      background:#f8fafc;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;
       cursor:pointer;font-weight:800;position:relative;
       transition:transform .08s, background .2s, border-color .2s;
       user-select:none;
-      padding-top:2px;
     }
     .quiz-square:hover{background:#eef7ff;transform:translateY(-1px);border-color:#cfe9ff;}
 
-    /* ✅ Icon inside tile */
-    .quiz-square .icon{
-      position:absolute;
-      top:8px;
-      left:10px;
-      font-size:14px;
-      line-height:1;
-      opacity:.95;
-    }
-
-    /* ✅ Completed mark */
+    /* Completed */
     .quiz-square.done{
       border-color:#86efac;
       background:#f0fdf4;
@@ -93,72 +73,36 @@
     .quiz-square.done::after{
       content:"✓";
       position:absolute;
-      top:6px;right:10px;
+      top:6px;
+      right:10px;
       font-size:14px;
       font-weight:900;
       color:#166534;
     }
 
-    /* ✅ Unavailable (frozen) - PROFESSIONAL */
+    /* Unavailable */
     .quiz-square.unavailable{
       cursor:not-allowed;
-      opacity:.78;
+      opacity:.75;
       background:#f8fafc;
       border-color:#e5e7eb;
-      transform:none !important;
     }
     .quiz-square.unavailable:hover{
       background:#f8fafc;
       border-color:#e5e7eb;
     }
-    .quiz-square .smallTag{
+
+    .quiz-square .status{
       font-size:10px;
-      font-weight:900;
-      margin-top:2px;
+      font-weight:800;
+      margin-top:4px;
       color:#64748b;
+    }
+    .quiz-square.unavailable .status{
+      color:#b45309;
     }
 
     .hidden{display:none!important;}
-
-    /* ✅ Professional notice (instead of alert) */
-    .notice{
-      margin-top:12px;
-      padding:12px 14px;
-      border-radius:12px;
-      border:1px solid #e6e6e6;
-      background:#fff;
-      box-shadow:var(--shadow);
-    }
-    .notice.warn{
-      border-color:#fed7aa;
-      background:#fff7ed;
-      color:#7c2d12;
-    }
-    .notice .title{font-weight:900;margin-bottom:4px;}
-    .notice .text{color:#7c2d12;}
-    .notice .mutedText{color:#9a3412;}
-    .notice .closeRow{margin-top:10px;display:flex;justify-content:flex-end;}
-    .notice button{
-      border:1px solid #ddd;
-      background:#fff;
-      padding:8px 10px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:700;
-    }
-    .notice button:hover{background:var(--accent-soft);}
-
-    /* ✅ Mobile responsiveness */
-    @media (max-width:520px){
-      .wrap{padding:16px;}
-      select,input{min-width:0;width:100%;}
-      .controls{gap:10px;}
-      .quiz-square{
-        width:58px;height:58px;
-        border-radius:14px;
-      }
-      .quiz-square .icon{top:7px;left:9px;}
-    }
   </style>
 
   <script>
@@ -209,17 +153,6 @@
     </div>
 
     <p id="status" class="muted"></p>
-
-    <!-- ✅ Professional notice (no alerts) -->
-    <div id="notice" class="notice warn hidden" role="status" aria-live="polite">
-      <div class="title">Assessment unavailable</div>
-      <div class="text">This assessment is currently unavailable. Please try again later.</div>
-      <div class="mutedText" id="noticeMeta" style="margin-top:4px;"></div>
-      <div class="closeRow">
-        <button type="button" id="closeNoticeBtn">Close</button>
-      </div>
-    </div>
-
     <div id="quizList"></div>
   </div>
 
@@ -243,20 +176,10 @@
   const expandAllBtn = document.getElementById("expandAllBtn");
   const collapseAllBtn = document.getElementById("collapseAllBtn");
 
-  // Notice
-  const notice = document.getElementById("notice");
-  const noticeMeta = document.getElementById("noticeMeta");
-  const closeNoticeBtn = document.getElementById("closeNoticeBtn");
-  closeNoticeBtn.addEventListener("click", () => {
-    notice.classList.add("hidden");
-    noticeMeta.textContent = "";
-  });
-
-  // State
   let topicOpen = {};
-  let cachedByTopic = null;      // { topic: [quizzes] }
-  let cachedTopics = [];         // [topic names]
-  let completedSet = new Set();  // quizIds that have results
+  let cachedByTopic = null;
+  let cachedTopics = [];
+  let completedSet = new Set();
 
   gradeSelect.addEventListener("change", loadQuizzes);
   topicSearch.addEventListener("input", () => filterTopics(topicSearch.value));
@@ -271,15 +194,8 @@
       if (!res.ok) return;
 
       const results = await res.json();
-
-      completedSet = new Set(
-        results
-          .map(r => (r.quizId && r.quizId._id) ? r.quizId._id : r.quizId)
-          .filter(Boolean)
-      );
-    } catch {
-      // ignore
-    }
+      completedSet = new Set(results.map(r => r.quizId).filter(Boolean));
+    } catch {}
   }
 
   async function loadQuizzes(){
@@ -290,117 +206,66 @@
       topicSearch.disabled = true;
       expandAllBtn.disabled = true;
       collapseAllBtn.disabled = true;
-      notice.classList.add("hidden");
       return;
     }
 
-    status.className = "muted";
     status.textContent = "Loading assessments...";
     quizList.innerHTML = "";
-    notice.classList.add("hidden");
 
     await loadCompletedResults();
 
-    let res;
-    try{
-      res = await fetch(`${API}/api/quizzes?grade=${encodeURIComponent(grade)}`, {
-        headers:{ Authorization:`Bearer ${authToken}` }
-      });
-    } catch {
-      status.className = "error";
-      status.textContent = "Network error. Please refresh.";
-      return;
-    }
+    const res = await fetch(`${API}/api/quizzes?grade=${grade}`, {
+      headers:{ Authorization:`Bearer ${authToken}` }
+    });
 
-    if (res.status === 401) {
-      localStorage.clear();
-      window.location.href = "login.html";
-      return;
-    }
-
-    const quizzes = await res.json().catch(()=>[]);
+    const quizzes = await res.json();
     if (!Array.isArray(quizzes) || quizzes.length === 0){
       status.textContent = "No assessments found.";
-      cachedByTopic = null;
-      cachedTopics = [];
-      topicSearch.disabled = true;
-      expandAllBtn.disabled = true;
-      collapseAllBtn.disabled = true;
       return;
     }
 
     const byTopic = {};
     quizzes.forEach(q=>{
-      const t = (q.topic || "General").trim() || "General";
+      const t = q.topic || "General";
       (byTopic[t] ||= []).push(q);
-      if (typeof topicOpen[t] !== "boolean") topicOpen[t] = true;
+      if (topicOpen[t] === undefined) topicOpen[t] = true;
     });
 
-    const topics = Object.keys(byTopic).sort((a,b)=>a.localeCompare(b));
-    topics.forEach(t=>{
-      byTopic[t].sort((a,b)=>{
-        const da = new Date(a.createdAt || 0).getTime();
-        const db = new Date(b.createdAt || 0).getTime();
-        return da - db;
-      });
-    });
-
+    cachedTopics = Object.keys(byTopic).sort();
     cachedByTopic = byTopic;
-    cachedTopics = topics;
 
     render();
     topicSearch.disabled = false;
     expandAllBtn.disabled = false;
     collapseAllBtn.disabled = false;
     status.textContent = "";
-    filterTopics(topicSearch.value);
   }
 
   function render(){
-    if (!cachedByTopic) return;
-
     quizList.innerHTML = `
       <div class="topic-wrap">
         ${cachedTopics.map(t=>{
-          const list = cachedByTopic[t] || [];
-          const open = topicOpen[t] !== false;
+          const list = cachedByTopic[t];
+          const open = topicOpen[t];
 
           return `
-            <div class="topic-card" data-topic="${escapeAttr(t)}">
+            <div class="topic-card" data-topic="${t}">
               <div class="topic-head">
-                <div class="topic-title">${escapeHtml(t)}</div>
-                <button class="toggle" type="button" data-toggle="${escapeAttr(t)}">
+                <div class="topic-title">${t}</div>
+                <button class="toggle" data-toggle="${t}">
                   ${open ? "Collapse" : "Expand"}
                 </button>
               </div>
 
-              <div class="quiz-squares ${open ? "" : "hidden"}" data-body="${escapeAttr(t)}">
+              <div class="quiz-squares ${open ? "" : "hidden"}">
                 ${list.map((q,i)=>{
-                  const isUnavailable = !!q.isFrozen; // backend flag
-                  const isDone = completedSet.has(q._id);
-
-                  const cls = `quiz-square ${isDone ? "done" : ""} ${isUnavailable ? "unavailable" : ""}`.trim();
-
-                  // ✅ Icons (simple, clean, works on mobile & desktop)
-                  // - done: ✓ already handled
-                  // - unavailable: ⏸ (pause) professional
-                  const icon = isUnavailable ? "⏸" : "📝";
-
-                  // Professional tooltip
-                  const tip = isUnavailable
-                    ? `Unavailable: this assessment cannot be started right now`
-                    : `Assessment: ${q.title || "Assessment"}`;
-
+                  const unavailable = q.isFrozen;
+                  const done = completedSet.has(q._id);
                   return `
-                    <div class="${cls}"
-                      title="${escapeAttr(tip)}"
-                      data-quizid="${escapeAttr(q._id)}"
-                      data-title="${escapeAttr(q.title || "Assessment")}"
-                      data-topic="${escapeAttr(q.topic || "General")}"
-                      data-unavailable="${isUnavailable ? "1" : "0"}">
-                      <span class="icon" aria-hidden="true">${icon}</span>
+                    <div class="quiz-square ${done ? "done" : ""} ${unavailable ? "unavailable" : ""}"
+                      data-id="${q._id}" data-unavailable="${unavailable}">
                       ${i+1}
-                      ${isUnavailable ? `<div class="smallTag">Unavailable</div>` : ``}
+                      <div class="status">${unavailable ? "Unavailable" : "Available"}</div>
                     </div>
                   `;
                 }).join("")}
@@ -411,74 +276,32 @@
       </div>
     `;
 
-    // Toggle buttons
-    document.querySelectorAll("[data-toggle]").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const t = btn.getAttribute("data-toggle");
-        topicOpen[t] = !(topicOpen[t] !== false);
-
-        const body = document.querySelector(`[data-body="${cssEscape(t)}"]`);
-        if (body) body.classList.toggle("hidden", topicOpen[t] === false);
-        btn.textContent = (topicOpen[t] === false) ? "Expand" : "Collapse";
-      });
+    document.querySelectorAll(".quiz-square").forEach(sq=>{
+      sq.onclick = () => {
+        if (sq.dataset.unavailable === "true") return;
+        window.location.href = `attempt.html?quizId=${sq.dataset.id}`;
+      };
     });
 
-    // Click handler for squares (blocks unavailable)
-    quizList.querySelectorAll(".quiz-square").forEach(sq=>{
-      sq.addEventListener("click", ()=>{
-        const unavailable = sq.getAttribute("data-unavailable") === "1";
-        const id = sq.getAttribute("data-quizid");
-        if (!id) return;
-
-        if (unavailable) {
-          const title = sq.getAttribute("data-title") || "Assessment";
-          const topic = sq.getAttribute("data-topic") || "General";
-
-          notice.classList.remove("hidden");
-          noticeMeta.textContent = `Topic: ${topic} • ${title}`;
-          // scroll notice into view (nice on mobile)
-          notice.scrollIntoView({ behavior: "smooth", block: "nearest" });
-          return;
-        }
-
-        window.location.href = `attempt.html?quizId=${encodeURIComponent(id)}`;
-      });
+    document.querySelectorAll("[data-toggle]").forEach(btn=>{
+      btn.onclick = ()=>{
+        const t = btn.dataset.toggle;
+        topicOpen[t] = !topicOpen[t];
+        render();
+      };
     });
   }
 
   function toggleAll(open){
-    Object.keys(topicOpen).forEach(t => topicOpen[t] = open);
-
-    document.querySelectorAll("[data-body]").forEach(body=>{
-      body.classList.toggle("hidden", !open);
-    });
-    document.querySelectorAll("[data-toggle]").forEach(btn=>{
-      btn.textContent = open ? "Collapse" : "Expand";
-    });
+    cachedTopics.forEach(t => topicOpen[t] = open);
+    render();
   }
 
   function filterTopics(q){
-    q = (q || "").trim().toLowerCase();
-    document.querySelectorAll("[data-topic]").forEach(card=>{
-      const topic = (card.getAttribute("data-topic") || "").toLowerCase();
-      const match = !q || topic.includes(q);
-      card.classList.toggle("hidden", !match);
+    q = q.toLowerCase();
+    document.querySelectorAll(".topic-card").forEach(card=>{
+      card.classList.toggle("hidden", !card.dataset.topic.toLowerCase().includes(q));
     });
-  }
-
-  function escapeHtml(str){
-    return String(str)
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-  function escapeAttr(str){
-    return String(str).replaceAll('"',"&quot;");
-  }
-  function cssEscape(str){
-    return String(str).replaceAll('"','\\"');
   }
 </script>
 
