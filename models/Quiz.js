@@ -25,12 +25,18 @@ const QuizSchema = new mongoose.Schema(
     title: { type: String, required: true, trim: true },
     topic: { type: String, default: "", trim: true },
 
-    // time limit per assessment (minutes)
+    // ✅ NEW: instructions shown before starting
+    instructions: { type: String, default: "", trim: true },
+
+    // ✅ time limit per assessment (minutes)
     timeLimitMinutes: { type: Number, default: 10, min: 1, max: 180 },
 
-    // ✅ NEW: freeze / lock assessment (still visible, but cannot be attempted)
+    // ✅ availability controls
     isFrozen: { type: Boolean, default: false },
     frozenAt: { type: Date, default: null },
+
+    availableFrom: { type: Date, default: null },   // if set, learner can only attempt after this date
+    availableUntil: { type: Date, default: null },  // if set, learner can only attempt before this date
 
     questions: { type: [QuestionSchema], default: [] },
   },
