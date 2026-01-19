@@ -25,10 +25,10 @@ const QuizSchema = new mongoose.Schema(
     title: { type: String, required: true, trim: true },
     topic: { type: String, default: "", trim: true },
 
-    // ✅ NEW: time limit per quiz (minutes)
+    // time limit per assessment (minutes)
     timeLimitMinutes: { type: Number, default: 10, min: 1, max: 180 },
 
-    // ✅ NEW: freeze assessment (admin can freeze/unfreeze)
+    // ✅ NEW: freeze / lock assessment (still visible, but cannot be attempted)
     isFrozen: { type: Boolean, default: false },
     frozenAt: { type: Date, default: null },
 
