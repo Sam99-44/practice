@@ -43,7 +43,7 @@
     .muted{color:var(--muted);}
     .error{color:var(--error);}
 
-    select,input{padding:10px;border-radius:10px;border:1px solid #ddd;min-width:220px;}
+    input{padding:10px;border-radius:10px;border:1px solid #ddd;min-width:220px;}
     .controls{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;align-items:center;}
     .btn2{background:#fff;border:1px solid #ddd;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:600;}
     .btn2:disabled{opacity:.6;cursor:not-allowed;}
@@ -103,6 +103,11 @@
     }
 
     .hidden{display:none!important;}
+
+    @media (max-width:700px){
+      .wrap{padding:16px;}
+      input{min-width:100%;}
+    }
   </style>
 
   <script>
@@ -133,21 +138,11 @@
   </div>
 
   <div class="card">
-    <h1>Select Grade</h1>
-    <p class="muted">Choose your grade to view assessments.</p>
+    <h1 id="pageTitle">Practice</h1>
+    <p class="muted" id="pageSub">Loading your grade…</p>
 
     <div class="controls">
-      <select id="gradeSelect">
-        <option value="">Choose grade</option>
-        <option value="8">Grade 8</option>
-        <option value="9">Grade 9</option>
-        <option value="10">Grade 10</option>
-        <option value="11">Grade 11</option>
-        <option value="12">Grade 12</option>
-      </select>
-
       <input id="topicSearch" placeholder="Search topic…" disabled />
-
       <button class="btn2" id="expandAllBtn" disabled type="button">Expand all</button>
       <button class="btn2" id="collapseAllBtn" disabled type="button">Collapse all</button>
     </div>
@@ -160,6 +155,7 @@
 
 <script>
   const API = "https://practice-backend-msgn.onrender.com";
+  const token = localStorage.getItem("token");
 
   document.getElementById("welcomeSub").textContent =
     "Welcome, " + (localStorage.getItem("username") || "Learner");
@@ -169,27 +165,60 @@
     window.location.href = "login.html";
   };
 
-  const gradeSelect = document.getElementById("gradeSelect");
   const quizList = document.getElementById("quizList");
   const status = document.getElementById("status");
   const topicSearch = document.getElementById("topicSearch");
   const expandAllBtn = document.getElementById("expandAllBtn");
   const collapseAllBtn = document.getElementById("collapseAllBtn");
+  const pageTitle = document.getElementById("pageTitle");
+  const pageSub = document.getElementById("pageSub");
 
   let topicOpen = {};
   let cachedByTopic = null;
   let cachedTopics = [];
   let completedSet = new Set();
+  let myGrade = null;
 
-  gradeSelect.addEventListener("change", loadQuizzes);
   topicSearch.addEventListener("input", () => filterTopics(topicSearch.value));
   expandAllBtn.addEventListener("click", () => toggleAll(true));
   collapseAllBtn.addEventListener("click", () => toggleAll(false));
 
+  init();
+
+  async function init(){
+    if (!token) return window.location.href = "login.html";
+
+    // Get learner grade from /me
+    const meRes = await fetch(`${API}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (meRes.status === 401) {
+      localStorage.clear();
+      return window.location.href = "login.html";
+    }
+
+    const me = await meRes.json().catch(()=>null);
+    if (!meRes.ok || !me) {
+      pageSub.className = "error";
+      pageSub.textContent = "Could not load your profile. Please login again.";
+      return;
+    }
+
+    myGrade = me.grade;
+
+    // Update heading
+    pageTitle.textContent = `Grade ${myGrade} Practice`;
+    pageSub.textContent = "Assessments are filtered automatically based on your registration grade.";
+
+    // Load quizzes
+    await loadQuizzes();
+  }
+
   async function loadCompletedResults(){
     try{
       const res = await fetch(`${API}/api/results/my`, {
-        headers: { Authorization: `Bearer ${authToken}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) return;
 
@@ -199,28 +228,23 @@
   }
 
   async function loadQuizzes(){
-    const grade = gradeSelect.value;
-    if (!grade){
-      quizList.innerHTML = "";
-      status.textContent = "";
-      topicSearch.disabled = true;
-      expandAllBtn.disabled = true;
-      collapseAllBtn.disabled = true;
-      return;
-    }
-
     status.textContent = "Loading assessments...";
     quizList.innerHTML = "";
 
     await loadCompletedResults();
 
-    const res = await fetch(`${API}/api/quizzes?grade=${grade}`, {
-      headers:{ Authorization:`Bearer ${authToken}` }
+    // ✅ No grade selector anymore.
+    // ✅ Backend should return only the learner grade quizzes.
+    const res = await fetch(`${API}/api/quizzes`, {
+      headers:{ Authorization:`Bearer ${token}` }
     });
 
-    const quizzes = await res.json();
+    const quizzes = await res.json().catch(()=>[]);
     if (!Array.isArray(quizzes) || quizzes.length === 0){
-      status.textContent = "No assessments found.";
+      status.textContent = "No assessments found for your grade.";
+      topicSearch.disabled = true;
+      expandAllBtn.disabled = true;
+      collapseAllBtn.disabled = true;
       return;
     }
 
@@ -249,17 +273,17 @@
           const open = topicOpen[t];
 
           return `
-            <div class="topic-card" data-topic="${t}">
+            <div class="topic-card" data-topic="${escapeAttr(t)}">
               <div class="topic-head">
-                <div class="topic-title">${t}</div>
-                <button class="toggle" data-toggle="${t}">
+                <div class="topic-title">${escapeHtml(t)}</div>
+                <button class="toggle" data-toggle="${escapeAttr(t)}">
                   ${open ? "Collapse" : "Expand"}
                 </button>
               </div>
 
               <div class="quiz-squares ${open ? "" : "hidden"}">
                 ${list.map((q,i)=>{
-                  const unavailable = q.isFrozen;
+                  const unavailable = !!q.isFrozen;
                   const done = completedSet.has(q._id);
                   return `
                     <div class="quiz-square ${done ? "done" : ""} ${unavailable ? "unavailable" : ""}"
@@ -298,10 +322,22 @@
   }
 
   function filterTopics(q){
-    q = q.toLowerCase();
+    q = String(q || "").toLowerCase();
     document.querySelectorAll(".topic-card").forEach(card=>{
       card.classList.toggle("hidden", !card.dataset.topic.toLowerCase().includes(q));
     });
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+  function escapeAttr(str){
+    return String(str).replaceAll('"',"&quot;");
   }
 </script>
 
