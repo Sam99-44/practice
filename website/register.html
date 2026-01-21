@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Create Account | Practice Online</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,176 +10,116 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    :root{
-      --bg:#f6f7fb; --card:#fff; --border:#e6e6e6;
-      --text:#0f172a; --muted:#475569; --accent:#0b3c5d;
-      --accent-soft:#e7eef5; --radius:14px; --shadow:0 6px 18px rgba(0,0,0,.06);
-      --error:#b91c1c; --ok:#065f46;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text);}
-    .wrap{max-width:1000px;margin:0 auto;padding:24px;}
-    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;}
-    .brand{display:flex;align-items:center;gap:10px;}
-    .logo{width:38px;height:38px;border-radius:10px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;}
-    .nav{display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
-    .nav a{text-decoration:none;color:var(--text);padding:6px 8px;border-radius:8px;}
-    .nav a:hover{background:var(--accent-soft);}
-    .nav a.active{font-weight:700;color:var(--accent);}
-    .nav .nav-btn{background:var(--accent);color:#fff;padding:8px 12px;border-radius:10px;}
-    .center{display:grid;place-items:center;margin-top:22px;}
-    .card{width:100%;max-width:520px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);}
-    h1{margin:0 0 8px 0;font-size:22px;}
-    .sub{margin:0 0 14px 0;color:var(--muted);line-height:1.6;font-size:14px;}
-    label{display:block;margin-top:10px;font-size:14px;}
-    input,select{width:100%;padding:10px;margin-top:6px;border-radius:10px;border:1px solid #ddd;outline:none;font-size:14px;}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end;}
-    @media (max-width:520px){.row{grid-template-columns:1fr;}}
-    .btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 12px;cursor:pointer;font-size:14px;font-weight:700;}
-    .btn:disabled{opacity:.7;cursor:not-allowed;}
-    .ghost{width:100%;background:#fff;border:1px solid #ddd;border-radius:10px;padding:10px 12px;cursor:pointer;font-size:14px;}
-    .msg{margin-top:10px;font-size:14px;}
-    .msg.error{color:var(--error);}
-    .msg.ok{color:var(--ok);}
-    .tiny{font-size:12px;color:var(--muted);}
-    .links{margin-top:10px;font-size:14px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
-    .links a{color:var(--accent);text-decoration:none;}
-    .links a:hover{text-decoration:underline;}
-    footer{margin-top:24px;text-align:center;font-size:13px;color:#64748b;}
+    body{margin:0;font-family:Inter,Arial,sans-serif;background:#f6f7fb;color:#0f172a}
+    .wrap{max-width:1000px;margin:auto;padding:24px}
+    .card{max-width:520px;margin:auto;background:#fff;border:1px solid #e6e6e6;
+      border-radius:14px;padding:20px;box-shadow:0 6px 18px rgba(0,0,0,.06)}
+    h1{margin:0 0 8px}
+    .sub{color:#475569;font-size:14px;margin-bottom:16px}
+    label{display:block;margin-top:12px;font-size:14px}
+    input,select{width:100%;padding:10px;margin-top:6px;border-radius:10px;
+      border:1px solid #ddd;font-size:14px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    @media(max-width:520px){.row{grid-template-columns:1fr}}
+    button{padding:10px;border-radius:10px;border:none;font-weight:700;cursor:pointer}
+    .btn{background:#0b3c5d;color:#fff}
+    .ghost{background:#fff;border:1px solid #ddd}
+    .msg{margin-top:10px;font-size:14px}
+    .msg.error{color:#b91c1c}
+    .msg.ok{color:#065f46}
+    footer{text-align:center;margin-top:24px;font-size:13px;color:#64748b}
   </style>
 
   <script>
-    // If already logged in, go to practice page
-    if (localStorage.getItem("token")) window.location.href = "learner-quizzes.html";
+    if (localStorage.getItem("token")) {
+      location.href = "learner-quizzes.html";
+    }
   </script>
 </head>
 
 <body>
   <div class="wrap">
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo">PO</div>
-        <div>
-          <strong>Practice Online</strong>
-          <div style="font-size:13px;color:var(--muted);">Grades 8–12 Mathematics</div>
+    <div class="card">
+      <h1>Create Account</h1>
+      <p class="sub">Register and we will send a verification email to activate your account.</p>
+
+      <form id="regForm">
+        <label>Username</label>
+        <input id="username" placeholder="e.g. mm123" />
+
+        <label>Email</label>
+        <input id="email" type="email" placeholder="e.g. name@gmail.com" />
+
+        <label>Grade</label>
+        <select id="grade">
+          <option value="">Select Grade</option>
+          <option value="8">Grade 8</option>
+          <option value="9">Grade 9</option>
+          <option value="10">Grade 10</option>
+          <option value="11">Grade 11</option>
+          <option value="12">Grade 12</option>
+        </select>
+
+        <div class="row">
+          <div>
+            <label>Password</label>
+            <input id="password" type="password" />
+          </div>
+          <div>
+            <label>Confirm Password</label>
+            <input id="confirmPassword" type="password" />
+          </div>
         </div>
-      </div>
 
-      <nav class="nav">
-        <a href="about.html">About</a>
-        <a href="login.html">Login</a>
-        <a href="register.html" class="nav-btn active">Register</a>
-      </nav>
+        <div class="row">
+          <button class="btn" id="registerBtn" type="submit">Register</button>
+          <button class="ghost" type="button" id="toggle">Show Password</button>
+        </div>
+
+        <p class="msg" id="msg"></p>
+      </form>
     </div>
 
-    <div class="center">
-      <div class="card">
-        <h1>Create Account</h1>
-        <p class="sub">Register and we will send a verification email to activate your account.</p>
-
-        <form id="regForm">
-          <label>Username</label>
-          <input id="username" placeholder="e.g. ndamu10" autocomplete="username" />
-
-          <label>Email</label>
-          <input id="email" type="email" placeholder="e.g. ndamu@gmail.com" autocomplete="email" />
-
-          <label>Grade</label>
-          <select id="grade">
-            <option value="">Select Grade</option>
-            <option value="8">Grade 8</option>
-            <option value="9">Grade 9</option>
-            <option value="10">Grade 10</option>
-            <option value="11">Grade 11</option>
-            <option value="12">Grade 12</option>
-          </select>
-
-          <div class="row">
-            <div>
-              <label>Password</label>
-              <input id="password" type="password" placeholder="Password (6+ chars)" autocomplete="new-password" />
-            </div>
-            <div>
-              <label>Confirm Password</label>
-              <input id="confirmPassword" type="password" placeholder="Confirm password" autocomplete="new-password" />
-            </div>
-          </div>
-
-          <div class="row" style="margin-top:12px;">
-            <button class="btn" id="registerBtn" type="submit">Register</button>
-            <button class="ghost" id="toggleBtn" type="button">Show Password</button>
-          </div>
-
-          <p class="msg" id="msg"></p>
-
-          <p class="tiny" style="margin:8px 0 0 0;">By registering, you agree to use this platform respectfully.</p>
-
-          <div class="links">
-            <a href="login.html">Already have an account? Login</a>
-            <a href="forgot-password.html">Forgot password?</a>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <footer>© <span id="year"></span> Practice Online. All rights reserved.</footer>
+    <footer>© <span id="year"></span> Practice Online</footer>
   </div>
 
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
 
+    // ✅ CORRECT BACKEND URL
     const API = "https://practice-backend-msgn.onrender.com";
 
-    // show/hide password
-    const toggleBtn = document.getElementById("toggleBtn");
-    toggleBtn.addEventListener("click", () => {
-      const p = document.getElementById("password");
-      const c = document.getElementById("confirmPassword");
-      const show = p.type === "password";
-      p.type = show ? "text" : "password";
-      c.type = show ? "text" : "password";
-      toggleBtn.textContent = show ? "Hide Password" : "Show Password";
-    });
+    const msg = document.getElementById("msg");
+    const btn = document.getElementById("registerBtn");
 
     function setMsg(text, type=""){
-      const msg = document.getElementById("msg");
       msg.className = "msg " + type;
       msg.textContent = text;
     }
 
-    function validEmail(email){
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    }
+    document.getElementById("toggle").onclick = () => {
+      const p = password.type === "password";
+      password.type = p ? "text" : "password";
+      confirmPassword.type = p ? "text" : "password";
+    };
 
-    // register submit
-    const form = document.getElementById("regForm");
-    const btn = document.getElementById("registerBtn");
-
-    form.addEventListener("submit", async (e) => {
+    document.getElementById("regForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const username = document.getElementById("username").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const grade = document.getElementById("grade").value;
-      const password = document.getElementById("password").value;
-      const confirmPassword = document.getElementById("confirmPassword").value;
+      const username = usernameEl.value.trim();
+      const email = emailEl.value.trim();
+      const grade = gradeEl.value;
+      const password = passwordEl.value;
+      const confirmPassword = confirmPasswordEl.value;
 
-      if(!username || !email || !grade || !password || !confirmPassword){
-        setMsg("Please fill in all fields.", "error");
-        return;
-      }
-      if(!validEmail(email)){
-        setMsg("Please enter a valid email address.", "error");
-        return;
-      }
-      if(password.length < 6){
-        setMsg("Password must be at least 6 characters.", "error");
-        return;
-      }
-      if(password !== confirmPassword){
-        setMsg("Passwords do not match.", "error");
-        return;
-      }
+      if (!username || !email || !grade || !password || !confirmPassword)
+        return setMsg("All fields required.", "error");
+
+      if (password.length < 6)
+        return setMsg("Password must be at least 6 characters.", "error");
+
+      if (password !== confirmPassword)
+        return setMsg("Passwords do not match.", "error");
 
       btn.disabled = true;
       setMsg("Creating account...");
@@ -191,20 +131,28 @@
           body: JSON.stringify({ username, email, grade, password })
         });
 
-        const data = await res.json().catch(()=> ({}));
+        const text = await res.text();
+        let data = {};
+        try { data = JSON.parse(text); } catch {}
 
-        if(res.ok){
-          setMsg("Account created ✅ Please check your email to verify before logging in.", "ok");
-          setTimeout(() => window.location.href = "login.html", 1400);
+        if (res.ok) {
+          setMsg("Account created ✅ Check your email to verify.", "ok");
         } else {
-          setMsg(data.message || "Could not register.", "error");
+          setMsg((data.message || text) + ` (HTTP ${res.status})`, "error");
           btn.disabled = false;
         }
-      } catch (err) {
-        setMsg("Network error. Please try again.", "error");
+      } catch {
+        setMsg("Network error.", "error");
         btn.disabled = false;
       }
     });
+
+    // element refs
+    const usernameEl = document.getElementById("username");
+    const emailEl = document.getElementById("email");
+    const gradeEl = document.getElementById("grade");
+    const passwordEl = document.getElementById("password");
+    const confirmPasswordEl = document.getElementById("confirmPassword");
   </script>
 </body>
 </html>
