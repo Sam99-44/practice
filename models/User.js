@@ -10,6 +10,11 @@ const UserSchema = new mongoose.Schema(
     role: { type: String, enum: ["learner", "admin"], default: "learner" },
     grade: { type: Number, required: true, min: 8, max: 12 },
 
+    /* ✅ Email verification */
+    emailVerified: { type: Boolean, default: false },
+    verifyTokenHash: { type: String, default: "" },
+    verifyTokenExpiresAt: { type: Date, default: null },
+
     // ✅ Premium subscription fields (R95 for 30 days)
     premium: { type: Boolean, default: false },
     premiumActivatedAt: { type: Date, default: null },
@@ -17,11 +22,10 @@ const UserSchema = new mongoose.Schema(
 
     // ✅ Forgot password fields
     resetPasswordTokenHash: { type: String, default: null },
-    resetPasswordExpires: { type: Date, default: null }
+    resetPasswordExpires: { type: Date, default: null },
   },
   {
-    // ✅ createdAt = date registered, updatedAt = last update
-    timestamps: true
+    timestamps: true,
   }
 );
 
