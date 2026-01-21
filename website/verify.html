@@ -1,62 +1,27 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Verify Email</title>
-  <style>
-    body{font-family:Arial, sans-serif; background:#f6f7fb; margin:0; padding:24px;}
-    .card{max-width:520px; margin:40px auto; background:#fff; border:1px solid #e6e6e6; border-radius:14px; padding:18px; box-shadow:0 6px 18px rgba(0,0,0,0.06);}
-    .muted{color:#555;}
-    .ok{color:#065f46; font-weight:800;}
-    .error{color:#b91c1c; font-weight:800;}
-    a{color:#0b3c5d; font-weight:800; text-decoration:none;}
-    a:hover{text-decoration:underline;}
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h2>Email Verification</h2>
-    <p id="msg" class="muted">Verifying...</p>
-    <p id="next" class="muted"></p>
-  </div>
+<html>
+<body style="font-family:Arial;padding:20px">
+  <h2 id="msg">Verifying...</h2>
 
   <script>
     const API = "https://practice-backend-msgn.onrender.com";
-    const params = new URLSearchParams(location.search);
-
-    const token = params.get("token");
-    const email = params.get("email");
-
+    const qs = new URLSearchParams(location.search);
+    const token = qs.get("token");
+    const email = qs.get("email");
     const msg = document.getElementById("msg");
-    const next = document.getElementById("next");
 
     async function run(){
       if (!token || !email){
-        msg.className = "error";
-        msg.textContent = "Missing token or email in the link.";
+        msg.textContent = "Missing token or email.";
         return;
       }
 
-      try{
-        const url = `${API}/api/auth/verify?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`;
-        const res = await fetch(url);
-        const data = await res.json().catch(()=>({}));
+      const res = await fetch(`${API}/api/auth/verify?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`);
+      const data = await res.json().catch(()=>({}));
 
-        if (res.ok){
-          msg.className = "ok";
-          msg.textContent = data.message || "✅ Verified! You can now login.";
-          next.innerHTML = `Redirecting to <a href="login.html">login</a>...`;
-          setTimeout(() => window.location.href = "login.html", 2500);
-        } else {
-          msg.className = "error";
-          msg.textContent = data.message || "❌ Could not verify. The link may be expired.";
-          next.innerHTML = `Try logging in or request a new verification email.`;
-        }
-      } catch (e){
-        msg.className = "error";
-        msg.textContent = "Network error. Please try again.";
-      }
+      msg.textContent = data.message || (res.ok ? "Verified!" : "Could not verify.");
+
+      if (res.ok) setTimeout(()=> location.href = "login.html", 2000);
     }
 
     run();
