@@ -31,9 +31,7 @@
   </style>
 
   <script>
-    if (localStorage.getItem("token")) {
-      location.href = "learner-quizzes.html";
-    }
+    if (localStorage.getItem("token")) location.href = "learner-quizzes.html";
   </script>
 </head>
 
@@ -43,12 +41,12 @@
       <h1>Create Account</h1>
       <p class="sub">Register and we will send a verification email to activate your account.</p>
 
-      <form id="regForm">
+      <form id="regForm" novalidate>
         <label>Username</label>
-        <input id="username" placeholder="e.g. mm123" />
+        <input id="username" placeholder="e.g. sam123" autocomplete="username" />
 
         <label>Email</label>
-        <input id="email" type="email" placeholder="e.g. name@gmail.com" />
+        <input id="email" type="email" placeholder="e.g. name@gmail.com" autocomplete="email" />
 
         <label>Grade</label>
         <select id="grade">
@@ -63,17 +61,17 @@
         <div class="row">
           <div>
             <label>Password</label>
-            <input id="password" type="password" />
+            <input id="password" type="password" autocomplete="new-password" />
           </div>
           <div>
             <label>Confirm Password</label>
-            <input id="confirmPassword" type="password" />
+            <input id="confirmPassword" type="password" autocomplete="new-password" />
           </div>
         </div>
 
         <div class="row">
           <button class="btn" id="registerBtn" type="submit">Register</button>
-          <button class="ghost" type="button" id="toggle">Show Password</button>
+          <button class="ghost" id="toggleBtn" type="button">Show Password</button>
         </div>
 
         <p class="msg" id="msg"></p>
@@ -86,25 +84,35 @@
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
 
-    // ✅ CORRECT BACKEND URL
+    // ✅ MUST be Render backend:
     const API = "https://practice-backend-msgn.onrender.com";
 
-    const msg = document.getElementById("msg");
+    // elements
+    const form = document.getElementById("regForm");
     const btn = document.getElementById("registerBtn");
+    const msgEl = document.getElementById("msg");
+
+    const usernameEl = document.getElementById("username");
+    const emailEl = document.getElementById("email");
+    const gradeEl = document.getElementById("grade");
+    const passwordEl = document.getElementById("password");
+    const confirmPasswordEl = document.getElementById("confirmPassword");
+    const toggleBtn = document.getElementById("toggleBtn");
 
     function setMsg(text, type=""){
-      msg.className = "msg " + type;
-      msg.textContent = text;
+      msgEl.className = "msg " + type;
+      msgEl.textContent = text;
     }
 
-    document.getElementById("toggle").onclick = () => {
-      const p = password.type === "password";
-      password.type = p ? "text" : "password";
-      confirmPassword.type = p ? "text" : "password";
-    };
+    toggleBtn.addEventListener("click", () => {
+      const show = passwordEl.type === "password";
+      passwordEl.type = show ? "text" : "password";
+      confirmPasswordEl.type = show ? "text" : "password";
+      toggleBtn.textContent = show ? "Hide Password" : "Show Password";
+    });
 
-    document.getElementById("regForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault(); // ✅ prevents normal form POST to Netlify
 
       const username = usernameEl.value.trim();
       const email = emailEl.value.trim();
@@ -112,14 +120,15 @@
       const password = passwordEl.value;
       const confirmPassword = confirmPasswordEl.value;
 
-      if (!username || !email || !grade || !password || !confirmPassword)
+      if (!username || !email || !grade || !password || !confirmPassword) {
         return setMsg("All fields required.", "error");
-
-      if (password.length < 6)
+      }
+      if (password.length < 6) {
         return setMsg("Password must be at least 6 characters.", "error");
-
-      if (password !== confirmPassword)
+      }
+      if (password !== confirmPassword) {
         return setMsg("Passwords do not match.", "error");
+      }
 
       btn.disabled = true;
       setMsg("Creating account...");
@@ -128,7 +137,7 @@
         const res = await fetch(`${API}/api/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, email, grade, password })
+          body: JSON.stringify({ username, email, grade, password }),
         });
 
         const text = await res.text();
@@ -137,22 +146,17 @@
 
         if (res.ok) {
           setMsg("Account created ✅ Check your email to verify.", "ok");
+          // optional redirect:
+          // setTimeout(() => location.href = "login.html", 2500);
         } else {
-          setMsg((data.message || text) + ` (HTTP ${res.status})`, "error");
+          setMsg((data.message || text || "Could not register.") + ` (HTTP ${res.status})`, "error");
           btn.disabled = false;
         }
-      } catch {
-        setMsg("Network error.", "error");
+      } catch (err) {
+        setMsg("Network error. Please try again.", "error");
         btn.disabled = false;
       }
     });
-
-    // element refs
-    const usernameEl = document.getElementById("username");
-    const emailEl = document.getElementById("email");
-    const gradeEl = document.getElementById("grade");
-    const passwordEl = document.getElementById("password");
-    const confirmPasswordEl = document.getElementById("confirmPassword");
   </script>
 </body>
 </html>
