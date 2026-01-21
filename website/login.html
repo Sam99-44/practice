@@ -1,364 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Login | Practice Online</title>
+async function login(){
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  if (!username || !password) {
+    setMsg("Please enter username and password.", "error");
+    return;
+  }
 
-  <style>
-    :root{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --border:#e6e6e6;
-      --text:#0f172a;
-      --muted:#475569;
-      --accent:#0b3c5d;
-      --accent-soft:#e7eef5;
-      --radius:14px;
-      --shadow:0 6px 18px rgba(0,0,0,0.06);
-      --error:#b91c1c;
-      --ok:#065f46;
-    }
+  loginBtn.disabled = true;
+  setMsg("Logging in...");
 
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Inter,Arial,sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
-    .wrap{max-width:1000px; margin:0 auto; padding:24px;}
-
-    .topbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:12px;
-      flex-wrap:wrap;
-      gap:12px;
-    }
-    .brand{display:flex; align-items:center; gap:10px;}
-    .logo{
-      width:38px; height:38px; border-radius:10px;
-      background:var(--accent); color:white;
-      display:flex; align-items:center; justify-content:center;
-      font-weight:700; font-size:16px;
-    }
-    .brand span{display:block; font-size:13px; color:var(--muted);}
-
-    /* NAV (desktop) */
-    .nav{display:flex; align-items:center; gap:14px;}
-    .nav a{
-      text-decoration:none;
-      font-size:14px;
-      color:var(--text);
-      padding:6px 8px;
-      border-radius:8px;
-      transition:background 0.2s;
-    }
-    .nav a:hover{ background:var(--accent-soft); }
-    .nav a.active{ font-weight:600; color:var(--accent); }
-    .nav .nav-btn{
-      background:var(--accent);
-      color:white;
-      padding:8px 12px;
-      border-radius:10px;
-    }
-    .nav .logout{
-      background:var(--accent);
-      color:white;
-      border:none;
-      padding:8px 12px;
-      border-radius:10px;
-      cursor:pointer;
-      font-size:14px;
-    }
-
-    /* Mobile */
-    .menu-btn{
-      display:none;
-      border:1px solid var(--border);
-      background:var(--card);
-      color:var(--text);
-      padding:10px 12px;
-      border-radius:10px;
-      cursor:pointer;
-    }
-    .mobile-menu{
-      display:none;
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:10px;
-      margin-bottom:16px;
-    }
-    .mobile-menu a,
-    .mobile-menu button{
-      width:100%;
-      display:block;
-      text-align:left;
-      padding:10px 12px;
-      border-radius:10px;
-      border:none;
-      background:transparent;
-      color:var(--text);
-      text-decoration:none;
-      cursor:pointer;
-      font-size:14px;
-    }
-    .mobile-menu a:hover,
-    .mobile-menu button:hover{ background:var(--accent-soft); }
-    .mobile-menu a.active{ font-weight:600; color:var(--accent); }
-    .mobile-menu .logout{
-      background:var(--accent);
-      color:white;
-    }
-    @media (max-width: 720px){
-      .nav{ display:none; }
-      .menu-btn{ display:inline-flex; }
-      .mobile-menu.open{ display:block; }
-    }
-
-    /* Login card */
-    .center{
-      display:grid;
-      place-items:center;
-      margin-top:22px;
-    }
-    .card{
-      width:100%;
-      max-width:480px;
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      padding:22px;
-      box-shadow:var(--shadow);
-    }
-    h1{margin:0 0 8px 0; font-size:22px;}
-    .sub{margin:0 0 16px 0; color:var(--muted); line-height:1.6; font-size:14px;}
-    label{display:block; margin-top:10px; font-size:14px;}
-    input{
-      width:100%;
-      padding:10px;
-      margin-top:6px;
-      border-radius:10px;
-      border:1px solid #ddd;
-      outline:none;
-      font-size:14px;
-    }
-    .btn{
-      width:100%;
-      margin-top:14px;
-      background:var(--accent);
-      color:#fff;
-      border:none;
-      border-radius:10px;
-      padding:10px 12px;
-      cursor:pointer;
-      font-size:14px;
-      font-weight:600;
-    }
-    .btn:disabled{opacity:.7; cursor:not-allowed;}
-    .msg{margin-top:10px; font-size:14px;}
-    .msg.error{color:var(--error);}
-    .msg.ok{color:var(--ok);}
-    .links{
-      margin-top:12px;
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-      font-size:14px;
-    }
-    .links a{color:var(--accent); text-decoration:none;}
-    .links a:hover{text-decoration:underline;}
-
-    footer{
-      margin-top:24px;
-      text-align:center;
-      font-size:13px;
-      color:#64748b;
-    }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-
-    <!-- TOP BAR -->
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo">PO</div>
-        <div>
-          <strong>Practice Online</strong>
-          <span>Grades 8–12 Mathematics</span>
-        </div>
-      </div>
-
-      <!-- Desktop Nav -->
-      <nav class="nav">
-        <a href="about.html">About</a>
-        <a href="login.html" class="active" data-guest>Login</a>
-        <a href="register.html" class="nav-btn" data-guest>Register</a>
-
-        <a href="learner-quizzes.html" data-auth>Practice</a>
-        <a href="admin-quiz.html" data-admin>Admin</a>
-        <button class="logout" type="button" id="logoutBtn" data-auth>Logout</button>
-      </nav>
-
-      <!-- Mobile menu button -->
-      <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu">Menu</button>
-    </div>
-
-    <!-- Mobile Menu Panel -->
-    <div class="mobile-menu" id="mobileMenu">
-      <a href="about.html">About</a>
-      <a href="login.html" class="active" data-guest>Login</a>
-      <a href="register.html" data-guest>Register</a>
-
-      <a href="learner-quizzes.html" data-auth>Practice</a>
-      <a href="admin-quiz.html" data-admin>Admin</a>
-      <button class="logout" type="button" id="logoutBtnMobile" data-auth>Logout</button>
-    </div>
-
-    <!-- LOGIN CARD -->
-    <div class="center">
-      <div class="card">
-        <h1>Login</h1>
-        <p class="sub">Enter your username and password to continue.</p>
-
-        <label>Username</label>
-        <input id="username" placeholder="e.g. sam" autocomplete="username" />
-
-        <label>Password</label>
-        <input id="password" type="password" placeholder="Your password" autocomplete="current-password" />
-
-        <button class="btn" id="loginBtn" type="button">Login</button>
-        <p class="msg" id="msg"></p>
-
-        <div class="links">
-          <a href="register.html">Create an account</a>
-          <a href="forgot-password.html">Forgot password?</a>
-        </div>
-      </div>
-    </div>
-
-    <footer>
-      © <span id="year"></span> Practice Online. All rights reserved.
-    </footer>
-  </div>
-
-  <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
-
-    // ✅ IMPORTANT: Use Render backend (not localhost)
-    const API = "https://practice-backend-msgn.onrender.com";
-
-    // Mobile menu toggle
-    const menuBtn = document.getElementById("menuBtn");
-    const mobileMenu = document.getElementById("mobileMenu");
-    menuBtn?.addEventListener("click", () => mobileMenu.classList.toggle("open"));
-    mobileMenu?.addEventListener("click", (e) => {
-      if (e.target.tagName === "A") mobileMenu.classList.remove("open");
+  try {
+    const res = await fetch(`${API}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
     });
 
-    // Logout
-    function logout(){
-      localStorage.removeItem("token");
-      localStorage.removeItem("username");
-      window.location.href = "login.html";
-    }
-    document.getElementById("logoutBtn")?.addEventListener("click", logout);
-    document.getElementById("logoutBtnMobile")?.addEventListener("click", logout);
+    const data = await res.json().catch(()=> ({}));
 
-    // Show/hide nav items based on login and role
-    async function setupNav(){
-      const token = localStorage.getItem("token");
-      const authEls = document.querySelectorAll("[data-auth]");
-      const guestEls = document.querySelectorAll("[data-guest]");
-      const adminEls = document.querySelectorAll("[data-admin]");
-      adminEls.forEach(el => el.style.display = "none");
-
-      if (!token) {
-        authEls.forEach(el => el.style.display = "none");
-        guestEls.forEach(el => el.style.display = "");
-        return;
-      }
-
-      authEls.forEach(el => el.style.display = "");
-      guestEls.forEach(el => el.style.display = "none");
-
-      try{
-        const res = await fetch(`${API}/api/auth/me`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        const me = await res.json().catch(()=>null);
-        if (res.ok && me && me.role === "admin") {
-          adminEls.forEach(el => el.style.display = "");
-        }
-      }catch(e){}
-    }
-    setupNav();
-
-    // Login
-    const msg = document.getElementById("msg");
-    const loginBtn = document.getElementById("loginBtn");
-
-    function setMsg(text, type=""){
-      msg.className = "msg " + type;
-      msg.textContent = text;
+    // ✅ EMAIL NOT VERIFIED
+    if (res.status === 403) {
+      setMsg(
+        (data.message || "Please verify your email before logging in.") +
+        " Check your inbox/spam.",
+        "error"
+      );
+      loginBtn.disabled = false;
+      return;
     }
 
-    async function login(){
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value;
+    if(res.ok && data.token){
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("username", data.username || username);
 
-      if (!username || !password) {
-        setMsg("Please enter username and password.", "error");
-        return;
-      }
-
-      loginBtn.disabled = true;
-      setMsg("Logging in...");
-
-      try {
-        const res = await fetch(`${API}/api/auth/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password })
-        });
-
-        const data = await res.json().catch(()=> ({}));
-
-        if(res.ok && data.token){
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("username", data.username || username);
-
-          window.location.href = "learner-quizzes.html";
-        } else {
-          setMsg(data.message || "Login failed.", "error");
-          loginBtn.disabled = false;
-        }
-      } catch (err) {
-        setMsg("Network error. Please try again.", "error");
-        loginBtn.disabled = false;
-      }
+      window.location.href = "learner-quizzes.html";
+    } else {
+      setMsg(data.message || "Login failed.", "error");
+      loginBtn.disabled = false;
     }
-
-    loginBtn.addEventListener("click", login);
-
-    // Press Enter to login
-    document.getElementById("password").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") login();
-    });
-  </script>
-
-  <!-- ✅ Optional: if you want shared nav logic, keep this -->
-  <!-- If nav.js already handles nav + logout, you can remove duplicated nav code above. -->
-  <!-- <script src="nav.js"></script> -->
-</body>
-</html>
+  } catch (err) {
+    setMsg("Network error. Please try again.", "error");
+    loginBtn.disabled = false;
+  }
+}
