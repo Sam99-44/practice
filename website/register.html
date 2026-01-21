@@ -24,13 +24,14 @@
     button{padding:10px;border-radius:10px;border:none;font-weight:700;cursor:pointer}
     .btn{background:#0b3c5d;color:#fff}
     .ghost{background:#fff;border:1px solid #ddd}
-    .msg{margin-top:10px;font-size:14px}
+    .msg{margin-top:10px;font-size:14px;white-space:pre-wrap}
     .msg.error{color:#b91c1c}
     .msg.ok{color:#065f46}
     footer{text-align:center;margin-top:24px;font-size:13px;color:#64748b}
   </style>
 
   <script>
+    // If already logged in, go to learner page
     if (localStorage.getItem("token")) location.href = "learner-quizzes.html";
   </script>
 </head>
@@ -70,7 +71,8 @@
         </div>
 
         <div class="row">
-          <button class="btn" id="registerBtn" type="submit">Register</button>
+          <!-- IMPORTANT: type="button" so it NEVER submits to Netlify -->
+          <button class="btn" id="registerBtn" type="button">Register</button>
           <button class="ghost" id="toggleBtn" type="button">Show Password</button>
         </div>
 
@@ -84,11 +86,10 @@
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
 
-    // ✅ MUST be Render backend:
+    // ✅ Render backend base URL (CORRECT)
     const API = "https://practice-backend-msgn.onrender.com";
 
     // elements
-    const form = document.getElementById("regForm");
     const btn = document.getElementById("registerBtn");
     const msgEl = document.getElementById("msg");
 
@@ -104,6 +105,10 @@
       msgEl.textContent = text;
     }
 
+    // ✅ Prove JS is running (you should see this on the page)
+    console.log("REGISTER JS LOADED ✅");
+    setMsg("Ready ✅", "ok");
+
     toggleBtn.addEventListener("click", () => {
       const show = passwordEl.type === "password";
       passwordEl.type = show ? "text" : "password";
@@ -111,9 +116,8 @@
       toggleBtn.textContent = show ? "Hide Password" : "Show Password";
     });
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault(); // ✅ prevents normal form POST to Netlify
-
+    // ✅ Click handler (no form submit)
+    btn.addEventListener("click", async () => {
       const username = usernameEl.value.trim();
       const email = emailEl.value.trim();
       const grade = gradeEl.value;
@@ -145,9 +149,7 @@
         try { data = JSON.parse(text); } catch {}
 
         if (res.ok) {
-          setMsg("Account created ✅ Check your email to verify.", "ok");
-          // optional redirect:
-          // setTimeout(() => location.href = "login.html", 2500);
+          setMsg(data.message || "Account created ✅ Check your email to verify.", "ok");
         } else {
           setMsg((data.message || text || "Could not register.") + ` (HTTP ${res.status})`, "error");
           btn.disabled = false;
