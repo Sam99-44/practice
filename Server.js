@@ -1,4 +1,4 @@
-// server.js
+// server.js (UPDATED: SendGrid email verification + welcome email + strict email sending)
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -19,27 +19,35 @@ app.use(express.json());
 
 /* ------------------ SENDGRID ------------------ */
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || "";
-const FROM_EMAIL = process.env.FROM_EMAIL || ""; // e.g. no-reply@yourdomain.com
-const APP_URL = (process.env.APP_URL || "").replace(/\/$/, ""); // e.g. https://practiceonline.netlify.app
+const FROM_EMAIL = (process.env.FROM_EMAIL || "").trim(); // must be VERIFIED in SendGrid (Single Sender)
+const APP_URL = (process.env.APP_URL || "").replace(/\/$/, ""); // remove trailing /
 
 if (SENDGRID_API_KEY) sgMail.setApiKey(SENDGRID_API_KEY);
 
 async function sendEmail({ to, subject, html, text }) {
-  if (!SENDGRID_API_KEY || !FROM_EMAIL) {
-    console.warn("Email not sent (missing SENDGRID_API_KEY or FROM_EMAIL).");
-    return;
+  if (!SENDGRID_API_KEY) throw new Error("Missing SENDGRID_API_KEY on server");
+  if (!FROM_EMAIL) throw new Error("Missing FROM_EMAIL on server");
+
+  try {
+    await sgMail.send({
+      to,
+      from: FROM_EMAIL,
+      subject,
+      text: text || undefined,
+      html: html || undefined,
+    });
+  } catch (err) {
+    const detail =
+      err?.response?.body?.errors?.map((e) => e.message).join(" | ") ||
+      err?.message ||
+      "Unknown SendGrid error";
+    console.error("SendGrid send failed:", detail);
+    throw new Error(detail);
   }
-  await sgMail.send({
-    to,
-    from: FROM_EMAIL,
-    subject,
-    text: text || undefined,
-    html: html || undefined,
-  });
 }
 
 function makeToken() {
-  return crypto.randomBytes(32).toString("hex");
+  return crypto.randomBytes(32).toString("hex"); // raw token
 }
 function hashToken(raw) {
   return crypto.createHash("sha256").update(String(raw)).digest("hex");
@@ -67,7 +75,6 @@ app.use(
 
 app.options("*", cors());
 
-// clearer CORS error
 app.use((err, req, res, next) => {
   if (err?.message?.startsWith("CORS blocked")) {
     return res.status(403).json({ message: err.message });
@@ -126,7 +133,6 @@ function norm(s) {
   return clean(s).replace(/\s+/g, " ");
 }
 
-/* ✅ Typed-answer correctness (exact / contains / number_tolerance) */
 function isCorrectTextAnswer(q, typedRaw) {
   const typed = norm(typedRaw);
   const correct = norm(q?.correctText);
@@ -155,7 +161,7 @@ function isCorrectTextAnswer(q, typedRaw) {
 
 /* ------------------ AUTH ROUTES ------------------ */
 
-// ✅ Register: create user as NOT verified + send verification email
+// ✅ Register: create user as NOT verified + email verification link
 app.post("/api/auth/register", async (req, res) => {
   try {
     const { username, email, grade, password } = req.body;
@@ -169,11 +175,11 @@ app.post("/api/auth/register", async (req, res) => {
       return res.status(400).json({ message: "Grade must be 8–12" });
     }
 
-    const emailLower = String(email).toLowerCase().trim();
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLower);
+    const emailNorm = String(email).toLowerCase().trim();
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm);
     if (!emailOk) return res.status(400).json({ message: "Invalid email" });
 
-    if (String(password).length < 6) {
+    if (password.length < 6) {
       return res.status(400).json({ message: "Password too short" });
     }
 
@@ -181,7 +187,7 @@ app.post("/api/auth/register", async (req, res) => {
       return res.status(409).json({ message: "Username taken" });
     }
 
-    if (await User.findOne({ email: emailLower })) {
+    if (await User.findOne({ email: emailNorm })) {
       return res.status(409).json({ message: "Email exists" });
     }
 
@@ -192,9 +198,9 @@ app.post("/api/auth/register", async (req, res) => {
     const tokenHash = hashToken(rawToken);
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24h
 
-    await User.create({
+    const user = await User.create({
       username,
-      email: emailLower,
+      email: emailNorm,
       grade: g,
       passwordHash,
 
@@ -204,27 +210,37 @@ app.post("/api/auth/register", async (req, res) => {
       verifyTokenExpiresAt: expiresAt,
     });
 
+    // ✅ verification link (frontend page)
     const verifyLink = APP_URL
-      ? `${APP_URL}/verify.html?token=${encodeURIComponent(rawToken)}&email=${encodeURIComponent(emailLower)}`
-      : `${req.protocol}://${req.get("host")}/api/auth/verify?token=${encodeURIComponent(rawToken)}&email=${encodeURIComponent(emailLower)}`;
+      ? `${APP_URL}/verify.html?token=${rawToken}&email=${encodeURIComponent(user.email)}`
+      : `${req.protocol}://${req.get("host")}/verify.html?token=${rawToken}&email=${encodeURIComponent(user.email)}`;
 
-    await sendEmail({
-      to: emailLower,
-      subject: "Verify your email - Practice Online",
-      text: `Welcome to Practice Online!\n\nPlease verify your email:\n${verifyLink}\n\nThis link expires in 24 hours.`,
-      html: `
-        <div style="font-family:Arial,sans-serif;line-height:1.5">
-          <h2>Welcome to Practice Online 👋</h2>
-          <p>Please verify your email address to activate your account.</p>
-          <p>
-            <a href="${verifyLink}" style="display:inline-block;padding:10px 14px;background:#0b3c5d;color:#fff;text-decoration:none;border-radius:10px;font-weight:700">
-              Verify Email
-            </a>
-          </p>
-          <p style="color:#555">This link expires in 24 hours.</p>
-        </div>
-      `,
-    });
+    // ✅ send verification email (STRICT: if it fails, delete user + return error)
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "Verify your email - Practice Online",
+        text: `Welcome to Practice Online!\n\nPlease verify your email:\n${verifyLink}\n\nThis link expires in 24 hours.`,
+        html: `
+          <div style="font-family:Arial,sans-serif;line-height:1.5">
+            <h2>Welcome to Practice Online 👋</h2>
+            <p>Please verify your email address to activate your account.</p>
+            <p>
+              <a href="${verifyLink}" style="display:inline-block;padding:10px 14px;background:#0b3c5d;color:#fff;text-decoration:none;border-radius:10px;font-weight:700">
+                Verify Email
+              </a>
+            </p>
+            <p style="color:#555">This link expires in 24 hours.</p>
+          </div>
+        `,
+      });
+    } catch (e) {
+      await User.deleteOne({ _id: user._id }); // rollback
+      return res.status(500).json({
+        message: "Account not created because verification email could not be sent.",
+        error: String(e.message || e),
+      });
+    }
 
     return res.status(201).json({
       message: "Account created. Please check your email to verify your account.",
@@ -234,7 +250,7 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 
-// ✅ Verify email
+// ✅ Verify email (clicked from email)
 app.get("/api/auth/verify", async (req, res) => {
   try {
     const { token, email } = req.query;
@@ -243,11 +259,10 @@ app.get("/api/auth/verify", async (req, res) => {
       return res.status(400).json({ message: "Missing token or email" });
     }
 
-    const emailLower = String(email).toLowerCase().trim();
     const tokenHash = hashToken(token);
 
     const user = await User.findOne({
-      email: emailLower,
+      email: String(email).toLowerCase().trim(),
       verifyTokenHash: tokenHash,
       verifyTokenExpiresAt: { $gt: new Date() },
     });
@@ -261,26 +276,27 @@ app.get("/api/auth/verify", async (req, res) => {
     }
 
     user.emailVerified = true;
-
-    // ✅ IMPORTANT: use null, not ""
     user.verifyTokenHash = null;
     user.verifyTokenExpiresAt = null;
-
     await user.save();
 
-    // ✅ welcome email after verification
-    await sendEmail({
-      to: user.email,
-      subject: "Welcome to Practice Online 🎉",
-      text: `Hi ${user.username},\n\nYour email is verified and your account is ready.\nYou can now login and start practicing.\n\nPractice Online`,
-      html: `
-        <div style="font-family:Arial,sans-serif;line-height:1.5">
-          <h2>You're verified 🎉</h2>
-          <p>Hi <b>${user.username}</b>, your email is verified and your account is ready.</p>
-          <p>You can now login and start practicing.</p>
-        </div>
-      `,
-    });
+    // ✅ send welcome email (do NOT fail verification if welcome email fails)
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "Welcome to Practice Online 🎉",
+        text: `Hi ${user.username},\n\nYour email is verified and your account is ready.\nYou can now login and start practicing.\n\nPractice Online`,
+        html: `
+          <div style="font-family:Arial,sans-serif;line-height:1.5">
+            <h2>You're verified 🎉</h2>
+            <p>Hi <b>${user.username}</b>, your email is verified and your account is ready.</p>
+            <p>You can now login and start practicing.</p>
+          </div>
+        `,
+      });
+    } catch (e) {
+      console.warn("Welcome email failed:", e.message || e);
+    }
 
     return res.json({ message: "Email verified successfully. You can login now." });
   } catch (err) {
@@ -334,7 +350,6 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 
 /* ------------------ ADMIN ROUTES ------------------ */
 
-// ✅ Admin stats
 app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
   try {
     const [totalUsers, totalAssessments, quizzesByGrade] = await Promise.all([
@@ -374,7 +389,10 @@ app.get("/api/admin/attempts", authRequired, adminOnly, async (req, res) => {
     }
 
     if (username) {
-      const users = await User.find({ username: { $regex: String(username), $options: "i" } }).select("_id");
+      const users = await User.find({
+        username: { $regex: String(username), $options: "i" },
+      }).select("_id");
+
       const userIds = users.map((u) => u._id);
       q.userId = { $in: userIds.length ? userIds : [new mongoose.Types.ObjectId()] };
     }
@@ -409,7 +427,10 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
 app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   try {
     const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: "Invalid quiz id" });
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid quiz id" });
+    }
 
     const quiz = await Quiz.findById(id);
     if (!quiz) return res.status(404).json({ message: "Quiz not found" });
@@ -432,7 +453,10 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
 app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: "Invalid quiz id" });
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid quiz id" });
+    }
 
     const allowed = (({
       grade,
@@ -464,6 +488,7 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
     });
 
     if (!updated) return res.status(404).json({ message: "Quiz not found" });
+
     res.json(updated);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -473,7 +498,10 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
 app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: "Invalid quiz id" });
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid quiz id" });
+    }
 
     const deleted = await Quiz.findByIdAndDelete(id);
     if (!deleted) return res.status(404).json({ message: "Quiz not found" });
@@ -486,13 +514,14 @@ app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
 
 /* ------------------ RESULTS ROUTES ------------------ */
 
-// ✅ Save result + snapshot answers (MCQ + typed)
 app.post("/api/results", authRequired, async (req, res) => {
   try {
     const { quizId, answers, timeTakenSeconds } = req.body;
 
     if (!quizId) return res.status(400).json({ message: "quizId required" });
-    if (!mongoose.Types.ObjectId.isValid(quizId)) return res.status(400).json({ message: "Invalid quizId" });
+    if (!mongoose.Types.ObjectId.isValid(quizId)) {
+      return res.status(400).json({ message: "Invalid quizId" });
+    }
 
     const quiz = await Quiz.findById(quizId).select(
       "grade topic title questions isFrozen frozenAt availableFrom availableUntil"
@@ -501,7 +530,9 @@ app.post("/api/results", authRequired, async (req, res) => {
 
     const availability = isQuizAvailableForLearner(quiz);
     if (!availability.ok) {
-      return res.status(403).json({ message: "This assessment is currently unavailable. Please check back later." });
+      return res.status(403).json({
+        message: "This assessment is currently unavailable. Please check back later.",
+      });
     }
 
     const exists = await Result.findOne({ userId: req.user.userId, quizId });
@@ -524,7 +555,9 @@ app.post("/api/results", authRequired, async (req, res) => {
         const textAnswer = clean(a.textAnswer);
 
         const correctIndex =
-          type === "mcq" && Number.isFinite(Number(q?.correctIndex)) ? Number(q.correctIndex) : -1;
+          type === "mcq" && Number.isFinite(Number(q?.correctIndex))
+            ? Number(q.correctIndex)
+            : -1;
 
         const correctText = type === "text" ? clean(q?.correctText) : "";
 
@@ -577,14 +610,19 @@ app.post("/api/results", authRequired, async (req, res) => {
       total,
     });
   } catch (err) {
-    if (err.code === 11000) return res.status(409).json({ message: "Assessment already attempted" });
+    if (err.code === 11000) {
+      return res.status(409).json({ message: "Assessment already attempted" });
+    }
     res.status(500).json({ message: err.message });
   }
 });
 
 app.get("/api/results/my", authRequired, async (req, res) => {
   try {
-    const results = await Result.find({ userId: req.user.userId }).sort({ createdAt: -1 }).limit(200);
+    const results = await Result.find({ userId: req.user.userId })
+      .sort({ createdAt: -1 })
+      .limit(200);
+
     res.json(results);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -594,14 +632,19 @@ app.get("/api/results/my", authRequired, async (req, res) => {
 app.get("/api/results/:id", authRequired, async (req, res) => {
   try {
     const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: "Invalid result id" });
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid result id" });
+    }
 
     const result = await Result.findById(id);
     if (!result) return res.status(404).json({ message: "Result not found" });
 
     if (String(result.userId) !== String(req.user.userId)) {
       const me = await User.findById(req.user.userId).select("role");
-      if (!me || me.role !== "admin") return res.status(403).json({ message: "Not allowed" });
+      if (!me || me.role !== "admin") {
+        return res.status(403).json({ message: "Not allowed" });
+      }
     }
 
     res.json(result);
