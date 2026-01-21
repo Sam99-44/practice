@@ -10,23 +10,21 @@ const UserSchema = new mongoose.Schema(
     role: { type: String, enum: ["learner", "admin"], default: "learner" },
     grade: { type: Number, required: true, min: 8, max: 12 },
 
-    /* ✅ Email verification */
+    // ✅ Email verification
     emailVerified: { type: Boolean, default: false },
-    verifyTokenHash: { type: String, default: "" },
+    verifyTokenHash: { type: String, default: null },
     verifyTokenExpiresAt: { type: Date, default: null },
 
-    // ✅ Premium subscription fields (R95 for 30 days)
+    // ✅ Premium subscription fields
     premium: { type: Boolean, default: false },
     premiumActivatedAt: { type: Date, default: null },
     premiumExpiresAt: { type: Date, default: null },
 
     // ✅ Forgot password fields
     resetPasswordTokenHash: { type: String, default: null },
-    resetPasswordExpires: { type: Date, default: null },
+    resetPasswordExpires: { type: Date, default: null }
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export default mongoose.model("User", UserSchema);
