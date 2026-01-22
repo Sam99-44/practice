@@ -4,161 +4,131 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Create Account | Practice Online</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
   <style>
-    body{margin:0;font-family:Inter,Arial,sans-serif;background:#f6f7fb;color:#0f172a}
-    .wrap{max-width:1000px;margin:auto;padding:24px}
-    .card{max-width:520px;margin:auto;background:#fff;border:1px solid #e6e6e6;
-      border-radius:14px;padding:20px;box-shadow:0 6px 18px rgba(0,0,0,.06)}
-    h1{margin:0 0 8px}
-    .sub{color:#475569;font-size:14px;margin-bottom:16px}
-    label{display:block;margin-top:12px;font-size:14px}
-    input,select{width:100%;padding:10px;margin-top:6px;border-radius:10px;
-      border:1px solid #ddd;font-size:14px}
+    body{margin:0;font-family:Arial,sans-serif;background:#f6f7fb;color:#0f172a}
+    .card{max-width:520px;margin:40px auto;background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:20px}
+    label{display:block;margin-top:12px}
+    input,select{width:100%;padding:10px;margin-top:6px;border-radius:10px;border:1px solid #ddd}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
     @media(max-width:520px){.row{grid-template-columns:1fr}}
-    button{padding:10px;border-radius:10px;border:none;font-weight:700;cursor:pointer}
-    .btn{background:#0b3c5d;color:#fff}
-    .ghost{background:#fff;border:1px solid #ddd}
-    .msg{margin-top:10px;font-size:14px;white-space:pre-wrap}
-    .msg.error{color:#b91c1c}
-    .msg.ok{color:#065f46}
-    footer{text-align:center;margin-top:24px;font-size:13px;color:#64748b}
+    .btn{background:#0b3c5d;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;cursor:pointer}
+    .ghost{background:#fff;border:1px solid #ddd;border-radius:10px;padding:10px;font-weight:700;cursor:pointer}
+    .msg{margin-top:10px;white-space:pre-wrap}
+    .error{color:#b91c1c}
+    .ok{color:#065f46}
   </style>
-
-  <script>
-    // If already logged in, go to learner page
-    if (localStorage.getItem("token")) location.href = "learner-quizzes.html";
-  </script>
 </head>
-
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>Create Account</h1>
-      <p class="sub">Register and we will send a verification email to activate your account.</p>
 
-      <form id="regForm" novalidate>
-        <label>Username</label>
-        <input id="username" placeholder="e.g. sam123" autocomplete="username" />
+<div class="card">
+  <h2>Create Account</h2>
+  <p>Register and we will send a verification email to activate your account.</p>
 
-        <label>Email</label>
-        <input id="email" type="email" placeholder="e.g. name@gmail.com" autocomplete="email" />
+  <form id="regForm" onsubmit="return false;">
+    <label>Username</label>
+    <input id="username" />
 
-        <label>Grade</label>
-        <select id="grade">
-          <option value="">Select Grade</option>
-          <option value="8">Grade 8</option>
-          <option value="9">Grade 9</option>
-          <option value="10">Grade 10</option>
-          <option value="11">Grade 11</option>
-          <option value="12">Grade 12</option>
-        </select>
+    <label>Email</label>
+    <input id="email" type="email" />
 
-        <div class="row">
-          <div>
-            <label>Password</label>
-            <input id="password" type="password" autocomplete="new-password" />
-          </div>
-          <div>
-            <label>Confirm Password</label>
-            <input id="confirmPassword" type="password" autocomplete="new-password" />
-          </div>
-        </div>
+    <label>Grade</label>
+    <select id="grade">
+      <option value="">Select Grade</option>
+      <option value="8">Grade 8</option>
+      <option value="9">Grade 9</option>
+      <option value="10">Grade 10</option>
+      <option value="11">Grade 11</option>
+      <option value="12">Grade 12</option>
+    </select>
 
-        <div class="row">
-          <!-- IMPORTANT: type="button" so it NEVER submits to Netlify -->
-          <button class="btn" id="registerBtn" type="button">Register</button>
-          <button class="ghost" id="toggleBtn" type="button">Show Password</button>
-        </div>
-
-        <p class="msg" id="msg"></p>
-      </form>
+    <div class="row">
+      <div>
+        <label>Password</label>
+        <input id="password" type="password" />
+      </div>
+      <div>
+        <label>Confirm Password</label>
+        <input id="confirmPassword" type="password" />
+      </div>
     </div>
 
-    <footer>© <span id="year"></span> Practice Online</footer>
-  </div>
+    <div class="row">
+      <button id="registerBtn" class="btn" type="button">Register</button>
+      <button id="toggleBtn" class="ghost" type="button">Show Password</button>
+    </div>
 
-  <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
+    <p id="msg" class="msg"></p>
+  </form>
+</div>
 
-    // ✅ Render backend base URL (CORRECT)
-    const API = "https://practice-backend-msgn.onrender.com";
+<script>
+  const API = "https://practice-backend-msgn.onrender.com"; // ✅ MUST be Render
 
-    // elements
-    const btn = document.getElementById("registerBtn");
-    const msgEl = document.getElementById("msg");
+  const btn = document.getElementById("registerBtn");
+  const msg = document.getElementById("msg");
 
-    const usernameEl = document.getElementById("username");
-    const emailEl = document.getElementById("email");
-    const gradeEl = document.getElementById("grade");
-    const passwordEl = document.getElementById("password");
-    const confirmPasswordEl = document.getElementById("confirmPassword");
-    const toggleBtn = document.getElementById("toggleBtn");
+  const usernameEl = document.getElementById("username");
+  const emailEl = document.getElementById("email");
+  const gradeEl = document.getElementById("grade");
+  const passwordEl = document.getElementById("password");
+  const confirmEl = document.getElementById("confirmPassword");
+  const toggleBtn = document.getElementById("toggleBtn");
 
-    function setMsg(text, type=""){
-      msgEl.className = "msg " + type;
-      msgEl.textContent = text;
+  function setMsg(text, type="") {
+    msg.className = "msg " + type;
+    msg.textContent = text;
+  }
+
+  toggleBtn.addEventListener("click", () => {
+    const show = passwordEl.type === "password";
+    passwordEl.type = show ? "text" : "password";
+    confirmEl.type = show ? "text" : "password";
+    toggleBtn.textContent = show ? "Hide Password" : "Show Password";
+  });
+
+  btn.addEventListener("click", async () => {
+    const username = usernameEl.value.trim();
+    const email = emailEl.value.trim();
+    const grade = gradeEl.value;
+    const password = passwordEl.value;
+    const confirmPassword = confirmEl.value;
+
+    if (!username || !email || !grade || !password || !confirmPassword) {
+      return setMsg("All fields required.", "error");
+    }
+    if (password.length < 6) {
+      return setMsg("Password must be at least 6 characters.", "error");
+    }
+    if (password !== confirmPassword) {
+      return setMsg("Passwords do not match.", "error");
     }
 
-    // ✅ Prove JS is running (you should see this on the page)
-    console.log("REGISTER JS LOADED ✅");
-    setMsg("Ready ✅", "ok");
+    btn.disabled = true;
+    setMsg("Creating account...");
 
-    toggleBtn.addEventListener("click", () => {
-      const show = passwordEl.type === "password";
-      passwordEl.type = show ? "text" : "password";
-      confirmPasswordEl.type = show ? "text" : "password";
-      toggleBtn.textContent = show ? "Hide Password" : "Show Password";
-    });
+    try {
+      const res = await fetch(API + "/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, grade, password })
+      });
 
-    // ✅ Click handler (no form submit)
-    btn.addEventListener("click", async () => {
-      const username = usernameEl.value.trim();
-      const email = emailEl.value.trim();
-      const grade = gradeEl.value;
-      const password = passwordEl.value;
-      const confirmPassword = confirmPasswordEl.value;
+      const data = await res.json().catch(()=> ({}));
 
-      if (!username || !email || !grade || !password || !confirmPassword) {
-        return setMsg("All fields required.", "error");
-      }
-      if (password.length < 6) {
-        return setMsg("Password must be at least 6 characters.", "error");
-      }
-      if (password !== confirmPassword) {
-        return setMsg("Passwords do not match.", "error");
-      }
-
-      btn.disabled = true;
-      setMsg("Creating account...");
-
-      try {
-        const res = await fetch(`${API}/api/auth/register`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, email, grade, password }),
-        });
-
-        const text = await res.text();
-        let data = {};
-        try { data = JSON.parse(text); } catch {}
-
-        if (res.ok) {
-          setMsg(data.message || "Account created ✅ Check your email to verify.", "ok");
-        } else {
-          setMsg((data.message || text || "Could not register.") + ` (HTTP ${res.status})`, "error");
-          btn.disabled = false;
-        }
-      } catch (err) {
-        setMsg("Network error. Please try again.", "error");
+      if (res.ok) {
+        setMsg(data.message || "Account created ✅ Check your email to verify.", "ok");
+      } else {
+        setMsg((data.message || "Could not register.") + ` (HTTP ${res.status})`, "error");
         btn.disabled = false;
       }
-    });
-  </script>
+    } catch (e) {
+      setMsg("Network error / CORS blocked. Check Render + Netlify settings.", "error");
+      btn.disabled = false;
+    }
+  });
+
+  setMsg("Ready ✅", "ok");
+</script>
+
 </body>
 </html>
