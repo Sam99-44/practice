@@ -1,46 +1,88 @@
-async function login(){
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value;
+<!-- login.html (COPY & PASTE)
+     - Simple login page placeholder
+     - Calls: POST https://practice-backend-msgn.onrender.com/api/login
+     NOTE: Only use this if you already have /api/login on your backend.
+-->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login | Practice Online</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{margin:0;font-family:Arial,sans-serif;background:#f6f7fb;color:#0f172a}
+    .card{max-width:420px;margin:40px auto;background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:20px}
+    label{display:block;margin-top:12px;font-weight:600}
+    input{width:100%;padding:10px;margin-top:6px;border-radius:10px;border:1px solid #ddd}
+    .btn{margin-top:14px;background:#0b3c5d;color:#fff;border:none;border-radius:10px;padding:12px;font-weight:700;cursor:pointer;width:100%}
+    .msg{margin-top:12px;white-space:pre-wrap;font-size:14px}
+    .error{color:#b91c1c}
+    .ok{color:#065f46}
+  </style>
+</head>
+<body>
+<div class="card">
+  <h2>Login</h2>
 
-  if (!username || !password) {
-    setMsg("Please enter username and password.", "error");
-    return;
+  <label>Email</label>
+  <input id="email" type="email" placeholder="you@email.com" />
+
+  <label>Password</label>
+  <input id="password" type="password" placeholder="••••••••" />
+
+  <button id="loginBtn" class="btn" type="button">Login</button>
+  <p id="msg" class="msg"></p>
+</div>
+
+<script>
+  const API_BASE = "https://practice-backend-msgn.onrender.com";
+  const LOGIN_URL = API_BASE + "/api/login";
+
+  const loginBtn = document.getElementById("loginBtn");
+  const msg = document.getElementById("msg");
+
+  function setMsg(text, type="") {
+    msg.className = "msg " + type;
+    msg.textContent = text;
   }
 
-  loginBtn.disabled = true;
-  setMsg("Logging in...");
-
-  try {
-    const res = await fetch(`${API}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
-    });
-
-    const data = await res.json().catch(()=> ({}));
-
-    // ✅ EMAIL NOT VERIFIED
-    if (res.status === 403) {
-      setMsg(
-        (data.message || "Please verify your email before logging in.") +
-        " Check your inbox/spam.",
-        "error"
-      );
-      loginBtn.disabled = false;
-      return;
-    }
-
-    if(res.ok && data.token){
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("username", data.username || username);
-
-      window.location.href = "learner-quizzes.html";
-    } else {
-      setMsg(data.message || "Login failed.", "error");
-      loginBtn.disabled = false;
-    }
-  } catch (err) {
-    setMsg("Network error. Please try again.", "error");
-    loginBtn.disabled = false;
+  async function safeJson(res) {
+    try { return await res.json(); } catch { return {}; }
   }
-}
+
+  loginBtn.onclick = async () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!email || !password) return setMsg("Email and password are required.", "error");
+
+    loginBtn.disabled = true;
+    setMsg("Logging in...");
+
+    try {
+      const res = await fetch(LOGIN_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await safeJson(res);
+
+      if (res.ok) {
+        // store token if your backend returns it
+        if (data.token) localStorage.setItem("token", data.token);
+        setMsg("Login successful ✅", "ok");
+      } else {
+        setMsg((data.message || "Login failed.") + ` (HTTP ${res.status})`, "error");
+        loginBtn.disabled = false;
+      }
+    } catch (e) {
+      setMsg("Network error.", "error");
+      loginBtn.disabled = false;
+    }
+  };
+
+  setMsg("Ready ✅", "ok");
+</script>
+</body>
+</html>
