@@ -1,15 +1,9 @@
-<!-- register.html (COPY & PASTE)
-     - Adds "Student / Access Materials Only"
-     - If Student selected -> grade shows + backend will generate an 8-digit student number
-     - Calls: POST https://practice-backend-msgn.onrender.com/api/register
--->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Create Account | Practice Online</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
   <style>
     body{margin:0;font-family:Arial,sans-serif;background:#f6f7fb;color:#0f172a}
     .card{max-width:520px;margin:40px auto;background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:20px}
@@ -24,13 +18,14 @@
     .ok{color:#065f46}
     .small{font-size:12px;color:#475569;margin-top:8px}
     .hidden{display:none}
+    a{color:#0b3c5d}
   </style>
 </head>
 <body>
 
 <div class="card">
   <h2>Create Account</h2>
-  <p>Register and we will send you a welcome email.</p>
+  <p>Create your account, then login.</p>
 
   <label>Username</label>
   <input id="username" placeholder="Ndamu" autocomplete="username" />
@@ -69,12 +64,16 @@
   </div>
 
   <div class="row">
-    <button id="registerBtn" class="btn" type="button">Register</button>
+    <button id="registerBtn" class="btn" type="button">Create Account</button>
     <button id="toggleBtn" class="ghost" type="button">Show Password</button>
   </div>
 
   <p id="msg" class="msg"></p>
   <div id="debug" class="small"></div>
+
+  <p class="small">
+    Already have an account? <a href="login.html">Login here</a>
+  </p>
 </div>
 
 <script>
@@ -120,7 +119,7 @@
     const username = usernameEl.value.trim();
     const email = emailEl.value.trim();
     const accountType = accountTypeEl.value;
-    const grade = gradeEl.value; // required only if student
+    const grade = gradeEl.value;
     const password = passwordEl.value;
     const confirmPassword = confirmEl.value;
 
@@ -160,23 +159,17 @@
       const data = await safeJson(res);
 
       if (res.ok) {
-        if (data.studentNumber) {
-          setMsg(
-            `Account created ✅\nStudent Number: ${data.studentNumber}\nWelcome email sent ✅`,
-            "ok"
-          );
-        } else {
-          setMsg(
-            `Account created ✅\nAccount type: Materials Only\nWelcome email sent ✅`,
-            "ok"
-          );
-        }
+        let extra = "";
+        if (data.studentNumber) extra = "\nStudent Number: " + data.studentNumber;
+
+        setMsg((data.message || "Account created ✅") + extra + "\nRedirecting to login...", "ok");
+        setTimeout(() => window.location.href = "login.html", 1500);
       } else {
         setMsg((data.message || "Registration failed.") + ` (HTTP ${res.status})`, "error");
         registerBtn.disabled = false;
       }
     } catch (e) {
-      setMsg("Network error / CORS blocked. Please check backend + Netlify APP_URL.", "error");
+      setMsg("Network error / CORS blocked. Check backend and Netlify settings.", "error");
       registerBtn.disabled = false;
     }
   };
