@@ -1,7 +1,7 @@
-// server.js (FULL UPDATED - Copy & Paste)
-// - POST /api/register (works with your User model)
-// - Sends welcome email via SendGrid (no dynamic template)
-// - Keeps your existing SendGrid + CORS + health + test-email setup
+// server.js (COPY & PASTE FULL UPDATED)
+// ✅ Adds: 8-digit Student Number when accountType = "student"
+// ✅ Adds: POST /api/login
+// ✅ Keeps: /api/register + SendGrid welcome email + test-email + health
 
 import express from "express";
 import mongoose from "mongoose";
@@ -50,11 +50,21 @@ async function sendEmail({ to, subject, html, text }) {
   }
 }
 
+/* ------------------ HELPERS ------------------ */
 function makeToken() {
   return crypto.randomBytes(32).toString("hex");
 }
 function hashToken(raw) {
   return crypto.createHash("sha256").update(String(raw)).digest("hex");
+}
+
+// ✅ Generate a unique 8-digit student number (only digits)
+async function generateStudentNumber8() {
+  while (true) {
+    const num = String(Math.floor(10000000 + Math.random() * 90000000)); // 8 digits
+    const exists = await User.findOne({ studentNumber: num }).select("_id");
+    if (!exists) return num;
+  }
 }
 
 /* ------------------ CORS ------------------ */
@@ -132,18 +142,29 @@ async function adminOnly(req, res, next) {
 
 /* ------------------ AUTH ROUTES ------------------ */
 
-// ✅ REGISTER (matches your models/User.js exactly)
+// ✅ REGISTER (updated: accountType + studentNumber (8 digits))
 app.post("/api/register", async (req, res) => {
   try {
-    const { username, email, grade, password } = req.body;
+    const { username, email, grade, password, accountType } = req.body;
 
-    if (!username || !email || !grade || !password) {
-      return res.status(400).json({ message: "All fields are required." });
+    if (!username || !email || !password || !accountType) {
+      return res.status(400).json({ message: "Username, email, password, and account type are required." });
     }
 
-    const gradeNum = Number(grade);
-    if (!Number.isInteger(gradeNum) || gradeNum < 8 || gradeNum > 12) {
-      return res.status(400).json({ message: "Grade must be between 8 and 12." });
+    if (!["student", "materials"].includes(accountType)) {
+      return res.status(400).json({ message: "Invalid account type." });
+    }
+
+    // grade required only for student
+    let gradeNum = null;
+    if (accountType === "student") {
+      if (grade === undefined || grade === null || grade === "") {
+        return res.status(400).json({ message: "Grade is required for Student accounts." });
+      }
+      gradeNum = Number(grade);
+      if (!Number.isInteger(gradeNum) || gradeNum < 8 || gradeNum > 12) {
+        return res.status(400).json({ message: "Grade must be between 8 and 12." });
+      }
     }
 
     if (String(password).length < 6) {
@@ -154,47 +175,106 @@ app.post("/api/register", async (req, res) => {
     const cleanEmail = String(email).toLowerCase().trim();
 
     const existingEmail = await User.findOne({ email: cleanEmail });
-    if (existingEmail) {
-      return res.status(409).json({ message: "Email already registered." });
-    }
+    if (existingEmail) return res.status(409).json({ message: "Email already registered." });
 
     const existingUsername = await User.findOne({ username: cleanUsername });
-    if (existingUsername) {
-      return res.status(409).json({ message: "Username already taken." });
-    }
+    if (existingUsername) return res.status(409).json({ message: "Username already taken." });
 
     const passwordHash = await bcrypt.hash(password, 10);
+
+    // ✅ only digits (8)
+    const studentNumber =
+      accountType === "student" ? await generateStudentNumber8() : null;
 
     const user = await User.create({
       username: cleanUsername,
       email: cleanEmail,
       passwordHash,
-      grade: gradeNum,
       role: "learner",
-      emailVerified: true, // ✅ since you are not doing verification now
+
+      // ✅ new fields (must exist in User model)
+      accountType,
+      studentNumber,
+
+      grade: gradeNum,
+
+      emailVerified: true,
       verifyTokenHash: null,
       verifyTokenExpiresAt: null,
     });
 
-    // ✅ Welcome Email
+    const extraHtml =
+      user.accountType === "student"
+        ? `<p><strong>Your Student Number:</strong> ${user.studentNumber}</p>`
+        : `<p>You registered for <strong>Access Materials Only</strong>.</p>`;
+
     await sendEmail({
       to: user.email,
       subject: `Welcome ${user.username} 🎓`,
-      text: `Welcome ${user.username}! Your account has been created.`,
+      text:
+        user.accountType === "student"
+          ? `Welcome ${user.username}! Your Student Number is ${user.studentNumber}.`
+          : `Welcome ${user.username}! You registered for Access Materials Only.`,
       html: `
         <h2>Welcome ${user.username} 🎓</h2>
-        <p>Your student profile has been successfully created.</p>
-        <p><strong>Next steps:</strong><br/>
-        Log in to your student portal and start learning.</p>
+        <p>Your account has been successfully created.</p>
+        ${extraHtml}
         <p>Regards,<br/>Practice Online Team</p>
       `,
     });
 
     return res.status(201).json({
       message: "Account created ✅ Welcome email sent ✅",
+      accountType: user.accountType,
+      studentNumber: user.studentNumber, // null for materials
     });
   } catch (err) {
     console.error("Register error:", err.message);
+    return res.status(500).json({ message: "Server error. Please try again." });
+  }
+});
+
+// ✅ LOGIN (new)
+app.post("/api/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required." });
+    }
+
+    const cleanEmail = String(email).toLowerCase().trim();
+    const user = await User.findOne({ email: cleanEmail });
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password." });
+    }
+
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) {
+      return res.status(401).json({ message: "Invalid email or password." });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.json({
+      message: "Login successful ✅",
+      token,
+      user: {
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        accountType: user.accountType,
+        studentNumber: user.studentNumber,
+        grade: user.grade,
+      },
+    });
+  } catch (err) {
+    console.error("Login error:", err.message);
     return res.status(500).json({ message: "Server error. Please try again." });
   }
 });
