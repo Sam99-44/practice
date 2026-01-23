@@ -13,23 +13,24 @@
     @media(max-width:520px){.row{grid-template-columns:1fr}}
     .btn{background:#0b3c5d;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;cursor:pointer}
     .ghost{background:#fff;border:1px solid #ddd;border-radius:10px;padding:10px;font-weight:700;cursor:pointer}
-    .msg{margin-top:10px;white-space:pre-wrap}
+    .msg{margin-top:12px;white-space:pre-wrap}
     .error{color:#b91c1c}
     .ok{color:#065f46}
+    .small{font-size:12px;color:#475569;margin-top:8px}
   </style>
 </head>
 <body>
 
 <div class="card">
   <h2>Create Account</h2>
-  <p>Register and we will send a verification email to activate your account.</p>
+  <p>Register and we will send you a welcome email.</p>
 
   <form id="regForm" onsubmit="return false;">
     <label>Username</label>
-    <input id="username" />
+    <input id="username" autocomplete="username" />
 
     <label>Email</label>
-    <input id="email" type="email" />
+    <input id="email" type="email" autocomplete="email" />
 
     <label>Grade</label>
     <select id="grade">
@@ -44,11 +45,11 @@
     <div class="row">
       <div>
         <label>Password</label>
-        <input id="password" type="password" />
+        <input id="password" type="password" autocomplete="new-password" />
       </div>
       <div>
         <label>Confirm Password</label>
-        <input id="confirmPassword" type="password" />
+        <input id="confirmPassword" type="password" autocomplete="new-password" />
       </div>
     </div>
 
@@ -58,14 +59,20 @@
     </div>
 
     <p id="msg" class="msg"></p>
+    <div class="small" id="debug"></div>
   </form>
 </div>
 
 <script>
-  const API = "https://practice-backend-msgn.onrender.com"; // ✅ MUST be Render
+  // ✅ Your Render backend
+  const API_BASE = "https://practice-backend-msgn.onrender.com";
+
+  // ✅ Must match your server route
+  const REGISTER_PATH = "/api/auth/register";  // if your backend uses /api/register, change this line
 
   const btn = document.getElementById("registerBtn");
   const msg = document.getElementById("msg");
+  const debug = document.getElementById("debug");
 
   const usernameEl = document.getElementById("username");
   const emailEl = document.getElementById("email");
@@ -85,6 +92,10 @@
     confirmEl.type = show ? "text" : "password";
     toggleBtn.textContent = show ? "Hide Password" : "Show Password";
   });
+
+  async function safeJson(res) {
+    try { return await res.json(); } catch { return {}; }
+  }
 
   btn.addEventListener("click", async () => {
     const username = usernameEl.value.trim();
@@ -106,23 +117,26 @@
     btn.disabled = true;
     setMsg("Creating account...");
 
+    const url = API_BASE + REGISTER_PATH;
+    debug.textContent = "POST " + url;
+
     try {
-      const res = await fetch(API + "/api/auth/register", {
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, grade, password })
       });
 
-      const data = await res.json().catch(()=> ({}));
+      const data = await safeJson(res);
 
       if (res.ok) {
-        setMsg(data.message || "Account created ✅ Check your email to verify.", "ok");
+        setMsg(data.message || "Account created ✅ Check your email (Inbox/Spam).", "ok");
       } else {
         setMsg((data.message || "Could not register.") + ` (HTTP ${res.status})`, "error");
         btn.disabled = false;
       }
     } catch (e) {
-      setMsg("Network error / CORS blocked. Check Render + Netlify settings.", "error");
+      setMsg("Network error / CORS blocked. Please check your backend + Netlify domain in APP_URL.", "error");
       btn.disabled = false;
     }
   });
