@@ -1,4 +1,8 @@
-// server.js (UPDATED: SendGrid email verification + welcome email + TEST email)
+// server.js (FULL UPDATED - Copy & Paste)
+// - POST /api/register (works with your User model)
+// - Sends welcome email via SendGrid (no dynamic template)
+// - Keeps your existing SendGrid + CORS + health + test-email setup
+
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -82,15 +86,18 @@ app.get("/api/health", (req, res) =>
 );
 
 /* ------------------ TEST EMAIL (TEMP) ------------------ */
+// Use: https://practice-backend-msgn.onrender.com/test-email?to=you@gmail.com
 app.get("/test-email", async (req, res) => {
+  const to = (req.query.to || "practiceallonline@gmail.com").trim();
+
   try {
     await sendEmail({
-      to: "practiceallonline@gmail.com",
-      subject: "SendGrid test",
+      to,
+      subject: "SendGrid test ✅",
       text: "Email sending works 🚀",
       html: "<strong>Email sending works 🚀</strong>",
     });
-    res.send("Email sent successfully");
+    res.send("Email sent successfully to " + to);
   } catch (err) {
     console.error("Test email failed:", err.message);
     res.status(500).send("Email failed: " + err.message);
@@ -124,7 +131,73 @@ async function adminOnly(req, res, next) {
 }
 
 /* ------------------ AUTH ROUTES ------------------ */
-// (unchanged — your register / verify / login code stays the same)
+
+// ✅ REGISTER (matches your models/User.js exactly)
+app.post("/api/register", async (req, res) => {
+  try {
+    const { username, email, grade, password } = req.body;
+
+    if (!username || !email || !grade || !password) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    const gradeNum = Number(grade);
+    if (!Number.isInteger(gradeNum) || gradeNum < 8 || gradeNum > 12) {
+      return res.status(400).json({ message: "Grade must be between 8 and 12." });
+    }
+
+    if (String(password).length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters." });
+    }
+
+    const cleanUsername = String(username).trim();
+    const cleanEmail = String(email).toLowerCase().trim();
+
+    const existingEmail = await User.findOne({ email: cleanEmail });
+    if (existingEmail) {
+      return res.status(409).json({ message: "Email already registered." });
+    }
+
+    const existingUsername = await User.findOne({ username: cleanUsername });
+    if (existingUsername) {
+      return res.status(409).json({ message: "Username already taken." });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      username: cleanUsername,
+      email: cleanEmail,
+      passwordHash,
+      grade: gradeNum,
+      role: "learner",
+      emailVerified: true, // ✅ since you are not doing verification now
+      verifyTokenHash: null,
+      verifyTokenExpiresAt: null,
+    });
+
+    // ✅ Welcome Email
+    await sendEmail({
+      to: user.email,
+      subject: `Welcome ${user.username} 🎓`,
+      text: `Welcome ${user.username}! Your account has been created.`,
+      html: `
+        <h2>Welcome ${user.username} 🎓</h2>
+        <p>Your student profile has been successfully created.</p>
+        <p><strong>Next steps:</strong><br/>
+        Log in to your student portal and start learning.</p>
+        <p>Regards,<br/>Practice Online Team</p>
+      `,
+    });
+
+    return res.status(201).json({
+      message: "Account created ✅ Welcome email sent ✅",
+    });
+  } catch (err) {
+    console.error("Register error:", err.message);
+    return res.status(500).json({ message: "Server error. Please try again." });
+  }
+});
 
 /* ------------------ DB + START ------------------ */
 const PORT = process.env.PORT || 5000;
