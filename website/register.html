@@ -2,144 +2,190 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Create Account | Practice Online</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
-    body{margin:0;font-family:Arial,sans-serif;background:#f6f7fb;color:#0f172a}
-    .card{max-width:520px;margin:40px auto;background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:20px}
-    label{display:block;margin-top:12px}
-    input,select{width:100%;padding:10px;margin-top:6px;border-radius:10px;border:1px solid #ddd}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-    @media(max-width:520px){.row{grid-template-columns:1fr}}
-    .btn{background:#0b3c5d;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;cursor:pointer}
-    .ghost{background:#fff;border:1px solid #ddd;border-radius:10px;padding:10px;font-weight:700;cursor:pointer}
-    .msg{margin-top:12px;white-space:pre-wrap}
-    .error{color:#b91c1c}
-    .ok{color:#065f46}
-    .small{font-size:12px;color:#475569;margin-top:8px}
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f6f7fb;
+      color: #0f172a;
+    }
+
+    .card {
+      max-width: 520px;
+      margin: 40px auto;
+      background: #fff;
+      border: 1px solid #e6e6e6;
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: 600;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 520px) {
+      .row { grid-template-columns: 1fr; }
+    }
+
+    .btn {
+      background: #0b3c5d;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .ghost {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .msg {
+      margin-top: 12px;
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+
+    .ok { color: #065f46; }
+    .error { color: #b91c1c; }
   </style>
 </head>
+
 <body>
 
 <div class="card">
   <h2>Create Account</h2>
   <p>Register and we will send you a welcome email.</p>
 
-  <form id="regForm" onsubmit="return false;">
-    <label>Username</label>
-    <input id="username" autocomplete="username" />
+  <label>Username</label>
+  <input id="username" placeholder="Ndamu" />
 
-    <label>Email</label>
-    <input id="email" type="email" autocomplete="email" />
+  <label>Email</label>
+  <input id="email" type="email" placeholder="student@email.com" />
 
-    <label>Grade</label>
-    <select id="grade">
-      <option value="">Select Grade</option>
-      <option value="8">Grade 8</option>
-      <option value="9">Grade 9</option>
-      <option value="10">Grade 10</option>
-      <option value="11">Grade 11</option>
-      <option value="12">Grade 12</option>
-    </select>
+  <label>Grade</label>
+  <select id="grade">
+    <option value="">Select Grade</option>
+    <option value="8">Grade 8</option>
+    <option value="9">Grade 9</option>
+    <option value="10">Grade 10</option>
+    <option value="11">Grade 11</option>
+    <option value="12">Grade 12</option>
+  </select>
 
-    <div class="row">
-      <div>
-        <label>Password</label>
-        <input id="password" type="password" autocomplete="new-password" />
-      </div>
-      <div>
-        <label>Confirm Password</label>
-        <input id="confirmPassword" type="password" autocomplete="new-password" />
-      </div>
+  <div class="row">
+    <div>
+      <label>Password</label>
+      <input id="password" type="password" />
     </div>
-
-    <div class="row">
-      <button id="registerBtn" class="btn" type="button">Register</button>
-      <button id="toggleBtn" class="ghost" type="button">Show Password</button>
+    <div>
+      <label>Confirm Password</label>
+      <input id="confirmPassword" type="password" />
     </div>
+  </div>
 
-    <p id="msg" class="msg"></p>
-    <div class="small" id="debug"></div>
-  </form>
+  <div class="row">
+    <button id="registerBtn" class="btn">Register</button>
+    <button id="toggleBtn" class="ghost" type="button">Show Password</button>
+  </div>
+
+  <p id="msg" class="msg"></p>
 </div>
 
 <script>
-  // ✅ Your Render backend
+  // ✅ YOUR RENDER BACKEND
   const API_BASE = "https://practice-backend-msgn.onrender.com";
 
-  // ✅ Must match your server route
-  const REGISTER_PATH = "/api/auth/register";  // if your backend uses /api/register, change this line
-
-  const btn = document.getElementById("registerBtn");
-  const msg = document.getElementById("msg");
-  const debug = document.getElementById("debug");
-
-  const usernameEl = document.getElementById("username");
-  const emailEl = document.getElementById("email");
-  const gradeEl = document.getElementById("grade");
-  const passwordEl = document.getElementById("password");
-  const confirmEl = document.getElementById("confirmPassword");
+  const registerBtn = document.getElementById("registerBtn");
   const toggleBtn = document.getElementById("toggleBtn");
+  const msg = document.getElementById("msg");
 
-  function setMsg(text, type="") {
+  function setMsg(text, type = "") {
     msg.className = "msg " + type;
     msg.textContent = text;
   }
 
-  toggleBtn.addEventListener("click", () => {
-    const show = passwordEl.type === "password";
-    passwordEl.type = show ? "text" : "password";
-    confirmEl.type = show ? "text" : "password";
+  toggleBtn.onclick = () => {
+    const pw = document.getElementById("password");
+    const cpw = document.getElementById("confirmPassword");
+    const show = pw.type === "password";
+    pw.type = show ? "text" : "password";
+    cpw.type = show ? "text" : "password";
     toggleBtn.textContent = show ? "Hide Password" : "Show Password";
-  });
+  };
 
-  async function safeJson(res) {
-    try { return await res.json(); } catch { return {}; }
-  }
-
-  btn.addEventListener("click", async () => {
-    const username = usernameEl.value.trim();
-    const email = emailEl.value.trim();
-    const grade = gradeEl.value;
-    const password = passwordEl.value;
-    const confirmPassword = confirmEl.value;
+  registerBtn.onclick = async () => {
+    const username = document.getElementById("username").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const grade = document.getElementById("grade").value;
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
 
     if (!username || !email || !grade || !password || !confirmPassword) {
-      return setMsg("All fields required.", "error");
+      return setMsg("All fields are required.", "error");
     }
+
     if (password.length < 6) {
       return setMsg("Password must be at least 6 characters.", "error");
     }
+
     if (password !== confirmPassword) {
       return setMsg("Passwords do not match.", "error");
     }
 
-    btn.disabled = true;
+    registerBtn.disabled = true;
     setMsg("Creating account...");
 
-    const url = API_BASE + REGISTER_PATH;
-    debug.textContent = "POST " + url;
-
     try {
-      const res = await fetch(url, {
+      const res = await fetch(API_BASE + "/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, grade, password })
       });
 
-      const data = await safeJson(res);
+      const data = await res.json();
 
       if (res.ok) {
-        setMsg(data.message || "Account created ✅ Check your email (Inbox/Spam).", "ok");
+        setMsg("Account created ✅ Check your email.", "ok");
       } else {
-        setMsg((data.message || "Could not register.") + ` (HTTP ${res.status})`, "error");
-        btn.disabled = false;
+        setMsg((data.message || "Registration failed.") + ` (HTTP ${res.status})`, "error");
+        registerBtn.disabled = false;
       }
-    } catch (e) {
-      setMsg("Network error / CORS blocked. Please check your backend + Netlify domain in APP_URL.", "error");
-      btn.disabled = false;
+
+    } catch (err) {
+      setMsg("Network error. Backend unreachable.", "error");
+      registerBtn.disabled = false;
     }
-  });
+  };
 
   setMsg("Ready ✅", "ok");
 </script>
