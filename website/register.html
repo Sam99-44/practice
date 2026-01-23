@@ -1,3 +1,8 @@
+<!-- register.html (FULL UPDATED - Copy & Paste)
+     - Uses Render backend
+     - Calls POST /api/register (matches server.js above)
+     - Shows clear messages
+-->
 <!doctype html>
 <html lang="en">
 <head>
@@ -6,80 +11,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f6f7fb;
-      color: #0f172a;
-    }
-
-    .card {
-      max-width: 520px;
-      margin: 40px auto;
-      background: #fff;
-      border: 1px solid #e6e6e6;
-      border-radius: 14px;
-      padding: 20px;
-    }
-
-    label {
-      display: block;
-      margin-top: 12px;
-      font-weight: 600;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-      font-size: 14px;
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    @media (max-width: 520px) {
-      .row { grid-template-columns: 1fr; }
-    }
-
-    .btn {
-      background: #0b3c5d;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      padding: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      width: 100%;
-    }
-
-    .ghost {
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      width: 100%;
-    }
-
-    .msg {
-      margin-top: 12px;
-      white-space: pre-wrap;
-      font-size: 14px;
-    }
-
-    .ok { color: #065f46; }
-    .error { color: #b91c1c; }
+    body{margin:0;font-family:Arial,sans-serif;background:#f6f7fb;color:#0f172a}
+    .card{max-width:520px;margin:40px auto;background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:20px}
+    label{display:block;margin-top:12px;font-weight:600}
+    input,select{width:100%;padding:10px;margin-top:6px;border-radius:10px;border:1px solid #ddd}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    @media(max-width:520px){.row{grid-template-columns:1fr}}
+    .btn{background:#0b3c5d;color:#fff;border:none;border-radius:10px;padding:12px;font-weight:700;cursor:pointer;width:100%}
+    .ghost{background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px;font-weight:700;cursor:pointer;width:100%}
+    .msg{margin-top:12px;white-space:pre-wrap;font-size:14px}
+    .error{color:#b91c1c}
+    .ok{color:#065f46}
+    .small{font-size:12px;color:#475569;margin-top:8px}
   </style>
 </head>
-
 <body>
 
 <div class="card">
@@ -114,22 +59,24 @@
   </div>
 
   <div class="row">
-    <button id="registerBtn" class="btn">Register</button>
+    <button id="registerBtn" class="btn" type="button">Register</button>
     <button id="toggleBtn" class="ghost" type="button">Show Password</button>
   </div>
 
   <p id="msg" class="msg"></p>
+  <div id="debug" class="small"></div>
 </div>
 
 <script>
-  // ✅ YOUR RENDER BACKEND
   const API_BASE = "https://practice-backend-msgn.onrender.com";
+  const REGISTER_URL = API_BASE + "/api/register"; // ✅ IMPORTANT
 
   const registerBtn = document.getElementById("registerBtn");
   const toggleBtn = document.getElementById("toggleBtn");
   const msg = document.getElementById("msg");
+  const debug = document.getElementById("debug");
 
-  function setMsg(text, type = "") {
+  function setMsg(text, type="") {
     msg.className = "msg " + type;
     msg.textContent = text;
   }
@@ -143,6 +90,10 @@
     toggleBtn.textContent = show ? "Hide Password" : "Show Password";
   };
 
+  async function safeJson(res) {
+    try { return await res.json(); } catch { return {}; }
+  }
+
   registerBtn.onclick = async () => {
     const username = document.getElementById("username").value.trim();
     const email = document.getElementById("email").value.trim();
@@ -153,36 +104,39 @@
     if (!username || !email || !grade || !password || !confirmPassword) {
       return setMsg("All fields are required.", "error");
     }
-
     if (password.length < 6) {
       return setMsg("Password must be at least 6 characters.", "error");
     }
-
     if (password !== confirmPassword) {
       return setMsg("Passwords do not match.", "error");
     }
 
     registerBtn.disabled = true;
     setMsg("Creating account...");
+    debug.textContent = "POST " + REGISTER_URL;
 
     try {
-      const res = await fetch(API_BASE + "/api/register", {
+      const res = await fetch(REGISTER_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, grade, password })
+        body: JSON.stringify({
+          username,
+          email,
+          grade: Number(grade),
+          password
+        })
       });
 
-      const data = await res.json();
+      const data = await safeJson(res);
 
       if (res.ok) {
-        setMsg("Account created ✅ Check your email.", "ok");
+        setMsg(data.message || "Account created ✅ Check your email (Inbox/Spam).", "ok");
       } else {
         setMsg((data.message || "Registration failed.") + ` (HTTP ${res.status})`, "error");
         registerBtn.disabled = false;
       }
-
-    } catch (err) {
-      setMsg("Network error. Backend unreachable.", "error");
+    } catch (e) {
+      setMsg("Network error / CORS blocked. Please check backend + Netlify APP_URL.", "error");
       registerBtn.disabled = false;
     }
   };
