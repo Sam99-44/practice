@@ -1,7 +1,8 @@
-// server.js (COPY & PASTE FULL UPDATED)
-// ✅ Adds: 8-digit Student Number when accountType = "student"
-// ✅ Adds: POST /api/login
-// ✅ Keeps: /api/register + SendGrid welcome email + test-email + health
+// server.js (FULL UPDATED - COPY & PASTE)
+// ✅ Student register: accountType + 8-digit studentNumber
+// ✅ Login: /api/login
+// ✅ Password reset (OTP): /api/forgot-password-otp + /api/reset-password-otp
+// ✅ SendGrid: welcome email + test-email + health
 
 import express from "express";
 import mongoose from "mongoose";
@@ -24,7 +25,7 @@ app.use(express.json());
 /* ------------------ SENDGRID ------------------ */
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || "";
 const FROM_EMAIL = (process.env.FROM_EMAIL || "").trim(); // verified in SendGrid
-const APP_URL = (process.env.APP_URL || "").replace(/\/$/, "");
+const APP_URL = (process.env.APP_URL || "").replace(/\/$/, ""); // your Netlify URL
 
 if (SENDGRID_API_KEY) sgMail.setApiKey(SENDGRID_API_KEY);
 
@@ -58,13 +59,18 @@ function hashToken(raw) {
   return crypto.createHash("sha256").update(String(raw)).digest("hex");
 }
 
-// ✅ Generate a unique 8-digit student number (only digits)
+// ✅ Generate unique 8-digit student number (digits only)
 async function generateStudentNumber8() {
   while (true) {
     const num = String(Math.floor(10000000 + Math.random() * 90000000)); // 8 digits
     const exists = await User.findOne({ studentNumber: num }).select("_id");
     if (!exists) return num;
   }
+}
+
+// ✅ Generate 6-digit OTP
+function makeOtp6() {
+  return String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
 }
 
 /* ------------------ CORS ------------------ */
@@ -142,13 +148,15 @@ async function adminOnly(req, res, next) {
 
 /* ------------------ AUTH ROUTES ------------------ */
 
-// ✅ REGISTER (updated: accountType + studentNumber (8 digits))
+// ✅ REGISTER (accountType + studentNumber)
 app.post("/api/register", async (req, res) => {
   try {
     const { username, email, grade, password, accountType } = req.body;
 
     if (!username || !email || !password || !accountType) {
-      return res.status(400).json({ message: "Username, email, password, and account type are required." });
+      return res.status(400).json({
+        message: "Username, email, password, and account type are required.",
+      });
     }
 
     if (!["student", "materials"].includes(accountType)) {
@@ -182,7 +190,6 @@ app.post("/api/register", async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // ✅ only digits (8)
     const studentNumber =
       accountType === "student" ? await generateStudentNumber8() : null;
 
@@ -191,13 +198,9 @@ app.post("/api/register", async (req, res) => {
       email: cleanEmail,
       passwordHash,
       role: "learner",
-
-      // ✅ new fields (must exist in User model)
       accountType,
       studentNumber,
-
       grade: gradeNum,
-
       emailVerified: true,
       verifyTokenHash: null,
       verifyTokenExpiresAt: null,
@@ -226,7 +229,7 @@ app.post("/api/register", async (req, res) => {
     return res.status(201).json({
       message: "Account created ✅ Welcome email sent ✅",
       accountType: user.accountType,
-      studentNumber: user.studentNumber, // null for materials
+      studentNumber: user.studentNumber,
     });
   } catch (err) {
     console.error("Register error:", err.message);
@@ -234,7 +237,7 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-// ✅ LOGIN (new)
+// ✅ LOGIN
 app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -276,6 +279,90 @@ app.post("/api/login", async (req, res) => {
   } catch (err) {
     console.error("Login error:", err.message);
     return res.status(500).json({ message: "Server error. Please try again." });
+  }
+});
+
+/* ------------------ PASSWORD RESET (OTP) ------------------ */
+
+// ✅ Send 6-digit OTP to email
+app.post("/api/forgot-password-otp", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) return res.status(400).json({ message: "Email is required." });
+
+    const cleanEmail = String(email).toLowerCase().trim();
+    const user = await User.findOne({ email: cleanEmail });
+
+    // security: always same response
+    if (!user) {
+      return res.json({ message: "If the email exists, a reset code has been sent ✅" });
+    }
+
+    const otp = makeOtp6();
+    const otpHash = hashToken(otp);
+
+    user.resetPasswordTokenHash = otpHash;
+    user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    await user.save();
+
+    await sendEmail({
+      to: user.email,
+      subject: "Your password reset code (10 mins) 🔐",
+      text: `Your Practice Online reset code is: ${otp}\nThis code expires in 10 minutes.`,
+      html: `
+        <h2>Password Reset Code</h2>
+        <p>Your reset code is:</p>
+        <h1 style="letter-spacing:3px">${otp}</h1>
+        <p>This code expires in <strong>10 minutes</strong>.</p>
+        <p>If you did not request this, ignore this email.</p>
+      `,
+    });
+
+    return res.json({ message: "If the email exists, a reset code has been sent ✅" });
+  } catch (err) {
+    console.error("forgot-password-otp error:", err.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ✅ Verify OTP + set new password
+app.post("/api/reset-password-otp", async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ message: "Email, code, and new password are required." });
+    }
+
+    if (String(newPassword).length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters." });
+    }
+
+    const cleanEmail = String(email).toLowerCase().trim();
+    const user = await User.findOne({ email: cleanEmail });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid code or expired." });
+    }
+
+    const codeHash = hashToken(String(code).trim());
+    const isExpired = !user.resetPasswordExpires || user.resetPasswordExpires.getTime() < Date.now();
+    const isMatch = user.resetPasswordTokenHash && user.resetPasswordTokenHash === codeHash;
+
+    if (!isMatch || isExpired) {
+      return res.status(400).json({ message: "Invalid code or expired." });
+    }
+
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    user.resetPasswordTokenHash = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    return res.json({ message: "Password reset successful ✅ You can now login." });
+  } catch (err) {
+    console.error("reset-password-otp error:", err.message);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
