@@ -1,188 +1,84 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Create Account | Practice Online</title>
-  <style>
-    body{margin:0;font-family:Arial,sans-serif;background:#f6f7fb;color:#0f172a}
-    .card{max-width:520px;margin:40px auto;background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:20px}
-    label{display:block;margin-top:12px;font-weight:600}
-    input,select{width:100%;padding:10px;margin-top:6px;border-radius:10px;border:1px solid #ddd}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-    @media(max-width:520px){.row{grid-template-columns:1fr}}
-    .btn{background:#0b3c5d;color:#fff;border:none;border-radius:10px;padding:12px;font-weight:700;cursor:pointer}
-    .ghost{background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px;font-weight:700;cursor:pointer}
-    .msg{margin-top:12px;white-space:pre-wrap;font-size:14px}
-    .error{color:#b91c1c}
-    .ok{color:#065f46}
-    .small{font-size:12px;color:#475569;margin-top:8px;word-break:break-word}
-    .hidden{display:none}
-    a{color:#0b3c5d}
-  </style>
+<meta charset="UTF-8">
+<title>Create Account</title>
+<style>
+body{font-family:Arial;background:#f6f7fb}
+.card{max-width:520px;margin:40px auto;background:#fff;padding:20px;border-radius:12px}
+input,select,button{width:100%;padding:10px;margin-top:8px}
+button{background:#0b3c5d;color:#fff;border:none;border-radius:8px;font-weight:bold}
+.msg{margin-top:10px}
+.error{color:red}
+.ok{color:green}
+</style>
 </head>
 <body>
 
 <div class="card">
-  <h2>Create Account</h2>
-  <p>Register and we will send you a welcome email.</p>
+<h2>Create Account</h2>
 
-  <form id="regForm" onsubmit="return false;">
-    <label>Username</label>
-    <input id="username" autocomplete="username" />
+<label>Username</label>
+<input id="username">
 
-    <label>Email</label>
-    <input id="email" type="email" autocomplete="email" />
+<label>Email</label>
+<input id="email" type="email">
 
-    <label>Account Type</label>
-    <!-- ✅ IMPORTANT: value must be exactly "student" or "materials" -->
-    <select id="accountType">
-      <option value="">Select Option</option>
-      <option value="student">Student</option>
-      <option value="materials">Access Materials Only</option>
-    </select>
+<label>Account Type</label>
+<select id="accountType">
+  <option value="">Select</option>
+  <option value="student">Student</option>
+  <option value="materials">Access Materials Only</option>
+</select>
 
-    <div id="gradeWrap" class="hidden">
-      <label>Grade</label>
-      <select id="grade">
-        <option value="">Select Grade</option>
-        <option value="8">Grade 8</option>
-        <option value="9">Grade 9</option>
-        <option value="10">Grade 10</option>
-        <option value="11">Grade 11</option>
-        <option value="12">Grade 12</option>
-      </select>
-    </div>
+<div id="gradeWrap" style="display:none">
+  <label>Grade</label>
+  <select id="grade">
+    <option value="">Select Grade</option>
+    <option value="8">Grade 8</option>
+    <option value="9">Grade 9</option>
+    <option value="10">Grade 10</option>
+    <option value="11">Grade 11</option>
+    <option value="12">Grade 12</option>
+  </select>
+</div>
 
-    <div class="row">
-      <div>
-        <label>Password</label>
-        <input id="password" type="password" autocomplete="new-password" />
-      </div>
-      <div>
-        <label>Confirm Password</label>
-        <input id="confirmPassword" type="password" autocomplete="new-password" />
-      </div>
-    </div>
+<label>Password</label>
+<input id="password" type="password">
 
-    <div class="row">
-      <button id="registerBtn" class="btn" type="button">Register</button>
-      <button id="toggleBtn" class="ghost" type="button">Show Password</button>
-    </div>
-
-    <p id="msg" class="msg"></p>
-    <div id="debug" class="small"></div>
-
-    <p class="small">
-      Already have an account? <a href="login.html">Login</a>
-    </p>
-  </form>
+<button onclick="register()">Register</button>
+<p id="msg" class="msg"></p>
 </div>
 
 <script>
-  const API_BASE = "https://practice-backend-msgn.onrender.com";
-  const REGISTER_URL = API_BASE + "/api/register";
+const API="https://practice-backend-msgn.onrender.com";
 
-  const btn = document.getElementById("registerBtn");
-  const msg = document.getElementById("msg");
-  const debug = document.getElementById("debug");
+document.getElementById("accountType").addEventListener("change",e=>{
+  document.getElementById("gradeWrap").style.display =
+    e.target.value==="student" ? "block":"none";
+});
 
-  const usernameEl = document.getElementById("username");
-  const emailEl = document.getElementById("email");
-  const accountTypeEl = document.getElementById("accountType");
-  const gradeWrap = document.getElementById("gradeWrap");
-  const gradeEl = document.getElementById("grade");
-  const passwordEl = document.getElementById("password");
-  const confirmEl = document.getElementById("confirmPassword");
-  const toggleBtn = document.getElementById("toggleBtn");
+async function register(){
+  const body={
+    username:username.value.trim(),
+    email:email.value.trim(),
+    password:password.value,
+    accountType:accountType.value,
+    grade:grade?.value || null
+  };
 
-  function setMsg(text, type="") {
-    msg.className = "msg " + type;
-    msg.textContent = text;
-  }
-
-  // ✅ show grade only for students
-  accountTypeEl.addEventListener("change", () => {
-    const isStudent = accountTypeEl.value === "student";
-    gradeWrap.classList.toggle("hidden", !isStudent);
-    if (!isStudent) gradeEl.value = "";
+  const r=await fetch(API+"/api/register",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(body)
   });
 
-  toggleBtn.addEventListener("click", () => {
-    const show = passwordEl.type === "password";
-    passwordEl.type = show ? "text" : "password";
-    confirmEl.type = show ? "text" : "password";
-    toggleBtn.textContent = show ? "Hide Password" : "Show Password";
-  });
+  const d=await r.json();
+  msg.className="msg "+(r.ok?"ok":"error");
+  msg.textContent=d.message||"Error";
 
-  async function safeJson(res) {
-    try { return await res.json(); } catch { return {}; }
-  }
-
-  btn.addEventListener("click", async () => {
-    const username = usernameEl.value.trim();
-    const email = emailEl.value.trim();
-    const accountType = accountTypeEl.value;   // ✅ "student" or "materials"
-    const grade = gradeEl.value;
-    const password = passwordEl.value;
-    const confirmPassword = confirmEl.value;
-
-    if (!username || !email || !accountType || !password || !confirmPassword) {
-      return setMsg("All fields required (choose account type).", "error");
-    }
-
-    if (accountType === "student" && !grade) {
-      return setMsg("Grade is required for Student accounts.", "error");
-    }
-
-    if (password.length < 6) {
-      return setMsg("Password must be at least 6 characters.", "error");
-    }
-
-    if (password !== confirmPassword) {
-      return setMsg("Passwords do not match.", "error");
-    }
-
-    const payload = {
-      username,
-      email,
-      password,
-      accountType, // ✅ correct key
-      grade: accountType === "student" ? Number(grade) : null
-    };
-
-    btn.disabled = true;
-    setMsg("Creating account...");
-    debug.textContent = "POST " + REGISTER_URL + "\nSending: " + JSON.stringify(payload);
-
-    try {
-      const res = await fetch(REGISTER_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await safeJson(res);
-
-      if (res.ok) {
-        let extra = "";
-        if (data.studentNumber) extra = "\nStudent Number: " + data.studentNumber;
-
-        setMsg((data.message || "Account created ✅") + extra, "ok");
-
-        // optional redirect after success:
-        setTimeout(() => window.location.href = "login.html", 1500);
-      } else {
-        setMsg((data.message || "Could not register.") + ` (HTTP ${res.status})`, "error");
-        btn.disabled = false;
-      }
-    } catch (e) {
-      setMsg("Network error / CORS blocked. Check Render + Netlify settings.", "error");
-      btn.disabled = false;
-    }
-  });
-
-  setMsg("Ready ✅", "ok");
+  if(r.ok) setTimeout(()=>location.href="login.html",1500);
+}
 </script>
 
 </body>
