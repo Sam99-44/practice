@@ -1,104 +1,49 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Login | Practice Online</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body{margin:0;font-family:Arial,sans-serif;background:#f6f7fb;color:#0f172a}
-    .card{max-width:420px;margin:40px auto;background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:20px}
-    label{display:block;margin-top:12px;font-weight:600}
-    input{width:100%;padding:10px;margin-top:6px;border-radius:10px;border:1px solid #ddd}
-    .btn{margin-top:14px;background:#0b3c5d;color:#fff;border:none;border-radius:10px;padding:12px;font-weight:700;cursor:pointer;width:100%}
-    .msg{margin-top:12px;white-space:pre-wrap;font-size:14px}
-    .error{color:#b91c1c}
-    .ok{color:#065f46}
-    .small{font-size:12px;color:#475569;margin-top:10px}
-    a{color:#0b3c5d}
-  </style>
+<title>Login</title>
+<style>
+body{font-family:Arial;background:#f6f7fb}
+.card{max-width:420px;margin:60px auto;background:#fff;padding:20px;border-radius:12px}
+input,button{width:100%;padding:10px;margin-top:8px}
+button{background:#0b3c5d;color:#fff;border:none;border-radius:8px;font-weight:bold}
+.msg{margin-top:10px}
+.error{color:red}
+.ok{color:green}
+</style>
 </head>
 <body>
 
 <div class="card">
-  <h2>Login</h2>
+<h2>Login</h2>
 
-  <label>Email</label>
-  <input id="email" type="email" placeholder="you@email.com" />
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
 
-  <label>Password</label>
-  <input id="password" type="password" placeholder="••••••••" />
-
-  <button id="loginBtn" class="btn" type="button">Login</button>
-  <p id="msg" class="msg"></p>
-  <div id="debug" class="small"></div>
-
-  <p class="small">
-    <a href="forgot-password.html">Forgot password?</a>
-    <br/>
-    No account? <a href="register.html">Create one</a>
-  </p>
+<p class="msg" id="msg"></p>
+<a href="forgot-password.html">Forgot password?</a>
 </div>
 
 <script>
-  const API_BASE = "https://practice-backend-msgn.onrender.com";
-  const LOGIN_URL = API_BASE + "/api/login";
+const API="https://practice-backend-msgn.onrender.com";
 
-  const loginBtn = document.getElementById("loginBtn");
-  const msg = document.getElementById("msg");
-  const debug = document.getElementById("debug");
+async function login(){
+  const r=await fetch(API+"/api/login",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({email:email.value,password:password.value})
+  });
 
-  function setMsg(text, type="") {
-    msg.className = "msg " + type;
-    msg.textContent = text;
+  const d=await r.json();
+  msg.className="msg "+(r.ok?"ok":"error");
+  msg.textContent=d.message;
+
+  if(r.ok){
+    localStorage.setItem("token",d.token);
+    alert("Student Number: "+(d.user.studentNumber||"N/A"));
   }
-
-  async function safeJson(res) {
-    try { return await res.json(); } catch { return {}; }
-  }
-
-  loginBtn.onclick = async () => {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-
-    if (!email || !password) return setMsg("Email and password are required.", "error");
-
-    loginBtn.disabled = true;
-    setMsg("Logging in...");
-    debug.textContent = "POST " + LOGIN_URL;
-
-    try {
-      const res = await fetch(LOGIN_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await safeJson(res);
-
-      if (res.ok) {
-        if (data.token) localStorage.setItem("token", data.token);
-        if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
-
-        setMsg("Login successful ✅ Redirecting...", "ok");
-
-        // redirect based on account type
-        const user = data.user || {};
-        if (user.accountType === "student") {
-          setTimeout(() => window.location.href = "student-dashboard.html", 800);
-        } else {
-          setTimeout(() => window.location.href = "materials.html", 800);
-        }
-      } else {
-        setMsg((data.message || "Login failed.") + ` (HTTP ${res.status})`, "error");
-        loginBtn.disabled = false;
-      }
-    } catch (e) {
-      setMsg("Network error.", "error");
-      loginBtn.disabled = false;
-    }
-  };
-
-  setMsg("Ready ✅", "ok");
+}
 </script>
 
 </body>
