@@ -1,10 +1,300 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <script>
-    window.location.href = "login.html";
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Practice Online | Learn Smarter</title>
+  <meta name="description" content="Practice Online helps learners prepare with quizzes, past papers, and step-by-step learning support." />
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#475569;
+      --border:#e6e6e6;
+      --brand:#0b3c5d;
+      --brand2:#0ea5e9;
+      --shadow:0 10px 30px rgba(2, 8, 23, .08);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    a{color:inherit;text-decoration:none}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}
+    .nav{
+      position:sticky;top:0;z-index:10;background:rgba(246,247,251,.85);
+      backdrop-filter:blur(10px);border-bottom:1px solid rgba(230,230,230,.8)
+    }
+    .navin{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px;max-width:1100px;margin:0 auto}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800}
+    .logo{
+      width:38px;height:38px;border-radius:999px;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--brand),#08304b);
+      color:#fff;font-weight:900;letter-spacing:.5px;
+      box-shadow:var(--shadow)
+    }
+    .navlinks{display:flex;align-items:center;gap:14px}
+    .navlinks a{font-weight:600;color:var(--muted)}
+    .navlinks a:hover{color:var(--text)}
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;
+      gap:10px;padding:12px 14px;border-radius:14px;border:1px solid var(--border);
+      font-weight:800;cursor:pointer;transition:.2s transform, .2s opacity, .2s background;
+      background:#fff
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+    .btn.primary:hover{opacity:.95}
+    .btn.ghost{background:transparent}
+    .hero{
+      padding:36px 0 10px;
+      display:grid;grid-template-columns:1.2fr .8fr;gap:24px;align-items:center
+    }
+    @media(max-width:900px){.hero{grid-template-columns:1fr}}
+    .badge{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 12px;border-radius:999px;
+      background:#eaf4ff;border:1px solid #d7ebff;color:#0b3c5d;font-weight:800;font-size:13px
+    }
+    h1{margin:14px 0 10px;font-size:44px;line-height:1.05}
+    @media(max-width:520px){h1{font-size:34px}}
+    .sub{color:var(--muted);font-size:16px;line-height:1.6;margin:0 0 18px}
+    .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+    .panel{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:var(--radius);box-shadow:var(--shadow);padding:18px
+    }
+    .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+    .stat{
+      border:1px solid var(--border);border-radius:16px;padding:14px;background:#fff
+    }
+    .stat b{display:block;font-size:18px}
+    .stat span{color:var(--muted);font-size:13px}
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    @media(max-width:900px){.grid3{grid-template-columns:1fr}}
+    .section{padding:22px 0}
+    .section h2{margin:0 0 10px;font-size:22px}
+    .section p{margin:0;color:var(--muted);line-height:1.6}
+    .feature{
+      background:#fff;border:1px solid var(--border);border-radius:18px;padding:16px
+    }
+    .icon{
+      width:42px;height:42px;border-radius:14px;display:grid;place-items:center;
+      background:linear-gradient(135deg,#eaf4ff,#ffffff);
+      border:1px solid #d7ebff;margin-bottom:10px;font-weight:900;color:var(--brand)
+    }
+    .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    @media(max-width:900px){.cards{grid-template-columns:1fr 1fr}}
+    @media(max-width:520px){.cards{grid-template-columns:1fr}}
+    .card{
+      background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px;cursor:pointer;
+      transition:.2s transform,.2s border-color
+    }
+    .card:hover{transform:translateY(-2px);border-color:#cfe6ff}
+    .card b{display:block}
+    .card span{color:var(--muted);font-size:13px}
+    .split{
+      display:grid;grid-template-columns:1fr 1fr;gap:14px
+    }
+    @media(max-width:900px){.split{grid-template-columns:1fr}}
+    .quote{background:#fff;border:1px solid var(--border);border-radius:18px;padding:16px}
+    .quote p{margin:0;color:var(--text);line-height:1.6}
+    .quote small{display:block;margin-top:10px;color:var(--muted)}
+    .footer{
+      border-top:1px solid var(--border);
+      padding:24px 0;margin-top:20px;color:var(--muted)
+    }
+    .footerin{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);
+      background:#fff;border-radius:999px;padding:8px 12px;color:var(--muted);font-weight:700;font-size:13px
+    }
+  </style>
 </head>
-<body></body>
+<body>
+
+  <!-- NAV -->
+  <div class="nav">
+    <div class="navin">
+      <div class="brand">
+        <div class="logo">PO</div>
+        <div>
+          <div style="line-height:1">Practice Online</div>
+          <div style="font-size:12px;color:var(--muted);font-weight:700">Learn Smarter • Practice More</div>
+        </div>
+      </div>
+
+      <div class="navlinks">
+        <a href="#features">Features</a>
+        <a href="#grades">Grades</a>
+        <a href="#about">About</a>
+        <a class="btn ghost" href="register.html">Create Account</a>
+        <a class="btn primary" href="login.html">Login</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- HERO -->
+    <div class="hero">
+      <div>
+        <div class="badge">🎓 Built for Grades 8–12 • South Africa</div>
+        <h1>Practice, improve, and pass with confidence.</h1>
+        <p class="sub">
+          Practice Online helps learners revise with quizzes, study material, and focused practice.
+          Create an account to get your student number and start learning.
+        </p>
+
+        <div class="cta">
+          <a class="btn primary" href="register.html">Create Account</a>
+          <a class="btn" href="login.html">Login</a>
+          <a class="btn ghost" href="#grades">Explore Grades</a>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <b>Quick Practice</b>
+            <span>Short quizzes that build confidence fast.</span>
+          </div>
+          <div class="stat">
+            <b>Secure Accounts</b>
+            <span>Student number + password login.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 style="margin:0 0 10px">Start in 3 steps</h2>
+        <div class="pill">1) Create an account</div><br/><br/>
+        <div class="pill">2) Receive welcome email</div><br/><br/>
+        <div class="pill">3) Login and practice</div>
+        <div style="margin-top:14px;color:var(--muted);line-height:1.6">
+          Tip: If the welcome email goes to spam during testing, mark it as “Not spam”.
+        </div>
+      </div>
+    </div>
+
+    <!-- FEATURES -->
+    <div class="section" id="features">
+      <h2>Everything you need to prepare</h2>
+      <p>Professional, simple, and focused tools for learners.</p>
+
+      <div style="height:12px"></div>
+
+      <div class="grid3">
+        <div class="feature">
+          <div class="icon">📝</div>
+          <b>Practice Quizzes</b>
+          <p>Short questions to help you revise topic by topic.</p>
+        </div>
+        <div class="feature">
+          <div class="icon">📚</div>
+          <b>Study Materials</b>
+          <p>Access learning resources that support your school work.</p>
+        </div>
+        <div class="feature">
+          <div class="icon">🔐</div>
+          <b>Secure Login</b>
+          <p>Login with email + password. Reset options can be added as needed.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRADES -->
+    <div class="section" id="grades">
+      <h2>Choose your grade</h2>
+      <p>Click a grade to start exploring (you can link these to grade pages later).</p>
+
+      <div style="height:12px"></div>
+
+      <div class="cards">
+        <div class="card" onclick="goGrade(8)">
+          <b>Grade 8</b><span>Foundation practice</span>
+        </div>
+        <div class="card" onclick="goGrade(9)">
+          <b>Grade 9</b><span>Build consistency</span>
+        </div>
+        <div class="card" onclick="goGrade(10)">
+          <b>Grade 10</b><span>Start exam prep</span>
+        </div>
+        <div class="card" onclick="goGrade(11)">
+          <b>Grade 11</b><span>Strengthen topics</span>
+        </div>
+        <div class="card" onclick="goGrade(12)">
+          <b>Grade 12</b><span>Matric focus</span>
+        </div>
+        <div class="card" onclick="goGrade('pastpapers')">
+          <b>Past Papers</b><span>Coming soon</span>
+        </div>
+        <div class="card" onclick="goGrade('tips')">
+          <b>Study Tips</b><span>Coming soon</span>
+        </div>
+        <div class="card" onclick="location.href='register.html'">
+          <b>Get Started</b><span>Create your account</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABOUT + TESTIMONIALS -->
+    <div class="section" id="about">
+      <div class="split">
+        <div class="panel">
+          <h2 style="margin:0 0 10px">Why Practice Online?</h2>
+          <p>
+            We keep it simple: learners practice frequently, track improvement, and build confidence.
+            This platform is designed to feel professional and easy to use.
+          </p>
+          <div style="height:12px"></div>
+          <div class="pill">✅ Clean design</div>
+          <div style="height:10px"></div>
+          <div class="pill">✅ Works on mobile</div>
+          <div style="height:10px"></div>
+          <div class="pill">✅ Easy to expand later</div>
+          <div style="height:14px"></div>
+          <a class="btn primary" href="register.html">Create Account</a>
+        </div>
+
+        <div>
+          <div class="quote">
+            <p>“The short quizzes help me practice every day without feeling overwhelmed.”</p>
+            <small>— Learner</small>
+          </div>
+          <div style="height:12px"></div>
+          <div class="quote">
+            <p>“It looks clean and professional. Easy to use even on my phone.”</p>
+            <small>— Parent</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <div class="footerin">
+        <div>
+          <b style="color:var(--text)">Practice Online</b><br/>
+          <span>© <span id="year"></span> All rights reserved.</span>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <a class="pill" href="register.html">Create Account</a>
+          <a class="pill" href="login.html">Login</a>
+          <a class="pill" href="#features">Features</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  document.getElementById("year").textContent = new Date().getFullYear();
+
+  function goGrade(g){
+    // Later you can make pages like grade-8.html, grade-9.html, etc.
+    alert("Grade selected: " + g + " (You can link this to a real page later)");
+  }
+</script>
+
+</body>
 </html>
