@@ -322,7 +322,7 @@ app.post("/api/forgot-password-otp", async (req, res) => {
         <p>Your reset code is:</p>
         <h1 style="letter-spacing:3px">${otp}</h1>
         <p>This code expires in <strong>10 minutes</strong>.</p>
-        <p>If you did not request this, ignore this email.</p>
+        
       `,
     });
 
@@ -383,3 +383,4 @@ mongoose
     app.listen(PORT, () => console.log(`Server running on ${PORT}`));
   })
   .catch((err) => console.error("Mongo error:", err.message));
+
