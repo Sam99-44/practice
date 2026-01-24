@@ -1,4 +1,4 @@
-// server.js (FULL UPDATED - COPY & PASTE)
+// server.js (UPDATED - COPY & PASTE)
 // ✅ Student register: accountType + 8-digit studentNumber
 // ✅ Login: /api/login
 // ✅ Password reset (OTP): /api/forgot-password-otp + /api/reset-password-otp
@@ -206,25 +206,32 @@ app.post("/api/register", async (req, res) => {
       verifyTokenExpiresAt: null,
     });
 
-    const extraHtml =
-      user.accountType === "student"
-        ? `<p><strong>Your Student Number:</strong> ${user.studentNumber}</p>`
-        : `<p>You registered for <strong>Access Materials Only</strong>.</p>`;
-
-    await sendEmail({
-      to: user.email,
-      subject: `Welcome ${user.username} 🎓`,
-      text:
-        user.accountType === "student"
-          ? `Welcome ${user.username}! Your Student Number is ${user.studentNumber}.`
-          : `Welcome ${user.username}! You registered for Access Materials Only.`,
-      html: `
-        <h2>Welcome ${user.username} 🎓</h2>
-        <p>Your account has been successfully created.</p>
-        ${extraHtml}
-        <p>Regards,<br/>Practice Online Team</p>
-      `,
-    });
+    // ✅ UPDATED WELCOME EMAIL (clear student number message)
+    if (user.accountType === "student") {
+      await sendEmail({
+        to: user.email,
+        subject: `Welcome ${user.username} 🎓`,
+        text: `Welcome ${user.username}, your student number is ${user.studentNumber}.`,
+        html: `
+          <h2>Welcome ${user.username} 🎓</h2>
+          <p>Your student number is:</p>
+          <h1>${user.studentNumber}</h1>
+          <p>Please keep this number safe.</p>
+          <p>Regards,<br/>Practice Online Team</p>
+        `,
+      });
+    } else {
+      await sendEmail({
+        to: user.email,
+        subject: `Welcome ${user.username}`,
+        text: `Welcome ${user.username}! You registered for Access Materials Only.`,
+        html: `
+          <h2>Welcome ${user.username}</h2>
+          <p>You registered for <strong>Access Materials Only</strong>.</p>
+          <p>Regards,<br/>Practice Online Team</p>
+        `,
+      });
+    }
 
     return res.status(201).json({
       message: "Account created ✅ Welcome email sent ✅",
