@@ -2,8 +2,10 @@
 // ✅ Student register: accountType + 8-digit studentNumber
 // ✅ Login: /api/login
 // ✅ Profile: GET /api/auth/me
+// ✅ Quizzes: GET /api/quizzes (learner grade), POST /api/quizzes (admin)
+// ✅ Quiz by id: GET /api/quizzes/:id
+// ✅ Results: POST /api/results, GET /api/results/my, GET /api/results/:id
 // ✅ Password reset (OTP): /api/forgot-password-otp + /api/reset-password-otp
-// ✅ Results: POST /api/results + GET /api/results/my + GET /api/results/:id
 // ✅ SendGrid: welcome email + test-email + health
 
 import express from "express";
@@ -26,8 +28,7 @@ app.use(express.json());
 
 /* ------------------ SENDGRID ------------------ */
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || "";
-const FROM_EMAIL = (process.env.FROM_EMAIL || "").trim(); // verified in SendGrid
-const APP_URL = (process.env.APP_URL || "").replace(/\/$/, ""); // your Netlify URL
+const FROM_EMAIL = (process.env.FROM_EMAIL || "").trim();
 
 if (SENDGRID_API_KEY) sgMail.setApiKey(SENDGRID_API_KEY);
 
@@ -58,7 +59,7 @@ function hashToken(raw) {
   return crypto.createHash("sha256").update(String(raw)).digest("hex");
 }
 
-// ✅ Generate unique 8-digit student number (digits only)
+// Generate unique 8-digit student number (digits only)
 async function generateStudentNumber8() {
   while (true) {
     const num = String(Math.floor(10000000 + Math.random() * 90000000)); // 8 digits
@@ -67,14 +68,18 @@ async function generateStudentNumber8() {
   }
 }
 
-// ✅ Generate 6-digit OTP
+// Generate 6-digit OTP
 function makeOtp6() {
   return String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
 }
 
+function cleanSpaces(s) {
+  return String(s || "").trim().replace(/\s+/g, " ");
+}
+
 /* ------------------ CORS ------------------ */
 const ALLOWED_ORIGINS = [
-  process.env.APP_URL,
+  process.env.APP_URL, // your Netlify URL (optional)
   "http://localhost:3000",
   "http://localhost:5500",
   "http://127.0.0.1:5500",
@@ -100,11 +105,9 @@ app.get("/api/health", (req, res) =>
   res.json({ ok: true, time: new Date().toISOString() })
 );
 
-/* ------------------ TEST EMAIL (TEMP) ------------------ */
-// Use: https://practice-backend-msgn.onrender.com/test-email?to=you@gmail.com
+/* ------------------ TEST EMAIL ------------------ */
 app.get("/test-email", async (req, res) => {
   const to = (req.query.to || "practiceallonline@gmail.com").trim();
-
   try {
     await sendEmail({
       to,
@@ -114,7 +117,6 @@ app.get("/test-email", async (req, res) => {
     });
     res.send("Email sent successfully to " + to);
   } catch (err) {
-    console.error("Test email failed:", err.message);
     res.status(500).send("Email failed: " + err.message);
   }
 });
@@ -127,22 +129,32 @@ function authRequired(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    req.user = decoded; // { userId, role }
     next();
   } catch {
     res.status(401).json({ message: "Invalid token" });
   }
 }
 
+async function adminOnly(req, res, next) {
+  try {
+    const u = await User.findById(req.user.userId).select("role");
+    if (!u) return res.status(401).json({ message: "User not found" });
+    if (u.role !== "admin") return res.status(403).json({ message: "Admin only" });
+    next();
+  } catch (e) {
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
 /* ------------------ AUTH ROUTES ------------------ */
 
-// ✅ Profile endpoint used by learner-quizzes.html
+// Profile endpoint used by learner-quizzes.html + admin pages
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select(
       "username email role grade accountType studentNumber"
     );
-
     if (!user) return res.status(404).json({ message: "User not found" });
 
     return res.json({
@@ -153,12 +165,12 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
       accountType: user.accountType,
       studentNumber: user.studentNumber,
     });
-  } catch (err) {
+  } catch {
     return res.status(500).json({ message: "Server error" });
   }
 });
 
-// ✅ REGISTER (accountType + studentNumber)
+// REGISTER
 app.post("/api/register", async (req, res) => {
   try {
     const { username, email, grade, password, accountType } = req.body;
@@ -173,7 +185,6 @@ app.post("/api/register", async (req, res) => {
       return res.status(400).json({ message: "Invalid account type." });
     }
 
-    // grade required only for student
     let gradeNum = null;
     if (accountType === "student") {
       if (grade === undefined || grade === null || grade === "") {
@@ -189,7 +200,7 @@ app.post("/api/register", async (req, res) => {
       return res.status(400).json({ message: "Password must be at least 6 characters." });
     }
 
-    const cleanUsername = String(username).trim();
+    const cleanUsername = cleanSpaces(username);
     const cleanEmail = String(email).toLowerCase().trim();
 
     const existingEmail = await User.findOne({ email: cleanEmail });
@@ -216,7 +227,6 @@ app.post("/api/register", async (req, res) => {
       verifyTokenExpiresAt: null,
     });
 
-    // ✅ Welcome email text exactly as you asked
     if (user.accountType === "student") {
       await sendEmail({
         to: user.email,
@@ -252,7 +262,7 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-// ✅ LOGIN
+// LOGIN
 app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -293,26 +303,279 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
+/* ------------------ QUIZZES ------------------ */
+
+// Learner: returns quizzes for learner grade
+// Admin: if you want all, use /api/quizzes?all=1
+app.get("/api/quizzes", authRequired, async (req, res) => {
+  try {
+    const u = await User.findById(req.user.userId).select("role grade");
+    if (!u) return res.status(401).json({ message: "User not found" });
+
+    const wantsAll = String(req.query.all || "") === "1";
+
+    let filter = {};
+    if (!(u.role === "admin" && wantsAll)) {
+      // learner (or admin without all=1): show only their grade quizzes
+      if (!u.grade) return res.json([]);
+      filter.grade = u.grade;
+    }
+
+    const quizzes = await Quiz.find(filter)
+      .sort({ createdAt: -1 })
+      .select("grade title topic questions timeLimitMinutes isFrozen availableFrom availableUntil createdAt updatedAt frozenAt");
+
+    return res.json(quizzes);
+  } catch (e) {
+    console.error("GET /api/quizzes error:", e.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get single quiz (attempt.html uses this)
+app.get("/api/quizzes/:id", authRequired, async (req, res) => {
+  try {
+    const quiz = await Quiz.findById(req.params.id);
+    if (!quiz) return res.status(404).json({ message: "Not found" });
+
+    // Optional: learners only access their grade quizzes
+    const u = await User.findById(req.user.userId).select("role grade");
+    if (!u) return res.status(401).json({ message: "User not found" });
+
+    if (u.role !== "admin" && Number(quiz.grade) !== Number(u.grade)) {
+      return res.status(403).json({ message: "Not allowed" });
+    }
+
+    return res.json(quiz);
+  } catch {
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Admin creates quiz (admin-quiz.html POSTs here)
+app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
+  try {
+    const { grade, title, topic, timeLimitMinutes, questions } = req.body;
+
+    if (!grade || !title || !topic || !Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({ message: "Grade, topic, title, and questions are required." });
+    }
+
+    const g = Number(grade);
+    if (!Number.isInteger(g) || g < 8 || g > 12) {
+      return res.status(400).json({ message: "Grade must be between 8 and 12." });
+    }
+
+    const quiz = await Quiz.create({
+      grade: g,
+      title: cleanSpaces(title),
+      topic: cleanSpaces(topic),
+      timeLimitMinutes: Number(timeLimitMinutes) || 0,
+      questions,
+      isFrozen: false,
+      frozenAt: null,
+    });
+
+    return res.status(201).json({ message: "Saved", quizId: quiz._id });
+  } catch (e) {
+    console.error("POST /api/quizzes error:", e.message);
+    return res.status(500).json({ message: "Could not save assessment" });
+  }
+});
+
+/* ------------------ RESULTS ------------------ */
+
+// helper: check quiz availability server-side
+function isUnavailableBySchedule(quiz) {
+  const now = new Date();
+
+  if (quiz?.isFrozen) return true;
+
+  if (quiz?.availableFrom) {
+    const from = new Date(quiz.availableFrom);
+    if (!isNaN(from.getTime()) && now < from) return true;
+  }
+  if (quiz?.availableUntil) {
+    const until = new Date(quiz.availableUntil);
+    if (!isNaN(until.getTime()) && now > until) return true;
+  }
+  return false;
+}
+
+function compareTextAnswer(userAns, correctAns, mode, tolerance) {
+  const ua = cleanSpaces(userAns).toLowerCase();
+  const ca = cleanSpaces(correctAns).toLowerCase();
+
+  if (!ca) return false;
+
+  if (mode === "contains") {
+    return ua.includes(ca);
+  }
+
+  if (mode === "number_tolerance") {
+    const uNum = Number(ua);
+    const cNum = Number(ca);
+    const tol = Number(tolerance);
+    if (!Number.isFinite(uNum) || !Number.isFinite(cNum) || !Number.isFinite(tol)) return false;
+    return Math.abs(uNum - cNum) <= tol;
+  }
+
+  // exact (default)
+  return ua === ca;
+}
+
+// Submit attempt (attempt.html POSTs here)
+app.post("/api/results", authRequired, async (req, res) => {
+  try {
+    const { quizId, answers, timeTakenSeconds } = req.body;
+
+    if (!quizId || !Array.isArray(answers)) {
+      return res.status(400).json({ message: "quizId and answers are required." });
+    }
+
+    const userId = req.user.userId;
+
+    // One attempt only
+    const existing = await Result.findOne({ userId, quizId }).select("_id");
+    if (existing) return res.status(409).json({ message: "Already attempted" });
+
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) return res.status(404).json({ message: "Assessment not found" });
+
+    // Unavailable
+    if (isUnavailableBySchedule(quiz)) {
+      return res.status(403).json({ message: "This assessment is currently unavailable." });
+    }
+
+    const qs = Array.isArray(quiz.questions) ? quiz.questions : [];
+    let correctCount = 0;
+
+    // Build review answers for review.html
+    const reviewAnswers = qs.map((q, i) => {
+      const type = String(q.type || "mcq").toLowerCase();
+      const hint = q.hint || "";
+      const options = Array.isArray(q.options) ? q.options : [];
+
+      const ans = answers.find((a) => Number(a.questionIndex) === i) || {};
+
+      if (type === "text") {
+        const userText = cleanSpaces(ans.textAnswer || "");
+        const correctText = cleanSpaces(q.correctText || "");
+        const mode = q.textAnswerMode || "exact";
+        const tol = q.numberTolerance ?? null;
+
+        const isCorrect = compareTextAnswer(userText, correctText, mode, tol);
+        if (isCorrect) correctCount++;
+
+        return {
+          type: "text",
+          questionIndex: i,
+          questionText: q.text || "",
+          hint,
+          textAnswer: userText,
+          correctText,
+          isCorrect,
+        };
+      }
+
+      // mcq
+      const chosenIndex = Number.isFinite(Number(ans.chosenIndex)) ? Number(ans.chosenIndex) : -1;
+      const correctIndex = Number.isFinite(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
+
+      const isCorrect = chosenIndex === correctIndex && correctIndex >= 0;
+      if (isCorrect) correctCount++;
+
+      return {
+        type: "mcq",
+        questionIndex: i,
+        questionText: q.text || "",
+        hint,
+        options,
+        chosenIndex,
+        correctIndex,
+        isCorrect,
+      };
+    });
+
+    const total = qs.length || 1;
+    const percent = Math.round((correctCount / total) * 100);
+
+    const saved = await Result.create({
+      userId,
+      quizId,
+      grade: quiz.grade,
+      topic: quiz.topic || "General",
+      title: quiz.title || "Assessment",
+      percent,
+      timeTakenSeconds: Number(timeTakenSeconds) || 0,
+      answers: reviewAnswers,
+    });
+
+    return res.status(201).json({
+      message: "Saved",
+      percent,
+      resultId: saved._id,
+    });
+  } catch (e) {
+    console.error("POST /api/results error:", e.message);
+    return res.status(500).json({ message: "Could not save attempt. Please try again." });
+  }
+});
+
+// Results list for logged-in learner (results.html calls this)
+app.get("/api/results/my", authRequired, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const rows = await Result.find({ userId })
+      .sort({ createdAt: -1 })
+      .select("_id createdAt grade topic title percent quizId");
+
+    return res.json(rows);
+  } catch (e) {
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Single result for review.html
+app.get("/api/results/:id", authRequired, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const r = await Result.findById(req.params.id);
+    if (!r) return res.status(404).json({ message: "Not found" });
+
+    // only owner (or admin)
+    const u = await User.findById(userId).select("role");
+    if (!u) return res.status(401).json({ message: "User not found" });
+
+    if (u.role !== "admin" && String(r.userId) !== String(userId)) {
+      return res.status(403).json({ message: "Not allowed" });
+    }
+
+    return res.json(r);
+  } catch {
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 /* ------------------ PASSWORD RESET (OTP) ------------------ */
 
-// ✅ Send 6-digit OTP to email
 app.post("/api/forgot-password-otp", async (req, res) => {
   try {
     const { email } = req.body;
-
     if (!email) return res.status(400).json({ message: "Email is required." });
 
     const cleanEmail = String(email).toLowerCase().trim();
     const user = await User.findOne({ email: cleanEmail });
 
-    // always same response (security)
     if (!user) return res.json({ message: "If the email exists, a reset code has been sent." });
 
     const otp = makeOtp6();
     const otpHash = hashToken(otp);
 
     user.resetPasswordTokenHash = otpHash;
-    user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
     await sendEmail({
@@ -334,7 +597,6 @@ app.post("/api/forgot-password-otp", async (req, res) => {
   }
 });
 
-// ✅ Verify OTP + set new password
 app.post("/api/reset-password-otp", async (req, res) => {
   try {
     const { email, code, newPassword } = req.body;
@@ -368,171 +630,6 @@ app.post("/api/reset-password-otp", async (req, res) => {
     return res.json({ message: "Password updated. You can login now." });
   } catch (err) {
     console.error("reset-password-otp error:", err.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-/* ------------------ RESULTS (LEARNER) ------------------ */
-
-// ✅ Save attempt (attempt.html -> POST /api/results)
-app.post("/api/results", authRequired, async (req, res) => {
-  try {
-    const { quizId, answers, timeTakenSeconds } = req.body || {};
-    if (!quizId) return res.status(400).json({ message: "quizId is required." });
-    if (!Array.isArray(answers)) return res.status(400).json({ message: "answers must be an array." });
-
-    const userId = req.user.userId;
-
-    // Prevent multiple attempts per quiz
-    const existing = await Result.findOne({ userId, quizId }).select("_id");
-    if (existing) return res.status(409).json({ message: "Already attempted." });
-
-    const quiz = await Quiz.findById(quizId);
-    if (!quiz) return res.status(404).json({ message: "Assessment not found." });
-
-    // Optional: learner can only attempt their grade (admin bypass)
-    const me = await User.findById(userId).select("grade role");
-    if (!me) return res.status(401).json({ message: "User not found." });
-    if (me.role !== "admin" && Number(me.grade) !== Number(quiz.grade)) {
-      return res.status(403).json({ message: "Not allowed." });
-    }
-
-    // Unavailable rules
-    const now = Date.now();
-    const from = quiz.availableFrom ? new Date(quiz.availableFrom).getTime() : null;
-    const until = quiz.availableUntil ? new Date(quiz.availableUntil).getTime() : null;
-
-    const unavailable =
-      quiz.isFrozen ||
-      (from && now < from) ||
-      (until && now > until);
-
-    if (unavailable) {
-      return res.status(403).json({ message: "This assessment is currently unavailable." });
-    }
-
-    // Score calc (MCQ + TEXT)
-    let correctCount = 0;
-    const total = (quiz.questions || []).length;
-
-    const savedAnswers = (quiz.questions || []).map((q, i) => {
-      const type = String(q.type || "mcq").toLowerCase();
-      const incoming = answers.find(a => Number(a.questionIndex) === i) || {};
-      const hint = q.hint || "";
-      const imageUrl = q.imageUrl || "";
-
-      if (type === "text") {
-        const userText = String(incoming.textAnswer || "").trim();
-        const correctText = String(q.correctText || "").trim();
-
-        const mode = String(q.textAnswerMode || "exact").toLowerCase();
-        const tol = Number(q.numberTolerance);
-
-        let isCorrect = false;
-
-        if (mode === "number_tolerance") {
-          const u = Number(userText);
-          const c = Number(correctText);
-          const t = Number.isFinite(tol) ? tol : 0;
-          if (Number.isFinite(u) && Number.isFinite(c)) {
-            isCorrect = Math.abs(u - c) <= t;
-          }
-        } else if (mode === "contains") {
-          isCorrect = userText.toLowerCase().includes(correctText.toLowerCase());
-        } else {
-          isCorrect = userText.toLowerCase() === correctText.toLowerCase();
-        }
-
-        if (isCorrect) correctCount++;
-
-        return {
-          type: "text",
-          questionText: q.text,
-          hint,
-          imageUrl,
-          textAnswer: userText,
-          correctText,
-          isCorrect,
-        };
-      }
-
-      // MCQ
-      const chosenIndex = Number(incoming.chosenIndex);
-      const correctIndex = Number(q.correctIndex);
-
-      const isCorrect = Number.isInteger(chosenIndex) && chosenIndex === correctIndex;
-      if (isCorrect) correctCount++;
-
-      return {
-        type: "mcq",
-        questionText: q.text,
-        hint,
-        imageUrl,
-        options: q.options || [],
-        chosenIndex: Number.isInteger(chosenIndex) ? chosenIndex : -1,
-        correctIndex,
-        isCorrect,
-      };
-    });
-
-    const percent = total > 0 ? Math.round((correctCount / total) * 100) : 0;
-
-    const doc = await Result.create({
-      userId,
-      quizId,
-      grade: quiz.grade,
-      topic: quiz.topic,
-      title: quiz.title,
-      percent,
-      timeTakenSeconds: Number(timeTakenSeconds) || 0,
-      answers: savedAnswers,
-    });
-
-    return res.status(201).json({
-      message: "Saved",
-      percent: doc.percent,
-      resultId: doc._id,
-    });
-  } catch (err) {
-    console.error("POST /api/results error:", err.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-// ✅ List my results (results.html -> GET /api/results/my)
-app.get("/api/results/my", authRequired, async (req, res) => {
-  try {
-    const userId = req.user.userId;
-
-    const rows = await Result.find({ userId })
-      .sort({ createdAt: -1 })
-      .select("_id createdAt grade topic title percent quizId");
-
-    return res.json(rows);
-  } catch (err) {
-    console.error("GET /api/results/my error:", err.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-// ✅ One result (review.html -> GET /api/results/:id)
-app.get("/api/results/:id", authRequired, async (req, res) => {
-  try {
-    const userId = req.user.userId;
-
-    const r = await Result.findById(req.params.id);
-    if (!r) return res.status(404).json({ message: "Not found" });
-
-    const me = await User.findById(userId).select("role");
-    const isOwner = String(r.userId) === String(userId);
-
-    if (!isOwner && me?.role !== "admin") {
-      return res.status(403).json({ message: "Not allowed" });
-    }
-
-    return res.json(r);
-  } catch (err) {
-    console.error("GET /api/results/:id error:", err.message);
     return res.status(500).json({ message: "Server error" });
   }
 });
