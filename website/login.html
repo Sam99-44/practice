@@ -14,7 +14,7 @@
     input,button{width:100%;padding:10px;margin-top:6px;border-radius:10px;border:1px solid #ddd}
     button{background:#0b3c5d;color:#fff;border:none;font-weight:700;cursor:pointer}
     button:disabled{opacity:.6;cursor:not-allowed}
-    .msg{margin-top:12px;white-space:pre-wrap}
+    .msg{margin-top:12px;font-size:14px}
     .error{color:#b91c1c}
     .ok{color:#065f46}
     .links{display:flex;justify-content:space-between;margin-top:12px;font-size:14px}
@@ -67,7 +67,7 @@
     }
 
     loginBtn.disabled = true;
-    setMsg("Logging in...");
+    setMsg("Signing in...");
 
     try {
       const res = await fetch(API + "/api/login", {
@@ -78,28 +78,24 @@
 
       const data = await safeJson(res);
 
-      if (res.ok) {
-        setMsg("Login successful ✅ Redirecting...", "ok");
-
-        // store token (for dashboard later)
-        localStorage.setItem("authToken", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-
-        // redirect (change later if needed)
-        setTimeout(() => {
-          window.location.href = "dashboard.html";
-        }, 1000);
-      } else {
-        setMsg((data.message || "Login failed.") + ` (HTTP ${res.status})`, "error");
+      if (!res.ok) {
         loginBtn.disabled = false;
+        return setMsg(data.message || "Invalid email or password.", "error");
       }
-    } catch (e) {
-      setMsg("Network error. Try again.", "error");
+
+      // ✅ Save for learner-quizzes.html
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user || {}));
+      localStorage.setItem("username", data.user?.username || "Learner");
+
+      // ✅ Redirect to quizzes
+      window.location.href = "learner-quizzes.html";
+
+    } catch {
       loginBtn.disabled = false;
+      setMsg("Network error. Please try again.", "error");
     }
   };
-
-  setMsg("Ready ✅", "ok");
 </script>
 
 </body>
