@@ -1,6 +1,7 @@
-// server.js (UPDATED - COPY & PASTE)
+// server.js (FULL UPDATED - COPY & PASTE)
 // ✅ Student register: accountType + 8-digit studentNumber
 // ✅ Login: /api/login
+// ✅ Profile: GET /api/auth/me  (FIXES learner-quizzes.html)
 // ✅ Password reset (OTP): /api/forgot-password-otp + /api/reset-password-otp
 // ✅ SendGrid: welcome email + test-email + health
 
@@ -52,9 +53,6 @@ async function sendEmail({ to, subject, html, text }) {
 }
 
 /* ------------------ HELPERS ------------------ */
-function makeToken() {
-  return crypto.randomBytes(32).toString("hex");
-}
 function hashToken(raw) {
   return crypto.createHash("sha256").update(String(raw)).digest("hex");
 }
@@ -109,9 +107,9 @@ app.get("/test-email", async (req, res) => {
   try {
     await sendEmail({
       to,
-      subject: "SendGrid test ✅",
-      text: "Email sending works 🚀",
-      html: "<strong>Email sending works 🚀</strong>",
+      subject: "SendGrid test",
+      text: "Email sending works.",
+      html: "<strong>Email sending works.</strong>",
     });
     res.send("Email sent successfully to " + to);
   } catch (err) {
@@ -135,18 +133,29 @@ function authRequired(req, res, next) {
   }
 }
 
-async function adminOnly(req, res, next) {
-  try {
-    const user = await User.findById(req.user.userId).select("role");
-    if (!user) return res.status(401).json({ message: "User not found" });
-    if (user.role !== "admin") return res.status(403).json({ message: "Admin only" });
-    next();
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-}
-
 /* ------------------ AUTH ROUTES ------------------ */
+
+// ✅ FIX: Profile endpoint used by learner-quizzes.html
+app.get("/api/auth/me", authRequired, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select(
+      "username email role grade accountType studentNumber"
+    );
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    return res.json({
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      grade: user.grade,
+      accountType: user.accountType,
+      studentNumber: user.studentNumber,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Server error" });
+  }
+});
 
 // ✅ REGISTER (accountType + studentNumber)
 app.post("/api/register", async (req, res) => {
@@ -206,17 +215,15 @@ app.post("/api/register", async (req, res) => {
       verifyTokenExpiresAt: null,
     });
 
-    // ✅ UPDATED WELCOME EMAIL (clear student number message)
+    // ✅ Welcome email text exactly as you asked
     if (user.accountType === "student") {
       await sendEmail({
         to: user.email,
-        subject: `Welcome ${user.username} 🎓`,
+        subject: `Welcome ${user.username}`,
         text: `Welcome ${user.username}, your student number is ${user.studentNumber}.`,
         html: `
-          <h2>Welcome ${user.username} 🎓</h2>
-          <p>Your student number is:</p>
-          <h1>${user.studentNumber}</h1>
-          <p>Please keep this number safe.</p>
+          <h2>Welcome ${user.username}</h2>
+          <p>Your student number is <strong>${user.studentNumber}</strong>.</p>
           <p>Regards,<br/>Practice Online Team</p>
         `,
       });
@@ -224,7 +231,7 @@ app.post("/api/register", async (req, res) => {
       await sendEmail({
         to: user.email,
         subject: `Welcome ${user.username}`,
-        text: `Welcome ${user.username}! You registered for Access Materials Only.`,
+        text: `Welcome ${user.username}. You registered for Access Materials Only.`,
         html: `
           <h2>Welcome ${user.username}</h2>
           <p>You registered for <strong>Access Materials Only</strong>.</p>
@@ -234,7 +241,7 @@ app.post("/api/register", async (req, res) => {
     }
 
     return res.status(201).json({
-      message: "Account created ✅ Welcome email sent ✅",
+      message: "Account created. Welcome email sent.",
       accountType: user.accountType,
       studentNumber: user.studentNumber,
     });
@@ -256,14 +263,10 @@ app.post("/api/login", async (req, res) => {
     const cleanEmail = String(email).toLowerCase().trim();
     const user = await User.findOne({ email: cleanEmail });
 
-    if (!user) {
-      return res.status(401).json({ message: "Invalid email or password." });
-    }
+    if (!user) return res.status(401).json({ message: "Invalid email or password." });
 
     const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) {
-      return res.status(401).json({ message: "Invalid email or password." });
-    }
+    if (!ok) return res.status(401).json({ message: "Invalid email or password." });
 
     const token = jwt.sign(
       { userId: user._id, role: user.role },
@@ -272,7 +275,7 @@ app.post("/api/login", async (req, res) => {
     );
 
     return res.json({
-      message: "Login successful ✅",
+      message: "Login successful",
       token,
       user: {
         username: user.username,
@@ -301,10 +304,8 @@ app.post("/api/forgot-password-otp", async (req, res) => {
     const cleanEmail = String(email).toLowerCase().trim();
     const user = await User.findOne({ email: cleanEmail });
 
-    // security: always same response
-    if (!user) {
-      return res.json({ message: "If the email exists, a reset code has been sent ✅" });
-    }
+    // always same response (security)
+    if (!user) return res.json({ message: "If the email exists, a reset code has been sent." });
 
     const otp = makeOtp6();
     const otpHash = hashToken(otp);
@@ -315,18 +316,17 @@ app.post("/api/forgot-password-otp", async (req, res) => {
 
     await sendEmail({
       to: user.email,
-      subject: "Your password reset code (10 mins) 🔐",
-      text: `Your Practice Online reset code is: ${otp}\nThis code expires in 10 minutes.`,
+      subject: "Password reset code",
+      text: `Your reset code is: ${otp}. It expires in 10 minutes.`,
       html: `
         <h2>Password Reset Code</h2>
         <p>Your reset code is:</p>
         <h1 style="letter-spacing:3px">${otp}</h1>
         <p>This code expires in <strong>10 minutes</strong>.</p>
-        
       `,
     });
 
-    return res.json({ message: "If the email exists, a reset code has been sent ✅" });
+    return res.json({ message: "If the email exists, a reset code has been sent." });
   } catch (err) {
     console.error("forgot-password-otp error:", err.message);
     return res.status(500).json({ message: "Server error" });
@@ -349,16 +349,14 @@ app.post("/api/reset-password-otp", async (req, res) => {
     const cleanEmail = String(email).toLowerCase().trim();
     const user = await User.findOne({ email: cleanEmail });
 
-    if (!user) {
-      return res.status(400).json({ message: "Invalid code or expired." });
-    }
+    if (!user) return res.status(400).json({ message: "Invalid or expired code." });
 
     const codeHash = hashToken(String(code).trim());
     const isExpired = !user.resetPasswordExpires || user.resetPasswordExpires.getTime() < Date.now();
     const isMatch = user.resetPasswordTokenHash && user.resetPasswordTokenHash === codeHash;
 
     if (!isMatch || isExpired) {
-      return res.status(400).json({ message: "Invalid code or expired." });
+      return res.status(400).json({ message: "Invalid or expired code." });
     }
 
     user.passwordHash = await bcrypt.hash(newPassword, 10);
@@ -366,7 +364,7 @@ app.post("/api/reset-password-otp", async (req, res) => {
     user.resetPasswordExpires = null;
     await user.save();
 
-    return res.json({ message: "Password reset successful ✅ You can now login." });
+    return res.json({ message: "Password updated. You can login now." });
   } catch (err) {
     console.error("reset-password-otp error:", err.message);
     return res.status(500).json({ message: "Server error" });
@@ -383,4 +381,3 @@ mongoose
     app.listen(PORT, () => console.log(`Server running on ${PORT}`));
   })
   .catch((err) => console.error("Mongo error:", err.message));
-
