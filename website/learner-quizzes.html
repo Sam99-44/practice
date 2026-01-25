@@ -132,7 +132,8 @@
       <a class="active" href="learner-quizzes.html">Practice</a>
       <a href="results.html">Results</a>
       <a href="about.html">About</a>
-      <a href="admin-quiz.html" data-admin>Admin</a>
+      <!-- ✅ Hidden by default, shown only for admin -->
+      <a href="admin-quiz.html" data-admin style="display:none;">Admin</a>
       <button class="logout" id="logoutBtn">Logout</button>
     </nav>
   </div>
@@ -188,6 +189,9 @@
   async function init(){
     if (!token) return window.location.href = "login.html";
 
+    // ✅ Hide/show Admin tab based on role
+    await setupAdminTab();
+
     // Get learner grade from /me
     const meRes = await fetch(`${API}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -215,6 +219,23 @@
     await loadQuizzes();
   }
 
+  async function setupAdminTab(){
+    const adminEls = document.querySelectorAll("[data-admin]");
+    adminEls.forEach(el => el.style.display = "none"); // hide by default
+
+    try{
+      const res = await fetch(`${API}/api/auth/me`, {
+        headers: { Authorization: "Bearer " + token }
+      });
+      const me = await res.json().catch(()=>null);
+      if (res.ok && me && me.role === "admin") {
+        adminEls.forEach(el => el.style.display = "");
+      }
+    } catch {
+      // keep hidden
+    }
+  }
+
   async function loadCompletedResults(){
     try{
       const res = await fetch(`${API}/api/results/my`, {
@@ -233,8 +254,6 @@
 
     await loadCompletedResults();
 
-    // ✅ No grade selector anymore.
-    // ✅ Backend should return only the learner grade quizzes.
     const res = await fetch(`${API}/api/quizzes`, {
       headers:{ Authorization:`Bearer ${token}` }
     });
@@ -343,5 +362,3 @@
 
 </body>
 </html>
-
-
