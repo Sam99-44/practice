@@ -25,7 +25,7 @@
 
 <div class="card">
   <h2>Login</h2>
-  <p>Enter your email and password</p>
+  <p>Enter your email and password.</p>
 
   <label>Email</label>
   <input id="email" type="email" placeholder="you@gmail.com" autocomplete="email" />
@@ -83,12 +83,12 @@
         return setMsg(data.message || "Invalid email or password.", "error");
       }
 
-      // ✅ Save for learner-quizzes.html
+      // Save token for all protected pages
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user || {}));
-      localStorage.setItem("username", data.user?.username || "Learner");
+      localStorage.setItem("username", data.user?.username || "");
 
-      // ✅ Redirect to quizzes
+      // Go straight to quizzes
       window.location.href = "learner-quizzes.html";
 
     } catch {
