@@ -1,8 +1,9 @@
 // server.js (FULL UPDATED - COPY & PASTE)
 // ✅ Student register: accountType + 8-digit studentNumber
 // ✅ Login: /api/login
-// ✅ Profile: GET /api/auth/me  (FIXES learner-quizzes.html)
+// ✅ Profile: GET /api/auth/me
 // ✅ Password reset (OTP): /api/forgot-password-otp + /api/reset-password-otp
+// ✅ Results: POST /api/results + GET /api/results/my + GET /api/results/:id
 // ✅ SendGrid: welcome email + test-email + health
 
 import express from "express";
@@ -135,7 +136,7 @@ function authRequired(req, res, next) {
 
 /* ------------------ AUTH ROUTES ------------------ */
 
-// ✅ FIX: Profile endpoint used by learner-quizzes.html
+// ✅ Profile endpoint used by learner-quizzes.html
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select(
@@ -367,6 +368,171 @@ app.post("/api/reset-password-otp", async (req, res) => {
     return res.json({ message: "Password updated. You can login now." });
   } catch (err) {
     console.error("reset-password-otp error:", err.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ------------------ RESULTS (LEARNER) ------------------ */
+
+// ✅ Save attempt (attempt.html -> POST /api/results)
+app.post("/api/results", authRequired, async (req, res) => {
+  try {
+    const { quizId, answers, timeTakenSeconds } = req.body || {};
+    if (!quizId) return res.status(400).json({ message: "quizId is required." });
+    if (!Array.isArray(answers)) return res.status(400).json({ message: "answers must be an array." });
+
+    const userId = req.user.userId;
+
+    // Prevent multiple attempts per quiz
+    const existing = await Result.findOne({ userId, quizId }).select("_id");
+    if (existing) return res.status(409).json({ message: "Already attempted." });
+
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) return res.status(404).json({ message: "Assessment not found." });
+
+    // Optional: learner can only attempt their grade (admin bypass)
+    const me = await User.findById(userId).select("grade role");
+    if (!me) return res.status(401).json({ message: "User not found." });
+    if (me.role !== "admin" && Number(me.grade) !== Number(quiz.grade)) {
+      return res.status(403).json({ message: "Not allowed." });
+    }
+
+    // Unavailable rules
+    const now = Date.now();
+    const from = quiz.availableFrom ? new Date(quiz.availableFrom).getTime() : null;
+    const until = quiz.availableUntil ? new Date(quiz.availableUntil).getTime() : null;
+
+    const unavailable =
+      quiz.isFrozen ||
+      (from && now < from) ||
+      (until && now > until);
+
+    if (unavailable) {
+      return res.status(403).json({ message: "This assessment is currently unavailable." });
+    }
+
+    // Score calc (MCQ + TEXT)
+    let correctCount = 0;
+    const total = (quiz.questions || []).length;
+
+    const savedAnswers = (quiz.questions || []).map((q, i) => {
+      const type = String(q.type || "mcq").toLowerCase();
+      const incoming = answers.find(a => Number(a.questionIndex) === i) || {};
+      const hint = q.hint || "";
+      const imageUrl = q.imageUrl || "";
+
+      if (type === "text") {
+        const userText = String(incoming.textAnswer || "").trim();
+        const correctText = String(q.correctText || "").trim();
+
+        const mode = String(q.textAnswerMode || "exact").toLowerCase();
+        const tol = Number(q.numberTolerance);
+
+        let isCorrect = false;
+
+        if (mode === "number_tolerance") {
+          const u = Number(userText);
+          const c = Number(correctText);
+          const t = Number.isFinite(tol) ? tol : 0;
+          if (Number.isFinite(u) && Number.isFinite(c)) {
+            isCorrect = Math.abs(u - c) <= t;
+          }
+        } else if (mode === "contains") {
+          isCorrect = userText.toLowerCase().includes(correctText.toLowerCase());
+        } else {
+          isCorrect = userText.toLowerCase() === correctText.toLowerCase();
+        }
+
+        if (isCorrect) correctCount++;
+
+        return {
+          type: "text",
+          questionText: q.text,
+          hint,
+          imageUrl,
+          textAnswer: userText,
+          correctText,
+          isCorrect,
+        };
+      }
+
+      // MCQ
+      const chosenIndex = Number(incoming.chosenIndex);
+      const correctIndex = Number(q.correctIndex);
+
+      const isCorrect = Number.isInteger(chosenIndex) && chosenIndex === correctIndex;
+      if (isCorrect) correctCount++;
+
+      return {
+        type: "mcq",
+        questionText: q.text,
+        hint,
+        imageUrl,
+        options: q.options || [],
+        chosenIndex: Number.isInteger(chosenIndex) ? chosenIndex : -1,
+        correctIndex,
+        isCorrect,
+      };
+    });
+
+    const percent = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+
+    const doc = await Result.create({
+      userId,
+      quizId,
+      grade: quiz.grade,
+      topic: quiz.topic,
+      title: quiz.title,
+      percent,
+      timeTakenSeconds: Number(timeTakenSeconds) || 0,
+      answers: savedAnswers,
+    });
+
+    return res.status(201).json({
+      message: "Saved",
+      percent: doc.percent,
+      resultId: doc._id,
+    });
+  } catch (err) {
+    console.error("POST /api/results error:", err.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ✅ List my results (results.html -> GET /api/results/my)
+app.get("/api/results/my", authRequired, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const rows = await Result.find({ userId })
+      .sort({ createdAt: -1 })
+      .select("_id createdAt grade topic title percent quizId");
+
+    return res.json(rows);
+  } catch (err) {
+    console.error("GET /api/results/my error:", err.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ✅ One result (review.html -> GET /api/results/:id)
+app.get("/api/results/:id", authRequired, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const r = await Result.findById(req.params.id);
+    if (!r) return res.status(404).json({ message: "Not found" });
+
+    const me = await User.findById(userId).select("role");
+    const isOwner = String(r.userId) === String(userId);
+
+    if (!isOwner && me?.role !== "admin") {
+      return res.status(403).json({ message: "Not allowed" });
+    }
+
+    return res.json(r);
+  } catch (err) {
+    console.error("GET /api/results/:id error:", err.message);
     return res.status(500).json({ message: "Server error" });
   }
 });
