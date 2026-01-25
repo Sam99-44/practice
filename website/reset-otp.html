@@ -30,10 +30,10 @@
   <p>Enter your email. We will send a 6-digit code.</p>
 
   <label>Email</label>
-  <input id="email" type="email" placeholder="you@gmail.com" autocomplete="email" />
+  <input id="email" type="email" autocomplete="email" />
 
   <button id="sendBtn" type="button">Send Code</button>
-  <div class="muted">Code expires in 10 minutes.</div>
+  
 
   <hr />
 
@@ -93,7 +93,7 @@
       const data = await safeJson(res);
 
       // backend returns same message for security
-      setMsg(data.message || "If the email exists, a reset code has been sent ✅", "ok");
+      setMsg(data.message || "If the email exists, a reset code has been sent ", "ok");
     } catch (e) {
       setMsg("Network error. Try again.", "error");
     } finally {
@@ -129,7 +129,7 @@
       const data = await safeJson(res);
 
       if (res.ok) {
-        setMsg(data.message || "Password reset successful ✅ Redirecting...", "ok");
+        setMsg(data.message || "Password reset successful Redirecting...", "ok");
         setTimeout(() => location.href = "login.html", 1200);
       } else {
         setMsg((data.message || "Reset failed.") + ` (HTTP ${res.status})`, "error");
@@ -141,7 +141,7 @@
     }
   };
 
-  setMsg("Ready ✅", "ok");
+  
 </script>
 
 </body>
