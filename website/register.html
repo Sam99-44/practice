@@ -23,16 +23,6 @@
 </head>
 <body>
 
-<div class="card">
-  <h2>Create Account</h2>
-  <p class="small">Choose account type. If you choose Student, you will get an 8-digit student number.</p>
-
-  <form id="regForm" onsubmit="return false;">
-    <label>Account Type</label>
-    <div class="radioRow">
-      <label><input type="radio" name="accountType" value="student" checked> Student</label>
-      <label><input type="radio" name="accountType" value="materials"> Access Materials Only</label>
-    </div>
 
     <label>Username</label>
     <input id="username" />
@@ -157,7 +147,7 @@
       const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
-        setMsg(data.message || "Account created ✅", "ok");
+        setMsg(data.message || "Account created ", "ok");
       } else {
         setMsg((data.message || "Could not register.") + ` (HTTP ${res.status})`, "error");
         btn.disabled = false;
@@ -168,8 +158,8 @@
     }
   });
 
-  setMsg("Ready ✅", "ok");
 </script>
 
 </body>
 </html>
+
