@@ -316,14 +316,15 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
 
     let filter = {};
     if (!(u.role === "admin" && wantsAll)) {
-      // learner (or admin without all=1): show only their grade quizzes
       if (!u.grade) return res.json([]);
       filter.grade = u.grade;
     }
 
     const quizzes = await Quiz.find(filter)
       .sort({ createdAt: -1 })
-      .select("grade title topic questions timeLimitMinutes isFrozen availableFrom availableUntil createdAt updatedAt frozenAt");
+      .select(
+        "grade title topic questions timeLimitMinutes isFrozen availableFrom availableUntil createdAt updatedAt frozenAt"
+      );
 
     return res.json(quizzes);
   } catch (e) {
@@ -338,7 +339,6 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
     const quiz = await Quiz.findById(req.params.id);
     if (!quiz) return res.status(404).json({ message: "Not found" });
 
-    // Optional: learners only access their grade quizzes
     const u = await User.findById(req.user.userId).select("role grade");
     if (!u) return res.status(401).json({ message: "User not found" });
 
@@ -402,11 +402,14 @@ function isUnavailableBySchedule(quiz) {
   return false;
 }
 
+// supports your admin quiz fields: textAnswerMode (exact/contains/number_tolerance) + numberTolerance
 function compareTextAnswer(userAns, correctAns, mode, tolerance) {
-  const ua = cleanSpaces(userAns).toLowerCase();
-  const ca = cleanSpaces(correctAns).toLowerCase();
+  const uaRaw = cleanSpaces(userAns);
+  const caRaw = cleanSpaces(correctAns);
+  if (!caRaw) return false;
 
-  if (!ca) return false;
+  const ua = uaRaw.toLowerCase();
+  const ca = caRaw.toLowerCase();
 
   if (mode === "contains") {
     return ua.includes(ca);
@@ -442,18 +445,21 @@ app.post("/api/results", authRequired, async (req, res) => {
     const quiz = await Quiz.findById(quizId);
     if (!quiz) return res.status(404).json({ message: "Assessment not found" });
 
-    // Unavailable
     if (isUnavailableBySchedule(quiz)) {
       return res.status(403).json({ message: "This assessment is currently unavailable." });
     }
 
     const qs = Array.isArray(quiz.questions) ? quiz.questions : [];
-    let correctCount = 0;
+    const total = qs.length || 0;
+    if (total === 0) return res.status(400).json({ message: "Assessment has no questions." });
 
-    // Build review answers for review.html
-    const reviewAnswers = qs.map((q, i) => {
+    let score = 0;
+
+    // Build answers snapshot (matches your ResultSchema)
+    const savedAnswers = qs.map((q, i) => {
       const type = String(q.type || "mcq").toLowerCase();
       const hint = q.hint || "";
+      const questionText = q.text || "";
       const options = Array.isArray(q.options) ? q.options : [];
 
       const ans = answers.find((a) => Number(a.questionIndex) === i) || {};
@@ -465,16 +471,26 @@ app.post("/api/results", authRequired, async (req, res) => {
         const tol = q.numberTolerance ?? null;
 
         const isCorrect = compareTextAnswer(userText, correctText, mode, tol);
-        if (isCorrect) correctCount++;
+        if (isCorrect) score++;
+
+        // map to schema fields
+        const answerMode =
+          mode === "number_tolerance" ? "number" :
+          mode === "exact" ? "exact" :
+          "case-insensitive";
 
         return {
-          type: "text",
           questionIndex: i,
-          questionText: q.text || "",
-          hint,
+          type: "text",
           textAnswer: userText,
           correctText,
+          hint,
+          answerMode,
+          tolerance: mode === "number_tolerance" ? Number(tol) : null,
+          roundTo: null,
           isCorrect,
+          questionText,
+          options: [],
         };
       }
 
@@ -483,22 +499,27 @@ app.post("/api/results", authRequired, async (req, res) => {
       const correctIndex = Number.isFinite(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
 
       const isCorrect = chosenIndex === correctIndex && correctIndex >= 0;
-      if (isCorrect) correctCount++;
+      if (isCorrect) score++;
 
       return {
-        type: "mcq",
         questionIndex: i,
-        questionText: q.text || "",
-        hint,
-        options,
+        type: "mcq",
         chosenIndex,
         correctIndex,
+        textAnswer: "",
+        correctText: "",
+        hint,
+        answerMode: "case-insensitive",
+        tolerance: null,
+        roundTo: null,
         isCorrect,
+        questionText,
+        options,
       };
     });
 
-    const total = qs.length || 1;
-    const percent = Math.round((correctCount / total) * 100);
+    const percent = Math.round((score / total) * 100);
+    const status = percent >= 50 ? "PASS" : "FAIL";
 
     const saved = await Result.create({
       userId,
@@ -506,18 +527,24 @@ app.post("/api/results", authRequired, async (req, res) => {
       grade: quiz.grade,
       topic: quiz.topic || "General",
       title: quiz.title || "Assessment",
+      score,
+      total,
       percent,
+      status,
+      answers: savedAnswers,
       timeTakenSeconds: Number(timeTakenSeconds) || 0,
-      answers: reviewAnswers,
     });
 
     return res.status(201).json({
       message: "Saved",
+      score,
+      total,
       percent,
+      status,
       resultId: saved._id,
     });
   } catch (e) {
-    console.error("POST /api/results error:", e.message);
+    console.error("POST /api/results error:", e);
     return res.status(500).json({ message: "Could not save attempt. Please try again." });
   }
 });
@@ -529,7 +556,7 @@ app.get("/api/results/my", authRequired, async (req, res) => {
 
     const rows = await Result.find({ userId })
       .sort({ createdAt: -1 })
-      .select("_id createdAt grade topic title percent quizId");
+      .select("_id createdAt grade topic title percent score total status quizId");
 
     return res.json(rows);
   } catch (e) {
@@ -545,7 +572,6 @@ app.get("/api/results/:id", authRequired, async (req, res) => {
     const r = await Result.findById(req.params.id);
     if (!r) return res.status(404).json({ message: "Not found" });
 
-    // only owner (or admin)
     const u = await User.findById(userId).select("role");
     if (!u) return res.status(401).json({ message: "User not found" });
 
