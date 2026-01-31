@@ -3,33 +3,67 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <title>Login | Practice Online</title>
 
+  <!-- SEO: do not index login pages -->
+  <meta name="robots" content="noindex, nofollow" />
+
   <style>
-    body{margin:0;font-family:Arial,sans-serif;background:#f6f7fb;color:#0f172a}
-    .card{max-width:420px;margin:60px auto;background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:20px}
+    body{
+      margin:0;
+      font-family:Arial,sans-serif;
+      background:#f6f7fb;
+      color:#0f172a
+    }
+    .card{
+      max-width:420px;
+      margin:60px auto;
+      background:#fff;
+      border:1px solid #e6e6e6;
+      border-radius:14px;
+      padding:20px
+    }
     h2{margin:0 0 6px}
     p{margin:6px 0 14px;color:#334155}
     label{display:block;margin-top:12px;font-weight:600}
-    input,button{width:100%;padding:10px;margin-top:6px;border-radius:10px;border:1px solid #ddd}
-    button{background:#0b3c5d;color:#fff;border:none;font-weight:700;cursor:pointer}
+    input,button{
+      width:100%;
+      padding:10px;
+      margin-top:6px;
+      border-radius:10px;
+      border:1px solid #ddd
+    }
+    button{
+      background:#0b3c5d;
+      color:#fff;
+      border:none;
+      font-weight:700;
+      cursor:pointer
+    }
     button:disabled{opacity:.6;cursor:not-allowed}
     .msg{margin-top:12px;font-size:14px}
     .error{color:#b91c1c}
     .ok{color:#065f46}
-    .links{display:flex;justify-content:space-between;margin-top:12px;font-size:14px}
+    .links{
+      display:flex;
+      justify-content:space-between;
+      margin-top:12px;
+      font-size:14px
+    }
     a{color:#0b3c5d;text-decoration:none}
   </style>
 </head>
+
 <body>
 
 <div class="card">
   <h2>Login</h2>
 
-  <label>Email</label>
+  <label for="email">Email</label>
   <input id="email" type="email" autocomplete="email" />
 
-  <label>Password</label>
+  <label for="password">Password</label>
   <input id="password" type="password" autocomplete="current-password" />
 
   <button id="loginBtn" type="button">Login</button>
@@ -43,7 +77,8 @@
 </div>
 
 <script>
-  const API = "https://practice-backend-msgn.onrender.com";
+  // ✅ USE YOUR API DOMAIN
+  const API = "https://api.practiceonline.co.za";
 
   const loginBtn = document.getElementById("loginBtn");
   const msg = document.getElementById("msg");
@@ -54,7 +89,8 @@
   }
 
   async function safeJson(res){
-    try { return await res.json(); } catch { return {}; }
+    try { return await res.json(); }
+    catch { return {}; }
   }
 
   loginBtn.onclick = async () => {
@@ -69,7 +105,7 @@
     setMsg("Signing in...");
 
     try {
-      const res = await fetch(API + "/api/login", {
+      const res = await fetch(`${API}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
@@ -82,12 +118,12 @@
         return setMsg(data.message || "Invalid email or password.", "error");
       }
 
-      // Save token for all protected pages
+      // ✅ Save JWT + user info
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user || {}));
       localStorage.setItem("username", data.user?.username || "");
 
-      // Go straight to quizzes
+      // ✅ Redirect after login
       window.location.href = "learner-quizzes.html";
 
     } catch {
@@ -99,5 +135,3 @@
 
 </body>
 </html>
-
-
