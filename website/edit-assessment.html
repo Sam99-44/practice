@@ -130,21 +130,16 @@
       <input id="title" />
 
       <label>Instructions (shown before starting)</label>
-      <textarea id="instructions" placeholder="Example:
-
-
-"></textarea>
+      <textarea id="instructions" placeholder="Example:"></textarea>
 
       <div class="row">
         <div>
           <label>Available From (optional)</label>
           <input id="availableFrom" type="datetime-local" />
-          
         </div>
         <div>
           <label>Available Until (optional)</label>
           <input id="availableUntil" type="datetime-local" />
-          
         </div>
       </div>
 
@@ -167,7 +162,8 @@
   </div>
 
   <script>
-    const API = window.API || "https://practice-backend-msgn.onrender.com";
+    // ✅ UPDATED API BASE (important)
+    const API = "https://api.practiceonline.co.za";
     const token = localStorage.getItem("token");
 
     const who = document.getElementById("who");
@@ -204,9 +200,8 @@
     }
 
     function logout(){
-      localStorage.removeItem("token");
-      localStorage.removeItem("username");
-      localStorage.removeItem("me_cache");
+      // ✅ cleaner logout
+      localStorage.clear();
       window.location.href = "login.html";
     }
     document.getElementById("logoutBtn").addEventListener("click", logout);
@@ -229,7 +224,6 @@
 
     function pad2(n){ return String(n).padStart(2,"0"); }
 
-    // Convert ISO string -> datetime-local value (local time)
     function isoToLocalInput(iso){
       if (!iso) return "";
       const d = new Date(iso);
@@ -237,7 +231,6 @@
       return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
     }
 
-    // Convert datetime-local value -> ISO string
     function localInputToIso(val){
       if (!val) return null;
       const d = new Date(val);
@@ -322,20 +315,25 @@
     }
 
     async function requireAdmin(){
-      const meRes = await fetch(`${API}/api/auth/me`, {
-        headers: { Authorization: "Bearer " + token }
-      });
-      const me = await meRes.json().catch(()=>null);
-
-      if (!meRes.ok || !me) {
-        alert("Session expired. Please login again.");
-        logout(); return false;
+      let meRes;
+      try{
+        meRes = await fetch(`${API}/api/auth/me`, {
+          headers: { Authorization: "Bearer " + token }
+        });
+      } catch {
+        setMsg("Network error. Please refresh.", "error");
+        return false;
       }
+
+      const me = await meRes.json().catch(()=>null);
+      if (!meRes.ok || !me) { alert("Session expired."); logout(); return false; }
+
       if (me.role !== "admin") {
         alert("Admin only");
         window.location.href = "learner-quizzes.html";
         return false;
       }
+
       who.textContent = `Logged in as: ${me.username} (admin)`;
       return true;
     }
@@ -346,31 +344,26 @@
       freezePill.className = a.cls;
       availabilityNote.textContent = a.note || "";
 
-      // Button wording
-      if (q?.isFrozen) {
-        freezeBtn.textContent = "Make Available";
-      } else {
-        freezeBtn.textContent = "Make Unavailable";
-      }
-
+      // ✅ Freeze button ALWAYS enabled after selection
       freezeBtn.disabled = false;
+      freezeBtn.textContent = q?.isFrozen ? "Make Available" : "Make Unavailable";
 
-      // While unavailable (frozen), block editing + delete (safer)
-      const unavailable = !!q?.isFrozen;
-      if (unavailable) {
+      // ✅ Delete button ALWAYS enabled after selection
+      deleteBtn.disabled = false;
+
+      // ✅ Editing blocked only when frozen
+      const frozen = !!q?.isFrozen;
+      if (frozen) {
         editArea.classList.add("disabledBox");
-        deleteBtn.disabled = true;
         saveBtn.disabled = true;
         addQuestionBtn.disabled = true;
       } else {
         editArea.classList.remove("disabledBox");
-        deleteBtn.disabled = false;
         saveBtn.disabled = false;
         addQuestionBtn.disabled = false;
       }
     }
 
-    // Render dropdown based on filters
     function renderDropdown(){
       const g = (gradeFilter.value || "").trim();
       const q = (searchBox.value || "").trim().toLowerCase();
@@ -406,9 +399,15 @@
       deleteBtn.disabled = true;
       editArea.classList.add("disabledBox");
 
-      const res = await fetch(`${API}/api/quizzes`, {
-        headers: { Authorization: "Bearer " + token }
-      });
+      let res;
+      try{
+        res = await fetch(`${API}/api/quizzes`, {
+          headers: { Authorization: "Bearer " + token }
+        });
+      } catch {
+        setMsg("Network error loading assessments.", "error");
+        return;
+      }
 
       if (res.status === 401) return logout();
       const list = await res.json().catch(()=>[]);
@@ -431,9 +430,16 @@
       editArea.classList.add("disabledBox");
       questionsWrap.innerHTML = "";
 
-      const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`, {
-        headers: { Authorization: "Bearer " + token }
-      });
+      let res;
+      try{
+        res = await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`, {
+          headers: { Authorization: "Bearer " + token }
+        });
+      } catch {
+        setMsg("Network error loading assessment.", "error");
+        return;
+      }
+
       if (res.status === 401) return logout();
 
       if (!res.ok) {
@@ -510,7 +516,7 @@
       if (!currentQuiz) return;
 
       if (currentQuiz.isFrozen) {
-        return setMsg("This assessment is currently unavailable. Make it available to edit.", "error");
+        return setMsg("This assessment is unavailable. Make it available to edit.", "error");
       }
 
       try{
@@ -560,7 +566,6 @@
         });
 
         const data = await res.json().catch(()=>({}));
-
         if (!res.ok) return setMsg(data.message || "Could not save.", "error");
 
         currentQuiz = data;
@@ -579,12 +584,12 @@
       const nextFrozen = !currentQuiz.isFrozen;
 
       const ok = confirm(nextFrozen
-        ? "Make this assessment unavailable? Learners will see it, but cannot attempt."
+        ? "Make this assessment unavailable? Learners will see it but cannot attempt."
         : "Make this assessment available? Learners can attempt if schedule allows."
       );
       if (!ok) return;
 
-      setMsg(nextFrozen ? "Updating availability…" : "Updating availability…", "muted");
+      setMsg("Updating availability…", "muted");
 
       const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
         method: "PUT",
@@ -599,7 +604,6 @@
       });
 
       const data = await res.json().catch(()=>({}));
-
       if (!res.ok) return setMsg(data.message || "Could not update availability.", "error");
 
       currentQuiz = data;
@@ -613,10 +617,7 @@
     deleteBtn.addEventListener("click", async () => {
       if (!currentQuiz) return;
 
-      if (currentQuiz.isFrozen) {
-        return setMsg("Make it available before deleting (safer).", "error");
-      }
-
+      // ✅ allow delete even if frozen
       const ok = confirm("Delete this assessment permanently?");
       if (!ok) return;
 
@@ -628,7 +629,6 @@
       });
 
       const data = await res.json().catch(()=>({}));
-
       if (!res.ok) return setMsg(data.message || "Could not delete.", "error");
 
       setMsg("✅ Deleted.", "ok");
@@ -670,7 +670,6 @@
       loadAssessmentById(id);
     });
 
-    // Filter handlers
     gradeFilter.addEventListener("change", () => {
       renderDropdown();
       assessmentSelect.value = "";
@@ -680,7 +679,6 @@
       assessmentSelect.value = "";
     });
 
-    // Boot
     (async () => {
       const ok = await requireAdmin();
       if (!ok) return;
