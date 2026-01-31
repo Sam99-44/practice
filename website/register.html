@@ -34,7 +34,6 @@
       <h2>Register Account</h2>
       <p>Create your Practice Online account</p>
 
-      <!-- Account Type (RESTORED) -->
       <label>Account Type</label>
       <div class="radioRow">
         <label>
@@ -92,7 +91,8 @@
   </div>
 
   <script>
-    const API = "https://practice-backend-msgn.onrender.com";
+    // ✅ Use your custom API domain
+    const API = "https://api.practiceonline.co.za";
 
     const btn = document.getElementById("registerBtn");
     const msg = document.getElementById("msg");
@@ -134,6 +134,10 @@
       toggleBtn.textContent = show ? "Hide Password" : "Show Password";
     });
 
+    async function safeJson(res){
+      try { return await res.json(); } catch { return {}; }
+    }
+
     btn.addEventListener("click", async () => {
       const username = usernameEl.value.trim();
       const email = emailEl.value.trim();
@@ -172,27 +176,24 @@
           body: JSON.stringify(payload)
         });
 
-        const data = await res.json().catch(() => ({}));
+        const data = await safeJson(res);
 
-        if (res.ok) {
-          setMsg(data.message || "Account created.", "ok");
-          setTimeout(() => {
-           window.location.href = "login.html";
-          }, 1500); // 1.5 seconds delay
-        } else {
-          setMsg((data.message || "Could not register.") + ` (HTTP ${res.status})`, "error");
+        if (!res.ok) {
           btn.disabled = false;
+          return setMsg((data.message || "Could not register.") + ` (HTTP ${res.status})`, "error");
         }
+
+        setMsg(data.message || "Account created.", "ok");
+
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 1500);
+
       } catch (e) {
-        setMsg("Network error / CORS blocked.", "error");
         btn.disabled = false;
-      } finally {
-        // keep disabled only if success; re-enable on error
-        if (msg.className.includes("error")) btn.disabled = false;
+        setMsg("Network error / CORS blocked.", "error");
       }
     });
   </script>
 </body>
 </html>
-
-
