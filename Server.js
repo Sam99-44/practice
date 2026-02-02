@@ -2,6 +2,7 @@
 // ✅ Student register: accountType + 8-digit studentNumber
 // ✅ Login: /api/login
 // ✅ Profile: GET /api/auth/me
+// ✅ Admin stats: GET /api/admin/stats
 // ✅ Quizzes: GET /api/quizzes (learner grade), POST /api/quizzes (admin)
 // ✅ Quiz by id: GET /api/quizzes/:id
 // ✅ Quiz update/delete (admin): PUT /api/quizzes/:id, DELETE /api/quizzes/:id
@@ -305,6 +306,32 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
+/* ------------------ ADMIN STATS ------------------ */
+// ✅ This powers admin-dashboard.html: GET /api/admin/stats
+app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
+  try {
+    const [totalUsers, totalAssessments, byGrade] = await Promise.all([
+      User.countDocuments({}),
+      Quiz.countDocuments({}),
+      Quiz.aggregate([
+        { $group: { _id: "$grade", count: { $sum: 1 } } },
+        { $sort: { _id: 1 } },
+        { $project: { _id: 0, grade: "$_id", count: 1 } },
+      ]),
+    ]);
+
+    return res.json({
+      totalUsers,
+      totalAssessments,       // your dashboard uses this
+      totalQuizzes: totalAssessments, // fallback support
+      quizzesByGrade: byGrade,
+    });
+  } catch (e) {
+    console.error("GET /api/admin/stats error:", e.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 /* ------------------ QUIZZES ------------------ */
 
 // Learner: returns quizzes for learner grade
@@ -475,7 +502,7 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
           }
         } else {
           const opts = Array.isArray(q?.options) ? q.options : [];
-          if (opts.length !== 4 || opts.some(o => !cleanSpaces(o))) {
+          if (opts.length !== 4 || opts.some((o) => !cleanSpaces(o))) {
             return res.status(400).json({ message: "MCQ questions must have 4 options A–D." });
           }
           const ci = Number(q?.correctIndex);
@@ -536,9 +563,7 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
   const ua = uaRaw.toLowerCase();
   const ca = caRaw.toLowerCase();
 
-  if (mode === "contains") {
-    return ua.includes(ca);
-  }
+  if (mode === "contains") return ua.includes(ca);
 
   if (mode === "number_tolerance") {
     const uNum = Number(ua);
@@ -548,8 +573,7 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
     return Math.abs(uNum - cNum) <= tol;
   }
 
-  // exact (default)
-  return ua === ca;
+  return ua === ca; // exact
 }
 
 // Submit attempt (attempt.html POSTs here)
@@ -580,7 +604,6 @@ app.post("/api/results", authRequired, async (req, res) => {
 
     let score = 0;
 
-    // Build answers snapshot (matches your ResultSchema)
     const savedAnswers = qs.map((q, i) => {
       const type = String(q.type || "mcq").toLowerCase();
       const hint = q.hint || "";
@@ -618,7 +641,6 @@ app.post("/api/results", authRequired, async (req, res) => {
         };
       }
 
-      // mcq
       const chosenIndex = Number.isFinite(Number(ans.chosenIndex)) ? Number(ans.chosenIndex) : -1;
       const correctIndex = Number.isFinite(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
 
@@ -719,7 +741,6 @@ app.post("/api/forgot-password-otp", async (req, res) => {
     const cleanEmail = String(email).toLowerCase().trim();
     const user = await User.findOne({ email: cleanEmail });
 
-    // Do not reveal if email exists
     if (!user) return res.json({ message: "If the email exists, a reset code has been sent." });
 
     const otp = makeOtp6();
