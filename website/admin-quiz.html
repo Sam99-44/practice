@@ -25,7 +25,6 @@
     .qhead{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
     .smallbtn{border:1px solid #ddd; background:#fff; color:#111827; padding:8px 10px; border-radius:10px; font-weight:700;}
     .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
-    .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
     hr{border:none; border-top:1px solid #eee; margin:14px 0;}
     .pill{display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid #cfe9ff; background:#eef7ff; color:#0b3c5d; font-size:12px; font-weight:800;}
     .tiny{font-size:12px;}
@@ -63,17 +62,20 @@
       </div>
 
       <div>
-        <label>Topic (type it) </label>
-         <input class="qText"  />
+        <label>Topic (type it)</label>
+        <input id="topic" placeholder="e.g. Algebra" />
       </div>
 
       <div>
         <label>Time Limit (minutes)</label>
         <input id="timeLimit" type="number" min="1" max="180" value="10" placeholder="e.g. 10" />
       </div>
-    </div>
 
-    <label>Assessment Title</label>
+      <div>
+        <label>Assessment Title</label>
+        <input id="title" placeholder="e.g. Term 1 Revision Test" />
+      </div>
+    </div>
 
     <hr>
 
@@ -135,10 +137,6 @@
       return t.replace(/\b\w/g, c => c.toUpperCase());
     }
 
-    function escapeAttr(str){
-      return String(str || "").replaceAll('"', "&quot;");
-    }
-
     // -------------------- Admin lock --------------------
     (async () => {
       const token = localStorage.getItem("token");
@@ -186,13 +184,13 @@
           </div>
 
           <label>Question Text</label>
-          <input class="qText"  />
+          <input class="qText" />
 
-          <label>Hint </label>
+          <label>Hint</label>
           <input class="qHint" />
 
           <label>Image URL (optional)</label>
-          <input class="qImage"  />
+          <input class="qImage" />
 
           <div class="grid2">
             <div><label>Option A</label><input class="optA" placeholder="A" /></div>
@@ -232,7 +230,7 @@
           <div class="grid2">
             <div>
               <label>Correct Answer (what you expect learners to type)</label>
-              <input class="correctText"  />
+              <input class="correctText" />
             </div>
             <div>
               <label>Check Mode</label>
@@ -437,7 +435,3 @@
 
 </body>
 </html>
-
-
-
-
