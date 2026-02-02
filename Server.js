@@ -4,6 +4,7 @@
 // ✅ Profile: GET /api/auth/me
 // ✅ Quizzes: GET /api/quizzes (learner grade), POST /api/quizzes (admin)
 // ✅ Quiz by id: GET /api/quizzes/:id
+// ✅ Quiz update/delete (admin): PUT /api/quizzes/:id, DELETE /api/quizzes/:id
 // ✅ Results: POST /api/results, GET /api/results/my, GET /api/results/:id
 // ✅ Password reset (OTP): /api/forgot-password-otp + /api/reset-password-otp
 // ✅ SendGrid: welcome email + test-email + health
@@ -88,7 +89,7 @@ const ALLOWED_ORIGINS = [
 app.use(
   cors({
     origin: (origin, cb) => {
-      if (!origin) return cb(null, true);
+      if (!origin) return cb(null, true); // Postman/curl
       if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
       if (origin.endsWith(".netlify.app")) return cb(null, true);
       return cb(new Error(`CORS blocked: ${origin}`), false);
@@ -97,6 +98,7 @@ app.use(
   })
 );
 
+// Preflight
 app.options("*", cors());
 
 /* ------------------ HEALTH ------------------ */
@@ -107,7 +109,7 @@ app.get("/api/health", (req, res) =>
 
 /* ------------------ TEST EMAIL ------------------ */
 app.get("/test-email", async (req, res) => {
-  const to = (req.query.to || "practiceallonline@gmail.com").trim();
+  const to = String(req.query.to || "practiceallonline@gmail.com").trim();
   try {
     await sendEmail({
       to,
@@ -142,7 +144,7 @@ async function adminOnly(req, res, next) {
     if (!u) return res.status(401).json({ message: "User not found" });
     if (u.role !== "admin") return res.status(403).json({ message: "Admin only" });
     next();
-  } catch (e) {
+  } catch {
     res.status(500).json({ message: "Server error" });
   }
 }
@@ -323,7 +325,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
     const quizzes = await Quiz.find(filter)
       .sort({ createdAt: -1 })
       .select(
-        "grade title topic questions timeLimitMinutes isFrozen availableFrom availableUntil createdAt updatedAt frozenAt"
+        "grade title topic questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt"
       );
 
     return res.json(quizzes);
@@ -372,14 +374,137 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
       topic: cleanSpaces(topic),
       timeLimitMinutes: Number(timeLimitMinutes) || 0,
       questions,
+      instructions: "",
       isFrozen: false,
       frozenAt: null,
+      availableFrom: null,
+      availableUntil: null,
     });
 
     return res.status(201).json({ message: "Saved", quizId: quiz._id });
   } catch (e) {
     console.error("POST /api/quizzes error:", e.message);
     return res.status(500).json({ message: "Could not save assessment" });
+  }
+});
+
+// Admin updates quiz (edit-assessment.html PUTs here)
+app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const update = {};
+    const allowed = [
+      "grade",
+      "title",
+      "topic",
+      "instructions",
+      "timeLimitMinutes",
+      "availableFrom",
+      "availableUntil",
+      "questions",
+      "isFrozen",
+      "frozenAt",
+    ];
+
+    for (const k of allowed) {
+      if (k in req.body) update[k] = req.body[k];
+    }
+
+    // Validation + cleaning
+    if ("grade" in update) {
+      const g = Number(update.grade);
+      if (!Number.isInteger(g) || g < 8 || g > 12) {
+        return res.status(400).json({ message: "Grade must be between 8 and 12." });
+      }
+      update.grade = g;
+    }
+
+    if ("title" in update) update.title = cleanSpaces(update.title);
+    if ("topic" in update) update.topic = cleanSpaces(update.topic);
+    if ("instructions" in update) update.instructions = String(update.instructions || "");
+
+    if ("timeLimitMinutes" in update) {
+      const t = Number(update.timeLimitMinutes);
+      if (!Number.isFinite(t) || t < 1 || t > 180) {
+        return res.status(400).json({ message: "Time limit must be 1–180 minutes." });
+      }
+      update.timeLimitMinutes = t;
+    }
+
+    if ("availableFrom" in update) {
+      update.availableFrom = update.availableFrom ? new Date(update.availableFrom) : null;
+    }
+    if ("availableUntil" in update) {
+      update.availableUntil = update.availableUntil ? new Date(update.availableUntil) : null;
+    }
+
+    if ("availableFrom" in update && "availableUntil" in update) {
+      if (update.availableFrom && update.availableUntil) {
+        if (update.availableUntil.getTime() <= update.availableFrom.getTime()) {
+          return res.status(400).json({ message: "Available Until must be after Available From." });
+        }
+      }
+    }
+
+    if ("questions" in update) {
+      if (!Array.isArray(update.questions) || update.questions.length === 0) {
+        return res.status(400).json({ message: "Questions are required." });
+      }
+
+      // light validation for question objects
+      for (const q of update.questions) {
+        const type = String(q?.type || "mcq").toLowerCase();
+        if (!cleanSpaces(q?.text)) {
+          return res.status(400).json({ message: "Each question must have text." });
+        }
+
+        if (type === "text") {
+          if (!cleanSpaces(q?.correctText)) {
+            return res.status(400).json({ message: "Typed questions must have correctText." });
+          }
+          const mode = q?.textAnswerMode || "exact";
+          if (!["exact", "contains", "number_tolerance"].includes(mode)) {
+            return res.status(400).json({ message: "Invalid textAnswerMode." });
+          }
+          if (mode === "number_tolerance") {
+            const tol = Number(q?.numberTolerance);
+            if (!Number.isFinite(tol) || tol < 0) {
+              return res.status(400).json({ message: "Invalid numberTolerance." });
+            }
+          }
+        } else {
+          const opts = Array.isArray(q?.options) ? q.options : [];
+          if (opts.length !== 4 || opts.some(o => !cleanSpaces(o))) {
+            return res.status(400).json({ message: "MCQ questions must have 4 options A–D." });
+          }
+          const ci = Number(q?.correctIndex);
+          if (!Number.isInteger(ci) || ci < 0 || ci > 3) {
+            return res.status(400).json({ message: "MCQ correctIndex must be 0–3." });
+          }
+        }
+      }
+    }
+
+    const quiz = await Quiz.findByIdAndUpdate(id, { $set: update }, { new: true });
+    if (!quiz) return res.status(404).json({ message: "Not found" });
+
+    return res.json(quiz);
+  } catch (e) {
+    console.error("PUT /api/quizzes/:id error:", e.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Admin deletes quiz
+app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
+  try {
+    const quiz = await Quiz.findByIdAndDelete(req.params.id);
+    if (!quiz) return res.status(404).json({ message: "Not found" });
+    return res.json({ message: "Deleted" });
+  } catch (e) {
+    console.error("DELETE /api/quizzes/:id error:", e.message);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -402,7 +527,7 @@ function isUnavailableBySchedule(quiz) {
   return false;
 }
 
-// supports your admin quiz fields: textAnswerMode (exact/contains/number_tolerance) + numberTolerance
+// supports admin quiz fields: textAnswerMode (exact/contains/number_tolerance) + numberTolerance
 function compareTextAnswer(userAns, correctAns, mode, tolerance) {
   const uaRaw = cleanSpaces(userAns);
   const caRaw = cleanSpaces(correctAns);
@@ -473,7 +598,6 @@ app.post("/api/results", authRequired, async (req, res) => {
         const isCorrect = compareTextAnswer(userText, correctText, mode, tol);
         if (isCorrect) score++;
 
-        // map to schema fields
         const answerMode =
           mode === "number_tolerance" ? "number" :
           mode === "exact" ? "exact" :
@@ -559,7 +683,7 @@ app.get("/api/results/my", authRequired, async (req, res) => {
       .select("_id createdAt grade topic title percent score total status quizId");
 
     return res.json(rows);
-  } catch (e) {
+  } catch {
     return res.status(500).json({ message: "Server error" });
   }
 });
@@ -595,6 +719,7 @@ app.post("/api/forgot-password-otp", async (req, res) => {
     const cleanEmail = String(email).toLowerCase().trim();
     const user = await User.findOne({ email: cleanEmail });
 
+    // Do not reveal if email exists
     if (!user) return res.json({ message: "If the email exists, a reset code has been sent." });
 
     const otp = makeOtp6();
@@ -658,6 +783,20 @@ app.post("/api/reset-password-otp", async (req, res) => {
     console.error("reset-password-otp error:", err.message);
     return res.status(500).json({ message: "Server error" });
   }
+});
+
+/* ------------------ OPTIONAL: FRIENDLY 404 FOR API ------------------ */
+app.use("/api", (req, res) => {
+  res.status(404).json({ message: "API route not found" });
+});
+
+/* ------------------ ERROR HANDLER (CORS ETC.) ------------------ */
+app.use((err, req, res, next) => {
+  if (String(err?.message || "").startsWith("CORS blocked:")) {
+    return res.status(403).json({ message: err.message });
+  }
+  console.error("Unhandled error:", err?.message || err);
+  res.status(500).json({ message: "Server error" });
 });
 
 /* ------------------ DB + START ------------------ */
