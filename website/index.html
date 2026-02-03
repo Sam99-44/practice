@@ -15,11 +15,14 @@
 
   <style>
     :root{
-      --blue:#1b1648;
+      --bg1:#1b1648;
+      --bg2:#0f0c2b;
       --red:#e11d2e;
       --white:#ffffff;
       --muted:#cbd5f5;
       --soft:#2a2563;
+      --glassBorder: rgba(255,255,255,.12);
+      --shadow: 0 18px 55px rgba(0,0,0,.35);
     }
 
     *{box-sizing:border-box}
@@ -27,275 +30,478 @@
     body{
       margin:0;
       font-family:"Inter", Arial, sans-serif;
-      background:var(--blue);
+      background: radial-gradient(1200px 600px at 18% 8%, #2b2670 0%, var(--bg1) 35%, var(--bg2) 100%);
       color:var(--white);
+      overflow-x:hidden;
     }
+
+    a{color:inherit}
 
     /* ---------- TOP NAV ---------- */
     .topbar{
       display:flex;
       justify-content:space-between;
       align-items:center;
-      padding:20px 48px;
+      padding:16px 48px;
+      gap:16px;
+      position:sticky;
+      top:0;
+      z-index:50;
+      background:rgba(15,12,43,.75);
+      backdrop-filter: blur(14px);
+      border-bottom:1px solid rgba(255,255,255,.08);
     }
 
     .logo{
-      font-size:20px;
-      font-weight:800;
-      letter-spacing:.6px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:.8px;
+      white-space:nowrap;
+      text-transform:uppercase;
+    }
+
+    .logo-badge{
+      width:34px;height:34px;
+      border-radius:10px;
+      background:linear-gradient(135deg, rgba(225,29,46,.95), rgba(225,29,46,.55));
+      box-shadow:0 10px 25px rgba(225,29,46,.35);
+      display:grid;place-items:center;
+      font-weight:900;
+      flex:0 0 auto;
     }
 
     .nav-links{
       display:flex;
-      gap:28px;
+      gap:18px;
       align-items:center;
+      flex-wrap:wrap;
     }
 
     .nav-links a{
       color:var(--white);
       text-decoration:none;
-      font-weight:600;
-      position:relative;
+      font-weight:700;
+      opacity:.92;
     }
+    .nav-links a:hover{opacity:1}
 
     .login-btn{
-      padding:9px 18px;
-      border:2px solid var(--red);
-      border-radius:8px;
+      padding:10px 14px;
+      border:1px solid rgba(225,29,46,.9);
+      background:rgba(225,29,46,.12);
+      border-radius:12px;
       color:var(--white);
       text-decoration:none;
-      font-weight:700;
+      font-weight:900;
+      transition:transform .08s ease, box-shadow .2s ease;
+      white-space:nowrap;
+    }
+    .login-btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 10px 28px rgba(225,29,46,.25);
+    }
+
+    /* Mobile menu button */
+    .menuBtn{
+      display:none;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.06);
+      color:#fff;
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:900;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+
+    .mobileMenu{
+      display:none;
+      padding:10px 16px 16px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      background:rgba(15,12,43,.92);
+      backdrop-filter: blur(14px);
+    }
+    .mobileMenu.open{display:block}
+    .mobileMenu a{
+      display:block;
+      padding:12px 10px;
+      color:#fff;
+      text-decoration:none;
+      font-weight:800;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.05);
+      border-radius:12px;
+      margin-top:10px;
     }
 
     /* ---------- HERO ---------- */
     .hero{
+      max-width:1150px;
+      margin:0 auto;
       display:grid;
-      grid-template-columns:1.2fr 1fr;
-      gap:48px;
-      padding:90px 48px;
+      grid-template-columns:1.12fr 0.88fr;
+      gap:26px;
+      padding:72px 48px 52px;
       align-items:center;
+    }
+
+    .kicker{
+      display:inline-flex;
+      gap:10px;
+      align-items:center;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);
+      font-weight:800;
+      color:var(--muted);
+      width:fit-content;
+      margin-bottom:14px;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:999px;background:var(--red);
+      box-shadow:0 0 0 6px rgba(225,29,46,.15);
     }
 
     .hero h1{
       font-size:52px;
-      line-height:1.1;
-      margin:0 0 14px;
+      line-height:1.05;
+      margin:0 0 12px;
+      letter-spacing:-0.02em;
     }
 
     .hero p{
       font-size:18px;
       color:var(--muted);
-      margin-bottom:26px;
-      max-width:520px;
+      margin:0 0 14px;
+      max-width:560px;
+      line-height:1.6;
     }
 
-    .cta{
-      display:inline-block;
-      color:var(--white);
-      font-weight:700;
+    /* Counters */
+    .counters{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0,1fr));
+      gap:12px;
+      margin-top:16px;
+      max-width:560px;
+    }
+    .counterCard{
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      padding:14px 14px;
+    }
+    .counterNum{
+      font-size:26px;
+      font-weight:900;
+      letter-spacing:-0.02em;
+      line-height:1.1;
+    }
+    .counterLabel{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.6px;
+    }
+
+    .ctaRow{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:16px;
+    }
+
+    .btnPrimary{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:12px 16px;
+      border-radius:12px;
+      background:linear-gradient(135deg, rgba(225,29,46,.98), rgba(225,29,46,.75));
+      color:#fff;
+      font-weight:900;
       text-decoration:none;
-      border-bottom:3px solid var(--red);
-      padding-bottom:4px;
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:0 16px 40px rgba(225,29,46,.28);
+      cursor:pointer;
+      white-space:nowrap;
     }
+    .btnPrimary:hover{transform:translateY(-1px)}
+    .btnGhost{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:12px 16px;
+      border-radius:12px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      color:#fff;
+      font-weight:900;
+      text-decoration:none;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .btnGhost:hover{background:rgba(255,255,255,.09)}
 
-    /* ---------- SEARCH ---------- */
+    /* ---------- SEARCH CARD (CLEAN) ---------- */
     .search-area{
-      background:var(--soft);
-      padding:26px;
-      border-radius:14px;
+      border-radius:16px;
+      border:1px solid var(--glassBorder);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+      box-shadow:var(--shadow);
+      padding:16px;
+      backdrop-filter: blur(12px);
     }
 
     .search-box{
-      background:var(--white);
-      border-radius:8px;
+      background:rgba(255,255,255,.96);
+      border-radius:12px;
       overflow:hidden;
+      display:flex;
+      align-items:center;
+      border:1px solid rgba(15,12,43,.08);
     }
 
     .search-box input{
       width:100%;
-      padding:18px;
+      padding:14px 14px;
       border:none;
-      font-size:16px;
+      font-size:15px;
       outline:none;
     }
 
+    .search-box button{
+      border:none;
+      background:var(--red);
+      color:#fff;
+      padding:14px 16px;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .search-box button:active{transform:translateY(1px)}
+
     .search-tabs{
       display:flex;
-      gap:26px;
-      margin-top:18px;
-      font-weight:600;
-      color:var(--muted);
+      gap:10px;
+      margin-top:12px;
+      flex-wrap:wrap;
     }
 
-    .search-tabs span{
-      padding-bottom:6px;
-      border-bottom:3px solid var(--red);
+    .search-tab{
+      cursor:pointer;
+      padding:9px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.05);
+      user-select:none;
+      font-weight:900;
+      color:rgba(203,213,245,.95);
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .search-tab.active{
+      color:#fff;
+      border-color:rgba(225,29,46,.7);
+      box-shadow:0 0 0 3px rgba(225,29,46,.15) inset;
+      background:rgba(225,29,46,.10);
     }
 
     /* ---------- SECTION HEADINGS ---------- */
     .section-title{
       font-size:34px;
-      margin-bottom:24px;
+      margin:0 0 24px;
       position:relative;
       display:inline-block;
-      padding-bottom:18px;
+      padding-bottom:16px;
+      letter-spacing:-0.02em;
     }
-
     .section-title::after{
       content:"";
       position:absolute;
       left:50%;
       bottom:0;
       transform:translateX(-50%);
-      width:0;
-      height:0;
+      width:0;height:0;
       border-left:10px solid transparent;
       border-right:10px solid transparent;
       border-top:12px solid var(--red);
     }
 
-    /* ---------- ABOUT ---------- */
+    /* ---------- ABOUT (DIFFERENT COLOR) ---------- */
     .about{
-      background:#16123a;
+      background:rgba(13, 10, 40, .65);
+      border-top:1px solid rgba(255,255,255,.06);
       padding:80px 48px;
     }
-
+    .about-wrap{max-width:1150px;margin:0 auto;}
     .about p{
-      max-width:760px;
+      max-width:860px;
       color:var(--muted);
       font-size:17px;
-      line-height:1.7;
-      margin-bottom:22px;
+      line-height:1.75;
+      margin:0 0 22px;
     }
 
     .about-grid{
       display:grid;
       grid-template-columns:repeat(3,1fr);
-      gap:28px;
-      margin-top:40px;
+      gap:18px;
+      margin-top:28px;
     }
 
     .about-card{
-      background:var(--soft);
-      padding:26px;
-      border-radius:14px;
+      background:rgba(255,255,255,.05);
+      padding:22px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
     }
 
-    .about-card h3{
-      margin-bottom:10px;
-      font-size:18px;
-    }
-
-    .about-card p{
-      font-size:15px;
-      line-height:1.6;
-      color:var(--muted);
-      margin:0;
-    }
+    .about-card h3{margin:0 0 10px;font-size:18px}
+    .about-card p{margin:0;color:var(--muted);font-size:15px;line-height:1.6}
 
     /* ---------- WHY ---------- */
     .why{
       padding:80px 48px;
     }
-
+    .why-wrap{max-width:1150px;margin:0 auto;}
     .why-grid{
       display:grid;
       grid-template-columns:repeat(4,1fr);
-      gap:26px;
-      margin-top:40px;
+      gap:16px;
+      margin-top:28px;
     }
 
     .why-card{
-      background:var(--soft);
-      padding:24px;
-      border-radius:14px;
-      text-align:center;
+      background:rgba(255,255,255,.05);
+      padding:20px;
+      border-radius:16px;
+      text-align:left;
+      border:1px solid rgba(255,255,255,.10);
     }
-
-    .why-card h4{
-      margin-bottom:10px;
-    }
-
-    .why-card p{
-      font-size:15px;
-      color:var(--muted);
-      line-height:1.6;
-    }
+    .why-card h4{margin:0 0 8px;font-size:16px}
+    .why-card p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
 
     /* ---------- TESTIMONIALS ---------- */
     .testimonials{
-      background:#16123a;
+      background:rgba(255,255,255,.02);
+      border-top:1px solid rgba(255,255,255,.06);
       padding:80px 48px;
     }
-
+    .test-wrap{max-width:1150px;margin:0 auto;}
     .testimonial{
-      max-width:700px;
-      margin-top:30px;
+      max-width:760px;
+      margin-top:18px;
       color:var(--muted);
       font-size:16px;
       line-height:1.7;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.05);
+      border-radius:16px;
+      padding:18px 18px;
     }
-
-    .testimonial strong{
-      color:var(--white);
-    }
+    .testimonial strong{color:#fff}
 
     /* ---------- CONTACT ---------- */
     .contact{
       padding:80px 48px;
       text-align:center;
     }
-
+    .contact-wrap{max-width:1150px;margin:0 auto;}
     .contact-text{
-      max-width:600px;
-      margin:0 auto 40px;
+      max-width:640px;
+      margin:0 auto 30px;
       color:var(--muted);
       font-size:17px;
+      line-height:1.6;
     }
 
     .contact-grid{
       display:grid;
       grid-template-columns:repeat(3,1fr);
-      gap:28px;
-      max-width:900px;
+      gap:16px;
+      max-width:940px;
       margin:0 auto;
     }
 
     .contact-card{
-      background:var(--soft);
-      padding:28px;
-      border-radius:14px;
+      background:rgba(255,255,255,.05);
+      padding:22px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      text-align:left;
+      min-width:0;
     }
+    .contact-card h4{margin:0 0 10px}
+    .contact-card p{margin:0;color:var(--muted);font-size:15px;line-height:1.6}
 
-    .contact-card h4{
-      margin-bottom:10px;
+    /* WhatsApp */
+    .waRow{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-top:4px;
+      flex-wrap:wrap;
     }
-
-    .contact-card p{
+    .waIcon{
+      width:36px;height:36px;
+      border-radius:12px;
+      display:grid;place-items:center;
+      background:rgba(37,211,102,.14);
+      border:1px solid rgba(37,211,102,.35);
+      flex:0 0 auto;
+    }
+    .waLink{
+      color:#25D366;
+      font-weight:900;
+      text-decoration:none;
+      word-break:break-word;
+    }
+    .waLink:hover{ text-decoration:underline; }
+    .waSub{
       color:var(--muted);
-      font-size:15px;
-      line-height:1.6;
+      font-size:12px;
+      margin-top:4px;
     }
 
     /* ---------- FOOTER ---------- */
     footer{
-      padding:40px 48px;
+      padding:38px 48px;
       text-align:center;
       font-size:14px;
       color:var(--muted);
-      border-top:1px solid #2f2b6b;
+      border-top:1px solid rgba(255,255,255,.06);
+      background:rgba(15,12,43,.65);
     }
 
     /* ---------- RESPONSIVE ---------- */
+    @media(max-width:1000px){
+      .topbar{padding:14px 18px}
+      .hero{padding:60px 18px 40px}
+      .about,.why,.testimonials,.contact{padding:56px 18px}
+      footer{padding:30px 18px}
+    }
+
     @media(max-width:900px){
-      .hero{
-        grid-template-columns:1fr;
-        padding:70px 28px;
-      }
+      .nav-links{display:none;}
+      .menuBtn{display:inline-flex;}
+      .hero{grid-template-columns:1fr; gap:18px;}
       .hero h1{font-size:38px}
-      .topbar{padding:18px 28px}
-      .about,.why,.testimonials,.contact{padding:60px 28px}
+      .counters{grid-template-columns:1fr; max-width:100%;}
       .about-grid,.why-grid,.contact-grid{grid-template-columns:1fr}
+    }
+
+    @media(max-width:420px){
+      .hero h1{font-size:32px}
+      .search-box button{padding:14px 12px}
+      .search-box input{font-size:14px}
+      .kicker{font-size:12px}
     }
   </style>
 </head>
@@ -304,7 +510,11 @@
 
   <!-- NAV -->
   <div class="topbar">
-    <div class="logo">PRACTICE ONLINE</div>
+    <div class="logo">
+      <div class="logo-badge">P</div>
+      PRACTICE ONLINE
+    </div>
+
     <div class="nav-links">
       <a href="#">Home</a>
       <a href="#about">About</a>
@@ -312,90 +522,145 @@
       <a href="register.html">Register</a>
       <a href="login.html" class="login-btn">Login</a>
     </div>
+
+    <button class="menuBtn" id="menuBtn" type="button" aria-label="Open menu">Menu</button>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div class="mobileMenu" id="mobileMenu">
+    <a href="#">Home</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+    <a href="register.html">Register</a>
+    <a href="login.html">Login</a>
   </div>
 
   <!-- HERO -->
   <section class="hero">
     <div>
+      <div class="kicker"><span class="dot"></span> Exam prep made simple</div>
       <h1>Join the smart way to learn</h1>
-      <p>Practice Online helps Grade 8–12 learners prepare better with interactive quizzes and instant results.</p>
-      <a href="register.html" class="cta">Find out more</a>
+      <p>Interactive quizzes, instant results, and structured revision.</p>
+
+      <div class="counters">
+        <div class="counterCard">
+          <div class="counterNum"><span class="counter" id="cQuizzes">0</span>+</div>
+          <div class="counterLabel">Assessments</div>
+        </div>
+        <div class="counterCard">
+          <div class="counterNum"><span class="counter" id="cTopics">0</span>+</div>
+          <div class="counterLabel">Topics</div>
+        </div>
+        <div class="counterCard">
+          <div class="counterNum"><span class="counter" id="cLearners">0</span>+</div>
+          <div class="counterLabel">Learners</div>
+        </div>
+      </div>
+
+      <div class="ctaRow">
+        <button class="btnPrimary" id="startBtn" type="button">Start Assessments</button>
+        <a href="#about" class="btnGhost">How it works</a>
+      </div>
     </div>
 
-    <div class="search-area">
-      <div class="search-box">
-        <input placeholder="Search for subjects or quizzes" />
-      </div>
-      <div class="search-tabs">
-        <span>Grade 8–9</span>
-        <span>Grade 10–12</span>
-        <span>Revision</span>
+    <div class="search-area" aria-label="Search assessments">
+      <form class="search-box" id="searchForm">
+        <input id="searchInput" placeholder="Search topic (e.g. Functions)" autocomplete="off" />
+        <button type="submit">Search</button>
+      </form>
+
+      <div class="search-tabs" id="tabs" aria-label="Grade filters">
+        <div class="search-tab active" data-filter="89" role="button" tabindex="0">Grade 8–9</div>
+        <div class="search-tab" data-filter="1012" role="button" tabindex="0">Grade 10–12</div>
+        <div class="search-tab" data-filter="rev" role="button" tabindex="0">Revision</div>
       </div>
     </div>
   </section>
 
   <!-- ABOUT -->
   <section class="about" id="about">
-    <h2 class="section-title">About Practice Online</h2>
-    <p>
-      Practice Online is a digital learning platform designed to support high
-      school learners through structured practice, instant feedback, and
-      curriculum-aligned content.
-    </p>
+    <div class="about-wrap">
+      <h2 class="section-title">About Practice Online</h2>
+      <p>
+        Practice Online is a digital learning platform designed to support high school learners through structured practice,
+        instant feedback, and curriculum-aligned content.
+      </p>
 
-    <div class="about-grid">
-      <div class="about-card">
-        <h3>Our Mission</h3>
-        <p>To empower learners with smart, accessible learning tools.</p>
-      </div>
-      <div class="about-card">
-        <h3>Our Vision</h3>
-        <p>To be a trusted learning companion for every learner.</p>
-      </div>
-      <div class="about-card">
-        <h3>What We Offer</h3>
-        <p>Quizzes, results tracking, and focused revision support.</p>
+      <div class="about-grid">
+        <div class="about-card">
+          <h3>Our Mission</h3>
+          <p>To empower learners with smart, accessible learning tools.</p>
+        </div>
+        <div class="about-card">
+          <h3>Our Vision</h3>
+          <p>To be a trusted learning companion for every learner.</p>
+        </div>
+        <div class="about-card">
+          <h3>What We Offer</h3>
+          <p>Quizzes, results tracking, and focused revision support.</p>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- WHY -->
   <section class="why">
-    <h2 class="section-title">Why Choose Practice Online</h2>
-    <div class="why-grid">
-      <div class="why-card"><h4>Curriculum Aligned</h4><p>Based on school subjects.</p></div>
-      <div class="why-card"><h4>Instant Feedback</h4><p>Results immediately.</p></div>
-      <div class="why-card"><h4>Easy to Use</h4><p>Simple learner interface.</p></div>
-      <div class="why-card"><h4>Accessible</h4><p>Anytime, anywhere.</p></div>
+    <div class="why-wrap">
+      <h2 class="section-title">Why Choose Practice Online</h2>
+      <div class="why-grid">
+        <div class="why-card"><h4>Curriculum Aligned</h4><p>Based on school subjects and what learners need most.</p></div>
+        <div class="why-card"><h4>Instant Feedback</h4><p>See your results immediately and track progress.</p></div>
+        <div class="why-card"><h4>Easy to Use</h4><p>Simple learner interface that works on mobile & desktop.</p></div>
+        <div class="why-card"><h4>Accessible</h4><p>Practice anytime, anywhere — at your own pace.</p></div>
+      </div>
     </div>
   </section>
 
   <!-- TESTIMONIALS -->
   <section class="testimonials">
-    <h2 class="section-title">What Learners Say</h2>
-    <p class="testimonial">
-      “Practice Online helped me prepare confidently for exams.”<br>
-      <strong>— Grade 11 Learner</strong>
-    </p>
+    <div class="test-wrap">
+      <h2 class="section-title">What Learners Say</h2>
+      <div class="testimonial">
+        “Practice Online helped me prepare confidently for exams.”<br>
+        <strong>— Grade 11 Learner</strong>
+      </div>
+    </div>
   </section>
 
   <!-- CONTACT -->
   <section class="contact" id="contact">
-    <h2 class="section-title">Contact Us</h2>
-    <p class="contact-text">Need help or have questions? Reach out to us.</p>
+    <div class="contact-wrap">
+      <h2 class="section-title">Contact Us</h2>
+      <p class="contact-text">Need help or have questions? Reach out to us.</p>
 
-    <div class="contact-grid">
-      <div class="contact-card">
-        <h4>Email</h4>
-        <p>info@practiceonline.co.za</p>
-      </div>
-      <div class="contact-card">
-        <h4>Support</h4>
-        <p>support@practiceonline.co.za</p>
-      </div>
-      <div class="contact-card">
-        <h4>Hours</h4>
-        <p>Mon – Fri<br>08:00 – 17:00</p>
+      <div class="contact-grid">
+        <div class="contact-card">
+          <h4>Email</h4>
+          <p>info@practiceonline.co.za</p>
+        </div>
+
+        <div class="contact-card">
+          <h4>WhatsApp</h4>
+          <div class="waRow">
+            <div class="waIcon" aria-hidden="true" title="WhatsApp">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366">
+                <path d="M20.52 3.48A11.86 11.86 0 0012.04 0C5.45 0 .08 5.37.08 11.96c0 2.11.55 4.16 1.6 5.97L0 24l6.24-1.64a11.93 11.93 0 005.8 1.48h.01c6.59 0 11.96-5.37 11.96-11.96a11.9 11.9 0 00-3.49-8.4zm-8.48 18.3a9.9 9.9 0 01-5.05-1.39l-.36-.22-3.7.97.99-3.6-.24-.37a9.87 9.87 0 01-1.52-5.22c0-5.45 4.44-9.9 9.9-9.9a9.83 9.83 0 016.99 2.9 9.83 9.83 0 012.9 7c0 5.46-4.44 9.9-9.9 9.9zm5.43-7.4c-.3-.15-1.78-.88-2.05-.98-.27-.1-.47-.15-.66.15-.2.3-.76.98-.94 1.18-.17.2-.34.22-.64.07-.3-.15-1.26-.46-2.4-1.47-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.14-.14.3-.34.46-.51.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.66-1.6-.9-2.19-.24-.57-.49-.5-.66-.5h-.57c-.2 0-.52.07-.8.37-.27.3-1.05 1.03-1.05 2.5s1.08 2.9 1.23 3.1c.15.2 2.13 3.26 5.16 4.57.72.31 1.28.5 1.72.64.72.23 1.38.2 1.9.12.58-.09 1.78-.73 2.03-1.44.25-.7.25-1.3.17-1.44-.07-.13-.27-.2-.57-.35z"/>
+              </svg>
+            </div>
+
+            <div style="min-width:0;">
+              <a class="waLink" href="https://wa.me/27763790764" target="_blank" rel="noopener">
+                076 379 0764
+              </a>
+              <div class="waSub">Tap to chat on WhatsApp</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-card">
+          <h4>Hours</h4>
+          <p>Mon – Fri<br>08:00 – 17:00</p>
+        </div>
       </div>
     </div>
   </section>
@@ -404,6 +669,88 @@
   <footer>
     © 2026 Practice Online. All rights reserved.
   </footer>
+
+  <script>
+    // ------------------ Mobile menu ------------------
+    const menuBtn = document.getElementById("menuBtn");
+    const mobileMenu = document.getElementById("mobileMenu");
+
+    if (menuBtn && mobileMenu) {
+      menuBtn.addEventListener("click", () => mobileMenu.classList.toggle("open"));
+      mobileMenu.addEventListener("click", (e) => {
+        if (e.target && e.target.tagName === "A") mobileMenu.classList.remove("open");
+      });
+    }
+
+    // ------------------ Grade tabs (click + keyboard) ------------------
+    let activeFilter = "89";
+    const tabs = document.getElementById("tabs");
+
+    function setActiveTab(tab){
+      document.querySelectorAll(".search-tab").forEach(x => x.classList.remove("active"));
+      tab.classList.add("active");
+      activeFilter = tab.getAttribute("data-filter") || "89";
+    }
+
+    tabs?.addEventListener("click", (e) => {
+      const tab = e.target.closest(".search-tab");
+      if (!tab) return;
+      setActiveTab(tab);
+    });
+
+    tabs?.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const tab = e.target.closest(".search-tab");
+      if (!tab) return;
+      e.preventDefault();
+      setActiveTab(tab);
+    });
+
+    // ✅ Search ALWAYS → login first → then learner quizzes
+    document.getElementById("searchForm")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const q = document.getElementById("searchInput").value.trim();
+      const target = `learner-quizzes.html?search=${encodeURIComponent(q)}&filter=${encodeURIComponent(activeFilter)}`;
+      window.location.href = `login.html?next=${encodeURIComponent(target)}`;
+    });
+
+    // ✅ Start Assessments ALWAYS → login first → then learner quizzes
+    document.getElementById("startBtn")?.addEventListener("click", () => {
+      const target = "learner-quizzes.html";
+      window.location.href = `login.html?next=${encodeURIComponent(target)}`;
+    });
+
+    // -------------------- Animated Counters --------------------
+    function animateCount(el, target, duration=900){
+      const startTime = performance.now();
+      function tick(now){
+        const p = Math.min(1, (now - startTime) / duration);
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = String(Math.round(target * eased));
+        if (p < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    const hero = document.querySelector(".hero");
+    const observer = new IntersectionObserver((entries) => {
+      const e = entries[0];
+      if (e && e.isIntersecting){
+        const quizzesEl = document.getElementById("cQuizzes");
+        const topicsEl = document.getElementById("cTopics");
+        const learnersEl = document.getElementById("cLearners");
+
+        // keep your values or change them
+        if (quizzesEl) animateCount(quizzesEl, 120);
+        if (topicsEl) animateCount(topicsEl, 25);
+        if (learnersEl) animateCount(learnersEl, 1250);
+
+        observer.disconnect();
+      }
+    }, { threshold: 0.25 });
+
+    if (hero) observer.observe(hero);
+  </script>
 
 </body>
 </html>
