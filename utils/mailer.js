@@ -1,33 +1,21 @@
-// utils/mailer.js
 import nodemailer from "nodemailer";
 
-function requiredEnv(name) {
-  const v = process.env[name];
-  if (!v) throw new Error(`Missing environment variable: ${name}`);
-  return v;
-}
-
 export function getTransporter() {
-  const host = requiredEnv("SMTP_HOST");       // smtp.gmail.com
-  const user = requiredEnv("SMTP_USER");       // your gmail
-  const pass = requiredEnv("SMTP_PASS");       // app password
-  const port = Number(process.env.SMTP_PORT || 587);
+  const port = Number(process.env.SMTP_PORT || 465);
+  const secure =
+    String(process.env.SMTP_SECURE || "").toLowerCase() === "true" || port === 465;
 
-  // 465 = SSL, 587 = STARTTLS
-  const secure = port === 465;
-
-  const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: { user, pass }
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,         // mail.practiceonline.co.za
+    port,                               // 465
+    secure,                             // true for 465
+    auth: {
+      user: process.env.SMTP_USER,      // no-reply@practiceonline.co.za
+      pass: process.env.SMTP_PASS       // your cPanel email password
+    },
+    tls: {
+      // helps with some hosting setups
+      rejectUnauthorized: false
+    }
   });
-
-  return transporter;
-}
-
-export async function verifySmtp() {
-  const transporter = getTransporter();
-  await transporter.verify();
-  return true;
 }
