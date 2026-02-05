@@ -1,7 +1,8 @@
-// server.js (PRODUCTION SAFE - COPY & PASTE)
-// ✅ NO testMail import
-// ✅ Register supports: accountType + grade (student) + studentNumber (auto)
-// ✅ Welcome email uses your cPanel SMTP via mailer.js (but will NOT block register if email fails)
+// server.js (UPDATED - COPY & PASTE)
+// ✅ No testMailRouter import
+// ✅ /api/test-email route included
+// ✅ Register does NOT fail if email fails (logs error)
+// ✅ Uses SMTP (no-reply) via utils/mailer.js
 
 import express from "express";
 import mongoose from "mongoose";
@@ -42,11 +43,30 @@ app.use(
 
 app.options("*", cors());
 
-/* ------------------- HELPERS ------------------- */
-function cleanSpaces(s) {
-  return String(s || "").trim().replace(/\s+/g, " ");
+/* ------------------- DEBUG ------------------- */
+console.log("MONGO_URI:", process.env.MONGO_URI ? "LOADED ✅" : "MISSING ❌");
+console.log("SMTP_HOST:", process.env.SMTP_HOST ? "LOADED ✅" : "MISSING ❌");
+console.log("SMTP_PORT:", process.env.SMTP_PORT ? "LOADED ✅" : "MISSING ❌");
+console.log("SMTP_USER:", process.env.SMTP_USER ? "LOADED ✅" : "MISSING ❌");
+console.log("MAIL_FROM_EMAIL:", process.env.MAIL_FROM_EMAIL ? "LOADED ✅" : "MISSING ❌");
+
+/* ------------------- EMAIL HELPER ------------------- */
+async function sendEmail({ to, subject, html }) {
+  const transporter = getTransporter();
+  const fromName = process.env.MAIL_FROM_NAME || "Practice Online";
+  const fromEmail = process.env.MAIL_FROM_EMAIL;
+
+  if (!fromEmail) throw new Error("MAIL_FROM_EMAIL missing");
+
+  return transporter.sendMail({
+    from: `"${fromName}" <${fromEmail}>`,
+    to,
+    subject,
+    html,
+  });
 }
 
+/* ------------------- HELPERS ------------------- */
 function hashToken(token) {
   return crypto.createHash("sha256").update(String(token)).digest("hex");
 }
@@ -55,24 +75,8 @@ function generateOtp() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-// 8-digit student number
-async function generateStudentNumber8() {
-  while (true) {
-    const num = String(Math.floor(10000000 + Math.random() * 90000000));
-    const exists = await User.findOne({ studentNumber: num }).select("_id");
-    if (!exists) return num;
-  }
-}
-
-/* ------------------- EMAIL ------------------- */
-async function sendEmail({ to, subject, html }) {
-  const transporter = getTransporter();
-  await transporter.sendMail({
-    from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM_EMAIL}>`,
-    to,
-    subject,
-    html,
-  });
+function cleanSpaces(s) {
+  return String(s || "").trim().replace(/\s+/g, " ");
 }
 
 /* ------------------- AUTH MIDDLEWARE ------------------- */
@@ -89,108 +93,68 @@ function authRequired(req, res, next) {
   }
 }
 
-async function adminOnly(req, res, next) {
-  try {
-    const u = await User.findById(req.user.userId).select("role");
-    if (!u) return res.status(401).json({ message: "User not found" });
-    if (u.role !== "admin") return res.status(403).json({ message: "Admin only" });
-    next();
-  } catch {
-    res.status(500).json({ message: "Server error" });
-  }
-}
-
 /* ------------------- ROUTES ------------------- */
 app.get("/", (req, res) => res.send("Practice Online API running"));
+
+/* ✅ TEST EMAIL */
+app.get("/api/test-email", async (req, res) => {
+  const to = String(req.query.to || "info@practiceonline.co.za").trim();
+  try {
+    await sendEmail({
+      to,
+      subject: "Practice Online ✅ SMTP Test",
+      html: `
+        <h2>SMTP Test Successful ✅</h2>
+        <p>This confirms your Practice Online email is working.</p>
+        <p><b>Time:</b> ${new Date().toLocaleString()}</p>
+      `,
+    });
+    res.send("Email sent successfully to " + to);
+  } catch (e) {
+    console.error("TEST EMAIL ERROR:", e?.message || e);
+    res.status(500).send("Email failed: " + (e?.message || "unknown"));
+  }
+});
 
 /* -------- REGISTER -------- */
 app.post("/api/register", async (req, res) => {
   try {
-    const { username, email, password, accountType, grade } = req.body;
+    const { username, email, password, grade, accountType } = req.body;
 
-    const cleanUsername = cleanSpaces(username);
-    const cleanEmail = String(email || "").toLowerCase().trim();
-    const type = String(accountType || "").toLowerCase().trim();
-
-    if (!cleanUsername || !cleanEmail || !password || !type) {
-      return res.status(400).json({
-        message: "username, email, password, and accountType are required.",
-      });
+    if (!username || !email || !password) {
+      return res.status(400).json({ message: "Missing fields" });
     }
 
-    if (!["student", "materials"].includes(type)) {
-      return res.status(400).json({ message: "Invalid accountType." });
-    }
-
-    let gradeNum = null;
-    if (type === "student") {
-      if (grade === undefined || grade === null || grade === "") {
-        return res.status(400).json({ message: "Grade is required for Student accounts." });
-      }
-      gradeNum = Number(grade);
-      if (!Number.isInteger(gradeNum) || gradeNum < 8 || gradeNum > 12) {
-        return res.status(400).json({ message: "Grade must be between 8 and 12." });
-      }
-    }
-
-    if (String(password).length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters." });
-    }
-
-    const exists = await User.findOne({ email: cleanEmail }).select("_id");
-    if (exists) return res.status(409).json({ message: "Email already registered." });
+    const cleanEmail = String(email).toLowerCase().trim();
+    const exists = await User.findOne({ email: cleanEmail });
+    if (exists) return res.status(409).json({ message: "Email exists" });
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const studentNumber = type === "student" ? await generateStudentNumber8() : null;
-
     const user = await User.create({
-      username: cleanUsername,
+      username: cleanSpaces(username),
       email: cleanEmail,
       passwordHash,
+      grade: grade ? Number(grade) : null,
       role: "learner",
-      accountType: type,
-      grade: gradeNum,
-      studentNumber,
+      accountType: accountType || "student",
     });
 
-    // ✅ Welcome email (DO NOT block register if email fails)
+    // ✅ Email should NOT block registration
     try {
       await sendEmail({
         to: user.email,
         subject: "Welcome to Practice Online",
-        html:
-          type === "student"
-            ? `<h2>Welcome ${user.username}</h2>
-               <p>Your student number is <b>${user.studentNumber}</b>.</p>
-               <p>Login and start practicing.</p>`
-            : `<h2>Welcome ${user.username}</h2>
-               <p>You registered for <b>Access Materials Only</b>.</p>
-               <p>Login and explore.</p>`,
+        html: `<h2>Welcome ${user.username}</h2><p>Your account is ready.</p>`,
       });
+      console.log("WELCOME EMAIL SENT ✅ to", user.email);
     } catch (e) {
-      console.error("WELCOME EMAIL FAILED:", e?.message || e);
+      console.error("WELCOME EMAIL FAILED ❌:", e?.message || e);
     }
 
-    return res.status(201).json({
-      message: "Registered successfully",
-      accountType: user.accountType,
-      studentNumber: user.studentNumber,
-    });
+    return res.status(201).json({ message: "Registered successfully" });
   } catch (e) {
-    // ✅ Make the error visible in Render logs
-    console.error("REGISTER ERROR:", e);
-
-    // Common Mongo duplicate key
-    if (String(e?.code) === "11000") {
-      return res.status(409).json({ message: "Duplicate value (email/username already exists)." });
-    }
-
-    // Common Mongoose validation error
-    if (e?.name === "ValidationError") {
-      return res.status(400).json({ message: e.message });
-    }
-
+    console.error("REGISTER ERROR:", e?.message || e);
     return res.status(500).json({ message: "Server error" });
   }
 });
@@ -200,7 +164,7 @@ app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const cleanEmail = String(email || "").toLowerCase().trim();
+    const cleanEmail = String(email).toLowerCase().trim();
     const user = await User.findOne({ email: cleanEmail });
     if (!user) return res.status(401).json({ message: "Invalid login" });
 
@@ -235,11 +199,16 @@ app.post("/api/forgot-password-otp", async (req, res) => {
     user.resetPasswordExpires = new Date(Date.now() + 10 * 60000);
     await user.save();
 
-    await sendEmail({
-      to: cleanEmail,
-      subject: "Password Reset Code",
-      html: `<h2>Your code: ${otp}</h2><p>Expires in 10 minutes.</p>`,
-    });
+    try {
+      await sendEmail({
+        to: cleanEmail,
+        subject: "Password Reset Code",
+        html: `<h2>Your code: ${otp}</h2><p>Expires in 10 minutes.</p>`,
+      });
+      console.log("RESET OTP EMAIL SENT ✅ to", cleanEmail);
+    } catch (e) {
+      console.error("RESET OTP EMAIL FAILED ❌:", e?.message || e);
+    }
 
     res.json({ message: "If email exists, code sent" });
   } catch (e) {
@@ -277,16 +246,8 @@ app.post("/api/reset-password-otp", async (req, res) => {
   }
 });
 
-/* ------------------- 404 + ERROR HANDLER ------------------- */
+/* ------------------- OPTIONAL 404 FOR API ------------------- */
 app.use("/api", (req, res) => res.status(404).json({ message: "API route not found" }));
-
-app.use((err, req, res, next) => {
-  if (String(err?.message || "").startsWith("CORS blocked:")) {
-    return res.status(403).json({ message: err.message });
-  }
-  console.error("Unhandled error:", err);
-  res.status(500).json({ message: "Server error" });
-});
 
 /* ------------------- START ------------------- */
 const PORT = process.env.PORT || 5000;
@@ -295,6 +256,9 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB connected ✅");
-    app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`Test email: http://localhost:${PORT}/api/test-email`);
+    });
   })
   .catch((err) => console.error("Mongo error:", err.message));
