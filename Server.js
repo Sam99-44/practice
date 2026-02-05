@@ -1,8 +1,3 @@
-// server.js (UPDATED - COPY & PASTE)
-// ✅ Uses your existing /api/test-email route (mounted)
-// ✅ Adds: admin quiz upload + email all learners in that grade
-// ✅ Keeps: register, login, forgot/reset OTP, CORS, Mongo connect
-
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -14,8 +9,6 @@ import crypto from "crypto";
 import User from "./models/User.js";
 import Quiz from "./models/Quiz.js";
 import Result from "./models/Result.js";
-
-import testMailRouter from "./routes/testMail.js";
 import { getTransporter } from "./utils/mailer.js";
 
 dotenv.config();
@@ -39,29 +32,28 @@ app.use(
       if (String(origin).endsWith(".netlify.app")) return cb(null, true);
       return cb(new Error("CORS blocked: " + origin), false);
     },
+    credentials: true,
   })
 );
 
-// Preflight
 app.options("*", cors());
 
-/* ------------------- DEBUG ------------------- */
+/* ------------------- DEBUG (SAFE) ------------------- */
 console.log("MONGO_URI:", process.env.MONGO_URI ? "LOADED ✅" : "MISSING ❌");
 console.log("SMTP_HOST:", process.env.SMTP_HOST ? "LOADED ✅" : "MISSING ❌");
 console.log("SMTP_USER:", process.env.SMTP_USER ? "LOADED ✅" : "MISSING ❌");
-console.log(
-  "MAIL_FROM_EMAIL:",
-  process.env.MAIL_FROM_EMAIL ? "LOADED ✅" : "MISSING ❌"
-);
+console.log("MAIL_FROM_EMAIL:", process.env.MAIL_FROM_EMAIL ? "LOADED ✅" : "MISSING ❌");
 
 /* ------------------- EMAIL HELPER ------------------- */
-async function sendEmail({ to, subject, html }) {
+async function sendEmail({ to, subject, html, text }) {
   const transporter = getTransporter();
+
   await transporter.sendMail({
     from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM_EMAIL}>`,
     to,
     subject,
-    html,
+    text: text || undefined,
+    html: html || undefined,
   });
 }
 
@@ -72,71 +64,6 @@ function hashToken(token) {
 
 function generateOtp() {
   return String(Math.floor(100000 + Math.random() * 900000));
-}
-
-function cleanSpaces(s) {
-  return String(s || "").trim().replace(/\s+/g, " ");
-}
-
-function chunkArray(arr, size) {
-  const out = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-}
-
-// Sends quiz upload email to one person
-function quizUploadedHtml({ quizTitle, quizTopic, grade }) {
-  return `
-    <div style="font-family:Arial,sans-serif;line-height:1.5">
-      <h2 style="margin:0 0 10px">New Quiz Uploaded ✅</h2>
-      <p style="margin:0 0 8px">A new quiz is now available on Practice Online.</p>
-      <p style="margin:0 0 6px"><b>Grade:</b> ${grade}</p>
-      <p style="margin:0 0 6px"><b>Topic:</b> ${quizTopic}</p>
-      <p style="margin:0 0 14px"><b>Title:</b> ${quizTitle}</p>
-      <p style="margin:0 0 14px">
-        Login to Practice Online to attempt it.
-      </p>
-      <p style="color:#64748b;margin:0">Practice Online</p>
-    </div>
-  `;
-}
-
-// Notify all learners in that grade (batch to avoid SMTP limits)
-async function notifyGradeLearners(grade, quiz) {
-  const learners = await User.find({
-    role: "learner",
-    grade: Number(grade),
-    email: { $exists: true, $ne: "" },
-  }).select("email");
-
-  const emails = learners.map((u) => u.email).filter(Boolean);
-  const batches = chunkArray(emails, 10);
-
-  let sent = 0;
-  let failed = 0;
-
-  for (const batch of batches) {
-    const results = await Promise.allSettled(
-      batch.map((to) =>
-        sendEmail({
-          to,
-          subject: `New Quiz Uploaded (Grade ${grade})`,
-          html: quizUploadedHtml({
-            quizTitle: quiz.title,
-            quizTopic: quiz.topic,
-            grade,
-          }),
-        })
-      )
-    );
-
-    for (const r of results) {
-      if (r.status === "fulfilled") sent++;
-      else failed++;
-    }
-  }
-
-  return { total: emails.length, sent, failed };
 }
 
 /* ------------------- AUTH MIDDLEWARE ------------------- */
@@ -153,30 +80,17 @@ function authRequired(req, res, next) {
   }
 }
 
-async function adminOnly(req, res, next) {
-  try {
-    const u = await User.findById(req.user.userId).select("role");
-    if (!u) return res.status(401).json({ message: "User not found" });
-    if (u.role !== "admin") return res.status(403).json({ message: "Admin only" });
-    next();
-  } catch {
-    res.status(500).json({ message: "Server error" });
-  }
-}
-
 /* ------------------- ROUTES ------------------- */
 app.get("/", (req, res) => res.send("Practice Online API running"));
-
-/* ✅ Mount test mail route => /api/test-email */
-app.use("/api", testMailRouter);
 
 /* -------- REGISTER -------- */
 app.post("/api/register", async (req, res) => {
   try {
-    const { username, email, password, grade } = req.body;
+    const { username, email, password, grade, accountType } = req.body;
 
-    if (!username || !email || !password)
+    if (!username || !email || !password) {
       return res.status(400).json({ message: "Missing fields" });
+    }
 
     const cleanEmail = String(email).toLowerCase().trim();
     const exists = await User.findOne({ email: cleanEmail });
@@ -185,14 +99,15 @@ app.post("/api/register", async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      username: cleanSpaces(username),
+      username: String(username).trim(),
       email: cleanEmail,
       passwordHash,
       grade: grade ? Number(grade) : null,
       role: "learner",
+      accountType: accountType || "student",
     });
 
-    // send welcome email (optional)
+    // ✅ welcome email from no-reply
     try {
       await sendEmail({
         to: user.email,
@@ -201,12 +116,13 @@ app.post("/api/register", async (req, res) => {
       });
     } catch (e) {
       console.error("WELCOME EMAIL FAILED:", e?.message || e);
+      // Don’t block registration if email fails
     }
 
-    res.status(201).json({ message: "Registered successfully" });
+    return res.status(201).json({ message: "Registered successfully" });
   } catch (e) {
     console.error("REGISTER ERROR:", e?.message || e);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -228,10 +144,10 @@ app.post("/api/login", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    res.json({ token, user });
+    return res.json({ token, user });
   } catch (e) {
     console.error("LOGIN ERROR:", e?.message || e);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -244,7 +160,7 @@ app.post("/api/forgot-password-otp", async (req, res) => {
 
     const user = await User.findOne({ email: cleanEmail });
 
-    // don’t reveal if it exists
+    // Don’t reveal if it exists
     if (!user) return res.json({ message: "If email exists, code sent" });
 
     const otp = generateOtp();
@@ -256,12 +172,13 @@ app.post("/api/forgot-password-otp", async (req, res) => {
       to: cleanEmail,
       subject: "Password Reset Code",
       html: `<h2>Your code: ${otp}</h2><p>Expires in 10 minutes.</p>`,
+      text: `Your code is ${otp}. It expires in 10 minutes.`,
     });
 
-    res.json({ message: "If email exists, code sent" });
+    return res.json({ message: "If email exists, code sent" });
   } catch (e) {
     console.error("FORGOT OTP ERROR:", e?.message || e);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -272,82 +189,31 @@ app.post("/api/reset-password-otp", async (req, res) => {
 
     const cleanEmail = String(email || "").toLowerCase().trim();
     const cleanCode = String(code || "").trim();
+    if (!cleanEmail || !cleanCode || !newPassword) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
 
     const user = await User.findOne({ email: cleanEmail });
-    if (!user) return res.status(400).json({ message: "Invalid code" });
+    if (!user) return res.status(400).json({ message: "Invalid or expired code" });
 
     const expired =
       !user.resetPasswordExpires || user.resetPasswordExpires.getTime() < Date.now();
     const match = user.resetPasswordTokenHash === hashToken(cleanCode);
 
-    if (!match || expired) return res.status(400).json({ message: "Invalid or expired code" });
+    if (!match || expired) {
+      return res.status(400).json({ message: "Invalid or expired code" });
+    }
 
     user.passwordHash = await bcrypt.hash(newPassword, 10);
     user.resetPasswordTokenHash = null;
     user.resetPasswordExpires = null;
     await user.save();
 
-    res.json({ message: "Password updated" });
+    return res.json({ message: "Password updated" });
   } catch (e) {
     console.error("RESET OTP ERROR:", e?.message || e);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
-});
-
-/* -------- QUIZZES (ADMIN UPLOAD + EMAIL GRADE) --------
-   POST /api/quizzes?notify=1 (default notify ON)
-*/
-app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
-  try {
-    const { grade, title, topic, timeLimitMinutes, questions } = req.body;
-
-    if (!grade || !title || !topic || !Array.isArray(questions) || questions.length === 0) {
-      return res.status(400).json({ message: "Grade, topic, title, and questions are required." });
-    }
-
-    const g = Number(grade);
-    if (!Number.isInteger(g) || g < 8 || g > 12) {
-      return res.status(400).json({ message: "Grade must be between 8 and 12." });
-    }
-
-    const quiz = await Quiz.create({
-      grade: g,
-      title: cleanSpaces(title),
-      topic: cleanSpaces(topic),
-      timeLimitMinutes: Number(timeLimitMinutes) || 0,
-      questions,
-    });
-
-    const notify = String(req.query.notify || "1") === "1";
-    let report = null;
-
-    if (notify) {
-      report = await notifyGradeLearners(g, { title: quiz.title, topic: quiz.topic });
-    }
-
-    return res.status(201).json({
-      message: "Quiz uploaded successfully",
-      quizId: quiz._id,
-      emailNotification: notify ? report : "Skipped (notify=0)",
-    });
-  } catch (e) {
-    console.error("QUIZ UPLOAD ERROR:", e?.message || e);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-/* ------------------- OPTIONAL 404 FOR API ------------------- */
-app.use("/api", (req, res) => {
-  res.status(404).json({ message: "API route not found" });
-});
-
-/* ------------------- ERROR HANDLER (CORS ETC.) ------------------- */
-app.use((err, req, res, next) => {
-  if (String(err?.message || "").startsWith("CORS blocked:")) {
-    return res.status(403).json({ message: err.message });
-  }
-  console.error("Unhandled error:", err?.message || err);
-  res.status(500).json({ message: "Server error" });
 });
 
 /* ------------------- START ------------------- */
@@ -357,9 +223,6 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB connected ✅");
-    app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-      console.log(`Test email: http://localhost:${PORT}/api/test-email`);
-    });
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch((err) => console.error("Mongo error:", err.message));
