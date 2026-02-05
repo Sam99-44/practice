@@ -1,3 +1,9 @@
+// server.js (PRODUCTION - COPY & PASTE)
+// ✅ Uses mailer.js directly
+// ❌ NO testMail.js (removed)
+// ✅ Register, login, OTP reset
+// ✅ Admin quiz upload + email learners by grade
+
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -32,28 +38,25 @@ app.use(
       if (String(origin).endsWith(".netlify.app")) return cb(null, true);
       return cb(new Error("CORS blocked: " + origin), false);
     },
-    credentials: true,
   })
 );
 
 app.options("*", cors());
 
-/* ------------------- DEBUG (SAFE) ------------------- */
+/* ------------------- DEBUG ------------------- */
 console.log("MONGO_URI:", process.env.MONGO_URI ? "LOADED ✅" : "MISSING ❌");
 console.log("SMTP_HOST:", process.env.SMTP_HOST ? "LOADED ✅" : "MISSING ❌");
 console.log("SMTP_USER:", process.env.SMTP_USER ? "LOADED ✅" : "MISSING ❌");
 console.log("MAIL_FROM_EMAIL:", process.env.MAIL_FROM_EMAIL ? "LOADED ✅" : "MISSING ❌");
 
 /* ------------------- EMAIL HELPER ------------------- */
-async function sendEmail({ to, subject, html, text }) {
+async function sendEmail({ to, subject, html }) {
   const transporter = getTransporter();
-
   await transporter.sendMail({
     from: `"${process.env.MAIL_FROM_NAME}" <${process.env.MAIL_FROM_EMAIL}>`,
     to,
     subject,
-    text: text || undefined,
-    html: html || undefined,
+    html,
   });
 }
 
@@ -66,7 +69,65 @@ function generateOtp() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-/* ------------------- AUTH MIDDLEWARE ------------------- */
+function cleanSpaces(s) {
+  return String(s || "").trim().replace(/\s+/g, " ");
+}
+
+function chunkArray(arr, size) {
+  const out = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
+/* ------------------- QUIZ EMAIL TEMPLATE ------------------- */
+function quizUploadedHtml({ quizTitle, quizTopic, grade }) {
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.5">
+      <h2>New Quiz Uploaded ✅</h2>
+      <p><b>Grade:</b> ${grade}</p>
+      <p><b>Topic:</b> ${quizTopic}</p>
+      <p><b>Title:</b> ${quizTitle}</p>
+      <p>Please login to Practice Online to attempt it.</p>
+      <p style="color:#64748b">Practice Online</p>
+    </div>
+  `;
+}
+
+async function notifyGradeLearners(grade, quiz) {
+  const learners = await User.find({
+    role: "learner",
+    grade: Number(grade),
+    email: { $exists: true, $ne: "" },
+  }).select("email");
+
+  const emails = learners.map((u) => u.email);
+  const batches = chunkArray(emails, 10);
+
+  let sent = 0;
+  let failed = 0;
+
+  for (const batch of batches) {
+    const results = await Promise.allSettled(
+      batch.map((to) =>
+        sendEmail({
+          to,
+          subject: `New Quiz Uploaded (Grade ${grade})`,
+          html: quizUploadedHtml({
+            quizTitle: quiz.title,
+            quizTopic: quiz.topic,
+            grade,
+          }),
+        })
+      )
+    );
+
+    results.forEach((r) => (r.status === "fulfilled" ? sent++ : failed++));
+  }
+
+  return { total: emails.length, sent, failed };
+}
+
+/* ------------------- AUTH ------------------- */
 function authRequired(req, res, next) {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
@@ -80,140 +141,126 @@ function authRequired(req, res, next) {
   }
 }
 
+async function adminOnly(req, res, next) {
+  const u = await User.findById(req.user.userId).select("role");
+  if (!u || u.role !== "admin") {
+    return res.status(403).json({ message: "Admin only" });
+  }
+  next();
+}
+
 /* ------------------- ROUTES ------------------- */
 app.get("/", (req, res) => res.send("Practice Online API running"));
 
 /* -------- REGISTER -------- */
 app.post("/api/register", async (req, res) => {
   try {
-    const { username, email, password, grade, accountType } = req.body;
-
-    if (!username || !email || !password) {
+    const { username, email, password, grade } = req.body;
+    if (!username || !email || !password)
       return res.status(400).json({ message: "Missing fields" });
-    }
 
     const cleanEmail = String(email).toLowerCase().trim();
-    const exists = await User.findOne({ email: cleanEmail });
-    if (exists) return res.status(409).json({ message: "Email exists" });
-
-    const passwordHash = await bcrypt.hash(password, 10);
+    if (await User.findOne({ email: cleanEmail }))
+      return res.status(409).json({ message: "Email exists" });
 
     const user = await User.create({
-      username: String(username).trim(),
+      username: cleanSpaces(username),
       email: cleanEmail,
-      passwordHash,
+      passwordHash: await bcrypt.hash(password, 10),
       grade: grade ? Number(grade) : null,
       role: "learner",
-      accountType: accountType || "student",
     });
 
-    // ✅ welcome email from no-reply
-    try {
-      await sendEmail({
-        to: user.email,
-        subject: "Welcome to Practice Online",
-        html: `<h2>Welcome ${user.username}</h2><p>Your account is ready.</p>`,
-      });
-    } catch (e) {
-      console.error("WELCOME EMAIL FAILED:", e?.message || e);
-      // Don’t block registration if email fails
-    }
+    await sendEmail({
+      to: user.email,
+      subject: "Welcome to Practice Online",
+      html: `<h2>Welcome ${user.username}</h2><p>Your account is ready.</p>`,
+    });
 
-    return res.status(201).json({ message: "Registered successfully" });
+    res.status(201).json({ message: "Registered successfully" });
   } catch (e) {
-    console.error("REGISTER ERROR:", e?.message || e);
-    return res.status(500).json({ message: "Server error" });
+    console.error(e);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 /* -------- LOGIN -------- */
 app.post("/api/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
+  const user = await User.findOne({ email: String(email).toLowerCase().trim() });
+  if (!user || !(await bcrypt.compare(password, user.passwordHash)))
+    return res.status(401).json({ message: "Invalid login" });
 
-    const cleanEmail = String(email).toLowerCase().trim();
-    const user = await User.findOne({ email: cleanEmail });
-    if (!user) return res.status(401).json({ message: "Invalid login" });
+  const token = jwt.sign(
+    { userId: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
 
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) return res.status(401).json({ message: "Invalid login" });
-
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    return res.json({ token, user });
-  } catch (e) {
-    console.error("LOGIN ERROR:", e?.message || e);
-    return res.status(500).json({ message: "Server error" });
-  }
+  res.json({ token, user });
 });
 
 /* -------- FORGOT PASSWORD (OTP) -------- */
 app.post("/api/forgot-password-otp", async (req, res) => {
-  try {
-    const { email } = req.body;
-    const cleanEmail = String(email || "").toLowerCase().trim();
-    if (!cleanEmail) return res.status(400).json({ message: "Email is required" });
+  const cleanEmail = String(req.body.email || "").toLowerCase().trim();
+  const user = await User.findOne({ email: cleanEmail });
+  if (!user) return res.json({ message: "If email exists, code sent" });
 
-    const user = await User.findOne({ email: cleanEmail });
+  const otp = generateOtp();
+  user.resetPasswordTokenHash = hashToken(otp);
+  user.resetPasswordExpires = new Date(Date.now() + 10 * 60000);
+  await user.save();
 
-    // Don’t reveal if it exists
-    if (!user) return res.json({ message: "If email exists, code sent" });
+  await sendEmail({
+    to: cleanEmail,
+    subject: "Password Reset Code",
+    html: `<h2>Your code: ${otp}</h2><p>Expires in 10 minutes.</p>`,
+  });
 
-    const otp = generateOtp();
-    user.resetPasswordTokenHash = hashToken(otp);
-    user.resetPasswordExpires = new Date(Date.now() + 10 * 60000);
-    await user.save();
-
-    await sendEmail({
-      to: cleanEmail,
-      subject: "Password Reset Code",
-      html: `<h2>Your code: ${otp}</h2><p>Expires in 10 minutes.</p>`,
-      text: `Your code is ${otp}. It expires in 10 minutes.`,
-    });
-
-    return res.json({ message: "If email exists, code sent" });
-  } catch (e) {
-    console.error("FORGOT OTP ERROR:", e?.message || e);
-    return res.status(500).json({ message: "Server error" });
-  }
+  res.json({ message: "If email exists, code sent" });
 });
 
-/* -------- RESET PASSWORD (OTP) -------- */
+/* -------- RESET PASSWORD -------- */
 app.post("/api/reset-password-otp", async (req, res) => {
-  try {
-    const { email, code, newPassword } = req.body;
+  const { email, code, newPassword } = req.body;
+  const user = await User.findOne({ email: String(email).toLowerCase().trim() });
 
-    const cleanEmail = String(email || "").toLowerCase().trim();
-    const cleanCode = String(code || "").trim();
-    if (!cleanEmail || !cleanCode || !newPassword) {
-      return res.status(400).json({ message: "Missing fields" });
-    }
-
-    const user = await User.findOne({ email: cleanEmail });
-    if (!user) return res.status(400).json({ message: "Invalid or expired code" });
-
-    const expired =
-      !user.resetPasswordExpires || user.resetPasswordExpires.getTime() < Date.now();
-    const match = user.resetPasswordTokenHash === hashToken(cleanCode);
-
-    if (!match || expired) {
-      return res.status(400).json({ message: "Invalid or expired code" });
-    }
-
-    user.passwordHash = await bcrypt.hash(newPassword, 10);
-    user.resetPasswordTokenHash = null;
-    user.resetPasswordExpires = null;
-    await user.save();
-
-    return res.json({ message: "Password updated" });
-  } catch (e) {
-    console.error("RESET OTP ERROR:", e?.message || e);
-    return res.status(500).json({ message: "Server error" });
+  if (
+    !user ||
+    user.resetPasswordTokenHash !== hashToken(code) ||
+    user.resetPasswordExpires < Date.now()
+  ) {
+    return res.status(400).json({ message: "Invalid or expired code" });
   }
+
+  user.passwordHash = await bcrypt.hash(newPassword, 10);
+  user.resetPasswordTokenHash = null;
+  user.resetPasswordExpires = null;
+  await user.save();
+
+  res.json({ message: "Password updated" });
+});
+
+/* -------- ADMIN QUIZ UPLOAD -------- */
+app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
+  const { grade, title, topic, questions } = req.body;
+  if (!grade || !title || !topic || !questions?.length)
+    return res.status(400).json({ message: "Invalid quiz data" });
+
+  const quiz = await Quiz.create({
+    grade: Number(grade),
+    title: cleanSpaces(title),
+    topic: cleanSpaces(topic),
+    questions,
+  });
+
+  const report = await notifyGradeLearners(grade, quiz);
+
+  res.status(201).json({
+    message: "Quiz uploaded",
+    quizId: quiz._id,
+    emailReport: report,
+  });
 });
 
 /* ------------------- START ------------------- */
@@ -223,6 +270,8 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB connected ✅");
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    app.listen(PORT, () =>
+      console.log(`Server running on http://localhost:${PORT}`)
+    );
   })
   .catch((err) => console.error("Mongo error:", err.message));
