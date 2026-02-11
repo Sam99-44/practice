@@ -3,81 +3,192 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
   <title>Login | Practice Online</title>
 
   <!-- SEO: do not index login pages -->
   <meta name="robots" content="noindex, nofollow" />
 
+  <!-- Font (same as other pages) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --border:#e6e6e6;
+      --text:#0f172a;
+      --muted:#475569;
+      --accent:#0b3c5d;
+      --accent-soft:#e7eef5;
+      --nav:#1b1648;
+      --red:#e11d2e;
+      --radius:14px;
+      --shadow:0 6px 18px rgba(0,0,0,0.06);
+      --error:#b91c1c;
+      --ok:#065f46;
+    }
+
+    *{box-sizing:border-box}
     body{
       margin:0;
-      font-family:Arial,sans-serif;
-      background:#f6f7fb;
-      color:#0f172a
+      font-family:Inter,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
     }
+
+    /* ---------- TOP NAV (same style) ---------- */
+    .topbar{background:var(--nav); padding:14px 20px;}
+    .nav{
+      max-width:1100px;
+      margin:auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .brand{
+      color:#fff;
+      font-weight:900;
+      text-decoration:none;
+      font-size:18px;
+      letter-spacing:.2px;
+    }
+
+    .tabs{display:flex; gap:18px; align-items:center; flex-wrap:wrap;}
+    .tabs a{
+      color:#c7c9e3;
+      text-decoration:none;
+      font-weight:700;
+      padding-bottom:6px;
+      border-bottom:3px solid transparent;
+    }
+    .tabs a:hover{color:#fff}
+    .tabs a.active{color:#fff; border-bottom:3px solid var(--red);}
+
+    /* ---------- PAGE ---------- */
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding:24px;
+    }
+
+    /* ---------- CARD (same card system) ---------- */
     .card{
       max-width:420px;
-      margin:60px auto;
-      background:#fff;
-      border:1px solid #e6e6e6;
-      border-radius:14px;
-      padding:20px
+      margin:46px auto;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow:var(--shadow);
     }
-    h2{margin:0 0 6px}
-    p{margin:6px 0 14px;color:#334155}
-    label{display:block;margin-top:12px;font-weight:600}
-    input,button{
-      width:100%;
-      padding:10px;
-      margin-top:6px;
-      border-radius:10px;
-      border:1px solid #ddd
-    }
-    button{
-      background:#0b3c5d;
-      color:#fff;
-      border:none;
+
+    h2{margin:0 0 6px; font-size:22px;}
+    p{margin:6px 0 14px; color:var(--muted);}
+
+    label{
+      display:block;
+      margin-top:12px;
       font-weight:700;
-      cursor:pointer
+      font-size:14px;
     }
-    button:disabled{opacity:.6;cursor:not-allowed}
-    .msg{margin-top:12px;font-size:14px}
-    .error{color:#b91c1c}
-    .ok{color:#065f46}
+
+    input{
+      width:100%;
+      padding:12px;
+      margin-top:6px;
+      border-radius:12px;
+      border:1px solid #ddd;
+      background:#fff;
+      font-size:14px;
+      outline:none;
+    }
+    input:focus{
+      border-color:#cfe9ff;
+      box-shadow:0 0 0 4px rgba(11,60,93,.10);
+    }
+
+    button{
+      width:100%;
+      padding:12px;
+      margin-top:14px;
+      border-radius:12px;
+      border:none;
+      background:var(--accent);
+      color:#fff;
+      font-weight:900;
+      cursor:pointer;
+      transition:transform .08s ease, box-shadow .2s ease;
+    }
+    button:hover{transform:translateY(-1px); box-shadow:0 10px 24px rgba(11,60,93,.18);}
+    button:disabled{opacity:.6; cursor:not-allowed; transform:none; box-shadow:none;}
+
+    .msg{margin-top:12px; font-size:14px;}
+    .error{color:var(--error)}
+    .ok{color:var(--ok)}
+
     .links{
       display:flex;
       justify-content:space-between;
-      margin-top:12px;
-      font-size:14px
+      gap:12px;
+      margin-top:14px;
+      font-size:14px;
+      flex-wrap:wrap;
     }
-    a{color:#0b3c5d;text-decoration:none}
+    .links a{
+      color:var(--accent);
+      text-decoration:none;
+      font-weight:700;
+    }
+    .links a:hover{text-decoration:underline}
+
+    @media(max-width:520px){
+      .wrap{padding:16px;}
+      .card{margin:26px auto; padding:16px;}
+      .tabs{gap:12px;}
+    }
   </style>
 </head>
 
 <body>
+  <!-- TOP NAV -->
+  <header class="topbar">
+    <div class="nav">
+      <a href="index.html" class="brand">Practice Online</a>
+      <div class="tabs">
+        <a href="login.html" class="active">Login</a>
+        <a href="register.html">Register</a>
+      </div>
+    </div>
+  </header>
 
-<div class="card">
-  <h2>Login</h2>
+  <main class="wrap">
+    <div class="card">
+      <h2>Login</h2>
+      <p>Access your Practice Online account</p>
 
-  <label for="email">Email</label>
-  <input id="email" type="email" autocomplete="email" />
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="email" />
 
-  <label for="password">Password</label>
-  <input id="password" type="password" autocomplete="current-password" />
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" />
 
-  <button id="loginBtn" type="button">Login</button>
+      <button id="loginBtn" type="button">Login</button>
 
-  <p id="msg" class="msg"></p>
+      <p id="msg" class="msg"></p>
 
-  <div class="links">
-    <a href="register.html">Create account</a>
-    <a href="reset-otp.html">Forgot password?</a>
-  </div>
-</div>
+      <div class="links">
+        <a href="register.html">Create account</a>
+        <a href="reset-otp.html">Forgot password?</a>
+      </div>
+    </div>
+  </main>
 
 <script>
-  // ✅ USE YOUR API DOMAIN
+  // ✅ API domain
   const API = "https://api.practiceonline.co.za";
 
   const loginBtn = document.getElementById("loginBtn");
@@ -92,6 +203,11 @@
     try { return await res.json(); }
     catch { return {}; }
   }
+
+  // Enter key support
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") loginBtn.click();
+  });
 
   loginBtn.onclick = async () => {
     const email = document.getElementById("email").value.trim();
@@ -118,13 +234,14 @@
         return setMsg(data.message || "Invalid email or password.", "error");
       }
 
-      // ✅ Save JWT + user info
+      // ✅ Save session
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user || {}));
       localStorage.setItem("username", data.user?.username || "");
 
-      // ✅ Redirect after login
-      window.location.href = "learner-quizzes.html";
+      // ✅ Redirect (respect ?next=... if present)
+      const next = new URLSearchParams(window.location.search).get("next");
+      window.location.href = next ? decodeURIComponent(next) : "learner-quizzes.html";
 
     } catch {
       loginBtn.disabled = false;
