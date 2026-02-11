@@ -8,7 +8,18 @@ const UserSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
 
     role: { type: String, enum: ["learner", "admin"], default: "learner" },
-    grade: { type: Number, required: true, min: 8, max: 12 },
+
+    // ✅ accountType + optional grade (required only for students)
+    accountType: { type: String, enum: ["student", "materials"], required: true },
+    grade: { type: Number, default: null, min: 8, max: 12 },
+
+    // ✅ 8-digit student number (students only)
+    studentNumber: { type: String, default: null },
+
+    // ✅ NEW OPTIONAL FIELDS
+    province: { type: String, default: "" },              // not required
+    cellphone: { type: String, default: "" },             // not required (store as string because +27)
+    guardianCellphone: { type: String, default: "" },     // not required
 
     // ✅ Email verification
     emailVerified: { type: Boolean, default: false },
@@ -22,9 +33,22 @@ const UserSchema = new mongoose.Schema(
 
     // ✅ Forgot password fields
     resetPasswordTokenHash: { type: String, default: null },
-    resetPasswordExpires: { type: Date, default: null }
+    resetPasswordExpires: { type: Date, default: null },
   },
   { timestamps: true }
 );
+
+// ✅ Ensure grade is provided only for student accounts
+UserSchema.pre("validate", function (next) {
+  if (this.accountType === "student") {
+    if (this.grade === null || this.grade === undefined || this.grade === "") {
+      return next(new Error("Grade is required for student accounts."));
+    }
+  } else {
+    this.grade = null;
+    this.studentNumber = null;
+  }
+  next();
+});
 
 export default mongoose.model("User", UserSchema);
