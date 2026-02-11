@@ -5,186 +5,404 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Create Account | Practice Online</title>
 
+  <!-- SEO: do not index auth pages -->
+  <meta name="robots" content="noindex, nofollow" />
+
+  <!-- Font (same as other pages) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
-    body{margin:0;font-family:Arial,sans-serif;background:#f6f7fb;color:#0f172a}
-    .wrap{max-width:560px;margin:40px auto;padding:0 14px}
-    .card{background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:20px}
-    h2{margin:0 0 6px}
-    p{margin:6px 0 14px;color:#334155}
-    label{display:block;margin-top:12px;font-weight:600}
-    input,select{width:100%;padding:10px;margin-top:6px;border-radius:10px;border:1px solid #ddd}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-    @media(max-width:520px){.row{grid-template-columns:1fr}}
-    .btn{background:#0b3c5d;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;cursor:pointer;width:100%}
-    .ghost{background:#fff;border:1px solid #ddd;border-radius:10px;padding:10px;font-weight:700;cursor:pointer;width:100%}
-    .msg{margin-top:10px;white-space:pre-wrap}
-    .error{color:#b91c1c}
-    .ok{color:#065f46}
-    .radioRow{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}
-    .radioRow label{font-weight:500;margin-top:0;display:flex;align-items:center;gap:8px}
-    .links{display:flex;justify-content:space-between;margin-top:12px;font-size:14px}
-    a{color:#0b3c5d;text-decoration:none}
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --border:#e6e6e6;
+      --text:#0f172a;
+      --muted:#475569;
+      --accent:#0b3c5d;
+      --accent-soft:#e7eef5;
+      --nav:#1b1648;
+      --red:#e11d2e;
+      --radius:14px;
+      --shadow:0 6px 18px rgba(0,0,0,0.06);
+      --error:#b91c1c;
+      --ok:#065f46;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    /* ---------- TOP NAV (same style) ---------- */
+    .topbar{background:var(--nav); padding:14px 20px;}
+    .navBar{
+      max-width:1100px;
+      margin:auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .brand{
+      color:#fff;
+      font-weight:900;
+      text-decoration:none;
+      font-size:18px;
+      letter-spacing:.2px;
+    }
+    .tabs{display:flex; gap:18px; align-items:center; flex-wrap:wrap;}
+    .tabs a{
+      color:#c7c9e3;
+      text-decoration:none;
+      font-weight:700;
+      padding-bottom:6px;
+      border-bottom:3px solid transparent;
+    }
+    .tabs a:hover{color:#fff}
+    .tabs a.active{color:#fff; border-bottom:3px solid var(--red);}
+
+    /* ---------- PAGE ---------- */
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding:24px;
+      min-height:calc(100vh - 64px);
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+    }
+
+    .card{
+      width:100%;
+      max-width:560px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+
+    h2{margin:0 0 6px; font-size:22px;}
+    p{margin:6px 0 14px; color:var(--muted);}
+
+    label{
+      display:block;
+      margin-top:12px;
+      font-weight:700;
+      font-size:14px;
+    }
+
+    input,select{
+      width:100%;
+      padding:12px;
+      margin-top:6px;
+      border-radius:12px;
+      border:1px solid #ddd;
+      background:#fff;
+      font-size:14px;
+      outline:none;
+    }
+    input:focus,select:focus{
+      border-color:#cfe9ff;
+      box-shadow:0 0 0 4px rgba(11,60,93,.10);
+    }
+
+    .radioRow{
+      display:flex;
+      gap:16px;
+      margin-top:10px;
+      flex-wrap:wrap;
+    }
+    .radioRow label{
+      font-weight:700;
+      margin-top:0;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:#334155;
+    }
+    .radioRow input{width:auto; margin:0;}
+
+    .row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:12px;
+    }
+    @media(max-width:520px){
+      .wrap{padding:16px;}
+      .row{grid-template-columns:1fr}
+    }
+
+    .btn{
+      background:var(--accent);
+      color:#fff;
+      border:none;
+      border-radius:12px;
+      padding:12px;
+      font-weight:900;
+      cursor:pointer;
+      width:100%;
+      transition:transform .08s ease, box-shadow .2s ease;
+    }
+    .btn:hover{transform:translateY(-1px); box-shadow:0 10px 24px rgba(11,60,93,.18);}
+    .btn:disabled{opacity:.6; cursor:not-allowed; transform:none; box-shadow:none;}
+
+    .ghost{
+      background:#fff;
+      border:1px solid #ddd;
+      border-radius:12px;
+      padding:12px;
+      font-weight:900;
+      cursor:pointer;
+      width:100%;
+    }
+    .ghost:hover{background:var(--accent-soft);}
+
+    .msg{margin-top:10px; font-size:14px;}
+    .error{color:var(--error)}
+    .ok{color:var(--ok)}
+
+    .links{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      margin-top:12px;
+      font-size:14px;
+      flex-wrap:wrap;
+    }
+    .links a{
+      color:var(--accent);
+      text-decoration:none;
+      font-weight:800;
+    }
+    .links a:hover{text-decoration:underline}
+
+    /* small helper text */
+    .hint{margin-top:6px; font-size:12px; color:var(--muted);}
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h2>Register Account</h2>
-      <p>Create your Practice Online account</p>
 
-      <label>Account Type</label>
-      <div class="radioRow">
-        <label>
-          <input type="radio" name="accountType" value="student" checked />
-          Student
-        </label>
-        <label>
-          <input type="radio" name="accountType" value="materials" />
-          Access Materials Only
-        </label>
-      </div>
-
-      <label>Username</label>
-      <input id="username" />
-
-      <label>Email</label>
-      <input id="email" type="email" autocomplete="email" />
-
-      <div id="gradeWrap">
-        <label>Grade (Students only)</label>
-        <select id="grade">
-          <option value="">Select Grade</option>
-          <option value="8">Grade 8</option>
-          <option value="9">Grade 9</option>
-          <option value="10">Grade 10</option>
-          <option value="11">Grade 11</option>
-          <option value="12">Grade 12</option>
-        </select>
-      </div>
-
-      <div class="row">
-        <div>
-          <label>Password</label>
-          <input id="password" type="password" autocomplete="new-password" />
-        </div>
-        <div>
-          <label>Confirm Password</label>
-          <input id="confirmPassword" type="password" autocomplete="new-password" />
-        </div>
-      </div>
-
-      <div class="row">
-        <button id="registerBtn" class="btn" type="button">Register</button>
-        <button id="toggleBtn" class="ghost" type="button">Show Password</button>
-      </div>
-
-      <p id="msg" class="msg"></p>
-
-      <div class="links">
-        <a href="login.html">Login</a>
-        <a href="reset-otp.html">Forgot password?</a>
-      </div>
+<header class="topbar">
+  <div class="navBar">
+    <a href="index.html" class="brand">Practice Online</a>
+    <div class="tabs">
+      <a href="login.html">Login</a>
+      <a href="register.html" class="active">Register</a>
     </div>
   </div>
+</header>
 
-  <script>
-    const API = "https://api.practiceonline.co.za";
+<main class="wrap">
+  <div class="card">
+    <h2>Register Account</h2>
+    <p>Create your Practice Online account</p>
 
-    const btn = document.getElementById("registerBtn");
-    const msg = document.getElementById("msg");
+    <label>Account Type</label>
+    <div class="radioRow">
+      <label><input type="radio" name="accountType" value="student" checked> Student</label>
+      <label><input type="radio" name="accountType" value="materials"> Access Materials Only</label>
+    </div>
 
-    const usernameEl = document.getElementById("username");
-    const emailEl = document.getElementById("email");
-    const gradeEl = document.getElementById("grade");
-    const passwordEl = document.getElementById("password");
-    const confirmEl = document.getElementById("confirmPassword");
-    const toggleBtn = document.getElementById("toggleBtn");
-    const gradeWrap = document.getElementById("gradeWrap");
+    <label for="username">Username</label>
+    <input id="username" autocomplete="username" />
 
-    function setMsg(text, type="") {
-      msg.className = "msg " + type;
-      msg.textContent = text;
-    }
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="email" />
 
-    function getAccountType() {
-      const picked = document.querySelector('input[name="accountType"]:checked');
-      return picked ? picked.value : "materials";
-    }
+    <!-- ✅ Province (optional) -->
+    <label for="province">Province </label>
+    <select id="province">
+      <option value="">Select Province</option>
+      <option value="Eastern Cape">Eastern Cape</option>
+      <option value="Free State">Free State</option>
+      <option value="Gauteng">Gauteng</option>
+      <option value="KwaZulu-Natal">KwaZulu-Natal</option>
+      <option value="Limpopo">Limpopo</option>
+      <option value="Mpumalanga">Mpumalanga</option>
+      <option value="Northern Cape">Northern Cape</option>
+      <option value="North West">North West</option>
+      <option value="Western Cape">Western Cape</option>
+    </select>
 
-    function updateGradeVisibility() {
-      const type = getAccountType();
-      gradeWrap.style.display = (type === "student") ? "block" : "none";
-      if (type !== "student") gradeEl.value = "";
-    }
+    <!-- ✅ Cellphone + Guardian (optional) -->
+    <div class="row">
+      <div>
+        <label for="cellphone">Your Cellphone</label>
+        <input id="cellphone" inputmode="tel" placeholder="+27" />
+      
+      </div>
+      <div>
+        <label for="guardianCellphone">Guardian Cellphone</label>
+        <input id="guardianCellphone" inputmode="tel" placeholder="+27" />
+        
+      </div>
+    </div>
 
-    document.querySelectorAll('input[name="accountType"]').forEach(r => {
-      r.addEventListener("change", updateGradeVisibility);
+    <div id="gradeWrap">
+      <label for="grade">Grade (Students only)</label>
+      <select id="grade">
+        <option value="">Select Grade</option>
+        <option value="8">Grade 8</option>
+        <option value="9">Grade 9</option>
+        <option value="10">Grade 10</option>
+        <option value="11">Grade 11</option>
+        <option value="12">Grade 12</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="new-password" />
+      </div>
+      <div>
+        <label for="confirmPassword">Confirm Password</label>
+        <input id="confirmPassword" type="password" autocomplete="new-password" />
+      </div>
+    </div>
+
+    <div class="row">
+      <button id="registerBtn" class="btn" type="button">Register</button>
+      <button id="toggleBtn" class="ghost" type="button">Show Password</button>
+    </div>
+
+    <p id="msg" class="msg"></p>
+
+    <div class="links">
+      <a href="login.html">Login</a>
+      <a href="reset-otp.html">Forgot password?</a>
+    </div>
+  </div>
+</main>
+
+<script>
+  const API = "https://api.practiceonline.co.za";
+
+  const msg = document.getElementById("msg");
+  const btn = document.getElementById("registerBtn");
+
+  const usernameEl = document.getElementById("username");
+  const emailEl = document.getElementById("email");
+  const gradeEl = document.getElementById("grade");
+  const passwordEl = document.getElementById("password");
+  const confirmEl = document.getElementById("confirmPassword");
+  const toggleBtn = document.getElementById("toggleBtn");
+  const gradeWrap = document.getElementById("gradeWrap");
+
+  // ✅ New optional fields
+  const provinceEl = document.getElementById("province");
+  const cellphoneEl = document.getElementById("cellphone");
+  const guardianCellEl = document.getElementById("guardianCellphone");
+
+  function setMsg(text,type=""){
+    msg.className = "msg " + type;
+    msg.textContent = text;
+  }
+
+  function accountType(){
+    return document.querySelector('input[name="accountType"]:checked').value;
+  }
+
+  function toggleGrade(){
+    const isStudent = accountType() === "student";
+    gradeWrap.style.display = isStudent ? "block" : "none";
+    if(!isStudent) gradeEl.value = "";
+  }
+
+  document.querySelectorAll('input[name="accountType"]').forEach(r=>{
+    r.addEventListener("change", toggleGrade);
+  });
+  toggleGrade();
+
+  // ✅ Pre-fill +27 (not required)
+  function ensurePlus27(el){
+    el.addEventListener("focus", () => {
+      if(!el.value.trim()) el.value = "+27";
     });
-    updateGradeVisibility();
-
-    toggleBtn.addEventListener("click", () => {
-      const show = passwordEl.type === "password";
-      passwordEl.type = show ? "text" : "password";
-      confirmEl.type = show ? "text" : "password";
-      toggleBtn.textContent = show ? "Hide Password" : "Show Password";
+    el.addEventListener("blur", () => {
+      if(el.value.trim() === "+27") el.value = "";
     });
+  }
+  ensurePlus27(cellphoneEl);
+  ensurePlus27(guardianCellEl);
 
-    async function safeJson(res){
-      try { return await res.json(); } catch { return {}; }
+  toggleBtn.onclick = () => {
+    const show = passwordEl.type === "password";
+    passwordEl.type = confirmEl.type = show ? "text" : "password";
+    toggleBtn.textContent = show ? "Hide Password" : "Show Password";
+  };
+
+  // Enter key support
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") btn.click();
+  });
+
+  btn.onclick = async () => {
+    const type = accountType();
+
+    // ✅ Optional values (only send if user typed something)
+    const province = provinceEl.value.trim();
+    const cellphone = cellphoneEl.value.trim();
+    const guardianCellphone = guardianCellEl.value.trim();
+
+    const payload = {
+      username: usernameEl.value.trim(),
+      email: emailEl.value.trim(),
+      password: passwordEl.value,
+      accountType: type,
+      ...(type === "student" ? { grade: Number(gradeEl.value) } : {}),
+      ...(province ? { province } : {}),
+      ...(cellphone ? { cellphone } : {}),
+      ...(guardianCellphone ? { guardianCellphone } : {})
+    };
+
+    if(!payload.username || !payload.email || !payload.password){
+      return setMsg("Please complete username, email and password.","error");
     }
 
-    btn.addEventListener("click", async () => {
-      const username = usernameEl.value.trim();
-      const email = emailEl.value.trim();
-      const password = passwordEl.value;
-      const confirmPassword = confirmEl.value;
-      const accountType = getAccountType();
-      const grade = gradeEl.value;
+    if(payload.password !== confirmEl.value){
+      return setMsg("Passwords do not match.","error");
+    }
 
-      if (!username || !email || !password || !confirmPassword) {
-        return setMsg("All fields required.", "error");
-      }
-      if (password.length < 6) {
-        return setMsg("Password must be at least 6 characters.", "error");
-      }
-      if (password !== confirmPassword) {
-        return setMsg("Passwords do not match.", "error");
-      }
-      if (accountType === "student" && !grade) {
-        return setMsg("Grade is required for Student accounts.", "error");
-      }
+    if(type === "student" && !Number.isFinite(payload.grade)){
+      return setMsg("Please select a grade.","error");
+    }
 
-      const payload = {
-        username, email, password, accountType,
-        ...(accountType === "student" ? { grade: Number(grade) } : {})
-      };
+    btn.disabled = true;
+    setMsg("Creating account...");
 
-      btn.disabled = true;
-      setMsg("Creating account...");
+    try{
+      const res = await fetch(API + "/api/register", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(payload)
+      });
 
-      try {
-        const res = await fetch(API + "/api/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+      const data = await res.json().catch(()=>({}));
 
-        const data = await safeJson(res);
-
-        if (!res.ok) {
-          btn.disabled = false;
-          return setMsg((data.message || "Could not register.") + ` (HTTP ${res.status})`, "error");
-        }
-
-        setMsg(data.message || "Account created.", "ok");
-        setTimeout(() => window.location.href = "login.html", 1200);
-
-      } catch (e) {
+      if(!res.ok){
         btn.disabled = false;
-        setMsg("Network error / CORS blocked.", "error");
+        return setMsg(data.message || "Registration failed.","error");
       }
-    });
-  </script>
+
+      setMsg("Account created successfully!","ok");
+      setTimeout(() => location.href = "login.html", 1200);
+
+    }catch{
+      btn.disabled = false;
+      setMsg("Network error. Please try again.","error");
+    }
+  };
+</script>
+
 </body>
 </html>
