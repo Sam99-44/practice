@@ -30,13 +30,14 @@
     .topbar{background:var(--nav);color:#fff;}
     .topbar-inner{
       max-width:1100px;margin:0 auto;padding:14px 18px;
-      display:flex;align-items:center;justify-content:space-between;
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
     }
 
     .brand{font-weight:900;}
-    .nav{display:flex;gap:10px;align-items:center;}
+    .nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
     .nav a{padding:8px 10px;border-radius:8px;color:#e7e9ff;font-weight:700;font-size:13px;}
     .nav a.active{border-bottom:3px solid var(--red);color:#fff;}
+    .nav a:hover{background:rgba(255,255,255,.10)}
     .logoutBtn{
       background:rgba(255,255,255,.12);
       color:#fff;
@@ -44,25 +45,32 @@
       padding:8px 12px;
       border-radius:8px;
       cursor:pointer;
+      font-weight:800;
     }
 
     .wrap{max-width:1100px;margin:0 auto;padding:18px;}
 
-    .controls{display:flex;gap:10px;flex-wrap:wrap;}
+    .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
 
     select{
-      padding:4px 6px;
-      border:1px solid #777;
+      padding:6px 8px;
+      border:1px solid #cbd5e1;
+      border-radius:10px;
       background:#fff;
       font-size:13px;
+      font-weight:700;
+      outline:none;
     }
 
     .btn{
-      padding:4px 10px;
-      border:1px solid #777;
-      background:#efefef;
+      padding:7px 12px;
+      border:1px solid #cbd5e1;
+      border-radius:10px;
+      background:#fff;
       cursor:pointer;
+      font-weight:800;
     }
+    .btn:hover{background:#f8fafc}
 
     .section{
       background:var(--card);
@@ -78,6 +86,9 @@
       grid-template-columns:repeat(4,1fr);
       gap:12px;
       margin-bottom:12px;
+    }
+    @media(max-width:820px){
+      .tiles{grid-template-columns:repeat(2,1fr)}
     }
 
     .tile{
@@ -96,7 +107,8 @@
 
     .tileValue{
       font-size:22px;
-      font-weight:700;
+      font-weight:800;
+      color:var(--accent);
     }
 
     table{
@@ -109,6 +121,7 @@
       padding:8px;
       border-bottom:1px solid #eee;
       text-align:left;
+      vertical-align:top;
     }
 
     th{
@@ -118,15 +131,18 @@
       color:var(--muted);
     }
 
-    .status.pass{color:#065f46;font-weight:700;}
-    .status.fail{color:#9a3412;font-weight:700;}
+    .status.pass{color:#065f46;font-weight:800;}
+    .status.fail{color:#9a3412;font-weight:800;}
 
     .smallBtn{
       padding:6px 10px;
       border:1px solid #ddd;
+      border-radius:10px;
       background:#fff;
       cursor:pointer;
+      font-weight:800;
     }
+    .smallBtn:hover{background:#f8fafc}
 
     .empty{
       padding:14px;
@@ -134,6 +150,7 @@
       border-radius:12px;
       background:#fafafa;
       color:var(--muted);
+      font-weight:700;
     }
   </style>
 
@@ -150,9 +167,14 @@
   <div class="topbar-inner">
     <div class="brand">Practice Online</div>
     <nav class="nav">
-      <a href="learner-quizzes.html">Back to Practice</a>
+      <a href="learner-quizzes.html">Practice</a>
       <a class="active" href="results.html">Results</a>
+
+      <!-- ✅ NEW -->
+      <a href="support.html">Support</a>
+
       <a href="about.html">About</a>
+      <a href="admin-quiz.html" data-admin style="display:none;">Admin</a>
       <button class="logoutBtn" id="logoutBtn">Logout</button>
     </nav>
   </div>
@@ -205,8 +227,11 @@
 
 </main>
 
+<!-- ✅ IMPORTANT: include nav.js so window.API + admin visibility works -->
+<script src="nav.js"></script>
+
 <script>
-const API = "https://api.practiceonline.co.za";
+const API = window.API || "https://practice-backend-msgn.onrender.com";
 const token = localStorage.getItem("token");
 
 const topicFilter = document.getElementById("topicFilter");
@@ -222,7 +247,9 @@ const bestBox = document.getElementById("bestBox");
 let allResults = [];
 
 document.getElementById("logoutBtn").onclick = ()=>{
-  localStorage.clear();
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  localStorage.removeItem("me_cache");
   location.href="login.html";
 };
 
@@ -237,6 +264,15 @@ async function loadResults(){
   const res = await fetch(`${API}/api/results/my`,{
     headers:{Authorization:`Bearer ${token}`}
   });
+
+  if(res.status === 401){
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    localStorage.removeItem("me_cache");
+    location.href="login.html";
+    return;
+  }
+
   const data = await res.json().catch(()=>[]);
   allResults = Array.isArray(data)?data:[];
   buildFilters(allResults);
@@ -244,14 +280,14 @@ async function loadResults(){
 }
 
 function buildFilters(data){
-  const topics=[...new Set(data.map(r=>r.topic||"General"))];
+  const topics=[...new Set(data.map(r=>r.topic||"General"))].sort((a,b)=>a.localeCompare(b));
   topicFilter.innerHTML=`<option value="">All Topics</option>`+
-    topics.map(t=>`<option value="${t}">${t}</option>`).join("");
+    topics.map(t=>`<option value="${escapeHtmlAttr(t)}">${escapeHtml(t)}</option>`).join("");
 
   const years=[...new Set(data.map(r=>{
     const d=new Date(r.createdAt);
     return isNaN(d)?null:d.getFullYear();
-  }).filter(Boolean))];
+  }).filter(Boolean))].sort((a,b)=>b-a);
 
   yearSelect.innerHTML=`<option value="">All Years</option>`+
     years.map(y=>`<option value="${y}">${y}</option>`).join("");
@@ -261,9 +297,9 @@ function renderEverything(){
   const filtered=applyFilters(allResults);
 
   const attempts=filtered.length;
-  const avg=attempts?Math.round(filtered.reduce((s,r)=>s+r.percent,0)/attempts):0;
-  const best=attempts?Math.max(...filtered.map(r=>r.percent)):0;
-  const passCount=filtered.filter(r=>r.percent>=50).length;
+  const avg=attempts?Math.round(filtered.reduce((s,r)=>s+(Number(r.percent)||0),0)/attempts):0;
+  const best=attempts?Math.max(...filtered.map(r=>Number(r.percent)||0)):0;
+  const passCount=filtered.filter(r=>(Number(r.percent)||0)>=50).length;
   const passRate=attempts?Math.round((passCount/attempts)*100):0;
 
   avgBox.textContent=avg+"%";
@@ -280,12 +316,13 @@ function applyFilters(data){
   const year=yearSelect.value;
 
   return data.filter(r=>{
-    if(topic && r.topic!==topic) return false;
-    if(status==="pass" && r.percent<50) return false;
-    if(status==="fail" && r.percent>=50) return false;
+    if(topic && String(r.topic||"General")!==topic) return false;
+    const p = Number(r.percent)||0;
+    if(status==="pass" && p<50) return false;
+    if(status==="fail" && p>=50) return false;
     if(year){
       const d=new Date(r.createdAt);
-      if(String(d.getFullYear())!==year) return false;
+      if(String(d.getFullYear())!==String(year)) return false;
     }
     return true;
   });
@@ -313,23 +350,37 @@ function renderTable(data){
       </thead>
       <tbody>
         ${data.map(r=>{
-          const d=new Date(r.createdAt).toLocaleString();
-          const pass=r.percent>=50;
+          const d=new Date(r.createdAt);
+          const dateTxt = isNaN(d) ? "" : d.toLocaleString();
+          const percent = Number(r.percent)||0;
+          const pass=percent>=50;
           return `
           <tr>
-            <td>${d}</td>
-            <td>${r.grade}</td>
-            <td>${r.topic}</td>
-            <td>${r.title}</td>
-            <td>${r.percent}%</td>
+            <td>${escapeHtml(dateTxt)}</td>
+            <td>${escapeHtml(String(r.grade??""))}</td>
+            <td>${escapeHtml(String(r.topic||"General"))}</td>
+            <td>${escapeHtml(String(r.title||"Assessment"))}</td>
+            <td>${percent}%</td>
             <td class="status ${pass?"pass":"fail"}">${pass?"Pass":"Fail"}</td>
-            <td><button class="smallBtn" onclick="location.href='review.html?resultId=${r._id}'">Review</button></td>
+            <td><button class="smallBtn" onclick="location.href='review.html?resultId=${encodeURIComponent(r._id)}'">Review</button></td>
           </tr>
           `;
         }).join("")}
       </tbody>
     </table>
   `;
+}
+
+function escapeHtml(str){
+  return String(str ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+function escapeHtmlAttr(str){
+  return escapeHtml(str).replaceAll('"',"&quot;");
 }
 </script>
 
