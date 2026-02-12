@@ -7,141 +7,125 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
+      --nav:#1b1648;
+      --accent:#0b3c5d;
+      --red:#e11d2e;
       --bg:#f6f7fb;
       --card:#ffffff;
       --border:#e6e6e6;
       --text:#0f172a;
       --muted:#475569;
-      --accent:#0b3c5d;
-      --accent-soft:#e7eef5;
       --radius:14px;
-      --shadow:0 6px 18px rgba(0,0,0,0.06);
-      --error:#b91c1c;
-      --ok:#065f46;
+      --shadow:0 8px 22px rgba(0,0,0,.06);
     }
+
     *{box-sizing:border-box}
-    body{margin:0; font-family:Inter,Arial,sans-serif; background:var(--bg); color:var(--text);}
-    .wrap{max-width:1100px; margin:0 auto; padding:24px;}
+    body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text);}
+    a{text-decoration:none;color:inherit}
 
-    .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:12px;}
-    .brand{display:flex; align-items:center; gap:10px;}
-    .logo{width:38px; height:38px; border-radius:10px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800;}
-    .brand span{display:block; font-size:13px; color:var(--muted);}
-
-    .nav{display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
-    .nav a{text-decoration:none; font-size:14px; color:var(--text); padding:6px 8px; border-radius:8px;}
-    .nav a:hover{ background:var(--accent-soft); }
-    .nav a.active{ font-weight:700; color:var(--accent); }
-    .nav .btn{background:var(--accent); color:#fff; padding:8px 12px; border-radius:10px; border:none; cursor:pointer; font-size:14px; font-weight:700;}
-
-    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);}
-    h1{margin:0; font-size:22px;}
-    .muted{color:var(--muted);}
-    .error{color:var(--error);}
-    .ok{color:var(--ok);}
-
-    .controls{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:flex-end;
-      margin-top:14px;
-      margin-bottom:10px;
+    .topbar{background:var(--nav);color:#fff;}
+    .topbar-inner{
+      max-width:1100px;margin:0 auto;padding:14px 18px;
+      display:flex;align-items:center;justify-content:space-between;
     }
-    .controls .group{display:flex; flex-direction:column; gap:6px;}
-    select,input{
-      padding:10px;
-      border-radius:10px;
-      border:1px solid #ddd;
-      background:#fff;
-      min-width:220px;
-      font-size:14px;
-      outline:none;
-    }
-    .btn2{
-      background:#fff;
-      border:1px solid #ddd;
-      padding:10px 12px;
-      border-radius:10px;
+
+    .brand{font-weight:900;}
+    .nav{display:flex;gap:10px;align-items:center;}
+    .nav a{padding:8px 10px;border-radius:8px;color:#e7e9ff;font-weight:700;font-size:13px;}
+    .nav a.active{border-bottom:3px solid var(--red);color:#fff;}
+    .logoutBtn{
+      background:rgba(255,255,255,.12);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.2);
+      padding:8px 12px;
+      border-radius:8px;
       cursor:pointer;
-      font-weight:700;
-      font-size:14px;
-    }
-    .smallBtn{
-      background:#fff;
-      border:1px solid #ddd;
-      padding:6px 10px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:800;
-      font-size:12px;
-      white-space:nowrap;
     }
 
-    /* ✅ Desktop table */
-    .tableWrap{
-      width:100%;
-      overflow-x:auto;
-      -webkit-overflow-scrolling:touch;
+    .wrap{max-width:1100px;margin:0 auto;padding:18px;}
+
+    .controls{display:flex;gap:10px;flex-wrap:wrap;}
+
+    select{
+      padding:4px 6px;
+      border:1px solid #777;
+      background:#fff;
+      font-size:13px;
+    }
+
+    .btn{
+      padding:4px 10px;
+      border:1px solid #777;
+      background:#efefef;
+      cursor:pointer;
+    }
+
+    .section{
+      background:var(--card);
       border:1px solid var(--border);
-      border-radius:14px;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      margin-top:14px;
+      padding:14px;
+    }
+
+    .tiles{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:12px;
+      margin-bottom:12px;
+    }
+
+    .tile{
       background:#fff;
-      margin-top:12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:12px;
     }
-    table.resultsTable{
-      width:100%;
-      border-collapse:collapse;
-      min-width:780px; /* enables horizontal scroll if needed */
-    }
-    .resultsTable th, .resultsTable td{
-      padding:10px;
-      border-bottom:1px solid #eee;
-      text-align:left;
-      font-size:14px;
-      vertical-align:top;
-      white-space:nowrap;
-    }
-    .resultsTable th{
-      font-size:12px;
+
+    .tileLabel{
+      font-size:11px;
       color:var(--muted);
       text-transform:uppercase;
-      letter-spacing:.04em;
-      background:#f8fafc;
+      font-weight:800;
     }
 
-    .pill{
-      display:inline-block;
-      padding:4px 10px;
-      border-radius:999px;
-      border:1px solid #cfe9ff;
-      background:#eef7ff;
-      color:#0b3c5d;
-      font-size:12px;
+    .tileValue{
+      font-size:22px;
       font-weight:700;
     }
 
-    /* ✅ Marks colours */
-    .marks-pass{
-      background:#dcfce7;
-      border:1px solid #16a34a;
-      color:#065f46;
-      font-weight:900;
-      padding:4px 10px;
-      border-radius:999px;
-      display:inline-block;
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
     }
-    .marks-fail{
-      background:#fee2e2;
-      border:1px solid #dc2626;
-      color:#7f1d1d;
-      font-weight:900;
-      padding:4px 10px;
-      border-radius:999px;
-      display:inline-block;
+
+    th, td{
+      padding:8px;
+      border-bottom:1px solid #eee;
+      text-align:left;
+    }
+
+    th{
+      background:#f8fafc;
+      font-size:11px;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+
+    .status.pass{color:#065f46;font-weight:700;}
+    .status.fail{color:#9a3412;font-weight:700;}
+
+    .smallBtn{
+      padding:6px 10px;
+      border:1px solid #ddd;
+      background:#fff;
+      cursor:pointer;
     }
 
     .empty{
@@ -149,170 +133,205 @@
       border:1px dashed #ddd;
       border-radius:12px;
       background:#fafafa;
-      margin-top:12px;
-    }
-
-    /* ✅ Phone view: rows become cards */
-    @media (max-width: 640px){
-      .wrap{padding:16px;}
-      .card{padding:14px;}
-
-      .tableWrap{
-        border:none;
-        background:transparent;
-        overflow:visible;
-      }
-
-      table.resultsTable{
-        min-width:0;
-        border-collapse:separate;
-        border-spacing:0 10px; /* spacing between cards */
-      }
-
-      .resultsTable thead{display:none;}
-
-      .resultsTable tbody tr{
-        display:block;
-        background:#fff;
-        border:1px solid var(--border);
-        border-radius:14px;
-        padding:12px;
-        box-shadow:var(--shadow);
-      }
-
-      .resultsTable tbody td{
-        display:flex;
-        justify-content:space-between;
-        align-items:flex-start;
-        gap:12px;
-        padding:8px 0;
-        border:none;
-        white-space:normal;
-      }
-
-      .resultsTable tbody td::before{
-        content: attr(data-label);
-        font-weight:800;
-        color:var(--muted);
-        min-width:110px;
-      }
-
-      .smallBtn{width:100%;}
+      color:var(--muted);
     }
   </style>
 
   <script>
-    const authToken = localStorage.getItem("token");
-    if (!authToken) window.location.href = "login.html";
+    if(!localStorage.getItem("token")){
+      location.href="login.html";
+    }
   </script>
 </head>
 
 <body>
-<div class="wrap">
 
-  <div class="topbar">
-    <div class="brand">
-      <div class="logo">PO</div>
-      <div>
-        <strong>Practice Online</strong>
-        <span id="welcomeSub">Results</span>
-      </div>
-    </div>
-
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">Practice Online</div>
     <nav class="nav">
       <a href="learner-quizzes.html">Back to Practice</a>
-      <a href="results.html" class="active">Results</a>
+      <a class="active" href="results.html">Results</a>
       <a href="about.html">About</a>
-      <a href="admin-quiz.html" data-admin>Admin</a>
-      <button class="btn" id="logoutBtn">Logout</button>
+      <button class="logoutBtn" id="logoutBtn">Logout</button>
     </nav>
   </div>
+</header>
 
-  <div class="card">
-    <h1>Your Results</h1>
-    <div id="tableWrap"></div>
+<main class="wrap">
+
+  <div class="controls">
+    <select id="topicFilter">
+      <option value="">All Topics</option>
+    </select>
+
+    <select id="statusFilter">
+      <option value="">All</option>
+      <option value="pass">Pass</option>
+      <option value="fail">Fail</option>
+    </select>
+
+    <select id="yearSelect">
+      <option value="">All Years</option>
+    </select>
+
+    <button class="btn" id="applyBtn">Continue</button>
   </div>
 
-</div>
+  <section class="section">
+    <div class="tiles">
+      <div class="tile">
+        <div class="tileLabel">Average</div>
+        <div class="tileValue" id="avgBox">0%</div>
+      </div>
+      <div class="tile">
+        <div class="tileLabel">Attempts</div>
+        <div class="tileValue" id="attemptsBox">0</div>
+      </div>
+      <div class="tile">
+        <div class="tileLabel">Pass Rate</div>
+        <div class="tileValue" id="passRateBox">0%</div>
+      </div>
+      <div class="tile">
+        <div class="tileLabel">Best Mark</div>
+        <div class="tileValue" id="bestBox">0%</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="tableWrap">
+    <div class="empty">Loading results…</div>
+  </section>
+
+</main>
 
 <script>
-  const API = window.API || "https://practice-backend-msgn.onrender.com";
-  const token = localStorage.getItem("token");
+const API = "https://api.practiceonline.co.za";
+const token = localStorage.getItem("token");
 
-  document.getElementById("logoutBtn").onclick = () => {
-    localStorage.removeItem("token");
-    window.location.href = "login.html";
-  };
+const topicFilter = document.getElementById("topicFilter");
+const statusFilter = document.getElementById("statusFilter");
+const yearSelect = document.getElementById("yearSelect");
+const applyBtn = document.getElementById("applyBtn");
 
-  loadResults();
+const avgBox = document.getElementById("avgBox");
+const attemptsBox = document.getElementById("attemptsBox");
+const passRateBox = document.getElementById("passRateBox");
+const bestBox = document.getElementById("bestBox");
 
-  async function loadResults(){
-    const res = await fetch(`${API}/api/results/my`, {
-      headers:{ Authorization:"Bearer "+token }
-    });
+let allResults = [];
 
-    const data = await res.json().catch(()=>[]);
+document.getElementById("logoutBtn").onclick = ()=>{
+  localStorage.clear();
+  location.href="login.html";
+};
 
-    if (!Array.isArray(data) || data.length === 0){
-      document.getElementById("tableWrap").innerHTML =
-        `<div class="empty">No results found.</div>`;
-      return;
+applyBtn.addEventListener("click", renderEverything);
+topicFilter.addEventListener("change", renderEverything);
+statusFilter.addEventListener("change", renderEverything);
+yearSelect.addEventListener("change", renderEverything);
+
+loadResults();
+
+async function loadResults(){
+  const res = await fetch(`${API}/api/results/my`,{
+    headers:{Authorization:`Bearer ${token}`}
+  });
+  const data = await res.json().catch(()=>[]);
+  allResults = Array.isArray(data)?data:[];
+  buildFilters(allResults);
+  renderEverything();
+}
+
+function buildFilters(data){
+  const topics=[...new Set(data.map(r=>r.topic||"General"))];
+  topicFilter.innerHTML=`<option value="">All Topics</option>`+
+    topics.map(t=>`<option value="${t}">${t}</option>`).join("");
+
+  const years=[...new Set(data.map(r=>{
+    const d=new Date(r.createdAt);
+    return isNaN(d)?null:d.getFullYear();
+  }).filter(Boolean))];
+
+  yearSelect.innerHTML=`<option value="">All Years</option>`+
+    years.map(y=>`<option value="${y}">${y}</option>`).join("");
+}
+
+function renderEverything(){
+  const filtered=applyFilters(allResults);
+
+  const attempts=filtered.length;
+  const avg=attempts?Math.round(filtered.reduce((s,r)=>s+r.percent,0)/attempts):0;
+  const best=attempts?Math.max(...filtered.map(r=>r.percent)):0;
+  const passCount=filtered.filter(r=>r.percent>=50).length;
+  const passRate=attempts?Math.round((passCount/attempts)*100):0;
+
+  avgBox.textContent=avg+"%";
+  attemptsBox.textContent=attempts;
+  passRateBox.textContent=passRate+"%";
+  bestBox.textContent=best+"%";
+
+  renderTable(filtered);
+}
+
+function applyFilters(data){
+  const topic=topicFilter.value;
+  const status=statusFilter.value;
+  const year=yearSelect.value;
+
+  return data.filter(r=>{
+    if(topic && r.topic!==topic) return false;
+    if(status==="pass" && r.percent<50) return false;
+    if(status==="fail" && r.percent>=50) return false;
+    if(year){
+      const d=new Date(r.createdAt);
+      if(String(d.getFullYear())!==year) return false;
     }
+    return true;
+  });
+}
 
-    document.getElementById("tableWrap").innerHTML = `
-      <div class="tableWrap">
-        <table class="resultsTable">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Grade</th>
-              <th>Topic</th>
-              <th>Assessment</th>
-              <th>Marks</th>
-              <th>Review</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${data.map(r=>{
-              const d = r.createdAt ? new Date(r.createdAt).toLocaleString() : "-";
-              const pass = Number(r.percent) >= 50;
-              const grade = r.grade ?? "-";
-              const topic = r.topic || "General";
-              const title = r.title || "Assessment";
-              const percent = Number.isFinite(Number(r.percent)) ? `${Number(r.percent)}%` : "-";
-              const rid = r._id;
-
-              return `
-                <tr>
-                  <td data-label="Date">${escapeHtml(d)}</td>
-                  <td data-label="Grade"><span class="pill">Grade ${escapeHtml(String(grade))}</span></td>
-                  <td data-label="Topic">${escapeHtml(topic)}</td>
-                  <td data-label="Assessment">${escapeHtml(title)}</td>
-                  <td data-label="Marks">
-                    <span class="${pass ? "marks-pass" : "marks-fail"}">${escapeHtml(percent)}</span>
-                  </td>
-                  <td data-label="Review">
-                    <button class="smallBtn" onclick="location.href='review.html?resultId=${encodeURIComponent(rid)}'">
-                      Review
-                    </button>
-                  </td>
-                </tr>
-              `;
-            }).join("")}
-          </tbody>
-        </table>
-      </div>
-    `;
+function renderTable(data){
+  const wrap=document.getElementById("tableWrap");
+  if(!data.length){
+    wrap.innerHTML=`<div class="empty">No results found.</div>`;
+    return;
   }
 
-  function escapeHtml(str){
-    return String(str)
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
+  wrap.innerHTML=`
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Grade</th>
+          <th>Topic</th>
+          <th>Assessment</th>
+          <th>Mark</th>
+          <th>Status</th>
+          <th>Review</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.map(r=>{
+          const d=new Date(r.createdAt).toLocaleString();
+          const pass=r.percent>=50;
+          return `
+          <tr>
+            <td>${d}</td>
+            <td>${r.grade}</td>
+            <td>${r.topic}</td>
+            <td>${r.title}</td>
+            <td>${r.percent}%</td>
+            <td class="status ${pass?"pass":"fail"}">${pass?"Pass":"Fail"}</td>
+            <td><button class="smallBtn" onclick="location.href='review.html?resultId=${r._id}'">Review</button></td>
+          </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+  `;
+}
 </script>
+
 </body>
 </html>
