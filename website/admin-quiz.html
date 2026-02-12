@@ -1,3 +1,12 @@
+<!-- admin-quiz.html (FULL UPDATED - COPY & PASTE)
+     ✅ MathJax enabled (LaTeX in questions/hints/options/instructions)
+     ✅ NEW: Instructions box (shown at top of assessment)
+     ✅ Live preview for: Instructions, Question Text, Hint, Options A–D, Expected Answer
+     ✅ Smaller question text on learner pages (you must add same CSS there if needed)
+     ✅ Safe: previews use textContent (no HTML injection)
+     ✅ Sends { instructions } to server.js POST /api/quizzes
+     ✅ NOTE: Use $...$ for inline math, e.g. $x^2$, $\frac{a}{b}$, $\sqrt{x}$
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,10 +14,20 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Admin | Add Assessment</title>
 
+  <!-- ✅ MathJax for rendering LaTeX -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
   <style>
     body{font-family:Arial; padding:20px; max-width:980px; margin:auto; background:#f6f7fb;}
     .card{background:#fff; border:1px solid #e6e6e6; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.06);}
     input, textarea, select{width:100%; padding:10px; margin:8px 0; border-radius:10px; border:1px solid #ddd; outline:none;}
+    textarea{resize:vertical}
     button{padding:10px 14px; cursor:pointer; border:none; border-radius:10px; font-weight:700;}
     .btn{background:#111827; color:#fff;}
     .btn:disabled{opacity:0.6; cursor:not-allowed;}
@@ -29,6 +48,41 @@
     .pill{display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid #cfe9ff; background:#eef7ff; color:#0b3c5d; font-size:12px; font-weight:800;}
     .tiny{font-size:12px;}
     .hide{display:none !important;}
+
+    /* ✅ Preview */
+    .previewLabel{margin:6px 0 0}
+    .previewBox{
+      border:1px dashed #e6e6e6;
+      background:#fbfbfe;
+      border-radius:10px;
+      padding:10px;
+      margin-top:6px;
+      font-size:13px;            /* ✅ smaller preview text */
+      line-height:1.35;
+      white-space:pre-wrap;
+    }
+    .previewRow{
+      margin-top:10px;
+      border-top:1px solid #f0f0f0;
+      padding-top:10px;
+    }
+    .prevTitle{
+      font-weight:900;
+      font-size:12px;
+      color:#0b3c5d;
+      margin:0 0 6px 0;
+    }
+
+    /* ✅ Instructions box */
+    .infoBox{
+      border:1px solid #e6e6e6;
+      background:#fbfbff;
+      border-radius:12px;
+      padding:12px;
+      margin:10px 0 6px;
+    }
+    .infoBox b{display:block; margin-bottom:6px;}
+    .helpLine{margin-top:6px;}
   </style>
 </head>
 
@@ -77,11 +131,29 @@
       </div>
     </div>
 
+    <!-- ✅ NEW: Instructions -->
+    <div class="infoBox">
+      <b>Assessment Instructions (optional)</b>
+      <textarea id="instructions" rows="3" placeholder="Example: Answer all questions. Use $x^2$ form for algebra answers. No calculators."></textarea>
+
+      <div class="helpLine muted tiny">
+        Type math using LaTeX: <b>$x^2$</b>, <b>$\frac{a}{b}$</b>, <b>$\sqrt{x}$</b>, <b>$(x+1)^2$</b>
+      </div>
+
+      <div class="previewRow" style="margin-top:10px;">
+        <div class="prevTitle">Instructions Preview</div>
+        <div class="previewBox" id="prevInstructions">(Instructions preview)</div>
+      </div>
+    </div>
+
     <hr>
 
     <div class="qhead">
       <div>
         <h3 style="margin:0;">Questions</h3>
+        <div class="muted tiny" style="margin-top:6px;">
+          Use $...$ for inline math. Example: Simplify $x^2 + 2x + 1$.
+        </div>
       </div>
 
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -110,6 +182,10 @@
     const timeLimitEl = document.getElementById("timeLimit");
     const titleEl = document.getElementById("title");
 
+    // ✅ NEW
+    const instructionsEl = document.getElementById("instructions");
+    const prevInstructions = document.getElementById("prevInstructions");
+
     const addMcqBtn = document.getElementById("addMcqBtn");
     const addTextBtn = document.getElementById("addTextBtn");
     const questionsWrap = document.getElementById("questionsWrap");
@@ -136,6 +212,28 @@
       if (!t) return "";
       return t.replace(/\b\w/g, c => c.toUpperCase());
     }
+
+    // ✅ MathJax typeset helper
+    function typesetMath(root=document){
+      if (window.MathJax?.typesetPromise) {
+        window.MathJax.typesetPromise([root]).catch(()=>{});
+      }
+    }
+
+    // ✅ Safe preview: use textContent then typeset
+    function setPreviewText(previewEl, text){
+      if (!previewEl) return;
+      previewEl.textContent = text || "";
+      typesetMath(previewEl);
+    }
+
+    // ✅ Instructions live preview
+    function renderInstructionsPreview(){
+      const t = cleanSpaces(instructionsEl.value || "");
+      setPreviewText(prevInstructions, t || "(Instructions preview)");
+    }
+    instructionsEl.addEventListener("input", renderInstructionsPreview);
+    renderInstructionsPreview();
 
     // -------------------- Admin lock --------------------
     (async () => {
@@ -183,20 +281,20 @@
             <button type="button" class="smallbtn removeBtn">Remove</button>
           </div>
 
-          <label>Question Text</label>
-          <input class="qText" />
+          <label>Question Text (supports math)</label>
+          <textarea class="qText" rows="3" placeholder="Example: Simplify $x^2 + 2x + 1$"></textarea>
 
-          <label>Hint</label>
-          <input class="qHint" />
+          <label>Hint (supports math)</label>
+          <input class="qHint" placeholder="Example: Use $(a+b)^2$ identity" />
 
           <label>Image URL (optional)</label>
           <input class="qImage" />
 
           <div class="grid2">
-            <div><label>Option A</label><input class="optA" placeholder="A" /></div>
-            <div><label>Option B</label><input class="optB" placeholder="B" /></div>
-            <div><label>Option C</label><input class="optC" placeholder="C" /></div>
-            <div><label>Option D</label><input class="optD" placeholder="D" /></div>
+            <div><label>Option A (supports math)</label><input class="optA" placeholder="A" /></div>
+            <div><label>Option B (supports math)</label><input class="optB" placeholder="B" /></div>
+            <div><label>Option C (supports math)</label><input class="optC" placeholder="C" /></div>
+            <div><label>Option D (supports math)</label><input class="optD" placeholder="D" /></div>
           </div>
 
           <label>Correct Answer</label>
@@ -206,6 +304,18 @@
             <option value="2">C</option>
             <option value="3">D</option>
           </select>
+
+          <div class="previewRow">
+            <div class="prevTitle">Live Preview</div>
+            <div class="muted tiny">Question:</div>
+            <div class="previewBox prevQ"></div>
+
+            <div class="muted tiny previewLabel">Hint:</div>
+            <div class="previewBox prevHint"></div>
+
+            <div class="muted tiny previewLabel">Options:</div>
+            <div class="previewBox prevOpts"></div>
+          </div>
         </div>
       `;
     }
@@ -221,16 +331,16 @@
             <button type="button" class="smallbtn removeBtn">Remove</button>
           </div>
 
-          <label>Question Text</label>
-          <input class="qText" />
+          <label>Question Text (supports math)</label>
+          <textarea class="qText" rows="3" placeholder="Example: Solve $\\frac{2x}{5}=4$"></textarea>
 
-          <label>Hint (recommended)</label>
-          <input class="qHint" />
+          <label>Hint (supports math)</label>
+          <input class="qHint" placeholder="Example: Multiply both sides by 5" />
 
           <div class="grid2">
             <div>
-              <label>Correct Answer (what you expect learners to type)</label>
-              <input class="correctText" />
+              <label>Correct Answer (supports math)</label>
+              <input class="correctText" placeholder="Example: 10 (or $x=10$ if you want math display only)" />
             </div>
             <div>
               <label>Check Mode</label>
@@ -264,6 +374,18 @@
               Learners will type the answer in a text box.
             </div>
           </div>
+
+          <div class="previewRow">
+            <div class="prevTitle">Live Preview</div>
+            <div class="muted tiny">Question:</div>
+            <div class="previewBox prevQ"></div>
+
+            <div class="muted tiny previewLabel">Hint:</div>
+            <div class="previewBox prevHint"></div>
+
+            <div class="muted tiny previewLabel">Expected Answer:</div>
+            <div class="previewBox prevAns"></div>
+          </div>
         </div>
       `;
     }
@@ -271,12 +393,14 @@
     function addMcq(){
       qCount += 1;
       questionsWrap.insertAdjacentHTML("beforeend", mcqCardHtml(qCount));
+      wireLastCard();
     }
 
     function addText(){
       qCount += 1;
       questionsWrap.insertAdjacentHTML("beforeend", textCardHtml(qCount));
       wireTextModeForLastCard();
+      wireLastCard();
     }
 
     addMcqBtn.addEventListener("click", addMcq);
@@ -306,6 +430,56 @@
 
       modeSel.addEventListener("change", update);
       update();
+    }
+
+    function renderCardPreview(card){
+      const type = card.getAttribute("data-type") || "mcq";
+
+      const qText = cleanSpaces(card.querySelector(".qText")?.value || "");
+      const hint  = cleanSpaces(card.querySelector(".qHint")?.value || "");
+
+      // common
+      setPreviewText(card.querySelector(".prevQ"), qText || "(Question preview)");
+      setPreviewText(card.querySelector(".prevHint"), hint || "(Hint preview)");
+
+      if (type === "mcq") {
+        const A = cleanSpaces(card.querySelector(".optA")?.value || "");
+        const B = cleanSpaces(card.querySelector(".optB")?.value || "");
+        const C = cleanSpaces(card.querySelector(".optC")?.value || "");
+        const D = cleanSpaces(card.querySelector(".optD")?.value || "");
+        const opts = [
+          A ? `A) ${A}` : "A) —",
+          B ? `B) ${B}` : "B) —",
+          C ? `C) ${C}` : "C) —",
+          D ? `D) ${D}` : "D) —"
+        ].join("\n");
+
+        setPreviewText(card.querySelector(".prevOpts"), opts);
+      } else {
+        const ans = cleanSpaces(card.querySelector(".correctText")?.value || "");
+        setPreviewText(card.querySelector(".prevAns"), ans || "(Expected answer preview)");
+      }
+    }
+
+    function wireLastCard(){
+      const cards = [...questionsWrap.querySelectorAll(".qcard")];
+      const last = cards[cards.length - 1];
+      if (!last) return;
+
+      // wire inputs for live preview
+      const fields = [
+        ".qText", ".qHint",
+        ".optA", ".optB", ".optC", ".optD",
+        ".correctText"
+      ];
+
+      fields.forEach(sel=>{
+        const el = last.querySelector(sel);
+        if (el) el.addEventListener("input", ()=>renderCardPreview(last));
+      });
+
+      // initial preview
+      renderCardPreview(last);
     }
 
     // start with one MCQ by default
@@ -386,6 +560,7 @@
       const topic = toTitleCase(topicEl.value);
       const title = toTitleCase(titleEl.value);
       const timeLimitMinutes = Number(timeLimitEl.value);
+      const instructions = cleanSpaces(instructionsEl.value || "");
 
       try{
         if (!grade) return setMsg("Please select grade.", "error");
@@ -407,7 +582,7 @@
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify({ grade, title, topic, timeLimitMinutes, questions })
+          body: JSON.stringify({ grade, title, topic, timeLimitMinutes, instructions, questions })
         });
 
         const data = await res.json().catch(()=>({}));
@@ -418,6 +593,8 @@
           gradeEl.value = "";
           topicEl.value = "";
           timeLimitEl.value = "10";
+          instructionsEl.value = "";
+          renderInstructionsPreview();
 
           questionsWrap.innerHTML = "";
           qCount = 0;
