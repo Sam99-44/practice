@@ -275,7 +275,7 @@ function newQuizEmail({ grade, quizId, title, topic, timeLimitMinutes, questions
             <tr>
               <td style="padding:22px 20px; font-family:Arial, sans-serif; color:#0f172a;">
                 <h2 style="margin:0 0 10px; font-size:20px; line-height:1.3;">
-                  New assessment for Grade ${g} 🎯
+                  New assessment for Grade ${g}
                 </h2>
 
                 <p style="margin:0 0 16px; font-size:14px; line-height:1.6; color:#475569;">
@@ -1126,3 +1126,4 @@ mongoose
     app.listen(PORT, () => console.log(`Server running on ${PORT}`));
   })
   .catch((err) => console.error("Mongo error:", err.message));
+
