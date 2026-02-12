@@ -5,62 +5,162 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Attempt Assessment | Practice Online</title>
 
+  <!-- Font (same everywhere) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
+      --nav:#1b1648;
+      --accent:#0b3c5d;
+      --red:#e11d2e;
+
       --bg:#f6f7fb;
       --card:#ffffff;
       --border:#e6e6e6;
       --text:#0f172a;
       --muted:#475569;
-      --accent:#0b3c5d;
-      --accent-soft:#e7eef5;
+
       --radius:14px;
-      --shadow:0 6px 18px rgba(0,0,0,0.06);
-      --error:#b91c1c;
+      --shadow:0 8px 22px rgba(0,0,0,.06);
       --ok:#065f46;
+      --error:#b91c1c;
       --warn:#b45309;
+
+      --soft:#eef2ff;
     }
+
     *{box-sizing:border-box}
-    body{margin:0; font-family:Inter,Arial,sans-serif; background:var(--bg); color:var(--text);}
-    .wrap{max-width:1000px; margin:0 auto; padding:24px;}
-    .error{color:var(--error);}
-    .ok{color:var(--ok);}
-    .muted{color:var(--muted);}
-    .hidden{display:none;}
+    body{
+      margin:0;
+      font-family:Inter, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    a{color:inherit;text-decoration:none}
+    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    .muted{color:var(--muted)}
+    .error{color:var(--error)}
+    .ok{color:var(--ok)}
+    .hidden{display:none!important}
 
-    .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:12px;}
-    .brand{display:flex; align-items:center; gap:10px;}
-    .logo{width:38px; height:38px; border-radius:10px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700;}
-
-    .nav{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
-    .nav a,.nav button{
-      text-decoration:none;
-      font-size:14px;
-      padding:8px 12px;
+    /* ---------- Shared header (same style as results) ---------- */
+    header.topbar{
+      background:var(--nav);
+      color:#fff;
+      border-bottom:3px solid rgba(255,255,255,.08);
+    }
+    .topbar-inner{
+      max-width:1100px;
+      margin:0 auto;
+      padding:14px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:900;
+    }
+    .brandBadge{
+      width:38px;height:38px;
+      border-radius:12px;
+      display:grid;place-items:center;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.14);
+      font-weight:900;
+    }
+    .brandText{display:flex;flex-direction:column;line-height:1.1}
+    .brandText small{opacity:.85;font-weight:700}
+    nav.nav{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    nav.nav a{
+      padding:8px 10px;
       border-radius:10px;
-      border:none;
+      color:#e7e9ff;
+      font-weight:800;
+      font-size:13px;
+    }
+    nav.nav a:hover{background:rgba(255,255,255,.10)}
+    nav.nav a.active{
+      color:#fff;
+      border-bottom:3px solid var(--red);
+      border-radius:10px 10px 8px 8px;
+      padding-bottom:5px;
+    }
+    .btnTop{
+      background:rgba(255,255,255,.12);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.18);
+      padding:8px 12px;
+      border-radius:12px;
+      font-weight:900;
       cursor:pointer;
     }
-    .nav a{color:var(--text);}
-    .nav .nav-btn{background:var(--accent); color:#fff;}
-    .nav .logout{background:var(--accent); color:#fff;}
+    .btnTop:hover{background:rgba(255,255,255,.18)}
 
-    .card{background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);}
-    h1{margin:0 0 6px 0;}
+    /* ---------- Page card ---------- */
+    .section{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      margin-top:14px;
+    }
+    .sectionHead{
+      background:linear-gradient(180deg,#f4f7ff,#eef4ff);
+      border-bottom:1px solid var(--border);
+      padding:12px 14px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .sectionHead h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:-0.01em;
+    }
+    .sectionHead p{margin:6px 0 0 0}
+    .sectionBody{padding:14px}
 
-    .metaRow{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;}
+    /* Meta row */
+    .metaRight{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:12px;
+      border:1px solid #e5e7eb;
+      background:#f8fafc;
+      color:#334155;
+      white-space:nowrap;
+    }
+    .pill.green{border-color:#bbf7d0;background:#f0fdf4;color:#065f46}
+    .pill.red{border-color:#fecaca;background:#fff1f2;color:#b91c1c}
+
     .timerBox{
       border:1px solid #dbeafe;
       background:#eff6ff;
       color:#1e3a8a;
-      padding:8px 12px;
+      padding:6px 10px;
       border-radius:999px;
-      font-weight:800;
-      font-size:14px;
+      font-weight:900;
+      font-size:12px;
       white-space:nowrap;
     }
     .timerBox.warn{
@@ -69,8 +169,39 @@
       color:var(--warn);
     }
 
-    .q{margin-top:16px; padding-top:16px; border-top:1px solid #eee;}
-    .q b{display:block; margin-bottom:10px;}
+    /* ✅ Term selector */
+    .termWrap{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .termLabel{
+      font-weight:900;
+      font-size:12px;
+      color:#334155;
+      background:#fff;
+      border:1px solid #e5e7eb;
+      padding:6px 10px;
+      border-radius:999px;
+    }
+    .termSelect{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      font-weight:900;
+      font-size:12px;
+      outline:none;
+    }
+
+    /* Questions */
+    .q{
+      padding:14px 0;
+      border-top:1px solid #eee;
+    }
+    .q:first-child{border-top:none;padding-top:0}
+    .q b{display:block;margin-bottom:10px}
     .qimg{
       display:block;
       max-width:100%;
@@ -81,16 +212,21 @@
     }
 
     .opt{
-      display:block;
-      padding:10px;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding:10px 12px;
       border:1px solid #ddd;
-      border-radius:10px;
+      border-radius:12px;
       margin-bottom:8px;
       cursor:pointer;
       background:#fff;
+      transition:.12s;
     }
-    .opt.disabled{opacity:.7; cursor:not-allowed;}
-    .opt input{margin-right:8px;}
+    .opt:hover{background:var(--soft)}
+    .opt input{margin-top:3px}
+    .opt.disabled{opacity:.7;cursor:not-allowed}
+    .opt.disabled:hover{background:#fff}
 
     .textAnswer{
       width:100%;
@@ -100,40 +236,54 @@
       outline:none;
       font-size:14px;
       background:#fff;
+      font-weight:600;
     }
-    .textAnswer:disabled{opacity:.7; background:#f8fafc;}
+    .textAnswer:focus{
+      border-color:#cfe9ff;
+      box-shadow:0 0 0 4px rgba(207,233,255,.65);
+    }
+    .textAnswer:disabled{opacity:.7;background:#f8fafc}
 
     .hint{
-      margin-top:8px;
+      margin-top:10px;
       padding:10px 12px;
       border-radius:12px;
-      background:var(--accent-soft);
+      background:var(--soft);
       border:1px solid #cfe9ff;
       color:#0b3c5d;
       font-size:13px;
-      font-weight:600;
+      font-weight:700;
     }
 
-    .btn{background:var(--accent); color:#fff; padding:10px 14px; border:none; border-radius:10px; cursor:pointer;}
-    .btn:disabled{opacity:.6; cursor:not-allowed;}
-    .btn2{background:#fff; border:1px solid #ddd; padding:10px 14px; border-radius:10px; cursor:pointer;}
-
-    .lockBox{border:1px dashed #ddd; background:#fafafa; padding:14px; border-radius:12px; margin-top:10px;}
-
-    .pill{
-      display:inline-block;
-      padding:6px 10px;
-      border-radius:999px;
+    /* Buttons */
+    .btnRow{
+      margin-top:14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      background:var(--red);
+      color:#fff;
+      padding:10px 14px;
+      border:none;
+      border-radius:12px;
+      cursor:pointer;
       font-weight:900;
-      font-size:12px;
-      border:1px solid #e5e7eb;
-      background:#f8fafc;
-      color:#334155;
-      white-space:nowrap;
     }
-    .pill.red{border-color:#fecaca; background:#fff1f2; color:#b91c1c;}
-    .pill.green{border-color:#bbf7d0; background:#f0fdf4; color:#065f46;}
+    .btn:hover{filter:brightness(.98)}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .btn2{
+      background:#fff;
+      border:1px solid #ddd;
+      padding:10px 14px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:900;
+    }
+    .btn2:disabled{opacity:.6;cursor:not-allowed}
 
+    /* Notices */
     .notice{
       border:1px solid #e5e7eb;
       background:#f8fafc;
@@ -147,6 +297,20 @@
       background:#fff1f2;
       color:#991b1b;
     }
+    .lockBox{
+      border:1px dashed #ddd;
+      background:#fafafa;
+      padding:14px;
+      border-radius:12px;
+      margin-top:12px;
+    }
+
+    /* Mobile tweaks */
+    @media(max-width:640px){
+      .wrap{padding:14px}
+      .sectionBody{padding:12px}
+      .sectionHead{padding:12px}
+    }
   </style>
 
   <script>
@@ -157,60 +321,78 @@
 </head>
 
 <body>
-<div class="wrap">
 
-  <div class="topbar">
+<header class="topbar">
+  <div class="topbar-inner">
     <div class="brand">
-      <div class="logo">PO</div>
-      <div>
-        <strong>Practice Online</strong>
-        <span class="muted" id="welcomeSub">Attempt Assessment</span>
+      <div class="brandBadge">PO</div>
+      <div class="brandText">
+        <div>Practice Online</div>
+        <small id="welcomeSub">Attempt Assessment</small>
       </div>
     </div>
 
     <nav class="nav">
-      <a href="learner-quizzes.html" class="nav-btn">Back</a>
+      <a href="learner-quizzes.html" class="active">Back to Practice</a>
       <a href="results.html">Results</a>
-      <button class="logout" id="logoutBtn">Logout</button>
+      <button class="btnTop" id="logoutBtn" type="button">Logout</button>
     </nav>
   </div>
+</header>
 
-  <div class="card">
-    <div class="metaRow">
+<div class="wrap">
+  <div class="section">
+    <div class="sectionHead">
       <div>
         <h1 id="quizTitle">Loading…</h1>
-        <p class="muted" id="quizInfo" style="margin:6px 0 0 0;"></p>
-        <div id="statusPill" class="pill hidden" style="margin-top:8px;">—</div>
+        <p class="muted" id="quizInfo"></p>
       </div>
 
-      <div id="timerBox" class="timerBox hidden">Time: 00:00</div>
+      <div class="metaRight">
+        <!-- ✅ NEW TERM -->
+        <div class="termWrap">
+          <span class="termLabel">TERM</span>
+          <select id="termSelect" class="termSelect" title="Select term (optional)">
+            <option value="">All</option>
+            <option value="1">Term 1</option>
+            <option value="2">Term 2</option>
+            <option value="3">Term 3</option>
+            <option value="4">Term 4</option>
+          </select>
+        </div>
+
+        <div id="statusPill" class="pill hidden">—</div>
+        <div id="timerBox" class="timerBox hidden">Time: 00:00</div>
+      </div>
     </div>
 
-    <!-- already attempted -->
-    <div id="lockNotice" class="lockBox hidden">
-      <b class="error">This assessment is not available.</b>
-      <div class="muted">You already attempted this assessment.</div>
+    <div class="sectionBody">
+      <div id="lockNotice" class="lockBox hidden">
+        <b class="error">This assessment is not available.</b>
+        <div class="muted">You already attempted this assessment.</div>
+      </div>
+
+      <div id="unavailableNotice" class="notice red hidden">
+        <b>This assessment is currently unavailable.</b>
+        <div class="muted" style="margin-top:4px;">Please check back later.</div>
+      </div>
+
+      <div id="questions"></div>
+
+      <div class="btnRow">
+        <button class="btn" id="submitBtn" type="button">Submit</button>
+        <button class="btn2" id="viewResultsBtn" type="button" disabled>View Results</button>
+      </div>
+
+      <p id="msg" class="muted" style="margin:12px 0 0;"></p>
     </div>
-
-    <!-- unavailable (frozen/scheduled/server-blocked) -->
-    <div id="unavailableNotice" class="notice red hidden">
-      <b>This assessment is currently unavailable.</b>
-      <div class="muted" style="margin-top:4px;">Please check back later.</div>
-    </div>
-
-    <div id="questions"></div>
-
-    <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
-      <button class="btn" id="submitBtn">Submit</button>
-      <button class="btn2" id="viewResultsBtn" disabled>View Results</button>
-    </div>
-
-    <p id="msg"></p>
   </div>
 </div>
 
 <script>
-  const API = "https://practice-backend-msgn.onrender.com";
+  // ✅ UPDATED API BASE
+  const API = "https://api.practiceonline.co.za";
+
   const token = localStorage.getItem("token");
   const quizId = new URLSearchParams(window.location.search).get("quizId");
 
@@ -224,19 +406,38 @@
   const unavailableNotice = document.getElementById("unavailableNotice");
   const statusPill = document.getElementById("statusPill");
 
-  // Timer
   const timerBox = document.getElementById("timerBox");
   let timerInterval = null;
   let quizEndAtMs = null;
   let quizData = null;
   let submitted = false;
-  let blocked = false; // unavailable or locked
+  let blocked = false;
 
   const END_KEY = `quiz_end_${quizId}`;
+
+  // ✅ term persistence per quiz
+  const TERM_KEY = `quiz_term_${quizId}`;
+  const termPure = document.getElementById("termSelect");
+
+  // load saved term (if any)
+  if (quizId && localStorage.getItem(TERM_KEY)) {
+    const savedTerm = localStorage.getItem(TERM_KEY);
+    if (savedTerm) {
+      const ok = ["1","2","3","4",""].includes(String(savedTerm));
+      if (ok) document.getElementById("termSelect").value = String(savedTerm);
+    }
+  }
+
+  // save term on change
+  document.getElementById("termSelect").addEventListener("change", () => {
+    if (!quizId) return;
+    localStorage.setItem(TERM_KEY, document.getElementById("termSelect").value || "");
+  });
 
   document.getElementById("logoutBtn").onclick = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
+    localStorage.removeItem("me_cache");
     window.location.href = "login.html";
   };
 
@@ -265,6 +466,7 @@
   function disableAllInputs(){
     document.querySelectorAll("input[type=radio], input[type=text], input[type=number], textarea").forEach(el => el.disabled = true);
     document.querySelectorAll(".opt").forEach(el => el.classList.add("disabled"));
+    document.getElementById("termSelect").disabled = true; // ✅ lock term after submit/unavailable
   }
 
   function stopTimerAndClearKey(){
@@ -276,7 +478,6 @@
 
   function isUnavailableBySchedule(quiz){
     const now = new Date();
-
     if (quiz?.isFrozen) return true;
 
     if (quiz?.availableFrom){
@@ -287,7 +488,6 @@
       const until = new Date(quiz.availableUntil);
       if (!isNaN(until.getTime()) && now > until) return true;
     }
-
     return false;
   }
 
@@ -299,9 +499,18 @@
     blocked = false;
     submitted = false;
 
-    const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`, {
-      headers: { Authorization: "Bearer " + token }
-    });
+    let res;
+    try{
+      res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`, {
+        headers: { Authorization: "Bearer " + token }
+      });
+    }catch{
+      quizTitle.textContent = "Network error";
+      msgEl.className = "error";
+      msgEl.textContent = "Please refresh and try again.";
+      submitBtn.disabled = true;
+      return;
+    }
 
     if (!res.ok) {
       quizTitle.textContent = "Assessment not found";
@@ -309,19 +518,19 @@
       return;
     }
 
-    quizData = await res.json();
+    quizData = await res.json().catch(()=>null);
+    if (!quizData){
+      quizTitle.textContent = "Could not load assessment";
+      submitBtn.disabled = true;
+      return;
+    }
 
     quizTitle.textContent = cleanSpaces(quizData.title || "Assessment");
+    quizInfo.textContent = cleanSpaces(quizData.topic || "") ? `Topic: ${cleanSpaces(quizData.topic)}` : "";
 
-    const mins = Number(quizData.timeLimitMinutes || 0);
-    const timeStr = mins > 0 ? ` • Time ${mins} min` : "";
-    
-
-    // Availability (professional)
     const unavailable = isUnavailableBySchedule(quizData);
     setPillAvailable(!unavailable);
 
-    // Render questions (MCQ + TEXT)
     questionsDiv.innerHTML = (quizData.questions || []).map((q, i) => {
       const type = String(q.type || "mcq").toLowerCase();
       const hint = cleanSpaces(q.hint || "");
@@ -340,7 +549,6 @@
         `;
       }
 
-      // default: mcq
       const opts = Array.isArray(q.options) ? q.options : [];
       return `
         <div class="q">
@@ -348,7 +556,8 @@
           ${imageHtml}
           ${opts.map((o, j) => `
             <label class="opt">
-              <input type="radio" name="q${i}" value="${j}"> ${escapeHtml(cleanSpaces(o))}
+              <input type="radio" name="q${i}" value="${j}">
+              <span>${escapeHtml(cleanSpaces(o))}</span>
             </label>
           `).join("")}
           ${hint ? `<div class="hint">Hint: ${escapeHtml(hint)}</div>` : ``}
@@ -356,7 +565,6 @@
       `;
     }).join("");
 
-    // If unavailable: block UI
     if (unavailable){
       unavailableNotice.classList.remove("hidden");
       blocked = true;
@@ -372,7 +580,6 @@
     submitBtn.onclick = () => submitQuiz("manual");
   }
 
-  // fallback: 1 min per question (min 5, max 30)
   function calcFallbackSeconds(totalQuestions){
     const raw = totalQuestions * 60;
     return Math.max(5 * 60, Math.min(raw, 30 * 60));
@@ -479,6 +686,14 @@
     return answered;
   }
 
+  function getSelectedTermNumber(){
+    const v = String(document.getElementById("termSelect").value || "").trim();
+    if (!v) return null;
+    const n = Number(v);
+    if (!Number.isInteger(n) || n < 1 || n > 4) return null;
+    return n;
+  }
+
   async function submitQuiz(mode){
     if (!quizData || submitted || blocked) return;
 
@@ -500,23 +715,33 @@
     const timeTakenSeconds = getTimeTakenSeconds();
     localStorage.removeItem(END_KEY);
 
-    // Server calculates score/percent now
+    const term = getSelectedTermNumber();
+
     const payload = {
       quizId,
+      term, // ✅ NEW (1..4 or null)
       answers: buildAnswersPayload(),
       timeTakenSeconds
     };
 
-    const res = await fetch(`${API}/api/results`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token
-      },
-      body: JSON.stringify(payload)
-    });
+    let res;
+    try{
+      res = await fetch(`${API}/api/results`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token
+        },
+        body: JSON.stringify(payload)
+      });
+    }catch{
+      msgEl.className = "error";
+      msgEl.textContent = "Network error. Please try again.";
+      submitted = false;
+      submitBtn.disabled = false;
+      return;
+    }
 
-    // Already attempted
     if (res.status === 409) {
       lockNotice.classList.remove("hidden");
       msgEl.className = "error";
@@ -526,7 +751,6 @@
       return;
     }
 
-    // Unavailable (server-side)
     if (res.status === 403) {
       unavailableNotice.classList.remove("hidden");
       const data = await res.json().catch(()=>({}));
@@ -546,13 +770,8 @@
       return;
     }
 
-    const data = await res.json().catch(()=>({}));
-    const percent = Number.isFinite(Number(data.percent)) ? Number(data.percent) : null;
-
     msgEl.className = "ok";
-    msgEl.textContent = percent !== null
-      ? `Submitted successfully.`
-      : `Submitted successfully.`;
+    msgEl.textContent = "Submitted successfully.";
 
     viewResultsBtn.disabled = false;
     viewResultsBtn.onclick = () => window.location.href = "results.html";
@@ -574,5 +793,3 @@
 </script>
 </body>
 </html>
-
-
