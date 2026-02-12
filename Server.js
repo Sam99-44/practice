@@ -1,9 +1,10 @@
 // server.js (FULL UPDATED - COPY & PASTE)
 // ✅ Student register: accountType + 8-digit studentNumber
+// ✅ Register saves: province, cellphone, guardianCellphone (optional)
 // ✅ Login: /api/login
-// ✅ Profile: GET /api/auth/me
+// ✅ Profile: GET /api/auth/me (includes new fields)
 // ✅ Admin stats: GET /api/admin/stats
-// ✅ Quizzes: GET /api/quizzes (learner grade), POST /api/quizzes (admin)
+// ✅ Quizzes: GET /api/quizzes (learner grade), POST /api/quizzes (admin) ✅ EMAIL students by grade
 // ✅ Quiz by id: GET /api/quizzes/:id
 // ✅ Quiz update/delete (admin): PUT /api/quizzes/:id, DELETE /api/quizzes/:id
 // ✅ Results: POST /api/results, GET /api/results/my, GET /api/results/:id
@@ -52,6 +53,34 @@ async function sendEmail({ to, subject, html, text }) {
       err?.message ||
       "Unknown SendGrid error";
     console.error("SendGrid send failed:", detail);
+    throw new Error(detail);
+  }
+}
+
+// ✅ BULK SEND (for notifying many learners)
+async function sendBulkEmail({ recipients, subject, html, text }) {
+  if (!SENDGRID_API_KEY) throw new Error("Missing SENDGRID_API_KEY on server");
+  if (!FROM_EMAIL) throw new Error("Missing FROM_EMAIL on server");
+  if (!Array.isArray(recipients) || recipients.length === 0) return;
+
+  const msg = {
+    from: FROM_EMAIL,
+    subject,
+    text: text || undefined,
+    html: html || undefined,
+    personalizations: recipients.map((email) => ({
+      to: [{ email }],
+    })),
+  };
+
+  try {
+    await sgMail.send(msg);
+  } catch (err) {
+    const detail =
+      err?.response?.body?.errors?.map((e) => e.message).join(" | ") ||
+      err?.message ||
+      "Unknown SendGrid error";
+    console.error("SendGrid bulk send failed:", detail);
     throw new Error(detail);
   }
 }
@@ -156,7 +185,7 @@ async function adminOnly(req, res, next) {
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select(
-      "username email role grade accountType studentNumber"
+      "username email role grade accountType studentNumber province cellphone guardianCellphone"
     );
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -167,6 +196,9 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
       grade: user.grade,
       accountType: user.accountType,
       studentNumber: user.studentNumber,
+      province: user.province || "",
+      cellphone: user.cellphone || "",
+      guardianCellphone: user.guardianCellphone || "",
     });
   } catch {
     return res.status(500).json({ message: "Server error" });
@@ -176,7 +208,16 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 // REGISTER
 app.post("/api/register", async (req, res) => {
   try {
-    const { username, email, grade, password, accountType } = req.body;
+    const {
+      username,
+      email,
+      grade,
+      password,
+      accountType,
+      province,
+      cellphone,
+      guardianCellphone,
+    } = req.body;
 
     if (!username || !email || !password || !accountType) {
       return res.status(400).json({
@@ -191,26 +232,34 @@ app.post("/api/register", async (req, res) => {
     let gradeNum = null;
     if (accountType === "student") {
       if (grade === undefined || grade === null || grade === "") {
-        return res.status(400).json({ message: "Grade is required for Student accounts." });
+        return res
+          .status(400)
+          .json({ message: "Grade is required for Student accounts." });
       }
       gradeNum = Number(grade);
       if (!Number.isInteger(gradeNum) || gradeNum < 8 || gradeNum > 12) {
-        return res.status(400).json({ message: "Grade must be between 8 and 12." });
+        return res
+          .status(400)
+          .json({ message: "Grade must be between 8 and 12." });
       }
     }
 
     if (String(password).length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters." });
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters." });
     }
 
     const cleanUsername = cleanSpaces(username);
     const cleanEmail = String(email).toLowerCase().trim();
 
     const existingEmail = await User.findOne({ email: cleanEmail });
-    if (existingEmail) return res.status(409).json({ message: "Email already registered." });
+    if (existingEmail)
+      return res.status(409).json({ message: "Email already registered." });
 
     const existingUsername = await User.findOne({ username: cleanUsername });
-    if (existingUsername) return res.status(409).json({ message: "Username already taken." });
+    if (existingUsername)
+      return res.status(409).json({ message: "Username already taken." });
 
     const passwordHash = await bcrypt.hash(password, 10);
 
@@ -225,6 +274,12 @@ app.post("/api/register", async (req, res) => {
       accountType,
       studentNumber,
       grade: gradeNum,
+
+      // ✅ optional fields
+      province: cleanSpaces(province || ""),
+      cellphone: cleanSpaces(cellphone || ""),
+      guardianCellphone: cleanSpaces(guardianCellphone || ""),
+
       emailVerified: true,
       verifyTokenHash: null,
       verifyTokenExpiresAt: null,
@@ -282,11 +337,9 @@ app.post("/api/login", async (req, res) => {
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) return res.status(401).json({ message: "Invalid email or password." });
 
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
     return res.json({
       message: "Login successful",
@@ -298,6 +351,9 @@ app.post("/api/login", async (req, res) => {
         accountType: user.accountType,
         studentNumber: user.studentNumber,
         grade: user.grade,
+        province: user.province || "",
+        cellphone: user.cellphone || "",
+        guardianCellphone: user.guardianCellphone || "",
       },
     });
   } catch (err) {
@@ -307,7 +363,6 @@ app.post("/api/login", async (req, res) => {
 });
 
 /* ------------------ ADMIN STATS ------------------ */
-// ✅ This powers admin-dashboard.html: GET /api/admin/stats
 app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
   try {
     const [totalUsers, totalAssessments, byGrade] = await Promise.all([
@@ -322,8 +377,8 @@ app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
 
     return res.json({
       totalUsers,
-      totalAssessments,       // your dashboard uses this
-      totalQuizzes: totalAssessments, // fallback support
+      totalAssessments,
+      totalQuizzes: totalAssessments,
       quizzesByGrade: byGrade,
     });
   } catch (e) {
@@ -381,7 +436,7 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   }
 });
 
-// Admin creates quiz (admin-quiz.html POSTs here)
+// Admin creates quiz (admin-quiz.html POSTs here) ✅ NOW EMAILS STUDENTS BY GRADE
 app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   try {
     const { grade, title, topic, timeLimitMinutes, questions } = req.body;
@@ -395,11 +450,14 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
       return res.status(400).json({ message: "Grade must be between 8 and 12." });
     }
 
+    const quizTitle = cleanSpaces(title);
+    const quizTopic = cleanSpaces(topic);
+
     const quiz = await Quiz.create({
       grade: g,
-      title: cleanSpaces(title),
-      topic: cleanSpaces(topic),
-      timeLimitMinutes: Number(timeLimitMinutes) || 0,
+      title: quizTitle,
+      topic: quizTopic,
+      timeLimitMinutes: Number(timeLimitMinutes) || 10,
       questions,
       instructions: "",
       isFrozen: false,
@@ -408,7 +466,55 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
       availableUntil: null,
     });
 
-    return res.status(201).json({ message: "Saved", quizId: quiz._id });
+    // ✅ return immediately (admin page stays fast)
+    res.status(201).json({ message: "Saved", quizId: quiz._id });
+
+    // ✅ send emails after response (background)
+    setImmediate(async () => {
+      try {
+        const learners = await User.find({
+          role: "learner",
+          accountType: "student",
+          grade: g,
+          email: { $exists: true, $ne: "" },
+        }).select("email");
+
+        const emails = learners
+          .map((u) => String(u.email).toLowerCase().trim())
+          .filter(Boolean);
+
+        if (!emails.length) {
+          console.log(`No learners found for grade ${g} to notify.`);
+          return;
+        }
+
+        const subject = `New assessment added (Grade ${g})`;
+        const link =
+          "https://practiceonline.co.za/login.html?next=" +
+          encodeURIComponent("learner-quizzes.html");
+
+        const html = `
+          <div style="font-family:Arial,sans-serif; line-height:1.6;">
+            <h2>New assessment available</h2>
+            <p>A new assessment was added for <b>Grade ${g}</b>:</p>
+            <p><b>${quizTitle}</b> (${quizTopic})</p>
+            <p>Log in to attempt it:</p>
+            <p><a href="${link}" target="_blank">Open Practice Online</a></p>
+            <p>Regards,<br/>Practice Online Team</p>
+          </div>
+        `;
+
+        const text = `New assessment for Grade ${g}: ${quizTitle} (${quizTopic}). Login: ${link}`;
+
+        await sendBulkEmail({ recipients: emails, subject, html, text });
+
+        console.log(`Notified ${emails.length} learners for grade ${g}.`);
+      } catch (e) {
+        console.error("Quiz notification email failed:", e.message);
+      }
+    });
+
+    return;
   } catch (e) {
     console.error("POST /api/quizzes error:", e.message);
     return res.status(500).json({ message: "Could not save assessment" });
@@ -537,7 +643,6 @@ app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
 
 /* ------------------ RESULTS ------------------ */
 
-// helper: check quiz availability server-side
 function isUnavailableBySchedule(quiz) {
   const now = new Date();
 
@@ -554,7 +659,6 @@ function isUnavailableBySchedule(quiz) {
   return false;
 }
 
-// supports admin quiz fields: textAnswerMode (exact/contains/number_tolerance) + numberTolerance
 function compareTextAnswer(userAns, correctAns, mode, tolerance) {
   const uaRaw = cleanSpaces(userAns);
   const caRaw = cleanSpaces(correctAns);
@@ -587,7 +691,6 @@ app.post("/api/results", authRequired, async (req, res) => {
 
     const userId = req.user.userId;
 
-    // One attempt only
     const existing = await Result.findOne({ userId, quizId }).select("_id");
     if (existing) return res.status(409).json({ message: "Already attempted" });
 
