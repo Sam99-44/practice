@@ -331,6 +331,10 @@
     <nav class="nav">
       <a href="learner-quizzes.html" class="active">Practice</a>
       <a href="results.html">Results</a>
+
+      <!-- ✅ NEW: Support link -->
+      <a href="support.html">Support</a>
+
       <a href="about.html">About</a>
       <a href="admin-quiz.html" data-admin style="display:none;">Admin</a>
       <button class="btnTop" id="logoutBtn" type="button">Logout</button>
@@ -364,9 +368,12 @@
   </div>
 </div>
 
+<!-- ✅ IMPORTANT: include nav.js so window.API matches your backend -->
+<script src="nav.js"></script>
+
 <script>
   // ✅ Use global API from nav.js if available, else fallback
-  const API = window.API || "https://api.practiceonline.co.za";
+  const API = window.API || "https://practice-backend-msgn.onrender.com";
   const token = localStorage.getItem("token");
 
   const pageSub = document.getElementById("pageSub");
@@ -384,7 +391,9 @@
   const qpFilter = cleanSpaces(params.get("filter") || ""); // 89 | 1012 | rev
 
   document.getElementById("logoutBtn").onclick = () => {
-    localStorage.clear();
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    localStorage.removeItem("me_cache");
     window.location.href = "login.html";
   };
 
@@ -443,10 +452,7 @@
       if (show) shownTopics++;
     });
 
-    // Small, clean feedback for users
-    if (q) {
-      statusEl.textContent = `Showing topics matching “${q}”.`;
-    }
+    if (q) statusEl.textContent = `Showing topics matching “${q}”.`;
   }
 
   /* 🔒 Admin tab control + load data */
@@ -464,7 +470,9 @@
 
       const me = await meRes.json().catch(()=>({}));
       if(!meRes.ok){
-        localStorage.clear();
+        localStorage.removeItem("token");
+        localStorage.removeItem("username");
+        localStorage.removeItem("me_cache");
         window.location.href = "login.html";
         return;
       }
@@ -499,11 +507,9 @@
         return;
       }
 
-      // Apply grade filter from homepage (useful for admin view)
       let list = Array.isArray(quizzes) ? quizzes : [];
       if (qpFilter) list = list.filter(q => gradeMatchesFilter(q.grade, qpFilter));
 
-      // Apply search from homepage querystring
       if (qpFilter === "rev" && !qpSearch) topicSearch.value = "revision";
       else topicSearch.value = qpSearch;
 
@@ -526,10 +532,8 @@
         groups[topic].push(quiz);
       }
 
-      // Sort topics alphabetically
       const topics = Object.keys(groups).sort((a,b)=>a.localeCompare(b));
 
-      // Render
       renderTopics(topics, groups, doneSet);
       hookControls(topics);
 
@@ -554,7 +558,6 @@
       const quizzes = groups[topic] || [];
       const topicId = `topic_${idx}`;
 
-      // Search index (topic + titles)
       const titlesIndex = quizzes.map(q => cleanSpaces(q.title || "")).join(" ");
       const searchIndex = `${topic} ${titlesIndex}`.toLowerCase();
 
@@ -597,7 +600,6 @@
       `;
     }).join("");
 
-    // Toggles
     document.querySelectorAll("[data-toggle]").forEach(btn=>{
       btn.addEventListener("click", ()=>{
         const id = btn.getAttribute("data-toggle");
@@ -607,7 +609,6 @@
       });
     });
 
-    // Quiz clicks
     document.querySelectorAll("[data-go]").forEach(el=>{
       el.addEventListener("click", ()=>{
         const id = el.getAttribute("data-go");
