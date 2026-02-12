@@ -4,12 +4,14 @@
 // ✅ Login: /api/login
 // ✅ Profile: GET /api/auth/me (includes new fields)
 // ✅ Admin stats: GET /api/admin/stats
-// ✅ Quizzes: GET /api/quizzes (learner grade), POST /api/quizzes (admin) + ✅ Email notification to students by grade
+// ✅ Quizzes: GET /api/quizzes (learner grade), POST /api/quizzes (admin) ✅ EMAIL students by grade
 // ✅ Quiz by id: GET /api/quizzes/:id
 // ✅ Quiz update/delete (admin): PUT /api/quizzes/:id, DELETE /api/quizzes/:id
 // ✅ Results: POST /api/results, GET /api/results/my, GET /api/results/:id
 // ✅ Password reset (OTP): /api/forgot-password-otp + /api/reset-password-otp
-// ✅ SendGrid: welcome email + test-email + health + quiz notificationFF
+// ✅ SendGrid: welcome email + test-email + health
+// ✅ NEW: Quiz instructions saved from admin + stored in Result for review page
+// ✅ NEW: Professional email layout (welcome + quiz notify + reset)
 
 import express from "express";
 import mongoose from "mongoose";
@@ -32,9 +34,6 @@ app.use(express.json());
 /* ------------------ SENDGRID ------------------ */
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || "";
 const FROM_EMAIL = (process.env.FROM_EMAIL || "").trim();
-
-// ✅ Website URL used in email links (set this on Render)
-const SITE_URL = (process.env.SITE_URL || process.env.APP_URL || "https://practiceonline.co.za").trim();
 
 if (SENDGRID_API_KEY) sgMail.setApiKey(SENDGRID_API_KEY);
 
@@ -60,6 +59,91 @@ async function sendEmail({ to, subject, html, text }) {
   }
 }
 
+// ✅ BULK SEND (for notifying many learners)
+async function sendBulkEmail({ recipients, subject, html, text }) {
+  if (!SENDGRID_API_KEY) throw new Error("Missing SENDGRID_API_KEY on server");
+  if (!FROM_EMAIL) throw new Error("Missing FROM_EMAIL on server");
+  if (!Array.isArray(recipients) || recipients.length === 0) return;
+
+  const msg = {
+    from: FROM_EMAIL,
+    subject,
+    text: text || undefined,
+    html: html || undefined,
+    personalizations: recipients.map((email) => ({
+      to: [{ email }],
+    })),
+  };
+
+  try {
+    await sgMail.send(msg);
+  } catch (err) {
+    const detail =
+      err?.response?.body?.errors?.map((e) => e.message).join(" | ") ||
+      err?.message ||
+      "Unknown SendGrid error";
+    console.error("SendGrid bulk send failed:", detail);
+    throw new Error(detail);
+  }
+}
+
+/* ------------------ EMAIL TEMPLATES ------------------ */
+function escapeHtml(s) {
+  return String(s || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function emailLayout({ title, intro, bodyHtml, ctaText, ctaUrl, footerNote }) {
+  const safeTitle = escapeHtml(title);
+  const safeIntro = escapeHtml(intro || "");
+  const safeFooter = escapeHtml(footerNote || "Practice Online");
+  const year = new Date().getFullYear();
+
+  const button =
+    ctaText && ctaUrl
+      ? `<a href="${ctaUrl}" style="display:inline-block;background:#e11d2e;color:#fff;text-decoration:none;padding:12px 16px;border-radius:10px;font-weight:700;">${escapeHtml(
+          ctaText
+        )}</a>`
+      : "";
+
+  return `
+  <div style="background:#f6f7fb;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
+    <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e6e6e6;border-radius:14px;overflow:hidden;">
+      <div style="padding:18px 18px;background:#1b1648;color:#ffffff;">
+        <div style="font-size:16px;font-weight:800;letter-spacing:.3px;">Practice Online</div>
+        <div style="opacity:.85;font-size:13px;margin-top:4px;">Grades 8–12 Practice</div>
+      </div>
+
+      <div style="padding:18px 18px;">
+        <h2 style="margin:0 0 10px;font-size:18px;line-height:1.3;">${safeTitle}</h2>
+        ${
+          intro
+            ? `<p style="margin:0 0 12px;color:#334155;line-height:1.65;font-size:14px;">${safeIntro}</p>`
+            : ""
+        }
+
+        ${bodyHtml || ""}
+
+        ${button ? `<div style="margin-top:16px;">${button}</div>` : ""}
+
+        <hr style="border:none;border-top:1px solid #eef2f7;margin:18px 0;">
+
+        <p style="margin:0;color:#64748b;font-size:12px;line-height:1.6;">
+          If you did not request this, you can ignore this email.
+        </p>
+      </div>
+
+      <div style="padding:14px 18px;background:#f8fafc;border-top:1px solid #eef2f7;color:#64748b;font-size:12px;line-height:1.6;">
+        © ${year} ${safeFooter}. All rights reserved.
+      </div>
+    </div>
+  </div>`;
+}
+
 /* ------------------ HELPERS ------------------ */
 function hashToken(raw) {
   return crypto.createHash("sha256").update(String(raw)).digest("hex");
@@ -81,250 +165,6 @@ function makeOtp6() {
 
 function cleanSpaces(s) {
   return String(s || "").trim().replace(/\s+/g, " ");
-}
-
-function escapeHtml(str) {
-  return String(str ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function safeTitle(s) {
-  const t = cleanSpaces(s);
-  return t || "Assessment";
-}
-
-function siteLink(pathOrUrl) {
-  const s = String(pathOrUrl || "").trim();
-  if (!s) return SITE_URL;
-  if (/^https?:\/\//i.test(s)) return s;
-  const base = SITE_URL.replace(/\/+$/, "");
-  const path = s.replace(/^\/+/, "");
-  return `${base}/${path}`;
-}
-
-/* ------------------ EMAIL TEMPLATES ------------------ */
-
-// ✅ Welcome email: username NOT bold
-function welcomeEmailStudent({ username, studentNumber }) {
-  const u = cleanSpaces(username);
-  const sn = cleanSpaces(studentNumber);
-
-  const subject = `Welcome to Practice Online, ${u}`;
-  const text =
-    `Welcome to Practice Online, ${u}\n` +
-    `Your student number is: ${sn}\n` +
-    `Login here: ${siteLink("login.html")}\n`;
-
-  const html = `
-  <div style="margin:0; padding:0; background:#f6f7fb;">
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f6f7fb; padding:24px 12px;">
-      <tr>
-        <td align="center">
-          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600"
-            style="max-width:600px; width:100%; background:#ffffff; border-radius:16px; overflow:hidden; border:1px solid #e6e6e6;">
-            <tr>
-              <td style="padding:18px 20px; background:#1b1648;">
-                <div style="font-family:Arial, sans-serif; color:#ffffff; font-size:18px; font-weight:800;">
-                  Practice Online
-                </div>
-                <div style="font-family:Arial, sans-serif; color:#cbd5f5; font-size:12px; margin-top:6px;">
-                  Welcome
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td style="padding:22px 20px; font-family:Arial, sans-serif; color:#0f172a;">
-                <h2 style="margin:0 0 10px; font-size:20px; line-height:1.3;">Welcome to Practice Online</h2>
-
-                <p style="margin:0 0 14px; font-size:14px; line-height:1.6; color:#475569;">
-                  Welcome, ${escapeHtml(u)}. Your account has been created successfully.
-                </p>
-
-                <div style="border:1px solid #e6e6e6; border-radius:14px; padding:14px; background:#fafbff;">
-                  <div style="font-size:12px; color:#64748b; margin-bottom:6px;">Your student number</div>
-                  <div style="font-size:22px; font-weight:800; color:#0f172a; letter-spacing:1px;">${escapeHtml(sn)}</div>
-                </div>
-
-                <div style="margin-top:18px;">
-                  <a href="${siteLink("login.html")}" target="_blank" rel="noopener"
-                    style="display:inline-block; background:#e11d2e; color:#ffffff; text-decoration:none; font-weight:800; padding:12px 16px; border-radius:12px; font-size:14px;">
-                    Login
-                  </a>
-                </div>
-
-                <p style="margin:16px 0 0; font-size:12px; color:#64748b; line-height:1.6;">
-                  Regards,<br/>
-                  <b>Practice Online Team</b>
-                </p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </div>
-  `;
-  return { subject, text, html };
-}
-
-function welcomeEmailMaterials({ username }) {
-  const u = cleanSpaces(username);
-  const subject = `Welcome to Practice Online, ${u}`;
-  const text =
-    `Welcome to Practice Online, ${u}\n` +
-    `You registered for Access Materials Only.\n` +
-    `Login here: ${siteLink("login.html")}\n`;
-
-  const html = `
-  <div style="margin:0; padding:0; background:#f6f7fb;">
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f6f7fb; padding:24px 12px;">
-      <tr>
-        <td align="center">
-          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600"
-            style="max-width:600px; width:100%; background:#ffffff; border-radius:16px; overflow:hidden; border:1px solid #e6e6e6;">
-            <tr>
-              <td style="padding:18px 20px; background:#1b1648;">
-                <div style="font-family:Arial, sans-serif; color:#ffffff; font-size:18px; font-weight:800;">
-                  Practice Online
-                </div>
-                <div style="font-family:Arial, sans-serif; color:#cbd5f5; font-size:12px; margin-top:6px;">
-                  Welcome
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td style="padding:22px 20px; font-family:Arial, sans-serif; color:#0f172a;">
-                <h2 style="margin:0 0 10px; font-size:20px; line-height:1.3;">Welcome to Practice Online</h2>
-
-                <p style="margin:0 0 14px; font-size:14px; line-height:1.6; color:#475569;">
-                  Welcome, ${escapeHtml(u)}. Your account has been created successfully.
-                </p>
-
-                <div style="border:1px solid #e6e6e6; border-radius:14px; padding:14px; background:#fafbff;">
-                  <div style="font-size:12px; color:#64748b; margin-bottom:6px;">Account type</div>
-                  <div style="font-size:16px; font-weight:800; color:#0f172a;">Access Materials Only</div>
-                </div>
-
-                <div style="margin-top:18px;">
-                  <a href="${siteLink("login.html")}" target="_blank" rel="noopener"
-                    style="display:inline-block; background:#e11d2e; color:#ffffff; text-decoration:none; font-weight:800; padding:12px 16px; border-radius:12px; font-size:14px;">
-                    Login
-                  </a>
-                </div>
-
-                <p style="margin:16px 0 0; font-size:12px; color:#64748b; line-height:1.6;">
-                  Regards,<br/>
-                  <b>Practice Online Team</b>
-                </p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </div>
-  `;
-  return { subject, text, html };
-}
-
-// ✅ Quiz notification email (grade + questions + Start button)
-function newQuizEmail({ grade, quizId, title, topic, timeLimitMinutes, questionsCount }) {
-  const g = Number(grade);
-  const quizTitle = safeTitle(title);
-  const quizTopic = safeTitle(topic);
-  const qCount = Number(questionsCount) || 0;
-
-  const target = `attempt.html?quizId=${encodeURIComponent(String(quizId))}`;
-  const link = siteLink(`login.html?next=${encodeURIComponent(target)}`);
-
-  const subject = `Grade ${g}: New Assessment — ${quizTopic}`;
-
-  const text =
-    `Practice Online: New assessment for Grade ${g}\n` +
-    `Title: ${quizTitle}\n` +
-    `Topic: ${quizTopic}\n` +
-    `Questions: ${qCount}\n` +
-    (timeLimitMinutes ? `Time limit: ${Number(timeLimitMinutes)} minutes\n` : "") +
-    `Start: ${link}\n`;
-
-  const html = `
-  <div style="margin:0; padding:0; background:#f6f7fb;">
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f6f7fb; padding:24px 12px;">
-      <tr>
-        <td align="center">
-          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600"
-            style="max-width:600px; width:100%; background:#ffffff; border-radius:16px; overflow:hidden; border:1px solid #e6e6e6;">
-            
-            <tr>
-              <td style="padding:18px 20px; background:#1b1648;">
-                <div style="font-family:Arial, sans-serif; color:#ffffff; font-size:18px; font-weight:800;">
-                  Practice Online
-                </div>
-                <div style="font-family:Arial, sans-serif; color:#cbd5f5; font-size:12px; margin-top:6px;">
-                  New assessment available
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td style="padding:22px 20px; font-family:Arial, sans-serif; color:#0f172a;">
-                <h2 style="margin:0 0 10px; font-size:20px; line-height:1.3;">
-                  New assessment for Grade ${g}
-                </h2>
-
-                <p style="margin:0 0 16px; font-size:14px; line-height:1.6; color:#475569;">
-                  A new assessment has been added. Click the button below to start.
-                </p>
-
-                <div style="border:1px solid #e6e6e6; border-radius:14px; padding:14px; background:#fafbff;">
-                  <div style="font-size:12px; color:#64748b; margin-bottom:6px;">Assessment details</div>
-
-                  <div style="font-size:16px; font-weight:800; color:#0f172a; margin-bottom:8px;">
-                    ${escapeHtml(quizTitle)}
-                  </div>
-
-                  <div style="font-size:13px; color:#475569; line-height:1.6;">
-                    <div><b>Topic:</b> ${escapeHtml(quizTopic)}</div>
-                    <div><b>Questions:</b> ${qCount}</div>
-                    ${timeLimitMinutes ? `<div><b>Time limit:</b> ${Number(timeLimitMinutes)} minutes</div>` : ""}
-                  </div>
-                </div>
-
-                <div style="margin-top:18px;">
-                  <a href="${link}" target="_blank" rel="noopener"
-                    style="display:inline-block; background:#e11d2e; color:#ffffff; text-decoration:none; font-weight:800; padding:12px 16px; border-radius:12px; font-size:14px;">
-                    Start Assessment
-                  </a>
-                </div>
-
-                <p style="margin:16px 0 0; font-size:12px; color:#64748b; line-height:1.6;">
-                 
-                </p>
-              </td>
-            </tr>
-
-            <tr>
-              <td style="padding:16px 20px; background:#f8fafc; font-family:Arial, sans-serif; color:#64748b; font-size:12px; line-height:1.6;">
-                Regards,<br/>
-                <b>Practice Online Team</b><br/>
-                <span style="color:#94a3b8;">You received this email because you have a student account for Grade ${g} on Practice Online.</span>
-              </td>
-            </tr>
-
-          </table>
-        </td>
-      </tr>
-    </table>
-  </div>
-  `;
-
-  return { subject, text, html, link };
 }
 
 /* ------------------ CORS ------------------ */
@@ -362,9 +202,14 @@ app.get("/test-email", async (req, res) => {
   try {
     await sendEmail({
       to,
-      subject: "SendGrid test",
+      subject: "Practice Online test email",
       text: "Email sending works.",
-      html: "<strong>Email sending works.</strong>",
+      html: emailLayout({
+        title: "Test email",
+        intro: "This is a test email to confirm delivery.",
+        bodyHtml: `<p style="margin:0;color:#334155;line-height:1.65;font-size:14px;">If you received this email, your SendGrid setup is working.</p>`,
+        footerNote: "Practice Online",
+      }),
     });
     res.send("Email sent successfully to " + to);
   } catch (err) {
@@ -451,29 +296,39 @@ app.post("/api/register", async (req, res) => {
     let gradeNum = null;
     if (accountType === "student") {
       if (grade === undefined || grade === null || grade === "") {
-        return res.status(400).json({ message: "Grade is required for Student accounts." });
+        return res
+          .status(400)
+          .json({ message: "Grade is required for Student accounts." });
       }
       gradeNum = Number(grade);
       if (!Number.isInteger(gradeNum) || gradeNum < 8 || gradeNum > 12) {
-        return res.status(400).json({ message: "Grade must be between 8 and 12." });
+        return res
+          .status(400)
+          .json({ message: "Grade must be between 8 and 12." });
       }
     }
 
     if (String(password).length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters." });
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters." });
     }
 
     const cleanUsername = cleanSpaces(username);
     const cleanEmail = String(email).toLowerCase().trim();
 
     const existingEmail = await User.findOne({ email: cleanEmail });
-    if (existingEmail) return res.status(409).json({ message: "Email already registered." });
+    if (existingEmail)
+      return res.status(409).json({ message: "Email already registered." });
 
     const existingUsername = await User.findOne({ username: cleanUsername });
-    if (existingUsername) return res.status(409).json({ message: "Username already taken." });
+    if (existingUsername)
+      return res.status(409).json({ message: "Username already taken." });
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const studentNumber = accountType === "student" ? await generateStudentNumber8() : null;
+
+    const studentNumber =
+      accountType === "student" ? await generateStudentNumber8() : null;
 
     const user = await User.create({
       username: cleanUsername,
@@ -494,16 +349,53 @@ app.post("/api/register", async (req, res) => {
       verifyTokenExpiresAt: null,
     });
 
-    // ✅ nicer welcome emails (username NOT bold)
+    const loginUrl = "https://practiceonline.co.za/login.html";
+
     if (user.accountType === "student") {
-      const { subject, text, html } = welcomeEmailStudent({
-        username: user.username,
-        studentNumber: user.studentNumber,
+      await sendEmail({
+        to: user.email,
+        subject: `Welcome to Practice Online`,
+        text: `Welcome ${user.username}. Your student number is ${user.studentNumber}. Login: ${loginUrl}`,
+        html: emailLayout({
+          title: "Welcome to Practice Online",
+          intro: `Hi ${user.username}, your account has been created successfully.`,
+          bodyHtml: `
+            <p style="margin:0 0 10px;color:#334155;line-height:1.65;font-size:14px;">
+              Your student number is:
+            </p>
+            <div style="display:inline-block;padding:10px 12px;border:1px solid #e6e6e6;border-radius:10px;background:#f8fafc;font-weight:800;letter-spacing:1px;">
+              ${escapeHtml(user.studentNumber)}
+            </div>
+            <p style="margin:12px 0 0;color:#334155;line-height:1.65;font-size:14px;">
+              You can log in anytime to start practising.
+            </p>
+          `,
+          ctaText: "Log in",
+          ctaUrl: loginUrl,
+          footerNote: "Practice Online",
+        }),
       });
-      await sendEmail({ to: user.email, subject, text, html });
     } else {
-      const { subject, text, html } = welcomeEmailMaterials({ username: user.username });
-      await sendEmail({ to: user.email, subject, text, html });
+      await sendEmail({
+        to: user.email,
+        subject: `Welcome to Practice Online`,
+        text: `Welcome ${user.username}. Your account is ready. Login: ${loginUrl}`,
+        html: emailLayout({
+          title: "Welcome to Practice Online",
+          intro: `Hi ${user.username}, your account has been created successfully.`,
+          bodyHtml: `
+            <p style="margin:0;color:#334155;line-height:1.65;font-size:14px;">
+              You registered for Access Materials Only.
+            </p>
+            <p style="margin:12px 0 0;color:#334155;line-height:1.65;font-size:14px;">
+              Log in to access available learning materials.
+            </p>
+          `,
+          ctaText: "Log in",
+          ctaUrl: loginUrl,
+          footerNote: "Practice Online",
+        }),
+      });
     }
 
     return res.status(201).json({
@@ -633,11 +525,10 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   }
 });
 
-// Admin creates quiz (admin-quiz.html POSTs here)
-// ✅ NOW: sends email to students in that grade
+// Admin creates quiz (admin-quiz.html POSTs here) ✅ NOW EMAILS STUDENTS BY GRADE
 app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   try {
-    const { grade, title, topic, timeLimitMinutes, questions } = req.body;
+    const { grade, title, topic, timeLimitMinutes, instructions, questions } = req.body;
 
     if (!grade || !title || !topic || !Array.isArray(questions) || questions.length === 0) {
       return res.status(400).json({ message: "Grade, topic, title, and questions are required." });
@@ -648,63 +539,85 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
       return res.status(400).json({ message: "Grade must be between 8 and 12." });
     }
 
+    const quizTitle = cleanSpaces(title);
+    const quizTopic = cleanSpaces(topic);
+    const quizInstructions = String(instructions || "").trim();
+
     const quiz = await Quiz.create({
       grade: g,
-      title: cleanSpaces(title),
-      topic: cleanSpaces(topic),
-      timeLimitMinutes: Number(timeLimitMinutes) || 0,
+      title: quizTitle,
+      topic: quizTopic,
+      timeLimitMinutes: Number(timeLimitMinutes) || 10,
       questions,
-      instructions: "",
+      instructions: quizInstructions,
       isFrozen: false,
       frozenAt: null,
       availableFrom: null,
       availableUntil: null,
     });
 
-    // ✅ respond immediately (fast UX)
+    // ✅ return immediately (admin page stays fast)
     res.status(201).json({ message: "Saved", quizId: quiz._id });
 
-    // ✅ send emails in background (does NOT block the admin)
+    // ✅ send emails after response (background)
     setImmediate(async () => {
       try {
-        // Only email STUDENT accounts that match the grade
-        const students = await User.find({
+        const learners = await User.find({
           role: "learner",
           accountType: "student",
           grade: g,
           email: { $exists: true, $ne: "" },
-        }).select("email username");
+        }).select("email");
 
-        if (!students.length) {
-          console.log(`[QUIZ EMAIL] No students found for Grade ${g}`);
+        const emails = learners
+          .map((u) => String(u.email).toLowerCase().trim())
+          .filter(Boolean);
+
+        if (!emails.length) {
+          console.log(`No learners found for grade ${g} to notify.`);
           return;
         }
 
-        const { subject, html, text } = newQuizEmail({
-          grade: g,
-          quizId: quiz._id,
-          title: quiz.title,
-          topic: quiz.topic,
-          timeLimitMinutes: quiz.timeLimitMinutes,
-          questionsCount: Array.isArray(quiz.questions) ? quiz.questions.length : 0,
+        const subject = `New assessment available (Grade ${g})`;
+        const link =
+          "https://practiceonline.co.za/login.html?next=" +
+          encodeURIComponent("learner-quizzes.html");
+
+        const html = emailLayout({
+          title: "New assessment available",
+          intro: `A new Grade ${g} assessment has been added.`,
+          bodyHtml: `
+            <p style="margin:0 0 10px;color:#334155;line-height:1.65;font-size:14px;">
+              <span style="font-weight:800;">${escapeHtml(quizTitle)}</span><br>
+              Topic: ${escapeHtml(quizTopic)}
+            </p>
+            ${
+              quizInstructions
+                ? `<p style="margin:0 0 10px;color:#334155;line-height:1.65;font-size:14px;">
+                    Instructions: ${escapeHtml(quizInstructions)}
+                  </p>`
+                : ""
+            }
+            <p style="margin:0;color:#334155;line-height:1.65;font-size:14px;">
+              Log in to view and attempt the assessment.
+            </p>
+          `,
+          ctaText: "Open assessments",
+          ctaUrl: link,
+          footerNote: "Practice Online",
         });
 
-        // ✅ send one-by-one (simple + reliable)
-        let okCount = 0;
-        for (const st of students) {
-          try {
-            await sendEmail({ to: st.email, subject, html, text });
-            okCount += 1;
-          } catch (e) {
-            console.error("[QUIZ EMAIL] Failed:", st.email, e.message);
-          }
-        }
+        const text = `New Grade ${g} assessment: ${quizTitle} (${quizTopic}). Login: ${link}`;
 
-        console.log(`[QUIZ EMAIL] Sent ${okCount}/${students.length} emails for Grade ${g} (quiz ${quiz._id})`);
+        await sendBulkEmail({ recipients: emails, subject, html, text });
+
+        console.log(`Notified ${emails.length} learners for grade ${g}.`);
       } catch (e) {
-        console.error("[QUIZ EMAIL] Error:", e.message);
+        console.error("Quiz notification email failed:", e.message);
       }
     });
+
+    return;
   } catch (e) {
     console.error("POST /api/quizzes error:", e.message);
     return res.status(500).json({ message: "Could not save assessment" });
@@ -966,6 +879,10 @@ app.post("/api/results", authRequired, async (req, res) => {
       grade: quiz.grade,
       topic: quiz.topic || "General",
       title: quiz.title || "Assessment",
+
+      // ✅ NEW: snapshot quiz instructions for review page
+      instructions: String(quiz.instructions || "").trim(),
+
       score,
       total,
       percent,
@@ -1043,18 +960,28 @@ app.post("/api/forgot-password-otp", async (req, res) => {
     user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
+    const resetNote = "This code expires in 10 minutes.";
+
     await sendEmail({
       to: user.email,
       subject: "Password reset code",
-      text: `Your reset code is: ${otp}. It expires in 10 minutes.`,
-      html: `
-        <div style="font-family:Arial,sans-serif; padding:18px;">
-          <h2 style="margin:0 0 10px;">Password Reset Code</h2>
-          <p style="margin:0 0 12px;">Your reset code is:</p>
-          <div style="font-size:28px; font-weight:800; letter-spacing:3px;">${otp}</div>
-          <p style="margin:12px 0 0; color:#475569;">This code expires in <b>10 minutes</b>.</p>
-        </div>
-      `,
+      text: `Your reset code is ${otp}. ${resetNote}`,
+      html: emailLayout({
+        title: "Password reset code",
+        intro: "Use the code below to reset your password.",
+        bodyHtml: `
+          <p style="margin:0 0 10px;color:#334155;line-height:1.65;font-size:14px;">
+            Your reset code is:
+          </p>
+          <div style="display:inline-block;padding:12px 14px;border:1px solid #e6e6e6;border-radius:10px;background:#f8fafc;font-weight:900;letter-spacing:3px;font-size:18px;">
+            ${escapeHtml(otp)}
+          </div>
+          <p style="margin:12px 0 0;color:#334155;line-height:1.65;font-size:14px;">
+            ${escapeHtml(resetNote)}
+          </p>
+        `,
+        footerNote: "Practice Online",
+      }),
     });
 
     return res.json({ message: "If the email exists, a reset code has been sent." });
@@ -1125,5 +1052,3 @@ mongoose
     app.listen(PORT, () => console.log(`Server running on ${PORT}`));
   })
   .catch((err) => console.error("Mongo error:", err.message));
-
-
