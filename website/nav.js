@@ -1,13 +1,13 @@
-/* nav.js - shared navigation + auth helpers for Practice Online */
+/* nav.js - shared navigation + auth helpers for Practice Online (SAFE)
+   ✅ Adds Support link to BOTH desktop + mobile nav (if present)
+   ✅ Auto-hides Admin link for non-admin users
+   ✅ Keeps existing logic + styling safe
+*/
 
 (function () {
-  // ✅ CHANGE THIS ONLY if your backend URL changes
   const API = "https://practice-backend-msgn.onrender.com";
-
-  // Make API accessible in other scripts if you want
   window.API = API;
 
-  // --------- Mobile Menu Toggle (optional) ----------
   const menuBtn = document.getElementById("menuBtn");
   const mobileMenu = document.getElementById("mobileMenu");
 
@@ -18,7 +18,56 @@
     });
   }
 
-  // --------- Logout ----------
+  // ✅ Inject "Support" link into desktop + mobile nav (only if nav exists)
+  function ensureSupportLink() {
+    const addLinkIfMissing = (navRoot) => {
+      if (!navRoot) return;
+
+      // Don't duplicate
+      const already = [...navRoot.querySelectorAll("a")].some((a) => {
+        const href = (a.getAttribute("href") || "").toLowerCase();
+        const text = (a.textContent || "").trim().toLowerCase();
+        return href.includes("support") || text === "support";
+      });
+      if (already) return;
+
+      // Create link
+      const a = document.createElement("a");
+      a.href = "support.html";
+      a.textContent = "Support";
+
+      // Insert after Results (best) else after Practice else at end
+      const links = [...navRoot.querySelectorAll("a")];
+      const resultsLink = links.find((x) => (x.getAttribute("href") || "").includes("results"));
+      const practiceLink = links.find((x) => (x.getAttribute("href") || "").includes("learner-quizzes"));
+
+      if (resultsLink && resultsLink.parentNode === navRoot) {
+        resultsLink.insertAdjacentElement("afterend", a);
+      } else if (practiceLink && practiceLink.parentNode === navRoot) {
+        practiceLink.insertAdjacentElement("afterend", a);
+      } else {
+        navRoot.appendChild(a);
+      }
+
+      // ✅ Optional: set active underline automatically (matches your "active" class usage)
+      try {
+        const path = (window.location.pathname || "").toLowerCase();
+        const isSupport = path.endsWith("/support.html") || path.endsWith("support.html");
+        if (isSupport) a.classList.add("active");
+      } catch {}
+    };
+
+    // Desktop nav: common patterns you use
+    addLinkIfMissing(document.querySelector("nav.nav"));
+    addLinkIfMissing(document.getElementById("desktopNav"));
+
+    // Mobile nav (if your mobile menu contains links)
+    addLinkIfMissing(document.getElementById("mobileMenu"));
+  }
+
+  // run immediately
+  ensureSupportLink();
+
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
@@ -26,27 +75,19 @@
     window.location.href = "login.html";
   }
 
-  const logoutBtn = document.getElementById("logoutBtn");
-  const logoutBtnMobile = document.getElementById("logoutBtnMobile");
+  document.getElementById("logoutBtn")?.addEventListener("click", logout);
+  document.getElementById("logoutBtnMobile")?.addEventListener("click", logout);
 
-  if (logoutBtn) logoutBtn.addEventListener("click", logout);
-  if (logoutBtnMobile) logoutBtnMobile.addEventListener("click", logout);
-
-  // --------- Helpers ----------
   function setDisplay(nodeList, show) {
-    nodeList.forEach((el) => {
-      el.style.display = show ? "" : "none";
-    });
+    nodeList.forEach((el) => (el.style.display = show ? "" : "none"));
   }
 
   async function getMe(token) {
-    // Small cache to avoid calling /me too often
     const cached = localStorage.getItem("me_cache");
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
-        // keep cache for 2 minutes
-        if (Date.now() - parsed.time < 2 * 60 * 1000) return parsed.data;
+        if (Date.now() - parsed.time < 120000) return parsed.data;
       } catch {}
     }
 
@@ -54,6 +95,7 @@
       headers: { Authorization: `Bearer ${token}` },
     });
 
+    if (res.status === 401 || res.status === 403) return "UNAUTH";
     if (!res.ok) return null;
 
     const data = await res.json().catch(() => null);
@@ -63,7 +105,6 @@
     return data;
   }
 
-  // --------- Main: Setup Nav ----------
   async function setupNav() {
     const token = localStorage.getItem("token");
 
@@ -71,49 +112,29 @@
     const guestEls = document.querySelectorAll("[data-guest]");
     const adminEls = document.querySelectorAll("[data-admin]");
 
-    // Default: hide admin links
     setDisplay(adminEls, false);
 
-    // Guest mode
     if (!token) {
       setDisplay(authEls, false);
       setDisplay(guestEls, true);
       return;
     }
 
-    // Logged-in mode (for now)
     setDisplay(authEls, true);
     setDisplay(guestEls, false);
 
-    // Check role
-    try {
-      const me = await getMe(token);
+    const me = await getMe(token);
+    if (me === "UNAUTH") return logout();
+    if (!me) return;
 
-      // Token invalid -> force logout
-      if (!me) {
-        logout();
-        return;
-      }
+    if (me.role === "admin") setDisplay(adminEls, true);
 
-      if (me.role === "admin") {
-        setDisplay(adminEls, true);
-      } else {
-        setDisplay(adminEls, false);
-      }
-
-      // Optional: show username somewhere if you create an element:
-      // <span id="navUsername"></span>
-      const navUsername = document.getElementById("navUsername");
-      if (navUsername) navUsername.textContent = me.username || "";
-    } catch (err) {
-      // If anything fails, just keep normal auth links visible
-      console.warn("setupNav error:", err);
-    }
+    const navUsername = document.getElementById("navUsername");
+    if (navUsername) navUsername.textContent = me.username || "";
   }
 
   setupNav();
 
-  // --------- Optional helper functions for pages ----------
   window.auth = {
     API,
     token: () => localStorage.getItem("token"),
