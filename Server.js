@@ -9,7 +9,7 @@
 // ✅ Quiz update/delete (admin): PUT /api/quizzes/:id, DELETE /api/quizzes/:id
 // ✅ Results: POST /api/results, GET /api/results/my, GET /api/results/:id
 // ✅ Password reset (OTP): /api/forgot-password-otp + /api/reset-password-otp
-// ✅ SendGrid: welcome email + test-email + health + quiz notification
+// ✅ SendGrid: welcome email + test-email + health + quiz notificationFF
 
 import express from "express";
 import mongoose from "mongoose";
@@ -304,8 +304,7 @@ function newQuizEmail({ grade, quizId, title, topic, timeLimitMinutes, questions
                 </div>
 
                 <p style="margin:16px 0 0; font-size:12px; color:#64748b; line-height:1.6;">
-                  If the button doesn’t work, copy and paste this link:<br/>
-                  <span style="color:#1b1648;">${link}</span>
+                 
                 </p>
               </td>
             </tr>
@@ -1126,4 +1125,5 @@ mongoose
     app.listen(PORT, () => console.log(`Server running on ${PORT}`));
   })
   .catch((err) => console.error("Mongo error:", err.message));
+
 
