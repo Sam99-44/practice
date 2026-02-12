@@ -1,3 +1,7 @@
+<!-- attempt.html (UPDATED - COPY & PASTE)
+     ✅ MathJax enabled
+     ✅ Renders math in question text + options + hint
+-->
 <!doctype html>
 <html lang="en">
 <head>
@@ -5,39 +9,39 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Attempt Assessment | Practice Online</title>
 
-  <!-- Font (same everywhere) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- ✅ MathJax -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
   <style>
     :root{
       --nav:#1b1648;
       --accent:#0b3c5d;
       --red:#e11d2e;
-
       --bg:#f6f7fb;
       --card:#ffffff;
       --border:#e6e6e6;
       --text:#0f172a;
       --muted:#475569;
-
       --radius:14px;
       --shadow:0 8px 22px rgba(0,0,0,.06);
       --ok:#065f46;
       --error:#b91c1c;
       --warn:#b45309;
-
       --soft:#eef2ff;
     }
 
     *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Inter, Arial, sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
+    body{margin:0;font-family:Inter, Arial, sans-serif;background:var(--bg);color:var(--text);}
     a{color:inherit;text-decoration:none}
     .wrap{max-width:1100px;margin:0 auto;padding:18px}
     .muted{color:var(--muted)}
@@ -45,267 +49,66 @@
     .ok{color:var(--ok)}
     .hidden{display:none!important}
 
-    /* ---------- Shared header (same style as results) ---------- */
-    header.topbar{
-      background:var(--nav);
-      color:#fff;
-      border-bottom:3px solid rgba(255,255,255,.08);
-    }
-    .topbar-inner{
-      max-width:1100px;
-      margin:0 auto;
-      padding:14px 18px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-weight:900;
-    }
-    .brandBadge{
-      width:38px;height:38px;
-      border-radius:12px;
-      display:grid;place-items:center;
-      background:rgba(255,255,255,.10);
-      border:1px solid rgba(255,255,255,.14);
-      font-weight:900;
-    }
+    header.topbar{background:var(--nav);color:#fff;border-bottom:3px solid rgba(255,255,255,.08);}
+    .topbar-inner{max-width:1100px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:900;}
+    .brandBadge{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);font-weight:900;}
     .brandText{display:flex;flex-direction:column;line-height:1.1}
     .brandText small{opacity:.85;font-weight:700}
-    nav.nav{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-    nav.nav a{
-      padding:8px 10px;
-      border-radius:10px;
-      color:#e7e9ff;
-      font-weight:800;
-      font-size:13px;
-    }
+    nav.nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    nav.nav a{padding:8px 10px;border-radius:10px;color:#e7e9ff;font-weight:800;font-size:13px;}
     nav.nav a:hover{background:rgba(255,255,255,.10)}
-    nav.nav a.active{
-      color:#fff;
-      border-bottom:3px solid var(--red);
-      border-radius:10px 10px 8px 8px;
-      padding-bottom:5px;
-    }
-    .btnTop{
-      background:rgba(255,255,255,.12);
-      color:#fff;
-      border:1px solid rgba(255,255,255,.18);
-      padding:8px 12px;
-      border-radius:12px;
-      font-weight:900;
-      cursor:pointer;
-    }
+    nav.nav a.active{color:#fff;border-bottom:3px solid var(--red);border-radius:10px 10px 8px 8px;padding-bottom:5px;}
+    .btnTop{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.18);padding:8px 12px;border-radius:12px;font-weight:900;cursor:pointer;}
     .btnTop:hover{background:rgba(255,255,255,.18)}
 
-    /* ---------- Page card ---------- */
-    .section{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      overflow:hidden;
-      margin-top:14px;
-    }
-    .sectionHead{
-      background:linear-gradient(180deg,#f4f7ff,#eef4ff);
-      border-bottom:1px solid var(--border);
-      padding:12px 14px;
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-    .sectionHead h1{
-      margin:0;
-      font-size:18px;
-      letter-spacing:-0.01em;
-    }
+    .section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-top:14px;}
+    .sectionHead{background:linear-gradient(180deg,#f4f7ff,#eef4ff);border-bottom:1px solid var(--border);padding:12px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+    .sectionHead h1{margin:0;font-size:18px;letter-spacing:-0.01em;}
     .sectionHead p{margin:6px 0 0 0}
     .sectionBody{padding:14px}
 
-    /* Meta row */
     .metaRight{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 10px;
-      border-radius:999px;
-      font-weight:900;
-      font-size:12px;
-      border:1px solid #e5e7eb;
-      background:#f8fafc;
-      color:#334155;
-      white-space:nowrap;
-    }
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid #e5e7eb;background:#f8fafc;color:#334155;white-space:nowrap;}
     .pill.green{border-color:#bbf7d0;background:#f0fdf4;color:#065f46}
     .pill.red{border-color:#fecaca;background:#fff1f2;color:#b91c1c}
+    .timerBox{border:1px solid #dbeafe;background:#eff6ff;color:#1e3a8a;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;white-space:nowrap;}
+    .timerBox.warn{border-color:#fed7aa;background:#fff7ed;color:var(--warn);}
 
-    .timerBox{
-      border:1px solid #dbeafe;
-      background:#eff6ff;
-      color:#1e3a8a;
-      padding:6px 10px;
-      border-radius:999px;
-      font-weight:900;
-      font-size:12px;
-      white-space:nowrap;
-    }
-    .timerBox.warn{
-      border-color:#fed7aa;
-      background:#fff7ed;
-      color:var(--warn);
-    }
+    .termWrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+    .termLabel{font-weight:900;font-size:12px;color:#334155;background:#fff;border:1px solid #e5e7eb;padding:6px 10px;border-radius:999px;}
+    .termSelect{padding:6px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#fff;font-weight:900;font-size:12px;outline:none;}
 
-    /* ✅ Term selector */
-    .termWrap{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-    .termLabel{
-      font-weight:900;
-      font-size:12px;
-      color:#334155;
-      background:#fff;
-      border:1px solid #e5e7eb;
-      padding:6px 10px;
-      border-radius:999px;
-    }
-    .termSelect{
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid #e5e7eb;
-      background:#fff;
-      font-weight:900;
-      font-size:12px;
-      outline:none;
-    }
-
-    /* Questions */
-    .q{
-      padding:14px 0;
-      border-top:1px solid #eee;
-    }
+    .q{padding:14px 0;border-top:1px solid #eee;}
     .q:first-child{border-top:none;padding-top:0}
     .q b{display:block;margin-bottom:10px}
-    .qimg{
-      display:block;
-      max-width:100%;
-      height:auto;
-      border-radius:12px;
-      border:1px solid #eee;
-      margin:10px 0 12px 0;
-    }
+    .q .MathJax, .opt .MathJax, .hint .MathJax { vertical-align: middle; }
 
-    .opt{
-      display:flex;
-      gap:10px;
-      align-items:flex-start;
-      padding:10px 12px;
-      border:1px solid #ddd;
-      border-radius:12px;
-      margin-bottom:8px;
-      cursor:pointer;
-      background:#fff;
-      transition:.12s;
-    }
+    .qimg{display:block;max-width:100%;height:auto;border-radius:12px;border:1px solid #eee;margin:10px 0 12px 0;}
+
+    .opt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #ddd;border-radius:12px;margin-bottom:8px;cursor:pointer;background:#fff;transition:.12s;}
     .opt:hover{background:var(--soft)}
     .opt input{margin-top:3px}
     .opt.disabled{opacity:.7;cursor:not-allowed}
     .opt.disabled:hover{background:#fff}
 
-    .textAnswer{
-      width:100%;
-      padding:12px;
-      border-radius:12px;
-      border:1px solid #ddd;
-      outline:none;
-      font-size:14px;
-      background:#fff;
-      font-weight:600;
-    }
-    .textAnswer:focus{
-      border-color:#cfe9ff;
-      box-shadow:0 0 0 4px rgba(207,233,255,.65);
-    }
+    .textAnswer{width:100%;padding:12px;border-radius:12px;border:1px solid #ddd;outline:none;font-size:14px;background:#fff;font-weight:600;}
+    .textAnswer:focus{border-color:#cfe9ff;box-shadow:0 0 0 4px rgba(207,233,255,.65);}
     .textAnswer:disabled{opacity:.7;background:#f8fafc}
 
-    .hint{
-      margin-top:10px;
-      padding:10px 12px;
-      border-radius:12px;
-      background:var(--soft);
-      border:1px solid #cfe9ff;
-      color:#0b3c5d;
-      font-size:13px;
-      font-weight:700;
-    }
+    .hint{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--soft);border:1px solid #cfe9ff;color:#0b3c5d;font-size:13px;font-weight:700;}
 
-    /* Buttons */
-    .btnRow{
-      margin-top:14px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-    .btn{
-      background:var(--red);
-      color:#fff;
-      padding:10px 14px;
-      border:none;
-      border-radius:12px;
-      cursor:pointer;
-      font-weight:900;
-    }
+    .btnRow{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;}
+    .btn{background:var(--red);color:#fff;padding:10px 14px;border:none;border-radius:12px;cursor:pointer;font-weight:900;}
     .btn:hover{filter:brightness(.98)}
     .btn:disabled{opacity:.6;cursor:not-allowed}
-    .btn2{
-      background:#fff;
-      border:1px solid #ddd;
-      padding:10px 14px;
-      border-radius:12px;
-      cursor:pointer;
-      font-weight:900;
-    }
+    .btn2{background:#fff;border:1px solid #ddd;padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:900;}
     .btn2:disabled{opacity:.6;cursor:not-allowed}
 
-    /* Notices */
-    .notice{
-      border:1px solid #e5e7eb;
-      background:#f8fafc;
-      color:#334155;
-      padding:12px;
-      border-radius:12px;
-      margin-top:12px;
-    }
-    .notice.red{
-      border-color:#fecaca;
-      background:#fff1f2;
-      color:#991b1b;
-    }
-    .lockBox{
-      border:1px dashed #ddd;
-      background:#fafafa;
-      padding:14px;
-      border-radius:12px;
-      margin-top:12px;
-    }
+    .notice{border:1px solid #e5e7eb;background:#f8fafc;color:#334155;padding:12px;border-radius:12px;margin-top:12px;}
+    .notice.red{border-color:#fecaca;background:#fff1f2;color:#991b1b;}
+    .lockBox{border:1px dashed #ddd;background:#fafafa;padding:14px;border-radius:12px;margin-top:12px;}
 
-    /* Mobile tweaks */
     @media(max-width:640px){
       .wrap{padding:14px}
       .sectionBody{padding:12px}
@@ -349,7 +152,6 @@
       </div>
 
       <div class="metaRight">
-        <!-- ✅ NEW TERM -->
         <div class="termWrap">
           <span class="termLabel">TERM</span>
           <select id="termSelect" class="termSelect" title="Select term (optional)">
@@ -390,7 +192,6 @@
 </div>
 
 <script>
-  // ✅ UPDATED API BASE
   const API = "https://api.practiceonline.co.za";
 
   const token = localStorage.getItem("token");
@@ -414,12 +215,14 @@
   let blocked = false;
 
   const END_KEY = `quiz_end_${quizId}`;
-
-  // ✅ term persistence per quiz
   const TERM_KEY = `quiz_term_${quizId}`;
-  const termPure = document.getElementById("termSelect");
 
-  // load saved term (if any)
+  function typesetMath(root=document){
+    if (window.MathJax?.typesetPromise) {
+      window.MathJax.typesetPromise([root]).catch(()=>{});
+    }
+  }
+
   if (quizId && localStorage.getItem(TERM_KEY)) {
     const savedTerm = localStorage.getItem(TERM_KEY);
     if (savedTerm) {
@@ -428,7 +231,6 @@
     }
   }
 
-  // save term on change
   document.getElementById("termSelect").addEventListener("change", () => {
     if (!quizId) return;
     localStorage.setItem(TERM_KEY, document.getElementById("termSelect").value || "");
@@ -466,7 +268,7 @@
   function disableAllInputs(){
     document.querySelectorAll("input[type=radio], input[type=text], input[type=number], textarea").forEach(el => el.disabled = true);
     document.querySelectorAll(".opt").forEach(el => el.classList.add("disabled"));
-    document.getElementById("termSelect").disabled = true; // ✅ lock term after submit/unavailable
+    document.getElementById("termSelect").disabled = true;
   }
 
   function stopTimerAndClearKey(){
@@ -537,14 +339,15 @@
       const img = cleanSpaces(q.imageUrl || "");
 
       const imageHtml = img ? `<img class="qimg" src="${escapeAttr(img)}" alt="Question image">` : "";
+      const qText = escapeHtml(cleanSpaces(q.text));
 
       if (type === "text") {
         return `
           <div class="q">
-            <b>${i + 1}. ${escapeHtml(cleanSpaces(q.text))}</b>
+            <b>${i + 1}. <span class="qText">${qText}</span></b>
             ${imageHtml}
             <input class="textAnswer" id="txt${i}" placeholder="Type your answer here" autocomplete="off" />
-            ${hint ? `<div class="hint">Hint: ${escapeHtml(hint)}</div>` : ``}
+            ${hint ? `<div class="hint">Hint: <span class="hintText">${escapeHtml(hint)}</span></div>` : ``}
           </div>
         `;
       }
@@ -552,18 +355,21 @@
       const opts = Array.isArray(q.options) ? q.options : [];
       return `
         <div class="q">
-          <b>${i + 1}. ${escapeHtml(cleanSpaces(q.text))}</b>
+          <b>${i + 1}. <span class="qText">${qText}</span></b>
           ${imageHtml}
           ${opts.map((o, j) => `
             <label class="opt">
               <input type="radio" name="q${i}" value="${j}">
-              <span>${escapeHtml(cleanSpaces(o))}</span>
+              <span class="optText">${escapeHtml(cleanSpaces(o))}</span>
             </label>
           `).join("")}
-          ${hint ? `<div class="hint">Hint: ${escapeHtml(hint)}</div>` : ``}
+          ${hint ? `<div class="hint">Hint: <span class="hintText">${escapeHtml(hint)}</span></div>` : ``}
         </div>
       `;
     }).join("");
+
+    // ✅ render math
+    typesetMath(questionsDiv);
 
     if (unavailable){
       unavailableNotice.classList.remove("hidden");
@@ -719,7 +525,7 @@
 
     const payload = {
       quizId,
-      term, // ✅ NEW (1..4 or null)
+      term,
       answers: buildAnswersPayload(),
       timeTakenSeconds
     };
