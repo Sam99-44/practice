@@ -5,44 +5,55 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Edit Assessment | Practice Online</title>
 
+  <!-- ✅ MathJax (so admins can edit LaTeX nicely) -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
   <style>
     body{font-family:Arial; padding:20px; max-width:1000px; margin:auto; background:#f6f7fb;}
     .card{background:#fff; border:1px solid #e6e6e6; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.06);}
-    input, textarea, select{width:100%; padding:10px; margin:8px 0; border-radius:10px; border:1px solid #ddd; outline:none;}
+    input, textarea, select{width:100%; padding:10px; margin:8px 0; border-radius:10px; border:1px solid #ddd; outline:none; font-size:14px;}
     textarea{min-height:90px; resize:vertical;}
-    button{padding:10px 14px; cursor:pointer; border:none; border-radius:10px; font-weight:700;}
+    label{font-size:13px; font-weight:700; color:#111827;}
+    button{padding:10px 14px; cursor:pointer; border:none; border-radius:10px; font-weight:700; font-size:13px;}
     .btn{background:#111827; color:#fff;}
     .btn2{background:#fff; border:1px solid #ddd; color:#111827;}
     .danger{background:#b91c1c; color:#fff;}
     .warn{background:#b45309; color:#fff;}
-    .ok{color:#065f46;}
-    .muted{color:#555;}
+    .muted{color:#555; font-size:13px;}
     .error{color:#b91c1c;}
+    .ok{color:#065f46;}
     .topbar{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
     .row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
     .qcard{border:1px solid #e6e6e6; border-radius:12px; padding:12px; margin-top:12px; background:#fff;}
     .qhead{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
-    .smallbtn{border:1px solid #ddd; background:#fff; color:#111827; padding:8px 10px; border-radius:10px; font-weight:700;}
+    .smallbtn{border:1px solid #ddd; background:#fff; color:#111827; padding:8px 10px; border-radius:10px; font-weight:700; font-size:12px;}
     .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
     hr{border:none; border-top:1px solid #eee; margin:14px 0;}
-    .pill{
-      display:inline-block;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid #cfe9ff;
-      background:#eef7ff;
-      color:#0b3c5d;
-      font-size:12px;
-      font-weight:800;
-      white-space:nowrap;
-    }
+    .pill{display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #cfe9ff; background:#eef7ff; color:#0b3c5d; font-size:12px; font-weight:800; white-space:nowrap;}
     .pill.red{border-color:#fecaca; background:#fff1f2; color:#b91c1c;}
     .pill.green{border-color:#bbf7d0; background:#f0fdf4; color:#065f46;}
     .actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
     .disabledBox{opacity:.6; pointer-events:none;}
-    .tiny{font-size:12px;}
     .note{font-size:12px; color:#64748b; margin-top:-4px;}
-    .hide{display:none !important;}
+    .tiny{font-size:12px;}
+    .tag{display:inline-block; padding:4px 8px; border-radius:999px; border:1px solid #e5e7eb; background:#f8fafc; font-size:12px; font-weight:800; color:#334155;}
+    .previewBox{
+      border:1px dashed #e6e6e6;
+      background:#fbfbfe;
+      border-radius:10px;
+      padding:10px;
+      margin-top:6px;
+      font-size:13px;
+      line-height:1.35;
+      white-space:pre-wrap;
+    }
+    .hide{display:none!important;}
   </style>
 
   <script>
@@ -66,7 +77,6 @@
 
   <div class="card">
 
-    <!-- Search + Grade filter -->
     <div class="row">
       <div>
         <label>Filter by Grade</label>
@@ -81,7 +91,7 @@
       </div>
       <div>
         <label>Search topic or assessment title</label>
-        <input id="searchBox"/>
+        <input id="searchBox" placeholder="Type to search..." />
       </div>
     </div>
 
@@ -108,6 +118,7 @@
     <hr>
 
     <div id="editArea" class="disabledBox">
+
       <div class="row">
         <div>
           <label>Grade</label>
@@ -131,9 +142,18 @@
       <input id="title" />
 
       <label>Instructions (shown before starting)</label>
-      <textarea id="instructions" placeholder="Example:"></textarea>
+      <textarea id="instructions" placeholder="Example: Read all questions carefully. Use $x^2$ format for maths."></textarea>
 
-      <div class="row">
+      <div class="tiny muted" style="margin-top:-4px;">
+        LaTeX allowed in instructions and questions (example: $\\frac{a}{b}$, $\\sqrt{x}$).
+      </div>
+
+      <div style="margin-top:10px;">
+        <div class="tag">Instructions Preview</div>
+        <div class="previewBox" id="prevInstructions">(Preview)</div>
+      </div>
+
+      <div class="row" style="margin-top:8px;">
         <div>
           <label>Available From (optional)</label>
           <input id="availableFrom" type="datetime-local" />
@@ -150,8 +170,11 @@
       <hr>
 
       <div class="qhead">
-        <h3 style="margin:0;">Questions</h3>
-        <div class="actions">
+        <div>
+          <h3 style="margin:0;">Questions</h3>
+          <div class="tiny muted" style="margin-top:4px;">Supports MCQ and Typed Answer.</div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <button class="smallbtn" id="addMcqBtn" type="button">+ Add MCQ</button>
           <button class="smallbtn" id="addTextBtn" type="button">+ Add Typed Answer</button>
         </div>
@@ -166,8 +189,8 @@
   </div>
 
   <script>
-    // ✅ Keep this consistent with your other pages
-    const API = window.API || "https://practice-backend-msgn.onrender.com";
+    // ✅ IMPORTANT: Use your new production API
+    const API = window.API || "https://api.practiceonline.co.za";
     const token = localStorage.getItem("token");
 
     const who = document.getElementById("who");
@@ -187,6 +210,7 @@
     const topicEl = document.getElementById("topic");
     const titleEl = document.getElementById("title");
     const instructionsEl = document.getElementById("instructions");
+    const prevInstructions = document.getElementById("prevInstructions");
     const availableFromEl = document.getElementById("availableFrom");
     const availableUntilEl = document.getElementById("availableUntil");
     const timeLimitEl = document.getElementById("timeLimitMinutes");
@@ -205,25 +229,15 @@
     }
 
     function logout(){
-      localStorage.clear();
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("me_cache");
       window.location.href = "login.html";
     }
     document.getElementById("logoutBtn").addEventListener("click", logout);
 
     function cleanSpaces(s){
       return String(s || "").trim().replace(/\s+/g, " ");
-    }
-
-    function escapeHtml(str){
-      return String(str)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-    function escapeAttr(str){
-      return String(str || "").replaceAll('"', "&quot;");
     }
 
     function pad2(n){ return String(n).padStart(2,"0"); }
@@ -234,7 +248,6 @@
       if (isNaN(d.getTime())) return "";
       return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
     }
-
     function localInputToIso(val){
       if (!val) return null;
       const d = new Date(val);
@@ -242,16 +255,34 @@
       return d.toISOString();
     }
 
+    async function readErrorText(res){
+      const txt = await res.text().catch(()=> "");
+      return txt ? txt.slice(0, 600) : `HTTP ${res.status}`;
+    }
+
+    function typesetMath(root=document){
+      if (window.MathJax?.typesetPromise) {
+        window.MathJax.typesetPromise([root]).catch(()=>{});
+      }
+    }
+    function setPreviewText(el, text){
+      el.textContent = text || "";
+      typesetMath(el);
+    }
+
+    function renderInstructionsPreview(){
+      const t = cleanSpaces(instructionsEl.value || "");
+      setPreviewText(prevInstructions, t || "(Preview)");
+    }
+    instructionsEl.addEventListener("input", renderInstructionsPreview);
+
     function isUnavailable(q){
       const now = new Date();
       if (q?.isFrozen) return true;
-
       const from = q?.availableFrom ? new Date(q.availableFrom) : null;
       const until = q?.availableUntil ? new Date(q.availableUntil) : null;
-
       if (from && now < from) return true;
       if (until && now > until) return true;
-
       return false;
     }
 
@@ -263,154 +294,10 @@
       const until = q.availableUntil ? new Date(q.availableUntil) : null;
 
       if (q.isFrozen) return { label:"UNAVAILABLE", cls:"pill red", note:"Manually set to unavailable." };
-
       if (from && now < from) return { label:"SCHEDULED", cls:"pill", note:`Available from ${from.toLocaleString()}` };
-
       if (until && now > until) return { label:"CLOSED", cls:"pill red", note:`Closed since ${until.toLocaleString()}` };
-
       if (until) return { label:"AVAILABLE", cls:"pill green", note:`Available until ${until.toLocaleString()}` };
-
       return { label:"AVAILABLE", cls:"pill green", note:"No schedule set." };
-    }
-
-    function mcqCardHtml(i, q){
-      const text = cleanSpaces(q?.text);
-      const hint = cleanSpaces(q?.hint);
-      const imageUrl = cleanSpaces(q?.imageUrl);
-      const opts = Array.isArray(q?.options) ? q.options : ["","","",""];
-      const correctIndex = Number.isFinite(Number(q?.correctIndex)) ? Number(q.correctIndex) : 0;
-
-      return `
-        <div class="qcard" data-type="mcq">
-          <div class="qhead">
-            <div>
-              <b>Question ${i + 1}</b>
-              <span class="pill">MCQ</span>
-            </div>
-            <button type="button" class="smallbtn removeBtn">Remove</button>
-          </div>
-
-          <label>Question Text</label>
-          <input class="qText" value="${escapeAttr(text)}" />
-
-          <label>Hint (optional)</label>
-          <input class="qHint" value="${escapeAttr(hint)}" />
-
-          <label>Image URL (optional)</label>
-          <input class="qImage" value="${escapeAttr(imageUrl)}" placeholder="https://..." />
-
-          <div class="grid2">
-            <div><label>Option A</label><input class="optA" value="${escapeAttr(opts[0] || "")}" /></div>
-            <div><label>Option B</label><input class="optB" value="${escapeAttr(opts[1] || "")}" /></div>
-            <div><label>Option C</label><input class="optC" value="${escapeAttr(opts[2] || "")}" /></div>
-            <div><label>Option D</label><input class="optD" value="${escapeAttr(opts[3] || "")}" /></div>
-          </div>
-
-          <label>Correct Answer</label>
-          <select class="correctIndex">
-            <option value="0" ${correctIndex===0?"selected":""}>A</option>
-            <option value="1" ${correctIndex===1?"selected":""}>B</option>
-            <option value="2" ${correctIndex===2?"selected":""}>C</option>
-            <option value="3" ${correctIndex===3?"selected":""}>D</option>
-          </select>
-        </div>
-      `;
-    }
-
-    function textCardHtml(i, q){
-      const text = cleanSpaces(q?.text);
-      const hint = cleanSpaces(q?.hint);
-      const imageUrl = cleanSpaces(q?.imageUrl);
-      const correctText = cleanSpaces(q?.correctText);
-      const mode = q?.textAnswerMode || "exact";
-      const tol = (q?.numberTolerance ?? "");
-
-      return `
-        <div class="qcard" data-type="text">
-          <div class="qhead">
-            <div>
-              <b>Question ${i + 1}</b>
-              <span class="pill">Typed Answer</span>
-            </div>
-            <button type="button" class="smallbtn removeBtn">Remove</button>
-          </div>
-
-          <label>Question Text</label>
-          <input class="qText" value="${escapeAttr(text)}" />
-
-          <label>Hint (recommended)</label>
-          <input class="qHint" value="${escapeAttr(hint)}" />
-
-          <label>Image URL (optional)</label>
-          <input class="qImage" value="${escapeAttr(imageUrl)}" placeholder="https://..." />
-
-          <div class="grid2">
-            <div>
-              <label>Correct Answer (what learners must type)</label>
-              <input class="correctText" value="${escapeAttr(correctText)}" />
-            </div>
-            <div>
-              <label>Check Mode</label>
-              <select class="textMode">
-                <option value="exact" ${mode==="exact"?"selected":""}>Exact (case-insensitive)</option>
-                <option value="contains" ${mode==="contains"?"selected":""}>Contains</option>
-                <option value="number_tolerance" ${mode==="number_tolerance"?"selected":""}>Number (tolerance)</option>
-              </select>
-              <div class="tiny muted">Use Number mode for calculations.</div>
-            </div>
-          </div>
-
-          <div class="grid2 tolRow ${mode==="number_tolerance" ? "" : "hide"}">
-            <div>
-              <label>Tolerance (only for Number mode)</label>
-              <input class="tolerance" type="number" step="0.0001" value="${escapeAttr(tol)}" />
-              <div class="tiny muted">Example: correct=3.14, tol=0.01 accepts 3.13–3.15</div>
-            </div>
-            <div class="tiny muted" style="padding-top:30px;">
-              Learners type the answer in a box.
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function wireTextMode(card){
-      const modeSel = card.querySelector(".textMode");
-      const tolRow = card.querySelector(".tolRow");
-      const tolInput = card.querySelector(".tolerance");
-
-      const update = () => {
-        const showTol = modeSel.value === "number_tolerance";
-        tolRow.classList.toggle("hide", !showTol);
-        if (!showTol) tolInput.value = "";
-      };
-
-      modeSel.addEventListener("change", update);
-      update();
-    }
-
-    async function requireAdmin(){
-      let meRes;
-      try{
-        meRes = await fetch(`${API}/api/auth/me`, {
-          headers: { Authorization: "Bearer " + token }
-        });
-      } catch {
-        setMsg("Network error. Please refresh.", "error");
-        return false;
-      }
-
-      const me = await meRes.json().catch(()=>null);
-      if (!meRes.ok || !me) { alert("Session expired."); logout(); return false; }
-
-      if (me.role !== "admin") {
-        alert("Admin only");
-        window.location.href = "learner-quizzes.html";
-        return false;
-      }
-
-      who.textContent = `Logged in as: ${me.username} (admin)`;
-      return true;
     }
 
     function setAvailabilityUI(q){
@@ -419,23 +306,54 @@
       freezePill.className = a.cls;
       availabilityNote.textContent = a.note || "";
 
-      freezeBtn.disabled = false;
       freezeBtn.textContent = q?.isFrozen ? "Make Available" : "Make Unavailable";
+      freezeBtn.disabled = false;
 
-      deleteBtn.disabled = false;
-
-      const frozen = !!q?.isFrozen;
-      if (frozen) {
+      const unavailable = !!q?.isFrozen;
+      if (unavailable) {
         editArea.classList.add("disabledBox");
+        deleteBtn.disabled = true;
         saveBtn.disabled = true;
         addMcqBtn.disabled = true;
         addTextBtn.disabled = true;
       } else {
         editArea.classList.remove("disabledBox");
+        deleteBtn.disabled = false;
         saveBtn.disabled = false;
         addMcqBtn.disabled = false;
         addTextBtn.disabled = false;
       }
+    }
+
+    async function requireAdmin(){
+      const meRes = await fetch(`${API}/api/auth/me`, {
+        headers: { Authorization: "Bearer " + token }
+      });
+      const me = await meRes.json().catch(()=>null);
+
+      if (!meRes.ok || !me) {
+        alert("Session expired. Please login again.");
+        logout(); return false;
+      }
+      if (me.role !== "admin") {
+        alert("Admin only");
+        window.location.href = "learner-quizzes.html";
+        return false;
+      }
+      who.textContent = `Logged in as: ${me.username} (admin)`;
+      return true;
+    }
+
+    function escapeHtml(str){
+      return String(str ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+    function escapeAttr(str){
+      return String(str ?? "").replaceAll('"', "&quot;");
     }
 
     function renderDropdown(){
@@ -445,7 +363,6 @@
       const filtered = allQuizzes.filter(x => {
         const matchGrade = !g || String(x.grade) === String(g);
         if (!matchGrade) return false;
-
         if (!q) return true;
         const topic = String(x.topic || "General").toLowerCase();
         const title = String(x.title || "Assessment").toLowerCase();
@@ -473,26 +390,18 @@
       deleteBtn.disabled = true;
       editArea.classList.add("disabledBox");
 
-      let res;
-      try{
-        // ✅ IMPORTANT: admin needs all=1
-        res = await fetch(`${API}/api/quizzes?all=1`, {
-          headers: { Authorization: "Bearer " + token }
-        });
-      } catch {
-        setMsg("Network error loading assessments.", "error");
-        return;
-      }
+      const res = await fetch(`${API}/api/quizzes?all=1`, {
+        headers: { Authorization: "Bearer " + token }
+      });
 
       if (res.status === 401) return logout();
-      const list = await res.json().catch(()=>[]);
-      allQuizzes = Array.isArray(list) ? list : [];
-
-      if (allQuizzes.length === 0) {
-        assessmentSelect.innerHTML = `<option value="">No assessments found</option>`;
-        setMsg("No assessments to edit.", "muted");
+      if (!res.ok){
+        setMsg("Could not load quizzes: " + await readErrorText(res), "error");
         return;
       }
+
+      const list = await res.json().catch(()=>[]);
+      allQuizzes = Array.isArray(list) ? list : [];
 
       renderDropdown();
       setMsg("Use filter/search, then select an assessment.", "ok");
@@ -505,20 +414,13 @@
       editArea.classList.add("disabledBox");
       questionsWrap.innerHTML = "";
 
-      let res;
-      try{
-        res = await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`, {
-          headers: { Authorization: "Bearer " + token }
-        });
-      } catch {
-        setMsg("Network error loading assessment.", "error");
-        return;
-      }
-
+      const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`, {
+        headers: { Authorization: "Bearer " + token }
+      });
       if (res.status === 401) return logout();
 
       if (!res.ok) {
-        setMsg("Could not load assessment.", "error");
+        setMsg("Could not load assessment: " + await readErrorText(res), "error");
         return;
       }
 
@@ -533,21 +435,181 @@
       availableFromEl.value = isoToLocalInput(currentQuiz.availableFrom);
       availableUntilEl.value = isoToLocalInput(currentQuiz.availableUntil);
 
-      const qs = Array.isArray(currentQuiz.questions) ? currentQuiz.questions : [];
-      if (qs.length === 0) {
-        questionsWrap.innerHTML = mcqCardHtml(0, { type:"mcq", text:"", imageUrl:"", options:["","","",""], correctIndex:0 });
-      } else {
-        questionsWrap.innerHTML = qs.map((q, i) => {
-          const type = String(q?.type || "mcq").toLowerCase();
-          return type === "text" ? textCardHtml(i, q) : mcqCardHtml(i, q);
-        }).join("");
-      }
+      renderInstructionsPreview();
 
-      // wire typed cards
-      [...questionsWrap.querySelectorAll(".qcard[data-type='text']")].forEach(wireTextMode);
+      const qs = Array.isArray(currentQuiz.questions) ? currentQuiz.questions : [];
+      questionsWrap.innerHTML = qs.length
+        ? qs.map((q, i) => questionCardHtml(i, q)).join("")
+        : questionCardHtml(0, { type:"mcq", text:"", imageUrl:"", options:["","","",""], correctIndex:0 });
+
+      // preview math
+      typesetMath(questionsWrap);
 
       setAvailabilityUI(currentQuiz);
       setMsg("Loaded.", "ok");
+    }
+
+    function questionCardHtml(i, q){
+      const type = String(q?.type || "mcq").toLowerCase();
+      const text = cleanSpaces(q?.text);
+      const hint = cleanSpaces(q?.hint);
+      const imageUrl = cleanSpaces(q?.imageUrl);
+
+      if (type === "text"){
+        const correctText = cleanSpaces(q?.correctText);
+        const mode = String(q?.textAnswerMode || "exact");
+        const tol = (q?.numberTolerance ?? "");
+
+        return `
+          <div class="qcard" data-index="${i}" data-type="text">
+            <div class="qhead">
+              <div><b>Question ${i + 1}</b> <span class="tag">Typed Answer</span></div>
+              <button type="button" class="smallbtn removeBtn">Remove</button>
+            </div>
+
+            <label>Question Text (supports math)</label>
+            <input class="qText" value="${escapeAttr(text)}" placeholder="Type your question here" />
+
+            <label>Hint (optional)</label>
+            <input class="qHint" value="${escapeAttr(hint)}" placeholder="Hint..." />
+
+            <label>Image URL (optional)</label>
+            <input class="qImage" value="${escapeAttr(imageUrl)}" placeholder="https://..." />
+
+            <div class="grid2">
+              <div>
+                <label>Correct Answer</label>
+                <input class="correctText" value="${escapeAttr(correctText)}" placeholder="Example: 10" />
+              </div>
+              <div>
+                <label>Check Mode</label>
+                <select class="textMode">
+                  <option value="exact" ${mode==="exact"?"selected":""}>Exact (case-insensitive)</option>
+                  <option value="contains" ${mode==="contains"?"selected":""}>Contains</option>
+                  <option value="number_tolerance" ${mode==="number_tolerance"?"selected":""}>Number (tolerance)</option>
+                </select>
+                <div class="tiny muted">Tolerance only applies for Number mode.</div>
+              </div>
+            </div>
+
+            <div class="grid2 tolRow ${mode==="number_tolerance"?"":"hide"}">
+              <div>
+                <label>Tolerance</label>
+                <input class="tolerance" type="number" step="0.0001" value="${escapeAttr(String(tol))}" />
+              </div>
+              <div class="tiny muted" style="padding-top:28px;">
+                Example: correct = 3.14, tolerance 0.01 accepts 3.13–3.15
+              </div>
+            </div>
+
+            <div style="margin-top:10px;">
+              <div class="tag">Preview</div>
+              <div class="previewBox prevQ"></div>
+              <div class="previewBox prevHint" style="margin-top:8px;"></div>
+              <div class="previewBox prevAns" style="margin-top:8px;"></div>
+            </div>
+          </div>
+        `;
+      }
+
+      const opts = Array.isArray(q?.options) ? q.options : ["","","",""];
+      const correctIndex = Number.isFinite(Number(q?.correctIndex)) ? Number(q.correctIndex) : 0;
+
+      return `
+        <div class="qcard" data-index="${i}" data-type="mcq">
+          <div class="qhead">
+            <div><b>Question ${i + 1}</b> <span class="tag">MCQ</span></div>
+            <button type="button" class="smallbtn removeBtn">Remove</button>
+          </div>
+
+          <label>Question Text (supports math)</label>
+          <input class="qText" value="${escapeAttr(text)}" placeholder="Type your question here" />
+
+          <label>Hint (optional)</label>
+          <input class="qHint" value="${escapeAttr(hint)}" placeholder="Hint..." />
+
+          <label>Image URL (optional)</label>
+          <input class="qImage" value="${escapeAttr(imageUrl)}" placeholder="https://..." />
+
+          <div class="grid2">
+            <div><label>Option A</label><input class="optA" value="${escapeAttr(opts[0] || "")}" /></div>
+            <div><label>Option B</label><input class="optB" value="${escapeAttr(opts[1] || "")}" /></div>
+            <div><label>Option C</label><input class="optC" value="${escapeAttr(opts[2] || "")}" /></div>
+            <div><label>Option D</label><input class="optD" value="${escapeAttr(opts[3] || "")}" /></div>
+          </div>
+
+          <label>Correct Answer</label>
+          <select class="correct">
+            <option value="0" ${correctIndex===0?"selected":""}>A</option>
+            <option value="1" ${correctIndex===1?"selected":""}>B</option>
+            <option value="2" ${correctIndex===2?"selected":""}>C</option>
+            <option value="3" ${correctIndex===3?"selected":""}>D</option>
+          </select>
+
+          <div style="margin-top:10px;">
+            <div class="tag">Preview</div>
+            <div class="previewBox prevQ"></div>
+            <div class="previewBox prevHint" style="margin-top:8px;"></div>
+            <div class="previewBox prevOpts" style="margin-top:8px;"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function wireCardPreview(card){
+      const type = card.getAttribute("data-type");
+      const qText = cleanSpaces(card.querySelector(".qText")?.value || "");
+      const hint  = cleanSpaces(card.querySelector(".qHint")?.value || "");
+
+      const prevQ = card.querySelector(".prevQ");
+      const prevHint = card.querySelector(".prevHint");
+      if (prevQ) { prevQ.textContent = qText || "(Question preview)"; }
+      if (prevHint) { prevHint.textContent = hint ? ("Hint: " + hint) : "(Hint preview)"; }
+
+      if (type === "mcq"){
+        const A = cleanSpaces(card.querySelector(".optA")?.value || "");
+        const B = cleanSpaces(card.querySelector(".optB")?.value || "");
+        const C = cleanSpaces(card.querySelector(".optC")?.value || "");
+        const D = cleanSpaces(card.querySelector(".optD")?.value || "");
+        const prevOpts = card.querySelector(".prevOpts");
+        if (prevOpts){
+          prevOpts.textContent =
+            `A) ${A || "—"}\nB) ${B || "—"}\nC) ${C || "—"}\nD) ${D || "—"}`;
+        }
+      } else {
+        const ans = cleanSpaces(card.querySelector(".correctText")?.value || "");
+        const prevAns = card.querySelector(".prevAns");
+        if (prevAns) prevAns.textContent = ans ? ("Expected: " + ans) : "(Expected answer preview)";
+
+        const modeSel = card.querySelector(".textMode");
+        const tolRow = card.querySelector(".tolRow");
+        const tolInput = card.querySelector(".tolerance");
+        if (modeSel && tolRow && tolInput){
+          const showTol = modeSel.value === "number_tolerance";
+          tolRow.classList.toggle("hide", !showTol);
+          if (!showTol) tolInput.value = "";
+        }
+      }
+
+      // MathJax render in this card
+      typesetMath(card);
+    }
+
+    function wireAllCards(){
+      [...questionsWrap.querySelectorAll(".qcard")].forEach(card=>{
+        const watch = [
+          ".qText",".qHint",".qImage",
+          ".optA",".optB",".optC",".optD",
+          ".correct",".correctText",".textMode",".tolerance"
+        ];
+        watch.forEach(sel=>{
+          const el = card.querySelector(sel);
+          if (!el) return;
+          el.addEventListener("input", ()=>wireCardPreview(card));
+          el.addEventListener("change", ()=>wireCardPreview(card));
+        });
+        wireCardPreview(card);
+      });
     }
 
     function collectQuestions(){
@@ -558,55 +620,55 @@
 
       for (const card of cards) {
         const type = card.getAttribute("data-type") || "mcq";
-
-        const text = cleanSpaces(card.querySelector(".qText")?.value);
+        const text = cleanSpaces(card.querySelector(".qText")?.value || "");
         const hint = cleanSpaces(card.querySelector(".qHint")?.value || "");
         const imageUrl = cleanSpaces(card.querySelector(".qImage")?.value || "");
 
         if (!text) throw new Error("Please fill in all question texts.");
 
-        if (type === "text") {
-          const correctText = cleanSpaces(card.querySelector(".correctText")?.value);
-          const textAnswerMode = card.querySelector(".textMode")?.value || "exact";
-          const tolRaw = cleanSpaces(card.querySelector(".tolerance")?.value);
+        if (type === "text"){
+          const correctText = cleanSpaces(card.querySelector(".correctText")?.value || "");
+          const textAnswerMode = String(card.querySelector(".textMode")?.value || "exact");
+          const tolRaw = cleanSpaces(card.querySelector(".tolerance")?.value || "");
 
-          if (!correctText) throw new Error("Please enter the correct answer for every typed question.");
+          if (!correctText) throw new Error("Please enter correct answer for typed questions.");
 
           let numberTolerance = null;
-          if (textAnswerMode === "number_tolerance") {
+          if (textAnswerMode === "number_tolerance"){
             const tol = Number(tolRaw);
-            if (!Number.isFinite(tol) || tol < 0) throw new Error("Please enter a valid tolerance (0 or more).");
+            if (!Number.isFinite(tol) || tol < 0) throw new Error("Enter valid tolerance (0 or more).");
             numberTolerance = tol;
           }
 
           questions.push({
             type: "text",
             text,
-            hint: hint || "",
-            imageUrl: imageUrl || "",
+            hint,
+            imageUrl,
             correctText,
             textAnswerMode,
             numberTolerance
           });
-
-        } else {
-          const A = cleanSpaces(card.querySelector(".optA")?.value);
-          const B = cleanSpaces(card.querySelector(".optB")?.value);
-          const C = cleanSpaces(card.querySelector(".optC")?.value);
-          const D = cleanSpaces(card.querySelector(".optD")?.value);
-          const correctIndex = Number(card.querySelector(".correctIndex")?.value);
-
-          if (!A || !B || !C || !D) throw new Error("Please fill in all options A–D for every MCQ question.");
-
-          questions.push({
-            type: "mcq",
-            text,
-            hint: hint || "",
-            imageUrl: imageUrl || "",
-            options: [A, B, C, D],
-            correctIndex
-          });
+          continue;
         }
+
+        // MCQ
+        const A = cleanSpaces(card.querySelector(".optA")?.value || "");
+        const B = cleanSpaces(card.querySelector(".optB")?.value || "");
+        const C = cleanSpaces(card.querySelector(".optC")?.value || "");
+        const D = cleanSpaces(card.querySelector(".optD")?.value || "");
+        const correctIndex = Number(card.querySelector(".correct")?.value || 0);
+
+        if (!A || !B || !C || !D) throw new Error("Please fill in all options A–D.");
+
+        questions.push({
+          type: "mcq",
+          text,
+          hint,
+          imageUrl,
+          options: [A,B,C,D],
+          correctIndex
+        });
       }
 
       return questions;
@@ -616,23 +678,24 @@
       if (!currentQuiz) return;
       const i = questionsWrap.querySelectorAll(".qcard").length;
       questionsWrap.insertAdjacentHTML("beforeend",
-        mcqCardHtml(i, { type:"mcq", text:"", hint:"", imageUrl:"", options:["","","",""], correctIndex:0 })
+        questionCardHtml(i, { type:"mcq", text:"", hint:"", imageUrl:"", options:["","","",""], correctIndex:0 })
       );
+      wireAllCards();
     });
 
     addTextBtn.addEventListener("click", () => {
       if (!currentQuiz) return;
       const i = questionsWrap.querySelectorAll(".qcard").length;
       questionsWrap.insertAdjacentHTML("beforeend",
-        textCardHtml(i, { type:"text", text:"", hint:"", imageUrl:"", correctText:"", textAnswerMode:"exact", numberTolerance:null })
+        questionCardHtml(i, { type:"text", text:"", hint:"", imageUrl:"", correctText:"", textAnswerMode:"exact", numberTolerance:null })
       );
-      const last = [...questionsWrap.querySelectorAll(".qcard[data-type='text']")].pop();
-      if (last) wireTextMode(last);
+      wireAllCards();
     });
 
     questionsWrap.addEventListener("click", (e) => {
       if (e.target.classList.contains("removeBtn")) {
         e.target.closest(".qcard").remove();
+        wireAllCards();
       }
     });
 
@@ -673,26 +736,15 @@
         setMsg("Saving changes…", "muted");
         const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token
-          },
-          body: JSON.stringify({
-            grade,
-            topic,
-            title,
-            instructions,
-            timeLimitMinutes,
-            availableFrom,
-            availableUntil,
-            questions
-          })
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({ grade, topic, title, instructions, timeLimitMinutes, availableFrom, availableUntil, questions })
         });
 
-        const data = await res.json().catch(()=>({}));
-        if (!res.ok) return setMsg(data.message || "Could not save.", "error");
+        if (!res.ok){
+          return setMsg("Save failed: " + await readErrorText(res), "error");
+        }
 
-        currentQuiz = data;
+        currentQuiz = await res.json();
         setMsg("✅ Saved.", "ok");
 
         await loadAssessments();
@@ -706,31 +758,22 @@
       if (!currentQuiz) return;
 
       const nextFrozen = !currentQuiz.isFrozen;
-
-      const ok = confirm(nextFrozen
-        ? "Make this assessment unavailable? Learners will see it but cannot attempt."
-        : "Make this assessment available? Learners can attempt if schedule allows."
-      );
+      const ok = confirm(nextFrozen ? "Make this assessment unavailable?" : "Make this assessment available?");
       if (!ok) return;
 
       setMsg("Updating availability…", "muted");
 
       const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token
-        },
-        body: JSON.stringify({
-          isFrozen: nextFrozen,
-          frozenAt: nextFrozen ? new Date().toISOString() : null
-        })
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ isFrozen: nextFrozen, frozenAt: nextFrozen ? new Date().toISOString() : null })
       });
 
-      const data = await res.json().catch(()=>({}));
-      if (!res.ok) return setMsg(data.message || "Could not update availability.", "error");
+      if (!res.ok){
+        return setMsg("Availability update failed: " + await readErrorText(res), "error");
+      }
 
-      currentQuiz = data;
+      currentQuiz = await res.json();
       setAvailabilityUI(currentQuiz);
       setMsg(nextFrozen ? "✅ Set to unavailable." : "✅ Set to available.", "ok");
 
@@ -751,8 +794,9 @@
         headers: { Authorization: "Bearer " + token }
       });
 
-      const data = await res.json().catch(()=>({}));
-      if (!res.ok) return setMsg(data.message || "Could not delete.", "error");
+      if (!res.ok){
+        return setMsg("Delete failed: " + await readErrorText(res), "error");
+      }
 
       setMsg("✅ Deleted.", "ok");
       currentQuiz = null;
@@ -761,6 +805,7 @@
       topicEl.value = "";
       titleEl.value = "";
       instructionsEl.value = "";
+      renderInstructionsPreview();
       availableFromEl.value = "";
       availableUntilEl.value = "";
       timeLimitEl.value = "";
@@ -788,19 +833,14 @@
         freezePill.textContent = "—";
         freezePill.className = "pill";
         availabilityNote.textContent = "";
+        questionsWrap.innerHTML = "";
         return;
       }
       loadAssessmentById(id);
     });
 
-    gradeFilter.addEventListener("change", () => {
-      renderDropdown();
-      assessmentSelect.value = "";
-    });
-    searchBox.addEventListener("input", () => {
-      renderDropdown();
-      assessmentSelect.value = "";
-    });
+    gradeFilter.addEventListener("change", () => { renderDropdown(); assessmentSelect.value = ""; });
+    searchBox.addEventListener("input", () => { renderDropdown(); assessmentSelect.value = ""; });
 
     (async () => {
       const ok = await requireAdmin();
