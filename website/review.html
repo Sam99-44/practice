@@ -7,10 +7,22 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- ✅ MathJax (renders $x^2$, \frac{a}{b}, etc.) -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
   <style>
     :root{
+      --nav:#1b1648;
+      --red:#e11d2e;
+
       --bg:#f6f7fb;
       --card:#ffffff;
       --border:#e6e6e6;
@@ -18,60 +30,179 @@
       --muted:#475569;
       --accent:#0b3c5d;
       --accent-soft:#e7eef5;
+
       --radius:14px;
-      --shadow:0 6px 18px rgba(0,0,0,0.06);
+      --shadow:0 8px 22px rgba(0,0,0,0.06);
 
       --green:#16a34a;
-      --greenBg:#dcfce7;
-      --red:#dc2626;
-      --redBg:#fee2e2;
+      --greenBg:#ecfdf5;
+      --greenBd:#bbf7d0;
+
+      --red2:#dc2626;
+      --redBg:#fff1f2;
+      --redBd:#fecaca;
     }
+
     *{box-sizing:border-box}
     body{margin:0; font-family:Inter,Arial,sans-serif; background:var(--bg); color:var(--text);}
-    .wrap{max-width:1000px; margin:0 auto; padding:24px;}
-    .muted{color:var(--muted);}
-    .hidden{display:none;}
-    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);}
+    .muted{color:var(--muted)}
+    .hidden{display:none!important}
 
-    .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:12px; flex-wrap:wrap;}
-    .brand{display:flex; align-items:center; gap:10px;}
-    .logo{width:38px; height:38px; border-radius:10px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800;}
-    .nav{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
-    .nav a,.nav button{
-      text-decoration:none; font-size:14px;
-      padding:8px 12px; border-radius:10px;
-      border:none; cursor:pointer;
-      background:#fff; color:var(--text); border:1px solid #ddd;
-      font-weight:700;
+    header.topbar{
+      background:var(--nav);
+      color:#fff;
+      border-bottom:3px solid rgba(255,255,255,.08);
     }
-    .nav .primary{background:var(--accent); color:#fff; border:none;}
+    .topbar-inner{
+      max-width:1100px;
+      margin:0 auto;
+      padding:14px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:900;
+      text-decoration:none;
+      color:#fff;
+    }
+    .brandBadge{
+      width:38px;height:38px;
+      border-radius:12px;
+      display:grid;place-items:center;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.14);
+      font-weight:900;
+    }
+    .brandText{display:flex;flex-direction:column;line-height:1.1}
+    .brandText small{opacity:.85;font-weight:700}
 
-    h1{margin:0 0 4px 0; font-size:22px;}
-    .pillRow{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; align-items:center;}
+    nav.nav{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    nav.nav a{
+      padding:8px 10px;
+      border-radius:10px;
+      color:#e7e9ff;
+      font-weight:800;
+      font-size:13px;
+      text-decoration:none;
+    }
+    nav.nav a:hover{background:rgba(255,255,255,.10)}
+    .btnTop{
+      background:rgba(255,255,255,.12);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.18);
+      padding:8px 12px;
+      border-radius:12px;
+      font-weight:900;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .btnTop:hover{background:rgba(255,255,255,.18)}
+
+    .wrap{max-width:1100px; margin:0 auto; padding:18px;}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .cardHead{
+      padding:14px 14px 12px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(180deg,#f4f7ff,#eef4ff);
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    h1{margin:0; font-size:18px; letter-spacing:-0.01em}
+    .sub{margin:6px 0 0; font-size:13px; color:var(--muted)}
+
+    .pillRow{
+      padding:12px 14px 14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      border-bottom:1px solid var(--border);
+    }
     .pill{
-      display:inline-block;
-      padding:4px 10px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
       border-radius:999px;
       border:1px solid #cfe9ff;
       background:#eef7ff;
-      color:#0b3c5d;
+      color:var(--accent);
       font-size:12px;
-      font-weight:800;
+      font-weight:900;
       white-space:nowrap;
     }
-    .markspill{
-      display:inline-block;
-      padding:4px 10px;
+    .markPill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
       border-radius:999px;
-      border:1px solid #e6e6e6;
+      border:1px solid #e5e7eb;
       background:#f8fafc;
+      color:#334155;
       font-size:12px;
       font-weight:900;
       white-space:nowrap;
     }
 
-    .qBox{margin-top:14px; padding-top:14px; border-top:1px solid #eee;}
-    .qTitle{font-weight:800; margin:0 0 10px 0; font-size:16px; line-height:1.35;}
+    .content{padding:14px;}
+
+    .controlsRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .jumpGroup{display:flex; flex-direction:column; gap:6px;}
+    .jumpLabel{font-size:12px; font-weight:900; color:var(--muted);}
+    select{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid #ddd;
+      background:#fff;
+      min-width:240px;
+      font-size:14px;
+      outline:none;
+      font-weight:700;
+    }
+
+    .qBox{
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:14px;
+      background:#fff;
+    }
+
+    .qTitle{
+      font-weight:900;
+      margin:0 0 10px 0;
+      font-size:16px;
+      line-height:1.35;
+      word-break:break-word;
+    }
+
     .hint{
       margin-top:10px;
       padding:10px 12px;
@@ -80,25 +211,24 @@
       border:1px solid #cfe9ff;
       color:#0b3c5d;
       font-size:13px;
-      font-weight:600;
+      font-weight:700;
     }
 
-    /* MCQ options */
     .opt{
       display:block;
-      padding:10px;
+      padding:10px 12px;
       border:1px solid #ddd;
-      border-radius:10px;
+      border-radius:12px;
       margin-bottom:8px;
       background:#fff;
       line-height:1.35;
       word-break:break-word;
+      font-weight:600;
     }
-    .opt.correct{ border-color:var(--green); background:var(--greenBg); }
-    .opt.wrong{ border-color:var(--red); background:var(--redBg); }
+    .opt.correct{ border-color:var(--greenBd); background:var(--greenBg); }
+    .opt.wrong{ border-color:var(--redBd); background:var(--redBg); }
     .opt input{margin-right:10px;}
 
-    /* Typed answer cards */
     .answerGrid{
       display:grid;
       grid-template-columns:1fr 1fr;
@@ -107,14 +237,14 @@
     }
     .answerCard{
       border:1px solid #e6e6e6;
-      border-radius:12px;
+      border-radius:14px;
       padding:12px;
       background:#fff;
       min-width:0;
     }
     .answerCard .label{
       font-size:12px;
-      font-weight:800;
+      font-weight:900;
       color:var(--muted);
       text-transform:uppercase;
       letter-spacing:.04em;
@@ -124,27 +254,16 @@
       font-weight:800;
       word-break:break-word;
     }
-    .answerCard.good{border-color:var(--green); background:var(--greenBg);}
-    .answerCard.bad{border-color:var(--red); background:var(--redBg);}
+    .answerCard.good{border-color:var(--greenBd); background:var(--greenBg);}
+    .answerCard.bad{border-color:var(--redBd); background:var(--redBg);}
 
-    .controlsRow{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-end;
-      gap:12px;
-      flex-wrap:wrap;
+    .onlyCorrect{
       margin-top:12px;
-      margin-bottom:10px;
-    }
-    .jumpGroup{display:flex; flex-direction:column; gap:6px;}
-    select{
-      padding:10px;
-      border-radius:10px;
-      border:1px solid #ddd;
-      background:#fff;
-      min-width:220px;
-      font-size:14px;
-      outline:none;
+      padding-top:12px;
+      border-top:1px solid #eee;
+      font-weight:900;
+      line-height:1.35;
+      word-break:break-word;
     }
 
     .footerRow{
@@ -153,26 +272,20 @@
       align-items:center;
       gap:10px;
       flex-wrap:wrap;
-      margin-top:14px;
+      margin-top:12px;
     }
     .btn2{
       background:#fff;
       border:1px solid #ddd;
       padding:10px 14px;
-      border-radius:10px;
+      border-radius:12px;
       cursor:pointer;
-      font-weight:800;
-    }
-    .btn2:disabled{opacity:.6; cursor:not-allowed;}
-
-    .onlyCorrect{
-      margin-top:14px;
-      padding-top:14px;
-      border-top:1px solid #eee;
       font-weight:900;
-      line-height:1.35;
-      word-break:break-word;
+      font-size:13px;
+      white-space:nowrap;
     }
+    .btn2:hover{background:#f8fafc}
+    .btn2:disabled{opacity:.6; cursor:not-allowed;}
 
     .errorBox{
       margin-top:12px;
@@ -180,10 +293,12 @@
       border:1px dashed #ddd;
       border-radius:12px;
       background:#fafafa;
+      color:#334155;
+      font-weight:700;
     }
 
     @media (max-width:700px){
-      .wrap{padding:16px;}
+      .wrap{padding:14px;}
       select{min-width:100%;}
       .answerGrid{grid-template-columns:1fr;}
       .footerRow{justify-content:flex-start;}
@@ -197,63 +312,71 @@
 </head>
 
 <body>
-<div class="wrap">
 
-  <div class="topbar">
-    <div class="brand">
-      <div class="logo">PO</div>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="index.html" class="brand">
+      <div class="brandBadge">PO</div>
+      <div class="brandText">
+        <div>Practice Online</div>
+        <small>Review Attempt</small>
+      </div>
+    </a>
+
+    <nav class="nav">
+      <a href="results.html">Back to Results</a>
+      <button class="btnTop" id="logoutBtn" type="button">Logout</button>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <div class="cardHead">
       <div>
-        <strong>Practice Online</strong>
-        <div class="muted" id="welcomeSub">Review Attempt</div>
+        <h1 id="title">Loading…</h1>
+        <p class="sub" id="subtitle"></p>
       </div>
     </div>
-
-    <div class="nav">
-      <a href="results.html">Back to Results</a>
-      <button class="primary" id="logoutBtn" type="button">Logout</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <h1 id="title">Loading…</h1>
-    <div class="muted" id="subtitle"></div>
 
     <div class="pillRow">
       <span class="pill" id="gradePill">Grade -</span>
       <span class="pill" id="topicPill">Topic -</span>
-      <span class="markspill" id="marksPill">Marks: -</span>
+      <span class="markPill" id="marksPill">Mark: -</span>
     </div>
 
-    <div class="qBox">
-      <div class="controlsRow">
-        <div class="muted" id="qCounter"></div>
+    <div class="content">
+      <div class="qBox">
+        <div class="controlsRow">
+          <div class="muted" id="qCounter"></div>
 
-        <div class="jumpGroup">
-          <label class="muted" style="font-size:12px;">Jump to question</label>
-          <select id="jumpSelect"></select>
+          <div class="jumpGroup">
+            <div class="jumpLabel">Jump to question</div>
+            <select id="jumpSelect"></select>
+          </div>
         </div>
-      </div>
 
-      <p class="qTitle" id="qText"></p>
+        <p class="qTitle" id="qText"></p>
 
-      <div id="hintBox" class="hint hidden"></div>
+        <div id="hintBox" class="hint hidden"></div>
 
-      <div id="body"></div>
+        <div id="body"></div>
 
-      <div class="onlyCorrect" id="onlyCorrect"></div>
+        <div class="onlyCorrect" id="onlyCorrect"></div>
 
-      <div class="footerRow">
-        <button class="btn2" id="prevBtn" type="button">Previous</button>
-        <button class="btn2" id="nextBtn" type="button">Next</button>
+        <div class="footerRow">
+          <button class="btn2" id="prevBtn" type="button">Previous</button>
+          <button class="btn2" id="nextBtn" type="button">Next</button>
+        </div>
+
+        <div id="err" class="errorBox" style="display:none;"></div>
       </div>
     </div>
-
-    <div id="err" class="errorBox" style="display:none;"></div>
   </div>
 </div>
 
 <script>
-  const API = window.API || "https://practice-backend-msgn.onrender.com";
+  const API = window.API || "https://api.practiceonline.co.za";
   const token = localStorage.getItem("token");
   const resultId = new URLSearchParams(window.location.search).get("resultId");
 
@@ -282,6 +405,13 @@
     localStorage.removeItem("username");
     window.location.href = "login.html";
   };
+
+  // ✅ MathJax typeset helper
+  function typesetMath(root=document){
+    if (window.MathJax?.typesetPromise) {
+      window.MathJax.typesetPromise([root]).catch(()=>{});
+    }
+  }
 
   if (!resultId) {
     showErr("Missing resultId in the URL.");
@@ -324,7 +454,10 @@
 
       const pct = Number(r.percent);
       const safePct = Number.isFinite(pct) ? pct : 0;
-      marksPill.textContent = `Marks: ${safePct}%`;
+      marksPill.textContent = `Mark: ${safePct}%`;
+
+      // ✅ typeset header pills/title too (optional)
+      typesetMath(document.querySelector(".card"));
 
       answers = Array.isArray(r.answers) ? r.answers : [];
       if (answers.length === 0) {
@@ -332,11 +465,9 @@
         return;
       }
 
-      jumpSelect.innerHTML = answers.map((a, i) => {
-        const type = String(a.type || "mcq").toLowerCase();
-        const tag = type === "text" ? "" : "";
-        return `<option value="${i}">Question ${i + 1}${tag}</option>`;
-      }).join("");
+      jumpSelect.innerHTML = answers.map((a, i) =>
+        `<option value="${i}">Question ${i + 1}</option>`
+      ).join("");
 
       jumpSelect.addEventListener("change", () => {
         const v = Number(jumpSelect.value);
@@ -361,6 +492,8 @@
 
     qCounter.textContent = `Question ${idx + 1} of ${answers.length}`;
     jumpSelect.value = String(idx);
+
+    // ✅ Keep as textContent (safe) - MathJax can still parse $...$
     qText.textContent = cleanSpaces(a.questionText || "");
 
     // Hint
@@ -375,9 +508,9 @@
 
     body.innerHTML = "";
     onlyCorrect.textContent = "";
+    err.style.display = "none";
 
     if (type === "text") {
-      // ✅ support both possible field names
       const userAns = cleanSpaces(a.textAnswer || a.chosenText || "");
       const correctAns = cleanSpaces(a.correctText || "");
       const isCorrect = !!a.isCorrect;
@@ -397,9 +530,7 @@
       `;
 
       onlyCorrect.textContent = `Result: ${isCorrect ? "Correct" : "Incorrect"}`;
-
     } else {
-      // MCQ
       const options = Array.isArray(a.options) ? a.options : [];
       const chosen = Number(a.chosenIndex);
       const correct = Number(a.correctIndex);
@@ -426,6 +557,12 @@
 
     prevBtn.disabled = idx === 0;
     nextBtn.disabled = idx === answers.length - 1;
+
+    // ✅ IMPORTANT: render math after content updates
+    typesetMath(qText);
+    if (!hintBox.classList.contains("hidden")) typesetMath(hintBox);
+    typesetMath(body);
+    typesetMath(onlyCorrect);
   }
 
   prevBtn.addEventListener("click", () => {
