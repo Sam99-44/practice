@@ -7,65 +7,269 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
+      --nav:#1b1648;
+      --red:#e11d2e;
+
       --bg:#f6f7fb;
       --card:#ffffff;
       --border:#e6e6e6;
       --text:#0f172a;
       --muted:#475569;
+
       --accent:#0b3c5d;
       --accent-soft:#e7eef5;
+
       --radius:14px;
-      --shadow:0 6px 18px rgba(0,0,0,0.06);
+      --shadow:0 8px 22px rgba(0,0,0,0.06);
+
       --error:#b91c1c;
+
+      --pillBg:#eef7ff;
+      --pillBd:#cfe9ff;
+
+      --tile:#f8fafc;
+      --tileHover:#eef7ff;
     }
 
     *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text);}
-    .wrap{max-width:1000px;margin:0 auto;padding:24px;}
+    body{
+      margin:0;
+      font-family:Inter,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
 
-    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:12px;}
-    .brand{display:flex;align-items:center;gap:10px;}
-    .logo{width:38px;height:38px;border-radius:10px;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;}
-    .brand span{font-size:13px;color:var(--muted);}
+    /* ---------- SHARED HEADER (matches attempt/results look) ---------- */
+    header.topbar{
+      background:var(--nav);
+      color:#fff;
+      border-bottom:3px solid rgba(255,255,255,.08);
+    }
+    .topbar-inner{
+      max-width:1100px;
+      margin:0 auto;
+      padding:14px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:900;
+      text-decoration:none;
+      color:#fff;
+    }
+    .brandBadge{
+      width:38px;height:38px;
+      border-radius:12px;
+      display:grid;place-items:center;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.14);
+      font-weight:900;
+    }
+    .brandText{display:flex;flex-direction:column;line-height:1.1}
+    .brandText small{opacity:.85;font-weight:700}
+    nav.nav{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    nav.nav a{
+      padding:8px 10px;
+      border-radius:10px;
+      color:#e7e9ff;
+      font-weight:800;
+      font-size:13px;
+      text-decoration:none;
+    }
+    nav.nav a:hover{background:rgba(255,255,255,.10)}
+    nav.nav a.active{
+      color:#fff;
+      border-bottom:3px solid var(--red);
+      border-radius:10px 10px 8px 8px;
+      padding-bottom:5px;
+    }
+    .btnTop{
+      background:rgba(255,255,255,.12);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.18);
+      padding:8px 12px;
+      border-radius:12px;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .btnTop:hover{background:rgba(255,255,255,.18)}
 
-    .nav{display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
-    .nav a{text-decoration:none;color:var(--text);padding:6px 8px;border-radius:8px;}
-    .nav a.active{font-weight:600;color:var(--accent);}
-    .nav a:hover{background:var(--accent-soft);}
-    .nav .logout{background:var(--accent);color:white;border:none;padding:8px 12px;border-radius:10px;cursor:pointer;}
+    /* ---------- PAGE ---------- */
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding:18px;
+    }
 
-    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);}
-    h1{margin:0;font-size:20px;}
-    .muted{color:var(--muted);}
-    .error{color:var(--error);}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
 
-    input{padding:10px;border-radius:10px;border:1px solid #ddd;min-width:220px;}
-    .controls{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;align-items:center;}
-    .btn2{background:#fff;border:1px solid #ddd;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:600;}
-    .btn2:disabled{opacity:.6;cursor:not-allowed;}
+    .cardHead{
+      padding:14px 14px 12px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(180deg,#f4f7ff,#eef4ff);
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
+    }
 
-    .topic-wrap{margin-top:16px;display:flex;flex-direction:column;gap:14px;}
-    .topic-card{border:1px solid var(--border);border-radius:14px;padding:14px;background:#fff;}
-    .topic-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
-    .topic-title{font-size:16px;font-weight:800;color:var(--accent);}
-    .toggle{border:1px solid #ddd;background:#fff;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:700;}
-    .toggle:hover{background:var(--accent-soft);}
+    h1{margin:0;font-size:18px;letter-spacing:-0.01em}
+    .muted{color:var(--muted)}
+    .error{color:var(--error)}
 
-    .quiz-squares{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+    .controls{
+      padding:12px 14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .searchWrap{
+      flex:1;
+      min-width:240px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    input{
+      width:100%;
+      max-width:520px;
+      padding:11px 12px;
+      border-radius:12px;
+      border:1px solid #ddd;
+      outline:none;
+      font-weight:600;
+      background:#fff;
+    }
+    input:focus{
+      border-color:#cfe9ff;
+      box-shadow:0 0 0 4px rgba(207,233,255,.65);
+    }
+
+    .btn2{
+      background:#fff;
+      border:1px solid #ddd;
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:800;
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .btn2:hover{background:#f8fafc}
+    .btn2:disabled{opacity:.6;cursor:not-allowed}
+
+    .statusBar{
+      padding:0 14px 12px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--pillBd);
+      background:var(--pillBg);
+      color:var(--accent);
+      font-size:12px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+
+    .topic-wrap{
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .topic-card{
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:12px;
+      background:#fff;
+    }
+
+    .topic-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .topic-title{
+      font-size:15px;
+      font-weight:900;
+      color:var(--accent);
+    }
+
+    .toggle{
+      border:1px solid #ddd;
+      background:#fff;
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:900;
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .toggle:hover{background:var(--accent-soft)}
+
+    .quiz-squares{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+
     .quiz-square{
-      width:64px;height:64px;border-radius:14px;border:1px solid var(--border);
-      background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;
-      cursor:pointer;font-weight:800;position:relative;
-      transition:transform .08s, background .2s, border-color .2s;
+      width:66px;
+      height:66px;
+      border-radius:16px;
+      border:1px solid var(--border);
+      background:var(--tile);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      font-weight:900;
+      position:relative;
+      transition:.12s;
       user-select:none;
     }
-    .quiz-square:hover{background:#eef7ff;transform:translateY(-1px);border-color:#cfe9ff;}
-
-    /* Completed */
+    .quiz-square:hover{background:var(--tileHover);transform:translateY(-1px)}
     .quiz-square.done{
       border-color:#86efac;
       background:#f0fdf4;
@@ -73,40 +277,36 @@
     .quiz-square.done::after{
       content:"✓";
       position:absolute;
-      top:6px;
+      top:8px;
       right:10px;
       font-size:14px;
       font-weight:900;
       color:#166534;
     }
-
-    /* Unavailable */
     .quiz-square.unavailable{
       cursor:not-allowed;
-      opacity:.75;
-      background:#f8fafc;
-      border-color:#e5e7eb;
-    }
-    .quiz-square.unavailable:hover{
-      background:#f8fafc;
-      border-color:#e5e7eb;
+      opacity:.7;
     }
 
-    .quiz-square .status{
+    .status{
       font-size:10px;
-      font-weight:800;
+      font-weight:900;
       margin-top:4px;
       color:#64748b;
+      text-transform:uppercase;
+      letter-spacing:.4px;
     }
-    .quiz-square.unavailable .status{
-      color:#b45309;
-    }
+    .quiz-square.unavailable .status{color:#b45309}
 
-    .hidden{display:none!important;}
+    .hidden{display:none!important}
 
-    @media (max-width:700px){
-      .wrap{padding:16px;}
-      input{min-width:100%;}
+    @media(max-width:700px){
+      .wrap{padding:14px}
+      input{max-width:100%}
+      .quiz-square{width:64px;height:64px}
+      .cardHead{padding:12px}
+      .controls{padding:12px}
+      .topic-wrap{padding:12px}
     }
   </style>
 
@@ -117,246 +317,323 @@
 </head>
 
 <body>
-<div class="wrap">
 
-  <div class="topbar">
-    <div class="brand">
-      <div class="logo">PO</div>
-      <div>
-        <strong>Practice Online</strong>
-        <span id="welcomeSub"></span>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="index.html" class="brand">
+      <div class="brandBadge">PO</div>
+      <div class="brandText">
+        <div>Practice Online</div>
+        <small>Practice</small>
       </div>
-    </div>
+    </a>
 
     <nav class="nav">
-      <a class="active" href="learner-quizzes.html">Practice</a>
+      <a href="learner-quizzes.html" class="active">Practice</a>
       <a href="results.html">Results</a>
       <a href="about.html">About</a>
-      <!-- ✅ Hidden by default, shown only for admin -->
       <a href="admin-quiz.html" data-admin style="display:none;">Admin</a>
-      <button class="logout" id="logoutBtn">Logout</button>
+      <button class="btnTop" id="logoutBtn" type="button">Logout</button>
     </nav>
   </div>
+</header>
 
+<div class="wrap">
   <div class="card">
-    <h1 id="pageTitle">Practice</h1>
-    <p class="muted" id="pageSub">Loading your grade…</p>
-
-    <div class="controls">
-      <input id="topicSearch" placeholder="Search topic…" disabled />
-      <button class="btn2" id="expandAllBtn" disabled type="button">Expand all</button>
-      <button class="btn2" id="collapseAllBtn" disabled type="button">Collapse all</button>
+    <div class="cardHead">
+      <div>
+        <h1 id="pageTitle">Practice</h1>
+        <p class="muted" id="pageSub" style="margin:6px 0 0;">Loading your grade…</p>
+      </div>
+      <div class="pill" id="loadedPill" style="display:none;">Loaded 0 assessments</div>
     </div>
 
-    <p id="status" class="muted"></p>
-    <div id="quizList"></div>
-  </div>
+    <div class="controls">
+      <div class="searchWrap">
+        <input id="topicSearch" placeholder="Search topic or assessment title…" disabled />
+      </div>
+      <button class="btn2" id="expandAllBtn" disabled>Expand all</button>
+      <button class="btn2" id="collapseAllBtn" disabled>Collapse all</button>
+    </div>
 
+    <div class="statusBar">
+      <p id="status" class="muted" style="margin:0;"></p>
+    </div>
+
+    <div id="quizList" class="topic-wrap"></div>
+  </div>
 </div>
 
 <script>
-  const API = "https://practice-backend-msgn.onrender.com";
+  // ✅ Use global API from nav.js if available, else fallback
+  const API = window.API || "https://api.practiceonline.co.za";
   const token = localStorage.getItem("token");
 
-  document.getElementById("welcomeSub").textContent =
-    "Welcome, " + (localStorage.getItem("username") || "Learner");
+  const pageSub = document.getElementById("pageSub");
+  const statusEl = document.getElementById("status");
+  const quizList = document.getElementById("quizList");
+
+  const topicSearch = document.getElementById("topicSearch");
+  const expandAllBtn = document.getElementById("expandAllBtn");
+  const collapseAllBtn = document.getElementById("collapseAllBtn");
+  const loadedPill = document.getElementById("loadedPill");
+
+  // ✅ read query params from homepage: learner-quizzes.html?search=...&filter=...
+  const params = new URLSearchParams(window.location.search);
+  const qpSearch = cleanSpaces(params.get("search") || "");
+  const qpFilter = cleanSpaces(params.get("filter") || ""); // 89 | 1012 | rev
 
   document.getElementById("logoutBtn").onclick = () => {
     localStorage.clear();
     window.location.href = "login.html";
   };
 
-  const quizList = document.getElementById("quizList");
-  const status = document.getElementById("status");
-  const topicSearch = document.getElementById("topicSearch");
-  const expandAllBtn = document.getElementById("expandAllBtn");
-  const collapseAllBtn = document.getElementById("collapseAllBtn");
-  const pageTitle = document.getElementById("pageTitle");
-  const pageSub = document.getElementById("pageSub");
-
-  let topicOpen = {};
-  let cachedByTopic = null;
-  let cachedTopics = [];
-  let completedSet = new Set();
-  let myGrade = null;
-
-  topicSearch.addEventListener("input", () => filterTopics(topicSearch.value));
-  expandAllBtn.addEventListener("click", () => toggleAll(true));
-  collapseAllBtn.addEventListener("click", () => toggleAll(false));
-
-  init();
-
-  async function init(){
-    if (!token) return window.location.href = "login.html";
-
-    // ✅ Hide/show Admin tab based on role
-    await setupAdminTab();
-
-    // Get learner grade from /me
-    const meRes = await fetch(`${API}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    if (meRes.status === 401) {
-      localStorage.clear();
-      return window.location.href = "login.html";
-    }
-
-    const me = await meRes.json().catch(()=>null);
-    if (!meRes.ok || !me) {
-      pageSub.className = "error";
-      pageSub.textContent = "Could not load your profile. Please login again.";
-      return;
-    }
-
-    myGrade = me.grade;
-
-    // Update heading
-    pageTitle.textContent = `Grade ${myGrade} Practice`;
-    pageSub.textContent = "Good luck with your Assessments.";
-
-    // Load quizzes
-    await loadQuizzes();
-  }
-
-  async function setupAdminTab(){
-    const adminEls = document.querySelectorAll("[data-admin]");
-    adminEls.forEach(el => el.style.display = "none"); // hide by default
-
-    try{
-      const res = await fetch(`${API}/api/auth/me`, {
-        headers: { Authorization: "Bearer " + token }
-      });
-      const me = await res.json().catch(()=>null);
-      if (res.ok && me && me.role === "admin") {
-        adminEls.forEach(el => el.style.display = "");
-      }
-    } catch {
-      // keep hidden
-    }
-  }
-
-  async function loadCompletedResults(){
-    try{
-      const res = await fetch(`${API}/api/results/my`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) return;
-
-      const results = await res.json();
-      completedSet = new Set(results.map(r => r.quizId).filter(Boolean));
-    } catch {}
-  }
-
-  async function loadQuizzes(){
-    status.textContent = "Loading assessments...";
-    quizList.innerHTML = "";
-
-    await loadCompletedResults();
-
-    const res = await fetch(`${API}/api/quizzes`, {
-      headers:{ Authorization:`Bearer ${token}` }
-    });
-
-    const quizzes = await res.json().catch(()=>[]);
-    if (!Array.isArray(quizzes) || quizzes.length === 0){
-      status.textContent = "No assessments found for your grade.";
-      topicSearch.disabled = true;
-      expandAllBtn.disabled = true;
-      collapseAllBtn.disabled = true;
-      return;
-    }
-
-    const byTopic = {};
-    quizzes.forEach(q=>{
-      const t = q.topic || "General";
-      (byTopic[t] ||= []).push(q);
-      if (topicOpen[t] === undefined) topicOpen[t] = false;
-    });
-
-    cachedTopics = Object.keys(byTopic).sort();
-    cachedByTopic = byTopic;
-
-    render();
-    topicSearch.disabled = false;
-    expandAllBtn.disabled = false;
-    collapseAllBtn.disabled = false;
-    status.textContent = "";
-  }
-
-  function render(){
-    quizList.innerHTML = `
-      <div class="topic-wrap">
-        ${cachedTopics.map(t=>{
-          const list = cachedByTopic[t];
-          const open = topicOpen[t];
-
-          return `
-            <div class="topic-card" data-topic="${escapeAttr(t)}">
-              <div class="topic-head">
-                <div class="topic-title">${escapeHtml(t)}</div>
-                <button class="toggle" data-toggle="${escapeAttr(t)}">
-                  ${open ? "Collapse" : "Expand"}
-                </button>
-              </div>
-
-              <div class="quiz-squares ${open ? "" : "hidden"}">
-                ${list.map((q,i)=>{
-                  const unavailable = !!q.isFrozen;
-                  const done = completedSet.has(q._id);
-                  return `
-                    <div class="quiz-square ${done ? "done" : ""} ${unavailable ? "unavailable" : ""}"
-                      data-id="${q._id}" data-unavailable="${unavailable}">
-                      ${i+1}
-                      <div class="status">${unavailable ? "Unavailable" : "Available"}</div>
-                    </div>
-                  `;
-                }).join("")}
-              </div>
-            </div>
-          `;
-        }).join("")}
-      </div>
-    `;
-
-    document.querySelectorAll(".quiz-square").forEach(sq=>{
-      sq.onclick = () => {
-        if (sq.dataset.unavailable === "true") return;
-        window.location.href = `attempt.html?quizId=${sq.dataset.id}`;
-      };
-    });
-
-    document.querySelectorAll("[data-toggle]").forEach(btn=>{
-      btn.onclick = ()=>{
-        const t = btn.dataset.toggle;
-        topicOpen[t] = !topicOpen[t];
-        render();
-      };
-    });
-  }
-
-  function toggleAll(open){
-    cachedTopics.forEach(t => topicOpen[t] = open);
-    render();
-  }
-
-  function filterTopics(q){
-    q = String(q || "").toLowerCase();
-    document.querySelectorAll(".topic-card").forEach(card=>{
-      card.classList.toggle("hidden", !card.dataset.topic.toLowerCase().includes(q));
-    });
-  }
-
   function escapeHtml(str){
-    return String(str)
+    return String(str ?? "")
       .replaceAll("&","&amp;")
       .replaceAll("<","&lt;")
       .replaceAll(">","&gt;")
       .replaceAll('"',"&quot;")
       .replaceAll("'","&#039;");
   }
-  function escapeAttr(str){
-    return String(str).replaceAll('"',"&quot;");
+
+  function cleanSpaces(s){
+    return String(s || "").trim().replace(/\s+/g, " ");
+  }
+
+  function isUnavailableBySchedule(quiz){
+    const now = new Date();
+
+    if (quiz?.isFrozen) return true;
+
+    if (quiz?.availableFrom){
+      const from = new Date(quiz.availableFrom);
+      if (!isNaN(from.getTime()) && now < from) return true;
+    }
+
+    if (quiz?.availableUntil){
+      const until = new Date(quiz.availableUntil);
+      if (!isNaN(until.getTime()) && now > until) return true;
+    }
+
+    return false;
+  }
+
+  function goToAttempt(quizId){
+    window.location.href = `attempt.html?quizId=${encodeURIComponent(quizId)}`;
+  }
+
+  function gradeMatchesFilter(grade, filter){
+    const g = Number(grade);
+    if (!Number.isFinite(g)) return true;
+
+    if (filter === "89") return g === 8 || g === 9;
+    if (filter === "1012") return g >= 10 && g <= 12;
+    return true; // rev or empty -> no grade filter
+  }
+
+  function applySearchAndFilter(){
+    const q = topicSearch.value.trim().toLowerCase();
+
+    let shownTopics = 0;
+    document.querySelectorAll("[data-topic-card]").forEach(card => {
+      const index = (card.getAttribute("data-search-index") || "");
+      const show = (!q || index.includes(q));
+      card.style.display = show ? "" : "none";
+      if (show) shownTopics++;
+    });
+
+    // Small, clean feedback for users
+    if (q) {
+      statusEl.textContent = `Showing topics matching “${q}”.`;
+    }
+  }
+
+  /* 🔒 Admin tab control + load data */
+  (async ()=>{
+    const adminEls = document.querySelectorAll("[data-admin]");
+    adminEls.forEach(el=>el.style.display="none");
+
+    try{
+      statusEl.textContent = "Loading…";
+
+      // 1) Me
+      const meRes = await fetch(`${API}/api/auth/me`,{
+        headers:{Authorization:`Bearer ${token}`}
+      });
+
+      const me = await meRes.json().catch(()=>({}));
+      if(!meRes.ok){
+        localStorage.clear();
+        window.location.href = "login.html";
+        return;
+      }
+
+      const grade = me.grade;
+      pageSub.textContent = grade ? `Your grade: ${grade}` : "No grade found on your account.";
+
+      const isAdmin = me.role === "admin";
+      if(isAdmin){
+        adminEls.forEach(el=>el.style.display="");
+        pageSub.textContent = "Admin view (all grades)";
+      }
+
+      // 2) Results (to mark DONE)
+      const myResultsRes = await fetch(`${API}/api/results/my`,{
+        headers:{Authorization:`Bearer ${token}`}
+      });
+      const myResults = await myResultsRes.json().catch(()=>[]);
+      const doneSet = new Set((Array.isArray(myResults) ? myResults : []).map(r => String(r.quizId)));
+
+      // 3) Quizzes
+      const quizUrl = isAdmin ? `${API}/api/quizzes?all=1` : `${API}/api/quizzes`;
+
+      const qRes = await fetch(quizUrl,{
+        headers:{Authorization:`Bearer ${token}`}
+      });
+
+      const quizzes = await qRes.json().catch(()=>[]);
+      if(!qRes.ok){
+        statusEl.className = "error";
+        statusEl.textContent = "Failed to load quizzes.";
+        return;
+      }
+
+      // Apply grade filter from homepage (useful for admin view)
+      let list = Array.isArray(quizzes) ? quizzes : [];
+      if (qpFilter) list = list.filter(q => gradeMatchesFilter(q.grade, qpFilter));
+
+      // Apply search from homepage querystring
+      if (qpFilter === "rev" && !qpSearch) topicSearch.value = "revision";
+      else topicSearch.value = qpSearch;
+
+      if(list.length === 0){
+        statusEl.textContent = "No assessments found.";
+        loadedPill.style.display = "inline-flex";
+        loadedPill.textContent = "Loaded 0 assessments";
+        topicSearch.disabled = false;
+        expandAllBtn.disabled = false;
+        collapseAllBtn.disabled = false;
+        applySearchAndFilter();
+        return;
+      }
+
+      // Group by topic
+      const groups = {};
+      for(const quiz of list){
+        const topic = cleanSpaces(quiz.topic || "General");
+        if(!groups[topic]) groups[topic] = [];
+        groups[topic].push(quiz);
+      }
+
+      // Sort topics alphabetically
+      const topics = Object.keys(groups).sort((a,b)=>a.localeCompare(b));
+
+      // Render
+      renderTopics(topics, groups, doneSet);
+      hookControls(topics);
+
+      statusEl.textContent = `Loaded ${list.length} assessments.`;
+      loadedPill.style.display = "inline-flex";
+      loadedPill.textContent = `Loaded ${list.length} assessments`;
+
+      topicSearch.disabled = false;
+      expandAllBtn.disabled = false;
+      collapseAllBtn.disabled = false;
+
+      applySearchAndFilter();
+
+    }catch(e){
+      statusEl.className = "error";
+      statusEl.textContent = "Network error. Please refresh.";
+    }
+  })();
+
+  function renderTopics(topics, groups, doneSet){
+    quizList.innerHTML = topics.map((topic, idx)=>{
+      const quizzes = groups[topic] || [];
+      const topicId = `topic_${idx}`;
+
+      // Search index (topic + titles)
+      const titlesIndex = quizzes.map(q => cleanSpaces(q.title || "")).join(" ");
+      const searchIndex = `${topic} ${titlesIndex}`.toLowerCase();
+
+      const squares = quizzes.map((q, i)=>{
+        const id = String(q._id || "");
+        const done = doneSet.has(id);
+        const unavailable = isUnavailableBySchedule(q);
+
+        const cls = [
+          "quiz-square",
+          done ? "done" : "",
+          unavailable ? "unavailable" : ""
+        ].join(" ").trim();
+
+        const label = i + 1;
+        const status = unavailable ? "Unavailable" : (done ? "Done" : "Start");
+        const clickAttr = unavailable ? "" : `data-go="${escapeHtml(id)}"`;
+
+        return `
+          <div class="${cls}" ${clickAttr} title="${escapeHtml(cleanSpaces(q.title || "Assessment"))}">
+            <div>${label}</div>
+            <div class="status">${escapeHtml(status)}</div>
+          </div>
+        `;
+      }).join("");
+
+      return `
+        <div class="topic-card"
+             data-topic-card
+             data-search-index="${escapeHtml(searchIndex)}">
+          <div class="topic-head">
+            <div class="topic-title">${escapeHtml(topic)}</div>
+            <button class="toggle" type="button" data-toggle="${topicId}">Collapse</button>
+          </div>
+
+          <div class="quiz-squares" id="${topicId}">
+            ${squares}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    // Toggles
+    document.querySelectorAll("[data-toggle]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-toggle");
+        const box = document.getElementById(id);
+        const hidden = box.classList.toggle("hidden");
+        btn.textContent = hidden ? "Expand" : "Collapse";
+      });
+    });
+
+    // Quiz clicks
+    document.querySelectorAll("[data-go]").forEach(el=>{
+      el.addEventListener("click", ()=>{
+        const id = el.getAttribute("data-go");
+        goToAttempt(id);
+      });
+    });
+  }
+
+  function hookControls(topics){
+    expandAllBtn.onclick = ()=>{
+      topics.forEach((_, idx)=>{
+        const box = document.getElementById(`topic_${idx}`);
+        if(box) box.classList.remove("hidden");
+      });
+      document.querySelectorAll("[data-toggle]").forEach(b=>b.textContent="Collapse");
+    };
+
+    collapseAllBtn.onclick = ()=>{
+      topics.forEach((_, idx)=>{
+        const box = document.getElementById(`topic_${idx}`);
+        if(box) box.classList.add("hidden");
+      });
+      document.querySelectorAll("[data-toggle]").forEach(b=>b.textContent="Expand");
+    };
+
+    topicSearch.addEventListener("input", applySearchAndFilter);
   }
 </script>
 
