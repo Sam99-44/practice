@@ -1,11 +1,10 @@
-<!-- admin-quiz.html (FULL UPDATED - COPY & PASTE)
+<!-- admin-quiz.html (UPDATED - COPY & PASTE)
      ✅ MathJax enabled (LaTeX in questions/hints/options/instructions)
-     ✅ NEW: Instructions box (shown at top of assessment)
-     ✅ Live preview for: Instructions, Question Text, Hint, Options A–D, Expected Answer
-     ✅ Smaller question text on learner pages (you must add same CSS there if needed)
-     ✅ Safe: previews use textContent (no HTML injection)
-     ✅ Sends { instructions } to server.js POST /api/quizzes
-     ✅ NOTE: Use $...$ for inline math, e.g. $x^2$, $\frac{a}{b}$, $\sqrt{x}$
+     ✅ Instructions box (shown at top of assessment)
+     ✅ NEW: Note/Heading blocks you can insert BEFORE questions (or between questions)
+     ✅ Live preview for: Instructions, Note, Question Text, Hint, Options A–D, Expected Answer
+     ✅ Safe previews use textContent (no HTML injection)
+     ✅ Sends { instructions } + { questions including type:"note" } to server.js POST /api/quizzes
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -57,7 +56,7 @@
       border-radius:10px;
       padding:10px;
       margin-top:6px;
-      font-size:13px;            /* ✅ smaller preview text */
+      font-size:13px;
       line-height:1.35;
       white-space:pre-wrap;
     }
@@ -131,7 +130,7 @@
       </div>
     </div>
 
-    <!-- ✅ NEW: Instructions -->
+    <!-- ✅ Instructions -->
     <div class="infoBox">
       <b>Assessment Instructions (optional)</b>
       <textarea id="instructions" rows="3" placeholder="Example: Answer all questions. Use $x^2$ form for algebra answers. No calculators."></textarea>
@@ -157,6 +156,7 @@
       </div>
 
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="smallbtn" id="addNoteBtn" type="button">+ Add Note / Heading</button>
         <button class="smallbtn" id="addMcqBtn" type="button">+ Add MCQ</button>
         <button class="smallbtn" id="addTextBtn" type="button">+ Add Typed Answer</button>
       </div>
@@ -182,10 +182,10 @@
     const timeLimitEl = document.getElementById("timeLimit");
     const titleEl = document.getElementById("title");
 
-    // ✅ NEW
     const instructionsEl = document.getElementById("instructions");
     const prevInstructions = document.getElementById("prevInstructions");
 
+    const addNoteBtn = document.getElementById("addNoteBtn");
     const addMcqBtn = document.getElementById("addMcqBtn");
     const addTextBtn = document.getElementById("addTextBtn");
     const questionsWrap = document.getElementById("questionsWrap");
@@ -269,6 +269,28 @@
 
     // -------------------- Question cards --------------------
     let qCount = 0;
+
+    function noteCardHtml(id){
+      return `
+        <div class="qcard" data-type="note">
+          <div class="qhead">
+            <div>
+              <b>Block ${id}</b>
+              <span class="pill">NOTE / HEADING</span>
+            </div>
+            <button type="button" class="smallbtn removeBtn">Remove</button>
+          </div>
+
+          <label>Text (supports math)</label>
+          <textarea class="noteText" rows="3" placeholder="Example: Given below is the number set $\\{2,4,6,8\\}$..."></textarea>
+
+          <div class="previewRow">
+            <div class="prevTitle">Live Preview</div>
+            <div class="previewBox prevNote"></div>
+          </div>
+        </div>
+      `;
+    }
 
     function mcqCardHtml(id){
       return `
@@ -390,6 +412,12 @@
       `;
     }
 
+    function addNote(){
+      qCount += 1;
+      questionsWrap.insertAdjacentHTML("beforeend", noteCardHtml(qCount));
+      wireLastCard();
+    }
+
     function addMcq(){
       qCount += 1;
       questionsWrap.insertAdjacentHTML("beforeend", mcqCardHtml(qCount));
@@ -403,6 +431,7 @@
       wireLastCard();
     }
 
+    addNoteBtn.addEventListener("click", addNote);
     addMcqBtn.addEventListener("click", addMcq);
     addTextBtn.addEventListener("click", addText);
 
@@ -435,10 +464,15 @@
     function renderCardPreview(card){
       const type = card.getAttribute("data-type") || "mcq";
 
+      if (type === "note") {
+        const t = cleanSpaces(card.querySelector(".noteText")?.value || "");
+        setPreviewText(card.querySelector(".prevNote"), t || "(Note preview)");
+        return;
+      }
+
       const qText = cleanSpaces(card.querySelector(".qText")?.value || "");
       const hint  = cleanSpaces(card.querySelector(".qHint")?.value || "");
 
-      // common
       setPreviewText(card.querySelector(".prevQ"), qText || "(Question preview)");
       setPreviewText(card.querySelector(".prevHint"), hint || "(Hint preview)");
 
@@ -466,8 +500,8 @@
       const last = cards[cards.length - 1];
       if (!last) return;
 
-      // wire inputs for live preview
       const fields = [
+        ".noteText",
         ".qText", ".qHint",
         ".optA", ".optB", ".optC", ".optD",
         ".correctText"
@@ -478,7 +512,6 @@
         if (el) el.addEventListener("input", ()=>renderCardPreview(last));
       });
 
-      // initial preview
       renderCardPreview(last);
     }
 
@@ -493,8 +526,16 @@
 
       for (const card of cards) {
         const type = card.getAttribute("data-type") || "mcq";
-        const text = cleanSpaces(card.querySelector(".qText")?.value);
 
+        // ✅ NOTE block
+        if (type === "note") {
+          const noteText = cleanSpaces(card.querySelector(".noteText")?.value);
+          if (!noteText) throw new Error("Please fill in the note/heading text.");
+          questions.push({ type: "note", text: noteText });
+          continue;
+        }
+
+        const text = cleanSpaces(card.querySelector(".qText")?.value);
         const hint = cleanSpaces(card.querySelector(".qHint")?.value || "");
         const imageUrl =
           cleanSpaces(card.querySelector(".qImage")?.value || "") ||
