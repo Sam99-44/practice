@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Review Attempt | Practice Online</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- MathJax -->
   <script>
@@ -19,12 +21,26 @@
   <style>
     :root{
       --nav:#1b1648;
+      --red:#e11d2e;
+
       --bg:#f6f7fb;
       --card:#ffffff;
       --border:#e6e6e6;
       --text:#0f172a;
       --muted:#475569;
-      --accent:#0b3c5d;
+
+      --radius:14px;
+      --shadow:0 10px 28px rgba(2,6,23,.08);
+
+      --ok:#065f46;
+      --error:#b91c1c;
+
+      --soft:#eef2ff;
+      --focus:0 0 0 4px rgba(207,233,255,.65);
+
+      --noteBg:#f8fafc;
+      --noteBd:#e5e7eb;
+      --noteText:#0b3c5d;
 
       --greenBg:#ecfdf5;
       --greenBd:#bbf7d0;
@@ -34,92 +50,118 @@
     }
 
     *{box-sizing:border-box}
+
+    /* ✅ ONLY FONT WEIGHTS UPDATED (less bold, more consistent) */
     body{
       margin:0;
-      font-family:Inter,Arial,sans-serif;
+      font-family:Inter, Arial, sans-serif;
+      font-weight:500;
       background:var(--bg);
       color:var(--text);
     }
 
-    header{
+    a{color:inherit;text-decoration:none}
+    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    .muted{color:var(--muted); font-weight:500;}
+    .error{color:var(--error)}
+    .hidden{display:none!important}
+
+    header.topbar{
       background:var(--nav);
       color:#fff;
+      border-bottom:1px solid rgba(255,255,255,.10);
+    }
+    .topbar-inner{
+      max-width:1100px;
+      margin:0 auto;
       padding:14px 18px;
       display:flex;
-      justify-content:space-between;
       align-items:center;
+      justify-content:space-between;
       gap:12px;
       flex-wrap:wrap;
     }
 
-    header a{
+    .brand{display:flex;flex-direction:column;line-height:1.15}
+    .brand .name{font-weight:600; letter-spacing:.15px;}
+    .brand .sub{font-weight:500; opacity:.85; font-size:12px; margin-top:2px;}
+
+    nav.nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    nav.nav a{
+      padding:8px 10px;
+      border-radius:10px;
+      color:#e7e9ff;
+      font-weight:600;
+      font-size:13px;
+    }
+    nav.nav a:hover{background:rgba(255,255,255,.10)}
+    nav.nav a.active{
       color:#fff;
-      text-decoration:none;
-      font-weight:800;
+      border-bottom:3px solid var(--red);
+      border-radius:10px 10px 8px 8px;
+      padding-bottom:5px;
+      font-weight:600;
     }
 
-    .wrap{
-      max-width:1000px;
-      margin:20px auto;
-      padding:0 16px;
+    .btnTop{
+      background:transparent;
+      color:#fff;
+      border:1px solid rgba(255,255,255,.22);
+      padding:8px 12px;
+      border-radius:10px;
+      font-weight:600;
+      cursor:pointer;
     }
+    .btnTop:hover{background:rgba(255,255,255,.08)}
 
-    .card{
+    .section{
       background:var(--card);
       border:1px solid var(--border);
-      border-radius:14px;
-      padding:18px;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      margin-top:14px;
     }
-
-    .metaRow{
+    .sectionHead{
+      background:linear-gradient(180deg,#f4f7ff,#eef4ff);
+      border-bottom:1px solid var(--border);
+      padding:12px 14px;
       display:flex;
-      gap:10px;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
       flex-wrap:wrap;
-      margin-top:6px;
     }
-
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 12px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:900;
-      background:#eef7ff;
-      border:1px solid #cfe9ff;
-      color:var(--accent);
-      white-space:nowrap;
+    .sectionHead h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:-0.01em;
+      font-weight:600;
     }
+    .sectionBody{padding:14px}
 
-    .pill.marks{
-      background:#f8fafc;
-      border-color:#e5e7eb;
-      color:#334155;
-    }
-
-    .topLine{
+    .controls{
       display:flex;
       align-items:flex-end;
       justify-content:space-between;
       gap:12px;
       flex-wrap:wrap;
-      margin:14px 0 8px;
+      margin-bottom:10px;
     }
-
     .counter{
-      font-weight:900;
-      color:#334155;
+      font-weight:600;
+      color:#111827;
+      font-size:13px;
     }
-
     .jump{
       display:flex;
       flex-direction:column;
       gap:6px;
+      align-items:flex-end;
     }
     .jump label{
       font-size:12px;
-      font-weight:900;
+      font-weight:600;
       color:var(--muted);
     }
     select{
@@ -130,8 +172,9 @@
       min-width:240px;
       font-size:14px;
       outline:none;
-      font-weight:800;
+      font-weight:600;
     }
+    select:focus{box-shadow:var(--focus);border-color:#cfe9ff;}
 
     .qBox{
       border:1px solid var(--border);
@@ -140,32 +183,50 @@
       background:#fff;
     }
 
+    .qHead{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:10px;
+    }
     .qTitle{
-      font-weight:900;
-      margin:0 0 10px 0;
-      font-size:16px;
+      font-weight:600;
       line-height:1.35;
+      margin:0;
+      min-width:0;
+      flex:1 1 auto;
       word-break:break-word;
+      font-size:15px;
+    }
+    .qRight{
+      flex:0 0 auto;
+      white-space:nowrap;
+      font-weight:500;
+      font-size:12px;
+      color:var(--muted);
+      padding-top:2px;
     }
 
     .hint{
       margin-top:10px;
       padding:10px 12px;
       border-radius:12px;
-      background:#e7eef5;
+      background:var(--soft);
       border:1px solid #cfe9ff;
       color:#0b3c5d;
       font-size:13px;
-      font-weight:700;
+      font-weight:500;
     }
 
-    .noteBlock{
-      padding:14px;
-      border:1px solid #e6e6e6;
-      border-radius:12px;
-      background:#f8fafc;
-      font-weight:800;
-      line-height:1.4;
+    .noteBox{
+      border:1px solid var(--noteBd);
+      background:var(--noteBg);
+      border-radius:14px;
+      padding:12px 12px;
+      color:var(--noteText);
+      font-weight:600;
+      line-height:1.45;
       word-break:break-word;
     }
 
@@ -175,7 +236,7 @@
       border:1px solid #ddd;
       margin-bottom:8px;
       background:#fff;
-      font-weight:700;
+      font-weight:500;
       line-height:1.35;
       word-break:break-word;
     }
@@ -188,22 +249,21 @@
       gap:10px;
       margin-top:10px;
     }
-
     .answerCard{
       padding:12px;
       border-radius:12px;
       border:1px solid #e6e6e6;
-      font-weight:800;
+      font-weight:600;
       word-break:break-word;
       background:#fff;
     }
-
     .answerCard.good{ background:var(--greenBg); border-color:var(--greenBd); }
     .answerCard.bad{ background:var(--redBg); border-color:var(--redBd); }
 
     .resultInfo{
       margin-top:12px;
-      font-weight:900;
+      font-weight:600;
+      color:#111827;
     }
 
     .navBtns{
@@ -219,7 +279,7 @@
       border:1px solid #ddd;
       background:#fff;
       cursor:pointer;
-      font-weight:900;
+      font-weight:600;
       font-size:13px;
       white-space:nowrap;
     }
@@ -233,13 +293,16 @@
       border-radius:12px;
       background:#fafafa;
       color:#334155;
-      font-weight:800;
+      font-weight:600;
       display:none;
     }
 
     @media (max-width:700px){
       .answerGrid{grid-template-columns:1fr;}
       select{min-width:100%;}
+      .jump{align-items:flex-start;}
+      .qHead{flex-wrap:wrap;}
+      .qRight{padding-top:0}
     }
   </style>
 
@@ -251,45 +314,56 @@
 
 <body>
 
-<header>
-  <a href="results.html">Back to Results</a>
-  <button id="logoutBtn" type="button">Logout</button>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="name">Practice Online</div>
+      <div class="sub">Review Attempt</div>
+    </div>
+
+    <nav class="nav">
+      <a href="results.html" class="active">Back to Results</a>
+      <button class="btnTop" id="logoutBtn" type="button">Logout</button>
+    </nav>
+  </div>
 </header>
 
 <div class="wrap">
-  <div class="card">
-
-    <h2 id="title" style="margin:0;">Loading…</h2>
-    <div class="metaRow" id="meta"></div>
-
-    <div class="topLine">
-      <div class="counter" id="counter"></div>
-
-      <div class="jump">
-        <label for="jumpSelect">Jump</label>
-        <select id="jumpSelect"></select>
+  <div class="section">
+    <div class="sectionHead">
+      <div>
+        <h1 id="title">Loading…</h1>
+        <div class="muted" style="margin-top:6px;">Review your attempt question by question.</div>
       </div>
     </div>
 
-    <div class="qBox">
-      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
-        <span class="pill marks" id="qMarksPill" style="display:none;">Marks: -</span>
+    <div class="sectionBody">
+      <div class="controls">
+        <div class="counter" id="counter"></div>
+        <div class="jump">
+          <label for="jumpSelect"></label>
+          <select id="jumpSelect"></select>
+        </div>
       </div>
 
-      <h3 class="qTitle" id="qText"></h3>
+      <div class="qBox">
+        <div class="qHead">
+          <div class="qTitle" id="qText"></div>
+          <div class="qRight" id="qRight"></div>
+        </div>
 
-      <div id="hint" class="hint" style="display:none;"></div>
-      <div id="body"></div>
-      <div class="resultInfo" id="resultInfo"></div>
+        <div id="hint" class="hint" style="display:none;"></div>
+        <div id="body"></div>
+        <div class="resultInfo" id="resultInfo"></div>
 
-      <div class="navBtns">
-        <button id="prevBtn" type="button">Previous</button>
-        <button id="nextBtn" type="button">Next</button>
+        <div class="navBtns">
+          <button id="prevBtn" type="button">Previous</button>
+          <button id="nextBtn" type="button">Next</button>
+        </div>
+
+        <div id="err" class="errorBox"></div>
       </div>
-
-      <div id="err" class="errorBox"></div>
     </div>
-
   </div>
 </div>
 
@@ -299,15 +373,14 @@
   const resultId = new URLSearchParams(window.location.search).get("resultId");
 
   const titleEl = document.getElementById("title");
-  const metaEl = document.getElementById("meta");
   const counterEl = document.getElementById("counter");
   const qTextEl = document.getElementById("qText");
+  const qRightEl = document.getElementById("qRight");
   const hintEl = document.getElementById("hint");
   const bodyEl = document.getElementById("body");
   const resultInfoEl = document.getElementById("resultInfo");
   const errEl = document.getElementById("err");
   const jumpSelect = document.getElementById("jumpSelect");
-  const qMarksPill = document.getElementById("qMarksPill");
 
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
@@ -315,7 +388,6 @@
   let answers = [];
   let idx = 0;
 
-  // ✅ Map: answer index -> question number (notes excluded)
   let qNumberByIndex = new Map();
   let totalQuestionsOnly = 0;
 
@@ -343,16 +415,6 @@
     if (window.MathJax?.typesetPromise) {
       window.MathJax.typesetPromise([root]).catch(()=>{});
     }
-  }
-
-  // ✅ marks helper (fallback to 1 if points not saved)
-  function getPoints(a){
-    const v = Number(a?.points ?? a?.mark ?? a?.marks ?? 1);
-    return Number.isFinite(v) && v > 0 ? Math.round(v) : 1;
-  }
-  function earnedPoints(a){
-    const pts = getPoints(a);
-    return a?.isCorrect ? pts : 0;
   }
 
   function buildNumbering(){
@@ -409,17 +471,7 @@
       }
 
       const r = await res.json();
-
       titleEl.textContent = cleanSpaces(r.title || "Assessment Review");
-
-      const pct = Number(r.percent);
-      const safePct = Number.isFinite(pct) ? pct : 0;
-
-      metaEl.innerHTML = `
-        <span class="pill">Grade ${r.grade ?? "-"}</span>
-        <span class="pill">Topic: ${escapeHtml(cleanSpaces(r.topic || "General"))}</span>
-        <span class="pill">Mark: ${safePct}%</span>
-      `;
 
       answers = Array.isArray(r.answers) ? r.answers : [];
       if (!answers.length) {
@@ -433,7 +485,7 @@
       idx = 0;
       render();
 
-      typesetMath(document.querySelector(".card"));
+      typesetMath(document.querySelector(".section"));
     } catch(e){
       showErr("Could not load review: " + (e.message || ""));
     }
@@ -446,45 +498,32 @@
     const type = String(a.type || "mcq").toLowerCase();
     jumpSelect.value = String(idx);
 
-    // Reset
     hintEl.style.display = "none";
     hintEl.textContent = "";
     bodyEl.innerHTML = "";
     resultInfoEl.textContent = "";
     qTextEl.textContent = "";
-    qMarksPill.style.display = "none";
-    qMarksPill.textContent = "Marks: -";
+    qRightEl.textContent = "";
 
-    // ✅ NOTE (not numbered)
     if (type === "note") {
       counterEl.textContent = `Note / Heading`;
-      bodyEl.innerHTML = `<div class="noteBlock">${escapeHtml(cleanSpaces(a.questionText || ""))}</div>`;
+      bodyEl.innerHTML = `<div class="noteBox">${escapeHtml(cleanSpaces(a.questionText || ""))}</div>`;
       typesetMath(bodyEl);
       updateNavButtons();
       return;
     }
 
-    // ✅ QUESTION (notes excluded from numbering)
     const qNum = qNumberByIndex.get(idx) || 1;
     counterEl.textContent = `Question ${qNum} of ${totalQuestionsOnly}`;
 
-    // ✅ Marks per question
-    const pts = getPoints(a);
-    const earned = earnedPoints(a);
-    qMarksPill.style.display = "inline-flex";
-    qMarksPill.textContent = `Marks: ${earned} / ${pts}`;
-
-    // Question text
     qTextEl.textContent = cleanSpaces(a.questionText || "");
 
-    // Hint
     const hint = cleanSpaces(a.hint || "");
     if (hint){
       hintEl.style.display = "block";
       hintEl.textContent = "Hint: " + hint;
     }
 
-    // Render answer
     if (type === "text") {
       const userAns = cleanSpaces(a.textAnswer || "");
       const correctAns = cleanSpaces(a.correctText || "");
