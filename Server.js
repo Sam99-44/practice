@@ -12,6 +12,8 @@
 // ✅ SendGrid: welcome email + test-email + health
 // ✅ NEW: Quiz instructions saved from admin + stored in Result for review page
 // ✅ NEW: Professional email layout (welcome + quiz notify + reset)
+// ✅ NEW: Supports question blocks type:"note" (text only) for headings/instructions between questions
+// ✅ NEW: Results scoring ignores note blocks (does not count toward total / score)
 
 import express from "express";
 import mongoose from "mongoose";
@@ -543,12 +545,85 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
     const quizTopic = cleanSpaces(topic);
     const quizInstructions = String(instructions || "").trim();
 
+    // ✅ NEW: Validate and clean questions (supports type:"note")
+    const cleanedQuestions = [];
+    for (const q of questions) {
+      const type = String(q?.type || "mcq").toLowerCase();
+
+      if (type === "note") {
+        const noteText = cleanSpaces(q?.text);
+        if (!noteText) {
+          return res.status(400).json({ message: "Each note block must have text." });
+        }
+        cleanedQuestions.push({ type: "note", text: noteText });
+        continue;
+      }
+
+      const qText = cleanSpaces(q?.text);
+      if (!qText) return res.status(400).json({ message: "Each question must have text." });
+
+      if (type === "text") {
+        const correctText = cleanSpaces(q?.correctText);
+        if (!correctText) {
+          return res.status(400).json({ message: "Typed questions must have correctText." });
+        }
+
+        const mode = q?.textAnswerMode || "exact";
+        if (!["exact", "contains", "number_tolerance"].includes(mode)) {
+          return res.status(400).json({ message: "Invalid textAnswerMode." });
+        }
+
+        let numberTolerance = null;
+        if (mode === "number_tolerance") {
+          const tol = Number(q?.numberTolerance);
+          if (!Number.isFinite(tol) || tol < 0) {
+            return res.status(400).json({ message: "Invalid numberTolerance." });
+          }
+          numberTolerance = tol;
+        }
+
+        cleanedQuestions.push({
+          type: "text",
+          text: qText,
+          hint: cleanSpaces(q?.hint || ""),
+          imageUrl: cleanSpaces(q?.imageUrl || ""),
+          correctText,
+          textAnswerMode: mode,
+          numberTolerance,
+        });
+        continue;
+      }
+
+      if (type === "mcq") {
+        const opts = Array.isArray(q?.options) ? q.options : [];
+        if (opts.length !== 4 || opts.some((o) => !cleanSpaces(o))) {
+          return res.status(400).json({ message: "MCQ questions must have 4 options A–D." });
+        }
+        const ci = Number(q?.correctIndex);
+        if (!Number.isInteger(ci) || ci < 0 || ci > 3) {
+          return res.status(400).json({ message: "MCQ correctIndex must be 0–3." });
+        }
+
+        cleanedQuestions.push({
+          type: "mcq",
+          text: qText,
+          hint: cleanSpaces(q?.hint || ""),
+          imageUrl: cleanSpaces(q?.imageUrl || ""),
+          options: opts.map((o) => cleanSpaces(o)),
+          correctIndex: ci,
+        });
+        continue;
+      }
+
+      return res.status(400).json({ message: "Invalid question type." });
+    }
+
     const quiz = await Quiz.create({
       grade: g,
       title: quizTitle,
       topic: quizTopic,
       timeLimitMinutes: Number(timeLimitMinutes) || 10,
-      questions,
+      questions: cleanedQuestions, // ✅ use cleaned
       instructions: quizInstructions,
       isFrozen: false,
       frozenAt: null,
@@ -688,9 +763,21 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
         return res.status(400).json({ message: "Questions are required." });
       }
 
-      // light validation for question objects
+      // ✅ UPDATED: supports type:"note"
+      const cleaned = [];
+
       for (const q of update.questions) {
         const type = String(q?.type || "mcq").toLowerCase();
+
+        if (type === "note") {
+          const noteText = cleanSpaces(q?.text);
+          if (!noteText) {
+            return res.status(400).json({ message: "Each note block must have text." });
+          }
+          cleaned.push({ type: "note", text: noteText });
+          continue;
+        }
+
         if (!cleanSpaces(q?.text)) {
           return res.status(400).json({ message: "Each question must have text." });
         }
@@ -709,17 +796,41 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
               return res.status(400).json({ message: "Invalid numberTolerance." });
             }
           }
-        } else {
-          const opts = Array.isArray(q?.options) ? q.options : [];
-          if (opts.length !== 4 || opts.some((o) => !cleanSpaces(o))) {
-            return res.status(400).json({ message: "MCQ questions must have 4 options A–D." });
-          }
-          const ci = Number(q?.correctIndex);
-          if (!Number.isInteger(ci) || ci < 0 || ci > 3) {
-            return res.status(400).json({ message: "MCQ correctIndex must be 0–3." });
-          }
+
+          cleaned.push({
+            type: "text",
+            text: cleanSpaces(q.text),
+            hint: cleanSpaces(q?.hint || ""),
+            imageUrl: cleanSpaces(q?.imageUrl || ""),
+            correctText: cleanSpaces(q.correctText),
+            textAnswerMode: mode,
+            numberTolerance:
+              mode === "number_tolerance" ? Number(q.numberTolerance) : null,
+          });
+          continue;
         }
+
+        // default MCQ
+        const opts = Array.isArray(q?.options) ? q.options : [];
+        if (opts.length !== 4 || opts.some((o) => !cleanSpaces(o))) {
+          return res.status(400).json({ message: "MCQ questions must have 4 options A–D." });
+        }
+        const ci = Number(q?.correctIndex);
+        if (!Number.isInteger(ci) || ci < 0 || ci > 3) {
+          return res.status(400).json({ message: "MCQ correctIndex must be 0–3." });
+        }
+
+        cleaned.push({
+          type: "mcq",
+          text: cleanSpaces(q.text),
+          hint: cleanSpaces(q?.hint || ""),
+          imageUrl: cleanSpaces(q?.imageUrl || ""),
+          options: opts.map((o) => cleanSpaces(o)),
+          correctIndex: ci,
+        });
       }
+
+      update.questions = cleaned;
     }
 
     const quiz = await Quiz.findByIdAndUpdate(id, { $set: update }, { new: true });
@@ -804,14 +915,45 @@ app.post("/api/results", authRequired, async (req, res) => {
       return res.status(403).json({ message: "This assessment is currently unavailable." });
     }
 
-    const qs = Array.isArray(quiz.questions) ? quiz.questions : [];
-    const total = qs.length || 0;
+    const qsAll = Array.isArray(quiz.questions) ? quiz.questions : [];
+
+    // ✅ NEW: only real questions count (ignore note blocks)
+    const scoredQs = qsAll.filter((q) => String(q?.type || "mcq").toLowerCase() !== "note");
+    const total = scoredQs.length || 0;
     if (total === 0) return res.status(400).json({ message: "Assessment has no questions." });
 
     let score = 0;
 
-    const savedAnswers = qs.map((q, i) => {
+    // ✅ NEW: map over ALL blocks so review can show notes too
+    // but scoring only happens on non-note blocks
+    let scoredIndex = -1;
+
+    const savedAnswers = qsAll.map((q, i) => {
       const type = String(q.type || "mcq").toLowerCase();
+
+      // ✅ NOTE BLOCK (no answer, no scoring)
+      if (type === "note") {
+        return {
+          questionIndex: i,
+          type: "note",
+          chosenIndex: -1,
+          correctIndex: -1,
+          textAnswer: "",
+          correctText: "",
+          hint: "",
+          answerMode: "note",
+          tolerance: null,
+          roundTo: null,
+          isCorrect: null,
+          questionText: q.text || "",
+          options: [],
+        };
+      }
+
+      // scored question index is used to match learner answers if you keep original indexes
+      // (your frontend uses questionIndex = i already, so we still use i)
+      scoredIndex += 1;
+
       const hint = q.hint || "";
       const questionText = q.text || "";
       const options = Array.isArray(q.options) ? q.options : [];
@@ -880,7 +1022,7 @@ app.post("/api/results", authRequired, async (req, res) => {
       topic: quiz.topic || "General",
       title: quiz.title || "Assessment",
 
-      // ✅ NEW: snapshot quiz instructions for review page
+      // snapshot quiz instructions for review page
       instructions: String(quiz.instructions || "").trim(),
 
       score,
