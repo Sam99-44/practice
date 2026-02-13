@@ -1,10 +1,12 @@
-<!-- admin-quiz.html (UPDATED - COPY & PASTE)
-     ✅ MathJax enabled (LaTeX in questions/hints/options/instructions)
-     ✅ Instructions box (shown at top of assessment)
-     ✅ NEW: Note/Heading blocks you can insert BEFORE questions (or between questions)
-     ✅ Live preview for: Instructions, Note, Question Text, Hint, Options A–D, Expected Answer
-     ✅ Safe previews use textContent (no HTML injection)
-     ✅ Sends { instructions } + { questions including type:"note" } to server.js POST /api/quizzes
+<!-- admin-quiz.html (FULL UPDATED - COPY & PASTE)
+     ✅ MathJax enabled
+     ✅ Instructions box
+     ✅ Note/Heading blocks (type:"note")
+     ✅ Marks per question (points)
+     ✅ Safe previews (textContent)
+     ✅ NEW: Drag & drop reorder (reshuffle questions/notes)
+     ✅ Auto-renumbers labels after reorder (Question 1, Block 2, etc.)
+     ✅ Sends questions in the NEW order to server
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -82,6 +84,33 @@
     }
     .infoBox b{display:block; margin-bottom:6px;}
     .helpLine{margin-top:6px;}
+
+    /* ✅ Drag & Drop styles */
+    .dragHandle{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid #e6e6e6;
+      background:#f8fafc;
+      color:#111827;
+      padding:6px 10px;
+      border-radius:10px;
+      font-weight:700;
+      cursor:grab;
+      user-select:none;
+    }
+    .dragHandle:active{cursor:grabbing;}
+    .qcard[draggable="true"]{cursor:default;}
+    .qcard.dragging{
+      opacity:.75;
+      transform:scale(0.995);
+      box-shadow:0 10px 22px rgba(0,0,0,.10);
+      border-color:#cfe9ff;
+    }
+    .qcard.dropTarget{
+      outline:3px solid rgba(207,233,255,.85);
+      outline-offset:3px;
+    }
   </style>
 </head>
 
@@ -149,9 +178,9 @@
 
     <div class="qhead">
       <div>
-        <h3 style="margin:0;">Questions</h3>
+        <h3 style="margin:0;">Blocks</h3>
         <div class="muted tiny" style="margin-top:6px;">
-          Use $...$ for inline math. Example: Simplify $x^2 + 2x + 1$.
+          Drag cards to reorder. Add a Note/Heading before questions if needed. Use $...$ for inline math.
         </div>
       </div>
 
@@ -267,16 +296,19 @@
       setMsg("Ready to add an assessment.", "ok");
     })();
 
-    // -------------------- Question cards --------------------
+    // -------------------- Cards --------------------
     let qCount = 0;
 
     function noteCardHtml(id){
       return `
-        <div class="qcard" data-type="note">
+        <div class="qcard" data-type="note" draggable="true">
           <div class="qhead">
-            <div>
-              <b>Block ${id}</b>
-              <span class="pill">NOTE / HEADING</span>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+              <span class="dragHandle" title="Drag to reorder">↕ Drag</span>
+              <div>
+                <b class="cardLabel">Block ${id}</b>
+                <span class="pill">NOTE / HEADING</span>
+              </div>
             </div>
             <button type="button" class="smallbtn removeBtn">Remove</button>
           </div>
@@ -294,11 +326,14 @@
 
     function mcqCardHtml(id){
       return `
-        <div class="qcard" data-type="mcq">
+        <div class="qcard" data-type="mcq" draggable="true">
           <div class="qhead">
-            <div>
-              <b>Question ${id}</b>
-              <span class="pill">MCQ</span>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+              <span class="dragHandle" title="Drag to reorder">↕ Drag</span>
+              <div>
+                <b class="cardLabel">Question ${id}</b>
+                <span class="pill">MCQ</span>
+              </div>
             </div>
             <button type="button" class="smallbtn removeBtn">Remove</button>
           </div>
@@ -311,6 +346,10 @@
 
           <label>Image URL (optional)</label>
           <input class="qImage" />
+
+          <!-- ✅ NEW: Marks -->
+          <label>Marks (points)</label>
+          <input class="qPoints" type="number" min="1" step="1" value="1" />
 
           <div class="grid2">
             <div><label>Option A (supports math)</label><input class="optA" placeholder="A" /></div>
@@ -344,11 +383,14 @@
 
     function textCardHtml(id){
       return `
-        <div class="qcard" data-type="text">
+        <div class="qcard" data-type="text" draggable="true">
           <div class="qhead">
-            <div>
-              <b>Question ${id}</b>
-              <span class="pill">Typed Answer</span>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+              <span class="dragHandle" title="Drag to reorder">↕ Drag</span>
+              <div>
+                <b class="cardLabel">Question ${id}</b>
+                <span class="pill">Typed Answer</span>
+              </div>
             </div>
             <button type="button" class="smallbtn removeBtn">Remove</button>
           </div>
@@ -358,6 +400,10 @@
 
           <label>Hint (supports math)</label>
           <input class="qHint" placeholder="Example: Multiply both sides by 5" />
+
+          <!-- ✅ NEW: Marks -->
+          <label>Marks (points)</label>
+          <input class="qPoints" type="number" min="1" step="1" value="1" />
 
           <div class="grid2">
             <div>
@@ -416,19 +462,23 @@
       qCount += 1;
       questionsWrap.insertAdjacentHTML("beforeend", noteCardHtml(qCount));
       wireLastCard();
+      renumberCards();
+      setupDragAndDrop(); // ensure new card is draggable
     }
-
     function addMcq(){
       qCount += 1;
       questionsWrap.insertAdjacentHTML("beforeend", mcqCardHtml(qCount));
       wireLastCard();
+      renumberCards();
+      setupDragAndDrop();
     }
-
     function addText(){
       qCount += 1;
       questionsWrap.insertAdjacentHTML("beforeend", textCardHtml(qCount));
       wireTextModeForLastCard();
       wireLastCard();
+      renumberCards();
+      setupDragAndDrop();
     }
 
     addNoteBtn.addEventListener("click", addNote);
@@ -438,6 +488,7 @@
     questionsWrap.addEventListener("click", (e) => {
       if (e.target.classList.contains("removeBtn")) {
         e.target.closest(".qcard").remove();
+        renumberCards();
       }
     });
 
@@ -472,7 +523,6 @@
 
       const qText = cleanSpaces(card.querySelector(".qText")?.value || "");
       const hint  = cleanSpaces(card.querySelector(".qHint")?.value || "");
-
       setPreviewText(card.querySelector(".prevQ"), qText || "(Question preview)");
       setPreviewText(card.querySelector(".prevHint"), hint || "(Hint preview)");
 
@@ -487,7 +537,6 @@
           C ? `C) ${C}` : "C) —",
           D ? `D) ${D}` : "D) —"
         ].join("\n");
-
         setPreviewText(card.querySelector(".prevOpts"), opts);
       } else {
         const ans = cleanSpaces(card.querySelector(".correctText")?.value || "");
@@ -503,6 +552,7 @@
       const fields = [
         ".noteText",
         ".qText", ".qHint",
+        ".qPoints",
         ".optA", ".optB", ".optC", ".optD",
         ".correctText"
       ];
@@ -515,8 +565,100 @@
       renderCardPreview(last);
     }
 
+    // ✅ Renumber visible labels based on CURRENT order in the list
+    function renumberCards(){
+      const cards = [...questionsWrap.querySelectorAll(".qcard")];
+      let qNum = 0;
+      let bNum = 0;
+
+      for (const card of cards){
+        const type = (card.getAttribute("data-type") || "mcq").toLowerCase();
+        const labelEl = card.querySelector(".cardLabel");
+        if (!labelEl) continue;
+
+        if (type === "note"){
+          bNum += 1;
+          labelEl.textContent = `Block ${bNum}`;
+        } else {
+          qNum += 1;
+          labelEl.textContent = `Question ${qNum}`;
+        }
+      }
+    }
+
+    // -------------------- Drag & Drop (HTML5) --------------------
+    let draggedCard = null;
+
+    function setupDragAndDrop(){
+      const cards = [...questionsWrap.querySelectorAll(".qcard")];
+
+      cards.forEach(card => {
+        // avoid double listeners
+        if (card.dataset.dndWired === "1") return;
+        card.dataset.dndWired = "1";
+
+        // Only allow drag from handle (prevents accidental dragging while editing inputs)
+        const handle = card.querySelector(".dragHandle");
+        if (handle){
+          handle.addEventListener("mousedown", () => {
+            card.setAttribute("draggable", "true");
+          });
+          handle.addEventListener("mouseup", () => {
+            card.setAttribute("draggable", "true");
+          });
+        }
+
+        card.addEventListener("dragstart", (e) => {
+          draggedCard = card;
+          card.classList.add("dragging");
+          e.dataTransfer.effectAllowed = "move";
+          // needed for Firefox
+          e.dataTransfer.setData("text/plain", "drag");
+        });
+
+        card.addEventListener("dragend", () => {
+          card.classList.remove("dragging");
+          [...questionsWrap.querySelectorAll(".qcard")].forEach(c => c.classList.remove("dropTarget"));
+          draggedCard = null;
+          renumberCards();
+        });
+
+        card.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          if (!draggedCard || draggedCard === card) return;
+
+          card.classList.add("dropTarget");
+
+          const rect = card.getBoundingClientRect();
+          const before = (e.clientY - rect.top) < rect.height / 2;
+
+          const dragging = draggedCard;
+          if (before) {
+            if (card.previousElementSibling !== dragging) {
+              questionsWrap.insertBefore(dragging, card);
+            }
+          } else {
+            if (card.nextElementSibling !== dragging) {
+              questionsWrap.insertBefore(dragging, card.nextElementSibling);
+            }
+          }
+        });
+
+        card.addEventListener("dragleave", () => {
+          card.classList.remove("dropTarget");
+        });
+
+        card.addEventListener("drop", (e) => {
+          e.preventDefault();
+          card.classList.remove("dropTarget");
+          renumberCards();
+        });
+      });
+    }
+
     // start with one MCQ by default
     addMcq();
+    setupDragAndDrop();
 
     function collectQuestions(){
       const cards = [...questionsWrap.querySelectorAll(".qcard")];
@@ -527,7 +669,6 @@
       for (const card of cards) {
         const type = card.getAttribute("data-type") || "mcq";
 
-        // ✅ NOTE block
         if (type === "note") {
           const noteText = cleanSpaces(card.querySelector(".noteText")?.value);
           if (!noteText) throw new Error("Please fill in the note/heading text.");
@@ -536,12 +677,18 @@
         }
 
         const text = cleanSpaces(card.querySelector(".qText")?.value);
+        if (!text) throw new Error("Please fill in all question texts.");
+
         const hint = cleanSpaces(card.querySelector(".qHint")?.value || "");
         const imageUrl =
           cleanSpaces(card.querySelector(".qImage")?.value || "") ||
           cleanSpaces(card.querySelector(".qImage2")?.value || "");
 
-        if (!text) throw new Error("Please fill in all question texts.");
+        const pointsRaw = cleanSpaces(card.querySelector(".qPoints")?.value || "1");
+        const points = Number(pointsRaw);
+        if (!Number.isInteger(points) || points < 1) {
+          throw new Error("Marks must be a whole number (1 or more) for each question.");
+        }
 
         if (type === "text") {
           const correctText = cleanSpaces(card.querySelector(".correctText")?.value);
@@ -564,6 +711,7 @@
             text,
             hint: hint || "",
             imageUrl: imageUrl || "",
+            points,
             correctText,
             textAnswerMode,
             numberTolerance
@@ -583,13 +731,14 @@
             text,
             hint: hint || "",
             imageUrl: imageUrl || "",
+            points,
             options: [A, B, C, D],
             correctIndex
           });
         }
       }
 
-      return questions;
+      return questions; // ✅ already in the NEW drag-drop order
     }
 
     // -------------------- Save assessment --------------------
@@ -640,6 +789,8 @@
           questionsWrap.innerHTML = "";
           qCount = 0;
           addMcq();
+          setupDragAndDrop();
+          renumberCards();
         } else {
           setMsg("Error: " + (data.message || "Could not save assessment"), "error");
         }
