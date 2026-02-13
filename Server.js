@@ -7,13 +7,11 @@
 // ✅ Quizzes: GET /api/quizzes (learner grade), POST /api/quizzes (admin) ✅ EMAIL students by grade
 // ✅ Quiz by id: GET /api/quizzes/:id
 // ✅ Quiz update/delete (admin): PUT /api/quizzes/:id, DELETE /api/quizzes/:id
-// ✅ Results: POST /api/results, GET /api/results/my, GET /api/results/:id
+// ✅ Results: POST /api/results (✅ supports note blocks + points-based marking), GET /api/results/my, GET /api/results/:id
 // ✅ Password reset (OTP): /api/forgot-password-otp + /api/reset-password-otp
 // ✅ SendGrid: welcome email + test-email + health
-// ✅ NEW: Quiz instructions saved from admin + stored in Result for review page
-// ✅ NEW: Professional email layout (welcome + quiz notify + reset)
-// ✅ NEW: Supports question blocks type:"note" (text only) for headings/instructions between questions
-// ✅ NEW: Results scoring ignores note blocks (does not count toward total / score)
+// ✅ Quiz instructions saved from admin + stored in Result for review page
+// ✅ NEW: Notes are excluded from total marks and numbering logic can be handled on review page
 
 import express from "express";
 import mongoose from "mongoose";
@@ -89,63 +87,6 @@ async function sendBulkEmail({ recipients, subject, html, text }) {
   }
 }
 
-/* ------------------ EMAIL TEMPLATES ------------------ */
-function escapeHtml(s) {
-  return String(s || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function emailLayout({ title, intro, bodyHtml, ctaText, ctaUrl, footerNote }) {
-  const safeTitle = escapeHtml(title);
-  const safeIntro = escapeHtml(intro || "");
-  const safeFooter = escapeHtml(footerNote || "Practice Online");
-  const year = new Date().getFullYear();
-
-  const button =
-    ctaText && ctaUrl
-      ? `<a href="${ctaUrl}" style="display:inline-block;background:#e11d2e;color:#fff;text-decoration:none;padding:12px 16px;border-radius:10px;font-weight:700;">${escapeHtml(
-          ctaText
-        )}</a>`
-      : "";
-
-  return `
-  <div style="background:#f6f7fb;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
-    <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e6e6e6;border-radius:14px;overflow:hidden;">
-      <div style="padding:18px 18px;background:#1b1648;color:#ffffff;">
-        <div style="font-size:16px;font-weight:800;letter-spacing:.3px;">Practice Online</div>
-        <div style="opacity:.85;font-size:13px;margin-top:4px;">Grades 8–12 Practice</div>
-      </div>
-
-      <div style="padding:18px 18px;">
-        <h2 style="margin:0 0 10px;font-size:18px;line-height:1.3;">${safeTitle}</h2>
-        ${
-          intro
-            ? `<p style="margin:0 0 12px;color:#334155;line-height:1.65;font-size:14px;">${safeIntro}</p>`
-            : ""
-        }
-
-        ${bodyHtml || ""}
-
-        ${button ? `<div style="margin-top:16px;">${button}</div>` : ""}
-
-        <hr style="border:none;border-top:1px solid #eef2f7;margin:18px 0;">
-
-        <p style="margin:0;color:#64748b;font-size:12px;line-height:1.6;">
-          If you did not request this, you can ignore this email.
-        </p>
-      </div>
-
-      <div style="padding:14px 18px;background:#f8fafc;border-top:1px solid #eef2f7;color:#64748b;font-size:12px;line-height:1.6;">
-        © ${year} ${safeFooter}. All rights reserved.
-      </div>
-    </div>
-  </div>`;
-}
-
 /* ------------------ HELPERS ------------------ */
 function hashToken(raw) {
   return crypto.createHash("sha256").update(String(raw)).digest("hex");
@@ -167,6 +108,18 @@ function makeOtp6() {
 
 function cleanSpaces(s) {
   return String(s || "").trim().replace(/\s+/g, " ");
+}
+
+function safeInt(v, fallback = null) {
+  const n = Number(v);
+  if (!Number.isInteger(n)) return fallback;
+  return n;
+}
+
+function safeNum(v, fallback = 0) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return fallback;
+  return n;
 }
 
 /* ------------------ CORS ------------------ */
@@ -204,14 +157,9 @@ app.get("/test-email", async (req, res) => {
   try {
     await sendEmail({
       to,
-      subject: "Practice Online test email",
+      subject: "SendGrid test",
       text: "Email sending works.",
-      html: emailLayout({
-        title: "Test email",
-        intro: "This is a test email to confirm delivery.",
-        bodyHtml: `<p style="margin:0;color:#334155;line-height:1.65;font-size:14px;">If you received this email, your SendGrid setup is working.</p>`,
-        footerNote: "Practice Online",
-      }),
+      html: "<strong>Email sending works.</strong>",
     });
     res.send("Email sent successfully to " + to);
   } catch (err) {
@@ -247,7 +195,7 @@ async function adminOnly(req, res, next) {
 
 /* ------------------ AUTH ROUTES ------------------ */
 
-// Profile endpoint used by learner-quizzes.html + admin pages
+// Profile endpoint used by learner pages + admin pages
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select(
@@ -341,7 +289,6 @@ app.post("/api/register", async (req, res) => {
       studentNumber,
       grade: gradeNum,
 
-      // ✅ optional fields
       province: cleanSpaces(province || ""),
       cellphone: cleanSpaces(cellphone || ""),
       guardianCellphone: cleanSpaces(guardianCellphone || ""),
@@ -351,52 +298,34 @@ app.post("/api/register", async (req, res) => {
       verifyTokenExpiresAt: null,
     });
 
-    const loginUrl = "https://practiceonline.co.za/login.html";
-
+    // ✅ Cleaner, normal wording (no heavy “AI tone”)
     if (user.accountType === "student") {
       await sendEmail({
         to: user.email,
         subject: `Welcome to Practice Online`,
-        text: `Welcome ${user.username}. Your student number is ${user.studentNumber}. Login: ${loginUrl}`,
-        html: emailLayout({
-          title: "Welcome to Practice Online",
-          intro: `Hi ${user.username}, your account has been created successfully.`,
-          bodyHtml: `
-            <p style="margin:0 0 10px;color:#334155;line-height:1.65;font-size:14px;">
-              Your student number is:
-            </p>
-            <div style="display:inline-block;padding:10px 12px;border:1px solid #e6e6e6;border-radius:10px;background:#f8fafc;font-weight:800;letter-spacing:1px;">
-              ${escapeHtml(user.studentNumber)}
-            </div>
-            <p style="margin:12px 0 0;color:#334155;line-height:1.65;font-size:14px;">
-              You can log in anytime to start practising.
-            </p>
-          `,
-          ctaText: "Log in",
-          ctaUrl: loginUrl,
-          footerNote: "Practice Online",
-        }),
+        text: `Hi ${user.username}, your student number is ${user.studentNumber}.`,
+        html: `
+          <div style="font-family:Arial,sans-serif; line-height:1.6;">
+            <p>Hi ${user.username},</p>
+            <p>Welcome to Practice Online.</p>
+            <p>Your student number is: <b>${user.studentNumber}</b></p>
+            <p>Regards,<br/>Practice Online Team</p>
+          </div>
+        `,
       });
     } else {
       await sendEmail({
         to: user.email,
         subject: `Welcome to Practice Online`,
-        text: `Welcome ${user.username}. Your account is ready. Login: ${loginUrl}`,
-        html: emailLayout({
-          title: "Welcome to Practice Online",
-          intro: `Hi ${user.username}, your account has been created successfully.`,
-          bodyHtml: `
-            <p style="margin:0;color:#334155;line-height:1.65;font-size:14px;">
-              You registered for Access Materials Only.
-            </p>
-            <p style="margin:12px 0 0;color:#334155;line-height:1.65;font-size:14px;">
-              Log in to access available learning materials.
-            </p>
-          `,
-          ctaText: "Log in",
-          ctaUrl: loginUrl,
-          footerNote: "Practice Online",
-        }),
+        text: `Hi ${user.username}, your account is ready. You have access to learning materials.`,
+        html: `
+          <div style="font-family:Arial,sans-serif; line-height:1.6;">
+            <p>Hi ${user.username},</p>
+            <p>Welcome to Practice Online.</p>
+            <p>Your account is ready and you have access to learning materials.</p>
+            <p>Regards,<br/>Practice Online Team</p>
+          </div>
+        `,
       });
     }
 
@@ -428,9 +357,11 @@ app.post("/api/login", async (req, res) => {
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) return res.status(401).json({ message: "Invalid email or password." });
 
-    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     return res.json({
       message: "Login successful",
@@ -533,7 +464,9 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
     const { grade, title, topic, timeLimitMinutes, instructions, questions } = req.body;
 
     if (!grade || !title || !topic || !Array.isArray(questions) || questions.length === 0) {
-      return res.status(400).json({ message: "Grade, topic, title, and questions are required." });
+      return res
+        .status(400)
+        .json({ message: "Grade, topic, title, and questions are required." });
     }
 
     const g = Number(grade);
@@ -545,77 +478,51 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
     const quizTopic = cleanSpaces(topic);
     const quizInstructions = String(instructions || "").trim();
 
-    // ✅ NEW: Validate and clean questions (supports type:"note")
-    const cleanedQuestions = [];
+    // ✅ Validate blocks (mcq/text/note) + points
     for (const q of questions) {
       const type = String(q?.type || "mcq").toLowerCase();
 
+      if (!cleanSpaces(q?.text)) {
+        return res.status(400).json({ message: "Each block must have text." });
+      }
+
       if (type === "note") {
-        const noteText = cleanSpaces(q?.text);
-        if (!noteText) {
-          return res.status(400).json({ message: "Each note block must have text." });
-        }
-        cleanedQuestions.push({ type: "note", text: noteText });
+        // notes: only text required
         continue;
       }
 
-      const qText = cleanSpaces(q?.text);
-      if (!qText) return res.status(400).json({ message: "Each question must have text." });
+      // points (marks)
+      const pts = safeInt(q?.points, 1);
+      if (!Number.isInteger(pts) || pts < 1) {
+        return res
+          .status(400)
+          .json({ message: "Each question must have marks (points) of 1 or more." });
+      }
 
       if (type === "text") {
-        const correctText = cleanSpaces(q?.correctText);
-        if (!correctText) {
+        if (!cleanSpaces(q?.correctText)) {
           return res.status(400).json({ message: "Typed questions must have correctText." });
         }
-
         const mode = q?.textAnswerMode || "exact";
         if (!["exact", "contains", "number_tolerance"].includes(mode)) {
           return res.status(400).json({ message: "Invalid textAnswerMode." });
         }
-
-        let numberTolerance = null;
         if (mode === "number_tolerance") {
-          const tol = Number(q?.numberTolerance);
-          if (!Number.isFinite(tol) || tol < 0) {
+          const tol = safeNum(q?.numberTolerance, null);
+          if (tol === null || tol < 0) {
             return res.status(400).json({ message: "Invalid numberTolerance." });
           }
-          numberTolerance = tol;
         }
-
-        cleanedQuestions.push({
-          type: "text",
-          text: qText,
-          hint: cleanSpaces(q?.hint || ""),
-          imageUrl: cleanSpaces(q?.imageUrl || ""),
-          correctText,
-          textAnswerMode: mode,
-          numberTolerance,
-        });
-        continue;
-      }
-
-      if (type === "mcq") {
+      } else {
         const opts = Array.isArray(q?.options) ? q.options : [];
         if (opts.length !== 4 || opts.some((o) => !cleanSpaces(o))) {
           return res.status(400).json({ message: "MCQ questions must have 4 options A–D." });
         }
-        const ci = Number(q?.correctIndex);
-        if (!Number.isInteger(ci) || ci < 0 || ci > 3) {
+        const ci = safeInt(q?.correctIndex, null);
+        if (ci === null || ci < 0 || ci > 3) {
           return res.status(400).json({ message: "MCQ correctIndex must be 0–3." });
         }
-
-        cleanedQuestions.push({
-          type: "mcq",
-          text: qText,
-          hint: cleanSpaces(q?.hint || ""),
-          imageUrl: cleanSpaces(q?.imageUrl || ""),
-          options: opts.map((o) => cleanSpaces(o)),
-          correctIndex: ci,
-        });
-        continue;
       }
-
-      return res.status(400).json({ message: "Invalid question type." });
     }
 
     const quiz = await Quiz.create({
@@ -623,7 +530,7 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
       title: quizTitle,
       topic: quizTopic,
       timeLimitMinutes: Number(timeLimitMinutes) || 10,
-      questions: cleanedQuestions, // ✅ use cleaned
+      questions,
       instructions: quizInstructions,
       isFrozen: false,
       frozenAt: null,
@@ -634,7 +541,7 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
     // ✅ return immediately (admin page stays fast)
     res.status(201).json({ message: "Saved", quizId: quiz._id });
 
-    // ✅ send emails after response (background)
+    // ✅ notify learners after response
     setImmediate(async () => {
       try {
         const learners = await User.find({
@@ -653,39 +560,24 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
           return;
         }
 
-        const subject = `New assessment available (Grade ${g})`;
+        const subject = `New assessment for Grade ${g}`;
         const link =
           "https://practiceonline.co.za/login.html?next=" +
           encodeURIComponent("learner-quizzes.html");
 
-        const html = emailLayout({
-          title: "New assessment available",
-          intro: `A new Grade ${g} assessment has been added.`,
-          bodyHtml: `
-            <p style="margin:0 0 10px;color:#334155;line-height:1.65;font-size:14px;">
-              <span style="font-weight:800;">${escapeHtml(quizTitle)}</span><br>
-              Topic: ${escapeHtml(quizTopic)}
-            </p>
-            ${
-              quizInstructions
-                ? `<p style="margin:0 0 10px;color:#334155;line-height:1.65;font-size:14px;">
-                    Instructions: ${escapeHtml(quizInstructions)}
-                  </p>`
-                : ""
-            }
-            <p style="margin:0;color:#334155;line-height:1.65;font-size:14px;">
-              Log in to view and attempt the assessment.
-            </p>
-          `,
-          ctaText: "Open assessments",
-          ctaUrl: link,
-          footerNote: "Practice Online",
-        });
+        const html = `
+          <div style="font-family:Arial,sans-serif; line-height:1.6;">
+            <p>Hello,</p>
+            <p>A new assessment is available for <b>Grade ${g}</b>.</p>
+            <p><b>${quizTitle}</b><br/>Topic: ${quizTopic}</p>
+            <p><a href="${link}" target="_blank">Log in to Practice Online</a></p>
+            <p>Regards,<br/>Practice Online Team</p>
+          </div>
+        `;
 
-        const text = `New Grade ${g} assessment: ${quizTitle} (${quizTopic}). Login: ${link}`;
+        const text = `New assessment for Grade ${g}: ${quizTitle} (Topic: ${quizTopic}). Login: ${link}`;
 
         await sendBulkEmail({ recipients: emails, subject, html, text });
-
         console.log(`Notified ${emails.length} learners for grade ${g}.`);
       } catch (e) {
         console.error("Quiz notification email failed:", e.message);
@@ -763,23 +655,23 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
         return res.status(400).json({ message: "Questions are required." });
       }
 
-      // ✅ UPDATED: supports type:"note"
-      const cleaned = [];
-
+      // ✅ validation for mcq/text/note + points
       for (const q of update.questions) {
         const type = String(q?.type || "mcq").toLowerCase();
 
+        if (!cleanSpaces(q?.text)) {
+          return res.status(400).json({ message: "Each block must have text." });
+        }
+
         if (type === "note") {
-          const noteText = cleanSpaces(q?.text);
-          if (!noteText) {
-            return res.status(400).json({ message: "Each note block must have text." });
-          }
-          cleaned.push({ type: "note", text: noteText });
           continue;
         }
 
-        if (!cleanSpaces(q?.text)) {
-          return res.status(400).json({ message: "Each question must have text." });
+        const pts = safeInt(q?.points, 1);
+        if (!Number.isInteger(pts) || pts < 1) {
+          return res
+            .status(400)
+            .json({ message: "Each question must have marks (points) of 1 or more." });
         }
 
         if (type === "text") {
@@ -796,41 +688,17 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
               return res.status(400).json({ message: "Invalid numberTolerance." });
             }
           }
-
-          cleaned.push({
-            type: "text",
-            text: cleanSpaces(q.text),
-            hint: cleanSpaces(q?.hint || ""),
-            imageUrl: cleanSpaces(q?.imageUrl || ""),
-            correctText: cleanSpaces(q.correctText),
-            textAnswerMode: mode,
-            numberTolerance:
-              mode === "number_tolerance" ? Number(q.numberTolerance) : null,
-          });
-          continue;
+        } else {
+          const opts = Array.isArray(q?.options) ? q.options : [];
+          if (opts.length !== 4 || opts.some((o) => !cleanSpaces(o))) {
+            return res.status(400).json({ message: "MCQ questions must have 4 options A–D." });
+          }
+          const ci = Number(q?.correctIndex);
+          if (!Number.isInteger(ci) || ci < 0 || ci > 3) {
+            return res.status(400).json({ message: "MCQ correctIndex must be 0–3." });
+          }
         }
-
-        // default MCQ
-        const opts = Array.isArray(q?.options) ? q.options : [];
-        if (opts.length !== 4 || opts.some((o) => !cleanSpaces(o))) {
-          return res.status(400).json({ message: "MCQ questions must have 4 options A–D." });
-        }
-        const ci = Number(q?.correctIndex);
-        if (!Number.isInteger(ci) || ci < 0 || ci > 3) {
-          return res.status(400).json({ message: "MCQ correctIndex must be 0–3." });
-        }
-
-        cleaned.push({
-          type: "mcq",
-          text: cleanSpaces(q.text),
-          hint: cleanSpaces(q?.hint || ""),
-          imageUrl: cleanSpaces(q?.imageUrl || ""),
-          options: opts.map((o) => cleanSpaces(o)),
-          correctIndex: ci,
-        });
       }
-
-      update.questions = cleaned;
     }
 
     const quiz = await Quiz.findByIdAndUpdate(id, { $set: update }, { new: true });
@@ -895,6 +763,7 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
 }
 
 // Submit attempt (attempt.html POSTs here)
+// ✅ Supports notes + points-based marking (notes excluded from total)
 app.post("/api/results", authRequired, async (req, res) => {
   try {
     const { quizId, answers, timeTakenSeconds } = req.body;
@@ -915,59 +784,56 @@ app.post("/api/results", authRequired, async (req, res) => {
       return res.status(403).json({ message: "This assessment is currently unavailable." });
     }
 
-    const qsAll = Array.isArray(quiz.questions) ? quiz.questions : [];
+    const qs = Array.isArray(quiz.questions) ? quiz.questions : [];
+    if (!qs.length) return res.status(400).json({ message: "Assessment has no questions." });
 
-    // ✅ NEW: only real questions count (ignore note blocks)
-    const scoredQs = qsAll.filter((q) => String(q?.type || "mcq").toLowerCase() !== "note");
-    const total = scoredQs.length || 0;
-    if (total === 0) return res.status(400).json({ message: "Assessment has no questions." });
+    // total points (exclude notes)
+    const gradedQs = qs.filter((q) => String(q.type || "mcq").toLowerCase() !== "note");
+    const totalPoints = gradedQs.reduce((sum, q) => sum + (Number(q.points) || 1), 0);
 
-    let score = 0;
+    let scorePoints = 0;
 
-    // ✅ NEW: map over ALL blocks so review can show notes too
-    // but scoring only happens on non-note blocks
-    let scoredIndex = -1;
-
-    const savedAnswers = qsAll.map((q, i) => {
+    const savedAnswers = qs.map((q, i) => {
       const type = String(q.type || "mcq").toLowerCase();
 
-      // ✅ NOTE BLOCK (no answer, no scoring)
+      const hint = q.hint || "";
+      const questionText = q.text || "";
+      const options = Array.isArray(q.options) ? q.options : [];
+      const qPoints = type === "note" ? 0 : (Number(q.points) || 1);
+
+      const ans = answers.find((a) => Number(a.questionIndex) === i) || {};
+
+      // NOTE (not graded)
       if (type === "note") {
         return {
           questionIndex: i,
           type: "note",
+          points: 0,
+          earnedPoints: 0,
           chosenIndex: -1,
           correctIndex: -1,
           textAnswer: "",
           correctText: "",
           hint: "",
-          answerMode: "note",
+          answerMode: "case-insensitive",
           tolerance: null,
           roundTo: null,
-          isCorrect: null,
-          questionText: q.text || "",
+          isCorrect: false,
+          questionText,
           options: [],
         };
       }
 
-      // scored question index is used to match learner answers if you keep original indexes
-      // (your frontend uses questionIndex = i already, so we still use i)
-      scoredIndex += 1;
-
-      const hint = q.hint || "";
-      const questionText = q.text || "";
-      const options = Array.isArray(q.options) ? q.options : [];
-
-      const ans = answers.find((a) => Number(a.questionIndex) === i) || {};
-
+      // TEXT
       if (type === "text") {
         const userText = cleanSpaces(ans.textAnswer || "");
         const correctText = cleanSpaces(q.correctText || "");
         const mode = q.textAnswerMode || "exact";
-        const tol = q.numberTolerance ?? null;
+        const tol = q.numberTolerance ?? 0;
 
         const isCorrect = compareTextAnswer(userText, correctText, mode, tol);
-        if (isCorrect) score++;
+        const earned = isCorrect ? qPoints : 0;
+        scorePoints += earned;
 
         const answerMode =
           mode === "number_tolerance" ? "number" :
@@ -977,6 +843,8 @@ app.post("/api/results", authRequired, async (req, res) => {
         return {
           questionIndex: i,
           type: "text",
+          points: qPoints,
+          earnedPoints: earned,
           textAnswer: userText,
           correctText,
           hint,
@@ -989,15 +857,19 @@ app.post("/api/results", authRequired, async (req, res) => {
         };
       }
 
+      // MCQ
       const chosenIndex = Number.isFinite(Number(ans.chosenIndex)) ? Number(ans.chosenIndex) : -1;
       const correctIndex = Number.isFinite(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
 
       const isCorrect = chosenIndex === correctIndex && correctIndex >= 0;
-      if (isCorrect) score++;
+      const earned = isCorrect ? qPoints : 0;
+      scorePoints += earned;
 
       return {
         questionIndex: i,
         type: "mcq",
+        points: qPoints,
+        earnedPoints: earned,
         chosenIndex,
         correctIndex,
         textAnswer: "",
@@ -1012,7 +884,7 @@ app.post("/api/results", authRequired, async (req, res) => {
       };
     });
 
-    const percent = Math.round((score / total) * 100);
+    const percent = totalPoints > 0 ? Math.round((scorePoints / totalPoints) * 100) : 0;
     const status = percent >= 50 ? "PASS" : "FAIL";
 
     const saved = await Result.create({
@@ -1022,21 +894,22 @@ app.post("/api/results", authRequired, async (req, res) => {
       topic: quiz.topic || "General",
       title: quiz.title || "Assessment",
 
-      // snapshot quiz instructions for review page
       instructions: String(quiz.instructions || "").trim(),
 
-      score,
-      total,
+      // ✅ points-based
+      score: scorePoints,
+      total: totalPoints,
       percent,
       status,
+
       answers: savedAnswers,
       timeTakenSeconds: Number(timeTakenSeconds) || 0,
     });
 
     return res.status(201).json({
       message: "Saved",
-      score,
-      total,
+      score: scorePoints,
+      total: totalPoints,
       percent,
       status,
       resultId: saved._id,
@@ -1102,28 +975,17 @@ app.post("/api/forgot-password-otp", async (req, res) => {
     user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
-    const resetNote = "This code expires in 10 minutes.";
-
     await sendEmail({
       to: user.email,
       subject: "Password reset code",
-      text: `Your reset code is ${otp}. ${resetNote}`,
-      html: emailLayout({
-        title: "Password reset code",
-        intro: "Use the code below to reset your password.",
-        bodyHtml: `
-          <p style="margin:0 0 10px;color:#334155;line-height:1.65;font-size:14px;">
-            Your reset code is:
-          </p>
-          <div style="display:inline-block;padding:12px 14px;border:1px solid #e6e6e6;border-radius:10px;background:#f8fafc;font-weight:900;letter-spacing:3px;font-size:18px;">
-            ${escapeHtml(otp)}
-          </div>
-          <p style="margin:12px 0 0;color:#334155;line-height:1.65;font-size:14px;">
-            ${escapeHtml(resetNote)}
-          </p>
-        `,
-        footerNote: "Practice Online",
-      }),
+      text: `Your reset code is: ${otp}. It expires in 10 minutes.`,
+      html: `
+        <div style="font-family:Arial,sans-serif; line-height:1.6;">
+          <p>Your reset code is:</p>
+          <p style="font-size:26px; font-weight:800; letter-spacing:3px;">${otp}</p>
+          <p>This code expires in 10 minutes.</p>
+        </div>
+      `,
     });
 
     return res.json({ message: "If the email exists, a reset code has been sent." });
