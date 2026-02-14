@@ -11,8 +11,8 @@
 // ✅ Password reset (OTP): /api/forgot-password-otp + /api/reset-password-otp
 // ✅ SendGrid: welcome email + test-email + health
 // ✅ Quiz instructions saved from admin + stored in Result for review page
-// ✅ NEW: Notes are excluded from total marks and numbering logic can be handled on review page
-// ✅ NEW: Support requests saved: POST /api/support (learner), Admin view: GET /api/admin/support
+// ✅ Notes are excluded from total marks and numbering logic can be handled on review page
+// ✅ NEW: MCQ supports 2+ choices (not limited to 4)
 
 import express from "express";
 import mongoose from "mongoose";
@@ -26,7 +26,6 @@ import sgMail from "@sendgrid/mail";
 import Quiz from "./models/Quiz.js";
 import User from "./models/User.js";
 import Result from "./models/Result.js";
-import Support from "./models/Support.js"; // ✅ NEW
 
 dotenv.config();
 
@@ -122,6 +121,17 @@ function safeNum(v, fallback = 0) {
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
   return n;
+}
+
+// ✅ NEW: MCQ options can be 2+ (not only 4)
+function normalizeMcqOptions(opts) {
+  const arr = Array.isArray(opts) ? opts.map(cleanSpaces) : [];
+  const filled = arr.filter(Boolean); // remove empty strings
+  return {
+    ok: filled.length >= 2,
+    options: filled,
+    count: filled.length,
+  };
 }
 
 /* ------------------ CORS ------------------ */
@@ -300,7 +310,6 @@ app.post("/api/register", async (req, res) => {
       verifyTokenExpiresAt: null,
     });
 
-    // ✅ Cleaner, normal wording (no heavy “AI tone”)
     if (user.accountType === "student") {
       await sendEmail({
         to: user.email,
@@ -383,132 +392,6 @@ app.post("/api/login", async (req, res) => {
   } catch (err) {
     console.error("Login error:", err.message);
     return res.status(500).json({ message: "Server error. Please try again." });
-  }
-});
-
-/* ------------------ SUPPORT (SAVE) ✅ NEW ------------------ */
-
-// Learner submits support (support.html POSTs here)
-app.post("/api/support", authRequired, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId).select("username email role grade");
-    if (!user) return res.status(401).json({ message: "User not found" });
-
-    const body = req.body || {};
-    const subject = cleanSpaces(body.subject || "Maths");
-    const requestType = cleanSpaces(body.requestType || "");
-    const message = cleanSpaces(body.message || "");
-
-    const topics = Array.isArray(body.topics)
-      ? body.topics.map((t) => cleanSpaces(t)).filter(Boolean)
-      : [];
-
-    const wantExtraClasses = !!body.wantExtraClasses;
-    const preferredService = cleanSpaces(body.preferredService || "");
-    const contact = cleanSpaces(body.contact || "");
-
-    const changeAccount = body.changeAccount || null;
-
-    if (!requestType) return res.status(400).json({ message: "Please select a request type." });
-
-    if (requestType === "Math help" && topics.length === 0) {
-      return res.status(400).json({ message: "Please select at least one topic/section." });
-    }
-
-    if (requestType !== "Change of account" && !message) {
-      return res.status(400).json({ message: "Please enter a clear message." });
-    }
-
-    if (wantExtraClasses && !contact) {
-      return res.status(400).json({ message: "Please provide a contact number for Extra Classes." });
-    }
-
-    if (requestType === "Change of account") {
-      const ca = changeAccount || {};
-      const currentAccountType = cleanSpaces(ca.currentAccountType || "");
-      const newAccountType = cleanSpaces(ca.newAccountType || "");
-      const newGrade = ca.newGrade === null || ca.newGrade === undefined || ca.newGrade === ""
-        ? null
-        : Number(ca.newGrade);
-      const caContact = cleanSpaces(ca.contact || "");
-
-      if (!currentAccountType) return res.status(400).json({ message: "Current account type is required." });
-      if (!newAccountType) return res.status(400).json({ message: "New account type is required." });
-      if (currentAccountType === newAccountType) {
-        return res.status(400).json({ message: "Current and new account type cannot be the same." });
-      }
-      if (!caContact) return res.status(400).json({ message: "A contact number is required for account changes." });
-      if (newAccountType === "student") {
-        if (!Number.isInteger(newGrade) || newGrade < 8 || newGrade > 12) {
-          return res.status(400).json({ message: "Please select a valid grade (8–12) for Student account." });
-        }
-      }
-
-      const saved = await Support.create({
-        userId: user._id,
-        username: user.username,
-        email: user.email,
-        grade: user.grade ?? null,
-
-        subject,
-        requestType: "Change of account",
-        message: message || "",
-
-        topics: [],
-
-        wantExtraClasses: false,
-        preferredService: "",
-        contact: "",
-
-        changeAccount: {
-          currentAccountType,
-          newAccountType,
-          newGrade: newAccountType === "student" ? newGrade : null,
-          contact: caContact,
-        },
-
-        status: "open",
-      });
-
-      return res.status(201).json({ ok: true, supportId: saved._id });
-    }
-
-    const saved = await Support.create({
-      userId: user._id,
-      username: user.username,
-      email: user.email,
-      grade: user.grade ?? null,
-
-      subject,
-      requestType,
-      topics,
-      message,
-
-      wantExtraClasses,
-      preferredService,
-      contact,
-
-      changeAccount: null,
-      status: "open",
-    });
-
-    return res.status(201).json({ ok: true, supportId: saved._id });
-  } catch (e) {
-    console.error("POST /api/support error:", e.message);
-    return res.status(500).json({ message: "Could not submit support request. Please try again." });
-  }
-});
-
-// Admin view support list
-app.get("/api/admin/support", authRequired, adminOnly, async (req, res) => {
-  try {
-    const rows = await Support.find({})
-      .sort({ createdAt: -1 })
-      .limit(300);
-    return res.json(rows);
-  } catch (e) {
-    console.error("GET /api/admin/support error:", e.message);
-    return res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -615,9 +498,11 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
       }
 
       if (type === "note") {
+        // notes: only text required
         continue;
       }
 
+      // points (marks)
       const pts = safeInt(q?.points, 1);
       if (!Number.isInteger(pts) || pts < 1) {
         return res
@@ -640,14 +525,21 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
           }
         }
       } else {
-        const opts = Array.isArray(q?.options) ? q.options : [];
-        if (opts.length !== 4 || opts.some((o) => !cleanSpaces(o))) {
-          return res.status(400).json({ message: "MCQ questions must have 4 options A–D." });
+        // ✅ MCQ: allow 2+ options (not only 4)
+        const { ok, options, count } = normalizeMcqOptions(q?.options);
+        if (!ok) {
+          return res.status(400).json({ message: "MCQ questions must have at least 2 options." });
         }
+
         const ci = safeInt(q?.correctIndex, null);
-        if (ci === null || ci < 0 || ci > 3) {
-          return res.status(400).json({ message: "MCQ correctIndex must be 0–3." });
+        if (ci === null || ci < 0 || ci >= count) {
+          return res.status(400).json({
+            message: "MCQ correctIndex must be within the options list.",
+          });
         }
+
+        // ✅ store cleaned options
+        q.options = options;
       }
     }
 
@@ -664,8 +556,10 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
       availableUntil: null,
     });
 
+    // ✅ return immediately (admin page stays fast)
     res.status(201).json({ message: "Saved", quizId: quiz._id });
 
+    // ✅ notify learners after response
     setImmediate(async () => {
       try {
         const learners = await User.find({
@@ -738,6 +632,7 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
       if (k in req.body) update[k] = req.body[k];
     }
 
+    // Validation + cleaning
     if ("grade" in update) {
       const g = Number(update.grade);
       if (!Number.isInteger(g) || g < 8 || g > 12) {
@@ -778,6 +673,7 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
         return res.status(400).json({ message: "Questions are required." });
       }
 
+      // ✅ validation for mcq/text/note + points
       for (const q of update.questions) {
         const type = String(q?.type || "mcq").toLowerCase();
 
@@ -811,14 +707,21 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
             }
           }
         } else {
-          const opts = Array.isArray(q?.options) ? q.options : [];
-          if (opts.length !== 4 || opts.some((o) => !cleanSpaces(o))) {
-            return res.status(400).json({ message: "MCQ questions must have 4 options A–D." });
+          // ✅ MCQ: allow 2+ options (not only 4)
+          const { ok, options, count } = normalizeMcqOptions(q?.options);
+          if (!ok) {
+            return res.status(400).json({ message: "MCQ questions must have at least 2 options." });
           }
-          const ci = Number(q?.correctIndex);
-          if (!Number.isInteger(ci) || ci < 0 || ci > 3) {
-            return res.status(400).json({ message: "MCQ correctIndex must be 0–3." });
+
+          const ci = safeInt(q?.correctIndex, null);
+          if (ci === null || ci < 0 || ci >= count) {
+            return res.status(400).json({
+              message: "MCQ correctIndex must be within the options list.",
+            });
           }
+
+          // ✅ keep cleaned options
+          q.options = options;
         }
       }
     }
@@ -909,6 +812,7 @@ app.post("/api/results", authRequired, async (req, res) => {
     const qs = Array.isArray(quiz.questions) ? quiz.questions : [];
     if (!qs.length) return res.status(400).json({ message: "Assessment has no questions." });
 
+    // total points (exclude notes)
     const gradedQs = qs.filter((q) => String(q.type || "mcq").toLowerCase() !== "note");
     const totalPoints = gradedQs.reduce((sum, q) => sum + (Number(q.points) || 1), 0);
 
@@ -924,6 +828,7 @@ app.post("/api/results", authRequired, async (req, res) => {
 
       const ans = answers.find((a) => Number(a.questionIndex) === i) || {};
 
+      // NOTE (not graded)
       if (type === "note") {
         return {
           questionIndex: i,
@@ -944,6 +849,7 @@ app.post("/api/results", authRequired, async (req, res) => {
         };
       }
 
+      // TEXT
       if (type === "text") {
         const userText = cleanSpaces(ans.textAnswer || "");
         const correctText = cleanSpaces(q.correctText || "");
@@ -976,6 +882,7 @@ app.post("/api/results", authRequired, async (req, res) => {
         };
       }
 
+      // MCQ
       const chosenIndex = Number.isFinite(Number(ans.chosenIndex)) ? Number(ans.chosenIndex) : -1;
       const correctIndex = Number.isFinite(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
 
@@ -1014,6 +921,7 @@ app.post("/api/results", authRequired, async (req, res) => {
 
       instructions: String(quiz.instructions || "").trim(),
 
+      // ✅ points-based
       score: scorePoints,
       total: totalPoints,
       percent,
