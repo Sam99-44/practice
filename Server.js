@@ -11,8 +11,8 @@
 // ✅ Password reset (OTP): /api/forgot-password-otp + /api/reset-password-otp
 // ✅ SendGrid: welcome email + test-email + health
 // ✅ Quiz instructions saved from admin + stored in Result for review page
-// ✅ Notes are excluded from total marks and numbering logic can be handled on review page
-// ✅ NEW: MCQ supports 2+ choices (not limited to 4)
+// ✅ Notes excluded from total marks
+// ✅ NEW: Typed answers ignore case + spaces + accepts fractions like 1/2 == 0.5 (and tolerance mode supports them too)
 
 import express from "express";
 import mongoose from "mongoose";
@@ -121,17 +121,6 @@ function safeNum(v, fallback = 0) {
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
   return n;
-}
-
-// ✅ NEW: MCQ options can be 2+ (not only 4)
-function normalizeMcqOptions(opts) {
-  const arr = Array.isArray(opts) ? opts.map(cleanSpaces) : [];
-  const filled = arr.filter(Boolean); // remove empty strings
-  return {
-    ok: filled.length >= 2,
-    options: filled,
-    count: filled.length,
-  };
 }
 
 /* ------------------ CORS ------------------ */
@@ -497,17 +486,11 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
         return res.status(400).json({ message: "Each block must have text." });
       }
 
-      if (type === "note") {
-        // notes: only text required
-        continue;
-      }
+      if (type === "note") continue;
 
-      // points (marks)
       const pts = safeInt(q?.points, 1);
       if (!Number.isInteger(pts) || pts < 1) {
-        return res
-          .status(400)
-          .json({ message: "Each question must have marks (points) of 1 or more." });
+        return res.status(400).json({ message: "Each question must have marks (points) of 1 or more." });
       }
 
       if (type === "text") {
@@ -525,21 +508,14 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
           }
         }
       } else {
-        // ✅ MCQ: allow 2+ options (not only 4)
-        const { ok, options, count } = normalizeMcqOptions(q?.options);
-        if (!ok) {
-          return res.status(400).json({ message: "MCQ questions must have at least 2 options." });
+        const opts = Array.isArray(q?.options) ? q.options : [];
+        if (opts.length < 2 || opts.some((o) => !cleanSpaces(o))) {
+          return res.status(400).json({ message: "MCQ must have at least 2 options." });
         }
-
         const ci = safeInt(q?.correctIndex, null);
-        if (ci === null || ci < 0 || ci >= count) {
-          return res.status(400).json({
-            message: "MCQ correctIndex must be within the options list.",
-          });
+        if (ci === null || ci < 0 || ci >= opts.length) {
+          return res.status(400).json({ message: "MCQ correctIndex must be within options." });
         }
-
-        // ✅ store cleaned options
-        q.options = options;
       }
     }
 
@@ -556,10 +532,8 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
       availableUntil: null,
     });
 
-    // ✅ return immediately (admin page stays fast)
     res.status(201).json({ message: "Saved", quizId: quiz._id });
 
-    // ✅ notify learners after response
     setImmediate(async () => {
       try {
         const learners = await User.find({
@@ -632,7 +606,6 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
       if (k in req.body) update[k] = req.body[k];
     }
 
-    // Validation + cleaning
     if ("grade" in update) {
       const g = Number(update.grade);
       if (!Number.isInteger(g) || g < 8 || g > 12) {
@@ -673,7 +646,6 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
         return res.status(400).json({ message: "Questions are required." });
       }
 
-      // ✅ validation for mcq/text/note + points
       for (const q of update.questions) {
         const type = String(q?.type || "mcq").toLowerCase();
 
@@ -681,15 +653,11 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
           return res.status(400).json({ message: "Each block must have text." });
         }
 
-        if (type === "note") {
-          continue;
-        }
+        if (type === "note") continue;
 
         const pts = safeInt(q?.points, 1);
         if (!Number.isInteger(pts) || pts < 1) {
-          return res
-            .status(400)
-            .json({ message: "Each question must have marks (points) of 1 or more." });
+          return res.status(400).json({ message: "Each question must have marks (points) of 1 or more." });
         }
 
         if (type === "text") {
@@ -707,21 +675,14 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
             }
           }
         } else {
-          // ✅ MCQ: allow 2+ options (not only 4)
-          const { ok, options, count } = normalizeMcqOptions(q?.options);
-          if (!ok) {
-            return res.status(400).json({ message: "MCQ questions must have at least 2 options." });
+          const opts = Array.isArray(q?.options) ? q.options : [];
+          if (opts.length < 2 || opts.some((o) => !cleanSpaces(o))) {
+            return res.status(400).json({ message: "MCQ must have at least 2 options." });
           }
-
-          const ci = safeInt(q?.correctIndex, null);
-          if (ci === null || ci < 0 || ci >= count) {
-            return res.status(400).json({
-              message: "MCQ correctIndex must be within the options list.",
-            });
+          const ci = Number(q?.correctIndex);
+          if (!Number.isInteger(ci) || ci < 0 || ci >= opts.length) {
+            return res.status(400).json({ message: "MCQ correctIndex must be within options." });
           }
-
-          // ✅ keep cleaned options
-          q.options = options;
         }
       }
     }
@@ -766,25 +727,66 @@ function isUnavailableBySchedule(quiz) {
   return false;
 }
 
+// ✅ parse numbers AND fractions like 1/2 or -3/4
+function parseNumberOrFraction(input) {
+  const s = String(input || "")
+    .trim()
+    .replace(/,/g, ".")
+    .replace(/−/g, "-");
+
+  if (!s) return null;
+
+  // fraction a/b
+  const m = s.match(/^([+-]?\d+(?:\.\d+)?)\s*\/\s*([+-]?\d+(?:\.\d+)?)$/);
+  if (m) {
+    const a = Number(m[1]);
+    const b = Number(m[2]);
+    if (!Number.isFinite(a) || !Number.isFinite(b) || b === 0) return null;
+    return a / b;
+  }
+
+  // normal number (0.5, -2, 3.14)
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+// ✅ normalize typed answers so case/spaces don't matter
+function normalizeTextAnswer(s) {
+  return String(s || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "") // remove all spaces
+    .replace(/−/g, "-");
+}
+
 function compareTextAnswer(userAns, correctAns, mode, tolerance) {
-  const uaRaw = cleanSpaces(userAns);
-  const caRaw = cleanSpaces(correctAns);
-  if (!caRaw) return false;
+  const uaRaw = String(userAns || "");
+  const caRaw = String(correctAns || "");
+  if (!caRaw.trim()) return false;
 
-  const ua = uaRaw.toLowerCase();
-  const ca = caRaw.toLowerCase();
-
-  if (mode === "contains") return ua.includes(ca);
+  // ✅ numeric compare: accept 1/2 == 0.5 (also works for 0.5 == 1/2)
+  // - If mode is number_tolerance: use tol
+  // - Otherwise: if both look numeric/fraction, compare exactly with tiny epsilon
+  const uNum = parseNumberOrFraction(uaRaw);
+  const cNum = parseNumberOrFraction(caRaw);
 
   if (mode === "number_tolerance") {
-    const uNum = Number(ua);
-    const cNum = Number(ca);
     const tol = Number(tolerance);
-    if (!Number.isFinite(uNum) || !Number.isFinite(cNum) || !Number.isFinite(tol)) return false;
+    if (uNum === null || cNum === null || !Number.isFinite(tol) || tol < 0) return false;
     return Math.abs(uNum - cNum) <= tol;
   }
 
-  return ua === ca; // exact
+  // If both are numeric-like, treat as equal (fraction/decimal) using a small epsilon
+  if (uNum !== null && cNum !== null) {
+    return Math.abs(uNum - cNum) <= 1e-12;
+  }
+
+  const ua = normalizeTextAnswer(uaRaw);
+  const ca = normalizeTextAnswer(caRaw);
+
+  if (mode === "contains") return ua.includes(ca);
+
+  return ua === ca; // exact (case-insensitive, space-insensitive)
 }
 
 // Submit attempt (attempt.html POSTs here)
