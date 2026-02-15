@@ -1,789 +1,254 @@
-<!-- attempt.html (FINAL POLISHED - COPY & PASTE)
-     ✅ Same logic as your version
-     ✅ Removes PO badge (no bubble)
-     ✅ Removes ALL “bubble” styling (no badges/pills)
-     ✅ Marks aligned RIGHT with clean professional typography
--->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Attempt Assessment | Practice Online</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login | Practice Online</title>
 
+  <!-- SEO: do not index login pages -->
+  <meta name="robots" content="noindex, nofollow" />
+
+  <!-- Font (same as other pages) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- MathJax -->
-  <script>
-    window.MathJax = {
-      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
-      svg: { fontCache: 'global' }
-    };
-  </script>
-  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
-
   <style>
     :root{
-      --nav:#1b1648;
-      --red:#e11d2e;
-
       --bg:#f6f7fb;
       --card:#ffffff;
       --border:#e6e6e6;
       --text:#0f172a;
       --muted:#475569;
-
+      --accent:#0b3c5d;
+      --accent-soft:#e7eef5;
+      --nav:#1b1648;
+      --red:#e11d2e;
       --radius:14px;
-      --shadow:0 10px 28px rgba(2,6,23,.08);
-
-      --ok:#065f46;
+      --shadow:0 6px 18px rgba(0,0,0,0.06);
       --error:#b91c1c;
-
-      --soft:#eef2ff;
-      --focus:0 0 0 4px rgba(207,233,255,.65);
-
-      --noteBg:#f8fafc;
-      --noteBd:#e5e7eb;
-      --noteText:#0b3c5d;
+      --ok:#065f46;
     }
 
     *{box-sizing:border-box}
-    body{margin:0;font-family:Inter, Arial, sans-serif;background:var(--bg);color:var(--text);}
-    a{color:inherit;text-decoration:none}
-    .wrap{max-width:1100px;margin:0 auto;padding:18px}
-    .muted{color:var(--muted)}
-    .error{color:var(--error)}
-    .ok{color:var(--ok)}
-    .hidden{display:none!important}
-
-    /* Top bar */
-    header.topbar{
-      background:var(--nav);
-      color:#fff;
-      border-bottom:1px solid rgba(255,255,255,.10);
+    body{
+      margin:0;
+      font-family:Inter,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
     }
-    .topbar-inner{
+
+    /* ---------- TOP NAV (same style) ---------- */
+    .topbar{background:var(--nav); padding:14px 20px;}
+    .nav{
       max-width:1100px;
-      margin:0 auto;
-      padding:14px 18px;
+      margin:auto;
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:12px;
       flex-wrap:wrap;
     }
-
-    /* ✅ Brand: no PO badge, no bubbles */
     .brand{
-      display:flex;
-      flex-direction:column;
-      line-height:1.15;
-    }
-    .brand .name{
+      color:#fff;
       font-weight:900;
+      text-decoration:none;
+      font-size:18px;
       letter-spacing:.2px;
     }
-    .brand .sub{
+
+    .tabs{display:flex; gap:18px; align-items:center; flex-wrap:wrap;}
+    .tabs a{
+      color:#c7c9e3;
+      text-decoration:none;
       font-weight:700;
-      opacity:.85;
-      font-size:12px;
-      margin-top:2px;
+      padding-bottom:6px;
+      border-bottom:3px solid transparent;
+    }
+    .tabs a:hover{color:#fff}
+    .tabs a.active{color:#fff; border-bottom:3px solid var(--red);}
+
+    /* ---------- PAGE ---------- */
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding:24px;
     }
 
-    nav.nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-    nav.nav a{
-      padding:8px 10px;
-      border-radius:10px;
-      color:#e7e9ff;
-      font-weight:800;
-      font-size:13px;
-    }
-    nav.nav a:hover{background:rgba(255,255,255,.10)}
-    nav.nav a.active{
-      color:#fff;
-      border-bottom:3px solid var(--red);
-      border-radius:10px 10px 8px 8px;
-      padding-bottom:5px;
-    }
-    .btnTop{
-      background:transparent;
-      color:#fff;
-      border:1px solid rgba(255,255,255,.22);
-      padding:8px 12px;
-      border-radius:10px;
-      font-weight:900;
-      cursor:pointer;
-    }
-    .btnTop:hover{background:rgba(255,255,255,.08)}
-
-    /* Card */
-    .section{
+    /* ---------- CARD (same card system) ---------- */
+    .card{
+      max-width:420px;
+      margin:46px auto;
       background:var(--card);
       border:1px solid var(--border);
       border-radius:var(--radius);
+      padding:18px;
       box-shadow:var(--shadow);
-      overflow:hidden;
-      margin-top:14px;
-    }
-    .sectionHead{
-      background:linear-gradient(180deg,#f4f7ff,#eef4ff);
-      border-bottom:1px solid var(--border);
-      padding:12px 14px;
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-    .sectionHead h1{margin:0;font-size:18px;letter-spacing:-0.01em;}
-    .sectionHead p{margin:6px 0 0 0}
-    .sectionBody{padding:14px}
-
-    /* ✅ Right meta: plain text, no bubbles */
-    .metaRight{
-      display:flex;
-      flex-direction:column;
-      align-items:flex-end;
-      gap:4px;
-      min-width:220px;
-    }
-    .statusText{
-      font-weight:800;
-      font-size:12px;
-      letter-spacing:.02em;
-      text-transform:uppercase;
-    }
-    .statusText.available{color:#065f46}
-    .statusText.unavailable{color:#b91c1c}
-    .timeText{
-      font-weight:800;
-      font-size:12px;
-      color:#0f172a;
-    }
-    .timeText.warn{color:#b45309}
-
-    /* Questions */
-    .q{padding:14px 0;border-top:1px solid #eee;}
-    .q:first-child{border-top:none;padding-top:0}
-    .q .MathJax, .opt .MathJax, .hint .MathJax, .noteBox .MathJax { vertical-align: middle; }
-
-    /* ✅ Professional question header + marks */
-    .qHead{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:12px;
-      margin-bottom:10px;
-    }
-    .qTitle{
-      font-weight:900;
-      line-height:1.35;
-      margin:0;
-      min-width:0;
-      flex:1 1 auto;
-      word-break:break-word;
-      font-size:15px;
-    }
-    .marksRight{
-      flex:0 0 auto;
-      white-space:nowrap;
-      font-weight:800;
-      font-size:12px;
-      color:var(--muted);
-      padding-top:2px;
-    }
-    .marksRight strong{
-      color:#0f172a;
-      font-weight:900;
-      margin-left:6px;
     }
 
-    .qimg{
+    h2{margin:0 0 6px; font-size:22px;}
+    p{margin:6px 0 14px; color:var(--muted);}
+
+    label{
       display:block;
-      max-width:100%;
-      height:auto;
-      border-radius:12px;
-      border:1px solid #eee;
-      margin:10px 0 12px 0;
+      margin-top:12px;
+      font-weight:700;
+      font-size:14px;
     }
 
-    /* Note/Heading block */
-    .noteBox{
-      border:1px solid var(--noteBd);
-      background:var(--noteBg);
-      border-radius:14px;
-      padding:12px 12px;
-      color:var(--noteText);
-      font-weight:800;
-      line-height:1.45;
-      word-break:break-word;
-    }
-
-    .opt{
-      display:flex;
-      gap:10px;
-      align-items:flex-start;
-      padding:10px 12px;
-      border:1px solid #ddd;
-      border-radius:12px;
-      margin-bottom:8px;
-      cursor:pointer;
-      background:#fff;
-      transition:.12s;
-    }
-    .opt:hover{background:var(--soft)}
-    .opt input{margin-top:3px}
-    .opt.disabled{opacity:.7;cursor:not-allowed}
-    .opt.disabled:hover{background:#fff}
-
-    .textAnswer{
+    input{
       width:100%;
       padding:12px;
+      margin-top:6px;
       border-radius:12px;
       border:1px solid #ddd;
-      outline:none;
-      font-size:14px;
       background:#fff;
-      font-weight:600;
+      font-size:14px;
+      outline:none;
     }
-    .textAnswer:focus{border-color:#cfe9ff;box-shadow:var(--focus);}
-    .textAnswer:disabled{opacity:.7;background:#f8fafc}
+    input:focus{
+      border-color:#cfe9ff;
+      box-shadow:0 0 0 4px rgba(11,60,93,.10);
+    }
 
-    .hint{
-      margin-top:10px;
-      padding:10px 12px;
+    button{
+      width:100%;
+      padding:12px;
+      margin-top:14px;
       border-radius:12px;
-      background:var(--soft);
-      border:1px solid #cfe9ff;
-      color:#0b3c5d;
-      font-size:13px;
+      border:none;
+      background:var(--accent);
+      color:#fff;
+      font-weight:900;
+      cursor:pointer;
+      transition:transform .08s ease, box-shadow .2s ease;
+    }
+    button:hover{transform:translateY(-1px); box-shadow:0 10px 24px rgba(11,60,93,.18);}
+    button:disabled{opacity:.6; cursor:not-allowed; transform:none; box-shadow:none;}
+
+    .msg{margin-top:12px; font-size:14px;}
+    .error{color:var(--error)}
+    .ok{color:var(--ok)}
+
+    .links{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      margin-top:14px;
+      font-size:14px;
+      flex-wrap:wrap;
+    }
+    .links a{
+      color:var(--accent);
+      text-decoration:none;
       font-weight:700;
     }
+    .links a:hover{text-decoration:underline}
 
-    /* Actions */
-    .btnRow{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;}
-    .btn{
-      background:var(--red);
-      color:#fff;
-      padding:10px 14px;
-      border:none;
-      border-radius:12px;
-      cursor:pointer;
-      font-weight:900;
-    }
-    .btn:hover{filter:brightness(.98)}
-    .btn:disabled{opacity:.6;cursor:not-allowed}
-
-    .btn2{
-      background:#fff;
-      border:1px solid #ddd;
-      padding:10px 14px;
-      border-radius:12px;
-      cursor:pointer;
-      font-weight:900;
-    }
-    .btn2:disabled{opacity:.6;cursor:not-allowed}
-
-    .notice{
-      border:1px solid #e5e7eb;
-      background:#f8fafc;
-      color:#334155;
-      padding:12px;
-      border-radius:12px;
-      margin-top:12px;
-    }
-    .notice.red{border-color:#fecaca;background:#fff1f2;color:#991b1b;}
-    .lockBox{
-      border:1px dashed #ddd;
-      background:#fafafa;
-      padding:14px;
-      border-radius:12px;
-      margin-top:12px;
-    }
-
-    @media(max-width:640px){
-      .wrap{padding:14px}
-      .sectionBody{padding:12px}
-      .sectionHead{padding:12px}
-      .metaRight{align-items:flex-start;min-width:0}
-      .qHead{flex-wrap:wrap}
-      .marksRight{padding-top:0}
+    @media(max-width:520px){
+      .wrap{padding:16px;}
+      .card{margin:26px auto; padding:16px;}
+      .tabs{gap:12px;}
     }
   </style>
-
-  <script>
-    if (!localStorage.getItem("token")) {
-      window.location.href = "login.html";
-    }
-  </script>
 </head>
 
 <body>
-
-<header class="topbar">
-  <div class="topbar-inner">
-    <div class="brand">
-      <div class="name">Practice Online</div>
-      <div class="sub" id="welcomeSub">Assessment</div>
-    </div>
-
-    <nav class="nav">
-      <a href="learner-quizzes.html" class="active">Back to Practice</a>
-      <a href="results.html">Results</a>
-      <button class="btnTop" id="logoutBtn" type="button">Logout</button>
-    </nav>
-  </div>
-</header>
-
-<div class="wrap">
-  <div class="section">
-    <div class="sectionHead">
-      <div>
-        <h1 id="quizTitle">Loading…</h1>
-        <p class="muted" id="quizInfo"></p>
-      </div>
-
-      <div class="metaRight">
-        <div class="statusText" id="statusText" style="display:none;">—</div>
-        <div class="timeText" id="timeText" style="display:none;">Time: 00:00</div>
+  <!-- TOP NAV -->
+  <header class="topbar">
+    <div class="nav">
+      <a href="index.html" class="brand">Practice Online</a>
+      <div class="tabs">
+        <a href="login.html" class="active">Login</a>
+        <a href="register.html">Register</a>
       </div>
     </div>
+  </header>
 
-    <div class="sectionBody">
-      <div id="lockNotice" class="lockBox hidden">
-        <b class="error">Attempt already submitted.</b>
-        <div class="muted" style="margin-top:4px;">View your result in Results.</div>
+  <main class="wrap">
+    <div class="card">
+      <h2>Login</h2>
+      <p>Access your Practice Online account</p>
+
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="email" />
+
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" />
+
+      <button id="loginBtn" type="button">Login</button>
+
+      <p id="msg" class="msg"></p>
+
+      <div class="links">
+        <a href="register.html">Create account</a>
+        <a href="reset-otp.html">Forgot password?</a>
       </div>
-
-      <div id="unavailableNotice" class="notice red hidden">
-        <b>This assessment is not available right now.</b>
-        <div class="muted" style="margin-top:4px;">Please try again later.</div>
-      </div>
-
-      <div id="questions"></div>
-
-      <div class="btnRow">
-        <button class="btn" id="submitBtn" type="button">Submit</button>
-        <button class="btn2" id="viewResultsBtn" type="button" disabled>View Results</button>
-      </div>
-
-      <p id="msg" class="muted" style="margin:12px 0 0;"></p>
     </div>
-  </div>
-</div>
+  </main>
 
 <script>
+  // ✅ API domain
   const API = "https://api.practiceonline.co.za";
 
-  const token = localStorage.getItem("token");
-  const quizId = new URLSearchParams(window.location.search).get("quizId");
+  const loginBtn = document.getElementById("loginBtn");
+  const msg = document.getElementById("msg");
 
-  const quizTitle = document.getElementById("quizTitle");
-  const quizInfo = document.getElementById("quizInfo");
-  const questionsDiv = document.getElementById("questions");
-  const submitBtn = document.getElementById("submitBtn");
-  const viewResultsBtn = document.getElementById("viewResultsBtn");
-  const msgEl = document.getElementById("msg");
-  const lockNotice = document.getElementById("lockNotice");
-  const unavailableNotice = document.getElementById("unavailableNotice");
-
-  const statusText = document.getElementById("statusText");
-  const timeText = document.getElementById("timeText");
-
-  let timerInterval = null;
-  let quizEndAtMs = null;
-  let quizData = null;
-  let submitted = false;
-  let blocked = false;
-
-  const END_KEY = `quiz_end_${quizId}`;
-
-  function typesetMath(root=document){
-    if (window.MathJax?.typesetPromise) {
-      window.MathJax.typesetPromise([root]).catch(()=>{});
-    }
+  function setMsg(text, type="") {
+    msg.className = "msg " + type;
+    msg.textContent = text;
   }
 
-  document.getElementById("logoutBtn").onclick = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
-    localStorage.removeItem("me_cache");
-    window.location.href = "login.html";
-  };
-
-  if (!quizId) {
-    quizTitle.textContent = "Assessment not found";
-    submitBtn.disabled = true;
-  } else {
-    loadQuiz();
+  async function safeJson(res){
+    try { return await res.json(); }
+    catch { return {}; }
   }
 
-  function cleanSpaces(s){
-    return String(s || "").trim().replace(/\s+/g, " ");
-  }
+  // Enter key support
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") loginBtn.click();
+  });
 
-  function setAvailability(isAvailable){
-    statusText.style.display = "block";
-    if (isAvailable){
-      statusText.textContent = "AVAILABLE";
-      statusText.className = "statusText available";
-    } else {
-      statusText.textContent = "UNAVAILABLE";
-      statusText.className = "statusText unavailable";
-    }
-  }
+  loginBtn.onclick = async () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
 
-  function disableAllInputs(){
-    document.querySelectorAll("input[type=radio], input[type=text], input[type=number], textarea").forEach(el => el.disabled = true);
-    document.querySelectorAll(".opt").forEach(el => el.classList.add("disabled"));
-  }
-
-  function stopTimerAndClearKey(){
-    if (timerInterval) clearInterval(timerInterval);
-    timerInterval = null;
-    timeText.style.display = "none";
-    localStorage.removeItem(END_KEY);
-  }
-
-  function isUnavailableBySchedule(quiz){
-    const now = new Date();
-    if (quiz?.isFrozen) return true;
-
-    if (quiz?.availableFrom){
-      const from = new Date(quiz.availableFrom);
-      if (!isNaN(from.getTime()) && now < from) return true;
-    }
-    if (quiz?.availableUntil){
-      const until = new Date(quiz.availableUntil);
-      if (!isNaN(until.getTime()) && now > until) return true;
-    }
-    return false;
-  }
-
-  function countScorableQuestions(){
-    return (quizData?.questions || []).filter(q => String(q.type || "mcq").toLowerCase() !== "note").length;
-  }
-
-  async function loadQuiz() {
-    msgEl.className = "muted";
-    msgEl.textContent = "";
-    lockNotice.classList.add("hidden");
-    unavailableNotice.classList.add("hidden");
-    blocked = false;
-    submitted = false;
-
-    let res;
-    try{
-      res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`, {
-        headers: { Authorization: "Bearer " + token }
-      });
-    }catch{
-      quizTitle.textContent = "Network error";
-      msgEl.className = "error";
-      msgEl.textContent = "Please refresh and try again.";
-      submitBtn.disabled = true;
-      return;
+    if (!email || !password) {
+      return setMsg("Email and password are required.", "error");
     }
 
-    if (!res.ok) {
-      quizTitle.textContent = "Assessment not found";
-      submitBtn.disabled = true;
-      return;
-    }
+    loginBtn.disabled = true;
+    setMsg("Signing in...");
 
-    quizData = await res.json().catch(()=>null);
-    if (!quizData){
-      quizTitle.textContent = "Could not load assessment";
-      submitBtn.disabled = true;
-      return;
-    }
-
-    quizTitle.textContent = cleanSpaces(quizData.title || "Assessment");
-    quizInfo.textContent = cleanSpaces(quizData.topic || "") ? `Topic: ${cleanSpaces(quizData.topic)}` : "";
-
-    const unavailable = isUnavailableBySchedule(quizData);
-    setAvailability(!unavailable);
-
-    // Number only non-note questions
-    let displayNo = 0;
-
-    questionsDiv.innerHTML = (quizData.questions || []).map((q, i) => {
-      const type = String(q.type || "mcq").toLowerCase();
-      const hint = cleanSpaces(q.hint || "");
-      const img = cleanSpaces(q.imageUrl || "");
-      const points = Math.max(1, Math.round(Number(q.points || 1)));
-
-      const imageHtml = img ? `<img class="qimg" src="${escapeAttr(img)}" alt="Question image">` : "";
-      const qText = escapeHtml(cleanSpaces(q.text));
-
-      // NOTE (no numbering, no input)
-      if (type === "note") {
-        return `
-          <div class="q">
-            <div class="noteBox">${qText}</div>
-            ${imageHtml}
-          </div>
-        `;
-      }
-
-      displayNo += 1;
-
-      const headHtml = `
-        <div class="qHead">
-          <div class="qTitle">${displayNo}. <span class="qText">${qText}</span></div>
-          <div class="marksRight">Marks <strong>${points}</strong></div>
-        </div>
-      `;
-
-      if (type === "text") {
-        return `
-          <div class="q" data-scorable="1">
-            ${headHtml}
-            ${imageHtml}
-            <input class="textAnswer" id="txt${i}" placeholder="Type your answer" autocomplete="off" />
-            ${hint ? `<div class="hint">Hint: <span class="hintText">${escapeHtml(hint)}</span></div>` : ``}
-          </div>
-        `;
-      }
-
-      const opts = Array.isArray(q.options) ? q.options : [];
-      return `
-        <div class="q" data-scorable="1">
-          ${headHtml}
-          ${imageHtml}
-          ${opts.map((o, j) => `
-            <label class="opt">
-              <input type="radio" name="q${i}" value="${j}">
-              <span class="optText">${escapeHtml(cleanSpaces(o))}</span>
-            </label>
-          `).join("")}
-          ${hint ? `<div class="hint">Hint: <span class="hintText">${escapeHtml(hint)}</span></div>` : ``}
-        </div>
-      `;
-    }).join("");
-
-    typesetMath(questionsDiv);
-
-    if (unavailable){
-      unavailableNotice.classList.remove("hidden");
-      blocked = true;
-      submitBtn.disabled = true;
-      viewResultsBtn.disabled = true;
-      disableAllInputs();
-      stopTimerAndClearKey();
-      return;
-    }
-
-    submitBtn.disabled = false;
-    startTimerWithQuiz(quizData);
-    submitBtn.onclick = () => submitQuiz("manual");
-  }
-
-  function calcFallbackSeconds(totalQuestions){
-    const raw = totalQuestions * 60;
-    return Math.max(5 * 60, Math.min(raw, 30 * 60));
-  }
-
-  function startTimerWithQuiz(quiz){
-    const now = Date.now();
-    const savedEnd = Number(localStorage.getItem(END_KEY));
-
-    if (savedEnd && savedEnd > now) {
-      quizEndAtMs = savedEnd;
-    } else {
-      const mins = Number(quiz.timeLimitMinutes || 0);
-      const totalQuestions = (quiz.questions || []).filter(q => String(q.type || "mcq").toLowerCase() !== "note").length;
-
-      let secs;
-      if (Number.isFinite(mins) && mins > 0) secs = mins * 60;
-      else secs = calcFallbackSeconds(totalQuestions);
-
-      quizEndAtMs = now + secs * 1000;
-      localStorage.setItem(END_KEY, String(quizEndAtMs));
-    }
-
-    timeText.style.display = "block";
-    timeText.classList.remove("warn");
-    tickTimer();
-    clearInterval(timerInterval);
-    timerInterval = setInterval(tickTimer, 1000);
-  }
-
-  function tickTimer(){
-    if (!quizEndAtMs || submitted || blocked) return;
-
-    const remainingMs = quizEndAtMs - Date.now();
-
-    if (remainingMs <= 0) {
-      timeText.textContent = "Time: 00:00";
-      timeText.classList.add("warn");
-      clearInterval(timerInterval);
-      timerInterval = null;
-
-      msgEl.className = "error";
-      msgEl.textContent = "Time is up. Submitting your answers…";
-      submitQuiz("auto");
-      return;
-    }
-
-    const remainingSec = Math.ceil(remainingMs / 1000);
-    const mm = String(Math.floor(remainingSec / 60)).padStart(2, "0");
-    const ss = String(remainingSec % 60).padStart(2, "0");
-    timeText.textContent = `Time: ${mm}:${ss}`;
-
-    if (remainingSec <= 60) timeText.classList.add("warn");
-    else timeText.classList.remove("warn");
-  }
-
-  function getTimeTakenSeconds(){
-    const mins = Number(quizData?.timeLimitMinutes || 0);
-    const totalQuestions = (quizData?.questions || []).filter(q => String(q.type || "mcq").toLowerCase() !== "note").length;
-
-    const totalSec = (Number.isFinite(mins) && mins > 0)
-      ? mins * 60
-      : calcFallbackSeconds(totalQuestions);
-
-    const now = Date.now();
-    const remainingSec = quizEndAtMs ? Math.max(0, Math.ceil((quizEndAtMs - now) / 1000)) : 0;
-    const taken = totalSec - remainingSec;
-    return Math.max(0, taken);
-  }
-
-  function buildAnswersPayload(){
-    const answers = [];
-    (quizData.questions || []).forEach((q, i) => {
-      const type = String(q.type || "mcq").toLowerCase();
-      if (type === "note") return;
-
-      if (type === "text") {
-        const inp = document.getElementById(`txt${i}`);
-        const val = inp ? cleanSpaces(inp.value) : "";
-        answers.push({ questionIndex: i, textAnswer: val });
-        return;
-      }
-
-      const chosen = document.querySelector(`input[name="q${i}"]:checked`);
-      answers.push({
-        questionIndex: i,
-        chosenIndex: chosen ? Number(chosen.value) : -1
-      });
-    });
-    return answers;
-  }
-
-  function countAnswered(){
-    let answered = 0;
-    (quizData.questions || []).forEach((q, i) => {
-      const type = String(q.type || "mcq").toLowerCase();
-      if (type === "note") return;
-
-      if (type === "text") {
-        const inp = document.getElementById(`txt${i}`);
-        if (inp && cleanSpaces(inp.value)) answered++;
-        return;
-      }
-
-      const chosen = document.querySelector(`input[name="q${i}"]:checked`);
-      if (chosen) answered++;
-    });
-    return answered;
-  }
-
-  async function submitQuiz(mode){
-    if (!quizData || submitted || blocked) return;
-
-    const total = countScorableQuestions();
-    const answered = countAnswered();
-
-    if (mode === "manual" && answered < total) {
-      msgEl.className = "error";
-      msgEl.textContent = `Please answer all questions (${answered}/${total}) before submitting.`;
-      return;
-    }
-
-    submitted = true;
-    submitBtn.disabled = true;
-
-    if (timerInterval) clearInterval(timerInterval);
-    timerInterval = null;
-
-    const timeTakenSeconds = getTimeTakenSeconds();
-    localStorage.removeItem(END_KEY);
-
-    const payload = {
-      quizId,
-      answers: buildAnswersPayload(),
-      timeTakenSeconds
-    };
-
-    let res;
-    try{
-      res = await fetch(`${API}/api/results`, {
+    try {
+      const res = await fetch(`${API}/api/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token
-        },
-        body: JSON.stringify(payload)
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
       });
-    }catch{
-      msgEl.className = "error";
-      msgEl.textContent = "Network error. Please try again.";
-      submitted = false;
-      submitBtn.disabled = false;
-      return;
+
+      const data = await safeJson(res);
+
+      if (!res.ok) {
+        loginBtn.disabled = false;
+        return setMsg(data.message || "Invalid email or password.", "error");
+      }
+
+      // ✅ Save session
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user || {}));
+      localStorage.setItem("username", data.user?.username || "");
+
+      // ✅ Redirect (respect ?next=... if present)
+      const next = new URLSearchParams(window.location.search).get("next");
+      window.location.href = next ? decodeURIComponent(next) : "learner-quizzes.html";
+
+    } catch {
+      loginBtn.disabled = false;
+      setMsg("Network error. Please try again.", "error");
     }
-
-    if (res.status === 409) {
-      lockNotice.classList.remove("hidden");
-      msgEl.className = "error";
-      msgEl.textContent = "You already attempted this assessment.";
-      blocked = true;
-      disableAllInputs();
-      return;
-    }
-
-    if (res.status === 403) {
-      unavailableNotice.classList.remove("hidden");
-      const data = await res.json().catch(()=>({}));
-      msgEl.className = "error";
-      msgEl.textContent = data.message || "This assessment is currently unavailable. Please try again later.";
-      blocked = true;
-      disableAllInputs();
-      return;
-    }
-
-    if (!res.ok) {
-      const data = await res.json().catch(()=>({}));
-      msgEl.className = "error";
-      msgEl.textContent = data.message || "Could not save attempt. Please try again.";
-      submitted = false;
-      submitBtn.disabled = false;
-      return;
-    }
-
-    msgEl.className = "ok";
-    msgEl.textContent = "Submitted successfully.";
-
-    viewResultsBtn.disabled = false;
-    viewResultsBtn.onclick = () => window.location.href = "results.html";
-
-    disableAllInputs();
-  }
-
-  function escapeHtml(str){
-    return String(str)
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-  function escapeAttr(str){
-    return String(str || "").replaceAll('"',"&quot;");
-  }
+  };
 </script>
+
 </body>
 </html>
