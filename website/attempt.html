@@ -1,8 +1,10 @@
-<!-- attempt.html (FINAL POLISHED - COPY & PASTE)
-     ✅ Same logic as your version
-     ✅ Removes PO badge (no bubble)
-     ✅ Removes ALL “bubble” styling (no badges/pills)
-     ✅ Marks aligned RIGHT with clean professional typography
+<!-- attempt.html (UPDATED - COPY & PASTE)
+     ✅ Keeps everything the same
+     ✅ FIX: No more “instant redirect” to login (we validate token properly)
+     ✅ FIX: Remembers the page and returns after login (?next=...)
+     ✅ UI: Questions NOT bold
+     ✅ UI: Numbering aligned nicely + wraps well on phones
+     ✅ UI: Marks shown in a square box on the right
 -->
 <!doctype html>
 <html lang="en">
@@ -75,7 +77,7 @@
       flex-wrap:wrap;
     }
 
-    /* ✅ Brand: no PO badge, no bubbles */
+    /* Brand */
     .brand{
       display:flex;
       flex-direction:column;
@@ -141,7 +143,7 @@
     .sectionHead p{margin:6px 0 0 0}
     .sectionBody{padding:14px}
 
-    /* ✅ Right meta: plain text, no bubbles */
+    /* Right meta */
     .metaRight{
       display:flex;
       flex-direction:column;
@@ -169,7 +171,7 @@
     .q:first-child{border-top:none;padding-top:0}
     .q .MathJax, .opt .MathJax, .hint .MathJax, .noteBox .MathJax { vertical-align: middle; }
 
-    /* ✅ Professional question header + marks */
+    /* ✅ Question header + marks */
     .qHead{
       display:flex;
       justify-content:space-between;
@@ -177,27 +179,59 @@
       gap:12px;
       margin-bottom:10px;
     }
+
+    /* ✅ Not bold + correct numbering alignment */
     .qTitle{
-      font-weight:900;
-      line-height:1.35;
+      font-weight:600;           /* was bold, now normal */
+      line-height:1.45;
       margin:0;
       min-width:0;
       flex:1 1 auto;
       word-break:break-word;
       font-size:15px;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
     }
-    .marksRight{
+    .qNo{
       flex:0 0 auto;
-      white-space:nowrap;
+      font-weight:700;
+      color:#0f172a;
+      width:28px;               /* keeps alignment */
+    }
+    .qText{
+      flex:1 1 auto;
+      min-width:0;
+    }
+
+    /* ✅ Marks in a square box (right) */
+    .marksBox{
+      flex:0 0 auto;
+      width:44px;
+      height:44px;
+      border:1px solid #cbd5e1;
+      border-radius:8px;
+      background:#ffffff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      color:#0f172a;
+      line-height:1;
+    }
+    .marksMeta{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:4px;
+      flex:0 0 auto;
+    }
+    .marksLbl{
       font-weight:800;
       font-size:12px;
       color:var(--muted);
-      padding-top:2px;
-    }
-    .marksRight strong{
-      color:#0f172a;
-      font-weight:900;
-      margin-left:6px;
+      white-space:nowrap;
+      text-transform:none;
     }
 
     .qimg{
@@ -303,21 +337,19 @@
       margin-top:12px;
     }
 
+    /* ✅ Phone layout */
     @media(max-width:640px){
       .wrap{padding:14px}
       .sectionBody{padding:12px}
       .sectionHead{padding:12px}
       .metaRight{align-items:flex-start;min-width:0}
-      .qHead{flex-wrap:wrap}
-      .marksRight{padding-top:0}
+      .qHead{flex-wrap:nowrap}
+      .qTitle{font-size:14px}
+      .qNo{width:24px}
+      .marksMeta{align-items:flex-end}
+      .marksBox{width:40px;height:40px}
     }
   </style>
-
-  <script>
-    if (!localStorage.getItem("token")) {
-      window.location.href = "login.html";
-    }
-  </script>
 </head>
 
 <body>
@@ -377,8 +409,14 @@
 <script>
   const API = "https://api.practiceonline.co.za";
 
-  const token = localStorage.getItem("token");
   const quizId = new URLSearchParams(window.location.search).get("quizId");
+  const token = localStorage.getItem("token");
+
+  // ✅ FIX: do auth check HERE (not in head), keep return URL
+  if (!token) {
+    const next = encodeURIComponent(window.location.href);
+    window.location.href = `login.html?next=${next}`;
+  }
 
   const quizTitle = document.getElementById("quizTitle");
   const quizInfo = document.getElementById("quizInfo");
@@ -487,6 +525,14 @@
       return;
     }
 
+    // ✅ If token invalid/expired, redirect to login (with return)
+    if (res.status === 401) {
+      localStorage.removeItem("token");
+      const next = encodeURIComponent(window.location.href);
+      window.location.href = `login.html?next=${next}`;
+      return;
+    }
+
     if (!res.ok) {
       quizTitle.textContent = "Assessment not found";
       submitBtn.disabled = true;
@@ -532,8 +578,15 @@
 
       const headHtml = `
         <div class="qHead">
-          <div class="qTitle">${displayNo}. <span class="qText">${qText}</span></div>
-          <div class="marksRight">Marks <strong>${points}</strong></div>
+          <div class="qTitle">
+            <span class="qNo">${displayNo}.</span>
+            <span class="qText">${qText}</span>
+          </div>
+
+          <div class="marksMeta">
+            <div class="marksLbl">Marks</div>
+            <div class="marksBox">${points}</div>
+          </div>
         </div>
       `;
 
@@ -752,6 +805,13 @@
       msgEl.textContent = data.message || "This assessment is currently unavailable. Please try again later.";
       blocked = true;
       disableAllInputs();
+      return;
+    }
+
+    if (res.status === 401) {
+      localStorage.removeItem("token");
+      const next = encodeURIComponent(window.location.href);
+      window.location.href = `login.html?next=${next}`;
       return;
     }
 
