@@ -14,46 +14,327 @@
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
+  <!-- Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
-    body{font-family:Arial; padding:20px; max-width:1000px; margin:auto; background:#f6f7fb;}
-    .card{background:#fff; border:1px solid #e6e6e6; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.06);}
-    input, textarea, select{width:100%; padding:10px; margin:8px 0; border-radius:10px; border:1px solid #ddd; outline:none; font-size:14px;}
-    textarea{min-height:90px; resize:vertical;}
-    label{font-size:13px; font-weight:700; color:#111827;}
-    button{padding:10px 14px; cursor:pointer; border:none; border-radius:10px; font-weight:700; font-size:13px;}
-    .btn{background:#111827; color:#fff;}
-    .btn2{background:#fff; border:1px solid #ddd; color:#111827;}
-    .danger{background:#b91c1c; color:#fff;}
-    .warn{background:#b45309; color:#fff;}
-    .muted{color:#555; font-size:13px;}
-    .error{color:#b91c1c;}
-    .ok{color:#065f46;}
-    .topbar{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
-    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
-    .qcard{border:1px solid #e6e6e6; border-radius:12px; padding:12px; margin-top:12px; background:#fff;}
-    .qhead{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
-    .smallbtn{border:1px solid #ddd; background:#fff; color:#111827; padding:8px 10px; border-radius:10px; font-weight:700; font-size:12px;}
-    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
-    hr{border:none; border-top:1px solid #eee; margin:14px 0;}
-    .pill{display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #cfe9ff; background:#eef7ff; color:#0b3c5d; font-size:12px; font-weight:800; white-space:nowrap;}
-    .pill.red{border-color:#fecaca; background:#fff1f2; color:#b91c1c;}
-    .pill.green{border-color:#bbf7d0; background:#f0fdf4; color:#065f46;}
-    .actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
-    .disabledBox{opacity:.6; pointer-events:none;}
-    .note{font-size:12px; color:#64748b; margin-top:-4px;}
-    .tiny{font-size:12px;}
-    .tag{display:inline-block; padding:4px 8px; border-radius:999px; border:1px solid #e5e7eb; background:#f8fafc; font-size:12px; font-weight:800; color:#334155;}
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --border:#e6e6e6;
+      --text:#0f172a;
+      --muted:#475569;
+      --muted2:#64748b;
+      --accent:#1b1648;
+      --accent2:#0f0c2b;
+      --red:#e11d2e;
+      --shadow:0 10px 30px rgba(2,6,23,.08);
+      --radius:16px;
+      --radius2:12px;
+      --ok:#065f46;
+      --warn:#b45309;
+      --danger:#b91c1c;
+      --focus:0 0 0 4px rgba(225,29,46,.18);
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:"Inter", Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      padding:22px 14px 34px;
+    }
+
+    .wrap{max-width:1100px;margin:0 auto;}
+
+    /* ---------- Top header ---------- */
+    .header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+    .title{
+      margin:0;
+      font-size:22px;
+      letter-spacing:-.02em;
+    }
+    .sub{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.5;
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      font-weight:800;
+      font-size:13px;
+      cursor:pointer;
+      text-decoration:none;
+      transition:transform .06s ease, box-shadow .2s ease, opacity .2s ease;
+      white-space:nowrap;
+    }
+    .btn:hover{transform:translateY(-1px); box-shadow:0 8px 18px rgba(2,6,23,.08);}
+    .btn:active{transform:translateY(0);}
+    .btn.primary{
+      background:linear-gradient(135deg, var(--accent), var(--accent2));
+      color:#fff;
+      border-color:rgba(255,255,255,.14);
+      box-shadow:0 12px 22px rgba(27,22,72,.22);
+    }
+    .btn.primary:hover{box-shadow:0 16px 32px rgba(27,22,72,.28);}
+    .btn.red{
+      background:rgba(225,29,46,.08);
+      border-color:rgba(225,29,46,.35);
+      color:#7f1d1d;
+    }
+    .btn.warn{
+      background:rgba(180,83,9,.10);
+      border-color:rgba(180,83,9,.30);
+      color:#7c2d12;
+    }
+    .btn.danger{
+      background:rgba(185,28,28,.10);
+      border-color:rgba(185,28,28,.30);
+      color:#7f1d1d;
+    }
+    .btn:disabled{opacity:.55; cursor:not-allowed; transform:none; box-shadow:none;}
+
+    /* ---------- Card ---------- */
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .cardHead{
+      padding:16px 16px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(180deg, #ffffff, #fbfbff);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .cardHead h3{
+      margin:0;
+      font-size:15px;
+      font-weight:900;
+      letter-spacing:-.01em;
+    }
+    .cardHead .mini{
+      color:var(--muted2);
+      font-size:12px;
+      margin-top:6px;
+      line-height:1.5;
+    }
+
+    /* ---------- Layout ---------- */
+    .pad{padding:16px;}
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+    .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;}
+    @media(max-width:900px){
+      .grid2,.grid3{grid-template-columns:1fr;}
+      .actions{gap:8px;}
+    }
+
+    /* ---------- Fields ---------- */
+    label{
+      display:block;
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.2px;
+      margin:0 0 6px;
+      color:#111827;
+    }
+    input, textarea, select{
+      width:100%;
+      padding:11px 12px;
+      border-radius:12px;
+      border:1px solid #d9d9e3;
+      outline:none;
+      font-size:14px;
+      background:#fff;
+      color:var(--text);
+      transition:box-shadow .15s ease, border-color .15s ease;
+    }
+    textarea{min-height:92px; resize:vertical;}
+    input:focus, textarea:focus, select:focus{
+      border-color:rgba(225,29,46,.45);
+      box-shadow:var(--focus);
+    }
+    .help{
+      margin-top:6px;
+      font-size:12px;
+      color:var(--muted2);
+      line-height:1.5;
+    }
+
+    /* ---------- Status pill ---------- */
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 11px;
+      border-radius:999px;
+      border:1px solid #e5e7eb;
+      background:#f8fafc;
+      font-size:12px;
+      font-weight:900;
+      color:#334155;
+      white-space:nowrap;
+    }
+    .dot{width:9px;height:9px;border-radius:999px;background:#94a3b8;}
+    .pill.ok{border-color:#bbf7d0;background:#f0fdf4;color:#065f46;}
+    .pill.ok .dot{background:#22c55e;}
+    .pill.bad{border-color:#fecaca;background:#fff1f2;color:#b91c1c;}
+    .pill.bad .dot{background:#ef4444;}
+    .pill.mid{border-color:#fde68a;background:#fffbeb;color:#92400e;}
+    .pill.mid .dot{background:#f59e0b;}
+
+    /* ---------- Message bar ---------- */
+    .msgbar{
+      margin-top:10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px 12px;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .msgbar .text{font-size:13px;color:var(--muted);}
+    .msgbar .text.ok{color:var(--ok); font-weight:800;}
+    .msgbar .text.error{color:var(--danger); font-weight:800;}
+    .msgbar .text.warn{color:var(--warn); font-weight:800;}
+
+    /* ---------- Sections ---------- */
+    .sectionTitle{
+      margin:0 0 10px;
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:-.01em;
+    }
+    .hr{border:none;border-top:1px solid var(--border); margin:14px 0;}
+
+    /* ---------- Question cards ---------- */
+    .qcard{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:14px;
+      background:#fff;
+      margin-top:12px;
+    }
+    .qhead{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:8px;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:5px 10px;
+      border-radius:999px;
+      border:1px solid #e5e7eb;
+      background:#f8fafc;
+      font-size:12px;
+      font-weight:900;
+      color:#334155;
+      white-space:nowrap;
+    }
+
+    .smallbtn{
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      padding:9px 11px;
+      border-radius:12px;
+      font-weight:900;
+      font-size:12px;
+      cursor:pointer;
+    }
+    .smallbtn:hover{box-shadow:0 8px 16px rgba(2,6,23,.06);}
+    .smallbtn:active{transform:translateY(1px);}
+
+    .toolbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
     .previewBox{
       border:1px dashed #e6e6e6;
       background:#fbfbfe;
-      border-radius:10px;
-      padding:10px;
-      margin-top:6px;
+      border-radius:12px;
+      padding:12px;
+      margin-top:8px;
       font-size:13px;
-      line-height:1.35;
+      line-height:1.45;
       white-space:pre-wrap;
+      color:#1f2937;
     }
+
+    .disabledBox{opacity:.55; pointer-events:none;}
     .hide{display:none!important;}
+
+    /* ✅ Drag & Drop */
+    .dragHandle{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid var(--border);
+      background:#f8fafc;
+      color:var(--text);
+      padding:6px 10px;
+      border-radius:12px;
+      font-weight:900;
+      cursor:grab;
+      user-select:none;
+    }
+    .dragHandle:active{cursor:grabbing;}
+
+    .qcard[draggable="true"]{cursor:default;}
+    .qcard.dragging{
+      opacity:.75;
+      transform:scale(.995);
+      box-shadow:0 14px 30px rgba(2,6,23,.12);
+      border-color:rgba(225,29,46,.25);
+    }
+    .qcard.dropTarget{
+      outline:3px solid rgba(225,29,46,.18);
+      outline-offset:3px;
+    }
   </style>
 
   <script>
@@ -61,131 +342,159 @@
   </script>
 </head>
 <body>
+  <div class="wrap">
 
-  <div class="topbar">
-    <div>
-      <h2 style="margin:0;">Admin – Edit / Availability</h2>
-      <div class="muted" id="who">Checking login...</div>
-    </div>
-    <div class="actions">
-      <a class="btn2" href="admin-dashboard.html" style="text-decoration:none; display:inline-block;">Dashboard</a>
-      <a class="btn2" href="admin-quiz.html" style="text-decoration:none; display:inline-block;">Add Assessment</a>
-      <a class="btn2" href="learner-quizzes.html" style="text-decoration:none; display:inline-block;">Learner View</a>
-      <button class="btn" id="logoutBtn" type="button">Logout</button>
-    </div>
-  </div>
-
-  <div class="card">
-
-    <div class="row">
+    <div class="header">
       <div>
-        <label>Filter by Grade</label>
-        <select id="gradeFilter">
-          <option value="">All grades</option>
-          <option value="8">Grade 8</option>
-          <option value="9">Grade 9</option>
-          <option value="10">Grade 10</option>
-          <option value="11">Grade 11</option>
-          <option value="12">Grade 12</option>
-        </select>
+        <h1 class="title">Edit Assessment</h1>
+        <div class="sub" id="who">Checking login…</div>
       </div>
-      <div>
-        <label>Search topic or assessment title</label>
-        <input id="searchBox" placeholder="Type to search..." />
+
+      <div class="actions">
+        <a class="btn" href="admin-dashboard.html">Dashboard</a>
+        <a class="btn" href="admin-quiz.html">Add Assessment</a>
+        <a class="btn" href="learner-quizzes.html">Learner View</a>
+        <button class="btn primary" id="logoutBtn" type="button">Logout</button>
       </div>
     </div>
 
-    <div class="row" style="margin-top:6px;">
-      <div>
-        <label>Select Assessment</label>
-        <select id="assessmentSelect">
-          <option value="">Loading…</option>
-        </select>
+    <div class="card">
+      <div class="cardHead">
+        <div>
+          <h3>Find and manage assessments</h3>
+          <div class="mini">Filter, search and update availability. Changes are saved immediately when you click “Save Changes”.</div>
+        </div>
+        <div>
+          <div id="freezePill" class="pill"><span class="dot"></span> —</div>
+          <div class="mini" id="availabilityNote"></div>
+        </div>
       </div>
-      <div>
-        <label>Availability</label>
-        <div id="freezePill" class="pill">—</div>
-        <div class="note" id="availabilityNote"></div>
+
+      <div class="pad">
+
+        <div class="grid2">
+          <div>
+            <label>Filter by grade</label>
+            <select id="gradeFilter">
+              <option value="">All grades</option>
+              <option value="8">Grade 8</option>
+              <option value="9">Grade 9</option>
+              <option value="10">Grade 10</option>
+              <option value="11">Grade 11</option>
+              <option value="12">Grade 12</option>
+            </select>
+          </div>
+          <div>
+            <label>Search by topic or title</label>
+            <input id="searchBox" placeholder="Type to search…" />
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:10px;">
+          <div>
+            <label>Select assessment</label>
+            <select id="assessmentSelect">
+              <option value="">Loading…</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Actions</label>
+            <div class="actions" style="margin-top:6px;">
+              <button class="btn warn" id="freezeBtn" type="button" disabled>Make Unavailable</button>
+              <button class="btn danger" id="deleteBtn" type="button" disabled>Delete</button>
+            </div>
+            <div class="help">Tip: If an assessment is unavailable, you can make it available again using the button above.</div>
+          </div>
+        </div>
+
+        <div class="msgbar" style="margin-top:12px;">
+          <div class="text" id="msg">Loading…</div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div id="editArea" class="disabledBox">
+
+          <h3 class="sectionTitle">Assessment details</h3>
+
+          <div class="grid2">
+            <div>
+              <label>Grade</label>
+              <select id="grade">
+                <option value="">Select grade</option>
+                <option value="8">Grade 8</option>
+                <option value="9">Grade 9</option>
+                <option value="10">Grade 10</option>
+                <option value="11">Grade 11</option>
+                <option value="12">Grade 12</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Topic</label>
+              <input id="topic" placeholder="e.g. Algebra" />
+            </div>
+          </div>
+
+          <div style="margin-top:10px;">
+            <label>Assessment title</label>
+            <input id="title" placeholder="e.g. Algebra – Linear Equations" />
+          </div>
+
+          <div style="margin-top:10px;">
+            <label>Instructions (shown before starting)</label>
+            <textarea id="instructions" placeholder="Example: Read all questions carefully. Use $x^2$ for maths."></textarea>
+            <div class="help">LaTeX is supported in instructions and questions (example: $\\frac{a}{b}$, $\\sqrt{x}$).</div>
+          </div>
+
+          <div style="margin-top:10px;">
+            <div class="tag">Instructions preview</div>
+            <div class="previewBox" id="prevInstructions">(Preview)</div>
+          </div>
+
+          <div class="grid2" style="margin-top:12px;">
+            <div>
+              <label>Available from (optional)</label>
+              <input id="availableFrom" type="datetime-local" />
+            </div>
+            <div>
+              <label>Available until (optional)</label>
+              <input id="availableUntil" type="datetime-local" />
+            </div>
+          </div>
+
+          <div style="margin-top:10px;">
+            <label>Time limit (minutes)</label>
+            <input id="timeLimitMinutes" type="number" min="1" max="180" />
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="toolbar">
+            <div>
+              <h3 class="sectionTitle" style="margin-bottom:6px;">Questions</h3>
+              <div class="help">Supports multiple-choice and typed answers. Drag cards to reorder.</div>
+            </div>
+            <div class="actions">
+              <button class="smallbtn" id="addNoteBtn" type="button">+ Add Note / Heading</button>
+              <button class="smallbtn" id="addMcqBtn" type="button">+ Add MCQ</button>
+              <button class="smallbtn" id="addTextBtn" type="button">+ Add Typed Answer</button>
+            </div>
+          </div>
+
+          <div id="questionsWrap"></div>
+
+          <div class="hr"></div>
+
+          <div class="actions">
+            <button class="btn primary" id="saveBtn" type="button">Save Changes</button>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <div class="actions" style="margin-top:6px;">
-      <button class="warn" id="freezeBtn" type="button" disabled>Make Unavailable</button>
-      <button class="danger" id="deleteBtn" type="button" disabled>Delete</button>
-      <span class="muted" id="msg"></span>
-    </div>
-
-    <hr>
-
-    <div id="editArea" class="disabledBox">
-
-      <div class="row">
-        <div>
-          <label>Grade</label>
-          <select id="grade">
-            <option value="">Select Grade</option>
-            <option value="8">Grade 8</option>
-            <option value="9">Grade 9</option>
-            <option value="10">Grade 10</option>
-            <option value="11">Grade 11</option>
-            <option value="12">Grade 12</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Topic</label>
-          <input id="topic" />
-        </div>
-      </div>
-
-      <label>Assessment Title</label>
-      <input id="title" />
-
-      <label>Instructions (shown before starting)</label>
-      <textarea id="instructions" placeholder="Example: Read all questions carefully. Use $x^2$ format for maths."></textarea>
-
-      <div class="tiny muted" style="margin-top:-4px;">
-        LaTeX allowed in instructions and questions (example: $\\frac{a}{b}$, $\\sqrt{x}$).
-      </div>
-
-      <div style="margin-top:10px;">
-        <div class="tag">Instructions Preview</div>
-        <div class="previewBox" id="prevInstructions">(Preview)</div>
-      </div>
-
-      <div class="row" style="margin-top:8px;">
-        <div>
-          <label>Available From (optional)</label>
-          <input id="availableFrom" type="datetime-local" />
-        </div>
-        <div>
-          <label>Available Until (optional)</label>
-          <input id="availableUntil" type="datetime-local" />
-        </div>
-      </div>
-
-      <label>Time Limit (minutes)</label>
-      <input id="timeLimitMinutes" type="number" min="1" max="180" />
-
-      <hr>
-
-      <div class="qhead">
-        <div>
-          <h3 style="margin:0;">Questions</h3>
-          <div class="tiny muted" style="margin-top:4px;">Supports MCQ and Typed Answer.</div>
-        </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="smallbtn" id="addMcqBtn" type="button">+ Add MCQ</button>
-          <button class="smallbtn" id="addTextBtn" type="button">+ Add Typed Answer</button>
-        </div>
-      </div>
-
-      <div id="questionsWrap"></div>
-
-      <hr>
-
-      <button class="btn" id="saveBtn" type="button">Save Changes</button>
-    </div>
   </div>
 
   <script>
@@ -216,6 +525,7 @@
     const timeLimitEl = document.getElementById("timeLimitMinutes");
 
     const saveBtn = document.getElementById("saveBtn");
+    const addNoteBtn = document.getElementById("addNoteBtn");
     const addMcqBtn = document.getElementById("addMcqBtn");
     const addTextBtn = document.getElementById("addTextBtn");
     const questionsWrap = document.getElementById("questionsWrap");
@@ -224,7 +534,7 @@
     let allQuizzes = [];
 
     function setMsg(t, cls="muted"){
-      msg.className = cls;
+      msg.className = "text " + cls;
       msg.textContent = t;
     }
 
@@ -293,16 +603,16 @@
       const from = q.availableFrom ? new Date(q.availableFrom) : null;
       const until = q.availableUntil ? new Date(q.availableUntil) : null;
 
-      if (q.isFrozen) return { label:"UNAVAILABLE", cls:"pill red", note:"Manually set to unavailable." };
-      if (from && now < from) return { label:"SCHEDULED", cls:"pill", note:`Available from ${from.toLocaleString()}` };
-      if (until && now > until) return { label:"CLOSED", cls:"pill red", note:`Closed since ${until.toLocaleString()}` };
-      if (until) return { label:"AVAILABLE", cls:"pill green", note:`Available until ${until.toLocaleString()}` };
-      return { label:"AVAILABLE", cls:"pill green", note:"No schedule set." };
+      if (q.isFrozen) return { label:"UNAVAILABLE", cls:"pill bad", note:"Manually set to unavailable." };
+      if (from && now < from) return { label:"SCHEDULED", cls:"pill mid", note:`Available from ${from.toLocaleString()}` };
+      if (until && now > until) return { label:"CLOSED", cls:"pill bad", note:`Closed since ${until.toLocaleString()}` };
+      if (until) return { label:"AVAILABLE", cls:"pill ok", note:`Available until ${until.toLocaleString()}` };
+      return { label:"AVAILABLE", cls:"pill ok", note:"No schedule set." };
     }
 
     function setAvailabilityUI(q){
       const a = availabilitySummary(q);
-      freezePill.textContent = a.label;
+      freezePill.innerHTML = `<span class="dot"></span> ${a.label}`;
       freezePill.className = a.cls;
       availabilityNote.textContent = a.note || "";
 
@@ -314,12 +624,14 @@
         editArea.classList.add("disabledBox");
         deleteBtn.disabled = true;
         saveBtn.disabled = true;
+        addNoteBtn.disabled = true;
         addMcqBtn.disabled = true;
         addTextBtn.disabled = true;
       } else {
         editArea.classList.remove("disabledBox");
         deleteBtn.disabled = false;
         saveBtn.disabled = false;
+        addNoteBtn.disabled = false;
         addMcqBtn.disabled = false;
         addTextBtn.disabled = false;
       }
@@ -340,7 +652,7 @@
         window.location.href = "learner-quizzes.html";
         return false;
       }
-      who.textContent = `Logged in as: ${me.username} (admin)`;
+      who.textContent = `Logged in as ${me.username} (admin)`;
       return true;
     }
 
@@ -396,7 +708,7 @@
 
       if (res.status === 401) return logout();
       if (!res.ok){
-        setMsg("Could not load quizzes: " + await readErrorText(res), "error");
+        setMsg("Could not load assessments: " + await readErrorText(res), "error");
         return;
       }
 
@@ -404,7 +716,7 @@
       allQuizzes = Array.isArray(list) ? list : [];
 
       renderDropdown();
-      setMsg("Use filter/search, then select an assessment.", "ok");
+      setMsg("Use the filter and search, then select an assessment.", "ok");
     }
 
     async function loadAssessmentById(id){
@@ -440,13 +752,18 @@
       const qs = Array.isArray(currentQuiz.questions) ? currentQuiz.questions : [];
       questionsWrap.innerHTML = qs.length
         ? qs.map((q, i) => questionCardHtml(i, q)).join("")
-        : questionCardHtml(0, { type:"mcq", text:"", imageUrl:"", options:["","","",""], correctIndex:0 });
+        : questionCardHtml(0, { type:"mcq", text:"", hint:"", imageUrl:"", options:["","","",""], correctIndex:0 });
 
-      // preview math
       typesetMath(questionsWrap);
+
+      // ✅ NEW: renumber + drag/drop
+      renumberCards();
+      setupDragAndDrop();
 
       setAvailabilityUI(currentQuiz);
       setMsg("Loaded.", "ok");
+
+      wireAllCards();
     }
 
     function questionCardHtml(i, q){
@@ -455,19 +772,44 @@
       const hint = cleanSpaces(q?.hint);
       const imageUrl = cleanSpaces(q?.imageUrl);
 
+      if (type === "note"){
+        return `
+          <div class="qcard" data-index="${i}" data-type="note" draggable="true">
+            <div class="qhead">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <span class="dragHandle" title="Drag to reorder">↕ Drag</span>
+                <div><b class="cardLabel">Block</b> <span class="tag">Note / Heading</span></div>
+              </div>
+              <button type="button" class="smallbtn removeBtn">Remove</button>
+            </div>
+
+            <label>Note / heading text (supports math)</label>
+            <input class="qText" value="${escapeAttr(text)}" placeholder="Type your note / heading here" />
+
+            <div style="margin-top:10px;">
+              <div class="tag">Preview</div>
+              <div class="previewBox prevQ"></div>
+            </div>
+          </div>
+        `;
+      }
+
       if (type === "text"){
         const correctText = cleanSpaces(q?.correctText);
         const mode = String(q?.textAnswerMode || "exact");
         const tol = (q?.numberTolerance ?? "");
 
         return `
-          <div class="qcard" data-index="${i}" data-type="text">
+          <div class="qcard" data-index="${i}" data-type="text" draggable="true">
             <div class="qhead">
-              <div><b>Question ${i + 1}</b> <span class="tag">Typed Answer</span></div>
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <span class="dragHandle" title="Drag to reorder">↕ Drag</span>
+                <div><b class="cardLabel">Question</b> <span class="tag">Typed answer</span></div>
+              </div>
               <button type="button" class="smallbtn removeBtn">Remove</button>
             </div>
 
-            <label>Question Text (supports math)</label>
+            <label>Question text (supports math)</label>
             <input class="qText" value="${escapeAttr(text)}" placeholder="Type your question here" />
 
             <label>Hint (optional)</label>
@@ -478,17 +820,17 @@
 
             <div class="grid2">
               <div>
-                <label>Correct Answer</label>
+                <label>Correct answer</label>
                 <input class="correctText" value="${escapeAttr(correctText)}" placeholder="Example: 10" />
               </div>
               <div>
-                <label>Check Mode</label>
+                <label>Check mode</label>
                 <select class="textMode">
                   <option value="exact" ${mode==="exact"?"selected":""}>Exact (case-insensitive)</option>
                   <option value="contains" ${mode==="contains"?"selected":""}>Contains</option>
                   <option value="number_tolerance" ${mode==="number_tolerance"?"selected":""}>Number (tolerance)</option>
                 </select>
-                <div class="tiny muted">Tolerance only applies for Number mode.</div>
+                <div class="help">Tolerance only applies for Number mode.</div>
               </div>
             </div>
 
@@ -497,7 +839,7 @@
                 <label>Tolerance</label>
                 <input class="tolerance" type="number" step="0.0001" value="${escapeAttr(String(tol))}" />
               </div>
-              <div class="tiny muted" style="padding-top:28px;">
+              <div class="help" style="padding-top:26px;">
                 Example: correct = 3.14, tolerance 0.01 accepts 3.13–3.15
               </div>
             </div>
@@ -516,13 +858,16 @@
       const correctIndex = Number.isFinite(Number(q?.correctIndex)) ? Number(q.correctIndex) : 0;
 
       return `
-        <div class="qcard" data-index="${i}" data-type="mcq">
+        <div class="qcard" data-index="${i}" data-type="mcq" draggable="true">
           <div class="qhead">
-            <div><b>Question ${i + 1}</b> <span class="tag">MCQ</span></div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <span class="dragHandle" title="Drag to reorder">↕ Drag</span>
+              <div><b class="cardLabel">Question</b> <span class="tag">MCQ</span></div>
+            </div>
             <button type="button" class="smallbtn removeBtn">Remove</button>
           </div>
 
-          <label>Question Text (supports math)</label>
+          <label>Question text (supports math)</label>
           <input class="qText" value="${escapeAttr(text)}" placeholder="Type your question here" />
 
           <label>Hint (optional)</label>
@@ -538,7 +883,7 @@
             <div><label>Option D</label><input class="optD" value="${escapeAttr(opts[3] || "")}" /></div>
           </div>
 
-          <label>Correct Answer</label>
+          <label>Correct answer</label>
           <select class="correct">
             <option value="0" ${correctIndex===0?"selected":""}>A</option>
             <option value="1" ${correctIndex===1?"selected":""}>B</option>
@@ -566,6 +911,12 @@
       if (prevQ) { prevQ.textContent = qText || "(Question preview)"; }
       if (prevHint) { prevHint.textContent = hint ? ("Hint: " + hint) : "(Hint preview)"; }
 
+      if (type === "note"){
+        // Note uses only qText
+        typesetMath(card);
+        return;
+      }
+
       if (type === "mcq"){
         const A = cleanSpaces(card.querySelector(".optA")?.value || "");
         const B = cleanSpaces(card.querySelector(".optB")?.value || "");
@@ -573,8 +924,7 @@
         const D = cleanSpaces(card.querySelector(".optD")?.value || "");
         const prevOpts = card.querySelector(".prevOpts");
         if (prevOpts){
-          prevOpts.textContent =
-            `A) ${A || "—"}\nB) ${B || "—"}\nC) ${C || "—"}\nD) ${D || "—"}`;
+          prevOpts.textContent = `A) ${A || "—"}\nB) ${B || "—"}\nC) ${C || "—"}\nD) ${D || "—"}`;
         }
       } else {
         const ans = cleanSpaces(card.querySelector(".correctText")?.value || "");
@@ -591,7 +941,6 @@
         }
       }
 
-      // MathJax render in this card
       typesetMath(card);
     }
 
@@ -610,6 +959,98 @@
         });
         wireCardPreview(card);
       });
+
+      // ✅ keep labels correct
+      renumberCards();
+      setupDragAndDrop();
+    }
+
+    // ✅ Renumber visible labels based on CURRENT order in the list
+    function renumberCards(){
+      const cards = [...questionsWrap.querySelectorAll(".qcard")];
+      let qNum = 0;
+      let bNum = 0;
+
+      for (const card of cards){
+        const type = (card.getAttribute("data-type") || "mcq").toLowerCase();
+        const labelEl = card.querySelector(".cardLabel");
+        if (!labelEl) continue;
+
+        if (type === "note"){
+          bNum += 1;
+          labelEl.textContent = `Block ${bNum}`;
+        } else {
+          qNum += 1;
+          labelEl.textContent = `Question ${qNum}`;
+        }
+      }
+    }
+
+    // -------------------- Drag & Drop (HTML5) --------------------
+    let draggedCard = null;
+
+    function setupDragAndDrop(){
+      const cards = [...questionsWrap.querySelectorAll(".qcard")];
+
+      cards.forEach(card => {
+        if (card.dataset.dndWired === "1") return;
+        card.dataset.dndWired = "1";
+
+        const handle = card.querySelector(".dragHandle");
+        if (handle){
+          handle.addEventListener("mousedown", () => {
+            card.setAttribute("draggable", "true");
+          });
+          handle.addEventListener("mouseup", () => {
+            card.setAttribute("draggable", "true");
+          });
+        }
+
+        card.addEventListener("dragstart", (e) => {
+          draggedCard = card;
+          card.classList.add("dragging");
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", "drag");
+        });
+
+        card.addEventListener("dragend", () => {
+          card.classList.remove("dragging");
+          [...questionsWrap.querySelectorAll(".qcard")].forEach(c => c.classList.remove("dropTarget"));
+          draggedCard = null;
+          renumberCards();
+        });
+
+        card.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          if (!draggedCard || draggedCard === card) return;
+
+          card.classList.add("dropTarget");
+
+          const rect = card.getBoundingClientRect();
+          const before = (e.clientY - rect.top) < rect.height / 2;
+
+          const dragging = draggedCard;
+          if (before) {
+            if (card.previousElementSibling !== dragging) {
+              questionsWrap.insertBefore(dragging, card);
+            }
+          } else {
+            if (card.nextElementSibling !== dragging) {
+              questionsWrap.insertBefore(dragging, card.nextElementSibling);
+            }
+          }
+        });
+
+        card.addEventListener("dragleave", () => {
+          card.classList.remove("dropTarget");
+        });
+
+        card.addEventListener("drop", (e) => {
+          e.preventDefault();
+          card.classList.remove("dropTarget");
+          renumberCards();
+        });
+      });
     }
 
     function collectQuestions(){
@@ -626,17 +1067,22 @@
 
         if (!text) throw new Error("Please fill in all question texts.");
 
+        if (type === "note"){
+          questions.push({ type:"note", text });
+          continue;
+        }
+
         if (type === "text"){
           const correctText = cleanSpaces(card.querySelector(".correctText")?.value || "");
           const textAnswerMode = String(card.querySelector(".textMode")?.value || "exact");
           const tolRaw = cleanSpaces(card.querySelector(".tolerance")?.value || "");
 
-          if (!correctText) throw new Error("Please enter correct answer for typed questions.");
+          if (!correctText) throw new Error("Please enter the correct answer for typed questions.");
 
           let numberTolerance = null;
           if (textAnswerMode === "number_tolerance"){
             const tol = Number(tolRaw);
-            if (!Number.isFinite(tol) || tol < 0) throw new Error("Enter valid tolerance (0 or more).");
+            if (!Number.isFinite(tol) || tol < 0) throw new Error("Enter a valid tolerance (0 or more).");
             numberTolerance = tol;
           }
 
@@ -652,7 +1098,6 @@
           continue;
         }
 
-        // MCQ
         const A = cleanSpaces(card.querySelector(".optA")?.value || "");
         const B = cleanSpaces(card.querySelector(".optB")?.value || "");
         const C = cleanSpaces(card.querySelector(".optC")?.value || "");
@@ -673,6 +1118,15 @@
 
       return questions;
     }
+
+    addNoteBtn.addEventListener("click", () => {
+      if (!currentQuiz) return;
+      const i = questionsWrap.querySelectorAll(".qcard").length;
+      questionsWrap.insertAdjacentHTML("beforeend",
+        questionCardHtml(i, { type:"note", text:"" })
+      );
+      wireAllCards();
+    });
 
     addMcqBtn.addEventListener("click", () => {
       if (!currentQuiz) return;
@@ -716,9 +1170,9 @@
         const availableFrom = localInputToIso(availableFromEl.value);
         const availableUntil = localInputToIso(availableUntilEl.value);
 
-        if (!grade) return setMsg("Select grade.", "error");
-        if (!topic) return setMsg("Enter topic.", "error");
-        if (!title) return setMsg("Enter title.", "error");
+        if (!grade) return setMsg("Select a grade.", "error");
+        if (!topic) return setMsg("Enter a topic.", "error");
+        if (!title) return setMsg("Enter a title.", "error");
         if (!Number.isFinite(timeLimitMinutes) || timeLimitMinutes < 1 || timeLimitMinutes > 180) {
           return setMsg("Time limit must be 1–180 minutes.", "error");
         }
@@ -727,7 +1181,7 @@
           const a = new Date(availableFrom).getTime();
           const b = new Date(availableUntil).getTime();
           if (Number.isFinite(a) && Number.isFinite(b) && b <= a) {
-            return setMsg("Available Until must be after Available From.", "error");
+            return setMsg("Available until must be after available from.", "error");
           }
         }
 
@@ -745,7 +1199,7 @@
         }
 
         currentQuiz = await res.json();
-        setMsg("✅ Saved.", "ok");
+        setMsg("Saved.", "ok");
 
         await loadAssessments();
         assessmentSelect.value = currentQuiz._id;
@@ -775,7 +1229,7 @@
 
       currentQuiz = await res.json();
       setAvailabilityUI(currentQuiz);
-      setMsg(nextFrozen ? "✅ Set to unavailable." : "✅ Set to available.", "ok");
+      setMsg(nextFrozen ? "Set to unavailable." : "Set to available.", "ok");
 
       await loadAssessments();
       assessmentSelect.value = currentQuiz._id;
@@ -798,7 +1252,7 @@
         return setMsg("Delete failed: " + await readErrorText(res), "error");
       }
 
-      setMsg("✅ Deleted.", "ok");
+      setMsg("Deleted.", "ok");
       currentQuiz = null;
 
       gradeEl.value = "";
@@ -817,7 +1271,7 @@
 
       await loadAssessments();
       assessmentSelect.value = "";
-      freezePill.textContent = "—";
+      freezePill.innerHTML = `<span class="dot"></span> —`;
       freezePill.className = "pill";
       availabilityNote.textContent = "";
     });
@@ -830,7 +1284,7 @@
         freezeBtn.disabled = true;
         deleteBtn.disabled = true;
         editArea.classList.add("disabledBox");
-        freezePill.textContent = "—";
+        freezePill.innerHTML = `<span class="dot"></span> —`;
         freezePill.className = "pill";
         availabilityNote.textContent = "";
         questionsWrap.innerHTML = "";
