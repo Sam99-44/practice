@@ -7,12 +7,14 @@
 // ✅ Quizzes: GET /api/quizzes (learner grade), POST /api/quizzes (admin) ✅ EMAIL students by grade
 // ✅ Quiz by id: GET /api/quizzes/:id
 // ✅ Quiz update/delete (admin): PUT /api/quizzes/:id, DELETE /api/quizzes/:id
-// ✅ Results: POST /api/results (✅ supports note blocks + points-based marking), GET /api/results/my, GET /api/results/:id
+// ✅ Results: POST /api/results
+//    ✅ Learners: ONE attempt only (409 if already attempted)
+//    ✅ Admin: can attempt SAME quiz MANY times (each attempt saved as a new result)
 // ✅ Password reset (OTP): /api/forgot-password-otp + /api/reset-password-otp
 // ✅ SendGrid: welcome email + test-email + health
 // ✅ Quiz instructions saved from admin + stored in Result for review page
 // ✅ Notes excluded from total marks
-// ✅ NEW: Typed answers ignore case + spaces + accepts fractions like 1/2 == 0.5 (and tolerance mode supports them too)
+// ✅ Typed answers ignore case + spaces + accepts fractions like 1/2 == 0.5 (tolerance mode supports them too)
 
 import express from "express";
 import mongoose from "mongoose";
@@ -448,6 +450,7 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
     const u = await User.findById(req.user.userId).select("role grade");
     if (!u) return res.status(401).json({ message: "User not found" });
 
+    // learners can only access their grade
     if (u.role !== "admin" && Number(quiz.grade) !== Number(u.grade)) {
       return res.status(403).json({ message: "Not allowed" });
     }
@@ -764,9 +767,6 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
   const caRaw = String(correctAns || "");
   if (!caRaw.trim()) return false;
 
-  // ✅ numeric compare: accept 1/2 == 0.5 (also works for 0.5 == 1/2)
-  // - If mode is number_tolerance: use tol
-  // - Otherwise: if both look numeric/fraction, compare exactly with tiny epsilon
   const uNum = parseNumberOrFraction(uaRaw);
   const cNum = parseNumberOrFraction(caRaw);
 
@@ -776,7 +776,7 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
     return Math.abs(uNum - cNum) <= tol;
   }
 
-  // If both are numeric-like, treat as equal (fraction/decimal) using a small epsilon
+  // If both are numeric-like, treat as equal (fraction/decimal)
   if (uNum !== null && cNum !== null) {
     return Math.abs(uNum - cNum) <= 1e-12;
   }
@@ -790,7 +790,8 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
 }
 
 // Submit attempt (attempt.html POSTs here)
-// ✅ Supports notes + points-based marking (notes excluded from total)
+// ✅ Learners: ONE attempt only
+// ✅ Admin: MANY attempts allowed (each attempt saved)
 app.post("/api/results", authRequired, async (req, res) => {
   try {
     const { quizId, answers, timeTakenSeconds } = req.body;
@@ -801,8 +802,27 @@ app.post("/api/results", authRequired, async (req, res) => {
 
     const userId = req.user.userId;
 
-    const existing = await Result.findOne({ userId, quizId }).select("_id");
-    if (existing) return res.status(409).json({ message: "Already attempted" });
+    // ✅ IMPORTANT FIX:
+    // Don't trust req.user.role (your JWT currently stores "learner" for admins too).
+    // Always check role from DB.
+    const me = await User.findById(userId).select("role");
+    if (!me) return res.status(401).json({ message: "User not found" });
+
+    const isAdmin = me.role === "admin";
+
+    // ✅ Learners blocked after first attempt
+    // ✅ Admin can retry unlimited times
+    if (!isAdmin) {
+      const existing = await Result.findOne({ userId, quizId }).select("_id");
+      if (existing) return res.status(409).json({ message: "Already attempted" });
+    }
+
+    // ✅ Admin attempt number (nice for ordering/reporting)
+    let attemptNo = 1;
+    if (isAdmin) {
+      const prev = await Result.countDocuments({ userId, quizId, isAdminAttempt: true });
+      attemptNo = prev + 1;
+    }
 
     const quiz = await Quiz.findById(quizId);
     if (!quiz) return res.status(404).json({ message: "Assessment not found" });
@@ -863,9 +883,11 @@ app.post("/api/results", authRequired, async (req, res) => {
         scorePoints += earned;
 
         const answerMode =
-          mode === "number_tolerance" ? "number" :
-          mode === "exact" ? "exact" :
-          "case-insensitive";
+          mode === "number_tolerance"
+            ? "number"
+            : mode === "exact"
+            ? "exact"
+            : "case-insensitive";
 
         return {
           questionIndex: i,
@@ -920,7 +942,6 @@ app.post("/api/results", authRequired, async (req, res) => {
       grade: quiz.grade,
       topic: quiz.topic || "General",
       title: quiz.title || "Assessment",
-
       instructions: String(quiz.instructions || "").trim(),
 
       // ✅ points-based
@@ -931,6 +952,11 @@ app.post("/api/results", authRequired, async (req, res) => {
 
       answers: savedAnswers,
       timeTakenSeconds: Number(timeTakenSeconds) || 0,
+
+      // ✅ IMPORTANT: these fields must exist in Result schema (from updated models/Result.js)
+      isAdminAttempt: isAdmin,
+      attemptNo,
+      attemptedAt: new Date(),
     });
 
     return res.status(201).json({
@@ -942,19 +968,25 @@ app.post("/api/results", authRequired, async (req, res) => {
       resultId: saved._id,
     });
   } catch (e) {
+    // If old unique index still exists, admin retries can throw E11000
+    if (String(e?.code) === "11000") {
+      return res.status(409).json({ message: "Already attempted" });
+    }
     console.error("POST /api/results error:", e);
     return res.status(500).json({ message: "Could not save attempt. Please try again." });
   }
 });
 
 // Results list for logged-in learner (results.html calls this)
+// ✅ Learners: see their own attempts
+// ✅ Admin: also sees THEIR attempts (including multiple)
 app.get("/api/results/my", authRequired, async (req, res) => {
   try {
     const userId = req.user.userId;
 
     const rows = await Result.find({ userId })
       .sort({ createdAt: -1 })
-      .select("_id createdAt grade topic title percent score total status quizId");
+      .select("_id createdAt grade topic title percent score total status quizId attemptNo isAdminAttempt");
 
     return res.json(rows);
   } catch {
@@ -1083,3 +1115,10 @@ mongoose
     app.listen(PORT, () => console.log(`Server running on ${PORT}`));
   })
   .catch((err) => console.error("Mongo error:", err.message));
+
+/*
+✅ IMPORTANT (do this once in MongoDB) if you previously had a full unique index:
+db.results.dropIndex("userId_1_quizId_1")
+
+Then ensure the new PARTIAL unique index is created by restarting server.
+*/
