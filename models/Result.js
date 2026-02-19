@@ -1,9 +1,9 @@
 // models/Result.js (UPDATED - COPY & PASTE)
 // ✅ Adds type: "note"
 // ✅ Stores points + earnedPoints per saved answer
-// ✅ Learners: enforce ONE attempt per quiz (DB-level via partial unique index)
+// ✅ Stores solution/workings snapshot per question (solution)
+// ✅ Learners: enforce ONE attempt per quiz (DB-level)
 // ✅ Admin: can attempt SAME quiz many times (DB allows multiple)
-// ✅ Saves solution/workings snapshot per question (so review can show memo even if quiz changes later)
 
 import mongoose from "mongoose";
 
@@ -13,7 +13,7 @@ const AnswerSchema = new mongoose.Schema(
 
     type: { type: String, enum: ["mcq", "text", "note"], default: "mcq" },
 
-    // ✅ points snapshot (so review can display marks per question)
+    // ✅ points snapshot
     points: { type: Number, default: 0, min: 0 },
     earnedPoints: { type: Number, default: 0, min: 0 },
 
@@ -24,7 +24,11 @@ const AnswerSchema = new mongoose.Schema(
     // TEXT
     textAnswer: { type: String, default: "" },
     correctText: { type: String, default: "" },
+
     hint: { type: String, default: "" },
+
+    // ✅ NEW: solution/workings snapshot
+    solution: { type: String, default: "" },
 
     answerMode: {
       type: String,
@@ -36,12 +40,9 @@ const AnswerSchema = new mongoose.Schema(
 
     isCorrect: { type: Boolean, default: false },
 
-    // Snapshot question content (for review page)
+    // Snapshot question content
     questionText: { type: String, default: "" },
     options: { type: [String], default: [] },
-
-    // ✅ NEW: snapshot memo/workings for this question (LaTeX supported)
-    solution: { type: String, default: "" },
   },
   { _id: false }
 );
@@ -58,18 +59,14 @@ const ResultSchema = new mongoose.Schema(
 
     instructions: { type: String, default: "" },
 
-    // ✅ NEW: snapshot whether solutions were enabled at attempt time
-    showSolutions: { type: Boolean, default: true },
-
-    score: { type: Number, required: true }, // ✅ points-based
-    total: { type: Number, required: true }, // ✅ points-based
+    score: { type: Number, required: true },
+    total: { type: Number, required: true },
     percent: { type: Number, required: true },
     status: { type: String, enum: ["PASS", "FAIL"], required: true },
 
     answers: { type: [AnswerSchema], default: [] },
     timeTakenSeconds: { type: Number, default: 0, min: 0 },
 
-    // ✅ allow admin retries without breaking learner one-attempt rule
     isAdminAttempt: { type: Boolean, default: false },
     attemptNo: { type: Number, default: 1, min: 1 },
     attemptedAt: { type: Date, default: Date.now },
@@ -77,8 +74,6 @@ const ResultSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ✅ Enforce UNIQUE only for learner attempts (isAdminAttempt=false)
-// Admin attempts (isAdminAttempt=true) are NOT restricted.
 ResultSchema.index(
   { userId: 1, quizId: 1 },
   { unique: true, partialFilterExpression: { isAdminAttempt: false } }
