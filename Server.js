@@ -15,6 +15,7 @@
 // ✅ Quiz instructions saved from admin + stored in Result for review page
 // ✅ Notes excluded from total marks
 // ✅ Typed answers ignore case + spaces + accepts fractions like 1/2 == 0.5 (tolerance mode supports them too)
+// ✅ NEW: Solutions/workings saved on quiz + snapshotted into Result for review page
 
 import express from "express";
 import mongoose from "mongoose";
@@ -481,12 +482,17 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
     const quizTopic = cleanSpaces(topic);
     const quizInstructions = String(instructions || "").trim();
 
-    // ✅ Validate blocks (mcq/text/note) + points
+    // ✅ Validate blocks (mcq/text/note) + points + solution (optional)
     for (const q of questions) {
       const type = String(q?.type || "mcq").toLowerCase();
 
       if (!cleanSpaces(q?.text)) {
         return res.status(400).json({ message: "Each block must have text." });
+      }
+
+      // ✅ solution allowed for any type (stored as string), notes will just ignore it
+      if ("solution" in q && q.solution !== undefined && q.solution !== null) {
+        q.solution = String(q.solution);
       }
 
       if (type === "note") continue;
@@ -654,6 +660,11 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
 
         if (!cleanSpaces(q?.text)) {
           return res.status(400).json({ message: "Each block must have text." });
+        }
+
+        // ✅ NEW: solution allowed (optional)
+        if ("solution" in q && q.solution !== undefined && q.solution !== null) {
+          q.solution = String(q.solution);
         }
 
         if (type === "note") continue;
@@ -848,6 +859,9 @@ app.post("/api/results", authRequired, async (req, res) => {
       const options = Array.isArray(q.options) ? q.options : [];
       const qPoints = type === "note" ? 0 : (Number(q.points) || 1);
 
+      // ✅ NEW: snapshot solution/workings
+      const solution = String(q.solution || "").trim();
+
       const ans = answers.find((a) => Number(a.questionIndex) === i) || {};
 
       // NOTE (not graded)
@@ -862,6 +876,7 @@ app.post("/api/results", authRequired, async (req, res) => {
           textAnswer: "",
           correctText: "",
           hint: "",
+          solution: "", // notes don't need solution
           answerMode: "case-insensitive",
           tolerance: null,
           roundTo: null,
@@ -897,6 +912,7 @@ app.post("/api/results", authRequired, async (req, res) => {
           textAnswer: userText,
           correctText,
           hint,
+          solution, // ✅ NEW
           answerMode,
           tolerance: mode === "number_tolerance" ? Number(tol) : null,
           roundTo: null,
@@ -924,6 +940,7 @@ app.post("/api/results", authRequired, async (req, res) => {
         textAnswer: "",
         correctText: "",
         hint,
+        solution, // ✅ NEW
         answerMode: "case-insensitive",
         tolerance: null,
         roundTo: null,
