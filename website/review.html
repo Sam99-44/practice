@@ -47,11 +47,15 @@
 
       --redBg:#fff1f2;
       --redBd:#fecaca;
+
+      /* ✅ Solution box */
+      --solBg:#fff7ed;
+      --solBd:#fed7aa;
+      --solText:#7c2d12;
     }
 
     *{box-sizing:border-box}
 
-    /* ✅ ONLY FONT WEIGHTS UPDATED (less bold, more consistent) */
     body{
       margin:0;
       font-family:Inter, Arial, sans-serif;
@@ -260,6 +264,25 @@
     .answerCard.good{ background:var(--greenBg); border-color:var(--greenBd); }
     .answerCard.bad{ background:var(--redBg); border-color:var(--redBd); }
 
+    /* ✅ NEW solution box */
+    .solutionBox{
+      margin-top:12px;
+      border-radius:12px;
+      border:1px solid var(--solBd);
+      background:var(--solBg);
+      color:var(--solText);
+      padding:12px;
+      font-weight:600;
+      line-height:1.45;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    .solutionTitle{
+      font-weight:700;
+      margin:0 0 6px 0;
+      font-size:13px;
+    }
+
     .resultInfo{
       margin-top:12px;
       font-weight:600;
@@ -354,6 +377,10 @@
 
         <div id="hint" class="hint" style="display:none;"></div>
         <div id="body"></div>
+
+        <!-- ✅ NEW solution container -->
+        <div id="solutionWrap" style="display:none;"></div>
+
         <div class="resultInfo" id="resultInfo"></div>
 
         <div class="navBtns">
@@ -378,6 +405,7 @@
   const qRightEl = document.getElementById("qRight");
   const hintEl = document.getElementById("hint");
   const bodyEl = document.getElementById("body");
+  const solutionWrap = document.getElementById("solutionWrap");
   const resultInfoEl = document.getElementById("resultInfo");
   const errEl = document.getElementById("err");
   const jumpSelect = document.getElementById("jumpSelect");
@@ -491,6 +519,23 @@
     }
   }
 
+  function renderSolutionBox(a){
+    const sol = cleanSpaces(a?.solution || "");
+    if (!sol){
+      solutionWrap.style.display = "none";
+      solutionWrap.innerHTML = "";
+      return;
+    }
+    solutionWrap.style.display = "block";
+    solutionWrap.innerHTML = `
+      <div class="solutionBox">
+        <div class="solutionTitle">Solution / Working</div>
+        <div>${escapeHtml(sol)}</div>
+      </div>
+    `;
+    typesetMath(solutionWrap);
+  }
+
   function render(){
     clearErr();
 
@@ -504,6 +549,8 @@
     resultInfoEl.textContent = "";
     qTextEl.textContent = "";
     qRightEl.textContent = "";
+    solutionWrap.style.display = "none";
+    solutionWrap.innerHTML = "";
 
     if (type === "note") {
       counterEl.textContent = `Note / Heading`;
@@ -517,6 +564,11 @@
     counterEl.textContent = `Question ${qNum} of ${totalQuestionsOnly}`;
 
     qTextEl.textContent = cleanSpaces(a.questionText || "");
+
+    // show marks per question (points snapshot)
+    const pts = Number(a.points || 0);
+    const earned = Number(a.earnedPoints || 0);
+    qRightEl.textContent = pts ? `${earned}/${pts} marks` : "";
 
     const hint = cleanSpaces(a.hint || "");
     if (hint){
@@ -561,6 +613,9 @@
 
       resultInfoEl.textContent = `Correct Answer: ${String.fromCharCode(65 + correct)}`;
     }
+
+    // ✅ show solution/workings if saved
+    renderSolutionBox(a);
 
     typesetMath(qTextEl);
     typesetMath(hintEl);
