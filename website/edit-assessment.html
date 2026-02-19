@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Edit Assessment | Practice Online</title>
 
-  <!-- ✅ MathJax (so admins can edit LaTeX nicely) -->
+  <!-- ✅ MathJax -->
   <script>
     window.MathJax = {
       tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
@@ -14,199 +14,49 @@
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
-  <!-- Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --border:#e6e6e6;
-      --text:#0f172a;
-      --muted:#475569;
-      --muted2:#64748b;
-      --accent:#1b1648;
-      --accent2:#0f0c2b;
-      --red:#e11d2e;
+      --bg:#f6f7fb; --card:#fff; --border:#e6e6e6; --text:#0f172a;
+      --muted:#475569; --muted2:#64748b;
+      --accent:#1b1648; --accent2:#0f0c2b; --red:#e11d2e;
       --shadow:0 10px 30px rgba(2,6,23,.08);
-      --radius:16px;
-      --radius2:12px;
-      --ok:#065f46;
-      --warn:#b45309;
-      --danger:#b91c1c;
+      --radius:16px; --ok:#065f46; --warn:#b45309; --danger:#b91c1c;
       --focus:0 0 0 4px rgba(225,29,46,.18);
+      --soft:#eef2ff;
     }
-
     *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{
-      margin:0;
-      font-family:"Inter", Arial, sans-serif;
-      background:var(--bg);
-      color:var(--text);
-      padding:22px 14px 34px;
-    }
-
+    body{margin:0;font-family:"Inter",Arial,sans-serif;background:var(--bg);color:var(--text);padding:22px 14px 34px;}
     .wrap{max-width:1100px;margin:0 auto;}
-
-    /* ---------- Top header ---------- */
-    .header{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:14px;
-      flex-wrap:wrap;
-      margin-bottom:14px;
-    }
-    .title{
-      margin:0;
-      font-size:22px;
-      letter-spacing:-.02em;
-    }
-    .sub{
-      margin-top:6px;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.5;
-    }
-
-    .actions{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-
-    .btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:10px 14px;
-      border-radius:12px;
-      border:1px solid var(--border);
-      background:#fff;
-      color:var(--text);
-      font-weight:800;
-      font-size:13px;
-      cursor:pointer;
-      text-decoration:none;
-      transition:transform .06s ease, box-shadow .2s ease, opacity .2s ease;
-      white-space:nowrap;
-    }
+    .header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
+    .title{margin:0;font-size:22px;letter-spacing:-.02em;}
+    .sub{margin-top:6px;color:var(--muted);font-size:13px;line-height:1.5;}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--text);
+      font-weight:800;font-size:13px;cursor:pointer;text-decoration:none;transition:transform .06s ease, box-shadow .2s ease, opacity .2s ease;white-space:nowrap;}
     .btn:hover{transform:translateY(-1px); box-shadow:0 8px 18px rgba(2,6,23,.08);}
-    .btn:active{transform:translateY(0);}
-    .btn.primary{
-      background:linear-gradient(135deg, var(--accent), var(--accent2));
-      color:#fff;
-      border-color:rgba(255,255,255,.14);
-      box-shadow:0 12px 22px rgba(27,22,72,.22);
-    }
-    .btn.primary:hover{box-shadow:0 16px 32px rgba(27,22,72,.28);}
-    .btn.red{
-      background:rgba(225,29,46,.08);
-      border-color:rgba(225,29,46,.35);
-      color:#7f1d1d;
-    }
-    .btn.warn{
-      background:rgba(180,83,9,.10);
-      border-color:rgba(180,83,9,.30);
-      color:#7c2d12;
-    }
-    .btn.danger{
-      background:rgba(185,28,28,.10);
-      border-color:rgba(185,28,28,.30);
-      color:#7f1d1d;
-    }
-    .btn:disabled{opacity:.55; cursor:not-allowed; transform:none; box-shadow:none;}
+    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:rgba(255,255,255,.14);box-shadow:0 12px 22px rgba(27,22,72,.22);}
+    .btn.warn{background:rgba(180,83,9,.10);border-color:rgba(180,83,9,.30);color:#7c2d12;}
+    .btn.danger{background:rgba(185,28,28,.10);border-color:rgba(185,28,28,.30);color:#7f1d1d;}
+    .btn:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none;}
 
-    /* ---------- Card ---------- */
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-    .cardHead{
-      padding:16px 16px;
-      border-bottom:1px solid var(--border);
-      background:linear-gradient(180deg, #ffffff, #fbfbff);
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-    .cardHead h3{
-      margin:0;
-      font-size:15px;
-      font-weight:900;
-      letter-spacing:-.01em;
-    }
-    .cardHead .mini{
-      color:var(--muted2);
-      font-size:12px;
-      margin-top:6px;
-      line-height:1.5;
-    }
-
-    /* ---------- Layout ---------- */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+    .cardHead{padding:16px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#fff,#fbfbff);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+    .cardHead h3{margin:0;font-size:15px;font-weight:900;letter-spacing:-.01em;}
+    .cardHead .mini{color:var(--muted2);font-size:12px;margin-top:6px;line-height:1.5;}
     .pad{padding:16px;}
-    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
-    .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;}
-    @media(max-width:900px){
-      .grid2,.grid3{grid-template-columns:1fr;}
-      .actions{gap:8px;}
-    }
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    @media(max-width:900px){.grid2{grid-template-columns:1fr;}.actions{gap:8px;}}
+    label{display:block;font-size:12px;font-weight:900;letter-spacing:.2px;margin:0 0 6px;color:#111827;}
+    input, textarea, select{width:100%;padding:11px 12px;border-radius:12px;border:1px solid #d9d9e3;outline:none;font-size:14px;background:#fff;color:var(--text);transition:box-shadow .15s ease,border-color .15s ease;}
+    textarea{min-height:92px;resize:vertical;}
+    input:focus, textarea:focus, select:focus{border-color:rgba(225,29,46,.45);box-shadow:var(--focus);}
+    .help{margin-top:6px;font-size:12px;color:var(--muted2);line-height:1.5;}
 
-    /* ---------- Fields ---------- */
-    label{
-      display:block;
-      font-size:12px;
-      font-weight:900;
-      letter-spacing:.2px;
-      margin:0 0 6px;
-      color:#111827;
-    }
-    input, textarea, select{
-      width:100%;
-      padding:11px 12px;
-      border-radius:12px;
-      border:1px solid #d9d9e3;
-      outline:none;
-      font-size:14px;
-      background:#fff;
-      color:var(--text);
-      transition:box-shadow .15s ease, border-color .15s ease;
-    }
-    textarea{min-height:92px; resize:vertical;}
-    input:focus, textarea:focus, select:focus{
-      border-color:rgba(225,29,46,.45);
-      box-shadow:var(--focus);
-    }
-    .help{
-      margin-top:6px;
-      font-size:12px;
-      color:var(--muted2);
-      line-height:1.5;
-    }
-
-    /* ---------- Status pill ---------- */
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:7px 11px;
-      border-radius:999px;
-      border:1px solid #e5e7eb;
-      background:#f8fafc;
-      font-size:12px;
-      font-weight:900;
-      color:#334155;
-      white-space:nowrap;
-    }
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border-radius:999px;border:1px solid #e5e7eb;background:#f8fafc;font-size:12px;font-weight:900;color:#334155;white-space:nowrap;}
     .dot{width:9px;height:9px;border-radius:999px;background:#94a3b8;}
     .pill.ok{border-color:#bbf7d0;background:#f0fdf4;color:#065f46;}
     .pill.ok .dot{background:#22c55e;}
@@ -215,126 +65,28 @@
     .pill.mid{border-color:#fde68a;background:#fffbeb;color:#92400e;}
     .pill.mid .dot{background:#f59e0b;}
 
-    /* ---------- Message bar ---------- */
-    .msgbar{
-      margin-top:10px;
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:10px 12px;
-      background:#fff;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-    }
+    .msgbar{margin-top:10px;border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
     .msgbar .text{font-size:13px;color:var(--muted);}
-    .msgbar .text.ok{color:var(--ok); font-weight:800;}
-    .msgbar .text.error{color:var(--danger); font-weight:800;}
-    .msgbar .text.warn{color:var(--warn); font-weight:800;}
+    .msgbar .text.ok{color:var(--ok);font-weight:800;}
+    .msgbar .text.error{color:var(--danger);font-weight:800;}
+    .msgbar .text.warn{color:var(--warn);font-weight:800;}
 
-    /* ---------- Sections ---------- */
-    .sectionTitle{
-      margin:0 0 10px;
-      font-size:14px;
-      font-weight:900;
-      letter-spacing:-.01em;
-    }
-    .hr{border:none;border-top:1px solid var(--border); margin:14px 0;}
+    .sectionTitle{margin:0 0 10px;font-size:14px;font-weight:900;letter-spacing:-.01em;}
+    .hr{border:none;border-top:1px solid var(--border);margin:14px 0;}
 
-    /* ---------- Question cards ---------- */
-    .qcard{
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:14px;
-      background:#fff;
-      margin-top:12px;
-    }
-    .qhead{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:8px;
-    }
-    .tag{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:5px 10px;
-      border-radius:999px;
-      border:1px solid #e5e7eb;
-      background:#f8fafc;
-      font-size:12px;
-      font-weight:900;
-      color:#334155;
-      white-space:nowrap;
-    }
-
-    .smallbtn{
-      border:1px solid var(--border);
-      background:#fff;
-      color:var(--text);
-      padding:9px 11px;
-      border-radius:12px;
-      font-weight:900;
-      font-size:12px;
-      cursor:pointer;
-    }
+    .qcard{border:1px solid var(--border);border-radius:14px;padding:14px;background:#fff;margin-top:12px;}
+    .qhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+    .tag{display:inline-flex;align-items:center;gap:8px;padding:5px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#f8fafc;font-size:12px;font-weight:900;color:#334155;white-space:nowrap;}
+    .smallbtn{border:1px solid var(--border);background:#fff;color:var(--text);padding:9px 11px;border-radius:12px;font-weight:900;font-size:12px;cursor:pointer;}
     .smallbtn:hover{box-shadow:0 8px 16px rgba(2,6,23,.06);}
-    .smallbtn:active{transform:translateY(1px);}
+    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
 
-    .toolbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
-    .previewBox{
-      border:1px dashed #e6e6e6;
-      background:#fbfbfe;
-      border-radius:12px;
-      padding:12px;
-      margin-top:8px;
-      font-size:13px;
-      line-height:1.45;
-      white-space:pre-wrap;
-      color:#1f2937;
-    }
-
-    .disabledBox{opacity:.55; pointer-events:none;}
+    .previewBox{border:1px dashed #e6e6e6;background:#fbfbfe;border-radius:12px;padding:12px;margin-top:8px;font-size:13px;line-height:1.45;white-space:pre-wrap;color:#1f2937;}
+    .disabledBox{opacity:.55;pointer-events:none;}
     .hide{display:none!important;}
 
-    /* ✅ Drag & Drop */
-    .dragHandle{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      border:1px solid var(--border);
-      background:#f8fafc;
-      color:var(--text);
-      padding:6px 10px;
-      border-radius:12px;
-      font-weight:900;
-      cursor:grab;
-      user-select:none;
-    }
-    .dragHandle:active{cursor:grabbing;}
-
-    .qcard[draggable="true"]{cursor:default;}
-    .qcard.dragging{
-      opacity:.75;
-      transform:scale(.995);
-      box-shadow:0 14px 30px rgba(2,6,23,.12);
-      border-color:rgba(225,29,46,.25);
-    }
-    .qcard.dropTarget{
-      outline:3px solid rgba(225,29,46,.18);
-      outline-offset:3px;
-    }
+    .optRow{display:flex; gap:10px; align-items:center; margin-top:10px;}
+    .optLabel{min-width:44px; font-weight:900;}
   </style>
 
   <script>
@@ -362,7 +114,7 @@
       <div class="cardHead">
         <div>
           <h3>Find and manage assessments</h3>
-          <div class="mini">Filter, search and update availability. Changes are saved immediately when you click “Save Changes”.</div>
+          <div class="mini">Filter, search and update availability. Changes are saved when you click “Save Changes”.</div>
         </div>
         <div>
           <div id="freezePill" class="pill"><span class="dot"></span> —</div>
@@ -404,7 +156,7 @@
               <button class="btn warn" id="freezeBtn" type="button" disabled>Make Unavailable</button>
               <button class="btn danger" id="deleteBtn" type="button" disabled>Delete</button>
             </div>
-            <div class="help">Tip: If an assessment is unavailable, you can make it available again using the button above.</div>
+            <div class="help">Tip: If unavailable, make it available again to edit.</div>
           </div>
         </div>
 
@@ -445,7 +197,7 @@
           <div style="margin-top:10px;">
             <label>Instructions (shown before starting)</label>
             <textarea id="instructions" placeholder="Example: Read all questions carefully. Use $x^2$ for maths."></textarea>
-            <div class="help">LaTeX is supported in instructions and questions (example: $\\frac{a}{b}$, $\\sqrt{x}$).</div>
+            <div class="help">LaTeX is supported (example: $\\frac{a}{b}$, $\\sqrt{x}$).</div>
           </div>
 
           <div style="margin-top:10px;">
@@ -473,8 +225,8 @@
 
           <div class="toolbar">
             <div>
-              <h3 class="sectionTitle" style="margin-bottom:6px;">Questions</h3>
-              <div class="help">Supports multiple-choice and typed answers. Drag cards to reorder.</div>
+              <h3 class="sectionTitle" style="margin-bottom:6px;">Blocks</h3>
+              <div class="help">Notes/headings + MCQ + typed answers. Solutions/workings supported.</div>
             </div>
             <div class="actions">
               <button class="smallbtn" id="addNoteBtn" type="button">+ Add Note / Heading</button>
@@ -498,7 +250,6 @@
   </div>
 
   <script>
-    // ✅ IMPORTANT: Use your new production API
     const API = window.API || "https://api.practiceonline.co.za";
     const token = localStorage.getItem("token");
 
@@ -546,10 +297,7 @@
     }
     document.getElementById("logoutBtn").addEventListener("click", logout);
 
-    function cleanSpaces(s){
-      return String(s || "").trim().replace(/\s+/g, " ");
-    }
-
+    function cleanSpaces(s){ return String(s || "").trim().replace(/\s+/g, " "); }
     function pad2(n){ return String(n).padStart(2,"0"); }
 
     function isoToLocalInput(iso){
@@ -564,22 +312,18 @@
       if (isNaN(d.getTime())) return null;
       return d.toISOString();
     }
-
     async function readErrorText(res){
       const txt = await res.text().catch(()=> "");
-      return txt ? txt.slice(0, 600) : `HTTP ${res.status}`;
+      return txt ? txt.slice(0, 800) : `HTTP ${res.status}`;
     }
 
     function typesetMath(root=document){
-      if (window.MathJax?.typesetPromise) {
-        window.MathJax.typesetPromise([root]).catch(()=>{});
-      }
+      if (window.MathJax?.typesetPromise) window.MathJax.typesetPromise([root]).catch(()=>{});
     }
     function setPreviewText(el, text){
       el.textContent = text || "";
       typesetMath(el);
     }
-
     function renderInstructionsPreview(){
       const t = cleanSpaces(instructionsEl.value || "");
       setPreviewText(prevInstructions, t || "(Preview)");
@@ -598,7 +342,6 @@
 
     function availabilitySummary(q){
       if (!q) return { label:"—", cls:"pill", note:"" };
-
       const now = new Date();
       const from = q.availableFrom ? new Date(q.availableFrom) : null;
       const until = q.availableUntil ? new Date(q.availableUntil) : null;
@@ -658,15 +401,10 @@
 
     function escapeHtml(str){
       return String(str ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
+        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
     }
-    function escapeAttr(str){
-      return String(str ?? "").replaceAll('"', "&quot;");
-    }
+    function escapeAttr(str){ return String(str ?? "").replaceAll('"', "&quot;"); }
 
     function renderDropdown(){
       const g = (gradeFilter.value || "").trim();
@@ -751,14 +489,10 @@
 
       const qs = Array.isArray(currentQuiz.questions) ? currentQuiz.questions : [];
       questionsWrap.innerHTML = qs.length
-        ? qs.map((q, i) => questionCardHtml(i, q)).join("")
-        : questionCardHtml(0, { type:"mcq", text:"", hint:"", imageUrl:"", options:["","","",""], correctIndex:0 });
+        ? qs.map((q, i) => blockCardHtml(i, q)).join("")
+        : blockCardHtml(0, { type:"mcq", text:"", hint:"", imageUrl:"", solution:"", points:1, options:["","","",""], correctIndex:0 });
 
       typesetMath(questionsWrap);
-
-      // ✅ NEW: renumber + drag/drop
-      renumberCards();
-      setupDragAndDrop();
 
       setAvailabilityUI(currentQuiz);
       setMsg("Loaded.", "ok");
@@ -766,29 +500,30 @@
       wireAllCards();
     }
 
-    function questionCardHtml(i, q){
+    function letter(i){ return String.fromCharCode(65 + i); }
+
+    function blockCardHtml(i, q){
       const type = String(q?.type || "mcq").toLowerCase();
       const text = cleanSpaces(q?.text);
       const hint = cleanSpaces(q?.hint);
       const imageUrl = cleanSpaces(q?.imageUrl);
+      const solution = cleanSpaces(q?.solution);
+      const points = Number.isFinite(Number(q?.points)) ? Number(q.points) : 1;
 
       if (type === "note"){
         return `
-          <div class="qcard" data-index="${i}" data-type="note" draggable="true">
+          <div class="qcard" data-index="${i}" data-type="note">
             <div class="qhead">
-              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                <span class="dragHandle" title="Drag to reorder">↕ Drag</span>
-                <div><b class="cardLabel">Block</b> <span class="tag">Note / Heading</span></div>
-              </div>
+              <div><b>Note / Heading</b> <span class="tag">NOTE</span></div>
               <button type="button" class="smallbtn removeBtn">Remove</button>
             </div>
 
-            <label>Note / heading text (supports math)</label>
-            <input class="qText" value="${escapeAttr(text)}" placeholder="Type your note / heading here" />
+            <label>Text (supports math)</label>
+            <textarea class="noteText" placeholder="Type note/heading here...">${escapeHtml(text)}</textarea>
 
             <div style="margin-top:10px;">
               <div class="tag">Preview</div>
-              <div class="previewBox prevQ"></div>
+              <div class="previewBox prevNote"></div>
             </div>
           </div>
         `;
@@ -800,12 +535,9 @@
         const tol = (q?.numberTolerance ?? "");
 
         return `
-          <div class="qcard" data-index="${i}" data-type="text" draggable="true">
+          <div class="qcard" data-index="${i}" data-type="text">
             <div class="qhead">
-              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                <span class="dragHandle" title="Drag to reorder">↕ Drag</span>
-                <div><b class="cardLabel">Question</b> <span class="tag">Typed answer</span></div>
-              </div>
+              <div><b>Typed Answer</b> <span class="tag">TEXT</span></div>
               <button type="button" class="smallbtn removeBtn">Remove</button>
             </div>
 
@@ -818,11 +550,18 @@
             <label>Image URL (optional)</label>
             <input class="qImage" value="${escapeAttr(imageUrl)}" placeholder="https://..." />
 
-            <div class="grid2">
+            <div class="grid2" style="margin-top:10px;">
+              <div>
+                <label>Marks (points)</label>
+                <input class="qPoints" type="number" min="1" step="1" value="${escapeAttr(String(points))}" />
+              </div>
               <div>
                 <label>Correct answer</label>
                 <input class="correctText" value="${escapeAttr(correctText)}" placeholder="Example: 10" />
               </div>
+            </div>
+
+            <div class="grid2" style="margin-top:10px;">
               <div>
                 <label>Check mode</label>
                 <select class="textMode">
@@ -832,16 +571,15 @@
                 </select>
                 <div class="help">Tolerance only applies for Number mode.</div>
               </div>
-            </div>
-
-            <div class="grid2 tolRow ${mode==="number_tolerance"?"":"hide"}">
-              <div>
+              <div class="tolRow ${mode==="number_tolerance"?"":"hide"}">
                 <label>Tolerance</label>
                 <input class="tolerance" type="number" step="0.0001" value="${escapeAttr(String(tol))}" />
               </div>
-              <div class="help" style="padding-top:26px;">
-                Example: correct = 3.14, tolerance 0.01 accepts 3.13–3.15
-              </div>
+            </div>
+
+            <div style="margin-top:10px;">
+              <label>Solution / Working (optional, supports math)</label>
+              <textarea class="qSolution" placeholder="Show steps / working...">${escapeHtml(solution)}</textarea>
             </div>
 
             <div style="margin-top:10px;">
@@ -849,21 +587,19 @@
               <div class="previewBox prevQ"></div>
               <div class="previewBox prevHint" style="margin-top:8px;"></div>
               <div class="previewBox prevAns" style="margin-top:8px;"></div>
+              <div class="previewBox prevSol" style="margin-top:8px;"></div>
             </div>
           </div>
         `;
       }
 
       const opts = Array.isArray(q?.options) ? q.options : ["","","",""];
-      const correctIndex = Number.isFinite(Number(q?.correctIndex)) ? Number(q.correctIndex) : 0;
+      const correctIndex = Number.isInteger(Number(q?.correctIndex)) ? Number(q.correctIndex) : 0;
 
       return `
-        <div class="qcard" data-index="${i}" data-type="mcq" draggable="true">
+        <div class="qcard" data-index="${i}" data-type="mcq">
           <div class="qhead">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-              <span class="dragHandle" title="Drag to reorder">↕ Drag</span>
-              <div><b class="cardLabel">Question</b> <span class="tag">MCQ</span></div>
-            </div>
+            <div><b>MCQ</b> <span class="tag">MCQ</span></div>
             <button type="button" class="smallbtn removeBtn">Remove</button>
           </div>
 
@@ -876,56 +612,130 @@
           <label>Image URL (optional)</label>
           <input class="qImage" value="${escapeAttr(imageUrl)}" placeholder="https://..." />
 
-          <div class="grid2">
-            <div><label>Option A</label><input class="optA" value="${escapeAttr(opts[0] || "")}" /></div>
-            <div><label>Option B</label><input class="optB" value="${escapeAttr(opts[1] || "")}" /></div>
-            <div><label>Option C</label><input class="optC" value="${escapeAttr(opts[2] || "")}" /></div>
-            <div><label>Option D</label><input class="optD" value="${escapeAttr(opts[3] || "")}" /></div>
+          <div class="grid2" style="margin-top:10px;">
+            <div>
+              <label>Marks (points)</label>
+              <input class="qPoints" type="number" min="1" step="1" value="${escapeAttr(String(points))}" />
+            </div>
+            <div>
+              <label>Correct Answer</label>
+              <select class="correctIndex"></select>
+              <div class="help">Updates automatically when you add/remove options.</div>
+            </div>
           </div>
 
-          <label>Correct answer</label>
-          <select class="correct">
-            <option value="0" ${correctIndex===0?"selected":""}>A</option>
-            <option value="1" ${correctIndex===1?"selected":""}>B</option>
-            <option value="2" ${correctIndex===2?"selected":""}>C</option>
-            <option value="3" ${correctIndex===3?"selected":""}>D</option>
-          </select>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px;">
+            <b style="font-size:13px;">Options</b>
+            <button class="smallbtn addOptBtn" type="button">+ Add Option</button>
+          </div>
+
+          <div class="optsWrap"></div>
+
+          <div style="margin-top:10px;">
+            <label>Solution / Working (optional, supports math)</label>
+            <textarea class="qSolution" placeholder="Show steps / working...">${escapeHtml(solution)}</textarea>
+          </div>
 
           <div style="margin-top:10px;">
             <div class="tag">Preview</div>
             <div class="previewBox prevQ"></div>
             <div class="previewBox prevHint" style="margin-top:8px;"></div>
             <div class="previewBox prevOpts" style="margin-top:8px;"></div>
+            <div class="previewBox prevSol" style="margin-top:8px;"></div>
           </div>
         </div>
       `;
     }
 
-    function wireCardPreview(card){
-      const type = card.getAttribute("data-type");
-      const qText = cleanSpaces(card.querySelector(".qText")?.value || "");
-      const hint  = cleanSpaces(card.querySelector(".qHint")?.value || "");
+    function relabelOptions(card){
+      const rows = [...card.querySelectorAll(".optRow")];
+      rows.forEach((r,i)=>{
+        const label = r.querySelector(".optLabel");
+        const input = r.querySelector(".optInput");
+        if (label) label.textContent = `${letter(i)})`;
+        if (input) input.placeholder = `Option ${letter(i)}`;
+      });
+    }
 
-      const prevQ = card.querySelector(".prevQ");
-      const prevHint = card.querySelector(".prevHint");
-      if (prevQ) { prevQ.textContent = qText || "(Question preview)"; }
-      if (prevHint) { prevHint.textContent = hint ? ("Hint: " + hint) : "(Hint preview)"; }
+    function syncCorrectDropdown(card){
+      const sel = card.querySelector(".correctIndex");
+      if (!sel) return;
+
+      const inputs = [...card.querySelectorAll(".optInput")];
+      const current = Number(sel.value);
+
+      sel.innerHTML = inputs.map((_,i)=>`<option value="${i}">${letter(i)}</option>`).join("");
+
+      const next = (Number.isInteger(current) && current >= 0 && current < inputs.length) ? current : 0;
+      sel.value = String(next);
+    }
+
+    function addOption(card, value=""){
+      const wrap = card.querySelector(".optsWrap");
+      if (!wrap) return;
+
+      const row = document.createElement("div");
+      row.className = "optRow";
+      row.innerHTML = `
+        <div class="optLabel">${letter(wrap.querySelectorAll(".optRow").length)})</div>
+        <input class="optInput" placeholder="Option" />
+        <button type="button" class="smallbtn removeOptBtn">Remove</button>
+      `;
+
+      const input = row.querySelector(".optInput");
+      input.value = String(value || "");
+      wrap.appendChild(row);
+
+      input.addEventListener("input", ()=>wireCardPreview(card));
+
+      row.querySelector(".removeOptBtn").addEventListener("click", ()=>{
+        const total = wrap.querySelectorAll(".optRow").length;
+        if (total <= 2) { alert("MCQ must have at least 2 options."); return; }
+        row.remove();
+        relabelOptions(card);
+        syncCorrectDropdown(card);
+        wireCardPreview(card);
+      });
+
+      relabelOptions(card);
+      syncCorrectDropdown(card);
+      wireCardPreview(card);
+    }
+
+    function wireCardPreview(card){
+      const type = (card.getAttribute("data-type") || "mcq").toLowerCase();
 
       if (type === "note"){
-        // Note uses only qText
+        const t = cleanSpaces(card.querySelector(".noteText")?.value || "");
+        const prev = card.querySelector(".prevNote");
+        if (prev) prev.textContent = t || "(Note preview)";
         typesetMath(card);
         return;
       }
 
+      const qText = cleanSpaces(card.querySelector(".qText")?.value || "");
+      const hint  = cleanSpaces(card.querySelector(".qHint")?.value || "");
+      const sol   = cleanSpaces(card.querySelector(".qSolution")?.value || "");
+
+      const prevQ = card.querySelector(".prevQ");
+      const prevHint = card.querySelector(".prevHint");
+      const prevSol = card.querySelector(".prevSol");
+
+      if (prevQ) prevQ.textContent = qText || "(Question preview)";
+      if (prevHint) prevHint.textContent = hint ? ("Hint: " + hint) : "(Hint preview)";
+      if (prevSol) prevSol.textContent = sol ? ("Solution: " + sol) : "(Solution / Working preview)";
+
       if (type === "mcq"){
-        const A = cleanSpaces(card.querySelector(".optA")?.value || "");
-        const B = cleanSpaces(card.querySelector(".optB")?.value || "");
-        const C = cleanSpaces(card.querySelector(".optC")?.value || "");
-        const D = cleanSpaces(card.querySelector(".optD")?.value || "");
         const prevOpts = card.querySelector(".prevOpts");
+        const optInputs = [...card.querySelectorAll(".optInput")];
         if (prevOpts){
-          prevOpts.textContent = `A) ${A || "—"}\nB) ${B || "—"}\nC) ${C || "—"}\nD) ${D || "—"}`;
+          const text = optInputs.map((inp, i)=>{
+            const v = cleanSpaces(inp.value || "");
+            return `${letter(i)}) ${v || "—"}`;
+          }).join("\n");
+          prevOpts.textContent = text || "(Options preview)";
         }
+        syncCorrectDropdown(card);
       } else {
         const ans = cleanSpaces(card.querySelector(".correctText")?.value || "");
         const prevAns = card.querySelector(".prevAns");
@@ -946,131 +756,70 @@
 
     function wireAllCards(){
       [...questionsWrap.querySelectorAll(".qcard")].forEach(card=>{
-        const watch = [
-          ".qText",".qHint",".qImage",
-          ".optA",".optB",".optC",".optD",
-          ".correct",".correctText",".textMode",".tolerance"
-        ];
-        watch.forEach(sel=>{
-          const el = card.querySelector(sel);
-          if (!el) return;
-          el.addEventListener("input", ()=>wireCardPreview(card));
-          el.addEventListener("change", ()=>wireCardPreview(card));
-        });
-        wireCardPreview(card);
-      });
-
-      // ✅ keep labels correct
-      renumberCards();
-      setupDragAndDrop();
-    }
-
-    // ✅ Renumber visible labels based on CURRENT order in the list
-    function renumberCards(){
-      const cards = [...questionsWrap.querySelectorAll(".qcard")];
-      let qNum = 0;
-      let bNum = 0;
-
-      for (const card of cards){
         const type = (card.getAttribute("data-type") || "mcq").toLowerCase();
-        const labelEl = card.querySelector(".cardLabel");
-        if (!labelEl) continue;
 
-        if (type === "note"){
-          bNum += 1;
-          labelEl.textContent = `Block ${bNum}`;
-        } else {
-          qNum += 1;
-          labelEl.textContent = `Question ${qNum}`;
-        }
-      }
-    }
+        const watch = (type === "note")
+          ? [".noteText"]
+          : [".qText",".qHint",".qImage",".qPoints",".qSolution",".correctIndex",".correctText",".textMode",".tolerance",".optInput"];
 
-    // -------------------- Drag & Drop (HTML5) --------------------
-    let draggedCard = null;
-
-    function setupDragAndDrop(){
-      const cards = [...questionsWrap.querySelectorAll(".qcard")];
-
-      cards.forEach(card => {
-        if (card.dataset.dndWired === "1") return;
-        card.dataset.dndWired = "1";
-
-        const handle = card.querySelector(".dragHandle");
-        if (handle){
-          handle.addEventListener("mousedown", () => {
-            card.setAttribute("draggable", "true");
+        watch.forEach(sel=>{
+          card.querySelectorAll(sel).forEach(el=>{
+            el.addEventListener("input", ()=>wireCardPreview(card));
+            el.addEventListener("change", ()=>wireCardPreview(card));
           });
-          handle.addEventListener("mouseup", () => {
-            card.setAttribute("draggable", "true");
-          });
-        }
-
-        card.addEventListener("dragstart", (e) => {
-          draggedCard = card;
-          card.classList.add("dragging");
-          e.dataTransfer.effectAllowed = "move";
-          e.dataTransfer.setData("text/plain", "drag");
         });
 
-        card.addEventListener("dragend", () => {
-          card.classList.remove("dragging");
-          [...questionsWrap.querySelectorAll(".qcard")].forEach(c => c.classList.remove("dropTarget"));
-          draggedCard = null;
-          renumberCards();
-        });
-
-        card.addEventListener("dragover", (e) => {
-          e.preventDefault();
-          if (!draggedCard || draggedCard === card) return;
-
-          card.classList.add("dropTarget");
-
-          const rect = card.getBoundingClientRect();
-          const before = (e.clientY - rect.top) < rect.height / 2;
-
-          const dragging = draggedCard;
-          if (before) {
-            if (card.previousElementSibling !== dragging) {
-              questionsWrap.insertBefore(dragging, card);
-            }
-          } else {
-            if (card.nextElementSibling !== dragging) {
-              questionsWrap.insertBefore(dragging, card.nextElementSibling);
-            }
+        // wire mcq option buttons
+        if (type === "mcq"){
+          const addBtn = card.querySelector(".addOptBtn");
+          if (addBtn && !addBtn.dataset.wired){
+            addBtn.dataset.wired = "1";
+            addBtn.addEventListener("click", ()=>addOption(card, ""));
           }
-        });
 
-        card.addEventListener("dragleave", () => {
-          card.classList.remove("dropTarget");
-        });
+          // ensure options exist (load existing)
+          const wrap = card.querySelector(".optsWrap");
+          if (wrap && wrap.childElementCount === 0){
+            const existing = (currentQuiz?.questions?.[Number(card.dataset.index)]?.options) || [];
+            const use = existing.length ? existing : ["","","",""];
+            use.forEach(v => addOption(card, v));
+            syncCorrectDropdown(card);
+            const correct = Number(currentQuiz?.questions?.[Number(card.dataset.index)]?.correctIndex ?? 0);
+            const sel = card.querySelector(".correctIndex");
+            if (sel) sel.value = String(Math.max(0, Math.min(correct, (wrap.querySelectorAll(".optRow").length - 1))));
+          }
+        }
 
-        card.addEventListener("drop", (e) => {
-          e.preventDefault();
-          card.classList.remove("dropTarget");
-          renumberCards();
-        });
+        wireCardPreview(card);
       });
     }
 
     function collectQuestions(){
       const cards = [...questionsWrap.querySelectorAll(".qcard")];
-      if (cards.length === 0) throw new Error("Add at least 1 question.");
+      if (cards.length === 0) throw new Error("Add at least 1 block.");
 
       const questions = [];
 
       for (const card of cards) {
-        const type = card.getAttribute("data-type") || "mcq";
+        const type = (card.getAttribute("data-type") || "mcq").toLowerCase();
+
+        if (type === "note"){
+          const noteText = cleanSpaces(card.querySelector(".noteText")?.value || "");
+          if (!noteText) throw new Error("Please fill in the note/heading text.");
+          questions.push({ type:"note", text: noteText });
+          continue;
+        }
+
         const text = cleanSpaces(card.querySelector(".qText")?.value || "");
         const hint = cleanSpaces(card.querySelector(".qHint")?.value || "");
         const imageUrl = cleanSpaces(card.querySelector(".qImage")?.value || "");
+        const solution = cleanSpaces(card.querySelector(".qSolution")?.value || "");
+
+        const pointsRaw = cleanSpaces(card.querySelector(".qPoints")?.value || "1");
+        const points = Number(pointsRaw);
+        if (!Number.isInteger(points) || points < 1) throw new Error("Marks must be a whole number (1 or more).");
 
         if (!text) throw new Error("Please fill in all question texts.");
-
-        if (type === "note"){
-          questions.push({ type:"note", text });
-          continue;
-        }
 
         if (type === "text"){
           const correctText = cleanSpaces(card.querySelector(".correctText")?.value || "");
@@ -1087,32 +836,38 @@
           }
 
           questions.push({
-            type: "text",
+            type:"text",
             text,
             hint,
             imageUrl,
+            points,
             correctText,
             textAnswerMode,
-            numberTolerance
+            numberTolerance,
+            solution
           });
           continue;
         }
 
-        const A = cleanSpaces(card.querySelector(".optA")?.value || "");
-        const B = cleanSpaces(card.querySelector(".optB")?.value || "");
-        const C = cleanSpaces(card.querySelector(".optC")?.value || "");
-        const D = cleanSpaces(card.querySelector(".optD")?.value || "");
-        const correctIndex = Number(card.querySelector(".correct")?.value || 0);
+        // MCQ dynamic options
+        const optInputs = [...card.querySelectorAll(".optInput")];
+        const options = optInputs.map(x => cleanSpaces(x.value)).filter(Boolean);
+        if (options.length < 2) throw new Error("MCQ must have at least 2 options.");
 
-        if (!A || !B || !C || !D) throw new Error("Please fill in all options A–D.");
+        const correctIndex = Number(card.querySelector(".correctIndex")?.value || 0);
+        if (!Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex >= options.length) {
+          throw new Error("Correct answer must be within the options list.");
+        }
 
         questions.push({
-          type: "mcq",
+          type:"mcq",
           text,
           hint,
           imageUrl,
-          options: [A,B,C,D],
-          correctIndex
+          points,
+          options,
+          correctIndex,
+          solution
         });
       }
 
@@ -1122,9 +877,7 @@
     addNoteBtn.addEventListener("click", () => {
       if (!currentQuiz) return;
       const i = questionsWrap.querySelectorAll(".qcard").length;
-      questionsWrap.insertAdjacentHTML("beforeend",
-        questionCardHtml(i, { type:"note", text:"" })
-      );
+      questionsWrap.insertAdjacentHTML("beforeend", blockCardHtml(i, { type:"note", text:"" }));
       wireAllCards();
     });
 
@@ -1132,7 +885,7 @@
       if (!currentQuiz) return;
       const i = questionsWrap.querySelectorAll(".qcard").length;
       questionsWrap.insertAdjacentHTML("beforeend",
-        questionCardHtml(i, { type:"mcq", text:"", hint:"", imageUrl:"", options:["","","",""], correctIndex:0 })
+        blockCardHtml(i, { type:"mcq", text:"", hint:"", imageUrl:"", solution:"", points:1, options:["","","",""], correctIndex:0 })
       );
       wireAllCards();
     });
@@ -1141,7 +894,7 @@
       if (!currentQuiz) return;
       const i = questionsWrap.querySelectorAll(".qcard").length;
       questionsWrap.insertAdjacentHTML("beforeend",
-        questionCardHtml(i, { type:"text", text:"", hint:"", imageUrl:"", correctText:"", textAnswerMode:"exact", numberTolerance:null })
+        blockCardHtml(i, { type:"text", text:"", hint:"", imageUrl:"", solution:"", points:1, correctText:"", textAnswerMode:"exact", numberTolerance:null })
       );
       wireAllCards();
     });
@@ -1300,6 +1053,7 @@
       const ok = await requireAdmin();
       if (!ok) return;
       await loadAssessments();
+      renderInstructionsPreview();
     })();
   </script>
 </body>
