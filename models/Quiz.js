@@ -1,9 +1,8 @@
 // models/Quiz.js (UPDATED - COPY & PASTE)
 // ✅ Adds type: "note"
 // ✅ Adds points (marks) per question for mcq/text
+// ✅ Adds solution/workings per question (solution)
 // ✅ Notes have no points (treated as 0)
-// ✅ Adds solution/workings per block (LaTeX supported)
-// ✅ Adds showSolutions flag (admin can control if learners see solutions after attempt)
 
 import mongoose from "mongoose";
 
@@ -21,8 +20,7 @@ const QuestionSchema = new mongoose.Schema(
     imageUrl: { type: String, default: "", trim: true },
     hint: { type: String, default: "", trim: true },
 
-    // ✅ NEW: Solution / Working / Memo (shown on review if quiz.showSolutions = true)
-    // Can be used for mcq/text and even note blocks (optional).
+    // ✅ NEW: Solution / workings (supports LaTeX)
     solution: { type: String, default: "", trim: true },
 
     // ✅ Marks per question (only for mcq/text)
@@ -117,10 +115,6 @@ const QuizSchema = new mongoose.Schema(
     timeLimitMinutes: { type: Number, default: 10, min: 1, max: 180 },
 
     instructions: { type: String, default: "", trim: true },
-
-    // ✅ NEW: Control whether learners see solutions/workings on review page
-    // If false: review still shows their answers + score, but no memo/workings.
-    showSolutions: { type: Boolean, default: true },
 
     isFrozen: { type: Boolean, default: false },
     frozenAt: { type: Date, default: null },
