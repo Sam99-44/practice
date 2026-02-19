@@ -1,8 +1,9 @@
 // models/Result.js (UPDATED - COPY & PASTE)
 // ✅ Adds type: "note"
 // ✅ Stores points + earnedPoints per saved answer
-// ✅ Learners: enforce ONE attempt per quiz (DB-level)
+// ✅ Learners: enforce ONE attempt per quiz (DB-level via partial unique index)
 // ✅ Admin: can attempt SAME quiz many times (DB allows multiple)
+// ✅ Saves solution/workings snapshot per question (so review can show memo even if quiz changes later)
 
 import mongoose from "mongoose";
 
@@ -35,9 +36,12 @@ const AnswerSchema = new mongoose.Schema(
 
     isCorrect: { type: Boolean, default: false },
 
-    // Snapshot question content
+    // Snapshot question content (for review page)
     questionText: { type: String, default: "" },
     options: { type: [String], default: [] },
+
+    // ✅ NEW: snapshot memo/workings for this question (LaTeX supported)
+    solution: { type: String, default: "" },
   },
   { _id: false }
 );
@@ -54,6 +58,9 @@ const ResultSchema = new mongoose.Schema(
 
     instructions: { type: String, default: "" },
 
+    // ✅ NEW: snapshot whether solutions were enabled at attempt time
+    showSolutions: { type: Boolean, default: true },
+
     score: { type: Number, required: true }, // ✅ points-based
     total: { type: Number, required: true }, // ✅ points-based
     percent: { type: Number, required: true },
@@ -62,7 +69,7 @@ const ResultSchema = new mongoose.Schema(
     answers: { type: [AnswerSchema], default: [] },
     timeTakenSeconds: { type: Number, default: 0, min: 0 },
 
-    // ✅ NEW: allow admin retries without breaking learner one-attempt rule
+    // ✅ allow admin retries without breaking learner one-attempt rule
     isAdminAttempt: { type: Boolean, default: false },
     attemptNo: { type: Number, default: 1, min: 1 },
     attemptedAt: { type: Date, default: Date.now },
