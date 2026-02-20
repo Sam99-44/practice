@@ -32,15 +32,8 @@
       --radius:14px;
       --shadow:0 10px 28px rgba(2,6,23,.08);
 
-      --ok:#065f46;
-      --error:#b91c1c;
-
       --soft:#eef2ff;
       --focus:0 0 0 4px rgba(207,233,255,.65);
-
-      --noteBg:#f8fafc;
-      --noteBd:#e5e7eb;
-      --noteText:#0b3c5d;
 
       --greenBg:#ecfdf5;
       --greenBd:#bbf7d0;
@@ -48,10 +41,11 @@
       --redBg:#fff1f2;
       --redBd:#fecaca;
 
-      /* ✅ Solution box */
-      --solBg:#fff7ed;
-      --solBd:#fed7aa;
-      --solText:#7c2d12;
+      --fs-12:12px;
+      --fs-13:13px;
+      --fs-14:14px;
+      --fs-15:15px;
+      --lh:1.5;
     }
 
     *{box-sizing:border-box}
@@ -62,12 +56,13 @@
       font-weight:500;
       background:var(--bg);
       color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
     }
 
     a{color:inherit;text-decoration:none}
     .wrap{max-width:1100px;margin:0 auto;padding:18px}
     .muted{color:var(--muted); font-weight:500;}
-    .error{color:var(--error)}
     .hidden{display:none!important}
 
     header.topbar{
@@ -87,8 +82,8 @@
     }
 
     .brand{display:flex;flex-direction:column;line-height:1.15}
-    .brand .name{font-weight:600; letter-spacing:.15px;}
-    .brand .sub{font-weight:500; opacity:.85; font-size:12px; margin-top:2px;}
+    .brand .name{font-weight:700; letter-spacing:.15px;}
+    .brand .sub{font-weight:500; opacity:.85; font-size:var(--fs-12); margin-top:2px;}
 
     nav.nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
     nav.nav a{
@@ -96,7 +91,7 @@
       border-radius:10px;
       color:#e7e9ff;
       font-weight:600;
-      font-size:13px;
+      font-size:var(--fs-13);
     }
     nav.nav a:hover{background:rgba(255,255,255,.10)}
     nav.nav a.active{
@@ -104,7 +99,7 @@
       border-bottom:3px solid var(--red);
       border-radius:10px 10px 8px 8px;
       padding-bottom:5px;
-      font-weight:600;
+      font-weight:700;
     }
 
     .btnTop{
@@ -113,7 +108,7 @@
       border:1px solid rgba(255,255,255,.22);
       padding:8px 12px;
       border-radius:10px;
-      font-weight:600;
+      font-weight:700;
       cursor:pointer;
     }
     .btnTop:hover{background:rgba(255,255,255,.08)}
@@ -127,7 +122,7 @@
       margin-top:14px;
     }
     .sectionHead{
-      background:linear-gradient(180deg,#f4f7ff,#eef4ff);
+      background:#f3f6ff;
       border-bottom:1px solid var(--border);
       padding:12px 14px;
       display:flex;
@@ -139,8 +134,7 @@
     .sectionHead h1{
       margin:0;
       font-size:18px;
-      letter-spacing:-0.01em;
-      font-weight:600;
+      font-weight:700;
     }
     .sectionBody{padding:14px}
 
@@ -153,20 +147,8 @@
       margin-bottom:10px;
     }
     .counter{
-      font-weight:600;
-      color:#111827;
-      font-size:13px;
-    }
-    .jump{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      align-items:flex-end;
-    }
-    .jump label{
-      font-size:12px;
-      font-weight:600;
-      color:var(--muted);
+      font-weight:700;
+      font-size:var(--fs-13);
     }
     select{
       padding:10px 12px;
@@ -174,7 +156,7 @@
       border:1px solid #ddd;
       background:#fff;
       min-width:240px;
-      font-size:14px;
+      font-size:var(--fs-14);
       outline:none;
       font-weight:600;
     }
@@ -195,19 +177,19 @@
       margin-bottom:10px;
     }
     .qTitle{
-      font-weight:600;
+      font-weight:700;
       line-height:1.35;
       margin:0;
       min-width:0;
       flex:1 1 auto;
       word-break:break-word;
-      font-size:15px;
+      font-size:var(--fs-15);
     }
     .qRight{
       flex:0 0 auto;
       white-space:nowrap;
-      font-weight:500;
-      font-size:12px;
+      font-weight:600;
+      font-size:var(--fs-12);
       color:var(--muted);
       padding-top:2px;
     }
@@ -216,22 +198,12 @@
       margin-top:10px;
       padding:10px 12px;
       border-radius:12px;
-      background:var(--soft);
-      border:1px solid #cfe9ff;
+      background:#f6f7ff;
+      border:1px solid #e4e7ff;
       color:#0b3c5d;
-      font-size:13px;
-      font-weight:500;
-    }
-
-    .noteBox{
-      border:1px solid var(--noteBd);
-      background:var(--noteBg);
-      border-radius:14px;
-      padding:12px 12px;
-      color:var(--noteText);
+      font-size:var(--fs-13);
       font-weight:600;
-      line-height:1.45;
-      word-break:break-word;
+      line-height:var(--lh);
     }
 
     .opt{
@@ -240,9 +212,10 @@
       border:1px solid #ddd;
       margin-bottom:8px;
       background:#fff;
-      font-weight:500;
-      line-height:1.35;
+      font-weight:600;
+      line-height:var(--lh);
       word-break:break-word;
+      font-size:var(--fs-14);
     }
     .opt.correct{ background:var(--greenBg); border-color:var(--greenBd); }
     .opt.wrong{ background:var(--redBg); border-color:var(--redBd); }
@@ -253,40 +226,60 @@
       gap:10px;
       margin-top:10px;
     }
+
+    /* ✅ CHANGED: make the answer text boxes smaller */
     .answerCard{
-      padding:12px;
+      padding:10px 12px;              /* was 12px */
       border-radius:12px;
       border:1px solid #e6e6e6;
-      font-weight:600;
+      font-weight:700;
       word-break:break-word;
       background:#fff;
+      font-size:var(--fs-13);          /* was 14px */
+      line-height:1.4;                 /* tighter */
     }
     .answerCard.good{ background:var(--greenBg); border-color:var(--greenBd); }
     .answerCard.bad{ background:var(--redBg); border-color:var(--redBd); }
 
-    /* ✅ NEW solution box */
+    /* ✅ SIMPLE: plain white solution box */
     .solutionBox{
       margin-top:12px;
       border-radius:12px;
-      border:1px solid var(--solBd);
-      background:var(--solBg);
-      color:var(--solText);
+      border:1px solid var(--border);
+      background:#ffffff;
       padding:12px;
+    }
+    .solutionTop{
+      font-weight:800;
+      font-size:var(--fs-13);
+      margin:0 0 8px 0;
+      color:#111827;
+    }
+    .solutionBody{
       font-weight:600;
-      line-height:1.45;
+      font-size:var(--fs-14);
+      line-height:1.8;
       white-space:pre-wrap;
       word-break:break-word;
+      padding:8px 10px;
+      border:1px solid #f0f0f0;
+      border-radius:10px;
+      background:#ffffff;
     }
-    .solutionTitle{
-      font-weight:700;
-      margin:0 0 6px 0;
-      font-size:13px;
+
+    .solutionBody mjx-container{
+      margin:0 !important;
+      padding:0 !important;
+    }
+    mjx-container[display="true"]{
+      margin:0.35rem 0 !important;
     }
 
     .resultInfo{
       margin-top:12px;
-      font-weight:600;
+      font-weight:700;
       color:#111827;
+      font-size:var(--fs-13);
     }
 
     .navBtns{
@@ -302,8 +295,8 @@
       border:1px solid #ddd;
       background:#fff;
       cursor:pointer;
-      font-weight:600;
-      font-size:13px;
+      font-weight:700;
+      font-size:var(--fs-13);
       white-space:nowrap;
     }
     button:hover{background:#f8fafc}
@@ -316,14 +309,14 @@
       border-radius:12px;
       background:#fafafa;
       color:#334155;
-      font-weight:600;
+      font-weight:700;
       display:none;
+      font-size:var(--fs-13);
     }
 
     @media (max-width:700px){
       .answerGrid{grid-template-columns:1fr;}
       select{min-width:100%;}
-      .jump{align-items:flex-start;}
       .qHead{flex-wrap:wrap;}
       .qRight{padding-top:0}
     }
@@ -356,7 +349,6 @@
     <div class="sectionHead">
       <div>
         <h1 id="title">Loading…</h1>
-        <div class="muted" style="margin-top:6px;">Review your attempt question by question.</div>
       </div>
     </div>
 
@@ -364,7 +356,6 @@
       <div class="controls">
         <div class="counter" id="counter"></div>
         <div class="jump">
-          <label for="jumpSelect"></label>
           <select id="jumpSelect"></select>
         </div>
       </div>
@@ -378,7 +369,6 @@
         <div id="hint" class="hint" style="display:none;"></div>
         <div id="body"></div>
 
-        <!-- ✅ NEW solution container -->
         <div id="solutionWrap" style="display:none;"></div>
 
         <div class="resultInfo" id="resultInfo"></div>
@@ -526,13 +516,15 @@
       solutionWrap.innerHTML = "";
       return;
     }
+
     solutionWrap.style.display = "block";
     solutionWrap.innerHTML = `
-      <div class="solutionBox">
-        <div class="solutionTitle">Solution / Working</div>
-        <div>${escapeHtml(sol)}</div>
+      <div class="solutionBox" role="note" aria-label="Solution">
+        <div class="solutionTop">Solution:</div>
+        <div class="solutionBody">${escapeHtml(sol)}</div>
       </div>
     `;
+
     typesetMath(solutionWrap);
   }
 
@@ -565,10 +557,8 @@
 
     qTextEl.textContent = cleanSpaces(a.questionText || "");
 
-    // show marks per question (points snapshot)
     const pts = Number(a.points || 0);
-    const earned = Number(a.earnedPoints || 0);
-    qRightEl.textContent = pts ? `${earned}/${pts} marks` : "";
+    qRightEl.textContent = pts ? `(${pts}) marks` : "";
 
     const hint = cleanSpaces(a.hint || "");
     if (hint){
@@ -614,7 +604,6 @@
       resultInfoEl.textContent = `Correct Answer: ${String.fromCharCode(65 + correct)}`;
     }
 
-    // ✅ show solution/workings if saved
     renderSolutionBox(a);
 
     typesetMath(qTextEl);
