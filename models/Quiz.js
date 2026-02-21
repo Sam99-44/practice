@@ -1,8 +1,11 @@
-// models/Quiz.js (UPDATED - COPY & PASTE)
-// ✅ Adds type: "note"
-// ✅ Adds points (marks) per question for mcq/text
-// ✅ Adds solution/workings per question (solution)
-// ✅ Notes have no points (treated as 0)
+// models/Quiz.js (UPDATED FOR MULTI-SELECT MCQ - COPY & PASTE)
+// ✅ Adds correctIndexes: [Number] for multi-select MCQ
+// ✅ Backwards compatible with correctIndex (single)
+// ✅ Validation rules:
+//    - MCQ must have >= 2 options
+//    - If correctIndexes is provided (length>0): it must be valid indexes within options
+//    - Else uses correctIndex (single) and validates it's within options
+// ✅ Notes ignore points
 
 import mongoose from "mongoose";
 
@@ -20,17 +23,15 @@ const QuestionSchema = new mongoose.Schema(
     imageUrl: { type: String, default: "", trim: true },
     hint: { type: String, default: "", trim: true },
 
-    // ✅ NEW: Solution / workings (supports LaTeX)
     solution: { type: String, default: "", trim: true },
 
-    // ✅ Marks per question (only for mcq/text)
     points: {
       type: Number,
       default: 1,
       min: 0,
       validate: {
         validator: function (v) {
-          if (this.type === "note") return true; // notes ignore points
+          if (this.type === "note") return true;
           return Number.isInteger(v) && v >= 1;
         },
         message: "Points must be a whole number (1 or more) for questions.",
@@ -49,16 +50,57 @@ const QuestionSchema = new mongoose.Schema(
       },
     },
 
+    // ✅ Single-correct (legacy)
     correctIndex: {
       type: Number,
       default: 0,
       min: 0,
       validate: {
         validator: function (v) {
-          if (this.type === "mcq") return Number.isFinite(v) && v >= 0;
+          if (this.type !== "mcq") return true;
+
+          // If multi-correct is being used, skip single validation
+          if (Array.isArray(this.correctIndexes) && this.correctIndexes.length > 0) return true;
+
+          // single must be within options
+          const len = Array.isArray(this.options) ? this.options.length : 0;
+          if (len < 2) return true; // options validator will handle
+          return Number.isInteger(v) && v >= 0 && v < len;
+        },
+        message: "MCQ correctIndex must be within options.",
+      },
+    },
+
+    // ✅ Multi-select correct answers
+    correctIndexes: {
+      type: [Number],
+      default: undefined, // keep empty unless you set it
+      validate: {
+        validator: function (arr) {
+          if (this.type !== "mcq") return true;
+          if (arr === undefined) return true; // not using multi-select
+
+          // if provided, must have at least 1 correct
+          if (!Array.isArray(arr) || arr.length < 1) return false;
+
+          const len = Array.isArray(this.options) ? this.options.length : 0;
+          if (len < 2) return true;
+
+          // all must be integers and within options
+          const uniq = [...new Set(arr.map((x) => Number(x)))];
+          if (uniq.some((x) => !Number.isInteger(x))) return false;
+          if (uniq.some((x) => x < 0 || x >= len)) return false;
+
           return true;
         },
-        message: "MCQ correctIndex is required",
+        message: "MCQ correctIndexes must contain valid option indexes (at least 1).",
+      },
+      set: function (arr) {
+        // normalize: unique + sorted
+        if (!Array.isArray(arr)) return arr;
+        const uniq = [...new Set(arr.map((x) => Number(x)).filter(Number.isInteger))];
+        uniq.sort((a, b) => a - b);
+        return uniq;
       },
     },
 
