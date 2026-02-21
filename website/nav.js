@@ -1,5 +1,6 @@
 /* nav.js - shared navigation + auth helpers for Practice Online (SAFE)
    ✅ Adds Support link to BOTH desktop + mobile nav (if present)
+   ✅ NEW: Adds Dashboard link to BOTH desktop + mobile nav (if present)
    ✅ Auto-hides Admin link for non-admin users
    ✅ Keeps existing logic + styling safe
 */
@@ -18,55 +19,80 @@
     });
   }
 
-  // ✅ Inject "Support" link into desktop + mobile nav (only if nav exists)
-  function ensureSupportLink() {
-    const addLinkIfMissing = (navRoot) => {
+  // ✅ Inject "Dashboard" + "Support" link into desktop + mobile nav (only if nav exists)
+  function ensureLinks() {
+    const addLinkIfMissing = (navRoot, { href, text, insertAfterHrefIncludes, insertBeforeHrefIncludes }) => {
       if (!navRoot) return;
 
       // Don't duplicate
       const already = [...navRoot.querySelectorAll("a")].some((a) => {
-        const href = (a.getAttribute("href") || "").toLowerCase();
-        const text = (a.textContent || "").trim().toLowerCase();
-        return href.includes("support") || text === "support";
+        const h = (a.getAttribute("href") || "").toLowerCase();
+        const t = (a.textContent || "").trim().toLowerCase();
+        return h.includes(href.toLowerCase()) || t === text.toLowerCase();
       });
       if (already) return;
 
-      // Create link
       const a = document.createElement("a");
-      a.href = "support.html";
-      a.textContent = "Support";
+      a.href = href;
+      a.textContent = text;
 
-      // Insert after Results (best) else after Practice else at end
       const links = [...navRoot.querySelectorAll("a")];
-      const resultsLink = links.find((x) => (x.getAttribute("href") || "").includes("results"));
-      const practiceLink = links.find((x) => (x.getAttribute("href") || "").includes("learner-quizzes"));
 
-      if (resultsLink && resultsLink.parentNode === navRoot) {
-        resultsLink.insertAdjacentElement("afterend", a);
-      } else if (practiceLink && practiceLink.parentNode === navRoot) {
-        practiceLink.insertAdjacentElement("afterend", a);
+      const afterLink = insertAfterHrefIncludes
+        ? links.find((x) => ((x.getAttribute("href") || "").toLowerCase()).includes(insertAfterHrefIncludes.toLowerCase()))
+        : null;
+
+      const beforeLink = insertBeforeHrefIncludes
+        ? links.find((x) => ((x.getAttribute("href") || "").toLowerCase()).includes(insertBeforeHrefIncludes.toLowerCase()))
+        : null;
+
+      // Insert position preference:
+      // 1) after specific link
+      // 2) before specific link
+      // 3) append at end
+      if (afterLink && afterLink.parentNode === navRoot) {
+        afterLink.insertAdjacentElement("afterend", a);
+      } else if (beforeLink && beforeLink.parentNode === navRoot) {
+        beforeLink.insertAdjacentElement("beforebegin", a);
       } else {
         navRoot.appendChild(a);
       }
 
-      // ✅ Optional: set active underline automatically (matches your "active" class usage)
+      // ✅ auto-active underline support
       try {
         const path = (window.location.pathname || "").toLowerCase();
-        const isSupport = path.endsWith("/support.html") || path.endsWith("support.html");
-        if (isSupport) a.classList.add("active");
+        const isActive = path.endsWith("/" + href.toLowerCase()) || path.endsWith(href.toLowerCase());
+        if (isActive) a.classList.add("active");
       } catch {}
     };
 
-    // Desktop nav: common patterns you use
-    addLinkIfMissing(document.querySelector("nav.nav"));
-    addLinkIfMissing(document.getElementById("desktopNav"));
+    const navDesktop1 = document.querySelector("nav.nav");
+    const navDesktop2 = document.getElementById("desktopNav");
+    const navMobile = document.getElementById("mobileMenu");
 
-    // Mobile nav (if your mobile menu contains links)
-    addLinkIfMissing(document.getElementById("mobileMenu"));
+    // ✅ Add Dashboard (after Results, before Support)
+    [navDesktop1, navDesktop2, navMobile].forEach((navRoot) => {
+      addLinkIfMissing(navRoot, {
+        href: "progress-dashboard.html",
+        text: "Dashboard",
+        insertAfterHrefIncludes: "results",
+        insertBeforeHrefIncludes: "support",
+      });
+    });
+
+    // ✅ Add Support (after Results, else after Practice)
+    [navDesktop1, navDesktop2, navMobile].forEach((navRoot) => {
+      addLinkIfMissing(navRoot, {
+        href: "support.html",
+        text: "Support",
+        insertAfterHrefIncludes: "results",
+        insertBeforeHrefIncludes: "about",
+      });
+    });
   }
 
   // run immediately
-  ensureSupportLink();
+  ensureLinks();
 
   function logout() {
     localStorage.removeItem("token");
