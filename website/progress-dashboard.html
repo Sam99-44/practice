@@ -33,7 +33,7 @@
       max-width:1100px;margin:0 auto;padding:14px 18px;
       display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
     }
-    .brand{display:flex;flex-direction:column;font-weight:700;letter-spacing:.15px;}
+    .brand{display:flex;flex-direction:column;line-height:1.1;font-weight:700;letter-spacing:.15px;}
     .brand small{opacity:.85;font-weight:600}
     nav.nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
     nav.nav a{padding:8px 10px;border-radius:10px;color:#e7e9ff;font-weight:600;font-size:13px;}
@@ -62,7 +62,7 @@
       display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;
     }
     .sectionHead h1{margin:0;font-size:18px;font-weight:700;letter-spacing:-.01em;}
-    .muted{color:var(--muted);font-weight:600;font-size:13px;margin-top:6px;}
+    .muted{color:var(--muted);font-weight:600;font-size:13px;margin-top:6px;min-height:18px;}
 
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px;}
     @media(max-width:900px){.grid2{grid-template-columns:1fr;}}
@@ -74,7 +74,9 @@
       padding:12px;
     }
     .chartTitle{margin:0 0 8px 0;font-size:13px;font-weight:800;color:#0f172a;}
-    canvas{width:100%;height:170px;border-radius:10px;background:#fff;}
+
+    /* ✅ Keep charts compact */
+    canvas{width:100%;height:170px;border-radius:10px;background:#fff;display:block;}
 
     table{width:100%;border-collapse:collapse;font-size:13px;}
     th, td{padding:10px 10px;border-bottom:1px solid #eee;text-align:left;vertical-align:top;}
@@ -85,6 +87,7 @@
       color:var(--muted);
       font-weight:700;
       letter-spacing:.06em;
+      white-space:nowrap;
     }
 
     .topicLink{color:var(--accent);font-weight:800;}
@@ -101,7 +104,10 @@
     }
     .smallBtn:hover{background:#f8fafc}
 
-    .empty{padding:14px;border:1px dashed #ddd;border-radius:12px;background:#fafafa;color:var(--muted);font-weight:700;margin:14px;}
+    .empty{
+      padding:14px;border:1px dashed #ddd;border-radius:12px;
+      background:#fafafa;color:var(--muted);font-weight:700;margin:14px;
+    }
 
     .filters{
       padding:12px 14px;
@@ -112,6 +118,9 @@
       font-size:13px;font-weight:700;outline:none;min-width:160px;
     }
     select:focus{box-shadow:var(--focus);border-color:#cfe9ff;}
+
+    .tableWrapInner{overflow:auto;}
+    table{min-width:860px;}
   </style>
 
   <script>
@@ -145,7 +154,8 @@
     <div class="sectionHead">
       <div>
         <h1>Topic Progress</h1>
-        <div class="muted" id="subTxt"></div> <!-- ✅ no more showing progress -->
+        <!-- ✅ No “Loading…” / No “Showing progress …” -->
+        <div class="muted" id="subTxt"></div>
       </div>
     </div>
 
@@ -198,38 +208,53 @@
   };
 
   let allResults = [];
-  let attemptsAvailableByTopic = new Map();
+  let allQuizzes = [];
+
+  let topicTotals = new Map();        // topic -> total quizzes
+  let quizTopicById = new Map();      // quizId -> topic (most accurate)
+  let attemptedQuizIdsByTopic = new Map(); // topic -> Set(quizId)
 
   yearSelect.addEventListener("change", renderAll);
   monthSelect.addEventListener("change", renderAll);
+
+  // redraw charts on resize (keeps them professional)
+  const ro = new ResizeObserver(() => renderAll());
+  ro.observe(topCanvas);
+  ro.observe(bottomCanvas);
 
   load();
 
   async function load(){
     try{
-      subTxt.textContent = ""; // ✅ keep blank
+      subTxt.textContent = "";
 
-      const [resResults, resMe] = await Promise.all([
-        fetch(`${API}/api/results/my`, { headers:{Authorization:`Bearer ${token}`} }),
-        fetch(`${API}/api/auth/me`, { headers:{Authorization:`Bearer ${token}`} }),
-      ]);
+      // ensure session valid + admin toggle
+      const meRes = await fetch(`${API}/api/auth/me`,{
+        headers:{Authorization:`Bearer ${token}`}
+      });
 
-      if(resResults.status === 401 || resMe.status === 401){
+      if(meRes.status === 401){
         localStorage.removeItem("token");
         location.href="login.html";
         return;
       }
 
-      const me = await resMe.json().catch(()=>({}));
-      const isAdmin = me?.role === "admin";
+      const me = await meRes.json().catch(()=>null);
+      if(!meRes.ok || !me){
+        localStorage.removeItem("token");
+        location.href="login.html";
+        return;
+      }
 
-      const data = await resResults.json().catch(()=>[]);
-      allResults = Array.isArray(data) ? data : [];
+      // show admin link if admin
+      try{
+        const isAdmin = me.role === "admin";
+        document.querySelectorAll("[data-admin]").forEach(a => a.style.display = isAdmin ? "" : "none");
+      }catch{}
 
-      buildDateFilters(allResults);
-
-      const quizzesUrl = isAdmin ? `${API}/api/quizzes?all=1` : `${API}/api/quizzes`;
-      const qRes = await fetch(quizzesUrl, { headers:{Authorization:`Bearer ${token}`} });
+      // quizzes (to match Practice topics exactly)
+      const quizzesUrl = (me.role === "admin") ? `${API}/api/quizzes?all=1` : `${API}/api/quizzes`;
+      const qRes = await fetch(quizzesUrl,{ headers:{Authorization:`Bearer ${token}`} });
 
       if(qRes.status === 401){
         localStorage.removeItem("token");
@@ -237,9 +262,34 @@
         return;
       }
 
-      const quizzes = await qRes.json().catch(()=>[]);
-      buildAttemptsAvailable(Array.isArray(quizzes) ? quizzes : []);
+      const qData = await qRes.json().catch(()=>[]);
+      allQuizzes = Array.isArray(qData) ? qData : [];
 
+      topicTotals = new Map();
+      quizTopicById = new Map();
+
+      for(const q of allQuizzes){
+        const id = String(q._id || "");
+        const t = cleanSpaces(q.topic || "General");
+        if (id) quizTopicById.set(id, t);
+        topicTotals.set(t, (topicTotals.get(t) || 0) + 1);
+      }
+
+      // results
+      const rRes = await fetch(`${API}/api/results/my`, {
+        headers:{Authorization:`Bearer ${token}`}
+      });
+
+      if(rRes.status === 401){
+        localStorage.removeItem("token");
+        location.href="login.html";
+        return;
+      }
+
+      const rData = await rRes.json().catch(()=>[]);
+      allResults = Array.isArray(rData) ? rData : [];
+
+      buildDateFilters(allResults);
       renderAll();
 
     }catch(e){
@@ -248,17 +298,8 @@
     }
   }
 
-  function buildAttemptsAvailable(quizzes){
-    const map = new Map();
-    for(const q of quizzes){
-      const topic = cleanSpaces(q?.topic || "General");
-      map.set(topic, (map.get(topic) || 0) + 1);
-    }
-    attemptsAvailableByTopic = map;
-  }
-
   function buildDateFilters(data){
-    const years = [...new Set(data.map(r=>{
+    const years = [...new Set((data||[]).map(r=>{
       const d=new Date(r.createdAt);
       return isNaN(d)?null:d.getFullYear();
     }).filter(Boolean))].sort((a,b)=>b-a);
@@ -266,7 +307,7 @@
     yearSelect.innerHTML = `<option value="">All Years</option>` +
       years.map(y=>`<option value="${y}">${y}</option>`).join("");
 
-    const months = [...new Set(data.map(r=>{
+    const months = [...new Set((data||[]).map(r=>{
       const d=new Date(r.createdAt);
       return isNaN(d)?null:(d.getMonth()+1);
     }).filter(Boolean))].sort((a,b)=>a-b);
@@ -282,7 +323,7 @@
     const y = yearSelect.value;
     const m = monthSelect.value;
 
-    return data.filter(r=>{
+    return (data || []).filter(r=>{
       const d=new Date(r.createdAt);
       if(y && (isNaN(d) || String(d.getFullYear()) !== String(y))) return false;
       if(m && (isNaN(d) || String(d.getMonth()+1) !== String(m))) return false;
@@ -290,17 +331,44 @@
     });
   }
 
-  function summarizeByTopic(results){
-    const map = new Map();
+  function buildAttemptedQuizSets(results){
+    attemptedQuizIdsByTopic = new Map();
 
-    for(const r of results){
-      const topic = cleanSpaces(r.topic || "General");
+    for(const r of (results || [])){
+      const quizId = String(r.quizId || "");
+      if(!quizId) continue;
+
+      // ✅ topic from quizzes (most accurate). fallback to result topic.
+      const topic = cleanSpaces(quizTopicById.get(quizId) || r.topic || "General");
+
+      if(!attemptedQuizIdsByTopic.has(topic)) attemptedQuizIdsByTopic.set(topic, new Set());
+      attemptedQuizIdsByTopic.get(topic).add(quizId);
+    }
+  }
+
+  function summarizeByTopic(filteredResults){
+    // Start from quizzes topics (matches Practice topics exactly)
+    const map = new Map();
+    for (const [topic, total] of topicTotals.entries()){
+      map.set(topic, {
+        topic,
+        totalQuizzes: total,
+        quizzesAttempted: 0,
+        attempts: 0,   // attempts (can be > quizzesAttempted)
+        sum: 0,
+        best: 0,
+        passCount: 0
+      });
+    }
+
+    for(const r of (filteredResults || [])){
+      const quizId = String(r.quizId || "");
+      const topic = cleanSpaces(quizTopicById.get(quizId) || r.topic || "General");
+      if(!map.has(topic)) continue;
+
       const percent = Number(r.percent) || 0;
       const pass = percent >= 50;
 
-      if(!map.has(topic)){
-        map.set(topic, { topic, attempts:0, sum:0, best:0, passCount:0 });
-      }
       const o = map.get(topic);
       o.attempts += 1;
       o.sum += percent;
@@ -308,11 +376,16 @@
       if(pass) o.passCount += 1;
     }
 
+    // quizzesAttempted = unique quizIds per topic (filtered by date)
+    for (const [topic, o] of map.entries()){
+      const set = attemptedQuizIdsByTopic.get(topic);
+      o.quizzesAttempted = set ? set.size : 0;
+    }
+
     const list = [...map.values()].map(o=>{
       const avg = o.attempts ? Math.round(o.sum / o.attempts) : 0;
       const passRate = o.attempts ? Math.round((o.passCount / o.attempts) * 100) : 0;
-      const available = attemptsAvailableByTopic.get(o.topic) || 0;
-      return { ...o, avg, passRate, available };
+      return { ...o, avg, passRate };
     });
 
     list.sort((a,b)=>a.topic.localeCompare(b.topic));
@@ -328,23 +401,35 @@
 
   function renderAll(){
     const filtered = applyDateFilters(allResults);
-    const topics = summarizeByTopic(filtered);
+    buildAttemptedQuizSets(filtered);
 
-    // ✅ keep header clean (no showing progress)
-    if(!filtered.length){
+    const rows = summarizeByTopic(filtered);
+
+    // ✅ no “Showing progress …” line (keep it clean)
+    if (!allQuizzes.length){
+      subTxt.textContent = "No assessments found yet.";
+    } else if (!allResults.length){
       subTxt.textContent = "No results yet. Attempt some quizzes to see your progress.";
     } else {
       subTxt.textContent = "";
     }
 
-    const sortedByPass = [...topics].sort((a,b)=>b.passRate - a.passRate);
-    const top5 = sortedByPass.slice(0,5);
-    const bottom5 = sortedByPass.slice(-5);
+    // charts only from topics with attempts (so charts are meaningful)
+    const attemptedTopics = rows.filter(r => r.attempts > 0);
 
-    drawBarChart(topCanvas, top5);
-    drawBarChart(bottomCanvas, bottom5);
+    // best → worst
+    const sorted = [...attemptedTopics].sort((a,b)=>b.passRate - a.passRate);
 
-    renderTable(topics);
+    const top5 = sorted.slice(0,5);
+    const bottom5 = [...sorted].reverse().slice(0,5).reverse(); // lowest 5, keep order left->right
+
+    // ✅ Top chart: ONE colour for all bars
+    drawBarChart(topCanvas, top5, { mode:"top" });
+
+    // ✅ Bottom chart: different ORANGE shades per bar
+    drawBarChart(bottomCanvas, bottom5, { mode:"bottom" });
+
+    renderTable(rows);
   }
 
   function renderTable(rows){
@@ -354,78 +439,87 @@
     }
 
     tableWrap.innerHTML = `
-      <table>
-        <thead>
-          <tr>
-            <th>Topic</th>
-            <th>Attempts</th>
-            <th>Attempts Available</th>
-            <th>Average</th>
-            <th>Best</th>
-            <th>Recommendation</th>
-            <th>Open</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map(r=>{
-            const rec = recommendation(r.passRate);
-            const topicUrl = `learner-quizzes.html?topic=${encodeURIComponent(r.topic)}`;
-            return `
-              <tr>
-                <td><a class="topicLink" href="${topicUrl}">${escapeHtml(r.topic)}</a></td>
-                <td>${r.attempts}</td>
-                <td>${r.available}</td>
-                <td>${r.avg}%</td>
-                <td>${Math.round(r.best)}%</td>
-                <td class="rec ${rec.cls}">${escapeHtml(rec.text)}</td>
-                <td><button class="smallBtn" type="button" onclick="location.href='${topicUrl}'">View quizzes</button></td>
-              </tr>
-            `;
-          }).join("")}
-        </tbody>
-      </table>
+      <div class="tableWrapInner">
+        <table>
+          <thead>
+            <tr>
+              <th>Topic</th>
+              <th>Total Quizzes</th>
+              <th>Quizzes Attempted</th>
+              <th>Average</th>
+              <th>Best</th>
+              <th>Recommendation</th>
+              <th>Open</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r=>{
+              const rec = recommendation(r.passRate);
+              const topicUrl = `learner-quizzes.html?search=${encodeURIComponent(r.topic)}`;
+              return `
+                <tr>
+                  <td><a class="topicLink" href="${topicUrl}">${escapeHtml(r.topic)}</a></td>
+                  <td>${Number(r.totalQuizzes||0)}</td>
+                  <td>${Number(r.quizzesAttempted||0)}</td>
+                  <td>${r.avg}%</td>
+                  <td>${Math.round(r.best)}%</td>
+                  <td class="rec ${rec.cls}">${escapeHtml(rec.text)}</td>
+                  <td><button class="smallBtn" type="button" onclick="location.href='${topicUrl}'">View quizzes</button></td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
     `;
   }
 
-  function drawBarChart(canvas, rows){
+  // ✅ Small bar chart (30° labels) + fixed spacing + fixed canvas sizing
+  function drawBarChart(canvas, rows, opts){
     const ctx = canvas.getContext("2d");
-    const dpr = devicePixelRatio || 1;
+    const dp = window.devicePixelRatio || 1;
 
-    const cssW = canvas.clientWidth || 600;
+    // read CSS size correctly
+    const cssW = Math.max(260, canvas.getBoundingClientRect().width || canvas.clientWidth || 500);
     const cssH = 170;
 
-    canvas.width = Math.floor(cssW * dpr);
-    canvas.height = Math.floor(cssH * dpr);
+    canvas.width = Math.floor(cssW * dp);
+    canvas.height = Math.floor(cssH * dp);
 
     const W = canvas.width;
     const H = canvas.height;
 
     ctx.clearRect(0,0,W,H);
 
-    const pad = 14 * dpr;
-    const topPad = 18 * dpr;
-    const labelH = 72 * dpr;
-
-    const chartTop = pad + topPad;
-    const chartBottom = H - pad - labelH;
-    const chartH = chartBottom - chartTop;
-
     const data = (rows || []).slice(0,5);
+
+    const pad = 16 * dp;
+    const labelH = 68 * dp;
+    const chartH = H - pad - labelH;
+    const chartBottom = pad + chartH;
+
     if(!data.length){
       ctx.fillStyle = "#64748b";
-      ctx.font = `${12*dpr}px Inter, Arial`;
-      ctx.fillText("No data", pad, pad + 18*dpr);
+      ctx.font = `${12*dp}px Inter, Arial`;
+      ctx.fillText("No data yet", pad, pad + 18*dp);
       return;
     }
 
     const maxVal = 100;
-    const gap = 10 * dpr;
-    const barW = Math.max(18*dpr, (W - pad*2 - gap*(data.length-1)) / data.length);
 
-    const colors = ["#1b1648","#0b3c5d","#e11d2e","#16a34a","#f59e0b"];
+    // spacing based on count (fixes “only 1 bar” look)
+    const count = data.length;
+    const gap = Math.max(10*dp, (count === 1 ? 0 : 12*dp));
+    const usable = (W - pad*2 - gap*(count-1));
+    const barW = Math.max(28*dp, usable / count);
 
+    // colours rule
+    const topColor = "#1b1648"; // one colour for all top bars
+    const oranges = ["#f59e0b","#fb923c","#f97316","#ea580c","#c2410c"]; // different orange shades
+
+    // axis line
     ctx.strokeStyle = "rgba(15,23,42,.10)";
-    ctx.lineWidth = 1 * dpr;
+    ctx.lineWidth = 1 * dp;
     ctx.beginPath();
     ctx.moveTo(pad, chartBottom);
     ctx.lineTo(W - pad, chartBottom);
@@ -433,32 +527,33 @@
 
     data.forEach((d, i)=>{
       const x = pad + i*(barW+gap);
-      const center = x + barW/2;
-
       const val = Math.max(0, Math.min(maxVal, Number(d.passRate)||0));
-      const h = (val / maxVal) * (chartH - 8*dpr);
+      const h = (val / maxVal) * (chartH - 8*dp);
       const y = chartBottom - h;
 
-      ctx.fillStyle = colors[i % colors.length];
-      roundRect(ctx, x, y, barW, h, 10*dpr);
+      const fill = (opts?.mode === "bottom") ? oranges[i % oranges.length] : topColor;
+
+      ctx.fillStyle = fill;
+      roundRect(ctx, x, y, barW, h, 12*dp);
       ctx.fill();
 
+      // percent label
       ctx.fillStyle = "rgba(15,23,42,.85)";
-      ctx.font = `${11*dpr}px Inter, Arial`;
+      ctx.font = `${11*dp}px Inter, Arial`;
       ctx.textAlign = "center";
-      ctx.fillText(`${val}%`, center, y - 6*dpr);
+      ctx.fillText(`${val}%`, x + barW/2, y - 6*dp);
 
+      // rotated topic label (30 degrees)
+      const name = shortLabel(d.topic, 30);
       ctx.save();
-      ctx.translate(center, chartBottom + 46*dpr);
-      ctx.rotate(-Math.PI / 6); // 30 degrees
+      ctx.translate(x + barW/2, chartBottom + 38*dp);
+      ctx.rotate(-Math.PI/6); // 30 degrees
       ctx.fillStyle = "#475569";
-      ctx.font = `${11*dpr}px Inter, Arial`;
+      ctx.font = `${11*dp}px Inter, Arial`;
       ctx.textAlign = "right";
-      ctx.fillText(shortLabel(d.topic, 26), 0, 0);
+      ctx.fillText(name, 0, 0);
       ctx.restore();
     });
-
-    ctx.textAlign = "left";
   }
 
   function roundRect(ctx, x, y, w, h, r){
