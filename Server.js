@@ -1,12 +1,14 @@
-// server.js (UPDATED FOR MULTI-SELECT MCQ - COPY & PASTE)
-// ✅ Backwards compatible:
-//    - Single-answer MCQ: uses correctIndex + chosenIndex
-//    - Multi-select MCQ: uses correctIndexes:[...] + chosenIndexes:[...]
-// ✅ Scores multi-select like this (simple + fair):
-//    - Full marks ONLY if chosen set matches correct set exactly
-//    - Otherwise 0 (no partial marks)
-// ✅ Validates multi-select MCQ on quiz create/update
-// ✅ Saves result snapshot with chosenIndexes/correctIndexes for review page
+// server.js (FULL UPDATED - COPY & PASTE)
+// ✅ Adds MULTI-SELECT MCQ support (checkbox questions)
+// ✅ Admin can set: correctIndexes: [..] (1 or more correct answers)
+// ✅ Server decides: isMultiSelect = (correctIndexes.length > 1) OR q.isMultiSelect === true
+// ✅ Results accept:
+//    - Single MCQ: { chosenIndex: number }
+//    - Multi MCQ:  { chosenIndexes: number[] }
+// ✅ Marking:
+//    - Single: chosenIndex === correctIndex
+//    - Multi: chosenIndexes set == correctIndexes set (order doesn’t matter)
+// ✅ Keeps everything else the same as your current server.js
 
 import express from "express";
 import mongoose from "mongoose";
@@ -88,14 +90,14 @@ function hashToken(raw) {
 
 async function generateStudentNumber8() {
   while (true) {
-    const num = String(Math.floor(10000000 + Math.random() * 90000000));
+    const num = String(Math.floor(10000000 + Math.random() * 90000000)); // 8 digits
     const exists = await User.findOne({ studentNumber: num }).select("_id");
     if (!exists) return num;
   }
 }
 
 function makeOtp6() {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
 }
 
 function cleanSpaces(s) {
@@ -114,19 +116,19 @@ function safeNum(v, fallback = 0) {
   return n;
 }
 
-function uniqIntArray(arr) {
-  const a = Array.isArray(arr) ? arr : [];
-  const out = [];
-  for (const x of a) {
-    const n = Number(x);
-    if (Number.isInteger(n) && n >= 0) out.push(n);
-  }
-  return [...new Set(out)];
+/* ------------------ MULTI-SELECT HELPERS ------------------ */
+function normalizeIndexArray(arr) {
+  if (!Array.isArray(arr)) return [];
+  const nums = arr
+    .map((x) => Number(x))
+    .filter((n) => Number.isInteger(n) && n >= 0);
+  // unique + sorted
+  return [...new Set(nums)].sort((a, b) => a - b);
 }
 
-function setsEqual(a, b) {
-  if (a.size !== b.size) return false;
-  for (const x of a) if (!b.has(x)) return false;
+function arraysEqual(a, b) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
   return true;
 }
 
@@ -224,6 +226,7 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
   }
 });
 
+/* ------------------ REGISTER ------------------ */
 app.post("/api/register", async (req, res) => {
   try {
     const {
@@ -292,9 +295,11 @@ app.post("/api/register", async (req, res) => {
       accountType,
       studentNumber,
       grade: gradeNum,
+
       province: cleanSpaces(province || ""),
       cellphone: cleanSpaces(cellphone || ""),
       guardianCellphone: cleanSpaces(guardianCellphone || ""),
+
       emailVerified: true,
       verifyTokenHash: null,
       verifyTokenExpiresAt: null,
@@ -341,6 +346,7 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
+/* ------------------ LOGIN ------------------ */
 app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -454,39 +460,7 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   }
 });
 
-// ✅ Helper: validate MCQ supports single or multi
-function validateMcqBlock(q) {
-  const opts = Array.isArray(q?.options) ? q.options : [];
-  if (opts.length < 2 || opts.some((o) => !cleanSpaces(o))) {
-    return { ok: false, message: "MCQ must have at least 2 options." };
-  }
-
-  const multiArr = uniqIntArray(q?.correctIndexes);
-
-  // If correctIndexes provided AND has length >= 1 => treat as multi (even if length 1)
-  if (Array.isArray(q?.correctIndexes)) {
-    if (multiArr.length < 1) {
-      return { ok: false, message: "MCQ correctIndexes must contain at least 1 index." };
-    }
-    if (multiArr.some((i) => i < 0 || i >= opts.length)) {
-      return { ok: false, message: "MCQ correctIndexes must be within options." };
-    }
-    // normalize it back (keeps DB clean)
-    q.correctIndexes = multiArr;
-    // optional: remove single field to avoid confusion
-    // q.correctIndex = undefined;
-    return { ok: true };
-  }
-
-  // otherwise single-correct
-  const ci = safeInt(q?.correctIndex, null);
-  if (ci === null || ci < 0 || ci >= opts.length) {
-    return { ok: false, message: "MCQ correctIndex must be within options." };
-  }
-  return { ok: true };
-}
-
-// Admin creates quiz
+/* ------------------ ADMIN CREATE QUIZ ------------------ */
 app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   try {
     const { grade, title, topic, timeLimitMinutes, instructions, questions } = req.body;
@@ -506,7 +480,7 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
     const quizTopic = cleanSpaces(topic);
     const quizInstructions = String(instructions || "").trim();
 
-    // ✅ Validate blocks (mcq/text/note) + points + solution (optional) + multi-select mcq
+    // ✅ Validate blocks (mcq/text/note) + points + solution + multi-select
     for (const q of questions) {
       const type = String(q?.type || "mcq").toLowerCase();
 
@@ -522,9 +496,7 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
 
       const pts = safeInt(q?.points, 1);
       if (!Number.isInteger(pts) || pts < 1) {
-        return res
-          .status(400)
-          .json({ message: "Each question must have marks (points) of 1 or more." });
+        return res.status(400).json({ message: "Each question must have marks (points) of 1 or more." });
       }
 
       if (type === "text") {
@@ -542,8 +514,38 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
           }
         }
       } else {
-        const v = validateMcqBlock(q);
-        if (!v.ok) return res.status(400).json({ message: v.message });
+        const opts = Array.isArray(q?.options) ? q.options : [];
+        if (opts.length < 2 || opts.some((o) => !cleanSpaces(o))) {
+          return res.status(400).json({ message: "MCQ must have at least 2 options." });
+        }
+
+        // ✅ NEW: support correctIndexes (multi-correct)
+        const correctIndexes = normalizeIndexArray(q?.correctIndexes);
+        const hasMulti = correctIndexes.length > 0;
+
+        // compatibility single correctIndex
+        const correctIndex = safeInt(q?.correctIndex, null);
+
+        if (!hasMulti && (correctIndex === null || correctIndex < 0 || correctIndex >= opts.length)) {
+          return res.status(400).json({ message: "MCQ correctIndex must be within options." });
+        }
+
+        if (hasMulti) {
+          if (correctIndexes.some((ix) => ix < 0 || ix >= opts.length)) {
+            return res.status(400).json({ message: "MCQ correctIndexes must be within options." });
+          }
+          // ✅ write back normalized
+          q.correctIndexes = correctIndexes;
+          // ✅ set isMultiSelect automatically if more than 1 correct (or admin forced it)
+          q.isMultiSelect = Boolean(q.isMultiSelect) || correctIndexes.length > 1;
+
+          // ✅ if exactly 1 correct, keep compat correctIndex too
+          if (correctIndexes.length === 1) q.correctIndex = correctIndexes[0];
+        } else {
+          // no correctIndexes provided, treat as single
+          q.isMultiSelect = false;
+          q.correctIndexes = [];
+        }
       }
     }
 
@@ -611,7 +613,7 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   }
 });
 
-// Admin updates quiz
+/* ------------------ ADMIN UPDATE QUIZ ------------------ */
 app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const id = req.params.id;
@@ -689,9 +691,7 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
 
         const pts = safeInt(q?.points, 1);
         if (!Number.isInteger(pts) || pts < 1) {
-          return res
-            .status(400)
-            .json({ message: "Each question must have marks (points) of 1 or more." });
+          return res.status(400).json({ message: "Each question must have marks (points) of 1 or more." });
         }
 
         if (type === "text") {
@@ -709,8 +709,31 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
             }
           }
         } else {
-          const v = validateMcqBlock(q);
-          if (!v.ok) return res.status(400).json({ message: v.message });
+          const opts = Array.isArray(q?.options) ? q.options : [];
+          if (opts.length < 2 || opts.some((o) => !cleanSpaces(o))) {
+            return res.status(400).json({ message: "MCQ must have at least 2 options." });
+          }
+
+          const correctIndexes = normalizeIndexArray(q?.correctIndexes);
+          const hasMulti = correctIndexes.length > 0;
+
+          const ci = safeInt(q?.correctIndex, null);
+
+          if (!hasMulti && (ci === null || ci < 0 || ci >= opts.length)) {
+            return res.status(400).json({ message: "MCQ correctIndex must be within options." });
+          }
+
+          if (hasMulti) {
+            if (correctIndexes.some((ix) => ix < 0 || ix >= opts.length)) {
+              return res.status(400).json({ message: "MCQ correctIndexes must be within options." });
+            }
+            q.correctIndexes = correctIndexes;
+            q.isMultiSelect = Boolean(q.isMultiSelect) || correctIndexes.length > 1;
+            if (correctIndexes.length === 1) q.correctIndex = correctIndexes[0];
+          } else {
+            q.isMultiSelect = false;
+            q.correctIndexes = [];
+          }
         }
       }
     }
@@ -725,6 +748,7 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   }
 });
 
+/* ------------------ ADMIN DELETE QUIZ ------------------ */
 app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const quiz = await Quiz.findByIdAndDelete(req.params.id);
@@ -807,45 +831,12 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
   return ua === ca;
 }
 
-// ✅ Determine correctness for MCQ (single OR multi)
-function checkMcqCorrect({ quizQuestion, userAnswer }) {
-  const opts = Array.isArray(quizQuestion.options) ? quizQuestion.options : [];
-
-  // Multi if quizQuestion.correctIndexes is an array (preferred)
-  if (Array.isArray(quizQuestion.correctIndexes)) {
-    const correctArr = uniqIntArray(quizQuestion.correctIndexes).filter((i) => i < opts.length);
-    const chosenArr = uniqIntArray(userAnswer?.chosenIndexes).filter((i) => i < opts.length);
-
-    const correctSet = new Set(correctArr);
-    const chosenSet = new Set(chosenArr);
-
-    return {
-      isMulti: true,
-      isCorrect: correctArr.length > 0 && setsEqual(correctSet, chosenSet),
-      chosenIndexes: chosenArr,
-      correctIndexes: correctArr,
-      chosenIndex: -1,
-      correctIndex: -1,
-    };
-  }
-
-  // Single (legacy)
-  const chosenIndex = Number.isFinite(Number(userAnswer?.chosenIndex))
-    ? Number(userAnswer.chosenIndex)
-    : -1;
-
-  const correctIndex = Number.isFinite(Number(quizQuestion?.correctIndex))
-    ? Number(quizQuestion.correctIndex)
-    : -1;
-
-  return {
-    isMulti: false,
-    isCorrect: chosenIndex === correctIndex && correctIndex >= 0,
-    chosenIndexes: [],
-    correctIndexes: [],
-    chosenIndex,
-    correctIndex,
-  };
+// ✅ NEW: mark multi-select (set equality)
+function isMultiMcqCorrect(chosenIndexes, correctIndexes) {
+  const chosen = normalizeIndexArray(chosenIndexes);
+  const correct = normalizeIndexArray(correctIndexes);
+  if (!correct.length) return false;
+  return arraysEqual(chosen, correct);
 }
 
 app.post("/api/results", authRequired, async (req, res) => {
@@ -906,13 +897,8 @@ app.post("/api/results", authRequired, async (req, res) => {
           type: "note",
           points: 0,
           earnedPoints: 0,
-
-          // legacy + multi fields (kept for consistent schema)
           chosenIndex: -1,
           correctIndex: -1,
-          chosenIndexes: [],
-          correctIndexes: [],
-
           textAnswer: "",
           correctText: "",
           hint: "",
@@ -948,12 +934,6 @@ app.post("/api/results", authRequired, async (req, res) => {
           type: "text",
           points: qPoints,
           earnedPoints: earned,
-
-          chosenIndex: -1,
-          correctIndex: -1,
-          chosenIndexes: [],
-          correctIndexes: [],
-
           textAnswer: userText,
           correctText,
           hint,
@@ -968,8 +948,33 @@ app.post("/api/results", authRequired, async (req, res) => {
       }
 
       // ✅ MCQ (single OR multi)
-      const chk = checkMcqCorrect({ quizQuestion: q, userAnswer: ans });
-      const earned = chk.isCorrect ? qPoints : 0;
+      const correctIndexes = normalizeIndexArray(q.correctIndexes || []);
+      const multiByCorrects = correctIndexes.length > 1;
+      const isMultiSelect = Boolean(q.isMultiSelect) || multiByCorrects;
+
+      let isCorrect = false;
+
+      // Default snapshots (for compatibility with your current Result schema)
+      let chosenIndex = -1;
+      let correctIndex = Number.isInteger(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
+
+      if (isMultiSelect) {
+        const chosenIndexes = normalizeIndexArray(ans.chosenIndexes || []);
+        isCorrect = isMultiMcqCorrect(chosenIndexes, correctIndexes);
+
+        // ✅ (optional) store one representative index for old UI (not ideal, but safe)
+        chosenIndex = chosenIndexes.length ? chosenIndexes[0] : -1;
+        correctIndex = correctIndexes.length ? correctIndexes[0] : -1;
+
+        // ✅ If your Result model supports arrays, you can also store them:
+        // return { ..., chosenIndexes, correctIndexes, isMultiSelect: true }
+      } else {
+        chosenIndex = Number.isFinite(Number(ans.chosenIndex)) ? Number(ans.chosenIndex) : -1;
+        correctIndex = Number.isFinite(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
+        isCorrect = chosenIndex === correctIndex && correctIndex >= 0;
+      }
+
+      const earned = isCorrect ? qPoints : 0;
       scorePoints += earned;
 
       return {
@@ -977,15 +982,8 @@ app.post("/api/results", authRequired, async (req, res) => {
         type: "mcq",
         points: qPoints,
         earnedPoints: earned,
-
-        // legacy single
-        chosenIndex: chk.chosenIndex,
-        correctIndex: chk.correctIndex,
-
-        // multi
-        chosenIndexes: chk.chosenIndexes,
-        correctIndexes: chk.correctIndexes,
-
+        chosenIndex,
+        correctIndex,
         textAnswer: "",
         correctText: "",
         hint,
@@ -993,7 +991,7 @@ app.post("/api/results", authRequired, async (req, res) => {
         answerMode: "case-insensitive",
         tolerance: null,
         roundTo: null,
-        isCorrect: chk.isCorrect,
+        isCorrect,
         questionText,
         options,
       };
@@ -1175,14 +1173,13 @@ mongoose
   .catch((err) => console.error("Mongo error:", err.message));
 
 /*
-✅ IMPORTANT:
-1) Your Quiz model should allow these fields on MCQ questions:
-   - correctIndex (Number)  // legacy single
-   - correctIndexes ([Number]) // new multi-select
-
-2) Your Result model (answers subdocument) should allow:
-   - chosenIndex, correctIndex (Number)
-   - chosenIndexes, correctIndexes ([Number])
-
-If you want, paste your models/Quiz.js + models/Result.js and I’ll update them too.
+✅ IMPORTANT NOTES FOR MULTI-SELECT
+1) Your Quiz model MUST include:
+   - isMultiSelect: Boolean (default false)
+   - correctIndexes: [Number] (default [])
+2) If you want review.html to show multiple ticks,
+   your Result model should also include:
+   - chosenIndexes: [Number] (default [])
+   - correctIndexes: [Number] (default [])
+   (Right now this server keeps compatibility by storing the first selected index)
 */
