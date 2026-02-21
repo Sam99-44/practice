@@ -2,6 +2,7 @@
 // ✅ Adds MCQ multi-select support
 // ✅ Allows NOTE blocks to store points=0 and correctIndex=-1 (matches server.js)
 // ✅ Validates correctIndex/correctIndexes are within options length
+// ✅ NEW: Adds quiz difficulty (easy/moderate/hard)
 
 import mongoose from "mongoose";
 
@@ -158,6 +159,14 @@ const QuizSchema = new mongoose.Schema(
 
     title: { type: String, required: true, trim: true },
     topic: { type: String, default: "", trim: true },
+
+    // ✅ NEW: difficulty stored on quiz (used for colour labels in learner-quizzes.html)
+    difficulty: {
+      type: String,
+      enum: ["easy", "moderate", "hard"],
+      default: "moderate",
+      trim: true,
+    },
 
     timeLimitMinutes: { type: Number, default: 10, min: 1, max: 180 },
 
