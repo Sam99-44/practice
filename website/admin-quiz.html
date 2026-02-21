@@ -5,10 +5,14 @@
      ✅ Marks per question (points)
      ✅ Solution/Workings per question (solution)
      ✅ MCQ options: ADD/REMOVE choices (min 2)
-     ✅ MCQ: MULTI-CORRECT (checkbox per option) ✅ NEW
+     ✅ MCQ: MULTI-CORRECT (checkbox per option)
+     ✅ FIX: correctIndexes mapping ALWAYS matches options (even if blanks removed)
+     ✅ FIX: sends isMultiSelect:true when 2+ correct answers
      ✅ Drag & drop reorder + renumber
      ✅ Difficulty per quiz (easy/moderate/hard)
      ✅ Sends MCQ correctIndexes (array). Also sends correctIndex if only 1 selected (compat).
+     ✅ UI FIX: Solution preview is now plain white (no brown paper background)
+     ✅ UI FIX: Solution preview uses normal/small font (not big)
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -52,7 +56,6 @@
     .tiny{font-size:12px;}
     .hide{display:none !important;}
 
-    /* ✅ Preview */
     .previewLabel{margin:6px 0 0}
     .previewBox{
       border:1px dashed #e6e6e6;
@@ -76,7 +79,6 @@
       margin:0 0 6px 0;
     }
 
-    /* ✅ Instructions box */
     .infoBox{
       border:1px solid #e6e6e6;
       background:#fbfbff;
@@ -87,7 +89,6 @@
     .infoBox b{display:block; margin-bottom:6px;}
     .helpLine{margin-top:6px;}
 
-    /* ✅ Drag & Drop styles */
     .dragHandle{
       display:inline-flex;
       align-items:center;
@@ -114,7 +115,6 @@
       outline-offset:3px;
     }
 
-    /* ✅ MCQ option rows */
     .optRow{display:flex; gap:10px; align-items:center; margin-top:10px;}
     .optLabel{min-width:44px; font-weight:900;}
     .optCorrectWrap{
@@ -132,7 +132,7 @@
     .optCorrectWrap span{font-weight:800; font-size:12px; color:#0b3c5d;}
 
     /* =========================================================
-       ✅ Paper-Style Preview
+       ✅ Paper-Style Preview (keep for question/hint/options)
        ========================================================= */
     :root{
       --paper:#fffdf7;
@@ -181,6 +181,25 @@
 
     .previewBox.paperBox mjx-container{display:inline-block;margin:0 !important;}
     .previewBox.paperBox svg{vertical-align:middle;}
+
+    /* =========================================================
+       ✅ NEW: Plain solution preview (NO brown/paper background)
+       ✅ Font is normal/small (not big)
+       ========================================================= */
+    .previewBox.solBox{
+      background:#ffffff;
+      border:1px solid #e6e6e6;
+      border-radius:12px;
+      padding:12px;
+      font-size:13px;      /* normal/small */
+      line-height:1.5;     /* normal */
+      color:#111827;
+      white-space:pre-wrap;
+    }
+
+    .previewBox.solBox::before{display:none !important;}
+    .previewBox.solBox mjx-container{display:inline-block;margin:0 !important;}
+    .previewBox.solBox svg{vertical-align:middle;}
 
     @media (max-width:650px){
       .previewBox.paperBox{padding-left:56px;}
@@ -235,7 +254,6 @@
         <input id="title" placeholder="e.g. Term 1 Revision Test" />
       </div>
 
-      <!-- ✅ Difficulty -->
       <div>
         <label>Difficulty Level</label>
         <select id="difficulty">
@@ -247,7 +265,6 @@
       </div>
     </div>
 
-    <!-- ✅ Instructions -->
     <div class="infoBox">
       <b>Assessment Instructions (optional)</b>
       <textarea id="instructions" rows="3" placeholder="Example: Answer all questions. Use $x^2$ form for algebra answers. No calculators."></textarea>
@@ -416,7 +433,6 @@
       `;
     }
 
-    // ✅ MCQ (multi-correct)
     function mcqCardHtml(id){
       return `
         <div class="qcard" data-type="mcq" draggable="true">
@@ -469,7 +485,8 @@
             <div class="previewBox prevOpts paperBox"></div>
 
             <div class="muted tiny previewLabel">Solution / Workings:</div>
-            <div class="previewBox prevSol paperBox"></div>
+            <!-- ✅ plain white solution preview -->
+            <div class="previewBox prevSol solBox"></div>
           </div>
         </div>
       `;
@@ -504,13 +521,13 @@
           <div class="grid2">
             <div>
               <label>Correct Answer (supports math)</label>
-              <input class="correctText" placeholder="Example: 10 (or $x=10$ if you want math display only)" />
+              <input class="correctText" placeholder="Example: 10" />
             </div>
             <div>
               <label>Check Mode</label>
               <select class="textMode">
                 <option value="exact">Exact (case-insensitive)</option>
-                <option value="contains">Contains (answer is inside learner text)</option>
+                <option value="contains">Contains</option>
                 <option value="number_tolerance">Number (tolerance)</option>
               </select>
               <div class="muted tiny">Use “Number (tolerance)” for calculations.</div>
@@ -551,7 +568,8 @@
             <div class="previewBox prevAns paperBox"></div>
 
             <div class="muted tiny previewLabel">Solution / Workings:</div>
-            <div class="previewBox prevSol paperBox"></div>
+            <!-- ✅ plain white solution preview -->
+            <div class="previewBox prevSol solBox"></div>
           </div>
         </div>
       `;
@@ -631,11 +649,13 @@
       setPreviewText(card.querySelector(".prevSol"), sol || "(Solution/workings preview)");
 
       if (type === "mcq") {
-        const optInputs = [...card.querySelectorAll(".optInput")];
-        const optsText = optInputs.map((inp, i) => {
-          const v = cleanSpaces(inp.value || "");
-          return `${letter(i)}) ${v || "—"}`;
-        }).join("\n");
+        const optRows = [...card.querySelectorAll(".optRow")];
+        const included = optRows
+          .map((r) => cleanSpaces(r.querySelector(".optInput")?.value || ""))
+          .map((v, i) => ({ v, i }))
+          .filter(x => !!x.v);
+
+        const optsText = included.map((x, idx) => `${letter(idx)}) ${x.v}`).join("\n");
         setPreviewText(card.querySelector(".prevOpts"), optsText || "(Options preview)");
       } else {
         const ans = cleanSpaces(card.querySelector(".correctText")?.value || "");
@@ -653,16 +673,6 @@
         if (input) input.placeholder = `Option ${letter(i)}`;
         if (checkText) checkText.textContent = "Correct";
       });
-    }
-
-    function getCheckedCorrectIndexes(card){
-      const rows = [...card.querySelectorAll(".optRow")];
-      const idxs = [];
-      rows.forEach((r,i)=>{
-        const cb = r.querySelector(".optCorrect");
-        if (cb && cb.checked) idxs.push(i);
-      });
-      return idxs;
     }
 
     function addOption(card, value="", isCorrect=false){
@@ -759,7 +769,7 @@
       }
     }
 
-    // -------------------- Drag & Drop (HTML5) --------------------
+    // -------------------- Drag & Drop --------------------
     let draggedCard = null;
 
     function setupDragAndDrop(){
@@ -768,16 +778,6 @@
       cards.forEach(card => {
         if (card.dataset.dndWired === "1") return;
         card.dataset.dndWired = "1";
-
-        const handle = card.querySelector(".dragHandle");
-        if (handle){
-          handle.addEventListener("mousedown", () => {
-            card.setAttribute("draggable", "true");
-          });
-          handle.addEventListener("mouseup", () => {
-            card.setAttribute("draggable", "true");
-          });
-        }
 
         card.addEventListener("dragstart", (e) => {
           draggedCard = card;
@@ -891,39 +891,24 @@
           });
 
         } else {
+          // ✅ FIX: build options + correctIndexes from INCLUDED (non-blank) options only
           const optRows = [...card.querySelectorAll(".optRow")];
-          const options = optRows.map(r => cleanSpaces(r.querySelector(".optInput")?.value)).filter(Boolean);
 
-          if (options.length < 2) {
-            throw new Error("MCQ must have at least 2 options.");
-          }
-
-          // ✅ MULTI-CORRECT
-          const correctIndexes = [];
-          optRows.forEach((r, i) => {
-            const txt = cleanSpaces(r.querySelector(".optInput")?.value);
-            if (!txt) return; // skip blank option (not included in options)
-            const cb = r.querySelector(".optCorrect");
-            if (cb && cb.checked) correctIndexes.push(i);
-          });
-
-          // If you removed blank options above, indexes can mismatch.
-          // ✅ Fix: rebuild indexes based on INCLUDED options only
-          const included = [];
-          optRows.forEach((r) => {
-            const txt = cleanSpaces(r.querySelector(".optInput")?.value);
-            if (!txt) return;
-            included.push({
+          const included = optRows.map((r) => {
+            const txt = cleanSpaces(r.querySelector(".optInput")?.value || "");
+            if (!txt) return null;
+            return {
+              text: txt,
               correct: !!r.querySelector(".optCorrect")?.checked
-            });
-          });
+            };
+          }).filter(Boolean);
 
+          const options = included.map(o => o.text);
           const correctedIndexes = [];
-          included.forEach((o, idx)=>{ if (o.correct) correctedIndexes.push(idx); });
+          included.forEach((o, idx) => { if (o.correct) correctedIndexes.push(idx); });
 
-          if (correctedIndexes.length < 1) {
-            throw new Error("Please tick at least ONE correct option for every MCQ.");
-          }
+          if (options.length < 2) throw new Error("MCQ must have at least 2 options.");
+          if (correctedIndexes.length < 1) throw new Error("Please tick at least ONE correct option for every MCQ.");
 
           const payload = {
             type: "mcq",
@@ -933,6 +918,8 @@
             points,
             options,
             correctIndexes: correctedIndexes,
+            // ✅ IMPORTANT: tells learner UI to show checkboxes
+            isMultiSelect: correctedIndexes.length >= 2,
             solution: solution || ""
           };
 
