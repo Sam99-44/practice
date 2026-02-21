@@ -1,7 +1,7 @@
 // models/Quiz.js (UPDATED - COPY & PASTE)
 // ✅ Adds MCQ multi-select support
-// ✅ correctIndexes: [Number] (1+ correct answers)
-// ✅ isMultiSelect: Boolean (if true, learner sees checkboxes)
+// ✅ Allows NOTE blocks to store points=0 and correctIndex=-1 (matches server.js)
+// ✅ Validates correctIndex/correctIndexes are within options length
 
 import mongoose from "mongoose";
 
@@ -19,7 +19,7 @@ const QuestionSchema = new mongoose.Schema(
     imageUrl: { type: String, default: "", trim: true },
     hint: { type: String, default: "", trim: true },
 
-    // ✅ NEW: Solution / workings (supports LaTeX)
+    // ✅ Solution / workings (supports LaTeX)
     solution: { type: String, default: "", trim: true },
 
     // ✅ Marks per question (only for mcq/text)
@@ -29,10 +29,10 @@ const QuestionSchema = new mongoose.Schema(
       min: 0,
       validate: {
         validator: function (v) {
-          if (this.type === "note") return true; // notes ignore points
+          if (this.type === "note") return v === 0; // notes must be 0
           return Number.isInteger(v) && v >= 1;
         },
-        message: "Points must be a whole number (1 or more) for questions.",
+        message: "Points must be a whole number (1 or more) for questions, and 0 for notes.",
       },
     },
 
@@ -50,20 +50,34 @@ const QuestionSchema = new mongoose.Schema(
     },
 
     // ✅ Single-correct (compat)
+    // IMPORTANT: allow -1 for note/text and for multi-select where correctIndexes is used
     correctIndex: {
       type: Number,
-      default: 0,
-      min: 0,
+      default: -1,
+      min: -1,
       validate: {
         validator: function (v) {
-          if (this.type === "mcq") return Number.isFinite(v) && v >= 0;
-          return true;
+          if (this.type !== "mcq") return true; // ignore for text/note
+
+          // If multi-select is used (either flag or correctIndexes provided), correctIndex can be -1
+          const usesMulti =
+            Boolean(this.isMultiSelect) ||
+            (Array.isArray(this.correctIndexes) && this.correctIndexes.length > 0);
+
+          if (usesMulti) {
+            return Number.isInteger(v) && v >= -1;
+          }
+
+          // single-correct must be within options
+          if (!Number.isInteger(v) || v < 0) return false;
+          const len = Array.isArray(this.options) ? this.options.length : 0;
+          return len >= 2 ? v < len : true;
         },
-        message: "MCQ correctIndex is required",
+        message: "MCQ correctIndex must be valid (within options) for single-correct questions.",
       },
     },
 
-    // ✅ NEW: Multi-correct indexes (preferred for multi-select)
+    // ✅ Multi-correct indexes (preferred for multi-select)
     correctIndexes: {
       type: [Number],
       default: [],
@@ -71,14 +85,24 @@ const QuestionSchema = new mongoose.Schema(
         validator: function (arr) {
           if (this.type !== "mcq") return true;
           if (!Array.isArray(arr)) return false;
-          // allow empty (single-correct may use correctIndex only)
-          return arr.every((n) => Number.isInteger(n) && n >= 0);
+
+          // allow empty when using single correctIndex
+          if (arr.length === 0) return true;
+
+          // must be integers >= 0 and within options length
+          if (!arr.every((n) => Number.isInteger(n) && n >= 0)) return false;
+
+          const len = Array.isArray(this.options) ? this.options.length : 0;
+          if (len >= 2 && arr.some((i) => i >= len)) return false;
+
+          // no duplicates
+          return new Set(arr).size === arr.length;
         },
-        message: "correctIndexes must be an array of whole numbers (0 or more).",
+        message: "correctIndexes must be valid unique option indexes within options length.",
       },
     },
 
-    // ✅ NEW: flag to show checkboxes on learner UI
+    // ✅ flag to show checkboxes on learner UI
     isMultiSelect: {
       type: Boolean,
       default: false,
