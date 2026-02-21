@@ -3,6 +3,8 @@
 //    - chosenIndexes: [Number] (what learner ticked)
 //    - correctIndexes: [Number] (the right ticks)
 // ✅ Still keeps chosenIndex/correctIndex for backwards compatibility
+// ✅ Learners: 1 attempt per quiz (unique index)
+// ✅ Admin: unlimited retries (partial unique index excludes admin attempts)
 
 import mongoose from "mongoose";
 
@@ -56,7 +58,8 @@ const ResultSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     quizId: { type: mongoose.Schema.Types.ObjectId, ref: "Quiz", required: true },
 
-    grade: { type: Number, required: true },
+    // ✅ safer for migrations/old data
+    grade: { type: Number, default: null },
 
     topic: { type: String, default: "General" },
     title: { type: String, default: "Assessment" },
@@ -78,9 +81,14 @@ const ResultSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// ✅ Learners: ONLY ONE attempt per quiz
+// ✅ Admin: unlimited retries
 ResultSchema.index(
   { userId: 1, quizId: 1 },
-  { unique: true, partialFilterExpression: { isAdminAttempt: false } }
+  {
+    unique: true,
+    partialFilterExpression: { isAdminAttempt: { $ne: true } },
+  }
 );
 
 export default mongoose.model("Result", ResultSchema);
