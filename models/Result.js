@@ -1,8 +1,8 @@
-// models/Result.js (UPDATED FOR MULTI-SELECT MCQ - COPY & PASTE)
-// ✅ Supports MCQ single-select (chosenIndex/correctIndex) AND multi-select (chosenIndexes/correctIndexes)
-// ✅ Keeps notes + points/earnedPoints + solution snapshot
-// ✅ Learners: enforce ONE attempt per quiz (DB-level) via partial unique index
-// ✅ Admin: can attempt SAME quiz many times (DB allows multiple)
+// models/Result.js (UPDATED - COPY & PASTE)
+// ✅ Stores multi-select answers properly for review/results:
+//    - chosenIndexes: [Number] (what learner ticked)
+//    - correctIndexes: [Number] (the right ticks)
+// ✅ Still keeps chosenIndex/correctIndex for backwards compatibility
 
 import mongoose from "mongoose";
 
@@ -16,36 +16,16 @@ const AnswerSchema = new mongoose.Schema(
     points: { type: Number, default: 0, min: 0 },
     earnedPoints: { type: Number, default: 0, min: 0 },
 
-    // ---------------- MCQ (single-select legacy) ----------------
+    // ✅ MCQ (single - compat)
     chosenIndex: { type: Number, default: -1, min: -1 },
     correctIndex: { type: Number, default: -1, min: -1 },
 
-    // ---------------- MCQ (multi-select new) ----------------
-    // learner picks multiple answers (checkbox style)
-    chosenIndexes: {
-      type: [Number],
-      default: undefined, // only store when multi-select is used
-      set: (arr) => {
-        if (!Array.isArray(arr)) return arr;
-        const uniq = [...new Set(arr.map((x) => Number(x)).filter(Number.isInteger))];
-        uniq.sort((a, b) => a - b);
-        return uniq;
-      },
-    },
+    // ✅ MCQ (multi-select - proper)
+    isMultiSelect: { type: Boolean, default: false },
+    chosenIndexes: { type: [Number], default: [] },
+    correctIndexes: { type: [Number], default: [] },
 
-    // correct multiple answers (snapshot from Quiz)
-    correctIndexes: {
-      type: [Number],
-      default: undefined, // only store when multi-select is used
-      set: (arr) => {
-        if (!Array.isArray(arr)) return arr;
-        const uniq = [...new Set(arr.map((x) => Number(x)).filter(Number.isInteger))];
-        uniq.sort((a, b) => a - b);
-        return uniq;
-      },
-    },
-
-    // TEXT
+    // ✅ TEXT
     textAnswer: { type: String, default: "" },
     correctText: { type: String, default: "" },
 
@@ -56,7 +36,7 @@ const AnswerSchema = new mongoose.Schema(
 
     answerMode: {
       type: String,
-      enum: ["case-insensitive", "exact", "number", "multi-select"],
+      enum: ["case-insensitive", "exact", "number"],
       default: "case-insensitive",
     },
     roundTo: { type: Number, default: null },
@@ -98,7 +78,6 @@ const ResultSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ✅ Learners: only ONE attempt per quiz (admins can have many)
 ResultSchema.index(
   { userId: 1, quizId: 1 },
   { unique: true, partialFilterExpression: { isAdminAttempt: false } }
