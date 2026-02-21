@@ -1,14 +1,8 @@
 // server.js (FULL UPDATED - COPY & PASTE)
-// ✅ Adds MULTI-SELECT MCQ support (checkbox questions)
-// ✅ Admin can set: correctIndexes: [..] (1 or more correct answers)
-// ✅ Server decides: isMultiSelect = (correctIndexes.length > 1) OR q.isMultiSelect === true
-// ✅ Results accept:
-//    - Single MCQ: { chosenIndex: number }
-//    - Multi MCQ:  { chosenIndexes: number[] }
-// ✅ Marking:
-//    - Single: chosenIndex === correctIndex
-//    - Multi: chosenIndexes set == correctIndexes set (order doesn’t matter)
-// ✅ Keeps everything else the same as your current server.js
+// ✅ Adds MCQ MULTI-SELECT support (chosenIndexes + correctIndexes)
+// ✅ Auto-detects multi-select when correctIndexes has 2+ items OR isMultiSelect true
+// ✅ Saves multi-select properly into Result for review/results
+// ✅ Backward compatible with old single-correct fields (chosenIndex/correctIndex)
 
 import express from "express";
 import mongoose from "mongoose";
@@ -56,6 +50,7 @@ async function sendEmail({ to, subject, html, text }) {
   }
 }
 
+// ✅ BULK SEND (for notifying many learners)
 async function sendBulkEmail({ recipients, subject, html, text }) {
   if (!SENDGRID_API_KEY) throw new Error("Missing SENDGRID_API_KEY on server");
   if (!FROM_EMAIL) throw new Error("Missing FROM_EMAIL on server");
@@ -88,6 +83,7 @@ function hashToken(raw) {
   return crypto.createHash("sha256").update(String(raw)).digest("hex");
 }
 
+// Generate unique 8-digit student number (digits only)
 async function generateStudentNumber8() {
   while (true) {
     const num = String(Math.floor(10000000 + Math.random() * 90000000)); // 8 digits
@@ -96,6 +92,7 @@ async function generateStudentNumber8() {
   }
 }
 
+// Generate 6-digit OTP
 function makeOtp6() {
   return String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
 }
@@ -116,17 +113,22 @@ function safeNum(v, fallback = 0) {
   return n;
 }
 
-/* ------------------ MULTI-SELECT HELPERS ------------------ */
-function normalizeIndexArray(arr) {
-  if (!Array.isArray(arr)) return [];
-  const nums = arr
-    .map((x) => Number(x))
-    .filter((n) => Number.isInteger(n) && n >= 0);
+// ✅ normalize index arrays (for multi-select)
+function normalizeIndexArray(v) {
+  if (!Array.isArray(v)) return [];
+  const out = [];
+  for (const x of v) {
+    const n = Number(x);
+    if (Number.isInteger(n) && n >= 0) out.push(n);
+  }
   // unique + sorted
-  return [...new Set(nums)].sort((a, b) => a - b);
+  return [...new Set(out)].sort((a, b) => a - b);
 }
 
-function arraysEqual(a, b) {
+function isMultiMcqCorrect(chosenIdxs, correctIdxs) {
+  const a = normalizeIndexArray(chosenIdxs);
+  const b = normalizeIndexArray(correctIdxs);
+  if (!b.length) return false;
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
   return true;
@@ -134,7 +136,7 @@ function arraysEqual(a, b) {
 
 /* ------------------ CORS ------------------ */
 const ALLOWED_ORIGINS = [
-  process.env.APP_URL,
+  process.env.APP_URL, // your Netlify URL (optional)
   "http://localhost:3000",
   "http://localhost:5500",
   "http://127.0.0.1:5500",
@@ -143,7 +145,7 @@ const ALLOWED_ORIGINS = [
 app.use(
   cors({
     origin: (origin, cb) => {
-      if (!origin) return cb(null, true);
+      if (!origin) return cb(null, true); // Postman/curl
       if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
       if (origin.endsWith(".netlify.app")) return cb(null, true);
       return cb(new Error(`CORS blocked: ${origin}`), false);
@@ -152,6 +154,7 @@ app.use(
   })
 );
 
+// Preflight
 app.options("*", cors());
 
 /* ------------------ HEALTH ------------------ */
@@ -203,6 +206,8 @@ async function adminOnly(req, res, next) {
 }
 
 /* ------------------ AUTH ROUTES ------------------ */
+
+// Profile endpoint used by learner pages + admin pages
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select(
@@ -226,7 +231,7 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
   }
 });
 
-/* ------------------ REGISTER ------------------ */
+// REGISTER
 app.post("/api/register", async (req, res) => {
   try {
     const {
@@ -346,7 +351,7 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-/* ------------------ LOGIN ------------------ */
+// LOGIN
 app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -416,6 +421,9 @@ app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
 });
 
 /* ------------------ QUIZZES ------------------ */
+
+// Learner: returns quizzes for learner grade
+// Admin: if you want all, use /api/quizzes?all=1
 app.get("/api/quizzes", authRequired, async (req, res) => {
   try {
     const u = await User.findById(req.user.userId).select("role grade");
@@ -442,6 +450,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
   }
 });
 
+// Get single quiz (attempt.html uses this)
 app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id);
@@ -450,6 +459,7 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
     const u = await User.findById(req.user.userId).select("role grade");
     if (!u) return res.status(401).json({ message: "User not found" });
 
+    // learners can only access their grade
     if (u.role !== "admin" && Number(quiz.grade) !== Number(u.grade)) {
       return res.status(403).json({ message: "Not allowed" });
     }
@@ -460,7 +470,7 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   }
 });
 
-/* ------------------ ADMIN CREATE QUIZ ------------------ */
+// Admin creates quiz (admin-quiz.html POSTs here) ✅ NOW EMAILS STUDENTS BY GRADE
 app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   try {
     const { grade, title, topic, timeLimitMinutes, instructions, questions } = req.body;
@@ -488,6 +498,7 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
         return res.status(400).json({ message: "Each block must have text." });
       }
 
+      // ✅ solution allowed for any type
       if ("solution" in q && q.solution !== undefined && q.solution !== null) {
         q.solution = String(q.solution);
       }
@@ -496,7 +507,9 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
 
       const pts = safeInt(q?.points, 1);
       if (!Number.isInteger(pts) || pts < 1) {
-        return res.status(400).json({ message: "Each question must have marks (points) of 1 or more." });
+        return res.status(400).json({
+          message: "Each question must have marks (points) of 1 or more.",
+        });
       }
 
       if (type === "text") {
@@ -514,37 +527,37 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
           }
         }
       } else {
+        // ✅ MCQ (single or multi)
         const opts = Array.isArray(q?.options) ? q.options : [];
         if (opts.length < 2 || opts.some((o) => !cleanSpaces(o))) {
           return res.status(400).json({ message: "MCQ must have at least 2 options." });
         }
 
-        // ✅ NEW: support correctIndexes (multi-correct)
-        const correctIndexes = normalizeIndexArray(q?.correctIndexes);
-        const hasMulti = correctIndexes.length > 0;
+        const idxs = normalizeIndexArray(q?.correctIndexes || []);
+        const hasMulti = idxs.length >= 2;
+        const wantsMulti = Boolean(q?.isMultiSelect) || hasMulti;
 
-        // compatibility single correctIndex
-        const correctIndex = safeInt(q?.correctIndex, null);
-
-        if (!hasMulti && (correctIndex === null || correctIndex < 0 || correctIndex >= opts.length)) {
-          return res.status(400).json({ message: "MCQ correctIndex must be within options." });
-        }
-
-        if (hasMulti) {
-          if (correctIndexes.some((ix) => ix < 0 || ix >= opts.length)) {
+        if (wantsMulti) {
+          if (idxs.length < 1) {
+            return res.status(400).json({ message: "MCQ must have at least 1 correct option." });
+          }
+          if (idxs.some((i) => i < 0 || i >= opts.length)) {
             return res.status(400).json({ message: "MCQ correctIndexes must be within options." });
           }
-          // ✅ write back normalized
-          q.correctIndexes = correctIndexes;
-          // ✅ set isMultiSelect automatically if more than 1 correct (or admin forced it)
-          q.isMultiSelect = Boolean(q.isMultiSelect) || correctIndexes.length > 1;
+          q.isMultiSelect = true;
+          q.correctIndexes = idxs;
 
-          // ✅ if exactly 1 correct, keep compat correctIndex too
-          if (correctIndexes.length === 1) q.correctIndex = correctIndexes[0];
+          // compat: keep correctIndex if only 1
+          if (idxs.length === 1) q.correctIndex = idxs[0];
         } else {
-          // no correctIndexes provided, treat as single
+          // single-correct
+          const ci = safeInt(q?.correctIndex, null);
+          if (ci === null || ci < 0 || ci >= opts.length) {
+            return res.status(400).json({ message: "MCQ correctIndex must be within options." });
+          }
+          // also store correctIndexes for easier review
+          q.correctIndexes = [ci];
           q.isMultiSelect = false;
-          q.correctIndexes = [];
         }
       }
     }
@@ -613,7 +626,7 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   }
 });
 
-/* ------------------ ADMIN UPDATE QUIZ ------------------ */
+// Admin updates quiz (edit-assessment.html PUTs here)
 app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const id = req.params.id;
@@ -714,25 +727,27 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
             return res.status(400).json({ message: "MCQ must have at least 2 options." });
           }
 
-          const correctIndexes = normalizeIndexArray(q?.correctIndexes);
-          const hasMulti = correctIndexes.length > 0;
+          const idxs = normalizeIndexArray(q?.correctIndexes || []);
+          const hasMulti = idxs.length >= 2;
+          const wantsMulti = Boolean(q?.isMultiSelect) || hasMulti;
 
-          const ci = safeInt(q?.correctIndex, null);
-
-          if (!hasMulti && (ci === null || ci < 0 || ci >= opts.length)) {
-            return res.status(400).json({ message: "MCQ correctIndex must be within options." });
-          }
-
-          if (hasMulti) {
-            if (correctIndexes.some((ix) => ix < 0 || ix >= opts.length)) {
+          if (wantsMulti) {
+            if (idxs.length < 1) {
+              return res.status(400).json({ message: "MCQ must have at least 1 correct option." });
+            }
+            if (idxs.some((i) => i < 0 || i >= opts.length)) {
               return res.status(400).json({ message: "MCQ correctIndexes must be within options." });
             }
-            q.correctIndexes = correctIndexes;
-            q.isMultiSelect = Boolean(q.isMultiSelect) || correctIndexes.length > 1;
-            if (correctIndexes.length === 1) q.correctIndex = correctIndexes[0];
+            q.isMultiSelect = true;
+            q.correctIndexes = idxs;
+            if (idxs.length === 1) q.correctIndex = idxs[0];
           } else {
+            const ci = Number(q?.correctIndex);
+            if (!Number.isInteger(ci) || ci < 0 || ci >= opts.length) {
+              return res.status(400).json({ message: "MCQ correctIndex must be within options." });
+            }
+            q.correctIndexes = [ci];
             q.isMultiSelect = false;
-            q.correctIndexes = [];
           }
         }
       }
@@ -748,7 +763,7 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   }
 });
 
-/* ------------------ ADMIN DELETE QUIZ ------------------ */
+// Admin deletes quiz
 app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const quiz = await Quiz.findByIdAndDelete(req.params.id);
@@ -761,6 +776,7 @@ app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
 });
 
 /* ------------------ RESULTS ------------------ */
+
 function isUnavailableBySchedule(quiz) {
   const now = new Date();
 
@@ -777,6 +793,7 @@ function isUnavailableBySchedule(quiz) {
   return false;
 }
 
+// ✅ parse numbers AND fractions like 1/2 or -3/4
 function parseNumberOrFraction(input) {
   const s = String(input || "")
     .trim()
@@ -785,6 +802,7 @@ function parseNumberOrFraction(input) {
 
   if (!s) return null;
 
+  // fraction a/b
   const m = s.match(/^([+-]?\d+(?:\.\d+)?)\s*\/\s*([+-]?\d+(?:\.\d+)?)$/);
   if (m) {
     const a = Number(m[1]);
@@ -793,15 +811,17 @@ function parseNumberOrFraction(input) {
     return a / b;
   }
 
+  // normal number (0.5, -2, 3.14)
   const n = Number(s);
   return Number.isFinite(n) ? n : null;
 }
 
+// ✅ normalize typed answers so case/spaces don't matter
 function normalizeTextAnswer(s) {
   return String(s || "")
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, "")
+    .replace(/\s+/g, "") // remove all spaces
     .replace(/−/g, "-");
 }
 
@@ -819,6 +839,7 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
     return Math.abs(uNum - cNum) <= tol;
   }
 
+  // If both are numeric-like, treat as equal (fraction/decimal)
   if (uNum !== null && cNum !== null) {
     return Math.abs(uNum - cNum) <= 1e-12;
   }
@@ -828,17 +849,12 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
 
   if (mode === "contains") return ua.includes(ca);
 
-  return ua === ca;
+  return ua === ca; // exact (case-insensitive, space-insensitive)
 }
 
-// ✅ NEW: mark multi-select (set equality)
-function isMultiMcqCorrect(chosenIndexes, correctIndexes) {
-  const chosen = normalizeIndexArray(chosenIndexes);
-  const correct = normalizeIndexArray(correctIndexes);
-  if (!correct.length) return false;
-  return arraysEqual(chosen, correct);
-}
-
+// Submit attempt (attempt.html POSTs here)
+// ✅ Learners: ONE attempt only
+// ✅ Admin: MANY attempts allowed (each attempt saved)
 app.post("/api/results", authRequired, async (req, res) => {
   try {
     const { quizId, answers, timeTakenSeconds } = req.body;
@@ -849,16 +865,20 @@ app.post("/api/results", authRequired, async (req, res) => {
 
     const userId = req.user.userId;
 
+    // ✅ Always check role from DB.
     const me = await User.findById(userId).select("role");
     if (!me) return res.status(401).json({ message: "User not found" });
 
     const isAdmin = me.role === "admin";
 
+    // ✅ Learners blocked after first attempt
+    // ✅ Admin can retry unlimited times
     if (!isAdmin) {
       const existing = await Result.findOne({ userId, quizId }).select("_id");
       if (existing) return res.status(409).json({ message: "Already attempted" });
     }
 
+    // ✅ Admin attempt number
     let attemptNo = 1;
     if (isAdmin) {
       const prev = await Result.countDocuments({ userId, quizId, isAdminAttempt: true });
@@ -875,6 +895,7 @@ app.post("/api/results", authRequired, async (req, res) => {
     const qs = Array.isArray(quiz.questions) ? quiz.questions : [];
     if (!qs.length) return res.status(400).json({ message: "Assessment has no questions." });
 
+    // total points (exclude notes)
     const gradedQs = qs.filter((q) => String(q.type || "mcq").toLowerCase() !== "note");
     const totalPoints = gradedQs.reduce((sum, q) => sum + (Number(q.points) || 1), 0);
 
@@ -887,18 +908,28 @@ app.post("/api/results", authRequired, async (req, res) => {
       const questionText = q.text || "";
       const options = Array.isArray(q.options) ? q.options : [];
       const qPoints = type === "note" ? 0 : (Number(q.points) || 1);
+
+      // ✅ snapshot solution/workings
       const solution = String(q.solution || "").trim();
 
       const ans = answers.find((a) => Number(a.questionIndex) === i) || {};
 
+      // NOTE (not graded)
       if (type === "note") {
         return {
           questionIndex: i,
           type: "note",
           points: 0,
           earnedPoints: 0,
+
           chosenIndex: -1,
           correctIndex: -1,
+
+          // ✅ keep arrays empty
+          isMultiSelect: false,
+          chosenIndexes: [],
+          correctIndexes: [],
+
           textAnswer: "",
           correctText: "",
           hint: "",
@@ -912,6 +943,7 @@ app.post("/api/results", authRequired, async (req, res) => {
         };
       }
 
+      // TEXT
       if (type === "text") {
         const userText = cleanSpaces(ans.textAnswer || "");
         const correctText = cleanSpaces(q.correctText || "");
@@ -934,6 +966,14 @@ app.post("/api/results", authRequired, async (req, res) => {
           type: "text",
           points: qPoints,
           earnedPoints: earned,
+
+          // compat (not used)
+          chosenIndex: -1,
+          correctIndex: -1,
+          isMultiSelect: false,
+          chosenIndexes: [],
+          correctIndexes: [],
+
           textAnswer: userText,
           correctText,
           hint,
@@ -947,31 +987,35 @@ app.post("/api/results", authRequired, async (req, res) => {
         };
       }
 
-      // ✅ MCQ (single OR multi)
+      // ✅ MCQ (SINGLE OR MULTI)
       const correctIndexes = normalizeIndexArray(q.correctIndexes || []);
       const multiByCorrects = correctIndexes.length > 1;
       const isMultiSelect = Boolean(q.isMultiSelect) || multiByCorrects;
 
       let isCorrect = false;
 
-      // Default snapshots (for compatibility with your current Result schema)
+      // defaults
       let chosenIndex = -1;
       let correctIndex = Number.isInteger(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
 
+      let chosenIndexes = [];
+      let correctIndexesSnap = correctIndexes;
+
       if (isMultiSelect) {
-        const chosenIndexes = normalizeIndexArray(ans.chosenIndexes || []);
+        chosenIndexes = normalizeIndexArray(ans.chosenIndexes || []);
         isCorrect = isMultiMcqCorrect(chosenIndexes, correctIndexes);
 
-        // ✅ (optional) store one representative index for old UI (not ideal, but safe)
+        // compat fields (optional)
         chosenIndex = chosenIndexes.length ? chosenIndexes[0] : -1;
         correctIndex = correctIndexes.length ? correctIndexes[0] : -1;
-
-        // ✅ If your Result model supports arrays, you can also store them:
-        // return { ..., chosenIndexes, correctIndexes, isMultiSelect: true }
       } else {
         chosenIndex = Number.isFinite(Number(ans.chosenIndex)) ? Number(ans.chosenIndex) : -1;
         correctIndex = Number.isFinite(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
         isCorrect = chosenIndex === correctIndex && correctIndex >= 0;
+
+        // also store arrays (nice for review)
+        chosenIndexes = chosenIndex >= 0 ? [chosenIndex] : [];
+        correctIndexesSnap = correctIndex >= 0 ? [correctIndex] : [];
       }
 
       const earned = isCorrect ? qPoints : 0;
@@ -982,8 +1026,16 @@ app.post("/api/results", authRequired, async (req, res) => {
         type: "mcq",
         points: qPoints,
         earnedPoints: earned,
+
+        // ✅ old fields (still there)
         chosenIndex,
         correctIndex,
+
+        // ✅ new fields (proper review/results)
+        isMultiSelect,
+        chosenIndexes,
+        correctIndexes: correctIndexesSnap,
+
         textAnswer: "",
         correctText: "",
         hint,
@@ -1008,6 +1060,7 @@ app.post("/api/results", authRequired, async (req, res) => {
       title: quiz.title || "Assessment",
       instructions: String(quiz.instructions || "").trim(),
 
+      // ✅ points-based
       score: scorePoints,
       total: totalPoints,
       percent,
@@ -1030,6 +1083,7 @@ app.post("/api/results", authRequired, async (req, res) => {
       resultId: saved._id,
     });
   } catch (e) {
+    // If old unique index still exists, admin retries can throw E11000
     if (String(e?.code) === "11000") {
       return res.status(409).json({ message: "Already attempted" });
     }
@@ -1038,6 +1092,7 @@ app.post("/api/results", authRequired, async (req, res) => {
   }
 });
 
+// Results list for logged-in learner (results.html calls this)
 app.get("/api/results/my", authRequired, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -1052,6 +1107,7 @@ app.get("/api/results/my", authRequired, async (req, res) => {
   }
 });
 
+// Single result for review.html
 app.get("/api/results/:id", authRequired, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -1073,6 +1129,7 @@ app.get("/api/results/:id", authRequired, async (req, res) => {
 });
 
 /* ------------------ PASSWORD RESET (OTP) ------------------ */
+
 app.post("/api/forgot-password-otp", async (req, res) => {
   try {
     const { email } = req.body;
@@ -1173,13 +1230,8 @@ mongoose
   .catch((err) => console.error("Mongo error:", err.message));
 
 /*
-✅ IMPORTANT NOTES FOR MULTI-SELECT
-1) Your Quiz model MUST include:
-   - isMultiSelect: Boolean (default false)
-   - correctIndexes: [Number] (default [])
-2) If you want review.html to show multiple ticks,
-   your Result model should also include:
-   - chosenIndexes: [Number] (default [])
-   - correctIndexes: [Number] (default [])
-   (Right now this server keeps compatibility by storing the first selected index)
+✅ IMPORTANT (do this once in MongoDB) if you previously had a full unique index:
+db.results.dropIndex("userId_1_quizId_1")
+
+Then ensure the new PARTIAL unique index is created by restarting server.
 */
