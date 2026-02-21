@@ -1,11 +1,7 @@
-// models/Quiz.js (UPDATED FOR MULTI-SELECT MCQ - COPY & PASTE)
-// ✅ Adds correctIndexes: [Number] for multi-select MCQ
-// ✅ Backwards compatible with correctIndex (single)
-// ✅ Validation rules:
-//    - MCQ must have >= 2 options
-//    - If correctIndexes is provided (length>0): it must be valid indexes within options
-//    - Else uses correctIndex (single) and validates it's within options
-// ✅ Notes ignore points
+// models/Quiz.js (UPDATED - COPY & PASTE)
+// ✅ Adds MCQ multi-select support
+// ✅ correctIndexes: [Number] (1+ correct answers)
+// ✅ isMultiSelect: Boolean (if true, learner sees checkboxes)
 
 import mongoose from "mongoose";
 
@@ -23,21 +19,24 @@ const QuestionSchema = new mongoose.Schema(
     imageUrl: { type: String, default: "", trim: true },
     hint: { type: String, default: "", trim: true },
 
+    // ✅ NEW: Solution / workings (supports LaTeX)
     solution: { type: String, default: "", trim: true },
 
+    // ✅ Marks per question (only for mcq/text)
     points: {
       type: Number,
       default: 1,
       min: 0,
       validate: {
         validator: function (v) {
-          if (this.type === "note") return true;
+          if (this.type === "note") return true; // notes ignore points
           return Number.isInteger(v) && v >= 1;
         },
         message: "Points must be a whole number (1 or more) for questions.",
       },
     },
 
+    // ✅ MCQ options
     options: {
       type: [String],
       default: [],
@@ -50,60 +49,42 @@ const QuestionSchema = new mongoose.Schema(
       },
     },
 
-    // ✅ Single-correct (legacy)
+    // ✅ Single-correct (compat)
     correctIndex: {
       type: Number,
       default: 0,
       min: 0,
       validate: {
         validator: function (v) {
-          if (this.type !== "mcq") return true;
-
-          // If multi-correct is being used, skip single validation
-          if (Array.isArray(this.correctIndexes) && this.correctIndexes.length > 0) return true;
-
-          // single must be within options
-          const len = Array.isArray(this.options) ? this.options.length : 0;
-          if (len < 2) return true; // options validator will handle
-          return Number.isInteger(v) && v >= 0 && v < len;
+          if (this.type === "mcq") return Number.isFinite(v) && v >= 0;
+          return true;
         },
-        message: "MCQ correctIndex must be within options.",
+        message: "MCQ correctIndex is required",
       },
     },
 
-    // ✅ Multi-select correct answers
+    // ✅ NEW: Multi-correct indexes (preferred for multi-select)
     correctIndexes: {
       type: [Number],
-      default: undefined, // keep empty unless you set it
+      default: [],
       validate: {
         validator: function (arr) {
           if (this.type !== "mcq") return true;
-          if (arr === undefined) return true; // not using multi-select
-
-          // if provided, must have at least 1 correct
-          if (!Array.isArray(arr) || arr.length < 1) return false;
-
-          const len = Array.isArray(this.options) ? this.options.length : 0;
-          if (len < 2) return true;
-
-          // all must be integers and within options
-          const uniq = [...new Set(arr.map((x) => Number(x)))];
-          if (uniq.some((x) => !Number.isInteger(x))) return false;
-          if (uniq.some((x) => x < 0 || x >= len)) return false;
-
-          return true;
+          if (!Array.isArray(arr)) return false;
+          // allow empty (single-correct may use correctIndex only)
+          return arr.every((n) => Number.isInteger(n) && n >= 0);
         },
-        message: "MCQ correctIndexes must contain valid option indexes (at least 1).",
-      },
-      set: function (arr) {
-        // normalize: unique + sorted
-        if (!Array.isArray(arr)) return arr;
-        const uniq = [...new Set(arr.map((x) => Number(x)).filter(Number.isInteger))];
-        uniq.sort((a, b) => a - b);
-        return uniq;
+        message: "correctIndexes must be an array of whole numbers (0 or more).",
       },
     },
 
+    // ✅ NEW: flag to show checkboxes on learner UI
+    isMultiSelect: {
+      type: Boolean,
+      default: false,
+    },
+
+    // ✅ TEXT questions
     correctText: {
       type: String,
       default: "",
