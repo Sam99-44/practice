@@ -206,6 +206,18 @@
       line-height:var(--lh);
     }
 
+    .noteBox{
+      padding:12px;
+      border-radius:12px;
+      border:1px solid #e7e9ff;
+      background:#f6f7ff;
+      font-weight:700;
+      font-size:var(--fs-14);
+      line-height:var(--lh);
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+
     .opt{
       padding:10px 12px;
       border-radius:12px;
@@ -227,21 +239,19 @@
       margin-top:10px;
     }
 
-    /* ✅ CHANGED: make the answer text boxes smaller */
     .answerCard{
-      padding:10px 12px;              /* was 12px */
+      padding:10px 12px;
       border-radius:12px;
       border:1px solid #e6e6e6;
       font-weight:700;
       word-break:break-word;
       background:#fff;
-      font-size:var(--fs-13);          /* was 14px */
-      line-height:1.4;                 /* tighter */
+      font-size:var(--fs-13);
+      line-height:1.4;
     }
     .answerCard.good{ background:var(--greenBg); border-color:var(--greenBd); }
     .answerCard.bad{ background:var(--redBg); border-color:var(--redBd); }
 
-    /* ✅ SIMPLE: plain white solution box */
     .solutionBox{
       margin-top:12px;
       border-radius:12px;
@@ -435,6 +445,22 @@
     }
   }
 
+  function normalizeIndexArray(v){
+    if (!Array.isArray(v)) return [];
+    const out = [];
+    for (const x of v){
+      const n = Number(x);
+      if (Number.isInteger(n) && n >= 0) out.push(n);
+    }
+    return [...new Set(out)].sort((a,b)=>a-b);
+  }
+
+  function idxsToLetters(idxs){
+    const arr = normalizeIndexArray(idxs);
+    if (!arr.length) return "No answer";
+    return arr.map(i => String.fromCharCode(65 + i)).join(", ");
+  }
+
   function buildNumbering(){
     qNumberByIndex = new Map();
     let qNum = 0;
@@ -510,7 +536,8 @@
   }
 
   function renderSolutionBox(a){
-    const sol = cleanSpaces(a?.solution || "");
+    // ✅ IMPORTANT: do NOT cleanSpaces here (keeps line breaks)
+    const sol = String(a?.solution || "").trim();
     if (!sol){
       solutionWrap.style.display = "none";
       solutionWrap.innerHTML = "";
@@ -546,7 +573,7 @@
 
     if (type === "note") {
       counterEl.textContent = `Note / Heading`;
-      bodyEl.innerHTML = `<div class="noteBox">${escapeHtml(cleanSpaces(a.questionText || ""))}</div>`;
+      bodyEl.innerHTML = `<div class="noteBox">${escapeHtml(String(a.questionText || "").trim())}</div>`;
       typesetMath(bodyEl);
       updateNavButtons();
       return;
@@ -555,6 +582,7 @@
     const qNum = qNumberByIndex.get(idx) || 1;
     counterEl.textContent = `Question ${qNum} of ${totalQuestionsOnly}`;
 
+    // keep as textContent (safe) and MathJax will typeset it
     qTextEl.textContent = cleanSpaces(a.questionText || "");
 
     const pts = Number(a.points || 0);
@@ -584,24 +612,50 @@
 
       resultInfoEl.textContent = isCorrect ? "Correct" : "Incorrect";
     } else {
+      // ✅ MCQ (single OR multi)
       const options = Array.isArray(a.options) ? a.options : [];
-      const chosen = Number(a.chosenIndex);
-      const correct = Number(a.correctIndex);
+
+      const correctIdxs = normalizeIndexArray(a.correctIndexes || []);
+      const chosenIdxs = normalizeIndexArray(a.chosenIndexes || []);
+
+      const isMulti =
+        Boolean(a.isMultiSelect) || (correctIdxs.length > 1);
+
+      // fallback to old single fields
+      const chosenSingle = Number(a.chosenIndex);
+      const correctSingle = Number(a.correctIndex);
+
+      const chosenToUse = isMulti
+        ? chosenIdxs
+        : (Number.isInteger(chosenSingle) && chosenSingle >= 0 ? [chosenSingle] : []);
+
+      const correctToUse = isMulti
+        ? (correctIdxs.length ? correctIdxs : (Number.isInteger(correctSingle) && correctSingle >= 0 ? [correctSingle] : []))
+        : (Number.isInteger(correctSingle) && correctSingle >= 0 ? [correctSingle] : []);
+
+      const chosenSet = new Set(chosenToUse);
+      const correctSet = new Set(correctToUse);
 
       bodyEl.innerHTML = options.map((opt, i) => {
-        const isCorrect = i === correct;
-        const isChosen = i === chosen;
+        const isCorrectOpt = correctSet.has(i);
+        const isChosenOpt = chosenSet.has(i);
 
         let cls = "";
-        if (isCorrect) cls = "correct";
-        if (isChosen && !isCorrect) cls = "wrong";
+        if (isCorrectOpt) cls = "correct";
+        if (isChosenOpt && !isCorrectOpt) cls = "wrong";
 
         return `<div class="opt ${cls}">
           ${String.fromCharCode(65 + i)}. ${escapeHtml(cleanSpaces(opt))}
         </div>`;
       }).join("");
 
-      resultInfoEl.textContent = `Correct Answer: ${String.fromCharCode(65 + correct)}`;
+      const correctLabel = idxsToLetters(correctToUse);
+      const chosenLabel = idxsToLetters(chosenToUse);
+
+      // ✅ show both (helps multi-select learners)
+      resultInfoEl.textContent = isMulti
+        ? `Your Answer(s): ${chosenLabel} | Correct Answer(s): ${correctLabel}`
+        : `Your Answer: ${chosenLabel} | Correct Answer: ${correctLabel}`;
     }
 
     renderSolutionBox(a);
