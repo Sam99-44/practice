@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Progress Dashboard | Practice Online</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --nav:#1b1648;
+      --accent:#0b3c5d;
+      --red:#e11d2e;
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --border:#e6e6e6;
+      --text:#0f172a;
+      --muted:#475569;
+      --radius:14px;
+      --shadow:0 8px 22px rgba(0,0,0,.06);
+      --focus:0 0 0 4px rgba(207,233,255,.65);
+    }
+
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text);}
+    a{text-decoration:none;color:inherit}
+
+    header.topbar{background:var(--nav);color:#fff;border-bottom:3px solid rgba(255,255,255,.08);}
+    .topbar-inner{
+      max-width:1100px;margin:0 auto;padding:14px 18px;
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    }
+    .brand{display:flex;flex-direction:column;font-weight:700;letter-spacing:.15px;}
+    .brand small{opacity:.85;font-weight:600}
+    nav.nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    nav.nav a{padding:8px 10px;border-radius:10px;color:#e7e9ff;font-weight:600;font-size:13px;}
+    nav.nav a.active{border-bottom:3px solid var(--red);color:#fff;border-radius:10px 10px 8px 8px;padding-bottom:5px;}
+    nav.nav a:hover{background:rgba(255,255,255,.10)}
+    .btnTop{
+      background:transparent;color:#fff;border:1px solid rgba(255,255,255,.22);
+      padding:8px 12px;border-radius:12px;cursor:pointer;font-weight:600;
+    }
+    .btnTop:hover{background:rgba(255,255,255,.08)}
+
+    .wrap{max-width:1100px;margin:0 auto;padding:18px;}
+
+    .section{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      margin-top:14px;
+      overflow:hidden;
+    }
+    .sectionHead{
+      padding:14px 14px 12px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(180deg,#f4f7ff,#eef4ff);
+      display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    }
+    .sectionHead h1{margin:0;font-size:18px;font-weight:700;letter-spacing:-.01em;}
+    .muted{color:var(--muted);font-weight:600;font-size:13px;margin-top:6px;}
+
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px;}
+    @media(max-width:900px){.grid2{grid-template-columns:1fr;}}
+
+    .chartCard{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      padding:12px;
+    }
+    .chartTitle{margin:0 0 8px 0;font-size:13px;font-weight:800;color:#0f172a;}
+    canvas{width:100%;height:170px;border-radius:10px;background:#fff;}
+
+    table{width:100%;border-collapse:collapse;font-size:13px;}
+    th, td{padding:10px 10px;border-bottom:1px solid #eee;text-align:left;vertical-align:top;}
+    th{
+      background:#f8fafc;
+      font-size:11px;
+      text-transform:uppercase;
+      color:var(--muted);
+      font-weight:700;
+      letter-spacing:.06em;
+    }
+
+    .topicLink{color:var(--accent);font-weight:800;}
+    .topicLink:hover{text-decoration:underline}
+
+    .rec{font-weight:800;color:#0f172a;}
+    .rec.low{color:#9a3412;}
+    .rec.mid{color:#0b3c5d;}
+    .rec.high{color:#065f46;}
+
+    .smallBtn{
+      padding:7px 10px;border:1px solid #ddd;border-radius:10px;background:#fff;
+      cursor:pointer;font-weight:700;font-size:12px;white-space:nowrap;
+    }
+    .smallBtn:hover{background:#f8fafc}
+
+    .empty{padding:14px;border:1px dashed #ddd;border-radius:12px;background:#fafafa;color:var(--muted);font-weight:700;margin:14px;}
+
+    .filters{
+      padding:12px 14px;
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+    }
+    select{
+      padding:8px 10px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;
+      font-size:13px;font-weight:700;outline:none;min-width:160px;
+    }
+    select:focus{box-shadow:var(--focus);border-color:#cfe9ff;}
+  </style>
+
+  <script>
+    if(!localStorage.getItem("token")) location.href="login.html";
+  </script>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div>Practice Online</div>
+      <small>Progress Dashboard</small>
+    </div>
+    <nav class="nav">
+      <a href="learner-quizzes.html">Practice</a>
+      <a href="results.html">Results</a>
+      <a class="active" href="progress-dashboard.html">Dashboard</a>
+      <a href="support.html">Support</a>
+      <a href="about.html">About</a>
+      <a href="admin-quiz.html" data-admin style="display:none;">Admin</a>
+      <button class="btnTop" id="logoutBtn" type="button">Logout</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="section">
+    <div class="sectionHead">
+      <div>
+        <h1>Topic Progress</h1>
+        <div class="muted" id="subTxt"></div> <!-- ✅ no more showing progress -->
+      </div>
+    </div>
+
+    <div class="filters">
+      <select id="yearSelect">
+        <option value="">All Years</option>
+      </select>
+      <select id="monthSelect">
+        <option value="">All Months</option>
+      </select>
+    </div>
+
+    <div class="grid2">
+      <div class="chartCard">
+        <div class="chartTitle">Top 5 Topics (Best Pass Rate)</div>
+        <canvas id="topChart" height="170"></canvas>
+      </div>
+      <div class="chartCard">
+        <div class="chartTitle">Bottom 5 Topics (Needs Work)</div>
+        <canvas id="bottomChart" height="170"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="tableWrap">
+    <div class="empty">Loading dashboard…</div>
+  </section>
+
+</main>
+
+<script src="nav.js"></script>
+
+<script>
+  const API = window.API || "https://practice-backend-msgn.onrender.com";
+  const token = localStorage.getItem("token");
+
+  const subTxt = document.getElementById("subTxt");
+  const yearSelect = document.getElementById("yearSelect");
+  const monthSelect = document.getElementById("monthSelect");
+  const tableWrap = document.getElementById("tableWrap");
+
+  const topCanvas = document.getElementById("topChart");
+  const bottomCanvas = document.getElementById("bottomChart");
+
+  document.getElementById("logoutBtn").onclick = ()=> {
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    localStorage.removeItem("me_cache");
+    location.href="login.html";
+  };
+
+  let allResults = [];
+  let attemptsAvailableByTopic = new Map();
+
+  yearSelect.addEventListener("change", renderAll);
+  monthSelect.addEventListener("change", renderAll);
+
+  load();
+
+  async function load(){
+    try{
+      subTxt.textContent = ""; // ✅ keep blank
+
+      const [resResults, resMe] = await Promise.all([
+        fetch(`${API}/api/results/my`, { headers:{Authorization:`Bearer ${token}`} }),
+        fetch(`${API}/api/auth/me`, { headers:{Authorization:`Bearer ${token}`} }),
+      ]);
+
+      if(resResults.status === 401 || resMe.status === 401){
+        localStorage.removeItem("token");
+        location.href="login.html";
+        return;
+      }
+
+      const me = await resMe.json().catch(()=>({}));
+      const isAdmin = me?.role === "admin";
+
+      const data = await resResults.json().catch(()=>[]);
+      allResults = Array.isArray(data) ? data : [];
+
+      buildDateFilters(allResults);
+
+      const quizzesUrl = isAdmin ? `${API}/api/quizzes?all=1` : `${API}/api/quizzes`;
+      const qRes = await fetch(quizzesUrl, { headers:{Authorization:`Bearer ${token}`} });
+
+      if(qRes.status === 401){
+        localStorage.removeItem("token");
+        location.href="login.html";
+        return;
+      }
+
+      const quizzes = await qRes.json().catch(()=>[]);
+      buildAttemptsAvailable(Array.isArray(quizzes) ? quizzes : []);
+
+      renderAll();
+
+    }catch(e){
+      subTxt.textContent = "Network error. Please refresh.";
+      tableWrap.innerHTML = `<div class="empty">Could not load dashboard.</div>`;
+    }
+  }
+
+  function buildAttemptsAvailable(quizzes){
+    const map = new Map();
+    for(const q of quizzes){
+      const topic = cleanSpaces(q?.topic || "General");
+      map.set(topic, (map.get(topic) || 0) + 1);
+    }
+    attemptsAvailableByTopic = map;
+  }
+
+  function buildDateFilters(data){
+    const years = [...new Set(data.map(r=>{
+      const d=new Date(r.createdAt);
+      return isNaN(d)?null:d.getFullYear();
+    }).filter(Boolean))].sort((a,b)=>b-a);
+
+    yearSelect.innerHTML = `<option value="">All Years</option>` +
+      years.map(y=>`<option value="${y}">${y}</option>`).join("");
+
+    const months = [...new Set(data.map(r=>{
+      const d=new Date(r.createdAt);
+      return isNaN(d)?null:(d.getMonth()+1);
+    }).filter(Boolean))].sort((a,b)=>a-b);
+
+    monthSelect.innerHTML = `<option value="">All Months</option>` +
+      months.map(m=>{
+        const name = new Date(2000, m-1, 1).toLocaleString(undefined,{month:"long"});
+        return `<option value="${m}">${name}</option>`;
+      }).join("");
+  }
+
+  function applyDateFilters(data){
+    const y = yearSelect.value;
+    const m = monthSelect.value;
+
+    return data.filter(r=>{
+      const d=new Date(r.createdAt);
+      if(y && (isNaN(d) || String(d.getFullYear()) !== String(y))) return false;
+      if(m && (isNaN(d) || String(d.getMonth()+1) !== String(m))) return false;
+      return true;
+    });
+  }
+
+  function summarizeByTopic(results){
+    const map = new Map();
+
+    for(const r of results){
+      const topic = cleanSpaces(r.topic || "General");
+      const percent = Number(r.percent) || 0;
+      const pass = percent >= 50;
+
+      if(!map.has(topic)){
+        map.set(topic, { topic, attempts:0, sum:0, best:0, passCount:0 });
+      }
+      const o = map.get(topic);
+      o.attempts += 1;
+      o.sum += percent;
+      o.best = Math.max(o.best, percent);
+      if(pass) o.passCount += 1;
+    }
+
+    const list = [...map.values()].map(o=>{
+      const avg = o.attempts ? Math.round(o.sum / o.attempts) : 0;
+      const passRate = o.attempts ? Math.round((o.passCount / o.attempts) * 100) : 0;
+      const available = attemptsAvailableByTopic.get(o.topic) || 0;
+      return { ...o, avg, passRate, available };
+    });
+
+    list.sort((a,b)=>a.topic.localeCompare(b.topic));
+    return list;
+  }
+
+  function recommendation(passRate){
+    const p = Number(passRate)||0;
+    if(p < 50) return { text:"Practice more", cls:"low" };
+    if(p < 75) return { text:"Good progress", cls:"mid" };
+    return { text:"Excellent", cls:"high" };
+  }
+
+  function renderAll(){
+    const filtered = applyDateFilters(allResults);
+    const topics = summarizeByTopic(filtered);
+
+    // ✅ keep header clean (no showing progress)
+    if(!filtered.length){
+      subTxt.textContent = "No results yet. Attempt some quizzes to see your progress.";
+    } else {
+      subTxt.textContent = "";
+    }
+
+    const sortedByPass = [...topics].sort((a,b)=>b.passRate - a.passRate);
+    const top5 = sortedByPass.slice(0,5);
+    const bottom5 = sortedByPass.slice(-5);
+
+    drawBarChart(topCanvas, top5);
+    drawBarChart(bottomCanvas, bottom5);
+
+    renderTable(topics);
+  }
+
+  function renderTable(rows){
+    if(!rows.length){
+      tableWrap.innerHTML = `<div class="empty">No topic progress yet.</div>`;
+      return;
+    }
+
+    tableWrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Topic</th>
+            <th>Attempts</th>
+            <th>Attempts Available</th>
+            <th>Average</th>
+            <th>Best</th>
+            <th>Recommendation</th>
+            <th>Open</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r=>{
+            const rec = recommendation(r.passRate);
+            const topicUrl = `learner-quizzes.html?topic=${encodeURIComponent(r.topic)}`;
+            return `
+              <tr>
+                <td><a class="topicLink" href="${topicUrl}">${escapeHtml(r.topic)}</a></td>
+                <td>${r.attempts}</td>
+                <td>${r.available}</td>
+                <td>${r.avg}%</td>
+                <td>${Math.round(r.best)}%</td>
+                <td class="rec ${rec.cls}">${escapeHtml(rec.text)}</td>
+                <td><button class="smallBtn" type="button" onclick="location.href='${topicUrl}'">View quizzes</button></td>
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function drawBarChart(canvas, rows){
+    const ctx = canvas.getContext("2d");
+    const dpr = devicePixelRatio || 1;
+
+    const cssW = canvas.clientWidth || 600;
+    const cssH = 170;
+
+    canvas.width = Math.floor(cssW * dpr);
+    canvas.height = Math.floor(cssH * dpr);
+
+    const W = canvas.width;
+    const H = canvas.height;
+
+    ctx.clearRect(0,0,W,H);
+
+    const pad = 14 * dpr;
+    const topPad = 18 * dpr;
+    const labelH = 72 * dpr;
+
+    const chartTop = pad + topPad;
+    const chartBottom = H - pad - labelH;
+    const chartH = chartBottom - chartTop;
+
+    const data = (rows || []).slice(0,5);
+    if(!data.length){
+      ctx.fillStyle = "#64748b";
+      ctx.font = `${12*dpr}px Inter, Arial`;
+      ctx.fillText("No data", pad, pad + 18*dpr);
+      return;
+    }
+
+    const maxVal = 100;
+    const gap = 10 * dpr;
+    const barW = Math.max(18*dpr, (W - pad*2 - gap*(data.length-1)) / data.length);
+
+    const colors = ["#1b1648","#0b3c5d","#e11d2e","#16a34a","#f59e0b"];
+
+    ctx.strokeStyle = "rgba(15,23,42,.10)";
+    ctx.lineWidth = 1 * dpr;
+    ctx.beginPath();
+    ctx.moveTo(pad, chartBottom);
+    ctx.lineTo(W - pad, chartBottom);
+    ctx.stroke();
+
+    data.forEach((d, i)=>{
+      const x = pad + i*(barW+gap);
+      const center = x + barW/2;
+
+      const val = Math.max(0, Math.min(maxVal, Number(d.passRate)||0));
+      const h = (val / maxVal) * (chartH - 8*dpr);
+      const y = chartBottom - h;
+
+      ctx.fillStyle = colors[i % colors.length];
+      roundRect(ctx, x, y, barW, h, 10*dpr);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(15,23,42,.85)";
+      ctx.font = `${11*dpr}px Inter, Arial`;
+      ctx.textAlign = "center";
+      ctx.fillText(`${val}%`, center, y - 6*dpr);
+
+      ctx.save();
+      ctx.translate(center, chartBottom + 46*dpr);
+      ctx.rotate(-Math.PI / 6); // 30 degrees
+      ctx.fillStyle = "#475569";
+      ctx.font = `${11*dpr}px Inter, Arial`;
+      ctx.textAlign = "right";
+      ctx.fillText(shortLabel(d.topic, 26), 0, 0);
+      ctx.restore();
+    });
+
+    ctx.textAlign = "left";
+  }
+
+  function roundRect(ctx, x, y, w, h, r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
+
+  function shortLabel(s, n){
+    const t = cleanSpaces(s);
+    if(t.length <= n) return t;
+    return t.slice(0, n-1) + "…";
+  }
+
+  function cleanSpaces(s){
+    return String(s||"").trim().replace(/\s+/g," ");
+  }
+
+  function escapeHtml(str){
+    return String(str ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+</script>
+
+</body>
+</html>
