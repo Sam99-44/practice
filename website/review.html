@@ -206,18 +206,6 @@
       line-height:var(--lh);
     }
 
-    .noteBox{
-      padding:12px;
-      border-radius:12px;
-      border:1px solid #e7e9ff;
-      background:#f6f7ff;
-      font-weight:700;
-      font-size:var(--fs-14);
-      line-height:var(--lh);
-      white-space:pre-wrap;
-      word-break:break-word;
-    }
-
     .opt{
       padding:10px 12px;
       border-radius:12px;
@@ -445,22 +433,6 @@
     }
   }
 
-  function normalizeIndexArray(v){
-    if (!Array.isArray(v)) return [];
-    const out = [];
-    for (const x of v){
-      const n = Number(x);
-      if (Number.isInteger(n) && n >= 0) out.push(n);
-    }
-    return [...new Set(out)].sort((a,b)=>a-b);
-  }
-
-  function idxsToLetters(idxs){
-    const arr = normalizeIndexArray(idxs);
-    if (!arr.length) return "No answer";
-    return arr.map(i => String.fromCharCode(65 + i)).join(", ");
-  }
-
   function buildNumbering(){
     qNumberByIndex = new Map();
     let qNum = 0;
@@ -536,8 +508,7 @@
   }
 
   function renderSolutionBox(a){
-    // ✅ IMPORTANT: do NOT cleanSpaces here (keeps line breaks)
-    const sol = String(a?.solution || "").trim();
+    const sol = cleanSpaces(a?.solution || "");
     if (!sol){
       solutionWrap.style.display = "none";
       solutionWrap.innerHTML = "";
@@ -553,6 +524,40 @@
     `;
 
     typesetMath(solutionWrap);
+  }
+
+  /* ============================
+     ✅ NEW HELPERS FOR MULTI MCQ
+     ============================ */
+  function toIndexSet(arr){
+    if (!Array.isArray(arr)) return new Set();
+    return new Set(arr.filter(n => Number.isInteger(n) && n >= 0));
+  }
+
+  function letter(i){
+    return String.fromCharCode(65 + i);
+  }
+
+  function formatLetters(indexes){
+    const a = Array.from(indexes).sort((x,y)=>x-y);
+    if (!a.length) return "";
+    return a.map(letter).join(", ");
+  }
+
+  function getCorrectSet(a){
+    // Prefer correctIndexes for MCQ if present
+    const set = toIndexSet(a.correctIndexes);
+    if (set.size) return set;
+    // Fallback to correctIndex (legacy)
+    const ci = Number(a.correctIndex);
+    return Number.isFinite(ci) && ci >= 0 ? new Set([ci]) : new Set();
+  }
+
+  function getChosenSet(a){
+    const set = toIndexSet(a.chosenIndexes);
+    if (set.size) return set;
+    const c = Number(a.chosenIndex);
+    return Number.isFinite(c) && c >= 0 ? new Set([c]) : new Set();
   }
 
   function render(){
@@ -573,7 +578,7 @@
 
     if (type === "note") {
       counterEl.textContent = `Note / Heading`;
-      bodyEl.innerHTML = `<div class="noteBox">${escapeHtml(String(a.questionText || "").trim())}</div>`;
+      bodyEl.innerHTML = `<div class="noteBox">${escapeHtml(cleanSpaces(a.questionText || ""))}</div>`;
       typesetMath(bodyEl);
       updateNavButtons();
       return;
@@ -582,7 +587,6 @@
     const qNum = qNumberByIndex.get(idx) || 1;
     counterEl.textContent = `Question ${qNum} of ${totalQuestionsOnly}`;
 
-    // keep as textContent (safe) and MathJax will typeset it
     qTextEl.textContent = cleanSpaces(a.questionText || "");
 
     const pts = Number(a.points || 0);
@@ -612,50 +616,26 @@
 
       resultInfoEl.textContent = isCorrect ? "Correct" : "Incorrect";
     } else {
-      // ✅ MCQ (single OR multi)
       const options = Array.isArray(a.options) ? a.options : [];
 
-      const correctIdxs = normalizeIndexArray(a.correctIndexes || []);
-      const chosenIdxs = normalizeIndexArray(a.chosenIndexes || []);
-
-      const isMulti =
-        Boolean(a.isMultiSelect) || (correctIdxs.length > 1);
-
-      // fallback to old single fields
-      const chosenSingle = Number(a.chosenIndex);
-      const correctSingle = Number(a.correctIndex);
-
-      const chosenToUse = isMulti
-        ? chosenIdxs
-        : (Number.isInteger(chosenSingle) && chosenSingle >= 0 ? [chosenSingle] : []);
-
-      const correctToUse = isMulti
-        ? (correctIdxs.length ? correctIdxs : (Number.isInteger(correctSingle) && correctSingle >= 0 ? [correctSingle] : []))
-        : (Number.isInteger(correctSingle) && correctSingle >= 0 ? [correctSingle] : []);
-
-      const chosenSet = new Set(chosenToUse);
-      const correctSet = new Set(correctToUse);
+      const correctSet = getCorrectSet(a);
+      const chosenSet  = getChosenSet(a);
 
       bodyEl.innerHTML = options.map((opt, i) => {
-        const isCorrectOpt = correctSet.has(i);
-        const isChosenOpt = chosenSet.has(i);
+        const isCorrect = correctSet.has(i);
+        const isChosen  = chosenSet.has(i);
 
         let cls = "";
-        if (isCorrectOpt) cls = "correct";
-        if (isChosenOpt && !isCorrectOpt) cls = "wrong";
+        if (isCorrect) cls = "correct";
+        if (isChosen && !isCorrect) cls = "wrong";
 
         return `<div class="opt ${cls}">
-          ${String.fromCharCode(65 + i)}. ${escapeHtml(cleanSpaces(opt))}
+          ${letter(i)}. ${escapeHtml(cleanSpaces(opt))}
         </div>`;
       }).join("");
 
-      const correctLabel = idxsToLetters(correctToUse);
-      const chosenLabel = idxsToLetters(chosenToUse);
-
-      // ✅ show both (helps multi-select learners)
-      resultInfoEl.textContent = isMulti
-        ? `Your Answer(s): ${chosenLabel} | Correct Answer(s): ${correctLabel}`
-        : `Your Answer: ${chosenLabel} | Correct Answer: ${correctLabel}`;
+      const correctLetters = formatLetters(correctSet);
+      resultInfoEl.textContent = correctLetters ? `Correct Answer: ${correctLetters}` : "Correct Answer: (not saved)";
     }
 
     renderSolutionBox(a);
