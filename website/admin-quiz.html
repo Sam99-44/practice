@@ -1,15 +1,14 @@
 <!-- admin-quiz.html (FULL UPDATED - COPY & PASTE)
-     ✅ MathJax enabled (SVG) — clean, no CHTML
+     ✅ MathJax enabled (SVG)
      ✅ Instructions box
      ✅ Note/Heading blocks (type:"note")
      ✅ Marks per question (points)
      ✅ Solution/Workings per question (solution)
      ✅ MCQ options: ADD/REMOVE choices (min 2)
-     ✅ Safe previews (textContent)
-     ✅ Drag & drop reorder
-     ✅ Auto-renumbers labels after reorder
-     ✅ Sends questions in the NEW order to server
-     ✅ NEW: Paper-style previews for NOTE / QUESTION / HINT / OPTIONS / EXPECTED ANSWER / SOLUTION (all consistent)
+     ✅ MCQ: MULTI-CORRECT (checkbox per option) ✅ NEW
+     ✅ Drag & drop reorder + renumber
+     ✅ Difficulty per quiz (easy/moderate/hard)
+     ✅ Sends MCQ correctIndexes (array). Also sends correctIndex if only 1 selected (compat).
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -118,10 +117,22 @@
     /* ✅ MCQ option rows */
     .optRow{display:flex; gap:10px; align-items:center; margin-top:10px;}
     .optLabel{min-width:44px; font-weight:900;}
+    .optCorrectWrap{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:0 8px;
+      border:1px solid #e6e6e6;
+      background:#f8fafc;
+      border-radius:10px;
+      height:40px;
+      white-space:nowrap;
+    }
+    .optCorrectWrap input{width:auto; margin:0;}
+    .optCorrectWrap span{font-weight:800; font-size:12px; color:#0b3c5d;}
 
     /* =========================================================
-       ✅ NEW: Consistent Paper-Style Preview (MathJax SVG clean)
-       Applies to NOTE / QUESTION / HINT / OPTIONS / ANSWER / SOLUTION
+       ✅ Paper-Style Preview
        ========================================================= */
     :root{
       --paper:#fffdf7;
@@ -136,19 +147,15 @@
       background:var(--paper);
       border:1px solid var(--paperEdge);
       border-radius:12px;
-
-      /* ✅ push content past red margin line */
       padding:12px 12px 12px 64px;
-
       color:var(--ink);
-      font-family:Arial, sans-serif; /* ✅ keep it clean */
+      font-family:Arial, sans-serif;
       font-size:13px;
-      line-height:28px; /* ✅ matches notebook lines */
+      line-height:28px;
       white-space:pre-wrap;
       overflow:hidden;
     }
 
-    /* red margin + notebook lines */
     .previewBox.paperBox::before{
       content:"";
       position:absolute;
@@ -172,17 +179,14 @@
       opacity:.95;
     }
 
-    /* Keep MathJax SVG compact inside paper previews */
-    .previewBox.paperBox mjx-container{
-      display:inline-block;
-      margin:0 !important;
-    }
+    .previewBox.paperBox mjx-container{display:inline-block;margin:0 !important;}
     .previewBox.paperBox svg{vertical-align:middle;}
 
     @media (max-width:650px){
-      .previewBox.paperBox{
-        padding-left:56px; /* still past red line */
-      }
+      .previewBox.paperBox{padding-left:56px;}
+      .row{grid-template-columns:1fr;}
+      .optRow{flex-wrap:wrap;}
+      .optCorrectWrap{height:auto; padding:8px 10px;}
     }
   </style>
 </head>
@@ -229,6 +233,17 @@
       <div>
         <label>Assessment Title</label>
         <input id="title" placeholder="e.g. Term 1 Revision Test" />
+      </div>
+
+      <!-- ✅ Difficulty -->
+      <div>
+        <label>Difficulty Level</label>
+        <select id="difficulty">
+          <option value="easy">Easy</option>
+          <option value="moderate" selected>Moderate</option>
+          <option value="hard">Hard</option>
+        </select>
+        <div class="muted tiny">Labels the whole assessment: Easy / Moderate / Hard.</div>
       </div>
     </div>
 
@@ -283,6 +298,7 @@
     const topicEl = document.getElementById("topic");
     const timeLimitEl = document.getElementById("timeLimit");
     const titleEl = document.getElementById("title");
+    const difficultyEl = document.getElementById("difficulty");
 
     const instructionsEl = document.getElementById("instructions");
     const prevInstructions = document.getElementById("prevInstructions");
@@ -315,21 +331,24 @@
       return t.replace(/\b\w/g, c => c.toUpperCase());
     }
 
-    // ✅ MathJax typeset helper
+    function normalizeDifficulty(v){
+      const d = String(v || "").toLowerCase().trim();
+      if (d === "easy" || d === "moderate" || d === "hard") return d;
+      return "moderate";
+    }
+
     function typesetMath(root=document){
       if (window.MathJax?.typesetPromise) {
         window.MathJax.typesetPromise([root]).catch(()=>{});
       }
     }
 
-    // ✅ Safe preview: use textContent then typeset
     function setPreviewText(previewEl, text){
       if (!previewEl) return;
       previewEl.textContent = text || "";
       typesetMath(previewEl);
     }
 
-    // ✅ Instructions live preview
     function renderInstructionsPreview(){
       const t = cleanSpaces(instructionsEl.value || "");
       setPreviewText(prevInstructions, t || "(Instructions preview)");
@@ -397,7 +416,7 @@
       `;
     }
 
-    // ✅ MCQ + Solution
+    // ✅ MCQ (multi-correct)
     function mcqCardHtml(id){
       return `
         <div class="qcard" data-type="mcq" draggable="true">
@@ -434,9 +453,9 @@
 
           <div class="optsWrap"></div>
 
-          <label>Correct Answer</label>
-          <select class="correctIndex"></select>
-          <div class="muted tiny">Correct answer updates automatically when you add/remove options.</div>
+          <div class="muted tiny" style="margin-top:8px;">
+             Tick <b>Correct</b> for one or more options (multi-select).
+          </div>
 
           <div class="previewRow">
             <div class="prevTitle">Live Preview</div>
@@ -456,7 +475,6 @@
       `;
     }
 
-    // ✅ Typed answer + Solution
     function textCardHtml(id){
       return `
         <div class="qcard" data-type="text" draggable="true">
@@ -630,27 +648,24 @@
       rows.forEach((r,i)=>{
         const label = r.querySelector(".optLabel");
         const input = r.querySelector(".optInput");
+        const checkText = r.querySelector(".optCorrectText");
         if (label) label.textContent = `${letter(i)})`;
         if (input) input.placeholder = `Option ${letter(i)}`;
+        if (checkText) checkText.textContent = "Correct";
       });
     }
 
-    function syncCorrectDropdown(card){
-      const sel = card.querySelector(".correctIndex");
-      if (!sel) return;
-
-      const inputs = [...card.querySelectorAll(".optInput")];
-      const current = Number(sel.value);
-
-      sel.innerHTML = inputs.map((_,i)=>`<option value="${i}">${letter(i)}</option>`).join("");
-
-      const next = (Number.isInteger(current) && current >= 0 && current < inputs.length) ? current : 0;
-      sel.value = String(next);
-
-      sel.onchange = ()=>renderCardPreview(card);
+    function getCheckedCorrectIndexes(card){
+      const rows = [...card.querySelectorAll(".optRow")];
+      const idxs = [];
+      rows.forEach((r,i)=>{
+        const cb = r.querySelector(".optCorrect");
+        if (cb && cb.checked) idxs.push(i);
+      });
+      return idxs;
     }
 
-    function addOption(card, value=""){
+    function addOption(card, value="", isCorrect=false){
       const wrap = card.querySelector(".optsWrap");
       if (!wrap) return;
 
@@ -659,19 +674,25 @@
 
       row.innerHTML = `
         <div class="optLabel">${letter(wrap.querySelectorAll(".optRow").length)})</div>
+
+        <div class="optCorrectWrap" title="Tick if this option is correct">
+          <input type="checkbox" class="optCorrect" />
+          <span class="optCorrectText">Correct</span>
+        </div>
+
         <input class="optInput" placeholder="Option" />
         <button type="button" class="smallbtn removeOptBtn">Remove</button>
       `;
 
       const input = row.querySelector(".optInput");
+      const cb = row.querySelector(".optCorrect");
       input.value = String(value || "");
+      cb.checked = !!isCorrect;
 
       wrap.appendChild(row);
 
-      input.addEventListener("input", ()=>{
-        syncCorrectDropdown(card);
-        renderCardPreview(card);
-      });
+      input.addEventListener("input", ()=> renderCardPreview(card));
+      cb.addEventListener("change", ()=> renderCardPreview(card));
 
       row.querySelector(".removeOptBtn").addEventListener("click", ()=>{
         const total = wrap.querySelectorAll(".optRow").length;
@@ -681,19 +702,17 @@
         }
         row.remove();
         relabelOptions(card);
-        syncCorrectDropdown(card);
         renderCardPreview(card);
       });
 
       relabelOptions(card);
-      syncCorrectDropdown(card);
       renderCardPreview(card);
     }
 
     function ensureMinOptions(card, min=4){
       const wrap = card.querySelector(".optsWrap");
       if (!wrap) return;
-      while (wrap.querySelectorAll(".optRow").length < min) addOption(card, "");
+      while (wrap.querySelectorAll(".optRow").length < min) addOption(card, "", false);
     }
 
     function wireLastCard(){
@@ -713,9 +732,8 @@
       });
 
       if (last.getAttribute("data-type") === "mcq") {
-        last.querySelector(".addOptBtn")?.addEventListener("click", ()=>addOption(last,""));
+        last.querySelector(".addOptBtn")?.addEventListener("click", ()=>addOption(last,"",false));
         ensureMinOptions(last, 4);
-        syncCorrectDropdown(last);
       }
 
       renderCardPreview(last);
@@ -873,28 +891,55 @@
           });
 
         } else {
-          const optInputs = [...card.querySelectorAll(".optInput")];
-          const options = optInputs.map(x => cleanSpaces(x.value)).filter(Boolean);
+          const optRows = [...card.querySelectorAll(".optRow")];
+          const options = optRows.map(r => cleanSpaces(r.querySelector(".optInput")?.value)).filter(Boolean);
 
           if (options.length < 2) {
             throw new Error("MCQ must have at least 2 options.");
           }
 
-          const correctIndex = Number(card.querySelector(".correctIndex")?.value);
-          if (!Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex >= options.length) {
-            throw new Error("Correct answer must be within the options list.");
+          // ✅ MULTI-CORRECT
+          const correctIndexes = [];
+          optRows.forEach((r, i) => {
+            const txt = cleanSpaces(r.querySelector(".optInput")?.value);
+            if (!txt) return; // skip blank option (not included in options)
+            const cb = r.querySelector(".optCorrect");
+            if (cb && cb.checked) correctIndexes.push(i);
+          });
+
+          // If you removed blank options above, indexes can mismatch.
+          // ✅ Fix: rebuild indexes based on INCLUDED options only
+          const included = [];
+          optRows.forEach((r) => {
+            const txt = cleanSpaces(r.querySelector(".optInput")?.value);
+            if (!txt) return;
+            included.push({
+              correct: !!r.querySelector(".optCorrect")?.checked
+            });
+          });
+
+          const correctedIndexes = [];
+          included.forEach((o, idx)=>{ if (o.correct) correctedIndexes.push(idx); });
+
+          if (correctedIndexes.length < 1) {
+            throw new Error("Please tick at least ONE correct option for every MCQ.");
           }
 
-          questions.push({
+          const payload = {
             type: "mcq",
             text,
             hint: hint || "",
             imageUrl: imageUrl || "",
             points,
             options,
-            correctIndex,
+            correctIndexes: correctedIndexes,
             solution: solution || ""
-          });
+          };
+
+          // ✅ Compatibility: if exactly 1 correct, also send correctIndex
+          if (correctedIndexes.length === 1) payload.correctIndex = correctedIndexes[0];
+
+          questions.push(payload);
         }
       }
 
@@ -911,6 +956,7 @@
       const title = toTitleCase(titleEl.value);
       const timeLimitMinutes = Number(timeLimitEl.value);
       const instructions = cleanSpaces(instructionsEl.value || "");
+      const difficulty = normalizeDifficulty(difficultyEl.value);
 
       try{
         if (!grade) return setMsg("Please select grade.", "error");
@@ -932,7 +978,7 @@
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify({ grade, title, topic, timeLimitMinutes, instructions, questions })
+          body: JSON.stringify({ grade, title, topic, timeLimitMinutes, instructions, difficulty, questions })
         });
 
         const data = await res.json().catch(()=>({}));
@@ -943,6 +989,7 @@
           gradeEl.value = "";
           topicEl.value = "";
           timeLimitEl.value = "10";
+          difficultyEl.value = "moderate";
           instructionsEl.value = "";
           renderInstructionsPreview();
 
