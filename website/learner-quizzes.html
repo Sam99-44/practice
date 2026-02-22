@@ -80,12 +80,35 @@ nav.nav a.active{
 h1{margin:0;font-size:18px;font-weight:600}
 .muted{color:var(--muted)}
 
-.controls{padding:12px 14px;display:flex;gap:10px;flex-wrap:wrap}
-input{
-  width:100%;max-width:520px;padding:11px 12px;border-radius:12px;
-  border:1px solid #ddd;font-weight:600;
+/* ✅ Controls layout: search full width, filters grouped + squeezed */
+.controls{padding:12px 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input,select{
+  padding:11px 12px;border-radius:12px;
+  border:1px solid #ddd;font-weight:600;background:#fff;
 }
-input:focus{border-color:#cfe9ff;box-shadow:var(--focus)}
+input{
+  width:100%;
+  flex:1 1 520px;
+  min-width:240px;
+}
+select:focus,input:focus{border-color:#cfe9ff;box-shadow:var(--focus);outline:none}
+
+/* ✅ filter group: Topic + Paper tight next to each other on the right */
+.filterRow{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex:0 0 auto;
+  margin-left:auto; /* pushes to the right when there is space */
+}
+#topicFilter{
+  width:220px;
+  min-width:200px;
+}
+#paperFilter{
+  width:150px;       /* ✅ squeezed */
+  min-width:140px;
+}
 
 /* ---------- TABS (clean, native-looking) ---------- */
 .filters{
@@ -150,7 +173,6 @@ input:focus{border-color:#cfe9ff;box-shadow:var(--focus)}
 .fbtn[data-diff="hard"]::after{ background:color-mix(in srgb, var(--hard) 35%, transparent); }
 .fbtn[data-diff="all"]::after{ background:color-mix(in srgb, #94a3b8 35%, transparent); }
 
-/* if browser doesn't support color-mix, it will just ignore, still looks fine */
 @supports not (background: color-mix(in srgb, #000 10%, transparent)) {
   .fbtn[data-diff="easy"]::after{ background:rgba(34,197,94,.25); }
   .fbtn[data-diff="moderate"]::after{ background:rgba(59,130,246,.25); }
@@ -230,8 +252,21 @@ if(!authToken) window.location.href="login.html";
   </div>
 </div>
 
+<!-- ✅ controls: search + (Topic + Paper tight on right) -->
 <div class="controls">
   <input id="topicSearch" placeholder="Search topic or assessment…" disabled />
+
+  <div class="filterRow">
+    <select id="topicFilter" disabled>
+      <option value="all">All Topics</option>
+    </select>
+
+    <select id="paperFilter" disabled>
+      <option value="all">All Papers</option>
+      <option value="paper1">Paper 1</option>
+      <option value="paper2">Paper 2</option>
+    </select>
+  </div>
 </div>
 
 <!-- TABS -->
@@ -252,7 +287,13 @@ const API="https://practice-backend-msgn.onrender.com";
 const token=localStorage.getItem("token");
 const quizList=document.getElementById("quizList");
 const diffButtons=[...document.querySelectorAll("[data-diff]")];
+
+const searchEl=document.getElementById("topicSearch");
+const topicFilterEl=document.getElementById("topicFilter");
+const paperFilterEl=document.getElementById("paperFilter");
+
 let difficultyFilter="all";
+let allQuizzes=[];
 
 diffButtons.forEach(btn=>{
   btn.onclick=()=>{
@@ -262,10 +303,107 @@ diffButtons.forEach(btn=>{
   };
 });
 
+searchEl.addEventListener("input", applyFilter);
+topicFilterEl.addEventListener("change", applyFilter);
+paperFilterEl.addEventListener("change", applyFilter);
+
+function esc(s){
+  return String(s||"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function paperLabel(p){
+  const pp=String(p||"paper1").toLowerCase();
+  return pp==="paper2" ? "Paper 2" : "Paper 1";
+}
+
+function buildTopicOptions(topics){
+  topicFilterEl.innerHTML = `<option value="all">All Topics</option>` +
+    topics.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join("");
+}
+
+function renderList(quizzes){
+  const groups={};
+  quizzes.forEach(q=>{
+    const t=q.topic || "General";
+    if(!groups[t]) groups[t]=[];
+    groups[t].push(q);
+  });
+
+  const topics=Object.keys(groups).sort((a,b)=>a.localeCompare(b));
+
+  if(!topics.length){
+    quizList.innerHTML = `
+      <div class="topic-card">
+        <div class="topic-head">
+          <div class="topic-title">No assessments found</div>
+        </div>
+        <div class="muted" style="margin-top:8px;font-weight:600;">
+          Try changing filters or search.
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  quizList.innerHTML = topics.map(topic=>{
+    const list = groups[topic]
+      .slice()
+      .sort((a,b)=> new Date(b.createdAt||0).getTime() - new Date(a.createdAt||0).getTime());
+
+    const squares = list.map((q,n)=>{
+      const diff=(q.difficulty||"moderate").toLowerCase();
+      const paper=(q.paper||"paper1").toLowerCase();
+      return `
+      <div class="quiz-square diff-${esc(diff)}"
+           data-square
+           data-diff="${esc(diff)}"
+           data-topic="${esc(topic)}"
+           data-paper="${esc(paper)}"
+           data-title="${esc(q.title||"")}"
+           onclick="location.href='attempt.html?quizId=${q._id}'">
+        <div>${n+1}</div>
+        <div class="status">Start</div>
+      </div>`;
+    }).join("");
+
+    return `
+    <div class="topic-card" data-topic-card="${esc(topic)}">
+      <div class="topic-head">
+        <div class="topic-title">${esc(topic)}</div>
+      </div>
+      <div class="quiz-squares">${squares}</div>
+    </div>`;
+  }).join("");
+}
+
 function applyFilter(){
+  const q = String(searchEl.value||"").trim().toLowerCase();
+  const topicPick = topicFilterEl.value || "all";
+  const paperPick = paperFilterEl.value || "all";
+
   document.querySelectorAll("[data-square]").forEach(sq=>{
-    const d=sq.dataset.diff;
-    sq.style.display=(difficultyFilter==="all"||d===difficultyFilter)?"":"none";
+    const d = sq.dataset.diff || "moderate";
+    const t = sq.dataset.topic || "General";
+    const p = sq.dataset.paper || "paper1";
+    const title = (sq.dataset.title || "").toLowerCase();
+
+    const matchesDiff = (difficultyFilter==="all" || d===difficultyFilter);
+    const matchesTopic = (topicPick==="all" || t===topicPick);
+    const matchesPaper = (paperPick==="all" || p===paperPick);
+
+    const matchesSearch =
+      !q ||
+      t.toLowerCase().includes(q) ||
+      title.includes(q) ||
+      paperLabel(p).toLowerCase().includes(q) ||
+      d.toLowerCase().includes(q);
+
+    sq.style.display = (matchesDiff && matchesTopic && matchesPaper && matchesSearch) ? "" : "none";
+  });
+
+  document.querySelectorAll("[data-topic-card]").forEach(card=>{
+    const anyVisible = [...card.querySelectorAll("[data-square]")].some(sq=>sq.style.display !== "none");
+    card.style.display = anyVisible ? "" : "none";
   });
 }
 
@@ -274,36 +412,17 @@ function applyFilter(){
   document.getElementById("pageSub").textContent="Grade: "+me.grade;
 
   const quizzes=await fetch(`${API}/api/quizzes`,{headers:{Authorization:`Bearer ${token}`}}).then(r=>r.json());
+  allQuizzes = Array.isArray(quizzes) ? quizzes : [];
 
-  const groups={};
-  quizzes.forEach(q=>{
-    const t=q.topic||"General";
-    if(!groups[t]) groups[t]=[];
-    groups[t].push(q);
-  });
+  searchEl.disabled = false;
+  topicFilterEl.disabled = false;
+  paperFilterEl.disabled = false;
 
-  const topics=Object.keys(groups).sort();
+  const topics = [...new Set(allQuizzes.map(q => q.topic || "General"))].sort((a,b)=>a.localeCompare(b));
+  buildTopicOptions(topics);
 
-  quizList.innerHTML=topics.map((topic,i)=>{
-    const squares=groups[topic].map((q,n)=>{
-      const diff=(q.difficulty||"moderate").toLowerCase();
-      return `
-      <div class="quiz-square diff-${diff}" data-square data-diff="${diff}"
-           onclick="location.href='attempt.html?quizId=${q._id}'">
-        <div>${n+1}</div>
-        <div class="status">Start</div>
-      </div>`;
-    }).join("");
-
-    return `
-    <div class="topic-card">
-      <div class="topic-head">
-        <div class="topic-title">${topic}</div>
-      </div>
-      <div class="quiz-squares">${squares}</div>
-    </div>`;
-  }).join("");
-
+  renderList(allQuizzes);
+  applyFilter();
 })();
 </script>
 
