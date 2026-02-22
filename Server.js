@@ -3,7 +3,8 @@
 // ✅ Auto-detects multi-select when correctIndexes has 2+ items OR isMultiSelect true
 // ✅ Saves multi-select properly into Result for review/results
 // ✅ Backward compatible with old single-correct fields (chosenIndex/correctIndex)
-// ✅ NEW: Saves + returns quiz difficulty (easy/moderate/hard)
+// ✅ Saves + returns quiz difficulty (easy/moderate/hard)
+// ✅ NEW: Saves + returns quiz paper (paper1/paper2)
 
 import express from "express";
 import mongoose from "mongoose";
@@ -114,11 +115,22 @@ function safeNum(v, fallback = 0) {
   return n;
 }
 
-// ✅ NEW: normalize difficulty
+// ✅ normalize difficulty
 function normalizeDifficulty(v) {
   const d = String(v || "").toLowerCase().trim();
   if (d === "easy" || d === "moderate" || d === "hard") return d;
   return "moderate";
+}
+
+// ✅ NEW: normalize paper
+function normalizePaper(v) {
+  const p = String(v || "").toLowerCase().trim();
+  if (p === "paper1" || p === "paper2") return p;
+  return "paper1";
+}
+function paperLabel(p) {
+  const pp = normalizePaper(p);
+  return pp === "paper2" ? "Paper 2" : "Paper 1";
 }
 
 // ✅ normalize index arrays (for multi-select)
@@ -448,8 +460,8 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
     const quizzes = await Quiz.find(filter)
       .sort({ createdAt: -1 })
       .select(
-        // ✅ NEW: include difficulty in list responses
-        "grade title topic difficulty questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt"
+        // ✅ include paper + difficulty
+        "grade title topic paper difficulty questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt"
       );
 
     return res.json(quizzes);
@@ -482,8 +494,9 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
 // Admin creates quiz (admin-quiz.html POSTs here) ✅ NOW EMAILS STUDENTS BY GRADE
 app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   try {
-    // ✅ NEW: accept difficulty
-    const { grade, title, topic, timeLimitMinutes, instructions, questions, difficulty } = req.body;
+    // ✅ accept difficulty + paper
+    const { grade, title, topic, paper, timeLimitMinutes, instructions, questions, difficulty } =
+      req.body;
 
     if (!grade || !title || !topic || !Array.isArray(questions) || questions.length === 0) {
       return res
@@ -500,8 +513,8 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
     const quizTopic = cleanSpaces(topic);
     const quizInstructions = String(instructions || "").trim();
 
-    // ✅ NEW: normalize difficulty before saving
     const quizDifficulty = normalizeDifficulty(difficulty);
+    const quizPaper = normalizePaper(paper);
 
     // ✅ Validate blocks (mcq/text/note) + points + solution + multi-select
     for (const q of questions) {
@@ -579,7 +592,8 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
       grade: g,
       title: quizTitle,
       topic: quizTopic,
-      difficulty: quizDifficulty, // ✅ NEW
+      paper: quizPaper, // ✅ NEW
+      difficulty: quizDifficulty,
       timeLimitMinutes: Number(timeLimitMinutes) || 10,
       questions,
       instructions: quizInstructions,
@@ -619,13 +633,16 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
             <p>Hello,</p>
             <p>A new assessment is available for <b>Grade ${g}</b>.</p>
             <p><b>${quizTitle}</b><br/>Topic: ${quizTopic}</p>
+            <p>Paper: <b>${paperLabel(quizPaper)}</b></p>
             <p>Difficulty: <b>${quizDifficulty}</b></p>
             <p><a href="${link}" target="_blank">Log in to Practice Online</a></p>
             <p>Regards,<br/>Practice Online Team</p>
           </div>
         `;
 
-        const text = `New assessment for Grade ${g}: ${quizTitle} (Topic: ${quizTopic}). Difficulty: ${quizDifficulty}. Login: ${link}`;
+        const text = `New assessment for Grade ${g}: ${quizTitle} (Topic: ${quizTopic}). Paper: ${paperLabel(
+          quizPaper
+        )}. Difficulty: ${quizDifficulty}. Login: ${link}`;
 
         await sendBulkEmail({ recipients: emails, subject, html, text });
         console.log(`Notified ${emails.length} learners for grade ${g}.`);
@@ -651,6 +668,7 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
       "grade",
       "title",
       "topic",
+      "paper", // ✅ NEW
       "instructions",
       "timeLimitMinutes",
       "availableFrom",
@@ -658,7 +676,7 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
       "questions",
       "isFrozen",
       "frozenAt",
-      "difficulty", // ✅ NEW
+      "difficulty",
     ];
 
     for (const k of allowed) {
@@ -677,8 +695,8 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
     if ("topic" in update) update.topic = cleanSpaces(update.topic);
     if ("instructions" in update) update.instructions = String(update.instructions || "");
 
-    // ✅ NEW: normalize difficulty on update
     if ("difficulty" in update) update.difficulty = normalizeDifficulty(update.difficulty);
+    if ("paper" in update) update.paper = normalizePaper(update.paper);
 
     if ("timeLimitMinutes" in update) {
       const t = Number(update.timeLimitMinutes);
@@ -723,7 +741,9 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
 
         const pts = safeInt(q?.points, 1);
         if (!Number.isInteger(pts) || pts < 1) {
-          return res.status(400).json({ message: "Each question must have marks (points) of 1 or more." });
+          return res
+            .status(400)
+            .json({ message: "Each question must have marks (points) of 1 or more." });
         }
 
         if (type === "text") {
@@ -752,10 +772,14 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
 
           if (wantsMulti) {
             if (idxs.length < 1) {
-              return res.status(400).json({ message: "MCQ must have at least 1 correct option." });
+              return res
+                .status(400)
+                .json({ message: "MCQ must have at least 1 correct option." });
             }
             if (idxs.some((i) => i < 0 || i >= opts.length)) {
-              return res.status(400).json({ message: "MCQ correctIndexes must be within options." });
+              return res
+                .status(400)
+                .json({ message: "MCQ correctIndexes must be within options." });
             }
             q.isMultiSelect = true;
             q.correctIndexes = idxs;
@@ -1079,6 +1103,9 @@ app.post("/api/results", authRequired, async (req, res) => {
       title: quiz.title || "Assessment",
       instructions: String(quiz.instructions || "").trim(),
 
+      // ✅ NEW snapshot paper (requires Result schema to include it)
+      paper: quiz.paper || "paper1",
+
       // ✅ points-based
       score: scorePoints,
       total: totalPoints,
@@ -1117,7 +1144,7 @@ app.get("/api/results/my", authRequired, async (req, res) => {
 
     const rows = await Result.find({ userId })
       .sort({ createdAt: -1 })
-      .select("_id createdAt grade topic title percent score total status quizId attemptNo isAdminAttempt");
+      .select("_id createdAt grade topic title paper percent score total status quizId attemptNo isAdminAttempt");
 
     return res.json(rows);
   } catch {
@@ -1252,4 +1279,9 @@ mongoose
 db.results.dropIndex("userId_1_quizId_1")
 
 Then ensure the new PARTIAL unique index is created by restarting server.
+
+✅ ALSO IMPORTANT:
+To truly STORE paper in MongoDB you must add:
+- `paper` field to models/Quiz.js schema
+- (optional) `paper` field to models/Result.js schema
 */
