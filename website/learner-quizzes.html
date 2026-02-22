@@ -1,315 +1,204 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Practice | Practice Online</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Practice | Practice Online</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <style>
-    :root{
-      --nav:#1b1648;
-      --red:#e11d2e;
+<style>
+:root{
+  --nav:#1b1648;
+  --red:#e11d2e;
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --border:#e6e6e6;
+  --text:#0f172a;
+  --muted:#475569;
+  --accent:#0b3c5d;
+  --accent-soft:#e7eef5;
+  --radius:14px;
+  --shadow:0 8px 22px rgba(0,0,0,0.06);
+  --focus:0 0 0 4px rgba(207,233,255,.65);
 
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --border:#e6e6e6;
-      --text:#0f172a;
-      --muted:#475569;
+  /* difficulty */
+  --easy:#22c55e;
+  --moderate:#3b82f6;
+  --hard:#ef4444;
+}
 
-      --accent:#0b3c5d;
-      --accent-soft:#e7eef5;
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
 
-      --radius:14px;
-      --shadow:0 8px 22px rgba(0,0,0,0.06);
+/* HEADER */
+header.topbar{
+  background:var(--nav);
+  color:#fff;
+}
+.topbar-inner{
+  max-width:1100px;margin:0 auto;padding:14px 18px;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;
+}
+.brand{display:flex;flex-direction:column;font-weight:700;color:#fff;text-decoration:none}
+.brand small{opacity:.85}
+nav.nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+nav.nav a{
+  padding:8px 10px;border-radius:10px;color:#e7e9ff;font-weight:600;font-size:13px;text-decoration:none;
+}
+nav.nav a:hover{background:rgba(255,255,255,.10)}
+nav.nav a.active{
+  color:#fff;border-bottom:3px solid var(--red);padding-bottom:5px;
+}
+.btnTop{
+  background:transparent;color:#fff;border:1px solid rgba(255,255,255,.22);
+  padding:8px 12px;border-radius:12px;font-weight:600;cursor:pointer;
+}
+.btnTop:hover{background:rgba(255,255,255,.08)}
 
-      --error:#b91c1c;
+/* PAGE */
+.wrap{max-width:1100px;margin:0 auto;padding:18px}
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+.cardHead{
+  padding:14px;border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,#f4f7ff,#eef4ff);
+  display:flex;justify-content:space-between;flex-wrap:wrap;
+}
+h1{margin:0;font-size:18px;font-weight:600}
+.muted{color:var(--muted)}
 
-      --pillBg:#eef7ff;
-      --pillBd:#cfe9ff;
+.controls{padding:12px 14px;display:flex;gap:10px;flex-wrap:wrap}
+input{
+  width:100%;max-width:520px;padding:11px 12px;border-radius:12px;
+  border:1px solid #ddd;font-weight:600;
+}
+input:focus{border-color:#cfe9ff;box-shadow:var(--focus)}
 
-      --tile:#f8fafc;
-      --tileHover:#eef7ff;
+/* ---------- TABS (clean, native-looking) ---------- */
+.filters{
+  padding:0 14px;
+  display:flex;
+  gap:18px;
+  align-items:flex-end;
+  border-bottom:1px solid #eee;
+}
 
-      --focus:0 0 0 4px rgba(207,233,255,.65);
-    }
+/* tab button */
+.fbtn{
+  appearance:none;
+  border:none;
+  background:transparent;
+  padding:12px 2px 10px;
+  font-weight:700;
+  font-size:13px;
+  color:#64748b;
+  cursor:pointer;
+  position:relative;
+  line-height:1;
+}
 
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Inter,Arial,sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
+/* underline */
+.fbtn::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:-1px;
+  height:3px;
+  border-radius:3px;
+  background:transparent;
+  transform:scaleX(.45);
+  transform-origin:center;
+  transition:transform .12s ease, background .12s ease;
+}
 
-    /* ---------- SHARED HEADER ---------- */
-    header.topbar{
-      background:var(--nav);
-      color:#fff;
-      border-bottom:3px solid rgba(255,255,255,.08);
-    }
-    .topbar-inner{
-      max-width:1100px;
-      margin:0 auto;
-      padding:14px 18px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-    .brand{
-      display:flex;
-      flex-direction:column;
-      line-height:1.1;
-      font-weight:700;
-      text-decoration:none;
-      color:#fff;
-      letter-spacing:.15px;
-    }
-    .brand small{opacity:.85;font-weight:600}
+/* hover */
+.fbtn:hover{color:#0f172a}
+.fbtn:hover::after{
+  background:#cbd5e1;
+  transform:scaleX(.75);
+}
 
-    nav.nav{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-    nav.nav a{
-      padding:8px 10px;
-      border-radius:10px;
-      color:#e7e9ff;
-      font-weight:600;
-      font-size:13px;
-      text-decoration:none;
-    }
-    nav.nav a:hover{background:rgba(255,255,255,.10)}
-    nav.nav a.active{
-      color:#fff;
-      border-bottom:3px solid var(--red);
-      border-radius:10px 10px 8px 8px;
-      padding-bottom:5px;
-    }
-    .btnTop{
-      background:transparent;
-      color:#fff;
-      border:1px solid rgba(255,255,255,.22);
-      padding:8px 12px;
-      border-radius:12px;
-      font-weight:600;
-      cursor:pointer;
-    }
-    .btnTop:hover{background:rgba(255,255,255,.08)}
+/* active states + colored underline */
+.fbtn.active{
+  color:#0f172a;
+}
+.fbtn.active::after{
+  transform:scaleX(1);
+}
+.fbtn.active[data-diff="all"]::after{ background:#94a3b8; }      /* neutral */
+.fbtn.active[data-diff="easy"]::after{ background:var(--easy); }
+.fbtn.active[data-diff="moderate"]::after{ background:var(--moderate); }
+.fbtn.active[data-diff="hard"]::after{ background:var(--hard); }
 
-    /* ---------- PAGE ---------- */
-    .wrap{
-      max-width:1100px;
-      margin:0 auto;
-      padding:18px;
-    }
+/* make colors visible even before selected (light underline) */
+.fbtn[data-diff="easy"]::after{ background:color-mix(in srgb, var(--easy) 35%, transparent); }
+.fbtn[data-diff="moderate"]::after{ background:color-mix(in srgb, var(--moderate) 35%, transparent); }
+.fbtn[data-diff="hard"]::after{ background:color-mix(in srgb, var(--hard) 35%, transparent); }
+.fbtn[data-diff="all"]::after{ background:color-mix(in srgb, #94a3b8 35%, transparent); }
 
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
+/* if browser doesn't support color-mix, it will just ignore, still looks fine */
+@supports not (background: color-mix(in srgb, #000 10%, transparent)) {
+  .fbtn[data-diff="easy"]::after{ background:rgba(34,197,94,.25); }
+  .fbtn[data-diff="moderate"]::after{ background:rgba(59,130,246,.25); }
+  .fbtn[data-diff="hard"]::after{ background:rgba(239,68,68,.25); }
+  .fbtn[data-diff="all"]::after{ background:rgba(148,163,184,.25); }
+}
 
-    .cardHead{
-      padding:14px 14px 12px;
-      border-bottom:1px solid var(--border);
-      background:linear-gradient(180deg,#f4f7ff,#eef4ff);
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:12px;
-      flex-wrap:wrap;
-    }
+/* CONTENT */
+.topic-wrap{padding:14px;display:flex;flex-direction:column;gap:12px}
 
-    h1{margin:0;font-size:18px;letter-spacing:-0.01em;font-weight:600}
-    .muted{color:var(--muted)}
-    .error{color:var(--error)}
+.topic-card{
+  border:1px solid var(--border);
+  border-radius:16px;padding:12px;background:#fff;
+}
 
-    .controls{
-      padding:12px 14px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
+.topic-head{
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;
+}
 
-    .searchWrap{
-      flex:1;
-      min-width:240px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
+.topic-title{font-size:15px;font-weight:700;color:var(--accent)}
 
-    input{
-      width:100%;
-      max-width:520px;
-      padding:11px 12px;
-      border-radius:12px;
-      border:1px solid #ddd;
-      outline:none;
-      font-weight:600;
-      background:#fff;
-    }
-    input:focus{
-      border-color:#cfe9ff;
-      box-shadow:var(--focus);
-    }
+.quiz-squares{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
 
-    .btn2{
-      background:#fff;
-      border:1px solid #ddd;
-      padding:10px 12px;
-      border-radius:12px;
-      cursor:pointer;
-      font-weight:600;
-      font-size:13px;
-      white-space:nowrap;
-    }
-    .btn2:hover{background:#f8fafc}
-    .btn2:disabled{opacity:.6;cursor:not-allowed}
+/* QUIZ SQUARE */
+.quiz-square{
+  width:66px;height:66px;border-radius:16px;
+  border:1px solid var(--border);
+  border-bottom-width:4px;
+  background:#f8fafc;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;font-weight:700;transition:.12s;
+  position:relative;
+}
+.quiz-square:hover{background:#eef7ff;transform:translateY(-1px)}
 
-    .statusBar{
-      padding:0 14px 12px;
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid var(--pillBd);
-      background:var(--pillBg);
-      color:var(--accent);
-      font-size:12px;
-      font-weight:600;
-      white-space:nowrap;
-    }
+.quiz-square.diff-easy{border-bottom-color:var(--easy)}
+.quiz-square.diff-moderate{border-bottom-color:var(--moderate)}
+.quiz-square.diff-hard{border-bottom-color:var(--hard)}
 
-    .topic-wrap{
-      padding:14px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
+.status{font-size:10px;font-weight:700;margin-top:4px;color:#64748b;text-transform:uppercase}
 
-    .topic-card{
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:12px;
-      background:#fff;
-    }
+.hidden{display:none!important}
+</style>
 
-    .topic-head{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
-    .topic-title{
-      font-size:15px;
-      font-weight:700;
-      color:var(--accent);
-      word-break:break-word;
-    }
-
-    .toggle{
-      border:1px solid #ddd;
-      background:#fff;
-      padding:8px 10px;
-      border-radius:12px;
-      cursor:pointer;
-      font-weight:600;
-      font-size:12px;
-      white-space:nowrap;
-    }
-    .toggle:hover{background:var(--accent-soft)}
-
-    .quiz-squares{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:10px;
-    }
-
-    .quiz-square{
-      width:66px;
-      height:66px;
-      border-radius:16px;
-      border:1px solid var(--border);
-      background:var(--tile);
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-      font-weight:700;
-      position:relative;
-      transition:.12s;
-      user-select:none;
-    }
-    .quiz-square:hover{background:var(--tileHover);transform:translateY(-1px)}
-    .quiz-square.done{
-      border-color:#86efac;
-      background:#f0fdf4;
-    }
-    .quiz-square.done::after{
-      content:"✓";
-      position:absolute;
-      top:8px;
-      right:10px;
-      font-size:14px;
-      font-weight:800;
-      color:#166534;
-    }
-    .quiz-square.unavailable{
-      cursor:not-allowed;
-      opacity:.7;
-    }
-
-    .status{
-      font-size:10px;
-      font-weight:700;
-      margin-top:4px;
-      color:#64748b;
-      text-transform:uppercase;
-      letter-spacing:.4px;
-    }
-    .quiz-square.unavailable .status{color:#b45309}
-
-    .hidden{display:none!important}
-
-    @media(max-width:700px){
-      .wrap{padding:14px}
-      input{max-width:100%}
-      .quiz-square{width:64px;height:64px}
-      .cardHead{padding:12px}
-      .controls{padding:12px}
-      .topic-wrap{padding:12px}
-    }
-  </style>
-
-  <script>
-    const authToken = localStorage.getItem("token");
-    if (!authToken) window.location.href = "login.html";
-  </script>
+<script>
+const authToken = localStorage.getItem("token");
+if(!authToken) window.location.href="login.html";
+</script>
 </head>
 
 <body>
@@ -326,291 +215,96 @@
       <a href="results.html">Results</a>
       <a href="support.html">Support</a>
       <a href="about.html">About</a>
-      <a href="admin-quiz.html" data-admin style="display:none;">Admin</a>
-      <button class="btnTop" id="logoutBtn" type="button">Logout</button>
+      <button class="btnTop" id="logoutBtn">Logout</button>
     </nav>
   </div>
 </header>
 
 <div class="wrap">
-  <div class="card">
-    <div class="cardHead">
-      <div>
-        <h1 id="pageTitle">Practice</h1>
-        <p class="muted" id="pageSub" style="margin:6px 0 0;">Loading your grade…</p>
-      </div>
-      <div class="pill" id="loadedPill" style="display:none;">Loaded 0 assessments</div>
-    </div>
+<div class="card">
 
-    <div class="controls">
-      <div class="searchWrap">
-        <input id="topicSearch" placeholder="Search topic or assessment title…" disabled />
-      </div>
-      <button class="btn2" id="expandAllBtn" disabled type="button">Expand all</button>
-      <button class="btn2" id="collapseAllBtn" disabled type="button">Collapse all</button>
-    </div>
-
-    <div class="statusBar">
-      <p id="status" class="muted" style="margin:0;"></p>
-    </div>
-
-    <div id="quizList" class="topic-wrap"></div>
+<div class="cardHead">
+  <div>
+    <h1>Practice</h1>
+    <p class="muted" id="pageSub">Loading your grade…</p>
   </div>
 </div>
 
-<script src="nav.js"></script>
+<div class="controls">
+  <input id="topicSearch" placeholder="Search topic or assessment…" disabled />
+</div>
+
+<!-- TABS -->
+<div class="filters">
+  <button class="fbtn active" data-diff="all" type="button">All</button>
+  <button class="fbtn" data-diff="easy" type="button">Easy Level</button>
+  <button class="fbtn" data-diff="moderate" type="button">Moderate Level</button>
+  <button class="fbtn" data-diff="hard" type="button">Hard Level</button>
+</div>
+
+<div id="quizList" class="topic-wrap"></div>
+
+</div>
+</div>
 
 <script>
-  const API = window.API || "https://practice-backend-msgn.onrender.com";
-  const token = localStorage.getItem("token");
+const API="https://practice-backend-msgn.onrender.com";
+const token=localStorage.getItem("token");
+const quizList=document.getElementById("quizList");
+const diffButtons=[...document.querySelectorAll("[data-diff]")];
+let difficultyFilter="all";
 
-  const pageSub = document.getElementById("pageSub");
-  const statusEl = document.getElementById("status");
-  const quizList = document.getElementById("quizList");
-
-  const topicSearch = document.getElementById("topicSearch");
-  const expandAllBtn = document.getElementById("expandAllBtn");
-  const collapseAllBtn = document.getElementById("collapseAllBtn");
-  const loadedPill = document.getElementById("loadedPill");
-
-  const params = new URLSearchParams(window.location.search);
-  const qpSearch = cleanSpaces(params.get("search") || "");
-  const qpFilter = cleanSpaces(params.get("filter") || ""); // 89 | 1012 | rev
-
-  document.getElementById("logoutBtn").onclick = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
-    localStorage.removeItem("me_cache");
-    window.location.href = "login.html";
+diffButtons.forEach(btn=>{
+  btn.onclick=()=>{
+    difficultyFilter=btn.dataset.diff;
+    diffButtons.forEach(b=>b.classList.toggle("active",b===btn));
+    applyFilter();
   };
+});
 
-  function escapeHtml(str){
-    return String(str ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
+function applyFilter(){
+  document.querySelectorAll("[data-square]").forEach(sq=>{
+    const d=sq.dataset.diff;
+    sq.style.display=(difficultyFilter==="all"||d===difficultyFilter)?"":"none";
+  });
+}
 
-  function cleanSpaces(s){
-    return String(s || "").trim().replace(/\s+/g, " ");
-  }
+(async()=>{
+  const me=await fetch(`${API}/api/auth/me`,{headers:{Authorization:`Bearer ${token}`}}).then(r=>r.json());
+  document.getElementById("pageSub").textContent="Grade: "+me.grade;
 
-  function isUnavailableBySchedule(quiz){
-    const now = new Date();
-    if (quiz?.isFrozen) return true;
+  const quizzes=await fetch(`${API}/api/quizzes`,{headers:{Authorization:`Bearer ${token}`}}).then(r=>r.json());
 
-    if (quiz?.availableFrom){
-      const from = new Date(quiz.availableFrom);
-      if (!isNaN(from.getTime()) && now < from) return true;
-    }
+  const groups={};
+  quizzes.forEach(q=>{
+    const t=q.topic||"General";
+    if(!groups[t]) groups[t]=[];
+    groups[t].push(q);
+  });
 
-    if (quiz?.availableUntil){
-      const until = new Date(quiz.availableUntil);
-      if (!isNaN(until.getTime()) && now > until) return true;
-    }
+  const topics=Object.keys(groups).sort();
 
-    return false;
-  }
-
-  function goToAttempt(quizId){
-    window.location.href = `attempt.html?quizId=${encodeURIComponent(quizId)}`;
-  }
-
-  function gradeMatchesFilter(grade, filter){
-    const g = Number(grade);
-    if (!Number.isFinite(g)) return true;
-
-    if (filter === "89") return g === 8 || g === 9;
-    if (filter === "1012") return g >= 10 && g <= 12;
-    return true;
-  }
-
-  function applySearchAndFilter(){
-    const q = topicSearch.value.trim().toLowerCase();
-
-    document.querySelectorAll("[data-topic-card]").forEach(card => {
-      const index = (card.getAttribute("data-search-index") || "");
-      const show = (!q || index.includes(q));
-      card.style.display = show ? "" : "none";
-    });
-
-    // ✅ Removed "Showing topics..." text
-    statusEl.textContent = "";
-  }
-
-  (async ()=>{
-    const adminEls = document.querySelectorAll("[data-admin]");
-    adminEls.forEach(el=>el.style.display="none");
-
-    try{
-      statusEl.textContent = "Loading…";
-
-      const meRes = await fetch(`${API}/api/auth/me`,{
-        headers:{Authorization:`Bearer ${token}`}
-      });
-
-      const me = await meRes.json().catch(()=>({}));
-      if(!meRes.ok){
-        localStorage.removeItem("token");
-        localStorage.removeItem("username");
-        localStorage.removeItem("me_cache");
-        window.location.href = "login.html";
-        return;
-      }
-
-      const grade = me.grade;
-      pageSub.textContent = grade ? `Grade: ${grade}` : "No grade found on your account.";
-
-      const isAdmin = me.role === "admin";
-      if(isAdmin){
-        adminEls.forEach(el=>el.style.display="");
-        pageSub.textContent = "Admin view (all grades)";
-      }
-
-      const myResultsRes = await fetch(`${API}/api/results/my`,{
-        headers:{Authorization:`Bearer ${token}`}
-      });
-      const myResults = await myResultsRes.json().catch(()=>[]);
-      const doneSet = new Set((Array.isArray(myResults) ? myResults : []).map(r => String(r.quizId)));
-
-      const quizUrl = isAdmin ? `${API}/api/quizzes?all=1` : `${API}/api/quizzes`;
-
-      const qRes = await fetch(quizUrl,{
-        headers:{Authorization:`Bearer ${token}`}
-      });
-
-      const quizzes = await qRes.json().catch(()=>[]);
-      if(!qRes.ok){
-        statusEl.className = "muted error";
-        statusEl.textContent = "Failed to load quizzes.";
-        return;
-      }
-
-      let list = Array.isArray(quizzes) ? quizzes : [];
-      if (qpFilter) list = list.filter(q => gradeMatchesFilter(q.grade, qpFilter));
-
-      if (qpFilter === "rev" && !qpSearch) topicSearch.value = "revision";
-      else topicSearch.value = qpSearch;
-
-      loadedPill.style.display = "inline-flex";
-      loadedPill.textContent = ` ${list.length} assessments`;
-
-      topicSearch.disabled = false;
-      expandAllBtn.disabled = false;
-      collapseAllBtn.disabled = false;
-
-      if(list.length === 0){
-        statusEl.textContent = "No assessments found.";
-        quizList.innerHTML = "";
-        applySearchAndFilter();
-        hookControls([]);
-        return;
-      }
-
-      const groups = {};
-      for(const quiz of list){
-        const topic = cleanSpaces(quiz.topic || "General");
-        if(!groups[topic]) groups[topic] = [];
-        groups[topic].push(quiz);
-      }
-
-      const topics = Object.keys(groups).sort((a,b)=>a.localeCompare(b));
-
-      renderTopics(topics, groups, doneSet);
-      hookControls(topics);
-
-      // Keep status clean (no "showing topics")
-      statusEl.textContent = "";
-      applySearchAndFilter();
-    }catch(e){
-      statusEl.className = "muted error";
-      statusEl.textContent = "Network error. Please refresh.";
-    }
-  })();
-
-  function renderTopics(topics, groups, doneSet){
-    quizList.innerHTML = topics.map((topic, idx)=>{
-      const quizzes = groups[topic] || [];
-      const topicId = `topic_${idx}`;
-
-      const titlesIndex = quizzes.map(q => cleanSpaces(q.title || "")).join(" ");
-      const searchIndex = `${topic} ${titlesIndex}`.toLowerCase();
-
-      const squares = quizzes.map((q, i)=>{
-        const id = String(q._id || "");
-        const done = doneSet.has(id);
-        const unavailable = isUnavailableBySchedule(q);
-
-        const cls = [
-          "quiz-square",
-          done ? "done" : "",
-          unavailable ? "unavailable" : ""
-        ].join(" ").trim();
-
-        const label = i + 1;
-        const status = unavailable ? "Unavailable" : (done ? "Done" : "Start");
-        const clickAttr = unavailable ? "" : `data-go="${escapeHtml(id)}"`;
-
-        return `
-          <div class="${cls}" ${clickAttr} title="${escapeHtml(cleanSpaces(q.title || "Assessment"))}">
-            <div>${label}</div>
-            <div class="status">${escapeHtml(status)}</div>
-          </div>
-        `;
-      }).join("");
-
+  quizList.innerHTML=topics.map((topic,i)=>{
+    const squares=groups[topic].map((q,n)=>{
+      const diff=(q.difficulty||"moderate").toLowerCase();
       return `
-        <div class="topic-card" data-topic-card data-search-index="${escapeHtml(searchIndex)}">
-          <div class="topic-head">
-            <div class="topic-title">${escapeHtml(topic)}</div>
-            <button class="toggle" type="button" data-toggle="${topicId}">Collapse</button>
-          </div>
-
-          <div class="quiz-squares" id="${topicId}">
-            ${squares}
-          </div>
-        </div>
-      `;
+      <div class="quiz-square diff-${diff}" data-square data-diff="${diff}"
+           onclick="location.href='attempt.html?quizId=${q._id}'">
+        <div>${n+1}</div>
+        <div class="status">Start</div>
+      </div>`;
     }).join("");
 
-    document.querySelectorAll("[data-toggle]").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const id = btn.getAttribute("data-toggle");
-        const box = document.getElementById(id);
-        const hidden = box.classList.toggle("hidden");
-        btn.textContent = hidden ? "Expand" : "Collapse";
-      });
-    });
+    return `
+    <div class="topic-card">
+      <div class="topic-head">
+        <div class="topic-title">${topic}</div>
+      </div>
+      <div class="quiz-squares">${squares}</div>
+    </div>`;
+  }).join("");
 
-    document.querySelectorAll("[data-go]").forEach(el=>{
-      el.addEventListener("click", ()=>{
-        const id = el.getAttribute("data-go");
-        goToAttempt(id);
-      });
-    });
-  }
-
-  function hookControls(topics){
-    expandAllBtn.onclick = ()=>{
-      topics.forEach((_, idx)=>{
-        const box = document.getElementById(`topic_${idx}`);
-        if(box) box.classList.remove("hidden");
-      });
-      document.querySelectorAll("[data-toggle]").forEach(b=>b.textContent="Collapse");
-    };
-
-    collapseAllBtn.onclick = ()=>{
-      topics.forEach((_, idx)=>{
-        const box = document.getElementById(`topic_${idx}`);
-        if(box) box.classList.add("hidden");
-      });
-      document.querySelectorAll("[data-toggle]").forEach(b=>b.textContent="Expand");
-    };
-
-    topicSearch.addEventListener("input", applySearchAndFilter);
-  }
+})();
 </script>
 
 </body>
