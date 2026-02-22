@@ -10,6 +10,7 @@
      ✅ FIX: sends isMultiSelect:true when 2+ correct answers
      ✅ Drag & drop reorder + renumber
      ✅ Difficulty per quiz (easy/moderate/hard)
+     ✅ NEW: Paper selection (paper1/paper2)
      ✅ Sends MCQ correctIndexes (array). Also sends correctIndex if only 1 selected (compat).
      ✅ UI FIX: Solution preview is now plain white (no brown paper background)
      ✅ UI FIX: Solution preview uses normal/small font (not big)
@@ -183,7 +184,7 @@
     .previewBox.paperBox svg{vertical-align:middle;}
 
     /* =========================================================
-       ✅ NEW: Plain solution preview (NO brown/paper background)
+       ✅ Plain solution preview (NO brown/paper background)
        ✅ Font is normal/small (not big)
        ========================================================= */
     .previewBox.solBox{
@@ -191,8 +192,8 @@
       border:1px solid #e6e6e6;
       border-radius:12px;
       padding:12px;
-      font-size:13px;      /* normal/small */
-      line-height:1.5;     /* normal */
+      font-size:13px;
+      line-height:1.5;
       color:#111827;
       white-space:pre-wrap;
     }
@@ -263,6 +264,16 @@
         </select>
         <div class="muted tiny">Labels the whole assessment: Easy / Moderate / Hard.</div>
       </div>
+
+      <!-- ✅ NEW: Paper selection -->
+      <div>
+        <label>Paper</label>
+        <select id="paper">
+          <option value="paper1" selected>Paper 1</option>
+          <option value="paper2">Paper 2</option>
+        </select>
+        <div class="muted tiny">Example: Financial Mathematics = Paper 1</div>
+      </div>
     </div>
 
     <div class="infoBox">
@@ -316,6 +327,7 @@
     const timeLimitEl = document.getElementById("timeLimit");
     const titleEl = document.getElementById("title");
     const difficultyEl = document.getElementById("difficulty");
+    const paperEl = document.getElementById("paper"); // ✅ NEW
 
     const instructionsEl = document.getElementById("instructions");
     const prevInstructions = document.getElementById("prevInstructions");
@@ -352,6 +364,13 @@
       const d = String(v || "").toLowerCase().trim();
       if (d === "easy" || d === "moderate" || d === "hard") return d;
       return "moderate";
+    }
+
+    // ✅ NEW: normalize paper
+    function normalizePaper(v){
+      const p = String(v || "").toLowerCase().trim();
+      if (p === "paper1" || p === "paper2") return p;
+      return "paper1";
     }
 
     function typesetMath(root=document){
@@ -485,7 +504,6 @@
             <div class="previewBox prevOpts paperBox"></div>
 
             <div class="muted tiny previewLabel">Solution / Workings:</div>
-            <!-- ✅ plain white solution preview -->
             <div class="previewBox prevSol solBox"></div>
           </div>
         </div>
@@ -568,7 +586,6 @@
             <div class="previewBox prevAns paperBox"></div>
 
             <div class="muted tiny previewLabel">Solution / Workings:</div>
-            <!-- ✅ plain white solution preview -->
             <div class="previewBox prevSol solBox"></div>
           </div>
         </div>
@@ -918,12 +935,10 @@
             points,
             options,
             correctIndexes: correctedIndexes,
-            // ✅ IMPORTANT: tells learner UI to show checkboxes
             isMultiSelect: correctedIndexes.length >= 2,
             solution: solution || ""
           };
 
-          // ✅ Compatibility: if exactly 1 correct, also send correctIndex
           if (correctedIndexes.length === 1) payload.correctIndex = correctedIndexes[0];
 
           questions.push(payload);
@@ -944,6 +959,7 @@
       const timeLimitMinutes = Number(timeLimitEl.value);
       const instructions = cleanSpaces(instructionsEl.value || "");
       const difficulty = normalizeDifficulty(difficultyEl.value);
+      const paper = normalizePaper(paperEl.value); // ✅ NEW
 
       try{
         if (!grade) return setMsg("Please select grade.", "error");
@@ -965,7 +981,7 @@
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify({ grade, title, topic, timeLimitMinutes, instructions, difficulty, questions })
+          body: JSON.stringify({ grade, title, topic, paper, timeLimitMinutes, instructions, difficulty, questions })
         });
 
         const data = await res.json().catch(()=>({}));
@@ -977,6 +993,7 @@
           topicEl.value = "";
           timeLimitEl.value = "10";
           difficultyEl.value = "moderate";
+          paperEl.value = "paper1"; // ✅ NEW reset
           instructionsEl.value = "";
           renderInstructionsPreview();
 
