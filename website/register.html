@@ -184,8 +184,20 @@
     }
     .links a:hover{text-decoration:underline}
 
-    /* small helper text */
     .hint{margin-top:6px; font-size:12px; color:var(--muted);}
+    .tiny{margin-top:6px; font-size:12px; color:var(--muted);}
+    .hide{display:none !important;}
+
+    /* ✅ Note box */
+    .noteBox{
+      background:var(--accent-soft);
+      border:1px solid #d8e6f3;
+      border-radius:12px;
+      padding:12px;
+      margin:10px 0 12px;
+      color:#0f172a;
+    }
+    .noteBox b{display:block; margin-bottom:4px;}
   </style>
 </head>
 
@@ -206,31 +218,65 @@
     <h2>Register Account</h2>
     <p>Create your Practice Online account</p>
 
-    <label>Account Type</label>
-    <div class="radioRow">
-      <label><input type="radio" name="accountType" value="student" checked> Student</label>
-      <label><input type="radio" name="accountType" value="materials"> Access Materials Only</label>
+    <!-- ✅ NOTE (updates based on account type) -->
+    <div class="noteBox" id="acctNote">
+      <b id="acctNoteTitle">Student Account</b>
+      <span id="acctNoteText">Practice the Quizzes + Online Tutorials.</span>
     </div>
 
+    <label>Account Type</label>
+    <div class="radioRow">
+      <!-- keep value="student" -->
+      <label><input type="radio" name="accountType" value="student" checked> Student</label>
+
+      <!-- ✅ RENAMED label, but keep value="materials" for backend compatibility -->
+      <label><input type="radio" name="accountType" value="materials"> Practice Account</label>
+    </div>
+
+    <!-- ✅ Username ONCE -->
     <label for="username">Username</label>
     <input id="username" autocomplete="username" />
 
     <label for="email">Email</label>
     <input id="email" type="email" autocomplete="email" />
 
-    <!-- ✅ Province (optional) -->
-    <label for="province">Province </label>
-    <select id="province">
-      <option value="">Select Province</option>
-      <option value="Eastern Cape">Eastern Cape</option>
-      <option value="Free State">Free State</option>
-      <option value="Gauteng">Gauteng</option>
-      <option value="KwaZulu-Natal">KwaZulu-Natal</option>
-      <option value="Limpopo">Limpopo</option>
-      <option value="Mpumalanga">Mpumalanga</option>
-      <option value="Northern Cape">Northern Cape</option>
-      <option value="North West">North West</option>
-      <option value="Western Cape">Western Cape</option>
+    <!-- ✅ SA question -->
+    <label>Are you in South Africa?</label>
+    <div class="radioRow">
+      <label><input type="radio" name="isSA" value="yes" checked> Yes</label>
+      <label><input type="radio" name="isSA" value="no"> No</label>
+    </div>
+
+    <!-- ✅ Province + District (show only if SA = Yes) -->
+    <div id="saWrap">
+      <label for="province">Province</label>
+      <select id="province">
+        <option value="">Select Province</option>
+        <option value="Eastern Cape">Eastern Cape</option>
+        <option value="Free State">Free State</option>
+        <option value="Gauteng">Gauteng</option>
+        <option value="KwaZulu-Natal">KwaZulu-Natal</option>
+        <option value="Limpopo">Limpopo</option>
+        <option value="Mpumalanga">Mpumalanga</option>
+        <option value="Northern Cape">Northern Cape</option>
+        <option value="North West">North West</option>
+        <option value="Western Cape">Western Cape</option>
+      </select>
+
+      <label for="district">District</label>
+      <select id="district" disabled>
+        <option value="">Select District</option>
+      </select>
+    </div>
+
+    <!-- ✅ Gender -->
+    <label for="gender">Gender</label>
+    <select id="gender">
+      <option value="">Prefer not to say</option>
+      <option value="female">Female</option>
+      <option value="male">Male</option>
+
+      <option value="other">Other</option>
     </select>
 
     <!-- ✅ Cellphone + Guardian (optional) -->
@@ -238,17 +284,15 @@
       <div>
         <label for="cellphone">Your Cellphone</label>
         <input id="cellphone" inputmode="tel" placeholder="+27" />
-      
       </div>
       <div>
         <label for="guardianCellphone">Guardian Cellphone</label>
         <input id="guardianCellphone" inputmode="tel" placeholder="+27" />
-        
       </div>
     </div>
 
     <div id="gradeWrap">
-      <label for="grade">Grade (Students only)</label>
+      <label for="grade">Grade</label>
       <select id="grade">
         <option value="">Select Grade</option>
         <option value="8">Grade 8</option>
@@ -290,7 +334,13 @@
   const msg = document.getElementById("msg");
   const btn = document.getElementById("registerBtn");
 
+  // Note
+  const acctNoteTitle = document.getElementById("acctNoteTitle");
+  const acctNoteText  = document.getElementById("acctNoteText");
+
+  // Username
   const usernameEl = document.getElementById("username");
+
   const emailEl = document.getElementById("email");
   const gradeEl = document.getElementById("grade");
   const passwordEl = document.getElementById("password");
@@ -298,8 +348,13 @@
   const toggleBtn = document.getElementById("toggleBtn");
   const gradeWrap = document.getElementById("gradeWrap");
 
-  // ✅ New optional fields
+  // SA location
+  const saWrap = document.getElementById("saWrap");
   const provinceEl = document.getElementById("province");
+  const districtEl = document.getElementById("district");
+
+  // Other fields
+  const genderEl = document.getElementById("gender");
   const cellphoneEl = document.getElementById("cellphone");
   const guardianCellEl = document.getElementById("guardianCellphone");
 
@@ -308,8 +363,28 @@
     msg.textContent = text;
   }
 
+  function cleanSpaces(s){
+    return String(s || "").trim().replace(/\s+/g," ");
+  }
+
   function accountType(){
     return document.querySelector('input[name="accountType"]:checked').value;
+  }
+
+  function isSA(){
+    return document.querySelector('input[name="isSA"]:checked')?.value === "yes";
+  }
+
+  // ✅ Update note text + grade visibility based on account type
+  function updateAccountNote(){
+    const t = accountType();
+    if (t === "student") {
+      acctNoteTitle.textContent = "Student Account";
+      acctNoteText.textContent  = "Practice the Quizzes + Online Tutorials.";
+    } else {
+      acctNoteTitle.textContent = "Practice Account";
+      acctNoteText.textContent  = "Practice the Quizzes.";
+    }
   }
 
   function toggleGrade(){
@@ -319,9 +394,13 @@
   }
 
   document.querySelectorAll('input[name="accountType"]').forEach(r=>{
-    r.addEventListener("change", toggleGrade);
+    r.addEventListener("change", () => {
+      toggleGrade();
+      updateAccountNote();
+    });
   });
   toggleGrade();
+  updateAccountNote();
 
   // ✅ Pre-fill +27 (not required)
   function ensurePlus27(el){
@@ -346,21 +425,144 @@
     if (e.key === "Enter") btn.click();
   });
 
+  /* ✅ Districts by Province (SA) */
+  const DISTRICTS_BY_PROVINCE = {
+    "Eastern Cape": [
+      "Buffalo City (Metro)",
+      "Nelson Mandela Bay (Metro)",
+      "Amathole",
+      "Chris Hani",
+      "Joe Gqabi",
+      "OR Tambo",
+      "Sarah Baartman"
+    ],
+    "Free State": [
+      "Mangaung (Metro)",
+      "Fezile Dabi",
+      "Lejweleputswa",
+      "Thabo Mofutsanyana",
+      "Xhariep"
+    ],
+    "Gauteng": [
+      "City of Johannesburg (Metro)",
+      "City of Tshwane (Metro)",
+      "Ekurhuleni (Metro)",
+      "Sedibeng",
+      "West Rand"
+    ],
+    "KwaZulu-Natal": [
+      "eThekwini (Metro)",
+      "Amajuba",
+      "Harry Gwala",
+      "iLembe",
+      "King Cetshwayo",
+      "Ugu",
+      "uMgungundlovu",
+      "uMkhanyakude",
+      "uMzinyathi",
+      "uThukela",
+      "Zululand"
+    ],
+    "Limpopo": [
+      "Capricorn",
+      "Mopani",
+      "Sekhukhune",
+      "Vhembe",
+      "Waterberg"
+    ],
+    "Mpumalanga": [
+      "Ehlanzeni",
+      "Gert Sibande",
+      "Nkangala"
+    ],
+    "Northern Cape": [
+      "Frances Baard",
+      "John Taolo Gaetsewe",
+      "Namakwa",
+      "Pixley ka Seme",
+      "ZF Mgcawu"
+    ],
+    "North West": [
+      "Bojanala Platinum",
+      "Dr Kenneth Kaunda",
+      "Dr Ruth Segomotsi Mompati",
+      "Ngaka Modiri Molema"
+    ],
+    "Western Cape": [
+      "City of Cape Town (Metro)",
+      "Cape Winelands",
+      "Central Karoo",
+      "Garden Route",
+      "Overberg",
+      "West Coast"
+    ]
+  };
+
+  function resetDistrict(){
+    districtEl.innerHTML = `<option value="">Select District</option>`;
+    districtEl.disabled = true;
+  }
+
+  function populateDistricts(){
+    const prov = provinceEl.value;
+    const list = DISTRICTS_BY_PROVINCE[prov] || [];
+    resetDistrict();
+    if(!prov || list.length === 0) return;
+
+    const frag = document.createDocumentFragment();
+    list.forEach(d => {
+      const opt = document.createElement("option");
+      opt.value = d;
+      opt.textContent = d;
+      frag.appendChild(opt);
+    });
+    districtEl.appendChild(frag);
+    districtEl.disabled = false;
+  }
+
+  provinceEl.addEventListener("change", populateDistricts);
+
+  function toggleSAFields(){
+    const yes = isSA();
+    saWrap.classList.toggle("hide", !yes);
+
+    if(!yes){
+      provinceEl.value = "";
+      resetDistrict();
+    } else {
+      populateDistricts();
+    }
+  }
+
+  document.querySelectorAll('input[name="isSA"]').forEach(r=>{
+    r.addEventListener("change", toggleSAFields);
+  });
+  toggleSAFields();
+
   btn.onclick = async () => {
     const type = accountType();
 
-    // ✅ Optional values (only send if user typed something)
-    const province = provinceEl.value.trim();
+    const username = cleanSpaces(usernameEl.value);
+    const email = emailEl.value.trim();
+
+    // Optional values
+    const gender = genderEl.value.trim();
     const cellphone = cellphoneEl.value.trim();
     const guardianCellphone = guardianCellEl.value.trim();
 
+    // SA fields
+    const province = isSA() ? provinceEl.value.trim() : "";
+    const district = isSA() ? districtEl.value.trim() : "";
+
     const payload = {
-      username: usernameEl.value.trim(),
-      email: emailEl.value.trim(),
+      username,
+      email,
       password: passwordEl.value,
-      accountType: type,
+      accountType: type, // student OR materials (Practice Account label)
       ...(type === "student" ? { grade: Number(gradeEl.value) } : {}),
+      ...(gender ? { gender } : {}),
       ...(province ? { province } : {}),
+      ...(district ? { district } : {}),
       ...(cellphone ? { cellphone } : {}),
       ...(guardianCellphone ? { guardianCellphone } : {})
     };
@@ -375,6 +577,10 @@
 
     if(type === "student" && !Number.isFinite(payload.grade)){
       return setMsg("Please select a grade.","error");
+    }
+
+    if(isSA() && province && !district){
+      return setMsg("Please select your district.","error");
     }
 
     btn.disabled = true;
