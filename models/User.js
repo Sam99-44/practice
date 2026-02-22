@@ -16,10 +16,17 @@ const UserSchema = new mongoose.Schema(
     // ✅ 8-digit student number (students only)
     studentNumber: { type: String, default: null },
 
-    // ✅ NEW OPTIONAL FIELDS
-    province: { type: String, default: "" },              // not required
-    cellphone: { type: String, default: "" },             // not required (store as string because +27)
-    guardianCellphone: { type: String, default: "" },     // not required
+    // ✅ LOCATION + PROFILE FIELDS
+    province: { type: String, default: "" },              // optional
+    district: { type: String, default: "" },              // ✅ NEW (for SA filtering)
+    gender: {
+      type: String,
+      enum: ["female", "male", "nonbinary", "other", ""], // ✅ NEW
+      default: ""
+    },
+
+    cellphone: { type: String, default: "" },             // optional (+27 safe)
+    guardianCellphone: { type: String, default: "" },     // optional
 
     // ✅ Email verification
     emailVerified: { type: Boolean, default: false },
