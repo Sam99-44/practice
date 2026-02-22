@@ -3,6 +3,7 @@
 // ✅ Auto-detects multi-select when correctIndexes has 2+ items OR isMultiSelect true
 // ✅ Saves multi-select properly into Result for review/results
 // ✅ Backward compatible with old single-correct fields (chosenIndex/correctIndex)
+// ✅ NEW: Saves + returns quiz difficulty (easy/moderate/hard)
 
 import express from "express";
 import mongoose from "mongoose";
@@ -111,6 +112,13 @@ function safeNum(v, fallback = 0) {
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
   return n;
+}
+
+// ✅ NEW: normalize difficulty
+function normalizeDifficulty(v) {
+  const d = String(v || "").toLowerCase().trim();
+  if (d === "easy" || d === "moderate" || d === "hard") return d;
+  return "moderate";
 }
 
 // ✅ normalize index arrays (for multi-select)
@@ -440,7 +448,8 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
     const quizzes = await Quiz.find(filter)
       .sort({ createdAt: -1 })
       .select(
-        "grade title topic questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt"
+        // ✅ NEW: include difficulty in list responses
+        "grade title topic difficulty questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt"
       );
 
     return res.json(quizzes);
@@ -473,7 +482,8 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
 // Admin creates quiz (admin-quiz.html POSTs here) ✅ NOW EMAILS STUDENTS BY GRADE
 app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   try {
-    const { grade, title, topic, timeLimitMinutes, instructions, questions } = req.body;
+    // ✅ NEW: accept difficulty
+    const { grade, title, topic, timeLimitMinutes, instructions, questions, difficulty } = req.body;
 
     if (!grade || !title || !topic || !Array.isArray(questions) || questions.length === 0) {
       return res
@@ -489,6 +499,9 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
     const quizTitle = cleanSpaces(title);
     const quizTopic = cleanSpaces(topic);
     const quizInstructions = String(instructions || "").trim();
+
+    // ✅ NEW: normalize difficulty before saving
+    const quizDifficulty = normalizeDifficulty(difficulty);
 
     // ✅ Validate blocks (mcq/text/note) + points + solution + multi-select
     for (const q of questions) {
@@ -566,6 +579,7 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
       grade: g,
       title: quizTitle,
       topic: quizTopic,
+      difficulty: quizDifficulty, // ✅ NEW
       timeLimitMinutes: Number(timeLimitMinutes) || 10,
       questions,
       instructions: quizInstructions,
@@ -605,12 +619,13 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
             <p>Hello,</p>
             <p>A new assessment is available for <b>Grade ${g}</b>.</p>
             <p><b>${quizTitle}</b><br/>Topic: ${quizTopic}</p>
+            <p>Difficulty: <b>${quizDifficulty}</b></p>
             <p><a href="${link}" target="_blank">Log in to Practice Online</a></p>
             <p>Regards,<br/>Practice Online Team</p>
           </div>
         `;
 
-        const text = `New assessment for Grade ${g}: ${quizTitle} (Topic: ${quizTopic}). Login: ${link}`;
+        const text = `New assessment for Grade ${g}: ${quizTitle} (Topic: ${quizTopic}). Difficulty: ${quizDifficulty}. Login: ${link}`;
 
         await sendBulkEmail({ recipients: emails, subject, html, text });
         console.log(`Notified ${emails.length} learners for grade ${g}.`);
@@ -643,6 +658,7 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
       "questions",
       "isFrozen",
       "frozenAt",
+      "difficulty", // ✅ NEW
     ];
 
     for (const k of allowed) {
@@ -660,6 +676,9 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
     if ("title" in update) update.title = cleanSpaces(update.title);
     if ("topic" in update) update.topic = cleanSpaces(update.topic);
     if ("instructions" in update) update.instructions = String(update.instructions || "");
+
+    // ✅ NEW: normalize difficulty on update
+    if ("difficulty" in update) update.difficulty = normalizeDifficulty(update.difficulty);
 
     if ("timeLimitMinutes" in update) {
       const t = Number(update.timeLimitMinutes);
@@ -1083,7 +1102,6 @@ app.post("/api/results", authRequired, async (req, res) => {
       resultId: saved._id,
     });
   } catch (e) {
-    // If old unique index still exists, admin retries can throw E11000
     if (String(e?.code) === "11000") {
       return res.status(409).json({ message: "Already attempted" });
     }
