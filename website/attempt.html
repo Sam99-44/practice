@@ -1,12 +1,3 @@
-<!-- attempt.html (UPDATED - COPY & PASTE)
-     ✅ Keeps everything the same
-     ✅ FIX: No more “instant redirect” to login (we validate token properly)
-     ✅ FIX: Remembers the page and returns after login (?next=...)
-     ✅ UI: Questions NOT bold
-     ✅ UI: Numbering aligned nicely + wraps well on phones
-     ✅ UI: Marks shown in a square box on the right
-     ✅ NEW: MCQ multi-select (checkboxes + chosenIndexes[])
--->
 <!doctype html>
 <html lang="en">
 <head>
@@ -77,21 +68,9 @@
       flex-wrap:wrap;
     }
 
-    .brand{
-      display:flex;
-      flex-direction:column;
-      line-height:1.15;
-    }
-    .brand .name{
-      font-weight:900;
-      letter-spacing:.2px;
-    }
-    .brand .sub{
-      font-weight:700;
-      opacity:.85;
-      font-size:12px;
-      margin-top:2px;
-    }
+    .brand{display:flex;flex-direction:column;line-height:1.15;}
+    .brand .name{font-weight:900;letter-spacing:.2px;}
+    .brand .sub{font-weight:700;opacity:.85;font-size:12px;margin-top:2px;}
 
     nav.nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
     nav.nav a{
@@ -165,7 +144,6 @@
 
     .q{padding:14px 0;border-top:1px solid #eee;}
     .q:first-child{border-top:none;padding-top:0}
-    .q .MathJax, .opt .MathJax, .hint .MathJax, .noteBox .MathJax { vertical-align: middle; }
 
     .qHead{
       display:flex;
@@ -187,16 +165,8 @@
       gap:10px;
       align-items:flex-start;
     }
-    .qNo{
-      flex:0 0 auto;
-      font-weight:700;
-      color:#0f172a;
-      width:28px;
-    }
-    .qText{
-      flex:1 1 auto;
-      min-width:0;
-    }
+    .qNo{flex:0 0 auto;font-weight:700;color:#0f172a;width:28px;}
+    .qText{flex:1 1 auto;min-width:0;}
 
     .marksBox{
       flex:0 0 auto;
@@ -212,20 +182,8 @@
       color:#0f172a;
       line-height:1;
     }
-    .marksMeta{
-      display:flex;
-      flex-direction:column;
-      align-items:flex-end;
-      gap:4px;
-      flex:0 0 auto;
-    }
-    .marksLbl{
-      font-weight:800;
-      font-size:12px;
-      color:var(--muted);
-      white-space:nowrap;
-      text-transform:none;
-    }
+    .marksMeta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:0 0 auto;}
+    .marksLbl{font-weight:800;font-size:12px;color:var(--muted);white-space:nowrap;}
 
     .qimg{
       display:block;
@@ -264,13 +222,6 @@
     .opt.disabled{opacity:.7;cursor:not-allowed}
     .opt.disabled:hover{background:#fff}
 
-    .multiHint{
-      margin:8px 0 10px 0;
-      font-size:13px;
-      font-weight:800;
-      color:#0b3c5d;
-    }
-
     .textAnswer{
       width:100%;
       padding:12px;
@@ -305,7 +256,6 @@
       cursor:pointer;
       font-weight:900;
     }
-    .btn:hover{filter:brightness(.98)}
     .btn:disabled{opacity:.6;cursor:not-allowed}
 
     .btn2{
@@ -340,17 +290,14 @@
       .sectionBody{padding:12px}
       .sectionHead{padding:12px}
       .metaRight{align-items:flex-start;min-width:0}
-      .qHead{flex-wrap:nowrap}
       .qTitle{font-size:14px}
       .qNo{width:24px}
-      .marksMeta{align-items:flex-end}
       .marksBox{width:40px;height:40px}
     }
   </style>
 </head>
 
 <body>
-
 <header class="topbar">
   <div class="topbar-inner">
     <div class="brand">
@@ -360,7 +307,7 @@
 
     <nav class="nav">
       <a href="learner-quizzes.html" class="active">Back to Practice</a>
-      <a href="results.html">Results</a>
+      <a href="results.html" id="resultsNavLink">Results</a>
       <button class="btnTop" id="logoutBtn" type="button">Logout</button>
     </nav>
   </div>
@@ -383,7 +330,9 @@
     <div class="sectionBody">
       <div id="lockNotice" class="lockBox hidden">
         <b class="error">Attempt already submitted.</b>
-        <div class="muted" style="margin-top:4px;">View your result in Results.</div>
+        <div class="muted" style="margin-top:4px;">
+          You can retry in <b>Practice Mode</b>. Practice results are not saved.
+        </div>
       </div>
 
       <div id="unavailableNotice" class="notice red hidden">
@@ -394,7 +343,8 @@
       <div id="questions"></div>
 
       <div class="btnRow">
-        <button class="btn" id="submitBtn" type="button">Submit</button>
+        <button class="btn" id="submitBtn" type="button">Submit (Save First Attempt)</button>
+        <button class="btn2" id="retryBtn" type="button" disabled>Retry</button>
         <button class="btn2" id="viewResultsBtn" type="button" disabled>View Results</button>
       </div>
 
@@ -406,9 +356,12 @@
 <script>
   const API = "https://api.practiceonline.co.za";
 
-  const quizId = new URLSearchParams(window.location.search).get("quizId");
-  const token = localStorage.getItem("token");
+  const qs = new URLSearchParams(window.location.search);
+  const quizId = qs.get("quizId");
+  const modeParam = String(qs.get("mode") || "").toLowerCase(); // mode=practice
+  const wantsPracticeFromLink = (modeParam === "practice");
 
+  const token = localStorage.getItem("token");
   if (!token) {
     const next = encodeURIComponent(window.location.href);
     window.location.href = `login.html?next=${next}`;
@@ -418,6 +371,7 @@
   const quizInfo = document.getElementById("quizInfo");
   const questionsDiv = document.getElementById("questions");
   const submitBtn = document.getElementById("submitBtn");
+  const retryBtn = document.getElementById("retryBtn");
   const viewResultsBtn = document.getElementById("viewResultsBtn");
   const msgEl = document.getElementById("msg");
   const lockNotice = document.getElementById("lockNotice");
@@ -426,9 +380,16 @@
   const statusText = document.getElementById("statusText");
   const timeText = document.getElementById("timeText");
 
+  // Top nav Results link (hide in practice mode)
+  const resultsNavLink = document.getElementById("resultsNavLink");
+
   let timerInterval = null;
   let quizEndAtMs = null;
   let quizData = null;
+
+  let alreadyAttempted = false;
+  let practiceMode = false;
+
   let submitted = false;
   let blocked = false;
 
@@ -489,11 +450,22 @@
     document.querySelectorAll(".opt").forEach(el => el.classList.add("disabled"));
   }
 
-  function stopTimerAndClearKey(){
+  function enableAllInputs(){
+    document.querySelectorAll("input[type=radio], input[type=checkbox], input[type=text], input[type=number], textarea").forEach(el => el.disabled = false);
+    document.querySelectorAll(".opt").forEach(el => el.classList.remove("disabled"));
+  }
+
+  function resetTimerFresh(){
+    localStorage.removeItem(END_KEY);
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = null;
-    timeText.style.display = "none";
-    localStorage.removeItem(END_KEY);
+    quizEndAtMs = null;
+    if (quizData) startTimerWithQuiz(quizData);
+  }
+
+  function clearAllAnswers(){
+    document.querySelectorAll(".mcqInput").forEach(inp => { inp.checked = false; });
+    document.querySelectorAll(".textAnswer").forEach(inp => { inp.value = ""; });
   }
 
   function isUnavailableBySchedule(quiz){
@@ -515,6 +487,372 @@
     return (quizData?.questions || []).filter(q => String(q.type || "mcq").toLowerCase() !== "note").length;
   }
 
+  async function checkAlreadyAttempted(){
+    try{
+      const r = await fetch(`${API}/api/results/my`,{
+        headers:{ Authorization:"Bearer " + token }
+      });
+      if (r.status === 401) return false;
+      const rows = await r.json().catch(()=>[]);
+      const list = Array.isArray(rows) ? rows : [];
+      return list.some(x => String(x.quizId) === String(quizId));
+    }catch{
+      return false;
+    }
+  }
+
+  // -------- Practice scoring --------
+  function parseNumberOrFraction(input) {
+    const s = String(input || "").trim().replace(/,/g, ".").replace(/−/g, "-");
+    if (!s) return null;
+
+    const m = s.match(/^([+-]?\d+(?:\.\d+)?)\s*\/\s*([+-]?\d+(?:\.\d+)?)$/);
+    if (m) {
+      const a = Number(m[1]);
+      const b = Number(m[2]);
+      if (!Number.isFinite(a) || !Number.isFinite(b) || b === 0) return null;
+      return a / b;
+    }
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function normalizeTextAnswer(s) {
+    return String(s || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "")
+      .replace(/−/g, "-");
+  }
+
+  function compareTextAnswer(userAns, correctAns, mode, tolerance) {
+    const uaRaw = String(userAns || "");
+    const caRaw = String(correctAns || "");
+    if (!caRaw.trim()) return false;
+
+    const uNum = parseNumberOrFraction(uaRaw);
+    const cNum = parseNumberOrFraction(caRaw);
+
+    if (mode === "number_tolerance") {
+      const tol = Number(tolerance);
+      if (uNum === null || cNum === null || !Number.isFinite(tol) || tol < 0) return false;
+      return Math.abs(uNum - cNum) <= tol;
+    }
+
+    if (uNum !== null && cNum !== null) return Math.abs(uNum - cNum) <= 1e-12;
+
+    const ua = normalizeTextAnswer(uaRaw);
+    const ca = normalizeTextAnswer(caRaw);
+
+    if (mode === "contains") return ua.includes(ca);
+    return ua === ca;
+  }
+
+  function isMultiMcqCorrect(chosenIdxs, correctIdxs){
+    const a = normalizeIndexArray(chosenIdxs);
+    const b = normalizeIndexArray(correctIdxs);
+    if (!b.length) return false;
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
+
+  function computePracticeResult(){
+    const qs = Array.isArray(quizData?.questions) ? quizData.questions : [];
+    let totalPoints = 0;
+    let scorePoints = 0;
+
+    qs.forEach((q, i) => {
+      const type = String(q.type || "mcq").toLowerCase();
+      if (type === "note") return;
+
+      const pts = Math.max(1, Math.round(Number(q.points || 1)));
+      totalPoints += pts;
+
+      if (type === "text") {
+        const inp = document.getElementById(`txt${i}`);
+        const userText = inp ? cleanSpaces(inp.value) : "";
+        const correctText = cleanSpaces(q.correctText || "");
+        const mode = q.textAnswerMode || "exact";
+        const tol = q.numberTolerance ?? 0;
+        if (compareTextAnswer(userText, correctText, mode, tol)) scorePoints += pts;
+        return;
+      }
+
+      const multi = isMultiQuestion(q);
+      if (multi){
+        const checked = [...document.querySelectorAll(`.mcqInput[data-qindex="${i}"]:checked`)];
+        const chosenIndexes = checked.map(el => Number(el.value)).filter(n => Number.isInteger(n) && n >= 0);
+        const correctIndexes = normalizeIndexArray(q.correctIndexes || []);
+        if (isMultiMcqCorrect(chosenIndexes, correctIndexes)) scorePoints += pts;
+      } else {
+        const chosen = document.querySelector(`.mcqInput[data-qindex="${i}"]:checked`);
+        const chosenIndex = chosen ? Number(chosen.value) : -1;
+        const correctIndex = Number.isFinite(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
+        if (chosenIndex === correctIndex && correctIndex >= 0) scorePoints += pts;
+      }
+    });
+
+    const percent = totalPoints > 0 ? Math.round((scorePoints / totalPoints) * 100) : 0;
+    return { scorePoints, totalPoints, percent };
+  }
+
+  // -------- Timer --------
+  function calcFallbackSeconds(totalQuestions){
+    const raw = totalQuestions * 60;
+    return Math.max(5 * 60, Math.min(raw, 30 * 60));
+  }
+
+  function startTimerWithQuiz(quiz){
+    const now = Date.now();
+    const savedEnd = Number(localStorage.getItem(END_KEY));
+
+    if (savedEnd && savedEnd > now) quizEndAtMs = savedEnd;
+    else {
+      const mins = Number(quiz.timeLimitMinutes || 0);
+      const totalQuestions = (quiz.questions || []).filter(q => String(q.type || "mcq").toLowerCase() !== "note").length;
+
+      let secs;
+      if (Number.isFinite(mins) && mins > 0) secs = mins * 60;
+      else secs = calcFallbackSeconds(totalQuestions);
+
+      quizEndAtMs = now + secs * 1000;
+      localStorage.setItem(END_KEY, String(quizEndAtMs));
+    }
+
+    timeText.style.display = "block";
+    timeText.classList.remove("warn");
+    tickTimer();
+    clearInterval(timerInterval);
+    timerInterval = setInterval(tickTimer, 1000);
+  }
+
+  function tickTimer(){
+    if (!quizEndAtMs || submitted || blocked) return;
+
+    const remainingMs = quizEndAtMs - Date.now();
+    if (remainingMs <= 0) {
+      timeText.textContent = "Time: 00:00";
+      timeText.classList.add("warn");
+      clearInterval(timerInterval);
+      timerInterval = null;
+
+      msgEl.className = "error";
+      msgEl.textContent = "Time is up. Submitting…";
+      submitQuiz("auto");
+      return;
+    }
+
+    const remainingSec = Math.ceil(remainingMs / 1000);
+    const mm = String(Math.floor(remainingSec / 60)).padStart(2, "0");
+    const ss = String(remainingSec % 60).padStart(2, "0");
+    timeText.textContent = `Time: ${mm}:${ss}`;
+    if (remainingSec <= 60) timeText.classList.add("warn");
+    else timeText.classList.remove("warn");
+  }
+
+  function getTimeTakenSeconds(){
+    const mins = Number(quizData?.timeLimitMinutes || 0);
+    const totalQuestions = (quizData?.questions || []).filter(q => String(q.type || "mcq").toLowerCase() !== "note").length;
+    const totalSec = (Number.isFinite(mins) && mins > 0) ? mins * 60 : calcFallbackSeconds(totalQuestions);
+    const remainingSec = quizEndAtMs ? Math.max(0, Math.ceil((quizEndAtMs - Date.now()) / 1000)) : 0;
+    return Math.max(0, totalSec - remainingSec);
+  }
+
+  function buildAnswersPayload(){
+    const answers = [];
+    (quizData.questions || []).forEach((q, i) => {
+      const type = String(q.type || "mcq").toLowerCase();
+      if (type === "note") return;
+
+      if (type === "text") {
+        const inp = document.getElementById(`txt${i}`);
+        answers.push({ questionIndex: i, textAnswer: inp ? cleanSpaces(inp.value) : "" });
+        return;
+      }
+
+      const multi = isMultiQuestion(q);
+      if (multi){
+        const checked = [...document.querySelectorAll(`.mcqInput[data-qindex="${i}"]:checked`)];
+        const chosenIndexes = checked.map(el => Number(el.value)).filter(n => Number.isInteger(n) && n >= 0);
+        answers.push({ questionIndex: i, chosenIndexes });
+      } else {
+        const chosen = document.querySelector(`.mcqInput[data-qindex="${i}"]:checked`);
+        answers.push({ questionIndex: i, chosenIndex: chosen ? Number(chosen.value) : -1 });
+      }
+    });
+    return answers;
+  }
+
+  function countAnswered(){
+    let answered = 0;
+    (quizData.questions || []).forEach((q, i) => {
+      const type = String(q.type || "mcq").toLowerCase();
+      if (type === "note") return;
+
+      if (type === "text") {
+        const inp = document.getElementById(`txt${i}`);
+        if (inp && cleanSpaces(inp.value)) answered++;
+        return;
+      }
+
+      const multi = isMultiQuestion(q);
+      if (multi){
+        if (document.querySelectorAll(`.mcqInput[data-qindex="${i}"]:checked`).length > 0) answered++;
+      } else {
+        if (document.querySelector(`.mcqInput[data-qindex="${i}"]:checked`)) answered++;
+      }
+    });
+    return answered;
+  }
+
+  // ✅ Practice mode UI: hide View Results + hide Results nav link
+  function applyPracticeUI(){
+    viewResultsBtn.classList.add("hidden");
+    resultsNavLink.classList.add("hidden");
+  }
+
+  function applyNormalUI(){
+    viewResultsBtn.classList.remove("hidden");
+    resultsNavLink.classList.remove("hidden");
+  }
+
+  // ✅ Start Practice Mode
+  function startPracticeMode(){
+    if (!quizData) return;
+
+    practiceMode = true;
+    blocked = false;
+    submitted = false;
+
+    applyPracticeUI();
+
+    msgEl.className = "muted";
+    msgEl.textContent = "Practice Mode: Submit to see your percentage. This attempt will NOT be saved.";
+
+    clearAllAnswers();
+    enableAllInputs();
+    resetTimerFresh();
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Submit";
+    submitBtn.onclick = () => submitQuiz("manual");
+
+    retryBtn.disabled = false;
+
+    lockNotice.classList.add("hidden");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  retryBtn.onclick = startPracticeMode;
+
+  async function submitQuiz(mode){
+    if (!quizData || submitted || blocked) return;
+
+    const total = countScorableQuestions();
+    const answered = countAnswered();
+
+    if (mode === "manual" && answered < total) {
+      msgEl.className = "error";
+      msgEl.textContent = `Please answer all questions before submitting.`;
+      return;
+    }
+
+    submitted = true;
+    submitBtn.disabled = true;
+
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+    localStorage.removeItem(END_KEY);
+
+    // ✅ PRACTICE submit: show message based on 100% or not
+    if (practiceMode) {
+      const r = computePracticeResult();
+
+      if (r.percent === 100) {
+        msgEl.className = "ok";
+        msgEl.textContent = `Outcome: ${r.percent}%. Well done! Move to the next assessment.`;
+      } else {
+        msgEl.className = "error";
+        msgEl.textContent = `Outcome: ${r.percent}%. You are getting there, please retry again until you get to 100%.`;
+      }
+
+      retryBtn.disabled = false;
+      disableAllInputs();
+      return;
+    }
+
+    // ✅ NORMAL submit locked if already attempted
+    if (alreadyAttempted) {
+      msgEl.className = "error";
+      msgEl.textContent = "You already submitted this assessment. Use Retry (Practice Mode).";
+      blocked = true;
+      disableAllInputs();
+      return;
+    }
+
+    const payload = {
+      quizId,
+      answers: buildAnswersPayload(),
+      timeTakenSeconds: getTimeTakenSeconds()
+    };
+
+    let res;
+    try{
+      res = await fetch(`${API}/api/results`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token
+        },
+        body: JSON.stringify(payload)
+      });
+    }catch{
+      msgEl.className = "error";
+      msgEl.textContent = "Network error. Please try again.";
+      submitted = false;
+      submitBtn.disabled = false;
+      return;
+    }
+
+    if (res.status === 409) {
+      alreadyAttempted = true;
+      lockNotice.classList.remove("hidden");
+      msgEl.className = "error";
+      msgEl.textContent = "First attempt already saved. You can retry in Practice Mode.";
+      disableAllInputs();
+
+      retryBtn.disabled = false;
+      submitBtn.disabled = true;
+
+      applyNormalUI();
+      viewResultsBtn.disabled = false;
+      viewResultsBtn.onclick = () => window.location.href = "results.html";
+      return;
+    }
+
+    if (!res.ok) {
+      const data = await res.json().catch(()=>({}));
+      msgEl.className = "error";
+      msgEl.textContent = data.message || "Could not save attempt. Please try again.";
+      submitted = false;
+      submitBtn.disabled = false;
+      return;
+    }
+
+    alreadyAttempted = true;
+    msgEl.className = "ok";
+    msgEl.textContent = "First attempt submitted and saved. You can now retry (Practice Mode).";
+
+    retryBtn.disabled = false;
+
+    applyNormalUI();
+    viewResultsBtn.disabled = false;
+    viewResultsBtn.onclick = () => window.location.href = "results.html";
+
+    disableAllInputs();
+  }
+
   async function loadQuiz() {
     msgEl.className = "muted";
     msgEl.textContent = "";
@@ -522,6 +860,9 @@
     unavailableNotice.classList.add("hidden");
     blocked = false;
     submitted = false;
+    practiceMode = false;
+
+    alreadyAttempted = await checkAlreadyAttempted();
 
     let res;
     try{
@@ -590,7 +931,6 @@
             <span class="qNo">${displayNo}.</span>
             <span class="qText">${qText}</span>
           </div>
-
           <div class="marksMeta">
             <div class="marksLbl">Marks</div>
             <div class="marksBox">${points}</div>
@@ -603,7 +943,7 @@
           <div class="q" data-scorable="1">
             ${headHtml}
             ${imageHtml}
-            <input class="textAnswer" id="txt${i}" data-text-qindex="${i}" placeholder="Type your answer" autocomplete="off" />
+            <input class="textAnswer" id="txt${i}" placeholder="Type your answer" autocomplete="off" />
             ${hint ? `<div class="hint">Hint: <span class="hintText">${escapeHtml(hint)}</span></div>` : ``}
           </div>
         `;
@@ -617,7 +957,6 @@
         <div class="q" data-scorable="1" data-qindex="${i}">
           ${headHtml}
           ${imageHtml}
-          ${multi ? `<div class="multiHint">Select one or more options (multi-select).</div>` : ``}
           ${opts.map((o, j) => `
             <label class="opt">
               <input class="mcqInput" data-qindex="${i}" type="${inputType}" name="q${i}" value="${j}">
@@ -635,232 +974,51 @@
       unavailableNotice.classList.remove("hidden");
       blocked = true;
       submitBtn.disabled = true;
+      retryBtn.disabled = true;
       viewResultsBtn.disabled = true;
       disableAllInputs();
-      stopTimerAndClearKey();
       return;
     }
+
+    // ✅ Already attempted -> lock normal submit, allow retry
+    if (alreadyAttempted){
+      lockNotice.classList.remove("hidden");
+      msgEl.className = "muted";
+      msgEl.textContent = "Your first attempt is already saved. You can retry (Practice Mode).";
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submit (Locked - Already Saved)";
+
+      retryBtn.disabled = false;
+
+      applyNormalUI();
+      viewResultsBtn.disabled = false;
+      viewResultsBtn.onclick = () => window.location.href = "results.html";
+
+      disableAllInputs();
+      resetTimerFresh();
+
+      if (wantsPracticeFromLink) startPracticeMode();
+      return;
+    }
+
+    // ✅ Not attempted yet -> normal submit available
+    practiceMode = false;
+    applyNormalUI();
 
     submitBtn.disabled = false;
+    submitBtn.textContent = "Submit (Save First Attempt)";
+    retryBtn.disabled = true;
+
+    viewResultsBtn.disabled = true;
+
     startTimerWithQuiz(quizData);
     submitBtn.onclick = () => submitQuiz("manual");
-  }
 
-  function calcFallbackSeconds(totalQuestions){
-    const raw = totalQuestions * 60;
-    return Math.max(5 * 60, Math.min(raw, 30 * 60));
-  }
-
-  function startTimerWithQuiz(quiz){
-    const now = Date.now();
-    const savedEnd = Number(localStorage.getItem(END_KEY));
-
-    if (savedEnd && savedEnd > now) {
-      quizEndAtMs = savedEnd;
-    } else {
-      const mins = Number(quiz.timeLimitMinutes || 0);
-      const totalQuestions = (quiz.questions || []).filter(q => String(q.type || "mcq").toLowerCase() !== "note").length;
-
-      let secs;
-      if (Number.isFinite(mins) && mins > 0) secs = mins * 60;
-      else secs = calcFallbackSeconds(totalQuestions);
-
-      quizEndAtMs = now + secs * 1000;
-      localStorage.setItem(END_KEY, String(quizEndAtMs));
-    }
-
-    timeText.style.display = "block";
-    timeText.classList.remove("warn");
-    tickTimer();
-    clearInterval(timerInterval);
-    timerInterval = setInterval(tickTimer, 1000);
-  }
-
-  function tickTimer(){
-    if (!quizEndAtMs || submitted || blocked) return;
-
-    const remainingMs = quizEndAtMs - Date.now();
-
-    if (remainingMs <= 0) {
-      timeText.textContent = "Time: 00:00";
-      timeText.classList.add("warn");
-      clearInterval(timerInterval);
-      timerInterval = null;
-
+    if (wantsPracticeFromLink) {
       msgEl.className = "error";
-      msgEl.textContent = "Time is up. Submitting your answers…";
-      submitQuiz("auto");
-      return;
+      msgEl.textContent = "Practice Mode is available after you submit your first attempt.";
     }
-
-    const remainingSec = Math.ceil(remainingMs / 1000);
-    const mm = String(Math.floor(remainingSec / 60)).padStart(2, "0");
-    const ss = String(remainingSec % 60).padStart(2, "0");
-    timeText.textContent = `Time: ${mm}:${ss}`;
-
-    if (remainingSec <= 60) timeText.classList.add("warn");
-    else timeText.classList.remove("warn");
-  }
-
-  function getTimeTakenSeconds(){
-    const mins = Number(quizData?.timeLimitMinutes || 0);
-    const totalQuestions = (quizData?.questions || []).filter(q => String(q.type || "mcq").toLowerCase() !== "note").length;
-
-    const totalSec = (Number.isFinite(mins) && mins > 0)
-      ? mins * 60
-      : calcFallbackSeconds(totalQuestions);
-
-    const now = Date.now();
-    const remainingSec = quizEndAtMs ? Math.max(0, Math.ceil((quizEndAtMs - now) / 1000)) : 0;
-    const taken = totalSec - remainingSec;
-    return Math.max(0, taken);
-  }
-
-  function buildAnswersPayload(){
-    const answers = [];
-    (quizData.questions || []).forEach((q, i) => {
-      const type = String(q.type || "mcq").toLowerCase();
-      if (type === "note") return;
-
-      if (type === "text") {
-        const inp = document.getElementById(`txt${i}`);
-        const val = inp ? cleanSpaces(inp.value) : "";
-        answers.push({ questionIndex: i, textAnswer: val });
-        return;
-      }
-
-      const multi = isMultiQuestion(q);
-
-      if (multi){
-        const checked = [...document.querySelectorAll(`.mcqInput[data-qindex="${i}"]:checked`)];
-        const chosenIndexes = checked
-          .map(el => Number(el.value))
-          .filter(n => Number.isInteger(n) && n >= 0);
-
-        answers.push({ questionIndex: i, chosenIndexes });
-      } else {
-        const chosen = document.querySelector(`.mcqInput[data-qindex="${i}"]:checked`);
-        answers.push({
-          questionIndex: i,
-          chosenIndex: chosen ? Number(chosen.value) : -1
-        });
-      }
-    });
-    return answers;
-  }
-
-  function countAnswered(){
-    let answered = 0;
-    (quizData.questions || []).forEach((q, i) => {
-      const type = String(q.type || "mcq").toLowerCase();
-      if (type === "note") return;
-
-      if (type === "text") {
-        const inp = document.getElementById(`txt${i}`);
-        if (inp && cleanSpaces(inp.value)) answered++;
-        return;
-      }
-
-      const multi = isMultiQuestion(q);
-
-      if (multi){
-        const checkedCount = document.querySelectorAll(`.mcqInput[data-qindex="${i}"]:checked`).length;
-        if (checkedCount > 0) answered++;
-      } else {
-        const chosen = document.querySelector(`.mcqInput[data-qindex="${i}"]:checked`);
-        if (chosen) answered++;
-      }
-    });
-    return answered;
-  }
-
-  async function submitQuiz(mode){
-    if (!quizData || submitted || blocked) return;
-
-    const total = countScorableQuestions();
-    const answered = countAnswered();
-
-    if (mode === "manual" && answered < total) {
-      msgEl.className = "error";
-      msgEl.textContent = `Please answer all questions (${answered}/${total}) before submitting.`;
-      return;
-    }
-
-    submitted = true;
-    submitBtn.disabled = true;
-
-    if (timerInterval) clearInterval(timerInterval);
-    timerInterval = null;
-
-    const timeTakenSeconds = getTimeTakenSeconds();
-    localStorage.removeItem(END_KEY);
-
-    const payload = {
-      quizId,
-      answers: buildAnswersPayload(),
-      timeTakenSeconds
-    };
-
-    let res;
-    try{
-      res = await fetch(`${API}/api/results`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token
-        },
-        body: JSON.stringify(payload)
-      });
-    }catch{
-      msgEl.className = "error";
-      msgEl.textContent = "Network error. Please try again.";
-      submitted = false;
-      submitBtn.disabled = false;
-      return;
-    }
-
-    if (res.status === 409) {
-      lockNotice.classList.remove("hidden");
-      msgEl.className = "error";
-      msgEl.textContent = "You already attempted this assessment.";
-      blocked = true;
-      disableAllInputs();
-      return;
-    }
-
-    if (res.status === 403) {
-      unavailableNotice.classList.remove("hidden");
-      const data = await res.json().catch(()=>({}));
-      msgEl.className = "error";
-      msgEl.textContent = data.message || "This assessment is currently unavailable. Please try again later.";
-      blocked = true;
-      disableAllInputs();
-      return;
-    }
-
-    if (res.status === 401) {
-      localStorage.removeItem("token");
-      const next = encodeURIComponent(window.location.href);
-      window.location.href = `login.html?next=${next}`;
-      return;
-    }
-
-    if (!res.ok) {
-      const data = await res.json().catch(()=>({}));
-      msgEl.className = "error";
-      msgEl.textContent = data.message || "Could not save attempt. Please try again.";
-      submitted = false;
-      submitBtn.disabled = false;
-      return;
-    }
-
-    msgEl.className = "ok";
-    msgEl.textContent = "Submitted successfully.";
-
-    viewResultsBtn.disabled = false;
-    viewResultsBtn.onclick = () => window.location.href = "results.html";
-
-    disableAllInputs();
   }
 
   function escapeHtml(str){
