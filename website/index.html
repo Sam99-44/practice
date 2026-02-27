@@ -129,8 +129,6 @@
       align-items:center;
     }
 
-    /* (Removed badge/kicker styles from the UI to avoid “AI badge” feel) */
-
     .hero h1{
       font-size:52px;
       line-height:1.05;
@@ -154,7 +152,7 @@
       margin-top:16px;
     }
 
-    /* ---------- BUTTONS (more “normal website”) ---------- */
+    /* ---------- BUTTONS ---------- */
     .btnPrimary{
       display:inline-flex;
       align-items:center;
@@ -187,7 +185,55 @@
     }
     .btnGhost:hover{background:rgba(255,255,255,.06)}
 
-    /* ---------- SEARCH CARD ---------- */
+    /* ---------- HERO GRAPH (MAIN VISUAL) ---------- */
+    .heroGraph{
+      border-radius:16px;
+      border:1px solid var(--glassBorder);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+      box-shadow:var(--shadow);
+      padding:16px;
+      backdrop-filter: blur(12px);
+    }
+    .heroGraphTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:10px;
+      flex-wrap:wrap;
+    }
+    .heroGraphTop h3{
+      margin:0;
+      font-size:16px;
+      font-weight:900;
+    }
+    .heroGraphTop p{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.5;
+      max-width:520px;
+    }
+    .heroGraphImgWrap{
+      background:rgba(255,255,255,.96);
+      border-radius:14px;
+      border:1px solid rgba(15,12,43,.08);
+      overflow:hidden;
+      padding:10px;
+    }
+    .heroGraphImg{
+      width:100%;
+      height:300px;        /* main image size */
+      object-fit:contain;  /* don't crop the graph */
+      display:block;
+    }
+
+    /* ---------- SEARCH (MOVED BELOW HERO) ---------- */
+    .searchStrip{
+      max-width:1150px;
+      margin:0 auto;
+      padding:0 48px 10px;
+    }
     .search-area{
       border-radius:16px;
       border:1px solid var(--glassBorder);
@@ -196,7 +242,6 @@
       padding:16px;
       backdrop-filter: blur(12px);
     }
-
     .search-area h3{
       margin:0 0 8px;
       font-size:16px;
@@ -208,7 +253,6 @@
       font-size:13px;
       line-height:1.5;
     }
-
     .search-box{
       background:rgba(255,255,255,.96);
       border-radius:12px;
@@ -217,7 +261,6 @@
       align-items:center;
       border:1px solid rgba(15,12,43,.08);
     }
-
     .search-box input{
       width:100%;
       padding:14px 14px;
@@ -226,7 +269,6 @@
       outline:none;
       color:var(--ink);
     }
-
     .search-box button{
       border:none;
       background:var(--red);
@@ -236,14 +278,12 @@
       cursor:pointer;
     }
     .search-box button:active{transform:translateY(1px)}
-
     .search-tabs{
       display:flex;
       gap:10px;
       margin-top:12px;
       flex-wrap:wrap;
     }
-
     .search-tab{
       cursor:pointer;
       padding:9px 12px;
@@ -262,7 +302,7 @@
       background:rgba(225,29,46,.10);
     }
 
-    /* ---------- SEO BOOST (short + human) ---------- */
+    /* ---------- SEO BOOST ---------- */
     .seo-boost{
       max-width:900px;
       margin:48px auto 10px;
@@ -369,14 +409,12 @@
       margin:0 auto 22px;
       text-align:center;
     }
-
     .about-grid{
       display:grid;
       grid-template-columns:repeat(3,1fr);
       gap:18px;
       margin-top:28px;
     }
-
     .about-card{
       background:rgba(255,255,255,.05);
       padding:22px;
@@ -440,7 +478,6 @@
       font-size:17px;
       line-height:1.65;
     }
-
     .contact-grid{
       display:grid;
       grid-template-columns:repeat(3,1fr);
@@ -448,7 +485,6 @@
       max-width:940px;
       margin:0 auto;
     }
-
     .contact-card{
       background:rgba(255,255,255,.05);
       padding:22px;
@@ -576,7 +612,8 @@
     /* ---------- RESPONSIVE ---------- */
     @media(max-width:1000px){
       .topbar{padding:14px 18px}
-      .hero{padding:60px 18px 40px}
+      .hero{padding:60px 18px 26px}
+      .searchStrip{padding:0 18px 6px}
       .about,.policies,.contact{padding:56px 18px}
       .seo-boost{padding:0 18px;}
       .grade-links{padding:0 18px;}
@@ -588,6 +625,7 @@
       .menuBtn{display:inline-flex;}
       .hero{grid-template-columns:1fr; gap:18px;}
       .hero h1{font-size:38px}
+      .heroGraphImg{height:260px}
       .about-grid,.pol-grid,.contact-grid{grid-template-columns:1fr}
       .grade-grid{grid-template-columns:1fr 1fr;}
     }
@@ -598,6 +636,7 @@
       .search-box input{font-size:14px}
       .logo img{width:52px;height:52px}
       .grade-grid{grid-template-columns:1fr;}
+      .heroGraphImg{height:220px}
     }
   </style>
 </head>
@@ -651,7 +690,29 @@
       </div>
     </div>
 
-    <div class="search-area" aria-label="Search assessments">
+    <!-- MAIN HERO IMAGE (GRAPH) -->
+    <div class="heroGraph" aria-label="Performance overview">
+      <div class="heroGraphTop">
+        <div>
+          <h3>Your Performance Dashboard</h3>
+          <p>Track your strengths and improve your weak topics.</p>
+        </div>
+      </div>
+
+      <div class="heroGraphImgWrap">
+        <img
+          class="heroGraphImg"
+          src="https://res.cloudinary.com/dopoxadlr/image/upload/v1772224685/Graph_mgqe5v.png"
+          alt="Learner performance graph"
+          loading="lazy"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- SEARCH (NOW BELOW HERO) -->
+  <section class="searchStrip" aria-label="Search assessments">
+    <div class="search-area">
       <h3>Search a topic</h3>
       <p class="hint">Example: Functions, Algebra, Integers</p>
 
@@ -890,9 +951,6 @@
         <h4>7. Contact</h4>
         <p>
           For privacy questions, contact: <strong>info@practiceonline.co.za</strong>
-        </p>
-
-        <p style="margin-top:14px;color:#64748b;">
         </p>
       </div>
     </div>
