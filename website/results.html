@@ -7,11 +7,13 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
 :root{
   --nav:#1b1648;
+  --accent:#0b3c5d;
+  --red:#e11d2e;
   --bg:#f6f7fb;
   --card:#ffffff;
   --border:#e6e6e6;
@@ -31,17 +33,25 @@ a{text-decoration:none;color:inherit}
   display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
 }
 
-.brand{font-weight:700;letter-spacing:.15px;}
+.brand{font-weight:900;letter-spacing:.2px;}
 .nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-.nav a{padding:8px 10px;border-radius:8px;color:#e7e9ff;font-weight:600;font-size:13px;}
-.nav a.active{border-bottom:3px solid #e11d2e;color:#fff;}
+.nav a{
+  padding:8px 10px;border-radius:8px;color:#e7e9ff;
+  font-weight:700;font-size:13px;
+}
+.nav a.active{border-bottom:3px solid var(--red);color:#fff;}
 .nav a:hover{background:rgba(255,255,255,.10)}
 
 .logoutBtn{
-  background:transparent;color:#fff;border:1px solid rgba(255,255,255,.22);
-  padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600;
+  background:rgba(255,255,255,.12);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.2);
+  padding:8px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:800;
 }
-.logoutBtn:hover{background:rgba(255,255,255,.08)}
+.logoutBtn:hover{background:rgba(255,255,255,.18)}
 
 .wrap{max-width:1100px;margin:0 auto;padding:18px;}
 
@@ -62,12 +72,12 @@ th{
   font-size:11px;
   text-transform:uppercase;
   color:var(--muted);
-  font-weight:600;
+  font-weight:800;
   letter-spacing:.06em;
 }
 
-.status.pass{color:#065f46;font-weight:700;}
-.status.fail{color:#9a3412;font-weight:700;}
+.status.pass{color:#065f46;font-weight:800;}
+.status.fail{color:#9a3412;font-weight:800;}
 
 /* ✅ NICE BADGE STYLE */
 .actionBadge{
@@ -76,10 +86,11 @@ th{
   border-radius:999px;
   background:#f3f4f6;
   border:1px solid #e5e7eb;
-  color:#000;               /* black text */
-  font-weight:600;
+  color:#000;
+  font-weight:800;
   cursor:pointer;
   transition:all .15s ease;
+  user-select:none;
 }
 
 .actionBadge:hover{
@@ -93,7 +104,7 @@ th{
   border-radius:12px;
   background:#fafafa;
   color:var(--muted);
-  font-weight:600;
+  font-weight:700;
 }
 </style>
 
@@ -109,29 +120,41 @@ if(!localStorage.getItem("token")){
 <header class="topbar">
   <div class="topbar-inner">
     <div class="brand">Practice Online</div>
+
     <nav class="nav">
       <a href="learner-quizzes.html">Practice</a>
       <a class="active" href="results.html">Results</a>
+
+      <!-- ✅ OTHER TABS -->
+      <a href="support.html">Support</a>
+      <a href="about.html">About</a>
+
+      <!-- ✅ ADMIN TAB (hidden for learners by nav.js) -->
+      <a href="admin-quiz.html" data-admin style="display:none;">Admin</a>
+
       <button class="logoutBtn" id="logoutBtn">Logout</button>
     </nav>
   </div>
 </header>
 
 <main class="wrap">
-
-<section class="section" id="tableWrap">
-  <div class="empty">Loading results…</div>
-</section>
-
+  <section class="section" id="tableWrap">
+    <div class="empty">Loading results…</div>
+  </section>
 </main>
 
+<!-- ✅ IMPORTANT: include nav.js so window.API + admin visibility works -->
+<script src="nav.js"></script>
+
 <script>
-const API = "https://api.practiceonline.co.za";
+const API = window.API || "https://api.practiceonline.co.za";  // ✅ uses nav.js if present
 const token = localStorage.getItem("token");
 let allResults = [];
 
 document.getElementById("logoutBtn").onclick = ()=>{
   localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  localStorage.removeItem("me_cache");
   location.href="login.html";
 };
 
@@ -144,6 +167,8 @@ async function loadResults(){
 
   if(res.status===401){
     localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    localStorage.removeItem("me_cache");
     location.href="login.html";
     return;
   }
