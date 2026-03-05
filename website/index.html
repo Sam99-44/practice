@@ -1,1159 +1,548 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Practice Online | Grade 8–12 Quizzes and Revision</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Practice Online | Grade 8–12 Quizzes</title>
 
-  <!-- SEO -->
-  <meta name="description" content="Practice Online helps Grade 8–12 learners with quizzes, revision and results. CAPS and IEB support. Learn, practise and track your progress." />
+<!-- SEO -->
+<meta name="description" content="Practice Online helps Grade 8–12 learners practise mathematics with timed assessments, instant solutions, topic analysis and unlimited retakes. Improve your results through structured online practice." />
 
-  <!-- Font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <style>
-    :root{
-      --bg1:#1b1648;
-      --bg2:#0f0c2b;
-      --red:#e11d2e;
-      --white:#ffffff;
-      --muted:#cbd5f5;
-      --glassBorder: rgba(255,255,255,.12);
-      --shadow: 0 18px 55px rgba(0,0,0,.35);
-      --dark:#0f172a;
-      --ink:#111827;
-    }
+<style>
+:root{
+  --blue:#0b3c5d;
+  --red:#e11d2e;
 
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth;}
-    body{
-      margin:0;
-      font-family:"Inter", Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 18% 8%, #2b2670 0%, var(--bg1) 35%, var(--bg2) 100%);
-      color:var(--white);
-      overflow-x:hidden;
-    }
-    a{color:inherit}
+  --bgTop:#f4f6f9;
+  --bgMid:#e9edf2;
 
-    /* ---------- TOP NAV ---------- */
-    .topbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:16px 48px;
-      gap:16px;
-      position:sticky;
-      top:0;
-      z-index:50;
-      background:#ffffff;
-      border-bottom:1px solid rgba(15,23,42,.12);
-    }
-    .logo{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      font-size:18px;
-      font-weight:900;
-      letter-spacing:.8px;
-      white-space:nowrap;
-      text-transform:uppercase;
-      text-decoration:none;
-      color:var(--dark);
-    }
-    .logo img{
-      width:58px;height:58px;object-fit:contain;border:none;box-shadow:none;background:transparent;
-    }
-    .nav-links{
-      display:flex;gap:18px;align-items:center;flex-wrap:wrap;
-    }
-    .nav-links a{
-      color:var(--dark);
-      text-decoration:none;
-      font-weight:700;
-    }
-    .nav-links a:hover{opacity:.75}
+  --text:#0f172a;
+  --muted:#64748b;
+  --line:rgba(15,23,42,.10);
 
-    .login-btn{
-      padding:10px 14px;
-      border:2px solid rgba(225,29,46,.95);
-      background:transparent;
-      border-radius:12px;
-      color:var(--dark);
-      text-decoration:none;
-      font-weight:900;
-      white-space:nowrap;
-    }
-    .login-btn:hover{background:rgba(225,29,46,.08)}
+  --max:1100px;
+  --radius:18px;
+  --shadow:0 18px 55px rgba(2,6,23,.14);
+  --shadow2:0 10px 26px rgba(2,6,23,.06);
+}
 
-    .menuBtn{
-      display:none;
-      border:1px solid rgba(15,23,42,.18);
-      background:#f8fafc;
-      color:var(--dark);
-      padding:10px 12px;
-      border-radius:12px;
-      font-weight:900;
-      cursor:pointer;
-      white-space:nowrap;
-    }
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  color:var(--text);
+  background:linear-gradient(180deg,var(--bgTop)0%,var(--bgMid)55%,#fff 100%);
+}
+a{text-decoration:none;color:inherit}
+img{max-width:100%;display:block}
 
-    .mobileMenu{
-      display:none;
-      padding:10px 16px 16px;
-      border-bottom:1px solid rgba(15,23,42,.12);
-      background:#ffffff;
-    }
-    .mobileMenu.open{display:block}
-    .mobileMenu a{
-      display:block;
-      padding:12px 10px;
-      color:var(--dark);
-      text-decoration:none;
-      font-weight:800;
-      border:1px solid rgba(15,23,42,.12);
-      background:#f8fafc;
-      border-radius:12px;
-      margin-top:10px;
-    }
+/* NAVBAR */
+.navbar{
+  background:var(--blue);
+  color:#fff;
+  position:sticky;
+  top:0;
+  z-index:100;
+  box-shadow:0 10px 24px rgba(2,6,23,.14);
+}
+.nav-inner{
+  max-width:var(--max);
+  margin:auto;
+  padding:10px 16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+}
+.nav-links{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  overflow:auto;
+  white-space:nowrap;
+  scrollbar-width:none;
+  min-width:0;
+}
+.nav-links::-webkit-scrollbar{display:none;}
+.nav-links a{
+  font-size:13.5px;
+  font-weight:700;
+  opacity:.92;
+  padding:8px 2px;
+  border-bottom:2px solid transparent;
+}
+.nav-links a:hover{
+  opacity:1;
+  border-bottom-color:rgba(255,255,255,.6);
+}
+.nav-actions{
+  display:flex;
+  gap:14px;
+  white-space:nowrap;
+}
+.nav-actions a{
+  font-size:13.5px;
+  font-weight:800;
+  opacity:.95;
+  padding:8px 2px;
+  border-bottom:2px solid transparent;
+}
+.nav-actions a:hover{
+  opacity:1;
+  border-bottom-color:rgba(255,255,255,.6);
+}
 
-    /* ---------- HERO ---------- */
-    .hero{
-      max-width:1150px;
-      margin:0 auto;
-      display:grid;
-      grid-template-columns:1.12fr 0.88fr;
-      gap:26px;
-      padding:72px 48px 52px;
-      align-items:center;
-    }
+/* TRUST STRIP */
+.trust{
+  max-width:var(--max);
+  margin:16px auto 0;
+  padding:0 16px;
+}
+.trust-inner{
+  border:1px solid rgba(15,23,42,.08);
+  background:rgba(255,255,255,.82);
+  border-radius:14px;
+  padding:10px 12px;
+  display:flex;
+  gap:14px;
+  align-items:center;
+  justify-content:space-between;
+}
+.trust-left{
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px;
+  align-items:center;
+}
+.trust-item{
+  font-size:12.5px;
+  font-weight:800;
+  color:#334155;
+  padding-bottom:3px;
+  border-bottom:2px solid rgba(225,29,46,.65);
+}
+.trust-right{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.link{
+  font-size:12.5px;
+  font-weight:900;
+  color:var(--blue);
+}
+.link:hover{text-decoration:underline;}
 
-    .hero h1{
-      font-size:52px;
-      line-height:1.05;
-      margin:0 0 12px;
-      letter-spacing:-0.02em;
-    }
+/* HERO */
+.hero{ padding:18px 16px 10px; }
+.hero-wrap{ max-width:var(--max); margin:auto; }
+.hero-bg{
+  padding:18px;
+  border-radius:20px;
+  background:
+    radial-gradient(760px 360px at 20% 20%, rgba(11,60,93,.10), transparent 60%),
+    radial-gradient(640px 300px at 85% 35%, rgba(225,29,46,.08), transparent 60%),
+    linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.46));
+  border:1px solid rgba(15,23,42,.08);
+}
 
-    .hero p{
-      font-size:18px;
-      color:var(--muted);
-      margin:0 0 14px;
-      max-width:600px;
-      line-height:1.6;
-    }
+.panel{
+  background:#fff;
+  border-radius:var(--radius);
+  overflow:hidden;
+  box-shadow:var(--shadow);
+  border:1px solid rgba(15,23,42,.08);
+}
+.panel-grid{
+  display:grid;
+  grid-template-columns:1.08fr .92fr;
+  min-height:280px;
+}
+.panel-left{
+  background:linear-gradient(180deg, rgba(11,60,93,.96), rgba(11,60,93,.92));
+  color:#fff;
+  padding:28px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:12px;
+}
+.crumbs{
+  font-size:12.5px;
+  font-weight:800;
+  opacity:.9;
+}
+.crumbs span{opacity:.75}
+.panel-title{
+  margin:0;
+  font-size:34px;
+  line-height:1.05;
+  letter-spacing:-1px;
+  font-weight:900;
+}
+.panel-text{
+  margin:0;
+  max-width:520px;
+  font-size:13.5px;
+  line-height:1.7;
+  opacity:.95;
+}
 
-    .ctaRow{
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      align-items:center;
-      margin-top:16px;
-    }
+.cta-row{
+  margin-top:10px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.cta{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:9px 16px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.28);
+  background:rgba(255,255,255,.10);
+  font-weight:900;
+  font-size:13.5px;
+  transition:transform .12s ease, background .12s ease;
+}
+.cta:hover{ background:rgba(255,255,255,.16); transform:translateY(-1px); }
+.cta-solid{ border:0; background:var(--red); color:#fff; }
+.cta-solid:hover{ background:#c91422; }
 
-    /* ---------- BUTTONS ---------- */
-    .btnPrimary{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:12px 16px;
-      border-radius:12px;
-      background:var(--red);
-      color:#fff;
-      font-weight:900;
-      text-decoration:none;
-      border:1px solid rgba(255,255,255,.10);
-      cursor:pointer;
-      white-space:nowrap;
-    }
-    .btnPrimary:hover{opacity:.92}
+.panel-right{
+  position:relative;
+  background:#0b1220;
+}
+.panel-right::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg, rgba(2,6,23,.04), rgba(2,6,23,.30));
+  pointer-events:none;
+}
+.panel-right img{
+  width:100%;
+  height:280px;
+  object-fit:cover;
+  display:block;
+}
 
-    .btnGhost{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:12px 16px;
-      border-radius:12px;
-      background:transparent;
-      border:1px solid rgba(255,255,255,.18);
-      color:#fff;
-      font-weight:900;
-      text-decoration:none;
-      cursor:pointer;
-      white-space:nowrap;
-    }
-    .btnGhost:hover{background:rgba(255,255,255,.06)}
+/* CONTENT */
+.content{
+  max-width:var(--max);
+  margin:auto;
+  padding:10px 16px 54px;
+}
 
-    /* ---------- HERO GRAPH (MAIN VISUAL) ---------- */
-    .heroGraph{
-      border-radius:16px;
-      border:1px solid var(--glassBorder);
-      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
-      box-shadow:var(--shadow);
-      padding:16px;
-      backdrop-filter: blur(12px);
-    }
-    .heroGraphTop{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:10px;
-      flex-wrap:wrap;
-    }
-    .heroGraphTop h3{
-      margin:0;
-      font-size:16px;
-      font-weight:900;
-    }
-    .heroGraphTop p{
-      margin:6px 0 0;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.5;
-      max-width:520px;
-    }
-    .heroGraphImgWrap{
-      background:rgba(255,255,255,.96);
-      border-radius:14px;
-      border:1px solid rgba(15,12,43,.08);
-      overflow:hidden;
-      padding:10px;
-    }
-    .heroGraphImg{
-      width:100%;
-      height:300px;        /* main image size */
-      object-fit:contain;  /* don't crop the graph */
-      display:block;
-    }
+/* QUICK STATS */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:12px;
+  margin-top:12px;
+}
+.stat{
+  background:#fff;
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:14px;
+  padding:14px 14px;
+  box-shadow:var(--shadow2);
+}
+.stat .k{
+  font-weight:900;
+  color:var(--blue);
+  font-size:15px;
+  letter-spacing:-.2px;
+}
+.stat .v{
+  margin-top:6px;
+  color:#475569;
+  font-size:12.5px;
+  line-height:1.5;
+  font-weight:700;
+}
 
-    /* ---------- SEARCH (MOVED BELOW HERO) ---------- */
-    .searchStrip{
-      max-width:1150px;
-      margin:0 auto;
-      padding:0 48px 10px;
-    }
-    .search-area{
-      border-radius:16px;
-      border:1px solid var(--glassBorder);
-      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
-      box-shadow:var(--shadow);
-      padding:16px;
-      backdrop-filter: blur(12px);
-    }
-    .search-area h3{
-      margin:0 0 8px;
-      font-size:16px;
-      font-weight:900;
-    }
-    .search-area .hint{
-      margin:0 0 12px;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.5;
-    }
-    .search-box{
-      background:rgba(255,255,255,.96);
-      border-radius:12px;
-      overflow:hidden;
-      display:flex;
-      align-items:center;
-      border:1px solid rgba(15,12,43,.08);
-    }
-    .search-box input{
-      width:100%;
-      padding:14px 14px;
-      border:none;
-      font-size:15px;
-      outline:none;
-      color:var(--ink);
-    }
-    .search-box button{
-      border:none;
-      background:var(--red);
-      color:#fff;
-      padding:14px 16px;
-      font-weight:900;
-      cursor:pointer;
-    }
-    .search-box button:active{transform:translateY(1px)}
-    .search-tabs{
-      display:flex;
-      gap:10px;
-      margin-top:12px;
-      flex-wrap:wrap;
-    }
-    .search-tab{
-      cursor:pointer;
-      padding:9px 12px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.05);
-      user-select:none;
-      font-weight:900;
-      color:rgba(203,213,245,.95);
-      font-size:13px;
-      white-space:nowrap;
-    }
-    .search-tab.active{
-      color:#fff;
-      border-color:rgba(225,29,46,.7);
-      background:rgba(225,29,46,.10);
-    }
+/* SECTIONS */
+.section{
+  background:#fff;
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:14px;
+  padding:22px;
+  margin-top:16px;
+  box-shadow:var(--shadow2);
+}
+.sectionHead{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:8px;
+}
+.section h2{
+  margin:0;
+  color:var(--blue);
+  font-size:19px;
+  letter-spacing:-.2px;
+}
+.section .sub{
+  margin:0;
+  color:#64748b;
+  font-size:12.75px;
+  font-weight:800;
+}
+.section p{
+  margin:0;
+  color:#64748b;
+  font-size:13.5px;
+  line-height:1.8;
+}
 
-    /* ---------- SEO BOOST ---------- */
-    .seo-boost{
-      max-width:900px;
-      margin:48px auto 10px;
-      padding:0 48px;
-    }
-    .seo-boost h2{
-      margin:0 0 10px;
-      font-size:22px;
-      letter-spacing:-0.01em;
-      color:#fff;
-    }
-    .seo-boost p{
-      margin:0 0 10px;
-      color:var(--muted);
-      font-size:16px;
-      line-height:1.75;
-    }
+/* GRAPH */
+.graphImg{
+  width:100%;
+  height:360px;
+  object-fit:contain;
+  margin-top:12px;
+  display:block;
+}
 
-    /* ---------- SECTION HEADINGS ---------- */
-    .section-title{
-      font-size:34px;
-      margin:0 0 24px;
-      position:relative;
-      display:inline-block;
-      padding-bottom:16px;
-      letter-spacing:-0.02em;
-      text-align:center;
-      width:100%;
-    }
-    .section-title::after{
-      content:"";
-      position:absolute;
-      left:50%;
-      bottom:0;
-      transform:translateX(-50%);
-      width:0;height:0;
-      border-left:10px solid transparent;
-      border-right:10px solid transparent;
-      border-top:12px solid var(--red);
-    }
+/* FEATURES GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-top:14px;
+}
+.card{
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:14px;
+  padding:14px;
+  background:#f8fafc;
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 14px 30px rgba(2,6,23,.08);
+}
+.card h3{
+  margin:0 0 6px;
+  font-size:14.5px;
+  color:var(--blue);
+}
+.card p{
+  margin:0;
+  font-size:13px;
+  color:#64748b;
+  line-height:1.6;
+}
 
-    /* ---------- GRADE PAGES LINKS (SEO) ---------- */
-    .grade-links{
-      max-width:1150px;
-      margin:26px auto 0;
-      padding:0 48px;
-    }
-    .grade-grid{
-      display:grid;
-      grid-template-columns:repeat(5,1fr);
-      gap:12px;
-    }
-    .grade-card{
-      display:block;
-      text-decoration:none;
-      background:rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:16px;
-      padding:16px 14px;
-      transition:transform .12s ease, background .12s ease, border-color .12s ease;
-    }
-    .grade-card:hover{
-      transform:translateY(-2px);
-      background:rgba(255,255,255,.07);
-      border-color:rgba(225,29,46,.35);
-    }
-    .grade-card .gTop{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
-    .grade-pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      font-weight:900;
-      font-size:13px;
-      padding:8px 10px;
-      border-radius:999px;
-      background:rgba(225,29,46,.12);
-      border:1px solid rgba(225,29,46,.35);
-      color:#fff;
-    }
-    .grade-card p{
-      margin:10px 0 0;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.55;
-    }
+/* FOOTER */
+footer{
+  border-top:1px solid rgba(15,23,42,.06);
+  background:rgba(255,255,255,.85);
+  text-align:center;
+  padding:20px 16px 30px;
+  color:#64748b;
+  font-size:13px;
+}
 
-    /* ---------- ABOUT ---------- */
-    .about{
-      background:rgba(13, 10, 40, .65);
-      border-top:1px solid rgba(255,255,255,.06);
-      padding:80px 48px;
-    }
-    .about-wrap{max-width:1150px;margin:0 auto;}
-    .about p{
-      max-width:920px;
-      color:var(--muted);
-      font-size:17px;
-      line-height:1.75;
-      margin:0 auto 22px;
-      text-align:center;
-    }
-    .about-grid{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:18px;
-      margin-top:28px;
-    }
-    .about-card{
-      background:rgba(255,255,255,.05);
-      padding:22px;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.10);
-    }
-    .about-card h3{margin:0 0 10px;font-size:18px}
-    .about-card p{margin:0;color:var(--muted);font-size:15px;line-height:1.6;text-align:left}
-
-    /* ---------- POLICY SECTION ---------- */
-    .policies{
-      padding:80px 48px;
-      border-top:1px solid rgba(255,255,255,.06);
-      background:rgba(255,255,255,.02);
-    }
-    .pol-wrap{max-width:1150px;margin:0 auto;}
-    .pol-sub{
-      max-width:900px;
-      margin:0 auto 18px;
-      color:var(--muted);
-      font-size:16px;
-      line-height:1.75;
-      text-align:center;
-    }
-    .pol-grid{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:16px;
-      margin-top:22px;
-    }
-    .pol-card{
-      background:rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:16px;
-      padding:20px;
-      text-align:left;
-    }
-    .pol-card h4{margin:0 0 8px;font-size:16px}
-    .pol-card p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
-    .pol-link{
-      display:inline-flex;
-      margin-top:12px;
-      font-weight:900;
-      color:#fff;
-      text-decoration:none;
-      border-bottom:2px solid rgba(225,29,46,.75);
-      padding-bottom:2px;
-    }
-    .pol-link:hover{opacity:.85}
-
-    /* ---------- CONTACT ---------- */
-    .contact{
-      padding:80px 48px;
-      text-align:center;
-    }
-    .contact-wrap{max-width:1150px;margin:0 auto;}
-    .contact-text{
-      max-width:760px;
-      margin:0 auto 30px;
-      color:var(--muted);
-      font-size:17px;
-      line-height:1.65;
-    }
-    .contact-grid{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:16px;
-      max-width:940px;
-      margin:0 auto;
-    }
-    .contact-card{
-      background:rgba(255,255,255,.05);
-      padding:22px;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.10);
-      text-align:left;
-      min-width:0;
-    }
-    .contact-card h4{margin:0 0 10px}
-    .contact-card p{margin:0;color:var(--muted);font-size:15px;line-height:1.6}
-
-    .waRow{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      margin-top:4px;
-      flex-wrap:wrap;
-    }
-    .waIcon{
-      width:36px;height:36px;
-      border-radius:12px;
-      display:grid;place-items:center;
-      background:rgba(37,211,102,.14);
-      border:1px solid rgba(37,211,102,.35);
-      flex:0 0 auto;
-    }
-    .waLink{
-      color:#25D366;
-      font-weight:900;
-      text-decoration:none;
-      word-break:break-word;
-    }
-    .waLink:hover{ text-decoration:underline; }
-    .waSub{
-      color:var(--muted);
-      font-size:12px;
-      margin-top:4px;
-    }
-
-    /* ---------- FOOTER ---------- */
-    footer{
-      padding:38px 48px;
-      text-align:center;
-      font-size:14px;
-      color:var(--muted);
-      border-top:1px solid rgba(255,255,255,.06);
-      background:rgba(15,12,43,.65);
-    }
-    .footer-links{
-      margin-top:10px;
-      display:flex;
-      gap:14px;
-      justify-content:center;
-      flex-wrap:wrap;
-      font-weight:700;
-    }
-    .footer-links a{color:var(--muted);text-decoration:none}
-    .footer-links a:hover{text-decoration:underline}
-
-    /* ---------- MODALS ---------- */
-    .modalOverlay{
-      position:fixed;
-      inset:0;
-      background:rgba(2,6,23,.65);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:18px;
-      z-index:100;
-    }
-    .modalOverlay.open{display:flex}
-    .modal{
-      width:min(920px, 100%);
-      background:#ffffff;
-      color:#0f172a;
-      border-radius:16px;
-      box-shadow:0 24px 80px rgba(0,0,0,.45);
-      border:1px solid rgba(15,23,42,.12);
-      overflow:hidden;
-    }
-    .modalHead{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding:14px 16px;
-      border-bottom:1px solid rgba(15,23,42,.10);
-      background:#f8fafc;
-    }
-    .modalHead h3{
-      margin:0;
-      font-size:16px;
-      font-weight:900;
-    }
-    .closeBtn{
-      border:1px solid rgba(15,23,42,.16);
-      background:#ffffff;
-      color:#0f172a;
-      padding:8px 10px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:900;
-    }
-    .closeBtn:hover{background:#f1f5f9}
-    .modalBody{
-      padding:16px;
-      max-height:70vh;
-      overflow:auto;
-    }
-    .modalBody h4{
-      margin:14px 0 8px;
-      font-size:14px;
-      text-transform:uppercase;
-      letter-spacing:.6px;
-      color:#0f172a;
-    }
-    .modalBody p, .modalBody li{
-      margin:0 0 10px;
-      color:#334155;
-      line-height:1.65;
-      font-size:14px;
-    }
-    .modalBody ul{margin:0 0 12px;padding-left:18px}
-
-    /* ---------- RESPONSIVE ---------- */
-    @media(max-width:1000px){
-      .topbar{padding:14px 18px}
-      .hero{padding:60px 18px 26px}
-      .searchStrip{padding:0 18px 6px}
-      .about,.policies,.contact{padding:56px 18px}
-      .seo-boost{padding:0 18px;}
-      .grade-links{padding:0 18px;}
-      footer{padding:30px 18px}
-    }
-
-    @media(max-width:900px){
-      .nav-links{display:none;}
-      .menuBtn{display:inline-flex;}
-      .hero{grid-template-columns:1fr; gap:18px;}
-      .hero h1{font-size:38px}
-      .heroGraphImg{height:260px}
-      .about-grid,.pol-grid,.contact-grid{grid-template-columns:1fr}
-      .grade-grid{grid-template-columns:1fr 1fr;}
-    }
-
-    @media(max-width:420px){
-      .hero h1{font-size:32px}
-      .search-box button{padding:14px 12px}
-      .search-box input{font-size:14px}
-      .logo img{width:52px;height:52px}
-      .grade-grid{grid-template-columns:1fr;}
-      .heroGraphImg{height:220px}
-    }
-  </style>
+/* RESPONSIVE */
+@media(max-width:980px){
+  .panel-grid{grid-template-columns:1fr;}
+  .panel-right img{height:220px;}
+  .panel-left{padding:22px;}
+  .panel-title{font-size:30px;}
+  .stats{grid-template-columns:1fr 1fr;}
+  .grid{grid-template-columns:1fr;}
+  .graphImg{height:300px;}
+  .trust-inner{flex-direction:column;align-items:flex-start;}
+}
+@media(max-width:520px){
+  .stats{grid-template-columns:1fr;}
+  .panel-title{font-size:28px;}
+  .hero-bg{padding:14px;}
+  .panel-text{font-size:13px;}
+  .cta{width:100%;}
+  .graphImg{height:240px;}
+}
+</style>
 </head>
 
 <body>
-  <div id="top"></div>
 
-  <!-- NAV -->
-  <div class="topbar" role="navigation" aria-label="Primary">
-    <a class="logo" href="#top" aria-label="Practice Online home">
-      <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1770295843/logo_cdx2ar.png" alt="Practice Online logo">
-      PRACTICE ONLINE
-    </a>
-
-    <div class="nav-links" aria-label="Links">
-      <a href="#top">Home</a>
-      <a href="#grades">Grades</a>
+<nav class="navbar" aria-label="Primary navigation">
+  <div class="nav-inner">
+    <div class="nav-links">
+      <a href="#home">Home</a>
+      <a href="#performance">Performance</a>
+      <a href="#features">Features</a>
       <a href="#about">About</a>
       <a href="#contact">Contact</a>
+    </div>
+
+    <div class="nav-actions">
       <a href="register.html">Register</a>
-      <a href="login.html" class="login-btn">Login</a>
+      <a href="login.html">Login</a>
     </div>
-
-    <button class="menuBtn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
-      Menu
-    </button>
   </div>
+</nav>
 
-  <!-- Mobile Menu -->
-  <div class="mobileMenu" id="mobileMenu" aria-label="Mobile menu">
-    <a href="#top">Home</a>
-    <a href="#grades">Grades</a>
-    <a href="#about">About</a>
-    <a href="#policies">Policies</a>
-    <a href="#contact">Contact</a>
-    <a href="register.html">Register</a>
-    <a href="login.html">Login</a>
+<section class="trust" aria-label="Highlights">
+  <div class="trust-inner">
+    <div class="trust-left">
+      <span class="trust-item">Timed assessments</span>
+      <span class="trust-item">Instant solutions</span>
+      <span class="trust-item">Topic analysis</span>
+      <span class="trust-item">Unlimited retakes</span>
+    </div>
+
+    <div class="trust-right">
+      <a class="link" href="#features">See features</a>
+      <a class="link" href="#contact">Get support</a>
+    </div>
   </div>
+</section>
 
-  <!-- HERO -->
-  <section class="hero" aria-label="Hero">
-    <div>
-      <h1>Practice online for school.</h1>
-      <p>
-        Use quick quizzes and revision to improve your marks. You can see your results and track your progress.
-      </p>
+<section class="hero" id="home">
+  <div class="hero-wrap">
+    <div class="hero-bg">
 
-      <div class="ctaRow">
-        <button class="btnPrimary" id="startBtn" type="button">Start</button>
-        <a href="#about" class="btnGhost">Learn more</a>
-      </div>
-    </div>
+      <div class="panel">
+        <div class="panel-grid">
 
-    <!-- MAIN HERO IMAGE (GRAPH) -->
-    <div class="heroGraph" aria-label="Performance overview">
-      <div class="heroGraphTop">
-        <div>
-          <h3>Your Performance Dashboard</h3>
-          <p>Track your strengths and improve your weak topics.</p>
-        </div>
-      </div>
+          <div class="panel-left">
+            <div class="crumbs">Home <span>›</span> Practice Online</div>
 
-      <div class="heroGraphImgWrap">
-        <img
-          class="heroGraphImg"
-          src="https://res.cloudinary.com/dopoxadlr/image/upload/v1772224685/Graph_mgqe5v.png"
-          alt="Learner performance graph"
-          loading="lazy"
-        />
-      </div>
-    </div>
-  </section>
+            <!-- Premium EdTech hero text -->
+            <h1 class="panel-title">Learn Smarter. Score Higher.</h1>
 
-  <!-- SEARCH (NOW BELOW HERO) -->
-  <section class="searchStrip" aria-label="Search assessments">
-    <div class="search-area">
-      <h3>Search a topic</h3>
-      <p class="hint">Example: Functions, Algebra, Integers</p>
+            <p class="panel-text">
+              Timed practice, instant solutions, and topic analysis for Grade 8–12 learners in South Africa.
+            </p>
 
-      <form class="search-box" id="searchForm">
-        <input id="searchInput" placeholder="Search..." autocomplete="off" />
-        <button type="submit">Go</button>
-      </form>
-
-      <div class="search-tabs" id="tabs" aria-label="Grade filters">
-        <div class="search-tab active" data-filter="89" role="button" tabindex="0" aria-pressed="true">Grade 8–9</div>
-        <div class="search-tab" data-filter="1012" role="button" tabindex="0" aria-pressed="false">Grade 10–12</div>
-        <div class="search-tab" data-filter="rev" role="button" tabindex="0" aria-pressed="false">Revision</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SEO BOOST -->
-  <section class="seo-boost" aria-label="SEO information">
-    <h2>Quizzes and Revision for Grade 8–12</h2>
-    <p>
-      Practice Online helps learners in South Africa with CAPS and IEB practice.
-      You can do quizzes, see your results, and work on topics you find difficult.
-    </p>
-    <p>
-      This site is useful for daily revision and exam prep.
-    </p>
-  </section>
-
-  <!-- PRACTICE BY GRADE (SEO PAGES) -->
-  <section class="grade-links" id="grades" aria-label="Practice Maths by Grade">
-    <h2 class="section-title" style="margin-top:34px;">Practice Maths by Grade</h2>
-
-    <div class="grade-grid">
-      <a class="grade-card" href="/grade-8-maths.html">
-        <div class="gTop">
-          <span class="grade-pill">Grade 8</span>
-          <span aria-hidden="true" style="color:rgba(255,255,255,.8);font-weight:900;">→</span>
-        </div>
-        <p>Integers, fractions, basic algebra and geometry practice.</p>
-      </a>
-
-      <a class="grade-card" href="/grade-9-maths.html">
-        <div class="gTop">
-          <span class="grade-pill">Grade 9</span>
-          <span aria-hidden="true" style="color:rgba(255,255,255,.8);font-weight:900;">→</span>
-        </div>
-        <p>Equations, graphs, exponents, geometry and exam prep.</p>
-      </a>
-
-      <a class="grade-card" href="/grade-10-maths.html">
-        <div class="gTop">
-          <span class="grade-pill">Grade 10</span>
-          <span aria-hidden="true" style="color:rgba(255,255,255,.8);font-weight:900;">→</span>
-        </div>
-        <p>Functions, trigonometry basics, algebra and patterns.</p>
-      </a>
-
-      <a class="grade-card" href="/grade-11-maths.html">
-        <div class="gTop">
-          <span class="grade-pill">Grade 11</span>
-          <span aria-hidden="true" style="color:rgba(255,255,255,.8);font-weight:900;">→</span>
-        </div>
-        <p>Trigonometry, geometry, sequences and functions practice.</p>
-      </a>
-
-      <a class="grade-card" href="/grade-12-maths.html">
-        <div class="gTop">
-          <span class="grade-pill">Grade 12</span>
-          <span aria-hidden="true" style="color:rgba(255,255,255,.8);font-weight:900;">→</span>
-        </div>
-        <p>Calculus, trig, probability, algebra and final exam prep.</p>
-      </a>
-    </div>
-  </section>
-
-  <!-- ABOUT -->
-  <section class="about" id="about">
-    <div class="about-wrap">
-      <h2 class="section-title">About Practice Online</h2>
-      <p>
-        Practice Online is made to help learners practise more and feel ready for tests.
-        You get quick feedback, clear results, and a simple way to track progress over time.
-      </p>
-
-      <div class="about-grid" aria-label="About highlights">
-        <div class="about-card">
-          <h3>Our Mission</h3>
-          <p>Help learners practise in a simple way and improve their understanding.</p>
-        </div>
-        <div class="about-card">
-          <h3>Our Vision</h3>
-          <p>Be a helpful study tool for Grade 8–12 learners across South Africa.</p>
-        </div>
-        <div class="about-card">
-          <h3>What You Get</h3>
-          <p>Quizzes, results, and revision support that matches school topics.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- POLICIES -->
-  <section class="policies" id="policies" aria-label="Policies">
-    <div class="pol-wrap">
-      <h2 class="section-title">Policies</h2>
-      <p class="pol-sub">
-        We care about privacy and using the platform correctly. You can read our policies below.
-      </p>
-
-      <div class="pol-grid">
-        <div class="pol-card">
-          <h4>Privacy Policy</h4>
-          <p>How we collect and protect user information.</p>
-          <a class="pol-link" href="#privacy" data-open-modal="privacy">Open</a>
-        </div>
-
-        <div class="pol-card">
-          <h4>Terms of Use</h4>
-          <p>Rules for using the website fairly.</p>
-          <a class="pol-link" href="#terms" data-open-modal="terms">Open</a>
-        </div>
-
-        <div class="pol-card">
-          <h4>Cookie Notice</h4>
-          <p>How cookies help the site work properly.</p>
-          <a class="pol-link" href="#cookies" data-open-modal="cookies">Open</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- CONTACT -->
-  <section class="contact" id="contact">
-    <div class="contact-wrap">
-      <h2 class="section-title">Contact Us</h2>
-      <p class="contact-text">
-        If you need help, contact us using the details below.
-      </p>
-
-      <div class="contact-grid">
-        <div class="contact-card">
-          <h4>Email</h4>
-          <p>info@practiceonline.co.za</p>
-        </div>
-
-        <div class="contact-card">
-          <h4>WhatsApp</h4>
-          <div class="waRow">
-            <div class="waIcon" aria-hidden="true" title="WhatsApp">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366">
-                <path d="M20.52 3.48A11.86 11.86 0 0012.04 0C5.45 0 .08 5.37.08 11.96c0 2.11.55 4.16 1.6 5.97L0 24l6.24-1.64a11.93 11.93 0 005.8 1.48h.01c6.59 0 11.96-5.37 11.96-11.96a11.9 11.9 0 00-3.49-8.4zm-8.48 18.3a9.9 9.9 0 01-5.05-1.39l-.36-.22-3.7.97.99-3.6-.24-.37a9.87 9.87 0 01-1.52-5.22c0-5.45 4.44-9.9 9.9-9.9a9.83 9.83 0 016.99 2.9 9.83 9.83 0 012.9 7c0 5.46-4.44 9.9-9.9 9.9zm5.43-7.4c-.3-.15-1.78-.88-2.05-.98-.27-.1-.47-.15-.66.15-.2.3-.76.98-.94 1.18-.17.2-.34.22-.64.07-.3-.15-1.26-.46-2.4-1.47-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.14-.14.3-.34.46-.51.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.66-1.6-.9-2.19-.24-.57-.49-.5-.66-.5h-.57c-.2 0-.52.07-.8.37-.27.3-1.05 1.03-1.05 2.5s1.08 2.9 1.23 3.1c.15.2 2.13 3.26 5.16 4.57.72.31 1.28.5 1.72.64.72.23 1.38.2 1.9.12.58-.09 1.78-.73 2.03-1.44.25-.7.25-1.3.17-1.44-.07-.13-.27-.2-.57-.35z"/>
-              </svg>
-            </div>
-
-            <div style="min-width:0;">
-              <a class="waLink" href="https://wa.me/27763790764" target="_blank" rel="noopener">
-                076 379 0764
-              </a>
-              <div class="waSub">Tap to chat</div>
+            <div class="cta-row">
+              <a class="cta cta-solid" href="register.html">Get Started</a>
+              <a class="cta" href="#about">Read More</a>
             </div>
           </div>
-        </div>
 
-        <div class="contact-card">
-          <h4>Hours</h4>
-          <p>Mon – Fri<br>08:00 – 17:00</p>
+          <div class="panel-right">
+            <img
+              src="https://res.cloudinary.com/dopoxadlr/image/upload/v1772745468/geralt-keyboard-2980844_1280_x0xkra.jpg"
+              alt="Student studying with laptop">
+          </div>
+
         </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<main class="content">
+
+  <section class="stats" aria-label="Key benefits">
+    <div class="stat">
+      <div class="k">Grade 8–12</div>
+      <div class="v">Designed for CAPS &amp; IEB learners.</div>
+    </div>
+    <div class="stat">
+      <div class="k">Instant Results</div>
+      <div class="v">Marks and solutions immediately after you finish.</div>
+    </div>
+    <div class="stat">
+      <div class="k">Topic Tracking</div>
+      <div class="v">See strengths and weak areas over time.</div>
+    </div>
+    <div class="stat">
+      <div class="k">Unlimited Practice</div>
+      <div class="v">Retry assessments until you master the work.</div>
+    </div>
+  </section>
+
+  <section class="section" id="performance">
+    <div class="sectionHead">
+      <h2>Your Progress Dashboard</h2>
+      <p class="sub">See your strengths, weak topics, and improvement over time.</p>
+    </div>
+
+    <p>
+      Monitor your progress across topics. Identify weak areas and focus on targeted revision
+      until you reach full mastery.
+    </p>
+
+    <img class="graphImg"
+      src="https://res.cloudinary.com/dopoxadlr/image/upload/v1772748145/Topic_Analysis_jlydfe.png"
+      alt="Topic analysis chart">
+  </section>
+
+  <section class="section" id="features">
+    <div class="sectionHead">
+      <h2>Everything You Need to Improve</h2>
+      <p class="sub">Smart practice features that help you learn faster and score higher.</p>
+    </div>
+
+    <p>Practice Online provides structured support that helps learners improve and build confidence.</p>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Timed Assessments</h3>
+        <p>Build exam readiness and confidence under time pressure.</p>
+      </div>
+      <div class="card">
+        <h3>Instant Solutions</h3>
+        <p>Step-by-step solutions that help you learn from mistakes.</p>
+      </div>
+      <div class="card">
+        <h3>Topic Analysis</h3>
+        <p>See which topics you pass most and which need more practice.</p>
+      </div>
+      <div class="card">
+        <h3>Mastery Tracking</h3>
+        <p>Retake assessments until you reach 100% understanding.</p>
+      </div>
+      <div class="card">
+        <h3>CAPS &amp; IEB Support</h3>
+        <p>Aligned with South African curriculum standards.</p>
       </div>
     </div>
   </section>
 
-  <!-- FOOTER -->
-  <footer>
-    © 2026 Practice Online. All rights reserved.
-    <div class="footer-links" aria-label="Footer links">
-      <a href="#top">Home</a>
-      <a href="#grades">Grades</a>
-      <a href="#about">About</a>
-      <a href="#policies">Policies</a>
-      <a href="#contact">Contact</a>
-      <a href="#" data-open-modal="privacy">Privacy Policy</a>
-      <a href="#" data-open-modal="terms">Terms</a>
-      <a href="#" data-open-modal="cookies">Cookies</a>
+  <section class="section" id="about">
+    <div class="sectionHead">
+      <h2>Built for Real Exam Success</h2>
+      <p class="sub">Practice with purpose, get feedback, and improve with every attempt.</p>
     </div>
-  </footer>
 
-  <!-- PRIVACY MODAL -->
-  <div class="modalOverlay" id="privacyModal" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
-    <div class="modal">
-      <div class="modalHead">
-        <h3 id="privacyTitle">Privacy Policy</h3>
-        <button class="closeBtn" type="button" data-close-modal>Close</button>
-      </div>
-      <div class="modalBody">
-        <p><strong>Effective date:</strong> 12 February 2026</p>
+    <p>
+      Practice Online helps learners build confidence through structured practice. We analyse results to identify
+      patterns such as which topics are mostly passed, where learners struggle the most, and how performance improves over time.
+      Learners can repeat assessments, learn from solutions, and keep improving until they master the work.
+    </p>
+  </section>
 
-        <h4>1. Overview</h4>
-        <p>
-          Practice Online is committed to protecting learner privacy. This Privacy Policy explains what information we collect,
-          how we use it, and the choices available to learners and guardians.
-        </p>
-
-        <h4>2. Information we collect</h4>
-        <ul>
-          <li><strong>Account information:</strong> name, grade, email/phone number, and login details.</li>
-          <li><strong>Usage information:</strong> quiz attempts, results, progress, and platform activity.</li>
-          <li><strong>Technical information:</strong> device and browser information, basic logs, and cookies.</li>
-        </ul>
-
-        <h4>3. How we use information</h4>
-        <ul>
-          <li>Provide access to quizzes, results, and learner dashboards.</li>
-          <li>Improve content quality, platform performance, and user experience.</li>
-          <li>Communicate important service updates (e.g., password reset, account notifications).</li>
-        </ul>
-
-        <h4>4. Data protection</h4>
-        <p>
-          We use reasonable technical and organisational measures to protect information. Access is restricted to authorised personnel
-          and service providers needed to operate the platform.
-        </p>
-
-        <h4>5. Sharing</h4>
-        <p>
-          We do not sell personal information. We may share limited information with trusted service providers
-          (for example email delivery or hosting) only to operate the platform.
-        </p>
-
-        <h4>6. Learner and guardian choices</h4>
-        <ul>
-          <li>Request correction of inaccurate details.</li>
-          <li>Request account deletion, subject to legal and operational requirements.</li>
-          <li>Opt out of non-essential communications where applicable.</li>
-        </ul>
-
-        <h4>7. Contact</h4>
-        <p>
-          For privacy questions, contact: <strong>info@practiceonline.co.za</strong>
-        </p>
-      </div>
+  <section class="section" id="contact">
+    <div class="sectionHead">
+      <h2>Need Help?</h2>
+      <p class="sub">We’re here to support you.</p>
     </div>
-  </div>
 
-  <!-- TERMS MODAL -->
-  <div class="modalOverlay" id="termsModal" role="dialog" aria-modal="true" aria-labelledby="termsTitle">
-    <div class="modal">
-      <div class="modalHead">
-        <h3 id="termsTitle">Terms of Use</h3>
-        <button class="closeBtn" type="button" data-close-modal>Close</button>
-      </div>
-      <div class="modalBody">
-        <p><strong>Effective date:</strong> 12 February 2026</p>
+    <p>Email: info@practiceonline.co.za</p>
+    <p>WhatsApp: 076 379 0764</p>
+  </section>
 
-        <h4>1. Acceptance</h4>
-        <p>
-          By using Practice Online, you agree to follow these Terms. If you do not agree, please do not use the platform.
-        </p>
+</main>
 
-        <h4>2. Accounts</h4>
-        <ul>
-          <li>Keep your login details private and secure.</li>
-          <li>Provide accurate information during registration.</li>
-          <li>Notify us if you believe your account has been compromised.</li>
-        </ul>
-
-        <h4>3. Acceptable use</h4>
-        <ul>
-          <li>Do not attempt to access admin features without permission.</li>
-          <li>Do not upload harmful content or misuse the platform.</li>
-          <li>Do not cheat, exploit bugs, or disrupt other learners.</li>
-        </ul>
-
-        <h4>4. Content</h4>
-        <p>
-          Quizzes and materials are provided for educational practice. We may update or remove content to improve quality.
-        </p>
-
-        <h4>5. Availability</h4>
-        <p>
-          We aim for reliable service, but the platform may be unavailable during maintenance or due to technical issues.
-        </p>
-
-        <h4>6. Contact</h4>
-        <p>
-          Questions about these terms: <strong>info@practiceonline.co.za</strong>
-        </p>
-
-        <p style="margin-top:14px;color:#64748b;">
-          Note: This is a standard terms template. You can add more legal detail if needed.
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <!-- COOKIES MODAL -->
-  <div class="modalOverlay" id="cookiesModal" role="dialog" aria-modal="true" aria-labelledby="cookiesTitle">
-    <div class="modal">
-      <div class="modalHead">
-        <h3 id="cookiesTitle">Cookie Notice</h3>
-        <button class="closeBtn" type="button" data-close-modal>Close</button>
-      </div>
-      <div class="modalBody">
-        <p><strong>Effective date:</strong> 12 February 2026</p>
-
-        <h4>1. What are cookies?</h4>
-        <p>
-          Cookies are small files stored on your device that help websites work properly and remember preferences.
-        </p>
-
-        <h4>2. How we use cookies</h4>
-        <ul>
-          <li><strong>Essential:</strong> login and security features.</li>
-          <li><strong>Performance:</strong> helps us understand what works and improve the experience.</li>
-          <li><strong>Preferences:</strong> remembers settings like selected grade filters.</li>
-        </ul>
-
-        <h4>3. Managing cookies</h4>
-        <p>
-          You can control cookies in your browser settings. Disabling essential cookies may affect login and platform features.
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // ------------------ Mobile menu ------------------
-    const menuBtn = document.getElementById("menuBtn");
-    const mobileMenu = document.getElementById("mobileMenu");
-
-    if (menuBtn && mobileMenu) {
-      menuBtn.addEventListener("click", () => {
-        const isOpen = mobileMenu.classList.toggle("open");
-        menuBtn.setAttribute("aria-expanded", String(isOpen));
-      });
-
-      mobileMenu.addEventListener("click", (e) => {
-        const a = e.target.closest("a");
-        if (a){
-          mobileMenu.classList.remove("open");
-          menuBtn.setAttribute("aria-expanded", "false");
-        }
-      });
-    }
-
-    // ------------------ Grade tabs ------------------
-    let activeFilter = "89";
-    const tabs = document.getElementById("tabs");
-
-    function setActiveTab(tab){
-      document.querySelectorAll(".search-tab").forEach(x => {
-        x.classList.remove("active");
-        x.setAttribute("aria-pressed", "false");
-      });
-      tab.classList.add("active");
-      tab.setAttribute("aria-pressed", "true");
-      activeFilter = tab.getAttribute("data-filter") || "89";
-    }
-
-    tabs?.addEventListener("click", (e) => {
-      const tab = e.target.closest(".search-tab");
-      if (!tab) return;
-      setActiveTab(tab);
-    });
-
-    tabs?.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter" && e.key !== " ") return;
-      const tab = e.target.closest(".search-tab");
-      if (!tab) return;
-      e.preventDefault();
-      setActiveTab(tab);
-    });
-
-    // Search -> login first -> then learner quizzes (block empty)
-    document.getElementById("searchForm")?.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const input = document.getElementById("searchInput");
-      const q = input.value.trim();
-
-      if (!q){
-        input.focus();
-        input.placeholder = "Type a topic first (e.g. Functions)";
-        return;
-      }
-
-      const target = `learner-quizzes.html?search=${encodeURIComponent(q)}&filter=${encodeURIComponent(activeFilter)}`;
-      window.location.href = `login.html?next=${encodeURIComponent(target)}`;
-    });
-
-    // Start -> login first -> then learner quizzes
-    document.getElementById("startBtn")?.addEventListener("click", () => {
-      const target = "learner-quizzes.html";
-      window.location.href = `login.html?next=${encodeURIComponent(target)}`;
-    });
-
-    // ------------------ Modals (Privacy/Terms/Cookies) ------------------
-    const modalMap = {
-      privacy: document.getElementById("privacyModal"),
-      terms: document.getElementById("termsModal"),
-      cookies: document.getElementById("cookiesModal"),
-    };
-
-    function openModal(key){
-      const m = modalMap[key];
-      if (!m) return;
-      m.classList.add("open");
-      document.body.style.overflow = "hidden";
-      const close = m.querySelector("[data-close-modal]");
-      close?.focus();
-    }
-
-    function closeModal(modalEl){
-      if (!modalEl) return;
-      modalEl.classList.remove("open");
-      document.body.style.overflow = "";
-    }
-
-    document.addEventListener("click", (e) => {
-      const openBtn = e.target.closest("[data-open-modal]");
-      if (openBtn){
-        e.preventDefault();
-        const key = openBtn.getAttribute("data-open-modal");
-        openModal(key);
-        return;
-      }
-
-      if (e.target.matches("[data-close-modal]")){
-        const overlay = e.target.closest(".modalOverlay");
-        closeModal(overlay);
-        return;
-      }
-
-      if (e.target.classList.contains("modalOverlay")){
-        closeModal(e.target);
-      }
-    });
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key !== "Escape") return;
-      document.querySelectorAll(".modalOverlay.open").forEach(m => closeModal(m));
-    });
-  </script>
+<footer>
+  © 2026 Practice Online. All rights reserved.
+</footer>
 
 </body>
 </html>
