@@ -33,6 +33,7 @@
     .ok{color:var(--ok);}
     .row{display:flex; gap:12px; flex-wrap:wrap; margin-top:12px;}
     .btn{background:var(--accent); color:#fff; border:none; padding:12px 14px; border-radius:12px; cursor:pointer; font-weight:700; font-size:14px;}
+    .btn:disabled{opacity:.65; cursor:not-allowed;}
     .btn2{background:#fff; color:var(--text); border:1px solid #ddd; padding:12px 14px; border-radius:12px; cursor:pointer; font-weight:700; font-size:14px;}
     .pill{display:inline-block; font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid #cfe9ff; background:#eef7ff; color:#0b3c5d;}
     .price{font-size:28px; font-weight:800; margin:10px 0;}
@@ -85,10 +86,16 @@
     const msgEl = document.getElementById("msg");
     const payBtn = document.getElementById("payBtn");
 
-    let userEmail = null;
-    let userId = null;
+    let currentUser = null;
 
-    (async function init(){
+    function fmtDate(v) {
+      if (!v) return "";
+      const d = new Date(v);
+      if (isNaN(d.getTime())) return "";
+      return d.toLocaleString();
+    }
+
+    (async function init() {
       try {
         const res = await fetch(`${API}/api/auth/me`, {
           headers: { Authorization: "Bearer " + token }
@@ -103,33 +110,43 @@
         if (!res.ok) throw new Error("Failed to load user");
 
         const u = await res.json();
+        currentUser = u;
 
-        userId = u._id;
         const username = localStorage.getItem("username") || u.username || "Learner";
-        userEmail = (u.email || "").toLowerCase();
-        welcomeEl.textContent = `Welcome, ${username} (${userEmail})`;
+        const userEmail = (u.email || "").toLowerCase();
+        welcomeEl.textContent = `Welcome, ${username}${userEmail ? ` (${userEmail})` : ""}`;
 
-        // ✅ Admin should not pay
         if (u.role === "admin") {
           statusEl.className = "ok";
-          statusEl.textContent = "✅ You are an admin. You don’t need a subscription.";
+          statusEl.textContent = "✅ You are an admin. You do not need a subscription.";
           payBtn.disabled = true;
           payBtn.style.display = "none";
           return;
         }
 
-        if (u.premium && u.premiumExpiresAt) {
-          const exp = new Date(u.premiumExpiresAt);
+        if (u.accountType !== "student") {
           statusEl.className = "ok";
-          statusEl.textContent = `✅ Premium is active. Expires on: ${exp.toLocaleString()}`;
+          statusEl.textContent = "✅ This account does not need a learner subscription.";
+          payBtn.disabled = true;
+          payBtn.style.display = "none";
+          return;
+        }
+
+        if (u.subscriptionStatus === "active" && u.paidUntil) {
+          statusEl.className = "ok";
+          statusEl.textContent = `✅ Subscription is active. Expires on: ${fmtDate(u.paidUntil)}`;
           payBtn.textContent = "Renew (extend 30 days)";
+        } else if (u.subscriptionStatus === "expired" && u.paidUntil) {
+          statusEl.className = "error";
+          statusEl.textContent = `❌ Subscription expired on: ${fmtDate(u.paidUntil)}. Pay R95 to unlock 30 days.`;
         } else {
           statusEl.className = "error";
-          statusEl.textContent = "❌ Premium is not active. Pay R95 to unlock 30 days.";
+          statusEl.textContent = "❌ Subscription is not active. Pay R95 to unlock 30 days.";
         }
 
         payBtn.disabled = false;
       } catch (e) {
+        console.error(e);
         statusEl.className = "error";
         statusEl.textContent = "Could not load your account. Please refresh.";
         payBtn.disabled = true;
@@ -138,51 +155,43 @@
 
     payBtn.addEventListener("click", async () => {
       msgEl.className = "muted";
-      msgEl.textContent = "Creating payment…";
+      msgEl.textContent = "Creating payment...";
 
       try {
-        if (!userEmail || !userId) throw new Error("Missing user info");
-
-        const orderId = `PO-${userId}-${Date.now()}`;
-
-        const payload = {
-          amount: 95.00,
-          item_name: "Practice Online Subscription (30 days)",
-          orderId,
-          email: userEmail
-        };
-
-        const res = await fetch(`${API}/api/payfast/create`, {
+        const res = await fetch(`${API}/api/payfast/initiate`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: "Bearer " + token
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({
+            amount: 95.00,
+            item_name: "Practice Online Subscription (30 days)"
+          })
         });
 
-        if (!res.ok) {
-          const t = await res.text();
-          throw new Error(t || "Failed to create payment");
-        }
+        const data = await res.json();
 
-        const { processUrl, data } = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || "Failed to create payment");
+        }
 
         const form = document.createElement("form");
         form.method = "POST";
-        form.action = processUrl;
+        form.action = data.action;
 
-        Object.keys(data).forEach((k) => {
+        Object.entries(data.fields).forEach(([key, value]) => {
           const input = document.createElement("input");
           input.type = "hidden";
-          input.name = k;
-          input.value = data[k];
+          input.name = key;
+          input.value = value;
           form.appendChild(input);
         });
 
         document.body.appendChild(form);
         form.submit();
       } catch (err) {
+        console.error(err);
         msgEl.className = "error";
         msgEl.textContent = "Payment error: " + (err.message || "Please try again.");
       }
