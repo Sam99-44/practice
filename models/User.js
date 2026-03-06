@@ -17,26 +17,35 @@ const UserSchema = new mongoose.Schema(
     studentNumber: { type: String, default: null },
 
     // ✅ LOCATION + PROFILE FIELDS
-    province: { type: String, default: "" },              // optional
-    district: { type: String, default: "" },              // ✅ NEW (for SA filtering)
+    province: { type: String, default: "" },
+    district: { type: String, default: "" },
     gender: {
       type: String,
-      enum: ["female", "male", "nonbinary", "other", ""], // ✅ NEW
-      default: ""
+      enum: ["female", "male", "nonbinary", "other", ""],
+      default: "",
     },
 
-    cellphone: { type: String, default: "" },             // optional (+27 safe)
-    guardianCellphone: { type: String, default: "" },     // optional
+    cellphone: { type: String, default: "" },
+    guardianCellphone: { type: String, default: "" },
 
     // ✅ Email verification
     emailVerified: { type: Boolean, default: false },
     verifyTokenHash: { type: String, default: null },
     verifyTokenExpiresAt: { type: Date, default: null },
 
-    // ✅ Premium subscription fields
+    // ✅ OLD premium fields (kept so nothing breaks)
     premium: { type: Boolean, default: false },
     premiumActivatedAt: { type: Date, default: null },
     premiumExpiresAt: { type: Date, default: null },
+
+    // ✅ NEW monthly subscription fields for PayFast
+    subscriptionStatus: {
+      type: String,
+      enum: ["none", "active", "expired"],
+      default: "none",
+    },
+    paidUntil: { type: Date, default: null },
+    lastPaymentId: { type: String, default: "" },
 
     // ✅ Forgot password fields
     resetPasswordTokenHash: { type: String, default: null },
