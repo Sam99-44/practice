@@ -5,6 +5,8 @@
 // ✅ Backward compatible with old single-correct fields (chosenIndex/correctIndex)
 // ✅ Saves + returns quiz difficulty (easy/moderate/hard)
 // ✅ NEW: Saves + returns quiz paper (paper1/paper2)
+// ✅ NEW: PayFast monthly payments
+// ✅ NEW: Subscription protection + paidUntil activation
 
 import express from "express";
 import mongoose from "mongoose";
@@ -18,11 +20,13 @@ import sgMail from "@sendgrid/mail";
 import Quiz from "./models/Quiz.js";
 import User from "./models/User.js";
 import Result from "./models/Result.js";
+import Payment from "./models/Payment.js";
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: false })); // ✅ needed for PayFast ITN
 
 /* ------------------ SENDGRID ------------------ */
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || "";
@@ -88,7 +92,7 @@ function hashToken(raw) {
 // Generate unique 8-digit student number (digits only)
 async function generateStudentNumber8() {
   while (true) {
-    const num = String(Math.floor(10000000 + Math.random() * 90000000)); // 8 digits
+    const num = String(Math.floor(10000000 + Math.random() * 90000000));
     const exists = await User.findOne({ studentNumber: num }).select("_id");
     if (!exists) return num;
   }
@@ -96,7 +100,7 @@ async function generateStudentNumber8() {
 
 // Generate 6-digit OTP
 function makeOtp6() {
-  return String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
+  return String(Math.floor(100000 + Math.random() * 900000));
 }
 
 function cleanSpaces(s) {
@@ -122,12 +126,13 @@ function normalizeDifficulty(v) {
   return "moderate";
 }
 
-// ✅ NEW: normalize paper
+// ✅ normalize paper
 function normalizePaper(v) {
   const p = String(v || "").toLowerCase().trim();
   if (p === "paper1" || p === "paper2") return p;
   return "paper1";
 }
+
 function paperLabel(p) {
   const pp = normalizePaper(p);
   return pp === "paper2" ? "Paper 2" : "Paper 1";
@@ -141,7 +146,6 @@ function normalizeIndexArray(v) {
     const n = Number(x);
     if (Number.isInteger(n) && n >= 0) out.push(n);
   }
-  // unique + sorted
   return [...new Set(out)].sort((a, b) => a - b);
 }
 
@@ -150,13 +154,79 @@ function isMultiMcqCorrect(chosenIdxs, correctIdxs) {
   const b = normalizeIndexArray(correctIdxs);
   if (!b.length) return false;
   if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
   return true;
+}
+
+/* ------------------ PAYFAST HELPERS ------------------ */
+
+const PAYFAST_MERCHANT_ID = process.env.PAYFAST_MERCHANT_ID || "";
+const PAYFAST_MERCHANT_KEY = process.env.PAYFAST_MERCHANT_KEY || "";
+const PAYFAST_PASSPHRASE = process.env.PAYFAST_PASSPHRASE || "";
+const PAYFAST_MODE = String(process.env.PAYFAST_MODE || "true") === "true"; // true = sandbox
+const APP_URL = String(process.env.APP_URL || "").replace(/\/$/, "");
+const API_URL = String(
+  process.env.API_URL || process.env.RENDER_EXTERNAL_URL || ""
+).replace(/\/$/, "");
+
+function payfastProcessUrl(testMode) {
+  return testMode
+    ? "https://sandbox.payfast.co.za/eng/process"
+    : "https://www.payfast.co.za/eng/process";
+}
+
+function payfastValidateUrl(testMode) {
+  return testMode
+    ? "https://sandbox.payfast.co.za/eng/query/validate"
+    : "https://www.payfast.co.za/eng/query/validate";
+}
+
+function pfEncode(val) {
+  return encodeURIComponent(String(val).trim()).replace(/%20/g, "+");
+}
+
+function buildPayfastSignature(data, passphrase = "") {
+  const keys = Object.keys(data)
+    .filter(
+      (k) =>
+        data[k] !== undefined &&
+        data[k] !== null &&
+        data[k] !== "" &&
+        k !== "signature"
+    )
+    .sort();
+
+  let str = keys.map((k) => `${k}=${pfEncode(data[k])}`).join("&");
+
+  if (passphrase) {
+    str += `&passphrase=${pfEncode(passphrase)}`;
+  }
+
+  return crypto.createHash("md5").update(str).digest("hex");
+}
+
+async function validatePayfastData(pfData) {
+  const url = payfastValidateUrl(PAYFAST_MODE);
+  const body = new URLSearchParams(pfData).toString();
+
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body,
+  });
+
+  const text = await resp.text();
+  return resp.ok && String(text || "").trim().toUpperCase() === "VALID";
 }
 
 /* ------------------ CORS ------------------ */
 const ALLOWED_ORIGINS = [
-  process.env.APP_URL, // your Netlify URL (optional)
+  process.env.APP_URL,
+  process.env.FRONTEND_URL,
   "http://localhost:3000",
   "http://localhost:5500",
   "http://127.0.0.1:5500",
@@ -165,16 +235,16 @@ const ALLOWED_ORIGINS = [
 app.use(
   cors({
     origin: (origin, cb) => {
-      if (!origin) return cb(null, true); // Postman/curl
+      if (!origin) return cb(null, true);
       if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
       if (origin.endsWith(".netlify.app")) return cb(null, true);
+      if (origin.endsWith(".onrender.com")) return cb(null, true);
       return cb(new Error(`CORS blocked: ${origin}`), false);
     },
     credentials: true,
   })
 );
 
-// Preflight
 app.options("*", cors());
 
 /* ------------------ HEALTH ------------------ */
@@ -207,7 +277,7 @@ function authRequired(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // { userId, role }
+    req.user = decoded;
     next();
   } catch {
     res.status(401).json({ message: "Invalid token" });
@@ -225,17 +295,50 @@ async function adminOnly(req, res, next) {
   }
 }
 
+async function paidRequired(req, res, next) {
+  try {
+    const user = await User.findById(req.user.userId).select(
+      "role paidUntil subscriptionStatus"
+    );
+
+    if (!user) return res.status(401).json({ message: "User not found" });
+
+    if (user.role === "admin") return next();
+
+    const now = new Date();
+
+    if (user.paidUntil && new Date(user.paidUntil) > now) {
+      if (user.subscriptionStatus !== "active") {
+        user.subscriptionStatus = "active";
+        await user.save();
+      }
+      return next();
+    }
+
+    if (user.subscriptionStatus !== "expired") {
+      user.subscriptionStatus = "expired";
+      await user.save();
+    }
+
+    return res.status(403).json({ message: "Subscription inactive. Please pay monthly." });
+  } catch (e) {
+    console.error("paidRequired error:", e.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
 /* ------------------ AUTH ROUTES ------------------ */
 
 // Profile endpoint used by learner pages + admin pages
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select(
-      "username email role grade accountType studentNumber province cellphone guardianCellphone"
+      "username email role grade accountType studentNumber province cellphone guardianCellphone subscriptionStatus paidUntil lastPaymentId"
     );
     if (!user) return res.status(404).json({ message: "User not found" });
 
     return res.json({
+      _id: user._id,
       username: user.username,
       email: user.email,
       role: user.role,
@@ -245,6 +348,9 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
       province: user.province || "",
       cellphone: user.cellphone || "",
       guardianCellphone: user.guardianCellphone || "",
+      subscriptionStatus: user.subscriptionStatus || "none",
+      paidUntil: user.paidUntil || null,
+      lastPaymentId: user.lastPaymentId || "",
     });
   } catch {
     return res.status(500).json({ message: "Server error" });
@@ -407,6 +513,9 @@ app.post("/api/login", async (req, res) => {
         province: user.province || "",
         cellphone: user.cellphone || "",
         guardianCellphone: user.guardianCellphone || "",
+        subscriptionStatus: user.subscriptionStatus || "none",
+        paidUntil: user.paidUntil || null,
+        lastPaymentId: user.lastPaymentId || "",
       },
     });
   } catch (err) {
@@ -444,7 +553,7 @@ app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
 
 // Learner: returns quizzes for learner grade
 // Admin: if you want all, use /api/quizzes?all=1
-app.get("/api/quizzes", authRequired, async (req, res) => {
+app.get("/api/quizzes", authRequired, paidRequired, async (req, res) => {
   try {
     const u = await User.findById(req.user.userId).select("role grade");
     if (!u) return res.status(401).json({ message: "User not found" });
@@ -460,7 +569,6 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
     const quizzes = await Quiz.find(filter)
       .sort({ createdAt: -1 })
       .select(
-        // ✅ include paper + difficulty
         "grade title topic paper difficulty questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt"
       );
 
@@ -472,7 +580,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
 });
 
 // Get single quiz (attempt.html uses this)
-app.get("/api/quizzes/:id", authRequired, async (req, res) => {
+app.get("/api/quizzes/:id", authRequired, paidRequired, async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id);
     if (!quiz) return res.status(404).json({ message: "Not found" });
@@ -480,7 +588,6 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
     const u = await User.findById(req.user.userId).select("role grade");
     if (!u) return res.status(401).json({ message: "User not found" });
 
-    // learners can only access their grade
     if (u.role !== "admin" && Number(quiz.grade) !== Number(u.grade)) {
       return res.status(403).json({ message: "Not allowed" });
     }
@@ -491,10 +598,9 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   }
 });
 
-// Admin creates quiz (admin-quiz.html POSTs here) ✅ NOW EMAILS STUDENTS BY GRADE
+// Admin creates quiz
 app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   try {
-    // ✅ accept difficulty + paper
     const { grade, title, topic, paper, timeLimitMinutes, instructions, questions, difficulty } =
       req.body;
 
@@ -516,7 +622,6 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
     const quizDifficulty = normalizeDifficulty(difficulty);
     const quizPaper = normalizePaper(paper);
 
-    // ✅ Validate blocks (mcq/text/note) + points + solution + multi-select
     for (const q of questions) {
       const type = String(q?.type || "mcq").toLowerCase();
 
@@ -524,7 +629,6 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
         return res.status(400).json({ message: "Each block must have text." });
       }
 
-      // ✅ solution allowed for any type
       if ("solution" in q && q.solution !== undefined && q.solution !== null) {
         q.solution = String(q.solution);
       }
@@ -553,7 +657,6 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
           }
         }
       } else {
-        // ✅ MCQ (single or multi)
         const opts = Array.isArray(q?.options) ? q.options : [];
         if (opts.length < 2 || opts.some((o) => !cleanSpaces(o))) {
           return res.status(400).json({ message: "MCQ must have at least 2 options." });
@@ -573,15 +676,12 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
           q.isMultiSelect = true;
           q.correctIndexes = idxs;
 
-          // compat: keep correctIndex if only 1
           if (idxs.length === 1) q.correctIndex = idxs[0];
         } else {
-          // single-correct
           const ci = safeInt(q?.correctIndex, null);
           if (ci === null || ci < 0 || ci >= opts.length) {
             return res.status(400).json({ message: "MCQ correctIndex must be within options." });
           }
-          // also store correctIndexes for easier review
           q.correctIndexes = [ci];
           q.isMultiSelect = false;
         }
@@ -592,7 +692,7 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
       grade: g,
       title: quizTitle,
       topic: quizTopic,
-      paper: quizPaper, // ✅ NEW
+      paper: quizPaper,
       difficulty: quizDifficulty,
       timeLimitMinutes: Number(timeLimitMinutes) || 10,
       questions,
@@ -658,7 +758,7 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   }
 });
 
-// Admin updates quiz (edit-assessment.html PUTs here)
+// Admin updates quiz
 app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const id = req.params.id;
@@ -668,7 +768,7 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
       "grade",
       "title",
       "topic",
-      "paper", // ✅ NEW
+      "paper",
       "instructions",
       "timeLimitMinutes",
       "availableFrom",
@@ -845,7 +945,6 @@ function parseNumberOrFraction(input) {
 
   if (!s) return null;
 
-  // fraction a/b
   const m = s.match(/^([+-]?\d+(?:\.\d+)?)\s*\/\s*([+-]?\d+(?:\.\d+)?)$/);
   if (m) {
     const a = Number(m[1]);
@@ -854,17 +953,15 @@ function parseNumberOrFraction(input) {
     return a / b;
   }
 
-  // normal number (0.5, -2, 3.14)
   const n = Number(s);
   return Number.isFinite(n) ? n : null;
 }
 
-// ✅ normalize typed answers so case/spaces don't matter
 function normalizeTextAnswer(s) {
   return String(s || "")
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, "") // remove all spaces
+    .replace(/\s+/g, "")
     .replace(/−/g, "-");
 }
 
@@ -882,7 +979,6 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
     return Math.abs(uNum - cNum) <= tol;
   }
 
-  // If both are numeric-like, treat as equal (fraction/decimal)
   if (uNum !== null && cNum !== null) {
     return Math.abs(uNum - cNum) <= 1e-12;
   }
@@ -892,13 +988,11 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
 
   if (mode === "contains") return ua.includes(ca);
 
-  return ua === ca; // exact (case-insensitive, space-insensitive)
+  return ua === ca;
 }
 
-// Submit attempt (attempt.html POSTs here)
-// ✅ Learners: ONE attempt only
-// ✅ Admin: MANY attempts allowed (each attempt saved)
-app.post("/api/results", authRequired, async (req, res) => {
+// Submit attempt
+app.post("/api/results", authRequired, paidRequired, async (req, res) => {
   try {
     const { quizId, answers, timeTakenSeconds } = req.body;
 
@@ -908,20 +1002,16 @@ app.post("/api/results", authRequired, async (req, res) => {
 
     const userId = req.user.userId;
 
-    // ✅ Always check role from DB.
     const me = await User.findById(userId).select("role");
     if (!me) return res.status(401).json({ message: "User not found" });
 
     const isAdmin = me.role === "admin";
 
-    // ✅ Learners blocked after first attempt
-    // ✅ Admin can retry unlimited times
     if (!isAdmin) {
       const existing = await Result.findOne({ userId, quizId }).select("_id");
       if (existing) return res.status(409).json({ message: "Already attempted" });
     }
 
-    // ✅ Admin attempt number
     let attemptNo = 1;
     if (isAdmin) {
       const prev = await Result.countDocuments({ userId, quizId, isAdminAttempt: true });
@@ -938,7 +1028,6 @@ app.post("/api/results", authRequired, async (req, res) => {
     const qs = Array.isArray(quiz.questions) ? quiz.questions : [];
     if (!qs.length) return res.status(400).json({ message: "Assessment has no questions." });
 
-    // total points (exclude notes)
     const gradedQs = qs.filter((q) => String(q.type || "mcq").toLowerCase() !== "note");
     const totalPoints = gradedQs.reduce((sum, q) => sum + (Number(q.points) || 1), 0);
 
@@ -952,12 +1041,10 @@ app.post("/api/results", authRequired, async (req, res) => {
       const options = Array.isArray(q.options) ? q.options : [];
       const qPoints = type === "note" ? 0 : (Number(q.points) || 1);
 
-      // ✅ snapshot solution/workings
       const solution = String(q.solution || "").trim();
 
       const ans = answers.find((a) => Number(a.questionIndex) === i) || {};
 
-      // NOTE (not graded)
       if (type === "note") {
         return {
           questionIndex: i,
@@ -968,7 +1055,6 @@ app.post("/api/results", authRequired, async (req, res) => {
           chosenIndex: -1,
           correctIndex: -1,
 
-          // ✅ keep arrays empty
           isMultiSelect: false,
           chosenIndexes: [],
           correctIndexes: [],
@@ -986,7 +1072,6 @@ app.post("/api/results", authRequired, async (req, res) => {
         };
       }
 
-      // TEXT
       if (type === "text") {
         const userText = cleanSpaces(ans.textAnswer || "");
         const correctText = cleanSpaces(q.correctText || "");
@@ -1010,7 +1095,6 @@ app.post("/api/results", authRequired, async (req, res) => {
           points: qPoints,
           earnedPoints: earned,
 
-          // compat (not used)
           chosenIndex: -1,
           correctIndex: -1,
           isMultiSelect: false,
@@ -1030,14 +1114,12 @@ app.post("/api/results", authRequired, async (req, res) => {
         };
       }
 
-      // ✅ MCQ (SINGLE OR MULTI)
       const correctIndexes = normalizeIndexArray(q.correctIndexes || []);
       const multiByCorrects = correctIndexes.length > 1;
       const isMultiSelect = Boolean(q.isMultiSelect) || multiByCorrects;
 
       let isCorrect = false;
 
-      // defaults
       let chosenIndex = -1;
       let correctIndex = Number.isInteger(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
 
@@ -1048,7 +1130,6 @@ app.post("/api/results", authRequired, async (req, res) => {
         chosenIndexes = normalizeIndexArray(ans.chosenIndexes || []);
         isCorrect = isMultiMcqCorrect(chosenIndexes, correctIndexes);
 
-        // compat fields (optional)
         chosenIndex = chosenIndexes.length ? chosenIndexes[0] : -1;
         correctIndex = correctIndexes.length ? correctIndexes[0] : -1;
       } else {
@@ -1056,7 +1137,6 @@ app.post("/api/results", authRequired, async (req, res) => {
         correctIndex = Number.isFinite(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
         isCorrect = chosenIndex === correctIndex && correctIndex >= 0;
 
-        // also store arrays (nice for review)
         chosenIndexes = chosenIndex >= 0 ? [chosenIndex] : [];
         correctIndexesSnap = correctIndex >= 0 ? [correctIndex] : [];
       }
@@ -1070,11 +1150,9 @@ app.post("/api/results", authRequired, async (req, res) => {
         points: qPoints,
         earnedPoints: earned,
 
-        // ✅ old fields (still there)
         chosenIndex,
         correctIndex,
 
-        // ✅ new fields (proper review/results)
         isMultiSelect,
         chosenIndexes,
         correctIndexes: correctIndexesSnap,
@@ -1102,19 +1180,13 @@ app.post("/api/results", authRequired, async (req, res) => {
       topic: quiz.topic || "General",
       title: quiz.title || "Assessment",
       instructions: String(quiz.instructions || "").trim(),
-
-      // ✅ NEW snapshot paper (requires Result schema to include it)
       paper: quiz.paper || "paper1",
-
-      // ✅ points-based
       score: scorePoints,
       total: totalPoints,
       percent,
       status,
-
       answers: savedAnswers,
       timeTakenSeconds: Number(timeTakenSeconds) || 0,
-
       isAdminAttempt: isAdmin,
       attemptNo,
       attemptedAt: new Date(),
@@ -1137,8 +1209,8 @@ app.post("/api/results", authRequired, async (req, res) => {
   }
 });
 
-// Results list for logged-in learner (results.html calls this)
-app.get("/api/results/my", authRequired, async (req, res) => {
+// Results list for logged-in learner
+app.get("/api/results/my", authRequired, paidRequired, async (req, res) => {
   try {
     const userId = req.user.userId;
 
@@ -1153,7 +1225,7 @@ app.get("/api/results/my", authRequired, async (req, res) => {
 });
 
 // Single result for review.html
-app.get("/api/results/:id", authRequired, async (req, res) => {
+app.get("/api/results/:id", authRequired, paidRequired, async (req, res) => {
   try {
     const userId = req.user.userId;
 
@@ -1249,6 +1321,172 @@ app.post("/api/reset-password-otp", async (req, res) => {
   }
 });
 
+/* ------------------ PAYFAST ------------------ */
+
+// Start monthly payment
+app.post("/api/payfast/initiate", authRequired, async (req, res) => {
+  try {
+    if (!PAYFAST_MERCHANT_ID || !PAYFAST_MERCHANT_KEY) {
+      return res.status(500).json({ message: "PayFast credentials missing." });
+    }
+
+    if (!APP_URL) {
+      return res.status(500).json({ message: "APP_URL is missing." });
+    }
+
+    if (!API_URL) {
+      return res.status(500).json({ message: "API_URL is missing." });
+    }
+
+    const { amount, item_name } = req.body;
+
+    const amt = Number(amount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      return res.status(400).json({ message: "Invalid amount." });
+    }
+
+    const currentUser = await User.findById(req.user.userId).select("email role");
+    if (!currentUser) {
+      return res.status(401).json({ message: "User not found." });
+    }
+
+    if (currentUser.role === "admin") {
+      return res.status(400).json({ message: "Admins do not need a subscription." });
+    }
+
+    const m_payment_id = `M-${req.user.userId}-${Date.now()}`;
+
+    await Payment.create({
+      userId: req.user.userId,
+      m_payment_id,
+      plan: "monthly",
+      amount: amt,
+      status: "PENDING",
+    });
+
+    const data = {
+      merchant_id: PAYFAST_MERCHANT_ID,
+      merchant_key: PAYFAST_MERCHANT_KEY,
+      return_url: `${APP_URL}/payment-success.html`,
+      cancel_url: `${APP_URL}/payment-cancel.html`,
+      notify_url: `${API_URL}/api/payfast/itn`,
+      m_payment_id,
+      amount: amt.toFixed(2),
+      item_name: String(item_name || "Practice Online Monthly Subscription").slice(0, 100),
+      name_first: currentUser.email ? currentUser.email.split("@")[0] : "Practice",
+      name_last: "Online",
+      email_address: currentUser.email || FROM_EMAIL || "no-reply@practiceonline.co.za",
+    };
+
+    data.signature = buildPayfastSignature(data, PAYFAST_PASSPHRASE);
+
+    return res.json({
+      action: payfastProcessUrl(PAYFAST_MODE),
+      fields: data,
+    });
+  } catch (e) {
+    console.error("POST /api/payfast/initiate error:", e.message);
+    return res.status(500).json({ message: "Could not start payment." });
+  }
+});
+
+// PayFast ITN
+app.post("/api/payfast/itn", async (req, res) => {
+  try {
+    const pfData = { ...req.body };
+
+    console.log("PayFast ITN received:", pfData);
+
+    if (!pfData || !pfData.m_payment_id) {
+      return res.status(400).send("Missing ITN data");
+    }
+
+    const receivedSignature = String(pfData.signature || "");
+    const calculatedSignature = buildPayfastSignature(pfData, PAYFAST_PASSPHRASE);
+
+    if (receivedSignature !== calculatedSignature) {
+      console.error("PayFast ITN invalid signature");
+      return res.status(400).send("Invalid signature");
+    }
+
+    const valid = await validatePayfastData(pfData);
+    if (!valid) {
+      console.error("PayFast ITN invalid data");
+      return res.status(400).send("Invalid data");
+    }
+
+    const payment = await Payment.findOne({ m_payment_id: pfData.m_payment_id });
+    if (!payment) {
+      console.error("PayFast ITN payment not found:", pfData.m_payment_id);
+      return res.status(200).send("OK");
+    }
+
+    const paymentStatus = String(pfData.payment_status || "").toUpperCase();
+    const amountGross = Number(pfData.amount_gross || 0);
+
+    if (Number(payment.amount).toFixed(2) !== Number(amountGross).toFixed(2)) {
+      payment.status = "FAILED";
+      payment.payment_status_raw = paymentStatus;
+      payment.pf_payment_id = String(pfData.pf_payment_id || "");
+      payment.amount_gross = amountGross;
+      payment.amount_fee = Number(pfData.amount_fee || 0);
+      payment.amount_net = Number(pfData.amount_net || 0);
+      payment.raw = pfData;
+      await payment.save();
+
+      console.error("PayFast amount mismatch:", payment.m_payment_id);
+      return res.status(200).send("OK");
+    }
+
+    if (paymentStatus === "COMPLETE") {
+      payment.status = "COMPLETE";
+    } else if (paymentStatus === "CANCELLED") {
+      payment.status = "CANCELLED";
+    } else {
+      payment.status = "FAILED";
+    }
+
+    payment.payment_status_raw = paymentStatus;
+    payment.pf_payment_id = String(pfData.pf_payment_id || "");
+    payment.amount_gross = amountGross;
+    payment.amount_fee = Number(pfData.amount_fee || 0);
+    payment.amount_net = Number(pfData.amount_net || 0);
+    payment.raw = pfData;
+
+    await payment.save();
+
+    if (payment.status === "COMPLETE") {
+      const user = await User.findById(payment.userId).select(
+        "paidUntil subscriptionStatus lastPaymentId premium premiumActivatedAt premiumExpiresAt"
+      );
+
+      if (user) {
+        const now = new Date();
+        const base =
+          user.paidUntil && new Date(user.paidUntil) > now ? new Date(user.paidUntil) : now;
+
+        const newUntil = new Date(base.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+        user.paidUntil = newUntil;
+        user.subscriptionStatus = "active";
+        user.lastPaymentId = payment.m_payment_id;
+
+        // keep old premium fields in sync so old pages don’t break
+        user.premium = true;
+        user.premiumActivatedAt = now;
+        user.premiumExpiresAt = newUntil;
+
+        await user.save();
+      }
+    }
+
+    return res.status(200).send("OK");
+  } catch (e) {
+    console.error("POST /api/payfast/itn error:", e.message);
+    return res.status(500).send("Server error");
+  }
+});
+
 /* ------------------ OPTIONAL: FRIENDLY 404 FOR API ------------------ */
 app.use("/api", (req, res) => {
   res.status(404).json({ message: "API route not found" });
@@ -1275,13 +1513,27 @@ mongoose
   .catch((err) => console.error("Mongo error:", err.message));
 
 /*
-✅ IMPORTANT (do this once in MongoDB) if you previously had a full unique index:
-db.results.dropIndex("userId_1_quizId_1")
+✅ IMPORTANT:
+You also need these env vars:
 
-Then ensure the new PARTIAL unique index is created by restarting server.
+PAYFAST_MERCHANT_ID=10046445
+PAYFAST_MERCHANT_KEY=irdjtc52y9kem
+PAYFAST_MODE=true
+PAYFAST_PASSPHRASE=your_passphrase
+APP_URL=https://practiceonline.co.za
+API_URL=https://practice-backend-msgn.onrender.com
 
-✅ ALSO IMPORTANT:
+✅ IMPORTANT:
+Create models/Payment.js
+
+✅ IMPORTANT:
+Update models/User.js with:
+- subscriptionStatus
+- paidUntil
+- lastPaymentId
+
+✅ IMPORTANT:
 To truly STORE paper in MongoDB you must add:
 - `paper` field to models/Quiz.js schema
-- (optional) `paper` field to models/Result.js schema
+- `paper` field to models/Result.js schema
 */
