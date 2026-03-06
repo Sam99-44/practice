@@ -166,6 +166,7 @@ const PAYFAST_MERCHANT_ID = process.env.PAYFAST_MERCHANT_ID || "";
 const PAYFAST_MERCHANT_KEY = process.env.PAYFAST_MERCHANT_KEY || "";
 const PAYFAST_PASSPHRASE = process.env.PAYFAST_PASSPHRASE || "";
 const PAYFAST_MODE = String(process.env.PAYFAST_MODE || "true") === "true"; // true = sandbox
+
 const APP_URL = String(process.env.APP_URL || "").replace(/\/$/, "");
 const API_URL = String(
   process.env.API_URL || process.env.RENDER_EXTERNAL_URL || ""
@@ -298,15 +299,20 @@ async function adminOnly(req, res, next) {
 async function paidRequired(req, res, next) {
   try {
     const user = await User.findById(req.user.userId).select(
-      "role paidUntil subscriptionStatus"
+      "role accountType paidUntil subscriptionStatus premium premiumExpiresAt"
     );
 
     if (!user) return res.status(401).json({ message: "User not found" });
 
+    // admins always allowed
     if (user.role === "admin") return next();
+
+    // materials account should not be blocked from general access
+    if (user.accountType === "materials") return next();
 
     const now = new Date();
 
+    // new monthly fields
     if (user.paidUntil && new Date(user.paidUntil) > now) {
       if (user.subscriptionStatus !== "active") {
         user.subscriptionStatus = "active";
@@ -315,8 +321,17 @@ async function paidRequired(req, res, next) {
       return next();
     }
 
+    // old premium fallback
+    if (user.premium && user.premiumExpiresAt && new Date(user.premiumExpiresAt) > now) {
+      user.subscriptionStatus = "active";
+      user.paidUntil = user.premiumExpiresAt;
+      await user.save();
+      return next();
+    }
+
     if (user.subscriptionStatus !== "expired") {
       user.subscriptionStatus = "expired";
+      user.premium = false;
       await user.save();
     }
 
@@ -333,9 +348,19 @@ async function paidRequired(req, res, next) {
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select(
-      "username email role grade accountType studentNumber province cellphone guardianCellphone subscriptionStatus paidUntil lastPaymentId"
+      "username email role grade accountType studentNumber province district gender cellphone guardianCellphone subscriptionStatus paidUntil lastPaymentId premium premiumExpiresAt"
     );
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    // fallback sync for old premium users
+    let effectiveStatus = user.subscriptionStatus || "none";
+    let effectivePaidUntil = user.paidUntil || null;
+    const now = new Date();
+
+    if ((!effectivePaidUntil || new Date(effectivePaidUntil) <= now) && user.premium && user.premiumExpiresAt && new Date(user.premiumExpiresAt) > now) {
+      effectiveStatus = "active";
+      effectivePaidUntil = user.premiumExpiresAt;
+    }
 
     return res.json({
       _id: user._id,
@@ -346,10 +371,12 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
       accountType: user.accountType,
       studentNumber: user.studentNumber,
       province: user.province || "",
+      district: user.district || "",
+      gender: user.gender || "",
       cellphone: user.cellphone || "",
       guardianCellphone: user.guardianCellphone || "",
-      subscriptionStatus: user.subscriptionStatus || "none",
-      paidUntil: user.paidUntil || null,
+      subscriptionStatus: effectiveStatus,
+      paidUntil: effectivePaidUntil,
       lastPaymentId: user.lastPaymentId || "",
     });
   } catch {
@@ -500,6 +527,15 @@ app.post("/api/login", async (req, res) => {
       { expiresIn: "7d" }
     );
 
+    const now = new Date();
+    let effectiveStatus = user.subscriptionStatus || "none";
+    let effectivePaidUntil = user.paidUntil || null;
+
+    if ((!effectivePaidUntil || new Date(effectivePaidUntil) <= now) && user.premium && user.premiumExpiresAt && new Date(user.premiumExpiresAt) > now) {
+      effectiveStatus = "active";
+      effectivePaidUntil = user.premiumExpiresAt;
+    }
+
     return res.json({
       message: "Login successful",
       token,
@@ -511,10 +547,12 @@ app.post("/api/login", async (req, res) => {
         studentNumber: user.studentNumber,
         grade: user.grade,
         province: user.province || "",
+        district: user.district || "",
+        gender: user.gender || "",
         cellphone: user.cellphone || "",
         guardianCellphone: user.guardianCellphone || "",
-        subscriptionStatus: user.subscriptionStatus || "none",
-        paidUntil: user.paidUntil || null,
+        subscriptionStatus: effectiveStatus,
+        paidUntil: effectivePaidUntil,
         lastPaymentId: user.lastPaymentId || "",
       },
     });
@@ -1039,7 +1077,7 @@ app.post("/api/results", authRequired, paidRequired, async (req, res) => {
       const hint = q.hint || "";
       const questionText = q.text || "";
       const options = Array.isArray(q.options) ? q.options : [];
-      const qPoints = type === "note" ? 0 : (Number(q.points) || 1);
+      const qPoints = type === "note" ? 0 : Number(q.points) || 1;
 
       const solution = String(q.solution || "").trim();
 
@@ -1345,13 +1383,17 @@ app.post("/api/payfast/initiate", authRequired, async (req, res) => {
       return res.status(400).json({ message: "Invalid amount." });
     }
 
-    const currentUser = await User.findById(req.user.userId).select("email role");
+    const currentUser = await User.findById(req.user.userId).select("email role accountType");
     if (!currentUser) {
       return res.status(401).json({ message: "User not found." });
     }
 
     if (currentUser.role === "admin") {
       return res.status(400).json({ message: "Admins do not need a subscription." });
+    }
+
+    if (currentUser.accountType !== "student") {
+      return res.status(400).json({ message: "This payment is only for student subscriptions." });
     }
 
     const m_payment_id = `M-${req.user.userId}-${Date.now()}`;
@@ -1364,6 +1406,8 @@ app.post("/api/payfast/initiate", authRequired, async (req, res) => {
       status: "PENDING",
     });
 
+    const emailPrefix = currentUser.email ? currentUser.email.split("@")[0] : "Practice";
+
     const data = {
       merchant_id: PAYFAST_MERCHANT_ID,
       merchant_key: PAYFAST_MERCHANT_KEY,
@@ -1373,7 +1417,7 @@ app.post("/api/payfast/initiate", authRequired, async (req, res) => {
       m_payment_id,
       amount: amt.toFixed(2),
       item_name: String(item_name || "Practice Online Monthly Subscription").slice(0, 100),
-      name_first: currentUser.email ? currentUser.email.split("@")[0] : "Practice",
+      name_first: emailPrefix,
       name_last: "Online",
       email_address: currentUser.email || FROM_EMAIL || "no-reply@practiceonline.co.za",
     };
