@@ -92,7 +92,7 @@ function hashToken(raw) {
 // Generate unique 8-digit student number (digits only)
 async function generateStudentNumber8() {
   while (true) {
-    const num = String(Math.floor(10000000 + Math.random() * 90000000));
+    const num = String(Math.floor(10000000 + Math.random() * 90000000)); // 8 digits
     const exists = await User.findOne({ studentNumber: num }).select("_id");
     if (!exists) return num;
   }
@@ -100,7 +100,7 @@ async function generateStudentNumber8() {
 
 // Generate 6-digit OTP
 function makeOtp6() {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
 }
 
 function cleanSpaces(s) {
@@ -132,7 +132,6 @@ function normalizePaper(v) {
   if (p === "paper1" || p === "paper2") return p;
   return "paper1";
 }
-
 function paperLabel(p) {
   const pp = normalizePaper(p);
   return pp === "paper2" ? "Paper 2" : "Paper 1";
@@ -154,9 +153,7 @@ function isMultiMcqCorrect(chosenIdxs, correctIdxs) {
   const b = normalizeIndexArray(correctIdxs);
   if (!b.length) return false;
   if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false;
-  }
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
   return true;
 }
 
@@ -166,7 +163,6 @@ const PAYFAST_MERCHANT_ID = process.env.PAYFAST_MERCHANT_ID || "";
 const PAYFAST_MERCHANT_KEY = process.env.PAYFAST_MERCHANT_KEY || "";
 const PAYFAST_PASSPHRASE = process.env.PAYFAST_PASSPHRASE || "";
 const PAYFAST_MODE = String(process.env.PAYFAST_MODE || "true") === "true"; // true = sandbox
-
 const APP_URL = String(process.env.APP_URL || "").replace(/\/$/, "");
 const API_URL = String(
   process.env.API_URL || process.env.RENDER_EXTERNAL_URL || ""
@@ -236,7 +232,7 @@ const ALLOWED_ORIGINS = [
 app.use(
   cors({
     origin: (origin, cb) => {
-      if (!origin) return cb(null, true);
+      if (!origin) return cb(null, true); // Postman/curl
       if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
       if (origin.endsWith(".netlify.app")) return cb(null, true);
       if (origin.endsWith(".onrender.com")) return cb(null, true);
@@ -246,6 +242,7 @@ app.use(
   })
 );
 
+// Preflight
 app.options("*", cors());
 
 /* ------------------ HEALTH ------------------ */
@@ -278,7 +275,7 @@ function authRequired(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    req.user = decoded; // { userId, role }
     next();
   } catch {
     res.status(401).json({ message: "Invalid token" });
@@ -304,15 +301,14 @@ async function paidRequired(req, res, next) {
 
     if (!user) return res.status(401).json({ message: "User not found" });
 
-    // admins always allowed
     if (user.role === "admin") return next();
 
-    // materials account should not be blocked from general access
+    // allow materials accounts through
     if (user.accountType === "materials") return next();
 
     const now = new Date();
 
-    // new monthly fields
+    // new subscription fields
     if (user.paidUntil && new Date(user.paidUntil) > now) {
       if (user.subscriptionStatus !== "active") {
         user.subscriptionStatus = "active";
@@ -352,12 +348,16 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
     );
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // fallback sync for old premium users
+    const now = new Date();
     let effectiveStatus = user.subscriptionStatus || "none";
     let effectivePaidUntil = user.paidUntil || null;
-    const now = new Date();
 
-    if ((!effectivePaidUntil || new Date(effectivePaidUntil) <= now) && user.premium && user.premiumExpiresAt && new Date(user.premiumExpiresAt) > now) {
+    if (
+      (!effectivePaidUntil || new Date(effectivePaidUntil) <= now) &&
+      user.premium &&
+      user.premiumExpiresAt &&
+      new Date(user.premiumExpiresAt) > now
+    ) {
       effectiveStatus = "active";
       effectivePaidUntil = user.premiumExpiresAt;
     }
@@ -531,7 +531,12 @@ app.post("/api/login", async (req, res) => {
     let effectiveStatus = user.subscriptionStatus || "none";
     let effectivePaidUntil = user.paidUntil || null;
 
-    if ((!effectivePaidUntil || new Date(effectivePaidUntil) <= now) && user.premium && user.premiumExpiresAt && new Date(user.premiumExpiresAt) > now) {
+    if (
+      (!effectivePaidUntil || new Date(effectivePaidUntil) <= now) &&
+      user.premium &&
+      user.premiumExpiresAt &&
+      new Date(user.premiumExpiresAt) > now
+    ) {
       effectiveStatus = "active";
       effectivePaidUntil = user.premiumExpiresAt;
     }
@@ -636,7 +641,7 @@ app.get("/api/quizzes/:id", authRequired, paidRequired, async (req, res) => {
   }
 });
 
-// Admin creates quiz
+// Admin creates quiz (admin-quiz.html POSTs here)
 app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   try {
     const { grade, title, topic, paper, timeLimitMinutes, instructions, questions, difficulty } =
@@ -796,7 +801,7 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   }
 });
 
-// Admin updates quiz
+// Admin updates quiz (edit-assessment.html PUTs here)
 app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const id = req.params.id;
@@ -974,7 +979,6 @@ function isUnavailableBySchedule(quiz) {
   return false;
 }
 
-// ✅ parse numbers AND fractions like 1/2 or -3/4
 function parseNumberOrFraction(input) {
   const s = String(input || "")
     .trim()
@@ -1029,7 +1033,7 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
   return ua === ca;
 }
 
-// Submit attempt
+// Submit attempt (attempt.html POSTs here)
 app.post("/api/results", authRequired, paidRequired, async (req, res) => {
   try {
     const { quizId, answers, timeTakenSeconds } = req.body;
@@ -1089,14 +1093,11 @@ app.post("/api/results", authRequired, paidRequired, async (req, res) => {
           type: "note",
           points: 0,
           earnedPoints: 0,
-
           chosenIndex: -1,
           correctIndex: -1,
-
           isMultiSelect: false,
           chosenIndexes: [],
           correctIndexes: [],
-
           textAnswer: "",
           correctText: "",
           hint: "",
@@ -1132,13 +1133,11 @@ app.post("/api/results", authRequired, paidRequired, async (req, res) => {
           type: "text",
           points: qPoints,
           earnedPoints: earned,
-
           chosenIndex: -1,
           correctIndex: -1,
           isMultiSelect: false,
           chosenIndexes: [],
           correctIndexes: [],
-
           textAnswer: userText,
           correctText,
           hint,
@@ -1167,14 +1166,12 @@ app.post("/api/results", authRequired, paidRequired, async (req, res) => {
       if (isMultiSelect) {
         chosenIndexes = normalizeIndexArray(ans.chosenIndexes || []);
         isCorrect = isMultiMcqCorrect(chosenIndexes, correctIndexes);
-
         chosenIndex = chosenIndexes.length ? chosenIndexes[0] : -1;
         correctIndex = correctIndexes.length ? correctIndexes[0] : -1;
       } else {
         chosenIndex = Number.isFinite(Number(ans.chosenIndex)) ? Number(ans.chosenIndex) : -1;
         correctIndex = Number.isFinite(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
         isCorrect = chosenIndex === correctIndex && correctIndex >= 0;
-
         chosenIndexes = chosenIndex >= 0 ? [chosenIndex] : [];
         correctIndexesSnap = correctIndex >= 0 ? [correctIndex] : [];
       }
@@ -1187,14 +1184,11 @@ app.post("/api/results", authRequired, paidRequired, async (req, res) => {
         type: "mcq",
         points: qPoints,
         earnedPoints: earned,
-
         chosenIndex,
         correctIndex,
-
         isMultiSelect,
         chosenIndexes,
         correctIndexes: correctIndexesSnap,
-
         textAnswer: "",
         correctText: "",
         hint,
@@ -1247,7 +1241,7 @@ app.post("/api/results", authRequired, paidRequired, async (req, res) => {
   }
 });
 
-// Results list for logged-in learner
+// Results list for logged-in learner (results.html calls this)
 app.get("/api/results/my", authRequired, paidRequired, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -1416,7 +1410,7 @@ app.post("/api/payfast/initiate", authRequired, async (req, res) => {
       notify_url: `${API_URL}/api/payfast/itn`,
       m_payment_id,
       amount: amt.toFixed(2),
-      item_name: String(item_name || "Practice Online Monthly Subscription").slice(0, 100),
+      item_name: String(item_name || "Practice Online Subscription (30 days)").slice(0, 100),
       name_first: emailPrefix,
       name_last: "Online",
       email_address: currentUser.email || FROM_EMAIL || "no-reply@practiceonline.co.za",
