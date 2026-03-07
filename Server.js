@@ -160,14 +160,14 @@ function isMultiMcqCorrect(chosenIdxs, correctIdxs) {
 }
 
 /* ------------------ PAYFAST HELPERS ------------------ */
-const PAYFAST_MERCHANT_ID = process.env.PAYFAST_MERCHANT_ID || "";
-const PAYFAST_MERCHANT_KEY = process.env.PAYFAST_MERCHANT_KEY || "";
-const PAYFAST_PASSPHRASE = process.env.PAYFAST_PASSPHRASE || "";
-const PAYFAST_MODE = String(process.env.PAYFAST_MODE || "true") === "true";
-const APP_URL = String(process.env.APP_URL || "").replace(/\/$/, "");
+const PAYFAST_MERCHANT_ID = (process.env.PAYFAST_MERCHANT_ID || "").trim();
+const PAYFAST_MERCHANT_KEY = (process.env.PAYFAST_MERCHANT_KEY || "").trim();
+const PAYFAST_PASSPHRASE = (process.env.PAYFAST_PASSPHRASE || "").trim();
+const PAYFAST_MODE = String(process.env.PAYFAST_MODE || "true").trim() === "true";
+const APP_URL = String(process.env.APP_URL || "").trim().replace(/\/$/, "");
 const API_URL = String(
   process.env.API_URL || process.env.RENDER_EXTERNAL_URL || ""
-).replace(/\/$/, "");
+).trim().replace(/\/$/, "");
 
 function payfastProcessUrl(testMode) {
   return testMode
@@ -185,24 +185,28 @@ function pfEncode(val) {
   return encodeURIComponent(String(val).trim()).replace(/%20/g, "+");
 }
 
+// ✅ FIXED: no sorting, trims values, matches posted field order
 function buildPayfastSignature(data, passphrase = "") {
-  const keys = Object.keys(data)
-    .filter(
-      (k) =>
-        data[k] !== undefined &&
-        data[k] !== null &&
-        data[k] !== "" &&
-        k !== "signature"
-    )
-    .sort();
+  let output = "";
 
-  let str = keys.map((k) => `${k}=${pfEncode(data[k])}`).join("&");
-
-  if (passphrase) {
-    str += `&passphrase=${pfEncode(passphrase)}`;
+  for (const key in data) {
+    if (
+      Object.prototype.hasOwnProperty.call(data, key) &&
+      key !== "signature" &&
+      data[key] !== undefined &&
+      data[key] !== null &&
+      data[key] !== ""
+    ) {
+      output += `${key}=${pfEncode(data[key])}&`;
+    }
   }
 
-  return crypto.createHash("md5").update(str).digest("hex");
+  if (passphrase) {
+    output += `passphrase=${pfEncode(passphrase)}&`;
+  }
+
+  output = output.slice(0, -1); // remove last &
+  return crypto.createHash("md5").update(output).digest("hex");
 }
 
 async function validatePayfastData(pfData) {
@@ -1408,12 +1412,12 @@ app.post("/api/payfast/initiate", authRequired, async (req, res) => {
       return_url: `${APP_URL}/payment-success.html`,
       cancel_url: `${APP_URL}/payment-cancel.html`,
       notify_url: `${API_URL}/api/payfast/itn`,
-      m_payment_id,
+      m_payment_id: String(m_payment_id).trim(),
       amount: amt.toFixed(2),
-      item_name: String(item_name || "Practice Online Subscription (30 days)").slice(0, 100),
-      name_first: emailPrefix,
+      item_name: String(item_name || "Practice Online Subscription (30 days)").trim().slice(0, 100),
+      name_first: String(emailPrefix || "Practice").trim(),
       name_last: "Online",
-      email_address: currentUser.email || FROM_EMAIL || "no-reply@practiceonline.co.za",
+      email_address: String(currentUser.email || FROM_EMAIL || "no-reply@practiceonline.co.za").trim(),
     };
 
     data.signature = buildPayfastSignature(data, PAYFAST_PASSPHRASE);
@@ -1439,7 +1443,7 @@ app.post("/api/payfast/itn", async (req, res) => {
       return res.status(400).send("Missing ITN data");
     }
 
-    const receivedSignature = String(pfData.signature || "");
+    const receivedSignature = String(pfData.signature || "").trim();
     const calculatedSignature = buildPayfastSignature(pfData, PAYFAST_PASSPHRASE);
 
     if (receivedSignature !== calculatedSignature) {
