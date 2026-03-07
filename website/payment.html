@@ -1,203 +1,299 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Subscribe | Practice Online</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Subscribe | Practice Online</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <style>
-    :root{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --border:#e6e6e6;
-      --text:#0f172a;
-      --muted:#475569;
-      --accent:#0b3c5d;
-      --accent-soft:#e7eef5;
-      --radius:14px;
-      --shadow:0 6px 18px rgba(0,0,0,0.06);
-      --error:#b91c1c;
-      --ok:#065f46;
-    }
-    *{box-sizing:border-box}
-    body{margin:0; font-family:Inter,Arial,sans-serif; background:var(--bg); color:var(--text);}
-    .wrap{max-width:800px; margin:0 auto; padding:24px;}
-    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);}
-    h1{margin:0; font-size:22px;}
-    .muted{color:var(--muted); line-height:1.6;}
-    .error{color:var(--error);}
-    .ok{color:var(--ok);}
-    .row{display:flex; gap:12px; flex-wrap:wrap; margin-top:12px;}
-    .btn{background:var(--accent); color:#fff; border:none; padding:12px 14px; border-radius:12px; cursor:pointer; font-weight:700; font-size:14px;}
-    .btn:disabled{opacity:.65; cursor:not-allowed;}
-    .btn2{background:#fff; color:var(--text); border:1px solid #ddd; padding:12px 14px; border-radius:12px; cursor:pointer; font-weight:700; font-size:14px;}
-    .pill{display:inline-block; font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid #cfe9ff; background:#eef7ff; color:#0b3c5d;}
-    .price{font-size:28px; font-weight:800; margin:10px 0;}
-    .hr{height:1px; background:#eee; margin:14px 0;}
-    ul{margin:10px 0 0 18px;}
-  </style>
+<style>
+:root{
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --border:#e6e6e6;
+  --text:#0f172a;
+  --muted:#475569;
+  --accent:#0b3c5d;
+  --radius:14px;
+  --shadow:0 6px 18px rgba(0,0,0,0.06);
+  --error:#b91c1c;
+  --ok:#065f46;
+}
 
-  <script>
-    const token = localStorage.getItem("token");
-    if (!token) window.location.href = "login.html";
-  </script>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Inter,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+.wrap{
+  max-width:800px;
+  margin:0 auto;
+  padding:24px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px;
+  box-shadow:var(--shadow);
+}
+
+h1{margin:0;font-size:22px}
+
+.muted{color:var(--muted);line-height:1.6}
+.error{color:var(--error)}
+.ok{color:var(--ok)}
+
+.row{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+.btn{
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  padding:12px 14px;
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:700;
+  font-size:14px;
+}
+
+.btn:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
+.btn2{
+  background:#fff;
+  color:var(--text);
+  border:1px solid #ddd;
+  padding:12px 14px;
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:700;
+  font-size:14px;
+}
+
+.pill{
+  display:inline-block;
+  font-size:12px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid #cfe9ff;
+  background:#eef7ff;
+  color:#0b3c5d;
+}
+
+.price{
+  font-size:28px;
+  font-weight:800;
+  margin:10px 0;
+}
+
+.hr{
+  height:1px;
+  background:#eee;
+  margin:14px 0;
+}
+
+ul{margin:10px 0 0 18px}
+</style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="card">
-      <div class="pill">Subscription</div>
-      <h1 style="margin-top:10px;">Unlock Practice Online</h1>
-      <p class="muted" id="welcome" style="margin:6px 0 0 0;">Loading your account…</p>
 
-      <div class="price">R95.00</div>
-      <p class="muted" style="margin:0;">Access for <strong>30 days</strong>. When it expires, quizzes will be blocked until you pay again.</p>
+<div class="wrap">
+<div class="card">
 
-      <div class="hr"></div>
+<div class="pill">Subscription</div>
 
-      <p class="muted" style="margin:0 0 8px 0;"><strong>What you get:</strong></p>
-      <ul class="muted">
-        <li>Full quiz access</li>
-        <li>30 days from payment date</li>
-        <li>Renew anytime (it extends your expiry)</li>
-      </ul>
+<h1 style="margin-top:10px;">Unlock Practice Online</h1>
 
-      <p id="status" class="muted" style="margin-top:14px;"></p>
+<p class="muted" id="welcome">Loading your account...</p>
 
-      <div class="row">
-        <button class="btn" id="payBtn" type="button" disabled>Pay R95 to Subscribe</button>
-        <button class="btn2" type="button" onclick="window.location.href='learner-quizzes.html'">Back</button>
-      </div>
+<div class="price">R95.00</div>
 
-      <p id="msg" style="margin-top:12px;"></p>
-    </div>
-  </div>
+<p class="muted">
+Access for <strong>30 days</strong>. When it expires, quizzes will be blocked until you pay again.
+</p>
 
-  <script>
-    const API = "https://practice-backend-msgn.onrender.com";
-    const token = localStorage.getItem("token");
+<div class="hr"></div>
 
-    const welcomeEl = document.getElementById("welcome");
-    const statusEl = document.getElementById("status");
-    const msgEl = document.getElementById("msg");
-    const payBtn = document.getElementById("payBtn");
+<p class="muted"><strong>What you get:</strong></p>
 
-    let currentUser = null;
+<ul class="muted">
+<li>Full quiz access</li>
+<li>30 days from payment date</li>
+<li>Renew anytime (extends expiry)</li>
+</ul>
 
-    function fmtDate(v) {
-      if (!v) return "";
-      const d = new Date(v);
-      if (isNaN(d.getTime())) return "";
-      return d.toLocaleString();
-    }
+<p id="status" class="muted" style="margin-top:14px;"></p>
 
-    (async function init() {
-      try {
-        const res = await fetch(`${API}/api/auth/me`, {
-          headers: { Authorization: "Bearer " + token }
-        });
+<div class="row">
+<button class="btn" id="payBtn" disabled>Pay R95 to Subscribe</button>
+<button class="btn2" onclick="window.location.href='learner-quizzes.html'">Back</button>
+</div>
 
-        if (res.status === 401) {
-          localStorage.removeItem("token");
-          window.location.href = "login.html";
-          return;
-        }
+<p id="msg" style="margin-top:12px;"></p>
 
-        if (!res.ok) throw new Error("Failed to load user");
+</div>
+</div>
 
-        const u = await res.json();
-        currentUser = u;
+<script>
 
-        const username = localStorage.getItem("username") || u.username || "Learner";
-        const userEmail = (u.email || "").toLowerCase();
-        welcomeEl.textContent = `Welcome, ${username}${userEmail ? ` (${userEmail})` : ""}`;
+const API = "https://practice-backend-msgn.onrender.com";
+const token = localStorage.getItem("token");
 
-        if (u.role === "admin") {
-          statusEl.className = "ok";
-          statusEl.textContent = "✅ You are an admin. You do not need a subscription.";
-          payBtn.disabled = true;
-          payBtn.style.display = "none";
-          return;
-        }
+if(!token){
+  window.location.href = "login.html";
+}
 
-        if (u.accountType !== "student") {
-          statusEl.className = "ok";
-          statusEl.textContent = "✅ This account does not need a learner subscription.";
-          payBtn.disabled = true;
-          payBtn.style.display = "none";
-          return;
-        }
+const welcomeEl = document.getElementById("welcome");
+const statusEl = document.getElementById("status");
+const payBtn = document.getElementById("payBtn");
+const msgEl = document.getElementById("msg");
 
-        if (u.subscriptionStatus === "active" && u.paidUntil) {
-          statusEl.className = "ok";
-          statusEl.textContent = `✅ Subscription is active. Expires on: ${fmtDate(u.paidUntil)}`;
-          payBtn.textContent = "Renew (extend 30 days)";
-        } else if (u.subscriptionStatus === "expired" && u.paidUntil) {
-          statusEl.className = "error";
-          statusEl.textContent = `❌ Subscription expired on: ${fmtDate(u.paidUntil)}. Pay R95 to unlock 30 days.`;
-        } else {
-          statusEl.className = "error";
-          statusEl.textContent = "❌ Subscription is not active. Pay R95 to unlock 30 days.";
-        }
+let userData = null;
 
-        payBtn.disabled = false;
-      } catch (e) {
-        console.error(e);
-        statusEl.className = "error";
-        statusEl.textContent = "Could not load your account. Please refresh.";
-        payBtn.disabled = true;
-      }
-    })();
+function formatDate(v){
+  if(!v) return "";
+  const d = new Date(v);
+  if(isNaN(d.getTime())) return "";
+  return d.toLocaleString();
+}
 
-    payBtn.addEventListener("click", async () => {
-      msgEl.className = "muted";
-      msgEl.textContent = "Creating payment...";
+async function loadUser(){
 
-      try {
-        const res = await fetch(`${API}/api/payfast/initiate`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token
-          },
-          body: JSON.stringify({
-            amount: 95.00,
-            item_name: "Practice Online Subscription (30 days)"
-          })
-        });
+  try{
 
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.message || "Failed to create payment");
-        }
-
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = data.action;
-
-        Object.entries(data.fields).forEach(([key, value]) => {
-          const input = document.createElement("input");
-          input.type = "hidden";
-          input.name = key;
-          input.value = value;
-          form.appendChild(input);
-        });
-
-        document.body.appendChild(form);
-        form.submit();
-      } catch (err) {
-        console.error(err);
-        msgEl.className = "error";
-        msgEl.textContent = "Payment error: " + (err.message || "Please try again.");
+    const res = await fetch(`${API}/api/auth/me`,{
+      headers:{
+        Authorization:`Bearer ${token}`
       }
     });
-  </script>
 
-  <script src="nav.js"></script>
+    if(res.status === 401){
+      localStorage.removeItem("token");
+      window.location.href="login.html";
+      return;
+    }
+
+    const u = await res.json();
+
+    userData = u;
+
+    const username = localStorage.getItem("username") || u.username || "Learner";
+    const email = (u.email || "").toLowerCase();
+
+    welcomeEl.textContent = `Welcome, ${username} (${email})`;
+
+    if(u.role === "admin"){
+      statusEl.className="ok";
+      statusEl.textContent="Admins do not need subscriptions.";
+      payBtn.style.display="none";
+      return;
+    }
+
+    if(u.accountType !== "student"){
+      statusEl.className="ok";
+      statusEl.textContent="This account does not require a learner subscription.";
+      payBtn.style.display="none";
+      return;
+    }
+
+    if(u.subscriptionStatus === "active"){
+      statusEl.className="ok";
+      statusEl.textContent=`Subscription active. Expires ${formatDate(u.paidUntil)}`;
+      payBtn.textContent="Renew Subscription";
+    }
+    else if(u.subscriptionStatus === "expired"){
+      statusEl.className="error";
+      statusEl.textContent=`Subscription expired on ${formatDate(u.paidUntil)}`;
+    }
+    else{
+      statusEl.className="error";
+      statusEl.textContent="Subscription not active.";
+    }
+
+    payBtn.disabled=false;
+
+  }catch(e){
+
+    console.error(e);
+    welcomeEl.textContent="Could not load account.";
+    statusEl.className="error";
+    statusEl.textContent="Server connection problem.";
+
+  }
+
+}
+
+loadUser();
+
+payBtn.addEventListener("click", async ()=>{
+
+  msgEl.textContent="Creating payment...";
+
+  try{
+
+    const res = await fetch(`${API}/api/payfast/initiate`,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization:`Bearer ${token}`
+      },
+      body:JSON.stringify({
+        amount:95.00,
+        item_name:"Practice Online Subscription (30 days)"
+      })
+    });
+
+    const data = await res.json();
+
+    if(!res.ok){
+      throw new Error(data.message || "Payment creation failed");
+    }
+
+    const form=document.createElement("form");
+    form.method="POST";
+    form.action=data.action;
+
+    Object.entries(data.fields).forEach(([key,value])=>{
+      const input=document.createElement("input");
+      input.type="hidden";
+      input.name=key;
+      input.value=value;
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+
+  }catch(err){
+
+    console.error(err);
+    msgEl.className="error";
+    msgEl.textContent="Payment error: "+err.message;
+
+  }
+
+});
+
+</script>
+
+<script src="nav.js"></script>
+
 </body>
 </html>
