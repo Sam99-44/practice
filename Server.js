@@ -5,6 +5,9 @@
 // ✅ Backward compatible with old single-correct fields (chosenIndex/correctIndex)
 // ✅ Saves + returns quiz difficulty (easy/moderate/hard)
 // ✅ NEW: Saves + returns quiz paper (paper1/paper2)
+// ✅ NEW: PayFast monthly payments
+// ✅ NEW: Returns subscription info on /api/auth/me
+// ✅ NOTE: NO route protection added yet
 
 import express from "express";
 import mongoose from "mongoose";
@@ -18,11 +21,13 @@ import sgMail from "@sendgrid/mail";
 import Quiz from "./models/Quiz.js";
 import User from "./models/User.js";
 import Result from "./models/Result.js";
+import Payment from "./models/Payment.js";
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 /* ------------------ SENDGRID ------------------ */
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || "";
@@ -154,9 +159,72 @@ function isMultiMcqCorrect(chosenIdxs, correctIdxs) {
   return true;
 }
 
+/* ------------------ PAYFAST HELPERS ------------------ */
+const PAYFAST_MERCHANT_ID = process.env.PAYFAST_MERCHANT_ID || "";
+const PAYFAST_MERCHANT_KEY = process.env.PAYFAST_MERCHANT_KEY || "";
+const PAYFAST_PASSPHRASE = process.env.PAYFAST_PASSPHRASE || "";
+const PAYFAST_MODE = String(process.env.PAYFAST_MODE || "true") === "true";
+const APP_URL = String(process.env.APP_URL || "").replace(/\/$/, "");
+const API_URL = String(
+  process.env.API_URL || process.env.RENDER_EXTERNAL_URL || ""
+).replace(/\/$/, "");
+
+function payfastProcessUrl(testMode) {
+  return testMode
+    ? "https://sandbox.payfast.co.za/eng/process"
+    : "https://www.payfast.co.za/eng/process";
+}
+
+function payfastValidateUrl(testMode) {
+  return testMode
+    ? "https://sandbox.payfast.co.za/eng/query/validate"
+    : "https://www.payfast.co.za/eng/query/validate";
+}
+
+function pfEncode(val) {
+  return encodeURIComponent(String(val).trim()).replace(/%20/g, "+");
+}
+
+function buildPayfastSignature(data, passphrase = "") {
+  const keys = Object.keys(data)
+    .filter(
+      (k) =>
+        data[k] !== undefined &&
+        data[k] !== null &&
+        data[k] !== "" &&
+        k !== "signature"
+    )
+    .sort();
+
+  let str = keys.map((k) => `${k}=${pfEncode(data[k])}`).join("&");
+
+  if (passphrase) {
+    str += `&passphrase=${pfEncode(passphrase)}`;
+  }
+
+  return crypto.createHash("md5").update(str).digest("hex");
+}
+
+async function validatePayfastData(pfData) {
+  const url = payfastValidateUrl(PAYFAST_MODE);
+  const body = new URLSearchParams(pfData).toString();
+
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body,
+  });
+
+  const text = await resp.text();
+  return resp.ok && String(text || "").trim().toUpperCase() === "VALID";
+}
+
 /* ------------------ CORS ------------------ */
 const ALLOWED_ORIGINS = [
   process.env.APP_URL, // your Netlify URL (optional)
+  process.env.FRONTEND_URL,
   "http://localhost:3000",
   "http://localhost:5500",
   "http://127.0.0.1:5500",
@@ -168,6 +236,7 @@ app.use(
       if (!origin) return cb(null, true); // Postman/curl
       if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
       if (origin.endsWith(".netlify.app")) return cb(null, true);
+      if (origin.endsWith(".onrender.com")) return cb(null, true);
       return cb(new Error(`CORS blocked: ${origin}`), false);
     },
     credentials: true,
@@ -231,11 +300,26 @@ async function adminOnly(req, res, next) {
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select(
-      "username email role grade accountType studentNumber province cellphone guardianCellphone"
+      "username email role grade accountType studentNumber province cellphone guardianCellphone subscriptionStatus paidUntil lastPaymentId premium premiumExpiresAt"
     );
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    const now = new Date();
+    let effectiveStatus = user.subscriptionStatus || "none";
+    let effectivePaidUntil = user.paidUntil || null;
+
+    if (
+      (!effectivePaidUntil || new Date(effectivePaidUntil) <= now) &&
+      user.premium &&
+      user.premiumExpiresAt &&
+      new Date(user.premiumExpiresAt) > now
+    ) {
+      effectiveStatus = "active";
+      effectivePaidUntil = user.premiumExpiresAt;
+    }
+
     return res.json({
+      _id: user._id,
       username: user.username,
       email: user.email,
       role: user.role,
@@ -245,6 +329,9 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
       province: user.province || "",
       cellphone: user.cellphone || "",
       guardianCellphone: user.guardianCellphone || "",
+      subscriptionStatus: effectiveStatus,
+      paidUntil: effectivePaidUntil,
+      lastPaymentId: user.lastPaymentId || "",
     });
   } catch {
     return res.status(500).json({ message: "Server error" });
@@ -394,6 +481,20 @@ app.post("/api/login", async (req, res) => {
       { expiresIn: "7d" }
     );
 
+    const now = new Date();
+    let effectiveStatus = user.subscriptionStatus || "none";
+    let effectivePaidUntil = user.paidUntil || null;
+
+    if (
+      (!effectivePaidUntil || new Date(effectivePaidUntil) <= now) &&
+      user.premium &&
+      user.premiumExpiresAt &&
+      new Date(user.premiumExpiresAt) > now
+    ) {
+      effectiveStatus = "active";
+      effectivePaidUntil = user.premiumExpiresAt;
+    }
+
     return res.json({
       message: "Login successful",
       token,
@@ -407,6 +508,9 @@ app.post("/api/login", async (req, res) => {
         province: user.province || "",
         cellphone: user.cellphone || "",
         guardianCellphone: user.guardianCellphone || "",
+        subscriptionStatus: effectiveStatus,
+        paidUntil: effectivePaidUntil,
+        lastPaymentId: user.lastPaymentId || "",
       },
     });
   } catch (err) {
@@ -1249,6 +1353,178 @@ app.post("/api/reset-password-otp", async (req, res) => {
   }
 });
 
+/* ------------------ PAYFAST ------------------ */
+
+// Start monthly payment
+app.post("/api/payfast/initiate", authRequired, async (req, res) => {
+  try {
+    if (!PAYFAST_MERCHANT_ID || !PAYFAST_MERCHANT_KEY) {
+      return res.status(500).json({ message: "PayFast credentials missing." });
+    }
+
+    if (!APP_URL) {
+      return res.status(500).json({ message: "APP_URL is missing." });
+    }
+
+    if (!API_URL) {
+      return res.status(500).json({ message: "API_URL is missing." });
+    }
+
+    const { amount, item_name } = req.body;
+
+    const amt = Number(amount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      return res.status(400).json({ message: "Invalid amount." });
+    }
+
+    const currentUser = await User.findById(req.user.userId).select("email role accountType");
+    if (!currentUser) {
+      return res.status(401).json({ message: "User not found." });
+    }
+
+    if (currentUser.role === "admin") {
+      return res.status(400).json({ message: "Admins do not need a subscription." });
+    }
+
+    if (currentUser.accountType !== "student") {
+      return res.status(400).json({ message: "This payment is only for student subscriptions." });
+    }
+
+    const m_payment_id = `M-${req.user.userId}-${Date.now()}`;
+
+    await Payment.create({
+      userId: req.user.userId,
+      m_payment_id,
+      plan: "monthly",
+      amount: amt,
+      status: "PENDING",
+    });
+
+    const emailPrefix = currentUser.email ? currentUser.email.split("@")[0] : "Practice";
+
+    const data = {
+      merchant_id: PAYFAST_MERCHANT_ID,
+      merchant_key: PAYFAST_MERCHANT_KEY,
+      return_url: `${APP_URL}/payment-success.html`,
+      cancel_url: `${APP_URL}/payment-cancel.html`,
+      notify_url: `${API_URL}/api/payfast/itn`,
+      m_payment_id,
+      amount: amt.toFixed(2),
+      item_name: String(item_name || "Practice Online Subscription (30 days)").slice(0, 100),
+      name_first: emailPrefix,
+      name_last: "Online",
+      email_address: currentUser.email || FROM_EMAIL || "no-reply@practiceonline.co.za",
+    };
+
+    data.signature = buildPayfastSignature(data, PAYFAST_PASSPHRASE);
+
+    return res.json({
+      action: payfastProcessUrl(PAYFAST_MODE),
+      fields: data,
+    });
+  } catch (e) {
+    console.error("POST /api/payfast/initiate error:", e.message);
+    return res.status(500).json({ message: "Could not start payment." });
+  }
+});
+
+// PayFast ITN
+app.post("/api/payfast/itn", async (req, res) => {
+  try {
+    const pfData = { ...req.body };
+
+    console.log("PayFast ITN received:", pfData);
+
+    if (!pfData || !pfData.m_payment_id) {
+      return res.status(400).send("Missing ITN data");
+    }
+
+    const receivedSignature = String(pfData.signature || "");
+    const calculatedSignature = buildPayfastSignature(pfData, PAYFAST_PASSPHRASE);
+
+    if (receivedSignature !== calculatedSignature) {
+      console.error("PayFast ITN invalid signature");
+      return res.status(400).send("Invalid signature");
+    }
+
+    const valid = await validatePayfastData(pfData);
+    if (!valid) {
+      console.error("PayFast ITN invalid data");
+      return res.status(400).send("Invalid data");
+    }
+
+    const payment = await Payment.findOne({ m_payment_id: pfData.m_payment_id });
+    if (!payment) {
+      console.error("PayFast ITN payment not found:", pfData.m_payment_id);
+      return res.status(200).send("OK");
+    }
+
+    const paymentStatus = String(pfData.payment_status || "").toUpperCase();
+    const amountGross = Number(pfData.amount_gross || 0);
+
+    if (Number(payment.amount).toFixed(2) !== Number(amountGross).toFixed(2)) {
+      payment.status = "FAILED";
+      payment.payment_status_raw = paymentStatus;
+      payment.pf_payment_id = String(pfData.pf_payment_id || "");
+      payment.amount_gross = amountGross;
+      payment.amount_fee = Number(pfData.amount_fee || 0);
+      payment.amount_net = Number(pfData.amount_net || 0);
+      payment.raw = pfData;
+      await payment.save();
+
+      console.error("PayFast amount mismatch:", payment.m_payment_id);
+      return res.status(200).send("OK");
+    }
+
+    if (paymentStatus === "COMPLETE") {
+      payment.status = "COMPLETE";
+    } else if (paymentStatus === "CANCELLED") {
+      payment.status = "CANCELLED";
+    } else {
+      payment.status = "FAILED";
+    }
+
+    payment.payment_status_raw = paymentStatus;
+    payment.pf_payment_id = String(pfData.pf_payment_id || "");
+    payment.amount_gross = amountGross;
+    payment.amount_fee = Number(pfData.amount_fee || 0);
+    payment.amount_net = Number(pfData.amount_net || 0);
+    payment.raw = pfData;
+
+    await payment.save();
+
+    if (payment.status === "COMPLETE") {
+      const user = await User.findById(payment.userId).select(
+        "paidUntil subscriptionStatus lastPaymentId premium premiumActivatedAt premiumExpiresAt"
+      );
+
+      if (user) {
+        const now = new Date();
+        const base =
+          user.paidUntil && new Date(user.paidUntil) > now ? new Date(user.paidUntil) : now;
+
+        const newUntil = new Date(base.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+        user.paidUntil = newUntil;
+        user.subscriptionStatus = "active";
+        user.lastPaymentId = payment.m_payment_id;
+
+        // keep old premium fields in sync so old pages don’t break
+        user.premium = true;
+        user.premiumActivatedAt = now;
+        user.premiumExpiresAt = newUntil;
+
+        await user.save();
+      }
+    }
+
+    return res.status(200).send("OK");
+  } catch (e) {
+    console.error("POST /api/payfast/itn error:", e.message);
+    return res.status(500).send("Server error");
+  }
+});
+
 /* ------------------ OPTIONAL: FRIENDLY 404 FOR API ------------------ */
 app.use("/api", (req, res) => {
   res.status(404).json({ message: "API route not found" });
@@ -1275,12 +1551,26 @@ mongoose
   .catch((err) => console.error("Mongo error:", err.message));
 
 /*
-✅ IMPORTANT (do this once in MongoDB) if you previously had a full unique index:
-db.results.dropIndex("userId_1_quizId_1")
+✅ IMPORTANT:
+You also need these env vars:
 
-Then ensure the new PARTIAL unique index is created by restarting server.
+PAYFAST_MERCHANT_ID=10046445
+PAYFAST_MERCHANT_KEY=irdjtc52y9kem
+PAYFAST_MODE=true
+PAYFAST_PASSPHRASE=your_passphrase
+APP_URL=https://practiceonline.co.za
+API_URL=https://practice-backend-msgn.onrender.com
 
-✅ ALSO IMPORTANT:
+✅ IMPORTANT:
+Create models/Payment.js
+
+✅ IMPORTANT:
+Update models/User.js with:
+- subscriptionStatus
+- paidUntil
+- lastPaymentId
+
+✅ IMPORTANT:
 To truly STORE paper in MongoDB you must add:
 - `paper` field to models/Quiz.js schema
 - (optional) `paper` field to models/Result.js schema
