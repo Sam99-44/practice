@@ -163,7 +163,7 @@ function isMultiMcqCorrect(chosenIdxs, correctIdxs) {
 const PAYFAST_MERCHANT_ID = (process.env.PAYFAST_MERCHANT_ID || "").trim();
 const PAYFAST_MERCHANT_KEY = (process.env.PAYFAST_MERCHANT_KEY || "").trim();
 const PAYFAST_PASSPHRASE = (process.env.PAYFAST_PASSPHRASE || "").trim();
-const PAYFAST_MODE = String(process.env.PAYFAST_MODE || "true").trim() === "true";
+const PAYFAST_MODE = String(process.env.PAYFAST_MODE || "false").trim() === "true";
 const APP_URL = String(process.env.APP_URL || "").trim().replace(/\/$/, "");
 const API_URL = String(
   process.env.API_URL || process.env.RENDER_EXTERNAL_URL || ""
@@ -1579,3 +1579,4 @@ To truly STORE paper in MongoDB you must add:
 - `paper` field to models/Quiz.js schema
 - (optional) `paper` field to models/Result.js schema
 */
+
