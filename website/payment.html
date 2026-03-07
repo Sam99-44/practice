@@ -115,48 +115,47 @@ ul{margin:10px 0 0 18px}
 <body>
 
 <div class="wrap">
-<div class="card">
+  <div class="card">
 
-<div class="pill">Subscription</div>
+    <div class="pill">Subscription</div>
 
-<h1 style="margin-top:10px;">Unlock Practice Online</h1>
+    <h1 style="margin-top:10px;">Unlock Practice Online</h1>
 
-<p class="muted" id="welcome">Loading your account...</p>
+    <p class="muted" id="welcome">Loading your account...</p>
 
-<div class="price">R95.00</div>
+    <div class="price">R95.00</div>
 
-<p class="muted">
-Access for <strong>30 days</strong>. When it expires, quizzes will be blocked until you pay again.
-</p>
+    <p class="muted">
+      Access for <strong>30 days</strong>. When it expires, quizzes will be blocked until you pay again.
+    </p>
 
-<div class="hr"></div>
+    <div class="hr"></div>
 
-<p class="muted"><strong>What you get:</strong></p>
+    <p class="muted"><strong>What you get:</strong></p>
 
-<ul class="muted">
-<li>Full quiz access</li>
-<li>30 days from payment date</li>
-<li>Renew anytime (extends expiry)</li>
-</ul>
+    <ul class="muted">
+      <li>Full quiz access</li>
+      <li>30 days from payment date</li>
+      <li>Renew anytime (extends expiry)</li>
+    </ul>
 
-<p id="status" class="muted" style="margin-top:14px;"></p>
+    <p id="status" class="muted" style="margin-top:14px;"></p>
 
-<div class="row">
-<button class="btn" id="payBtn" disabled>Pay R95 to Subscribe</button>
-<button class="btn2" onclick="window.location.href='learner-quizzes.html'">Back</button>
-</div>
+    <div class="row">
+      <button class="btn" id="payBtn" disabled>Pay R95 to Subscribe</button>
+      <button class="btn2" type="button" onclick="window.location.href='learner-quizzes.html'">Back</button>
+    </div>
 
-<p id="msg" style="margin-top:12px;"></p>
+    <p id="msg" style="margin-top:12px;"></p>
 
-</div>
+  </div>
 </div>
 
 <script>
-
 const API = "https://practice-backend-msgn.onrender.com";
 const token = localStorage.getItem("token");
 
-if(!token){
+if (!token) {
   window.location.href = "login.html";
 }
 
@@ -167,130 +166,124 @@ const msgEl = document.getElementById("msg");
 
 let userData = null;
 
-function formatDate(v){
-  if(!v) return "";
+function formatDate(v) {
+  if (!v) return "";
   const d = new Date(v);
-  if(isNaN(d.getTime())) return "";
+  if (isNaN(d.getTime())) return "";
   return d.toLocaleString();
 }
 
-async function loadUser(){
-
-  try{
-
-    const res = await fetch(`${API}/api/auth/me`,{
-      headers:{
-        Authorization:`Bearer ${token}`
+async function loadUser() {
+  try {
+    const res = await fetch(`${API}/api/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`
       }
     });
 
-    if(res.status === 401){
+    if (res.status === 401) {
       localStorage.removeItem("token");
-      window.location.href="login.html";
+      localStorage.removeItem("username");
+      window.location.href = "login.html";
       return;
     }
 
     const u = await res.json();
-
     userData = u;
 
     const username = localStorage.getItem("username") || u.username || "Learner";
     const email = (u.email || "").toLowerCase();
 
-    welcomeEl.textContent = `Welcome, ${username} (${email})`;
+    welcomeEl.textContent = `Welcome, ${username}${email ? ` (${email})` : ""}`;
 
-    if(u.role === "admin"){
-      statusEl.className="ok";
-      statusEl.textContent="Admins do not need subscriptions.";
-      payBtn.style.display="none";
+    if (u.role === "admin") {
+      statusEl.className = "ok";
+      statusEl.textContent = "Admins do not need subscriptions.";
+      payBtn.style.display = "none";
       return;
     }
 
-    if(u.accountType !== "student"){
-      statusEl.className="ok";
-      statusEl.textContent="This account does not require a learner subscription.";
-      payBtn.style.display="none";
+    if (u.accountType !== "student") {
+      statusEl.className = "ok";
+      statusEl.textContent = "This account does not require a learner subscription.";
+      payBtn.style.display = "none";
       return;
     }
 
-    if(u.subscriptionStatus === "active"){
-      statusEl.className="ok";
-      statusEl.textContent=`Subscription active. Expires ${formatDate(u.paidUntil)}`;
-      payBtn.textContent="Renew Subscription";
-    }
-    else if(u.subscriptionStatus === "expired"){
-      statusEl.className="error";
-      statusEl.textContent=`Subscription expired on ${formatDate(u.paidUntil)}`;
-    }
-    else{
-      statusEl.className="error";
-      statusEl.textContent="Subscription not active.";
+    if (u.subscriptionStatus === "active") {
+      statusEl.className = "ok";
+      statusEl.textContent = `Subscription active. Expires ${formatDate(u.paidUntil)}`;
+      payBtn.textContent = "Renew Subscription";
+    } else if (u.subscriptionStatus === "expired") {
+      statusEl.className = "error";
+      statusEl.textContent = `Subscription expired on ${formatDate(u.paidUntil)}`;
+      payBtn.textContent = "Pay R95 to Renew";
+    } else {
+      statusEl.className = "error";
+      statusEl.textContent = "Subscription not active.";
+      payBtn.textContent = "Pay R95 to Subscribe";
     }
 
-    payBtn.disabled=false;
-
-  }catch(e){
-
+    payBtn.disabled = false;
+  } catch (e) {
     console.error(e);
-    welcomeEl.textContent="Could not load account.";
-    statusEl.className="error";
-    statusEl.textContent="Server connection problem.";
-
+    welcomeEl.textContent = "Could not load account.";
+    statusEl.className = "error";
+    statusEl.textContent = "Server connection problem.";
   }
-
 }
 
 loadUser();
 
-payBtn.addEventListener("click", async ()=>{
+payBtn.addEventListener("click", async () => {
+  payBtn.disabled = true;
+  msgEl.className = "muted";
+  msgEl.textContent = "Creating payment...";
 
-  msgEl.textContent="Creating payment...";
-
-  try{
-
-    const res = await fetch(`${API}/api/payfast/initiate`,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        Authorization:`Bearer ${token}`
+  try {
+    const res = await fetch(`${API}/api/payfast/initiate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
       },
-      body:JSON.stringify({
-        amount:95.00,
-        item_name:"Practice Online Subscription (30 days)"
+      body: JSON.stringify({
+        amount: 95.00,
+        item_name: "Practice Online Subscription (30 days)"
       })
     });
 
     const data = await res.json();
 
-    if(!res.ok){
+    if (!res.ok) {
       throw new Error(data.message || "Payment creation failed");
     }
 
-    const form=document.createElement("form");
-    form.method="POST";
-    form.action=data.action;
+    if (!data.action || !data.fields) {
+      throw new Error("Invalid payment response from server");
+    }
 
-    Object.entries(data.fields).forEach(([key,value])=>{
-      const input=document.createElement("input");
-      input.type="hidden";
-      input.name=key;
-      input.value=value;
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = data.action;
+
+    Object.entries(data.fields).forEach(([key, value]) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = key;
+      input.value = value;
       form.appendChild(input);
     });
 
     document.body.appendChild(form);
     form.submit();
-
-  }catch(err){
-
+  } catch (err) {
     console.error(err);
-    msgEl.className="error";
-    msgEl.textContent="Payment error: "+err.message;
-
+    msgEl.className = "error";
+    msgEl.textContent = "Payment error: " + err.message;
+    payBtn.disabled = false;
   }
-
 });
-
 </script>
 
 <script src="nav.js"></script>
