@@ -1,6 +1,7 @@
 /* nav.js - shared navigation + auth helpers for Practice Online (SAFE)
+   ✅ Adds Subscription link to BOTH desktop + mobile nav (if present)
    ✅ Adds Support link to BOTH desktop + mobile nav (if present)
-   ✅ NEW: Adds Dashboard link to BOTH desktop + mobile nav (if present)
+   ✅ Adds Dashboard link to BOTH desktop + mobile nav (if present)
    ✅ Auto-hides Admin link for non-admin users
    ✅ Keeps existing logic + styling safe
 */
@@ -19,12 +20,14 @@
     });
   }
 
-  // ✅ Inject "Dashboard" + "Support" link into desktop + mobile nav (only if nav exists)
+  // ✅ Inject "Dashboard" + "Subscription" + "Support" link into desktop + mobile nav
   function ensureLinks() {
-    const addLinkIfMissing = (navRoot, { href, text, insertAfterHrefIncludes, insertBeforeHrefIncludes }) => {
+    const addLinkIfMissing = (
+      navRoot,
+      { href, text, insertAfterHrefIncludes, insertBeforeHrefIncludes, dataAuth = false }
+    ) => {
       if (!navRoot) return;
 
-      // Don't duplicate
       const already = [...navRoot.querySelectorAll("a")].some((a) => {
         const h = (a.getAttribute("href") || "").toLowerCase();
         const t = (a.textContent || "").trim().toLowerCase();
@@ -36,20 +39,22 @@
       a.href = href;
       a.textContent = text;
 
+      if (dataAuth) a.setAttribute("data-auth", "1");
+
       const links = [...navRoot.querySelectorAll("a")];
 
       const afterLink = insertAfterHrefIncludes
-        ? links.find((x) => ((x.getAttribute("href") || "").toLowerCase()).includes(insertAfterHrefIncludes.toLowerCase()))
+        ? links.find((x) =>
+            ((x.getAttribute("href") || "").toLowerCase()).includes(insertAfterHrefIncludes.toLowerCase())
+          )
         : null;
 
       const beforeLink = insertBeforeHrefIncludes
-        ? links.find((x) => ((x.getAttribute("href") || "").toLowerCase()).includes(insertBeforeHrefIncludes.toLowerCase()))
+        ? links.find((x) =>
+            ((x.getAttribute("href") || "").toLowerCase()).includes(insertBeforeHrefIncludes.toLowerCase())
+          )
         : null;
 
-      // Insert position preference:
-      // 1) after specific link
-      // 2) before specific link
-      // 3) append at end
       if (afterLink && afterLink.parentNode === navRoot) {
         afterLink.insertAdjacentElement("afterend", a);
       } else if (beforeLink && beforeLink.parentNode === navRoot) {
@@ -58,7 +63,6 @@
         navRoot.appendChild(a);
       }
 
-      // ✅ auto-active underline support
       try {
         const path = (window.location.pathname || "").toLowerCase();
         const isActive = path.endsWith("/" + href.toLowerCase()) || path.endsWith(href.toLowerCase());
@@ -70,28 +74,42 @@
     const navDesktop2 = document.getElementById("desktopNav");
     const navMobile = document.getElementById("mobileMenu");
 
-    // ✅ Add Dashboard (after Results, before Support)
-    [navDesktop1, navDesktop2, navMobile].forEach((navRoot) => {
+    const navs = [navDesktop1, navDesktop2, navMobile];
+
+    // ✅ Dashboard
+    navs.forEach((navRoot) => {
       addLinkIfMissing(navRoot, {
         href: "progress-dashboard.html",
         text: "Dashboard",
         insertAfterHrefIncludes: "results",
-        insertBeforeHrefIncludes: "support",
+        insertBeforeHrefIncludes: "subscription",
+        dataAuth: true,
       });
     });
 
-    // ✅ Add Support (after Results, else after Practice)
-    [navDesktop1, navDesktop2, navMobile].forEach((navRoot) => {
+    // ✅ Subscription
+    navs.forEach((navRoot) => {
+      addLinkIfMissing(navRoot, {
+        href: "payment.html",
+        text: "Subscription",
+        insertAfterHrefIncludes: "dashboard",
+        insertBeforeHrefIncludes: "support",
+        dataAuth: true,
+      });
+    });
+
+    // ✅ Support
+    navs.forEach((navRoot) => {
       addLinkIfMissing(navRoot, {
         href: "support.html",
         text: "Support",
-        insertAfterHrefIncludes: "results",
+        insertAfterHrefIncludes: "payment",
         insertBeforeHrefIncludes: "about",
+        dataAuth: true,
       });
     });
   }
 
-  // run immediately
   ensureLinks();
 
   function logout() {
