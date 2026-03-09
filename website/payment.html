@@ -3,152 +3,462 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Subscribe | Practice Online</title>
+<title>Subscription | Practice Online</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
 :root{
-  --bg:#f6f7fb;
+  --bg:#f5f7fb;
   --card:#ffffff;
-  --border:#e6e6e6;
+  --border:#e2e8f0;
   --text:#0f172a;
-  --muted:#475569;
+  --muted:#64748b;
   --accent:#0b3c5d;
-  --radius:14px;
-  --shadow:0 6px 18px rgba(0,0,0,0.06);
+  --accent-soft:#edf5fa;
+  --success:#166534;
+  --success-bg:#f0fdf4;
   --error:#b91c1c;
-  --ok:#065f46;
+  --error-bg:#fef2f2;
+  --shadow:0 10px 30px rgba(15,23,42,0.08);
+  --radius:20px;
 }
 
 *{box-sizing:border-box}
 
-body{
+html,body{
   margin:0;
+  padding:0;
   font-family:Inter,Arial,sans-serif;
-  background:var(--bg);
+  background:
+    radial-gradient(circle at top left, rgba(11,60,93,0.05), transparent 28%),
+    linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
   color:var(--text);
+}
+
+body{
+  min-height:100vh;
 }
 
 .wrap{
-  max-width:800px;
+  max-width:1120px;
   margin:0 auto;
-  padding:24px;
+  padding:32px 18px 48px;
 }
 
-.card{
+.page-head{
+  max-width:760px;
+  margin:0 auto 26px;
+  text-align:center;
+}
+
+.page-head h1{
+  margin:16px 0 10px;
+  font-size:34px;
+  line-height:1.1;
+  letter-spacing:-0.02em;
+}
+
+.page-head p{
+  margin:0;
+  color:var(--muted);
+  font-size:15px;
+  line-height:1.7;
+}
+
+.top-card{
   background:var(--card);
   border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:18px;
+  border-radius:24px;
   box-shadow:var(--shadow);
+  padding:20px;
+  margin-bottom:22px;
 }
 
-h1{margin:0;font-size:22px}
-
-.muted{color:var(--muted);line-height:1.6}
-.error{color:var(--error)}
-.ok{color:var(--ok)}
-
-.row{
+.account-row{
   display:flex;
-  gap:12px;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
   flex-wrap:wrap;
-  margin-top:12px;
 }
 
-.btn{
+.account-box{
+  flex:1 1 320px;
+}
+
+.account-label{
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  font-weight:700;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+
+#welcome{
+  margin:0;
+  font-size:15px;
+  line-height:1.6;
+  color:var(--text);
+}
+
+#status{
+  flex:1 1 280px;
+  margin:0;
+  padding:14px 16px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:#f8fafc;
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.6;
+}
+
+#status.ok{
+  background:var(--success-bg);
+  border-color:#bbf7d0;
+  color:var(--success);
+}
+
+#status.error{
+  background:var(--error-bg);
+  border-color:#fecaca;
+  color:var(--error);
+}
+
+.plans{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:22px;
+}
+
+.plan{
+  position:relative;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:24px;
+  padding:26px;
+  box-shadow:var(--shadow);
+  display:flex;
+  flex-direction:column;
+  min-height:100%;
+}
+
+.plan.featured{
+  border:1.5px solid var(--accent);
+}
+
+.popular-badge{
+  position:absolute;
+  top:18px;
+  right:18px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:7px 12px;
+  border-radius:999px;
   background:var(--accent);
   color:#fff;
-  border:none;
-  padding:12px 14px;
-  border-radius:12px;
-  cursor:pointer;
+  font-size:11px;
   font-weight:700;
-  font-size:14px;
+  letter-spacing:.03em;
 }
 
-.btn:disabled{
-  opacity:.6;
-  cursor:not-allowed;
-}
-
-.btn2{
-  background:#fff;
-  color:var(--text);
-  border:1px solid #ddd;
-  padding:12px 14px;
-  border-radius:12px;
-  cursor:pointer;
-  font-weight:700;
-  font-size:14px;
-}
-
-.pill{
-  display:inline-block;
+.plan-type{
   font-size:12px;
-  padding:6px 10px;
-  border-radius:999px;
-  border:1px solid #cfe9ff;
-  background:#eef7ff;
-  color:#0b3c5d;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:12px;
+}
+
+.plan h2{
+  margin:0 0 8px;
+  font-size:26px;
+  line-height:1.2;
+  letter-spacing:-0.02em;
+}
+
+.plan-sub{
+  margin:0 0 20px;
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.7;
 }
 
 .price{
-  font-size:28px;
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+  margin-bottom:6px;
+}
+
+.amount{
+  font-size:42px;
+  line-height:1;
   font-weight:800;
-  margin:10px 0;
+  letter-spacing:-0.03em;
 }
 
-.hr{
-  height:1px;
-  background:#eee;
-  margin:14px 0;
+.period{
+  font-size:14px;
+  color:var(--muted);
+  margin-bottom:6px;
 }
 
-ul{margin:10px 0 0 18px}
+.access-note{
+  margin:0 0 18px;
+  font-size:14px;
+  color:var(--muted);
+  line-height:1.6;
+}
+
+.feature-list{
+  list-style:none;
+  padding:0;
+  margin:0 0 22px;
+}
+
+.feature-list li{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:10px 0;
+  border-bottom:1px solid #f1f5f9;
+  font-size:14px;
+  color:#1e293b;
+  line-height:1.6;
+}
+
+.feature-list li:last-child{
+  border-bottom:none;
+}
+
+.tick{
+  width:20px;
+  height:20px;
+  border-radius:999px;
+  background:#ecfdf5;
+  color:#15803d;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  font-weight:800;
+  flex:0 0 20px;
+  margin-top:1px;
+}
+
+.plan-footer{
+  margin-top:auto;
+}
+
+.btn{
+  width:100%;
+  border:none;
+  border-radius:14px;
+  background:var(--accent);
+  color:#fff;
+  padding:14px 16px;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  transition:transform .15s ease, opacity .15s ease, box-shadow .15s ease;
+  box-shadow:0 10px 20px rgba(11,60,93,0.18);
+}
+
+.btn:hover:not(:disabled){
+  transform:translateY(-1px);
+}
+
+.btn:disabled{
+  opacity:.65;
+  cursor:not-allowed;
+  transform:none;
+  box-shadow:none;
+}
+
+.btn.secondary{
+  background:#fff;
+  color:var(--text);
+  border:1px solid var(--border);
+  box-shadow:none;
+}
+
+.bottom-actions{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  margin-top:24px;
+  flex-wrap:wrap;
+}
+
+.bottom-actions .btn{
+  width:auto;
+  min-width:180px;
+}
+
+#msg{
+  margin:18px auto 0;
+  max-width:720px;
+  text-align:center;
+  font-size:14px;
+  line-height:1.6;
+  color:var(--muted);
+}
+
+#msg.error{ color:var(--error); }
+#msg.ok{ color:var(--success); }
+
+.note{
+  margin:16px auto 0;
+  max-width:760px;
+  text-align:center;
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.7;
+}
+
+@media (max-width: 900px){
+  .plans{
+    grid-template-columns:1fr;
+  }
+
+  .page-head h1{
+    font-size:28px;
+  }
+}
+
+@media (max-width: 640px){
+  .wrap{
+    padding:22px 14px 40px;
+  }
+
+  .top-card,
+  .plan{
+    padding:18px;
+    border-radius:20px;
+  }
+
+  .amount{
+    font-size:36px;
+  }
+
+  .page-head h1{
+    font-size:24px;
+  }
+
+  .bottom-actions{
+    flex-direction:column;
+  }
+
+  .bottom-actions .btn{
+    width:100%;
+  }
+}
 </style>
 </head>
 
 <body>
 
 <div class="wrap">
-  <div class="card">
 
-    <div class="pill">Subscription</div>
-
-    <h1 style="margin-top:10px;">Unlock Practice Online</h1>
-
-    <p class="muted" id="welcome">Loading your account...</p>
-
-    <div class="price">R95.00</div>
-
-    <p class="muted">
-      Access for <strong>30 days</strong>. When it expires, quizzes will be blocked until you pay again.
+  <div class="page-head">
+    <h1>Choose a plan for your learning</h1>
+    <p>
+      Get full quiz access, or choose the complete learning plan with live lessons and extra support.
     </p>
+  </div>
 
-    <div class="hr"></div>
+  <div class="top-card">
+    <div class="account-row">
+      <div class="account-box">
+        <div class="account-label">Your account</div>
+        <p id="welcome">Loading your account details...</p>
+      </div>
 
-    <p class="muted"><strong>What you get:</strong></p>
+      <p id="status">Checking your subscription...</p>
+    </div>
+  </div>
 
-    <ul class="muted">
-      <li>Full quiz access</li>
-      <li>30 days from payment date</li>
-      <li>Renew anytime (extends expiry)</li>
-    </ul>
+  <div class="plans">
 
-    <p id="status" class="muted" style="margin-top:14px;"></p>
+    <div class="plan">
+      <div class="plan-type">Quiz Access</div>
+      <h2>Quiz Subscription</h2>
+      <p class="plan-sub">
+        A good choice for learners who want to practise, revise, and get quick feedback.
+      </p>
 
-    <div class="row">
-      <button class="btn" id="payBtn" disabled>Pay R95 to Subscribe</button>
-      <button class="btn2" type="button" onclick="window.location.href='learner-quizzes.html'">Back</button>
+      <div class="price">
+        <div class="amount">R95</div>
+        <div class="period">/ 30 days</div>
+      </div>
+
+      <p class="access-note">
+        Gives you quiz access for 30 days from the payment date.
+      </p>
+
+      <ul class="feature-list">
+        <li><span class="tick">✓</span><span>Access to all quizzes</span></li>
+        <li><span class="tick">✓</span><span>Instant marking and feedback</span></li>
+        <li><span class="tick">✓</span><span>Step-by-step solutions where available</span></li>
+        <li><span class="tick">✓</span><span>Progress tracking and revision support</span></li>
+      </ul>
+
+      <div class="plan-footer">
+        <button class="btn" id="payQuizBtn" disabled>Subscribe for R95</button>
+      </div>
     </div>
 
-    <p id="msg" style="margin-top:12px;"></p>
+    <div class="plan featured">
+      <div class="popular-badge">Most Popular</div>
+      <div class="plan-type">Full Learning Access</div>
+      <h2>Lessons + Full Platform</h2>
+      <p class="plan-sub">
+        Best for learners who want lessons, guidance, and full access to the Practice Online platform.
+      </p>
+
+      <div class="price">
+        <div class="amount">R599</div>
+        <div class="period">/ month</div>
+      </div>
+
+      <p class="access-note">
+        Includes live maths lessons, guided support, quizzes, practice work, and worked solutions.
+      </p>
+
+      <ul class="feature-list">
+        <li><span class="tick">✓</span><span>Everything in the quiz subscription</span></li>
+        <li><span class="tick">✓</span><span>Live maths lessons</span></li>
+        <li><span class="tick">✓</span><span>Simple tutorial guidance</span></li>
+        <li><span class="tick">✓</span><span>Practice exercises and solutions</span></li>
+        <li><span class="tick">✓</span><span>Exam preparation support</span></li>
+      </ul>
+
+      <div class="plan-footer">
+        <button class="btn" id="payLessonBtn" disabled>Start Learning for R599</button>
+      </div>
+    </div>
 
   </div>
+
+  <div class="bottom-actions">
+    <button class="btn secondary" type="button" onclick="window.location.href='learner-quizzes.html'">
+      Back to Quizzes
+    </button>
+  </div>
+
+  <p id="msg"></p>
+
+  <p class="note">
+    Your access starts after successful payment. If your subscription has ended, you can renew anytime.
+  </p>
+
 </div>
 
 <script>
@@ -161,16 +471,31 @@ if (!token) {
 
 const welcomeEl = document.getElementById("welcome");
 const statusEl = document.getElementById("status");
-const payBtn = document.getElementById("payBtn");
+const payQuizBtn = document.getElementById("payQuizBtn");
+const payLessonBtn = document.getElementById("payLessonBtn");
 const msgEl = document.getElementById("msg");
-
-let userData = null;
 
 function formatDate(v) {
   if (!v) return "";
   const d = new Date(v);
   if (isNaN(d.getTime())) return "";
-  return d.toLocaleString();
+  return d.toLocaleString("en-ZA", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+function setMessage(text, type = "") {
+  msgEl.className = type ? type : "";
+  msgEl.textContent = text;
+}
+
+function setButtonsLoading(isLoading) {
+  payQuizBtn.disabled = isLoading;
+  payLessonBtn.disabled = isLoading;
 }
 
 async function loadUser() {
@@ -189,7 +514,6 @@ async function loadUser() {
     }
 
     const u = await res.json();
-    userData = u;
 
     const username = localStorage.getItem("username") || u.username || "Learner";
     const email = (u.email || "").toLowerCase();
@@ -198,47 +522,44 @@ async function loadUser() {
 
     if (u.role === "admin") {
       statusEl.className = "ok";
-      statusEl.textContent = "Admins do not need subscriptions.";
-      payBtn.style.display = "none";
+      statusEl.textContent = "Admin accounts do not need a subscription.";
+      payQuizBtn.style.display = "none";
+      payLessonBtn.style.display = "none";
       return;
     }
 
     if (u.accountType !== "student") {
       statusEl.className = "ok";
-      statusEl.textContent = "This account does not require a learner subscription.";
-      payBtn.style.display = "none";
+      statusEl.textContent = "This account does not need a learner subscription.";
+      payQuizBtn.style.display = "none";
+      payLessonBtn.style.display = "none";
       return;
     }
 
     if (u.subscriptionStatus === "active") {
       statusEl.className = "ok";
-      statusEl.textContent = `Subscription active. Expires ${formatDate(u.paidUntil)}`;
-      payBtn.textContent = "Renew Subscription";
+      statusEl.textContent = `Your subscription is active until ${formatDate(u.paidUntil)}.`;
     } else if (u.subscriptionStatus === "expired") {
       statusEl.className = "error";
-      statusEl.textContent = `Subscription expired on ${formatDate(u.paidUntil)}`;
-      payBtn.textContent = "Pay R95 to Renew";
+      statusEl.textContent = `Your subscription ended on ${formatDate(u.paidUntil)}. Renew to continue learning.`;
     } else {
       statusEl.className = "error";
-      statusEl.textContent = "Subscription not active.";
-      payBtn.textContent = "Pay R95 to Subscribe";
+      statusEl.textContent = "No active subscription found. Choose a plan below to continue.";
     }
 
-    payBtn.disabled = false;
+    payQuizBtn.disabled = false;
+    payLessonBtn.disabled = false;
   } catch (e) {
     console.error(e);
-    welcomeEl.textContent = "Could not load account.";
+    welcomeEl.textContent = "Could not load your account details.";
     statusEl.className = "error";
-    statusEl.textContent = "Server connection problem.";
+    statusEl.textContent = "We could not connect to the server right now. Please try again.";
   }
 }
 
-loadUser();
-
-payBtn.addEventListener("click", async () => {
-  payBtn.disabled = true;
-  msgEl.className = "muted";
-  msgEl.textContent = "Creating payment...";
+async function startPayment(amount, itemName, planType) {
+  setButtonsLoading(true);
+  setMessage("Preparing your payment...");
 
   try {
     const res = await fetch(`${API}/api/payfast/initiate`, {
@@ -248,8 +569,9 @@ payBtn.addEventListener("click", async () => {
         Authorization: `Bearer ${token}`
       },
       body: JSON.stringify({
-        amount: 95.00,
-        item_name: "Practice Online Subscription (30 days)"
+        amount,
+        item_name: itemName,
+        planType
       })
     });
 
@@ -279,14 +601,30 @@ payBtn.addEventListener("click", async () => {
     form.submit();
   } catch (err) {
     console.error(err);
-    msgEl.className = "error";
-    msgEl.textContent = "Payment error: " + err.message;
-    payBtn.disabled = false;
+    setMessage("Payment error: " + err.message, "error");
+    setButtonsLoading(false);
   }
+}
+
+payQuizBtn.addEventListener("click", () => {
+  startPayment(
+    95.00,
+    "Practice Online Quiz Subscription (30 days)",
+    "quiz"
+  );
 });
+
+payLessonBtn.addEventListener("click", () => {
+  startPayment(
+    599.00,
+    "Practice Online Lessons + Full Platform (30 days)",
+    "lessons"
+  );
+});
+
+loadUser();
 </script>
 
 <script src="nav.js"></script>
-
 </body>
 </html>
