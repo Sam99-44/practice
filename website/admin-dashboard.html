@@ -25,7 +25,7 @@
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text);}
-    .wrap{max-width:1100px;margin:0 auto;padding:20px;}
+    .wrap{max-width:1200px;margin:0 auto;padding:20px;}
 
     .top{
       display:flex;
@@ -66,19 +66,22 @@
       color:var(--text);
       border:1px solid #ddd;
     }
+    .btn:disabled{
+      opacity:0.65;
+      cursor:not-allowed;
+    }
     .btn:active{transform:translateY(1px);}
 
     .grid{
       display:grid;
-      grid-template-columns:repeat(3, minmax(0, 1fr));
+      grid-template-columns:repeat(2, minmax(0, 1fr));
       gap:14px;
       margin-top:14px;
     }
     @media (max-width: 900px){
-      .grid{grid-template-columns:repeat(2, minmax(0, 1fr));}
+      .grid{grid-template-columns:1fr;}
     }
     @media (max-width: 560px){
-      .grid{grid-template-columns:1fr;}
       .actions{justify-content:flex-start;}
     }
 
@@ -102,22 +105,26 @@
       letter-spacing:-0.02em;
     }
 
-    .byGradeList{
+    .list{
       margin-top:10px;
       display:flex;
       flex-direction:column;
       gap:8px;
     }
+
     .rowItem{
       display:flex;
       justify-content:space-between;
+      align-items:center;
       gap:10px;
       padding:10px 12px;
       border:1px solid #eee;
       border-radius:12px;
       background:#fafafa;
       font-size:14px;
+      flex-wrap:wrap;
     }
+
     .pill{
       display:inline-block;
       padding:4px 10px;
@@ -130,13 +137,26 @@
       white-space:nowrap;
     }
 
+    .miniStats{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .miniPill{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      border:1px solid #e2e8f0;
+      background:#fff;
+      color:#334155;
+    }
+
     #msg{margin-top:14px;}
   </style>
-
-  <script>
-    const authToken = localStorage.getItem("token");
-    if (!authToken) window.location.href = "login.html";
-  </script>
 </head>
 
 <body>
@@ -168,8 +188,23 @@
       </div>
 
       <div class="card">
+        <div class="muted">Total Learners (Grades 8–12)</div>
+        <div class="big" id="totalLearners">-</div>
+      </div>
+
+      <div class="card">
         <div class="muted">Assessments by Grade</div>
-        <div id="byGrade" class="byGradeList muted" style="margin-top:10px;">-</div>
+        <div id="byGradeAssessments" class="list muted" style="margin-top:10px;">-</div>
+      </div>
+
+      <div class="card">
+        <div class="muted">Learners by Grade</div>
+        <div id="byGradeLearners" class="list muted" style="margin-top:10px;">-</div>
+      </div>
+
+      <div class="card">
+        <div class="muted">Account Type by Grade</div>
+        <div id="byGradeAccountType" class="list muted" style="margin-top:10px;">-</div>
       </div>
     </div>
 
@@ -179,6 +214,7 @@
   <script>
     const API = window.API || "https://practice-backend-msgn.onrender.com";
     const token = localStorage.getItem("token");
+    const refreshBtn = document.getElementById("refreshBtn");
 
     function logout(){
       localStorage.removeItem("token");
@@ -201,21 +237,64 @@
       return Number.isFinite(n) ? n : 0;
     }
 
-    function renderByGrade(list){
-      const el = document.getElementById("byGrade");
-      const by = Array.isArray(list) ? list : [];
+    function buildGradeMap(list){
+      const map = new Map();
+      (Array.isArray(list) ? list : []).forEach(item => {
+        map.set(String(item.grade), safeNum(item.count));
+      });
+      return map;
+    }
 
-      if (!by.length){
-        el.innerHTML = `<div class="muted">No data</div>`;
-        return;
-      }
+    function renderAssessmentsByGrade(list){
+      const el = document.getElementById("byGradeAssessments");
+      const grades = [8, 9, 10, 11, 12];
+      const map = buildGradeMap(list);
 
-      el.innerHTML = by.map(x => `
+      el.innerHTML = grades.map(g => `
         <div class="rowItem">
-          <span class="pill">Grade ${safeNum(x.grade)}</span>
-          <b>${safeNum(x.count)}</b>
+          <span class="pill">Grade ${g}</span>
+          <b>${map.get(String(g)) || 0}</b>
         </div>
       `).join("");
+    }
+
+    function renderLearnersByGrade(list){
+      const el = document.getElementById("byGradeLearners");
+      const grades = [8, 9, 10, 11, 12];
+      const map = buildGradeMap(list);
+
+      el.innerHTML = grades.map(g => `
+        <div class="rowItem">
+          <span class="pill">Grade ${g}</span>
+          <b>${map.get(String(g)) || 0}</b>
+        </div>
+      `).join("");
+    }
+
+    function renderAccountTypeByGrade(list){
+      const el = document.getElementById("byGradeAccountType");
+      const rows = Array.isArray(list) ? list : [];
+      const grades = [8, 9, 10, 11, 12];
+
+      el.innerHTML = grades.map(g => {
+        const row = rows.find(x => Number(x.grade) === g) || {
+          grade: g,
+          student: 0,
+          materials: 0,
+          total: 0
+        };
+
+        return `
+          <div class="rowItem">
+            <span class="pill">Grade ${g}</span>
+            <div class="miniStats">
+              <span class="miniPill">Student: <b>${safeNum(row.student)}</b></span>
+              <span class="miniPill">Materials: <b>${safeNum(row.materials)}</b></span>
+              <span class="miniPill">Total: <b>${safeNum(row.total)}</b></span>
+            </div>
+          </div>
+        `;
+      }).join("");
     }
 
     async function requireAdmin(){
@@ -230,11 +309,16 @@
       }
 
       const me = await meRes.json().catch(()=>null);
-      if (!meRes.ok || !me) { logout(); return false; }
+      if (!meRes.ok || !me) {
+        logout();
+        return false;
+      }
 
       if (me.role !== "admin") {
-        alert("Admin only");
-        window.location.href = "learner-quizzes.html";
+        setMsg("Admin access only. Redirecting...", "error");
+        setTimeout(() => {
+          window.location.href = "learner-quizzes.html";
+        }, 700);
         return false;
       }
 
@@ -243,6 +327,7 @@
     }
 
     async function loadStats(showToast){
+      refreshBtn.disabled = true;
       setMsg("Loading stats...", "muted");
 
       let res;
@@ -252,24 +337,36 @@
         });
       } catch {
         setMsg("Network error loading stats.", "error");
+        refreshBtn.disabled = false;
         return;
       }
 
       const data = await res.json().catch(()=>null);
       if (!res.ok || !data){
         setMsg("Could not load stats.", "error");
+        refreshBtn.disabled = false;
         return;
       }
 
       document.getElementById("totalUsers").textContent = safeNum(data.totalUsers);
 
-      // ✅ Use totalAssessments if present, fallback to totalQuizzes
-      const totalAssessments = (data.totalAssessments != null) ? data.totalAssessments : data.totalQuizzes;
+      const totalAssessments = (data.totalAssessments != null)
+        ? data.totalAssessments
+        : data.totalQuizzes;
+
       document.getElementById("totalAssessments").textContent = safeNum(totalAssessments);
 
-      renderByGrade(data.quizzesByGrade);
+      const totalLearners = (Array.isArray(data.usersByGrade) ? data.usersByGrade : [])
+        .reduce((sum, x) => sum + safeNum(x.count), 0);
 
-      setMsg(showToast ? "✅ Stats refreshed." : "✅ Stats loaded.", "ok");
+      document.getElementById("totalLearners").textContent = totalLearners;
+
+      renderAssessmentsByGrade(data.quizzesByGrade);
+      renderLearnersByGrade(data.usersByGrade);
+      renderAccountTypeByGrade(data.accountTypeByGrade);
+
+      setMsg(showToast ? "Stats refreshed." : "Stats loaded.", "ok");
+      refreshBtn.disabled = false;
     }
 
     (async () => {
@@ -279,7 +376,5 @@
       await loadStats(false);
     })();
   </script>
-
-  <script src="nav.js"></script>
 </body>
 </html>
