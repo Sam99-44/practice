@@ -64,7 +64,12 @@ a{text-decoration:none;color:inherit}
   padding:14px;
 }
 
-table{width:100%;border-collapse:collapse;font-size:13px;}
+.tableWrapInner{
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:860px;}
 th, td{padding:8px;border-bottom:1px solid #eee;text-align:left;vertical-align:top;}
 
 th{
@@ -105,6 +110,159 @@ th{
   background:#fafafa;
   color:var(--muted);
   font-weight:700;
+}
+
+/* ✅ Mobile cards */
+.mobileCards{
+  display:none;
+  gap:12px;
+}
+
+.resultCard{
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:#fff;
+  padding:14px;
+  box-shadow:0 4px 12px rgba(15,23,42,.04);
+}
+
+.resultHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.resultTitle{
+  font-weight:800;
+  color:var(--text);
+  line-height:1.4;
+  font-size:15px;
+}
+
+.resultTopic{
+  color:var(--accent);
+  font-weight:800;
+  font-size:14px;
+  margin-top:3px;
+}
+
+.resultDate{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:600;
+  line-height:1.5;
+}
+
+.resultMark{
+  text-align:right;
+  white-space:nowrap;
+}
+
+.resultPercent{
+  font-size:18px;
+  font-weight:900;
+  line-height:1;
+}
+
+.resultGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:10px;
+}
+
+.metric{
+  background:#f8fafc;
+  border:1px solid #eef2f7;
+  border-radius:12px;
+  padding:10px;
+}
+
+.metricLabel{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--muted);
+  font-weight:800;
+  margin-bottom:4px;
+}
+
+.metricValue{
+  font-size:14px;
+  font-weight:800;
+  color:var(--text);
+}
+
+.cardActions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+.cardActions .actionBadge{
+  text-align:center;
+  flex:1 1 140px;
+}
+
+@media (max-width: 760px){
+  .topbar-inner{
+    padding:12px 14px;
+  }
+
+  .nav{
+    gap:8px;
+  }
+
+  .nav a{
+    font-size:12px;
+    padding:7px 9px;
+  }
+
+  .logoutBtn{
+    padding:7px 10px;
+    font-size:12px;
+  }
+
+  .wrap{
+    padding:14px;
+  }
+
+  .section{
+    padding:12px;
+  }
+
+  .tableWrapInner{
+    display:none;
+  }
+
+  .mobileCards{
+    display:grid;
+  }
+}
+
+@media (max-width: 480px){
+  .resultGrid{
+    grid-template-columns:1fr;
+  }
+
+  .resultHead{
+    flex-direction:column;
+  }
+
+  .resultMark{
+    text-align:left;
+  }
+
+  .cardActions{
+    flex-direction:column;
+  }
+
+  .cardActions .actionBadge{
+    width:100%;
+  }
 }
 </style>
 
@@ -147,7 +305,7 @@ if(!localStorage.getItem("token")){
 <script src="nav.js"></script>
 
 <script>
-const API = window.API || "https://api.practiceonline.co.za";  // ✅ uses nav.js if present
+const API = window.API || "https://api.practiceonline.co.za";
 const token = localStorage.getItem("token");
 let allResults = [];
 
@@ -187,20 +345,57 @@ function renderTable(data){
   }
 
   wrap.innerHTML=`
-  <table>
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Grade</th>
-        <th>Topic</th>
-        <th>Assessment</th>
-        <th>Mark</th>
-        <th>Status</th>
-        <th>Solution</th>
-        <th>Retry</th>
-      </tr>
-    </thead>
-    <tbody>
+    <div class="tableWrapInner">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Grade</th>
+            <th>Topic</th>
+            <th>Assessment</th>
+            <th>Mark</th>
+            <th>Status</th>
+            <th>Solution</th>
+            <th>Retry</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map(r=>{
+            const d=new Date(r.createdAt);
+            const dateTxt=isNaN(d)?"":d.toLocaleString();
+            const percent=Number(r.percent)||0;
+            const pass=percent>=50;
+
+            return `
+            <tr>
+              <td>${escapeHtml(dateTxt)}</td>
+              <td>${escapeHtml(String(r.grade??""))}</td>
+              <td>${escapeHtml(String(r.topic||"General"))}</td>
+              <td>${escapeHtml(String(r.title||"Assessment"))}</td>
+              <td>${percent}%</td>
+              <td class="status ${pass?"pass":"fail"}">${pass?"Pass":"Fail"}</td>
+
+              <td>
+                <span class="actionBadge"
+                  onclick="location.href='review.html?resultId=${encodeURIComponent(r._id)}'">
+                  Solution
+                </span>
+              </td>
+
+              <td>
+                <span class="actionBadge"
+                  onclick="location.href='attempt.html?quizId=${encodeURIComponent(r.quizId)}&mode=practice'">
+                  Retry
+                </span>
+              </td>
+            </tr>
+            `;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mobileCards">
       ${data.map(r=>{
         const d=new Date(r.createdAt);
         const dateTxt=isNaN(d)?"":d.toLocaleString();
@@ -208,32 +403,48 @@ function renderTable(data){
         const pass=percent>=50;
 
         return `
-        <tr>
-          <td>${escapeHtml(dateTxt)}</td>
-          <td>${escapeHtml(String(r.grade??""))}</td>
-          <td>${escapeHtml(String(r.topic||"General"))}</td>
-          <td>${escapeHtml(String(r.title||"Assessment"))}</td>
-          <td>${percent}%</td>
-          <td class="status ${pass?"pass":"fail"}">${pass?"Pass":"Fail"}</td>
+          <div class="resultCard">
+            <div class="resultHead">
+              <div>
+                <div class="resultTitle">${escapeHtml(String(r.title||"Assessment"))}</div>
+                <div class="resultTopic">${escapeHtml(String(r.topic||"General"))}</div>
+                <div class="resultDate">${escapeHtml(dateTxt)}</div>
+              </div>
 
-          <td>
-            <span class="actionBadge"
-              onclick="location.href='review.html?resultId=${encodeURIComponent(r._id)}'">
-              Solution
-            </span>
-          </td>
+              <div class="resultMark">
+                <div class="resultPercent">${percent}%</div>
+                <div class="status ${pass?"pass":"fail"}">${pass?"Pass":"Fail"}</div>
+              </div>
+            </div>
 
-          <td>
-            <span class="actionBadge"
-              onclick="location.href='attempt.html?quizId=${encodeURIComponent(r.quizId)}&mode=practice'">
-              Retry
-            </span>
-          </td>
-        </tr>
+            <div class="resultGrid">
+              <div class="metric">
+                <div class="metricLabel">Grade</div>
+                <div class="metricValue">${escapeHtml(String(r.grade??""))}</div>
+              </div>
+
+              <div class="metric">
+                <div class="metricLabel">Assessment</div>
+                <div class="metricValue">${escapeHtml(String(r.title||"Assessment"))}</div>
+              </div>
+            </div>
+
+            <div class="cardActions">
+              <span class="actionBadge"
+                onclick="location.href='review.html?resultId=${encodeURIComponent(r._id)}'">
+                Solution
+              </span>
+
+              <span class="actionBadge"
+                onclick="location.href='attempt.html?quizId=${encodeURIComponent(r.quizId)}&mode=practice'">
+                Retry
+              </span>
+            </div>
+          </div>
         `;
       }).join("")}
-    </tbody>
-  </table>`;
+    </div>
+  `;
 }
 
 function escapeHtml(str){
