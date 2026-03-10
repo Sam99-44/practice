@@ -7,7 +7,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
@@ -19,33 +19,102 @@
       --border:#e6e6e6;
       --text:#0f172a;
       --muted:#475569;
-      --radius:14px;
-      --shadow:0 8px 22px rgba(0,0,0,.06);
+      --radius:16px;
+      --shadow:0 10px 24px rgba(0,0,0,.06);
       --focus:0 0 0 4px rgba(207,233,255,.65);
+      --soft:#f8fafc;
+      --soft2:#f1f5f9;
+      --green:#065f46;
+      --orange:#9a3412;
+      --blue:#0b3c5d;
     }
 
     *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text);}
+    html,body{margin:0;padding:0}
+    body{
+      font-family:Inter,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+
     a{text-decoration:none;color:inherit}
 
-    header.topbar{background:var(--nav);color:#fff;border-bottom:3px solid rgba(255,255,255,.08);}
-    .topbar-inner{
-      max-width:1100px;margin:0 auto;padding:14px 18px;
-      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    header.topbar{
+      background:var(--nav);
+      color:#fff;
+      border-bottom:3px solid rgba(255,255,255,.08);
     }
-    .brand{display:flex;flex-direction:column;line-height:1.1;font-weight:700;letter-spacing:.15px;}
-    .brand small{opacity:.85;font-weight:600}
-    nav.nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-    nav.nav a{padding:8px 10px;border-radius:10px;color:#e7e9ff;font-weight:600;font-size:13px;}
-    nav.nav a.active{border-bottom:3px solid var(--red);color:#fff;border-radius:10px 10px 8px 8px;padding-bottom:5px;}
-    nav.nav a:hover{background:rgba(255,255,255,.10)}
-    .btnTop{
-      background:transparent;color:#fff;border:1px solid rgba(255,255,255,.22);
-      padding:8px 12px;border-radius:12px;cursor:pointer;font-weight:600;
-    }
-    .btnTop:hover{background:rgba(255,255,255,.08)}
 
-    .wrap{max-width:1100px;margin:0 auto;padding:18px;}
+    .topbar-inner{
+      max-width:1100px;
+      margin:0 auto;
+      padding:14px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .brand{
+      display:flex;
+      flex-direction:column;
+      line-height:1.1;
+      font-weight:800;
+      letter-spacing:.12px;
+    }
+
+    .brand small{
+      opacity:.85;
+      font-weight:600;
+      margin-top:4px;
+    }
+
+    nav.nav{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    nav.nav a{
+      padding:8px 10px;
+      border-radius:10px;
+      color:#e7e9ff;
+      font-weight:600;
+      font-size:13px;
+    }
+
+    nav.nav a.active{
+      border-bottom:3px solid var(--red);
+      color:#fff;
+      border-radius:10px 10px 8px 8px;
+      padding-bottom:5px;
+    }
+
+    nav.nav a:hover{
+      background:rgba(255,255,255,.10)
+    }
+
+    .btnTop{
+      background:transparent;
+      color:#fff;
+      border:1px solid rgba(255,255,255,.22);
+      padding:8px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:700;
+    }
+
+    .btnTop:hover{
+      background:rgba(255,255,255,.08)
+    }
+
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding:18px;
+    }
 
     .section{
       background:var(--card);
@@ -55,72 +124,318 @@
       margin-top:14px;
       overflow:hidden;
     }
+
     .sectionHead{
-      padding:14px 14px 12px;
+      padding:16px 16px 14px;
       border-bottom:1px solid var(--border);
-      background:linear-gradient(180deg,#f4f7ff,#eef4ff);
-      display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;
+      background:linear-gradient(180deg,#f8fbff,#eef4ff);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
     }
-    .sectionHead h1{margin:0;font-size:18px;font-weight:700;letter-spacing:-.01em;}
-    .muted{color:var(--muted);font-weight:600;font-size:13px;margin-top:6px;min-height:18px;}
 
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px;}
-    @media(max-width:900px){.grid2{grid-template-columns:1fr;}}
+    .sectionHead h1{
+      margin:0;
+      font-size:20px;
+      font-weight:800;
+      letter-spacing:-.02em;
+    }
 
-    .chartCard{
-      border:1px solid var(--border);
-      border-radius:14px;
+    .muted{
+      color:var(--muted);
+      font-weight:600;
+      font-size:13px;
+      margin-top:6px;
+      min-height:18px;
+      line-height:1.5;
+    }
+
+    .filters{
+      padding:14px 16px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
       background:#fff;
-      padding:12px;
     }
-    .chartTitle{margin:0 0 8px 0;font-size:13px;font-weight:800;color:#0f172a;}
 
-    /* ✅ Keep charts compact */
-    canvas{width:100%;height:170px;border-radius:10px;background:#fff;display:block;}
+    select{
+      padding:10px 12px;
+      border:1px solid #cbd5e1;
+      border-radius:12px;
+      background:#fff;
+      font-size:13px;
+      font-weight:700;
+      outline:none;
+      min-width:170px;
+      color:var(--text);
+    }
 
-    table{width:100%;border-collapse:collapse;font-size:13px;}
-    th, td{padding:10px 10px;border-bottom:1px solid #eee;text-align:left;vertical-align:top;}
+    select:focus{
+      box-shadow:var(--focus);
+      border-color:#cfe9ff;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+      padding:16px;
+    }
+
+    .summaryCard{
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:#fff;
+      overflow:hidden;
+    }
+
+    .summaryTitle{
+      margin:0;
+      padding:13px 14px;
+      font-size:13px;
+      font-weight:800;
+      color:#0f172a;
+      border-bottom:1px solid var(--border);
+      background:var(--soft);
+      letter-spacing:.01em;
+    }
+
+    .miniTableWrap,
+    .tableWrapInner{
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+    }
+
+    th, td{
+      padding:11px 12px;
+      border-bottom:1px solid #eee;
+      text-align:left;
+      vertical-align:top;
+    }
+
     th{
       background:#f8fafc;
       font-size:11px;
       text-transform:uppercase;
       color:var(--muted);
-      font-weight:700;
+      font-weight:800;
       letter-spacing:.06em;
       white-space:nowrap;
     }
 
-    .topicLink{color:var(--accent);font-weight:800;}
-    .topicLink:hover{text-decoration:underline}
+    .miniTable{
+      min-width:100%;
+      width:100%;
+    }
 
-    .rec{font-weight:800;color:#0f172a;}
-    .rec.low{color:#9a3412;}
-    .rec.mid{color:#0b3c5d;}
-    .rec.high{color:#065f46;}
+    .miniTable th,
+    .miniTable td{
+      padding:11px 12px;
+    }
+
+    .rankCell{
+      font-weight:800;
+      color:var(--muted);
+      width:50px;
+    }
+
+    .scoreCell{
+      font-weight:800;
+    }
+
+    .topicLink{
+      color:var(--accent);
+      font-weight:800;
+    }
+
+    .topicLink:hover{
+      text-decoration:underline;
+    }
+
+    .rec{
+      font-weight:800;
+      color:#0f172a;
+    }
+
+    .rec.low{color:var(--orange);}
+    .rec.mid{color:var(--blue);}
+    .rec.high{color:var(--green);}
 
     .smallBtn{
-      padding:7px 10px;border:1px solid #ddd;border-radius:10px;background:#fff;
-      cursor:pointer;font-weight:700;font-size:12px;white-space:nowrap;
+      padding:8px 12px;
+      border:1px solid #d6dbe3;
+      border-radius:10px;
+      background:#fff;
+      cursor:pointer;
+      font-weight:700;
+      font-size:12px;
+      white-space:nowrap;
     }
-    .smallBtn:hover{background:#f8fafc}
+
+    .smallBtn:hover{
+      background:#f8fafc;
+    }
 
     .empty{
-      padding:14px;border:1px dashed #ddd;border-radius:12px;
-      background:#fafafa;color:var(--muted);font-weight:700;margin:14px;
+      padding:14px;
+      border:1px dashed #ddd;
+      border-radius:12px;
+      background:#fafafa;
+      color:var(--muted);
+      font-weight:700;
+      margin:14px;
+      line-height:1.5;
     }
 
-    .filters{
-      padding:12px 14px;
-      display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+    .desktopTable{
+      display:block;
     }
-    select{
-      padding:8px 10px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;
-      font-size:13px;font-weight:700;outline:none;min-width:160px;
-    }
-    select:focus{box-shadow:var(--focus);border-color:#cfe9ff;}
 
-    .tableWrapInner{overflow:auto;}
-    table{min-width:860px;}
+    .mobileCards{
+      display:none;
+      padding:14px;
+      gap:12px;
+    }
+
+    .topicCard{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      padding:14px;
+      box-shadow:0 4px 12px rgba(15,23,42,.04);
+    }
+
+    .topicCardHead{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:10px;
+    }
+
+    .topicCardTitle{
+      font-size:15px;
+      font-weight:800;
+      color:var(--accent);
+      line-height:1.4;
+    }
+
+    .topicCardGrid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px 12px;
+      margin-top:10px;
+      margin-bottom:12px;
+    }
+
+    .metric{
+      background:#f8fafc;
+      border:1px solid #eef2f7;
+      border-radius:12px;
+      padding:10px 11px;
+    }
+
+    .metricLabel{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      color:var(--muted);
+      font-weight:800;
+      margin-bottom:5px;
+    }
+
+    .metricValue{
+      font-size:14px;
+      font-weight:800;
+      color:var(--text);
+    }
+
+    .cardActions{
+      display:flex;
+      justify-content:flex-end;
+    }
+
+    @media(max-width:900px){
+      .grid2{
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media(max-width:760px){
+      .wrap{
+        padding:14px;
+      }
+
+      .sectionHead{
+        padding:15px 14px 13px;
+      }
+
+      .sectionHead h1{
+        font-size:18px;
+      }
+
+      .filters{
+        padding:12px 14px;
+      }
+
+      select{
+        width:100%;
+        min-width:0;
+      }
+
+      .desktopTable{
+        display:none;
+      }
+
+      .mobileCards{
+        display:grid;
+      }
+
+      .topbar-inner{
+        padding:12px 14px;
+      }
+
+      nav.nav{
+        gap:8px;
+      }
+
+      nav.nav a{
+        font-size:12px;
+        padding:7px 9px;
+      }
+
+      .btnTop{
+        padding:8px 10px;
+        font-size:12px;
+      }
+    }
+
+    @media(max-width:520px){
+      .topicCardGrid{
+        grid-template-columns:1fr;
+      }
+
+      .summaryTitle{
+        font-size:12px;
+      }
+
+      .brand{
+        font-size:15px;
+      }
+
+      .brand small{
+        font-size:12px;
+      }
+    }
   </style>
 
   <script>
@@ -154,7 +469,6 @@
     <div class="sectionHead">
       <div>
         <h1>Topic Progress</h1>
-        <!-- ✅ No “Loading…” / No “Showing progress …” -->
         <div class="muted" id="subTxt"></div>
       </div>
     </div>
@@ -169,13 +483,18 @@
     </div>
 
     <div class="grid2">
-      <div class="chartCard">
-        <div class="chartTitle">Top 5 Topics (Best Pass Rate)</div>
-        <canvas id="topChart" height="170"></canvas>
+      <div class="summaryCard">
+        <h3 class="summaryTitle">Top 5 Topics</h3>
+        <div id="topTableWrap" class="miniTableWrap">
+          <div class="empty" style="margin:12px;">No data yet.</div>
+        </div>
       </div>
-      <div class="chartCard">
-        <div class="chartTitle">Bottom 5 Topics (Needs Work)</div>
-        <canvas id="bottomChart" height="170"></canvas>
+
+      <div class="summaryCard">
+        <h3 class="summaryTitle">Topics Needing Attention</h3>
+        <div id="bottomTableWrap" class="miniTableWrap">
+          <div class="empty" style="margin:12px;">No data yet.</div>
+        </div>
       </div>
     </div>
   </section>
@@ -196,9 +515,8 @@
   const yearSelect = document.getElementById("yearSelect");
   const monthSelect = document.getElementById("monthSelect");
   const tableWrap = document.getElementById("tableWrap");
-
-  const topCanvas = document.getElementById("topChart");
-  const bottomCanvas = document.getElementById("bottomChart");
+  const topTableWrap = document.getElementById("topTableWrap");
+  const bottomTableWrap = document.getElementById("bottomTableWrap");
 
   document.getElementById("logoutBtn").onclick = ()=> {
     localStorage.removeItem("token");
@@ -210,17 +528,12 @@
   let allResults = [];
   let allQuizzes = [];
 
-  let topicTotals = new Map();        // topic -> total quizzes
-  let quizTopicById = new Map();      // quizId -> topic (most accurate)
-  let attemptedQuizIdsByTopic = new Map(); // topic -> Set(quizId)
+  let topicTotals = new Map();
+  let quizTopicById = new Map();
+  let attemptedQuizIdsByTopic = new Map();
 
   yearSelect.addEventListener("change", renderAll);
   monthSelect.addEventListener("change", renderAll);
-
-  // redraw charts on resize (keeps them professional)
-  const ro = new ResizeObserver(() => renderAll());
-  ro.observe(topCanvas);
-  ro.observe(bottomCanvas);
 
   load();
 
@@ -228,7 +541,6 @@
     try{
       subTxt.textContent = "";
 
-      // ensure session valid + admin toggle
       const meRes = await fetch(`${API}/api/auth/me`,{
         headers:{Authorization:`Bearer ${token}`}
       });
@@ -246,13 +558,11 @@
         return;
       }
 
-      // show admin link if admin
       try{
         const isAdmin = me.role === "admin";
         document.querySelectorAll("[data-admin]").forEach(a => a.style.display = isAdmin ? "" : "none");
       }catch{}
 
-      // quizzes (to match Practice topics exactly)
       const quizzesUrl = (me.role === "admin") ? `${API}/api/quizzes?all=1` : `${API}/api/quizzes`;
       const qRes = await fetch(quizzesUrl,{ headers:{Authorization:`Bearer ${token}`} });
 
@@ -275,7 +585,6 @@
         topicTotals.set(t, (topicTotals.get(t) || 0) + 1);
       }
 
-      // results
       const rRes = await fetch(`${API}/api/results/my`, {
         headers:{Authorization:`Bearer ${token}`}
       });
@@ -295,6 +604,8 @@
     }catch(e){
       subTxt.textContent = "Network error. Please refresh.";
       tableWrap.innerHTML = `<div class="empty">Could not load dashboard.</div>`;
+      topTableWrap.innerHTML = `<div class="empty" style="margin:12px;">Could not load summary.</div>`;
+      bottomTableWrap.innerHTML = `<div class="empty" style="margin:12px;">Could not load summary.</div>`;
     }
   }
 
@@ -338,7 +649,6 @@
       const quizId = String(r.quizId || "");
       if(!quizId) continue;
 
-      // ✅ topic from quizzes (most accurate). fallback to result topic.
       const topic = cleanSpaces(quizTopicById.get(quizId) || r.topic || "General");
 
       if(!attemptedQuizIdsByTopic.has(topic)) attemptedQuizIdsByTopic.set(topic, new Set());
@@ -347,14 +657,13 @@
   }
 
   function summarizeByTopic(filteredResults){
-    // Start from quizzes topics (matches Practice topics exactly)
     const map = new Map();
     for (const [topic, total] of topicTotals.entries()){
       map.set(topic, {
         topic,
         totalQuizzes: total,
         quizzesAttempted: 0,
-        attempts: 0,   // attempts (can be > quizzesAttempted)
+        attempts: 0,
         sum: 0,
         best: 0,
         passCount: 0
@@ -376,7 +685,6 @@
       if(pass) o.passCount += 1;
     }
 
-    // quizzesAttempted = unique quizIds per topic (filtered by date)
     for (const [topic, o] of map.entries()){
       const set = attemptedQuizIdsByTopic.get(topic);
       o.quizzesAttempted = set ? set.size : 0;
@@ -405,7 +713,6 @@
 
     const rows = summarizeByTopic(filtered);
 
-    // ✅ no “Showing progress …” line (keep it clean)
     if (!allQuizzes.length){
       subTxt.textContent = "No assessments found yet.";
     } else if (!allResults.length){
@@ -414,22 +721,45 @@
       subTxt.textContent = "";
     }
 
-    // charts only from topics with attempts (so charts are meaningful)
     const attemptedTopics = rows.filter(r => r.attempts > 0);
-
-    // best → worst
     const sorted = [...attemptedTopics].sort((a,b)=>b.passRate - a.passRate);
 
     const top5 = sorted.slice(0,5);
-    const bottom5 = [...sorted].reverse().slice(0,5).reverse(); // lowest 5, keep order left->right
+    const bottom5 = [...attemptedTopics].sort((a,b)=>a.passRate - b.passRate).slice(0,5);
 
-    // ✅ Top chart: ONE colour for all bars
-    drawBarChart(topCanvas, top5, { mode:"top" });
-
-    // ✅ Bottom chart: different ORANGE shades per bar
-    drawBarChart(bottomCanvas, bottom5, { mode:"bottom" });
-
+    renderSummaryTable(topTableWrap, top5);
+    renderSummaryTable(bottomTableWrap, bottom5);
     renderTable(rows);
+  }
+
+  function renderSummaryTable(container, rows){
+    if(!rows.length){
+      container.innerHTML = `<div class="empty" style="margin:12px;">No topic results yet.</div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <table class="miniTable">
+        <thead>
+          <tr>
+            <th style="width:60px;">Rank</th>
+            <th>Topic</th>
+            <th>Average</th>
+            <th>Best</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map((r, i) => `
+            <tr>
+              <td class="rankCell">${i + 1}</td>
+              <td>${escapeHtml(r.topic)}</td>
+              <td class="scoreCell">${r.avg}%</td>
+              <td>${Math.round(r.best)}%</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
   }
 
   function renderTable(rows){
@@ -439,138 +769,82 @@
     }
 
     tableWrap.innerHTML = `
-      <div class="tableWrapInner">
-        <table>
-          <thead>
-            <tr>
-              <th>Topic</th>
-              <th>Total Quizzes</th>
-              <th>Quizzes Attempted</th>
-              <th>Average</th>
-              <th>Best</th>
-              <th>Recommendation</th>
-              <th>Open</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows.map(r=>{
-              const rec = recommendation(r.passRate);
-              const topicUrl = `learner-quizzes.html?search=${encodeURIComponent(r.topic)}`;
-              return `
-                <tr>
-                  <td><a class="topicLink" href="${topicUrl}">${escapeHtml(r.topic)}</a></td>
-                  <td>${Number(r.totalQuizzes||0)}</td>
-                  <td>${Number(r.quizzesAttempted||0)}</td>
-                  <td>${r.avg}%</td>
-                  <td>${Math.round(r.best)}%</td>
-                  <td class="rec ${rec.cls}">${escapeHtml(rec.text)}</td>
-                  <td><button class="smallBtn" type="button" onclick="location.href='${topicUrl}'">View quizzes</button></td>
-                </tr>
-              `;
-            }).join("")}
-          </tbody>
-        </table>
+      <div class="desktopTable">
+        <div class="tableWrapInner">
+          <table>
+            <thead>
+              <tr>
+                <th>Topic</th>
+                <th>Total Quizzes</th>
+                <th>Quizzes Attempted</th>
+                <th>Average</th>
+                <th>Best</th>
+                <th>Recommendation</th>
+                <th>Open</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(r=>{
+                const rec = recommendation(r.passRate);
+                const topicUrl = `learner-quizzes.html?search=${encodeURIComponent(r.topic)}`;
+                return `
+                  <tr>
+                    <td><a class="topicLink" href="${topicUrl}">${escapeHtml(r.topic)}</a></td>
+                    <td>${Number(r.totalQuizzes||0)}</td>
+                    <td>${Number(r.quizzesAttempted||0)}</td>
+                    <td>${r.avg}%</td>
+                    <td>${Math.round(r.best)}%</td>
+                    <td class="rec ${rec.cls}">${escapeHtml(rec.text)}</td>
+                    <td><button class="smallBtn" type="button" onclick="location.href='${topicUrl}'">View quizzes</button></td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="mobileCards">
+        ${rows.map(r=>{
+          const rec = recommendation(r.passRate);
+          const topicUrl = `learner-quizzes.html?search=${encodeURIComponent(r.topic)}`;
+          return `
+            <div class="topicCard">
+              <div class="topicCardHead">
+                <a class="topicCardTitle" href="${topicUrl}">${escapeHtml(r.topic)}</a>
+              </div>
+
+              <div class="topicCardGrid">
+                <div class="metric">
+                  <div class="metricLabel">Total Quizzes</div>
+                  <div class="metricValue">${Number(r.totalQuizzes||0)}</div>
+                </div>
+                <div class="metric">
+                  <div class="metricLabel">Quizzes Attempted</div>
+                  <div class="metricValue">${Number(r.quizzesAttempted||0)}</div>
+                </div>
+                <div class="metric">
+                  <div class="metricLabel">Average</div>
+                  <div class="metricValue">${r.avg}%</div>
+                </div>
+                <div class="metric">
+                  <div class="metricLabel">Best</div>
+                  <div class="metricValue">${Math.round(r.best)}%</div>
+                </div>
+                <div class="metric" style="grid-column:1/-1;">
+                  <div class="metricLabel">Recommendation</div>
+                  <div class="metricValue rec ${rec.cls}">${escapeHtml(rec.text)}</div>
+                </div>
+              </div>
+
+              <div class="cardActions">
+                <button class="smallBtn" type="button" onclick="location.href='${topicUrl}'">View quizzes</button>
+              </div>
+            </div>
+          `;
+        }).join("")}
       </div>
     `;
-  }
-
-  // ✅ Small bar chart (30° labels) + fixed spacing + fixed canvas sizing
-  function drawBarChart(canvas, rows, opts){
-    const ctx = canvas.getContext("2d");
-    const dp = window.devicePixelRatio || 1;
-
-    // read CSS size correctly
-    const cssW = Math.max(260, canvas.getBoundingClientRect().width || canvas.clientWidth || 500);
-    const cssH = 170;
-
-    canvas.width = Math.floor(cssW * dp);
-    canvas.height = Math.floor(cssH * dp);
-
-    const W = canvas.width;
-    const H = canvas.height;
-
-    ctx.clearRect(0,0,W,H);
-
-    const data = (rows || []).slice(0,5);
-
-    const pad = 16 * dp;
-    const labelH = 68 * dp;
-    const chartH = H - pad - labelH;
-    const chartBottom = pad + chartH;
-
-    if(!data.length){
-      ctx.fillStyle = "#64748b";
-      ctx.font = `${12*dp}px Inter, Arial`;
-      ctx.fillText("No data yet", pad, pad + 18*dp);
-      return;
-    }
-
-    const maxVal = 100;
-
-    // spacing based on count (fixes “only 1 bar” look)
-    const count = data.length;
-    const gap = Math.max(10*dp, (count === 1 ? 0 : 12*dp));
-    const usable = (W - pad*2 - gap*(count-1));
-    const barW = Math.max(28*dp, usable / count);
-
-    // colours rule
-    const topColor = "#1b1648"; // one colour for all top bars
-    const oranges = ["#f59e0b","#fb923c","#f97316","#ea580c","#c2410c"]; // different orange shades
-
-    // axis line
-    ctx.strokeStyle = "rgba(15,23,42,.10)";
-    ctx.lineWidth = 1 * dp;
-    ctx.beginPath();
-    ctx.moveTo(pad, chartBottom);
-    ctx.lineTo(W - pad, chartBottom);
-    ctx.stroke();
-
-    data.forEach((d, i)=>{
-      const x = pad + i*(barW+gap);
-      const val = Math.max(0, Math.min(maxVal, Number(d.passRate)||0));
-      const h = (val / maxVal) * (chartH - 8*dp);
-      const y = chartBottom - h;
-
-      const fill = (opts?.mode === "bottom") ? oranges[i % oranges.length] : topColor;
-
-      ctx.fillStyle = fill;
-      roundRect(ctx, x, y, barW, h, 12*dp);
-      ctx.fill();
-
-      // percent label
-      ctx.fillStyle = "rgba(15,23,42,.85)";
-      ctx.font = `${11*dp}px Inter, Arial`;
-      ctx.textAlign = "center";
-      ctx.fillText(`${val}%`, x + barW/2, y - 6*dp);
-
-      // rotated topic label (30 degrees)
-      const name = shortLabel(d.topic, 30);
-      ctx.save();
-      ctx.translate(x + barW/2, chartBottom + 38*dp);
-      ctx.rotate(-Math.PI/6); // 30 degrees
-      ctx.fillStyle = "#475569";
-      ctx.font = `${11*dp}px Inter, Arial`;
-      ctx.textAlign = "right";
-      ctx.fillText(name, 0, 0);
-      ctx.restore();
-    });
-  }
-
-  function roundRect(ctx, x, y, w, h, r){
-    const rr = Math.min(r, w/2, h/2);
-    ctx.beginPath();
-    ctx.moveTo(x+rr, y);
-    ctx.arcTo(x+w, y, x+w, y+h, rr);
-    ctx.arcTo(x+w, y+h, x, y+h, rr);
-    ctx.arcTo(x, y+h, x, y, rr);
-    ctx.arcTo(x, y, x+w, y, rr);
-    ctx.closePath();
-  }
-
-  function shortLabel(s, n){
-    const t = cleanSpaces(s);
-    if(t.length <= n) return t;
-    return t.slice(0, n-1) + "…";
   }
 
   function cleanSpaces(s){
