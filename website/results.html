@@ -84,7 +84,7 @@ th{
 .status.pass{color:#065f46;font-weight:800;}
 .status.fail{color:#9a3412;font-weight:800;}
 
-/* ✅ NICE BADGE STYLE */
+/* desktop badges */
 .actionBadge{
   display:inline-block;
   padding:6px 12px;
@@ -195,16 +195,36 @@ th{
   color:var(--text);
 }
 
+/* ✅ more professional mobile actions */
 .cardActions{
   display:flex;
-  gap:10px;
+  justify-content:flex-end;
+  gap:8px;
   flex-wrap:wrap;
   margin-top:12px;
 }
 
-.cardActions .actionBadge{
-  text-align:center;
-  flex:1 1 140px;
+.cardActionBtn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:92px;
+  padding:7px 12px;
+  border-radius:999px;
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  color:#0f172a;
+  font-weight:800;
+  font-size:12px;
+  line-height:1;
+  cursor:pointer;
+  transition:all .15s ease;
+  user-select:none;
+}
+
+.cardActionBtn:hover{
+  background:#eef2f7;
+  transform:translateY(-1px);
 }
 
 @media (max-width: 760px){
@@ -257,11 +277,14 @@ th{
   }
 
   .cardActions{
-    flex-direction:column;
+    justify-content:flex-start;
+    gap:8px;
   }
 
-  .cardActions .actionBadge{
-    width:100%;
+  .cardActionBtn{
+    min-width:84px;
+    padding:7px 10px;
+    font-size:11px;
   }
 }
 </style>
@@ -283,11 +306,9 @@ if(!localStorage.getItem("token")){
       <a href="learner-quizzes.html">Practice</a>
       <a class="active" href="results.html">Results</a>
 
-      <!-- ✅ OTHER TABS -->
       <a href="support.html">Support</a>
       <a href="about.html">About</a>
 
-      <!-- ✅ ADMIN TAB (hidden for learners by nav.js) -->
       <a href="admin-quiz.html" data-admin style="display:none;">Admin</a>
 
       <button class="logoutBtn" id="logoutBtn">Logout</button>
@@ -301,7 +322,6 @@ if(!localStorage.getItem("token")){
   </section>
 </main>
 
-<!-- ✅ IMPORTANT: include nav.js so window.API + admin visibility works -->
 <script src="nav.js"></script>
 
 <script>
@@ -430,12 +450,12 @@ function renderTable(data){
             </div>
 
             <div class="cardActions">
-              <span class="actionBadge"
+              <span class="cardActionBtn"
                 onclick="location.href='review.html?resultId=${encodeURIComponent(r._id)}'">
                 Solution
               </span>
 
-              <span class="actionBadge"
+              <span class="cardActionBtn"
                 onclick="location.href='attempt.html?quizId=${encodeURIComponent(r.quizId)}&mode=practice'">
                 Retry
               </span>
