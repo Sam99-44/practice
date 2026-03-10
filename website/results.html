@@ -84,7 +84,6 @@ th{
 .status.pass{color:#065f46;font-weight:800;}
 .status.fail{color:#9a3412;font-weight:800;}
 
-/* desktop badges */
 .actionBadge{
   display:inline-block;
   padding:6px 12px;
@@ -112,7 +111,7 @@ th{
   font-weight:700;
 }
 
-/* ✅ Mobile cards */
+/* Mobile cards */
 .mobileCards{
   display:none;
   gap:12px;
@@ -127,10 +126,7 @@ th{
 }
 
 .resultHead{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:10px;
+  display:block;
   margin-bottom:10px;
 }
 
@@ -153,17 +149,7 @@ th{
   font-size:12px;
   font-weight:600;
   line-height:1.5;
-}
-
-.resultMark{
-  text-align:right;
-  white-space:nowrap;
-}
-
-.resultPercent{
-  font-size:18px;
-  font-weight:900;
-  line-height:1;
+  margin-top:4px;
 }
 
 .resultGrid{
@@ -195,7 +181,6 @@ th{
   color:var(--text);
 }
 
-/* ✅ more professional mobile actions */
 .cardActions{
   display:flex;
   justify-content:flex-end;
@@ -226,6 +211,39 @@ th{
   background:#eef2f7;
   transform:translateY(-1px);
 }
+
+/* ✅ mark + status bottom on phone */
+.mobileResultFooter{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.mobileResultBox{
+  background:#f8fafc;
+  border:1px solid #eef2f7;
+  border-radius:12px;
+  padding:10px 12px;
+}
+
+.mobileResultLabel{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--muted);
+  font-weight:800;
+  margin-bottom:4px;
+}
+
+.mobileResultValue{
+  font-size:15px;
+  font-weight:900;
+  line-height:1.2;
+}
+
+.mobileResultValue.pass{color:#065f46;}
+.mobileResultValue.fail{color:#9a3412;}
 
 @media (max-width: 760px){
   .topbar-inner{
@@ -268,14 +286,6 @@ th{
     grid-template-columns:1fr;
   }
 
-  .resultHead{
-    flex-direction:column;
-  }
-
-  .resultMark{
-    text-align:left;
-  }
-
   .cardActions{
     justify-content:flex-start;
     gap:8px;
@@ -285,6 +295,19 @@ th{
     min-width:84px;
     padding:7px 10px;
     font-size:11px;
+  }
+
+  .mobileResultFooter{
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .mobileResultBox{
+    padding:9px 10px;
+  }
+
+  .mobileResultValue{
+    font-size:14px;
   }
 }
 </style>
@@ -425,16 +448,9 @@ function renderTable(data){
         return `
           <div class="resultCard">
             <div class="resultHead">
-              <div>
-                <div class="resultTitle">${escapeHtml(String(r.title||"Assessment"))}</div>
-                <div class="resultTopic">${escapeHtml(String(r.topic||"General"))}</div>
-                <div class="resultDate">${escapeHtml(dateTxt)}</div>
-              </div>
-
-              <div class="resultMark">
-                <div class="resultPercent">${percent}%</div>
-                <div class="status ${pass?"pass":"fail"}">${pass?"Pass":"Fail"}</div>
-              </div>
+              <div class="resultTitle">${escapeHtml(String(r.title||"Assessment"))}</div>
+              <div class="resultTopic">${escapeHtml(String(r.topic||"General"))}</div>
+              <div class="resultDate">${escapeHtml(dateTxt)}</div>
             </div>
 
             <div class="resultGrid">
@@ -459,6 +475,18 @@ function renderTable(data){
                 onclick="location.href='attempt.html?quizId=${encodeURIComponent(r.quizId)}&mode=practice'">
                 Retry
               </span>
+            </div>
+
+            <div class="mobileResultFooter">
+              <div class="mobileResultBox">
+                <div class="mobileResultLabel">Mark</div>
+                <div class="mobileResultValue">${percent}%</div>
+              </div>
+
+              <div class="mobileResultBox">
+                <div class="mobileResultLabel">Status</div>
+                <div class="mobileResultValue ${pass?"pass":"fail"}">${pass?"Pass":"Fail"}</div>
+              </div>
             </div>
           </div>
         `;
