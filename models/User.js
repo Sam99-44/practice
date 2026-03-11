@@ -7,7 +7,8 @@ const UserSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true },
 
-    role: { type: String, enum: ["learner", "admin"], default: "learner" },
+    // ✅ UPDATED: added editor role
+    role: { type: String, enum: ["learner", "admin", "editor"], default: "learner" },
 
     // ✅ accountType + optional grade (required only for students)
     accountType: { type: String, enum: ["student", "materials"], required: true },
