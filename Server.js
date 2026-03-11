@@ -7,8 +7,7 @@
 // ✅ NEW: Saves + returns quiz paper (paper1/paper2)
 // ✅ NEW: PayFast monthly payments
 // ✅ NEW: Returns subscription info on /api/auth/me
-// ✅ UPDATED: Adds editor role access for assessment create/edit/delete
-// ✅ UPDATED: Editor can access quizzes for editing but cannot access learner stats
+// ✅ NOTE: NO route protection added yet
 
 import express from "express";
 import mongoose from "mongoose";
@@ -228,7 +227,7 @@ async function validatePayfastData(pfData) {
 
 /* ------------------ CORS ------------------ */
 const ALLOWED_ORIGINS = [
-  process.env.APP_URL,
+  process.env.APP_URL, // your Netlify URL (optional)
   process.env.FRONTEND_URL,
   "http://localhost:3000",
   "http://localhost:5500",
@@ -293,23 +292,6 @@ async function adminOnly(req, res, next) {
     const u = await User.findById(req.user.userId).select("role");
     if (!u) return res.status(401).json({ message: "User not found" });
     if (u.role !== "admin") return res.status(403).json({ message: "Admin only" });
-    next();
-  } catch {
-    res.status(500).json({ message: "Server error" });
-  }
-}
-
-// ✅ NEW: admin or editor middleware
-async function adminOrEditor(req, res, next) {
-  try {
-    const u = await User.findById(req.user.userId).select("role");
-    if (!u) return res.status(401).json({ message: "User not found" });
-
-    if (u.role !== "admin" && u.role !== "editor") {
-      return res.status(403).json({ message: "Admin or editor only" });
-    }
-
-    req.currentRole = u.role;
     next();
   } catch {
     res.status(500).json({ message: "Server error" });
@@ -569,7 +551,7 @@ app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
 /* ------------------ QUIZZES ------------------ */
 
 // Learner: returns quizzes for learner grade
-// Admin/Editor: if you want all, use /api/quizzes?all=1
+// Admin: if you want all, use /api/quizzes?all=1
 app.get("/api/quizzes", authRequired, async (req, res) => {
   try {
     const u = await User.findById(req.user.userId).select("role grade");
@@ -578,7 +560,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
     const wantsAll = String(req.query.all || "") === "1";
 
     let filter = {};
-    if (!((u.role === "admin" || u.role === "editor") && wantsAll)) {
+    if (!(u.role === "admin" && wantsAll)) {
       if (!u.grade) return res.json([]);
       filter.grade = u.grade;
     }
@@ -607,7 +589,7 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
     if (!u) return res.status(401).json({ message: "User not found" });
 
     // learners can only access their grade
-    if (u.role !== "admin" && u.role !== "editor" && Number(quiz.grade) !== Number(u.grade)) {
+    if (u.role !== "admin" && Number(quiz.grade) !== Number(u.grade)) {
       return res.status(403).json({ message: "Not allowed" });
     }
 
@@ -617,8 +599,8 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   }
 });
 
-// Admin/Editor creates quiz (admin-quiz.html POSTs here) ✅ NOW EMAILS STUDENTS BY GRADE
-app.post("/api/quizzes", authRequired, adminOrEditor, async (req, res) => {
+// Admin creates quiz (admin-quiz.html POSTs here) ✅ NOW EMAILS STUDENTS BY GRADE
+app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   try {
     // ✅ accept difficulty + paper
     const { grade, title, topic, paper, timeLimitMinutes, instructions, questions, difficulty } =
@@ -718,7 +700,7 @@ app.post("/api/quizzes", authRequired, adminOrEditor, async (req, res) => {
       grade: g,
       title: quizTitle,
       topic: quizTopic,
-      paper: quizPaper,
+      paper: quizPaper, // ✅ NEW
       difficulty: quizDifficulty,
       timeLimitMinutes: Number(timeLimitMinutes) || 10,
       questions,
@@ -784,8 +766,8 @@ app.post("/api/quizzes", authRequired, adminOrEditor, async (req, res) => {
   }
 });
 
-// Admin/Editor updates quiz (edit-assessment.html PUTs here)
-app.put("/api/quizzes/:id", authRequired, adminOrEditor, async (req, res) => {
+// Admin updates quiz (edit-assessment.html PUTs here)
+app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const id = req.params.id;
 
@@ -794,7 +776,7 @@ app.put("/api/quizzes/:id", authRequired, adminOrEditor, async (req, res) => {
       "grade",
       "title",
       "topic",
-      "paper",
+      "paper", // ✅ NEW
       "instructions",
       "timeLimitMinutes",
       "availableFrom",
@@ -932,8 +914,8 @@ app.put("/api/quizzes/:id", authRequired, adminOrEditor, async (req, res) => {
   }
 });
 
-// Admin/Editor deletes quiz
-app.delete("/api/quizzes/:id", authRequired, adminOrEditor, async (req, res) => {
+// Admin deletes quiz
+app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const quiz = await Quiz.findByIdAndDelete(req.params.id);
     if (!quiz) return res.status(404).json({ message: "Not found" });
@@ -990,7 +972,7 @@ function normalizeTextAnswer(s) {
   return String(s || "")
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, "")
+    .replace(/\s+/g, "") // remove all spaces
     .replace(/−/g, "-");
 }
 
@@ -1018,7 +1000,7 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
 
   if (mode === "contains") return ua.includes(ca);
 
-  return ua === ca;
+  return ua === ca; // exact (case-insensitive, space-insensitive)
 }
 
 // Submit attempt (attempt.html POSTs here)
@@ -1094,6 +1076,7 @@ app.post("/api/results", authRequired, async (req, res) => {
           chosenIndex: -1,
           correctIndex: -1,
 
+          // ✅ keep arrays empty
           isMultiSelect: false,
           chosenIndexes: [],
           correctIndexes: [],
@@ -1135,6 +1118,7 @@ app.post("/api/results", authRequired, async (req, res) => {
           points: qPoints,
           earnedPoints: earned,
 
+          // compat (not used)
           chosenIndex: -1,
           correctIndex: -1,
           isMultiSelect: false,
@@ -1161,6 +1145,7 @@ app.post("/api/results", authRequired, async (req, res) => {
 
       let isCorrect = false;
 
+      // defaults
       let chosenIndex = -1;
       let correctIndex = Number.isInteger(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
 
@@ -1171,6 +1156,7 @@ app.post("/api/results", authRequired, async (req, res) => {
         chosenIndexes = normalizeIndexArray(ans.chosenIndexes || []);
         isCorrect = isMultiMcqCorrect(chosenIndexes, correctIndexes);
 
+        // compat fields (optional)
         chosenIndex = chosenIndexes.length ? chosenIndexes[0] : -1;
         correctIndex = correctIndexes.length ? correctIndexes[0] : -1;
       } else {
@@ -1178,6 +1164,7 @@ app.post("/api/results", authRequired, async (req, res) => {
         correctIndex = Number.isFinite(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
         isCorrect = chosenIndex === correctIndex && correctIndex >= 0;
 
+        // also store arrays (nice for review)
         chosenIndexes = chosenIndex >= 0 ? [chosenIndex] : [];
         correctIndexesSnap = correctIndex >= 0 ? [correctIndex] : [];
       }
@@ -1191,9 +1178,11 @@ app.post("/api/results", authRequired, async (req, res) => {
         points: qPoints,
         earnedPoints: earned,
 
+        // ✅ old fields (still there)
         chosenIndex,
         correctIndex,
 
+        // ✅ new fields (proper review/results)
         isMultiSelect,
         chosenIndexes,
         correctIndexes: correctIndexesSnap,
@@ -1222,8 +1211,10 @@ app.post("/api/results", authRequired, async (req, res) => {
       title: quiz.title || "Assessment",
       instructions: String(quiz.instructions || "").trim(),
 
+      // ✅ NEW snapshot paper (requires Result schema to include it)
       paper: quiz.paper || "paper1",
 
+      // ✅ points-based
       score: scorePoints,
       total: totalPoints,
       percent,
@@ -1522,6 +1513,7 @@ app.post("/api/payfast/itn", async (req, res) => {
         user.subscriptionStatus = "active";
         user.lastPaymentId = payment.m_payment_id;
 
+        // keep old premium fields in sync so old pages don’t break
         user.premium = true;
         user.premiumActivatedAt = now;
         user.premiumExpiresAt = newUntil;
@@ -1578,7 +1570,6 @@ Create models/Payment.js
 
 ✅ IMPORTANT:
 Update models/User.js with:
-- role now includes editor
 - subscriptionStatus
 - paidUntil
 - lastPaymentId
