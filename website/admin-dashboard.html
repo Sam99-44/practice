@@ -163,7 +163,7 @@
   <div class="wrap">
     <div class="top">
       <div class="title">
-        <h1>Admin Dashboard</h1>
+        <h1 id="pageTitle">Admin Dashboard</h1>
         <p class="muted" id="who">Checking login...</p>
       </div>
 
@@ -176,33 +176,33 @@
       </div>
     </div>
 
-    <div class="grid">
-      <div class="card">
+    <div class="grid" id="statsGrid">
+      <div class="card" id="cardTotalUsers">
         <div class="muted">Total Users</div>
         <div class="big" id="totalUsers">-</div>
       </div>
 
-      <div class="card">
+      <div class="card" id="cardTotalAssessments">
         <div class="muted">Total Assessments</div>
         <div class="big" id="totalAssessments">-</div>
       </div>
 
-      <div class="card">
+      <div class="card" id="cardTotalLearners">
         <div class="muted">Total Learners (Grades 8–12)</div>
         <div class="big" id="totalLearners">-</div>
       </div>
 
-      <div class="card">
+      <div class="card" id="cardByGradeAssessments">
         <div class="muted">Assessments by Grade</div>
         <div id="byGradeAssessments" class="list muted" style="margin-top:10px;">-</div>
       </div>
 
-      <div class="card">
+      <div class="card" id="cardByGradeLearners">
         <div class="muted">Learners by Grade</div>
         <div id="byGradeLearners" class="list muted" style="margin-top:10px;">-</div>
       </div>
 
-      <div class="card">
+      <div class="card" id="cardByGradeAccountType">
         <div class="muted">Account Type by Grade</div>
         <div id="byGradeAccountType" class="list muted" style="margin-top:10px;">-</div>
       </div>
@@ -215,6 +215,7 @@
     const API = window.API || "https://practice-backend-msgn.onrender.com";
     const token = localStorage.getItem("token");
     const refreshBtn = document.getElementById("refreshBtn");
+    let currentRole = "";
 
     function logout(){
       localStorage.removeItem("token");
@@ -297,6 +298,18 @@
       }).join("");
     }
 
+    function hideStatsForEditor(){
+      document.getElementById("pageTitle").textContent = "Editor Dashboard";
+      document.getElementById("cardTotalUsers").style.display = "none";
+      document.getElementById("cardTotalAssessments").style.display = "none";
+      document.getElementById("cardTotalLearners").style.display = "none";
+      document.getElementById("cardByGradeAssessments").style.display = "none";
+      document.getElementById("cardByGradeLearners").style.display = "none";
+      document.getElementById("cardByGradeAccountType").style.display = "none";
+      refreshBtn.style.display = "none";
+      setMsg("Editor access: you can add, edit and freeze assessments.", "ok");
+    }
+
     async function requireAdmin(){
       let meRes;
       try{
@@ -314,19 +327,27 @@
         return false;
       }
 
-      if (me.role !== "admin") {
-        setMsg("Admin access only. Redirecting...", "error");
+      if (me.role !== "admin" && me.role !== "editor") {
+        setMsg("Access denied. Redirecting...", "error");
         setTimeout(() => {
           window.location.href = "learner-quizzes.html";
         }, 700);
         return false;
       }
 
-      document.getElementById("who").textContent = `Logged in as: ${me.username} (admin)`;
+      currentRole = me.role;
+      document.getElementById("who").textContent = `Logged in as: ${me.username} (${me.role})`;
+
+      if (me.role === "editor") {
+        hideStatsForEditor();
+      }
+
       return true;
     }
 
     async function loadStats(showToast){
+      if (currentRole === "editor") return;
+
       refreshBtn.disabled = true;
       setMsg("Loading stats...", "muted");
 
@@ -373,7 +394,9 @@
       if (!token) return logout();
       const ok = await requireAdmin();
       if (!ok) return;
-      await loadStats(false);
+      if (currentRole === "admin") {
+        await loadStats(false);
+      }
     })();
   </script>
 </body>
