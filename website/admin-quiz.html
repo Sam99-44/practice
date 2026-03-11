@@ -14,6 +14,7 @@
      ✅ Sends MCQ correctIndexes (array). Also sends correctIndex if only 1 selected (compat).
      ✅ UI FIX: Solution preview is now plain white (no brown paper background)
      ✅ UI FIX: Solution preview uses normal/small font (not big)
+     ✅ UPDATED: admin + editor can access this page
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -215,7 +216,7 @@
 
   <div class="topbar">
     <div>
-      <h2 style="margin:0;">Practice Online – Admin (Add Assessment)</h2>
+      <h2 style="margin:0;">Practice Online – Add Assessment</h2>
       <div class="muted" id="who">Checking login...</div>
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -327,7 +328,7 @@
     const timeLimitEl = document.getElementById("timeLimit");
     const titleEl = document.getElementById("title");
     const difficultyEl = document.getElementById("difficulty");
-    const paperEl = document.getElementById("paper"); // ✅ NEW
+    const paperEl = document.getElementById("paper");
 
     const instructionsEl = document.getElementById("instructions");
     const prevInstructions = document.getElementById("prevInstructions");
@@ -366,7 +367,6 @@
       return "moderate";
     }
 
-    // ✅ NEW: normalize paper
     function normalizePaper(v){
       const p = String(v || "").toLowerCase().trim();
       if (p === "paper1" || p === "paper2") return p;
@@ -392,7 +392,7 @@
     instructionsEl.addEventListener("input", renderInstructionsPreview);
     renderInstructionsPreview();
 
-    // -------------------- Admin lock --------------------
+    // -------------------- Admin / Editor lock --------------------
     (async () => {
       const token = localStorage.getItem("token");
       if (!token) return window.location.href = "login.html";
@@ -414,12 +414,12 @@
         return logout();
       }
 
-      if (me.role !== "admin") {
-        alert("Admin only");
+      if (me.role !== "admin" && me.role !== "editor") {
+        alert("Admin or editor only");
         return window.location.href = "learner-quizzes.html";
       }
 
-      who.textContent = `Logged in as: ${me.username} (admin)`;
+      who.textContent = `Logged in as: ${me.username} (${me.role})`;
       saveBtn.disabled = false;
       setMsg("Ready to add an assessment.", "ok");
     })();
@@ -959,7 +959,7 @@
       const timeLimitMinutes = Number(timeLimitEl.value);
       const instructions = cleanSpaces(instructionsEl.value || "");
       const difficulty = normalizeDifficulty(difficultyEl.value);
-      const paper = normalizePaper(paperEl.value); // ✅ NEW
+      const paper = normalizePaper(paperEl.value);
 
       try{
         if (!grade) return setMsg("Please select grade.", "error");
@@ -993,7 +993,7 @@
           topicEl.value = "";
           timeLimitEl.value = "10";
           difficultyEl.value = "moderate";
-          paperEl.value = "paper1"; // ✅ NEW reset
+          paperEl.value = "paper1";
           instructionsEl.value = "";
           renderInstructionsPreview();
 
