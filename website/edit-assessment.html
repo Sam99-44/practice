@@ -380,7 +380,7 @@
       }
     }
 
-    async function requireAdmin(){
+    async function requireAdminOrEditor(){
       const meRes = await fetch(`${API}/api/auth/me`, {
         headers: { Authorization: "Bearer " + token }
       });
@@ -390,12 +390,12 @@
         alert("Session expired. Please login again.");
         logout(); return false;
       }
-      if (me.role !== "admin") {
-        alert("Admin only");
+      if (me.role !== "admin" && me.role !== "editor") {
+        alert("Admin or editor only");
         window.location.href = "learner-quizzes.html";
         return false;
       }
-      who.textContent = `Logged in as ${me.username} (admin)`;
+      who.textContent = `Logged in as ${me.username} (${me.role})`;
       return true;
     }
 
@@ -769,7 +769,6 @@
           });
         });
 
-        // wire mcq option buttons
         if (type === "mcq"){
           const addBtn = card.querySelector(".addOptBtn");
           if (addBtn && !addBtn.dataset.wired){
@@ -777,7 +776,6 @@
             addBtn.addEventListener("click", ()=>addOption(card, ""));
           }
 
-          // ensure options exist (load existing)
           const wrap = card.querySelector(".optsWrap");
           if (wrap && wrap.childElementCount === 0){
             const existing = (currentQuiz?.questions?.[Number(card.dataset.index)]?.options) || [];
@@ -849,7 +847,6 @@
           continue;
         }
 
-        // MCQ dynamic options
         const optInputs = [...card.querySelectorAll(".optInput")];
         const options = optInputs.map(x => cleanSpaces(x.value)).filter(Boolean);
         if (options.length < 2) throw new Error("MCQ must have at least 2 options.");
@@ -1050,7 +1047,7 @@
     searchBox.addEventListener("input", () => { renderDropdown(); assessmentSelect.value = ""; });
 
     (async () => {
-      const ok = await requireAdmin();
+      const ok = await requireAdminOrEditor();
       if (!ok) return;
       await loadAssessments();
       renderInstructionsPreview();
