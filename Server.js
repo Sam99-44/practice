@@ -7,7 +7,10 @@
 // ✅ NEW: Saves + returns quiz paper (paper1/paper2)
 // ✅ NEW: PayFast monthly payments
 // ✅ NEW: Returns subscription info on /api/auth/me
-// ✅ NOTE: NO route protection added yet
+// ✅ NEW: Strong email validation
+// ✅ NEW: Email verification routes
+// ✅ NEW: Login blocks unverified users
+// ✅ NEW: Register route protection with express-rate-limit
 
 import express from "express";
 import mongoose from "mongoose";
@@ -17,6 +20,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import sgMail from "@sendgrid/mail";
+import rateLimit from "express-rate-limit";
 
 import Quiz from "./models/Quiz.js";
 import User from "./models/User.js";
@@ -90,10 +94,19 @@ function hashToken(raw) {
   return crypto.createHash("sha256").update(String(raw)).digest("hex");
 }
 
+function makeVerifyToken() {
+  return crypto.randomBytes(32).toString("hex");
+}
+
+function isValidEmail(email) {
+  const e = String(email || "").trim().toLowerCase();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+}
+
 // Generate unique 8-digit student number (digits only)
 async function generateStudentNumber8() {
   while (true) {
-    const num = String(Math.floor(10000000 + Math.random() * 90000000)); // 8 digits
+    const num = String(Math.floor(10000000 + Math.random() * 90000000));
     const exists = await User.findOne({ studentNumber: num }).select("_id");
     if (!exists) return num;
   }
@@ -101,7 +114,7 @@ async function generateStudentNumber8() {
 
 // Generate 6-digit OTP
 function makeOtp6() {
-  return String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
+  return String(Math.floor(100000 + Math.random() * 900000));
 }
 
 function cleanSpaces(s) {
@@ -133,6 +146,7 @@ function normalizePaper(v) {
   if (p === "paper1" || p === "paper2") return p;
   return "paper1";
 }
+
 function paperLabel(p) {
   const pp = normalizePaper(p);
   return pp === "paper2" ? "Paper 2" : "Paper 1";
@@ -146,7 +160,6 @@ function normalizeIndexArray(v) {
     const n = Number(x);
     if (Number.isInteger(n) && n >= 0) out.push(n);
   }
-  // unique + sorted
   return [...new Set(out)].sort((a, b) => a - b);
 }
 
@@ -158,6 +171,17 @@ function isMultiMcqCorrect(chosenIdxs, correctIdxs) {
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
   return true;
 }
+
+/* ------------------ RATE LIMIT ------------------ */
+const registerLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Too many registration attempts. Please try again later.",
+  },
+});
 
 /* ------------------ PAYFAST HELPERS ------------------ */
 const PAYFAST_MERCHANT_ID = (process.env.PAYFAST_MERCHANT_ID || "").trim();
@@ -205,7 +229,7 @@ function buildPayfastSignature(data, passphrase = "") {
     output += `passphrase=${pfEncode(passphrase)}&`;
   }
 
-  output = output.slice(0, -1); // remove last &
+  output = output.slice(0, -1);
   return crypto.createHash("md5").update(output).digest("hex");
 }
 
@@ -227,7 +251,7 @@ async function validatePayfastData(pfData) {
 
 /* ------------------ CORS ------------------ */
 const ALLOWED_ORIGINS = [
-  process.env.APP_URL, // your Netlify URL (optional)
+  process.env.APP_URL,
   process.env.FRONTEND_URL,
   "http://localhost:3000",
   "http://localhost:5500",
@@ -237,7 +261,7 @@ const ALLOWED_ORIGINS = [
 app.use(
   cors({
     origin: (origin, cb) => {
-      if (!origin) return cb(null, true); // Postman/curl
+      if (!origin) return cb(null, true);
       if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
       if (origin.endsWith(".netlify.app")) return cb(null, true);
       if (origin.endsWith(".onrender.com")) return cb(null, true);
@@ -247,7 +271,6 @@ app.use(
   })
 );
 
-// Preflight
 app.options("*", cors());
 
 /* ------------------ HEALTH ------------------ */
@@ -280,7 +303,7 @@ function authRequired(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // { userId, role }
+    req.user = decoded;
     next();
   } catch {
     res.status(401).json({ message: "Invalid token" });
@@ -300,11 +323,10 @@ async function adminOnly(req, res, next) {
 
 /* ------------------ AUTH ROUTES ------------------ */
 
-// Profile endpoint used by learner pages + admin pages
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select(
-      "username email role grade accountType studentNumber province cellphone guardianCellphone subscriptionStatus paidUntil lastPaymentId premium premiumExpiresAt"
+      "username email role grade accountType studentNumber province district gender cellphone guardianCellphone emailVerified subscriptionStatus paidUntil lastPaymentId premium premiumExpiresAt"
     );
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -331,8 +353,11 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
       accountType: user.accountType,
       studentNumber: user.studentNumber,
       province: user.province || "",
+      district: user.district || "",
+      gender: user.gender || "",
       cellphone: user.cellphone || "",
       guardianCellphone: user.guardianCellphone || "",
+      emailVerified: !!user.emailVerified,
       subscriptionStatus: effectiveStatus,
       paidUntil: effectivePaidUntil,
       lastPaymentId: user.lastPaymentId || "",
@@ -343,7 +368,7 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 });
 
 // REGISTER
-app.post("/api/register", async (req, res) => {
+app.post("/api/register", registerLimiter, async (req, res) => {
   try {
     const {
       username,
@@ -352,6 +377,8 @@ app.post("/api/register", async (req, res) => {
       password,
       accountType,
       province,
+      district,
+      gender,
       cellphone,
       guardianCellphone,
     } = req.body;
@@ -388,20 +415,29 @@ app.post("/api/register", async (req, res) => {
     }
 
     const cleanUsername = cleanSpaces(username);
-    const cleanEmail = String(email).toLowerCase().trim();
+    const cleanEmail = String(email || "").toLowerCase().trim();
 
-    const existingEmail = await User.findOne({ email: cleanEmail });
-    if (existingEmail)
+    if (!isValidEmail(cleanEmail)) {
+      return res.status(400).json({ message: "Please enter a valid email address." });
+    }
+
+    const existingEmail = await User.findOne({ email: cleanEmail }).select("_id");
+    if (existingEmail) {
       return res.status(409).json({ message: "Email already registered." });
+    }
 
-    const existingUsername = await User.findOne({ username: cleanUsername });
-    if (existingUsername)
+    const existingUsername = await User.findOne({ username: cleanUsername }).select("_id");
+    if (existingUsername) {
       return res.status(409).json({ message: "Username already taken." });
+    }
 
     const passwordHash = await bcrypt.hash(password, 10);
-
     const studentNumber =
       accountType === "student" ? await generateStudentNumber8() : null;
+
+    const rawVerifyToken = makeVerifyToken();
+    const verifyTokenHash = hashToken(rawVerifyToken);
+    const verifyTokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     const user = await User.create({
       username: cleanUsername,
@@ -413,24 +449,33 @@ app.post("/api/register", async (req, res) => {
       grade: gradeNum,
 
       province: cleanSpaces(province || ""),
+      district: cleanSpaces(district || ""),
+      gender: String(gender || "").trim(),
       cellphone: cleanSpaces(cellphone || ""),
       guardianCellphone: cleanSpaces(guardianCellphone || ""),
 
-      emailVerified: true,
-      verifyTokenHash: null,
-      verifyTokenExpiresAt: null,
+      emailVerified: false,
+      verifyTokenHash,
+      verifyTokenExpiresAt,
     });
+
+    const verifyUrl = `${APP_URL}/verify-email.html?token=${encodeURIComponent(
+      rawVerifyToken
+    )}&email=${encodeURIComponent(user.email)}`;
 
     if (user.accountType === "student") {
       await sendEmail({
         to: user.email,
-        subject: `Welcome to Practice Online`,
-        text: `Hi ${user.username}, your student number is ${user.studentNumber}.`,
+        subject: "Verify your Practice Online email",
+        text: `Hi ${user.username}, your student number is ${user.studentNumber}. Verify your email here: ${verifyUrl}`,
         html: `
           <div style="font-family:Arial,sans-serif; line-height:1.6;">
             <p>Hi ${user.username},</p>
             <p>Welcome to Practice Online.</p>
             <p>Your student number is: <b>${user.studentNumber}</b></p>
+            <p>Please verify your email address by clicking the link below:</p>
+            <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
+            <p>This link expires in 24 hours.</p>
             <p>Regards,<br/>Practice Online Team</p>
           </div>
         `,
@@ -438,13 +483,16 @@ app.post("/api/register", async (req, res) => {
     } else {
       await sendEmail({
         to: user.email,
-        subject: `Welcome to Practice Online`,
-        text: `Hi ${user.username}, your account is ready. You have access to learning materials.`,
+        subject: "Verify your Practice Online email",
+        text: `Hi ${user.username}, your account is ready. Verify your email here: ${verifyUrl}`,
         html: `
           <div style="font-family:Arial,sans-serif; line-height:1.6;">
             <p>Hi ${user.username},</p>
             <p>Welcome to Practice Online.</p>
             <p>Your account is ready and you have access to learning materials.</p>
+            <p>Please verify your email address by clicking the link below:</p>
+            <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
+            <p>This link expires in 24 hours.</p>
             <p>Regards,<br/>Practice Online Team</p>
           </div>
         `,
@@ -452,13 +500,103 @@ app.post("/api/register", async (req, res) => {
     }
 
     return res.status(201).json({
-      message: "Account created. Welcome email sent.",
+      message: "Account created. Please verify your email before logging in.",
       accountType: user.accountType,
       studentNumber: user.studentNumber,
     });
   } catch (err) {
     console.error("Register error:", err.message);
     return res.status(500).json({ message: "Server error. Please try again." });
+  }
+});
+
+// VERIFY EMAIL
+app.post("/api/verify-email", async (req, res) => {
+  try {
+    const { email, token } = req.body;
+
+    if (!email || !token) {
+      return res.status(400).json({ message: "Email and token are required." });
+    }
+
+    const cleanEmail = String(email || "").trim().toLowerCase();
+    const tokenHash = hashToken(String(token || "").trim());
+
+    const user = await User.findOne({ email: cleanEmail });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired verification link." });
+    }
+
+    const isExpired =
+      !user.verifyTokenExpiresAt || user.verifyTokenExpiresAt.getTime() < Date.now();
+
+    const isMatch =
+      user.verifyTokenHash && String(user.verifyTokenHash) === String(tokenHash);
+
+    if (!isMatch || isExpired) {
+      return res.status(400).json({ message: "Invalid or expired verification link." });
+    }
+
+    user.emailVerified = true;
+    user.verifyTokenHash = null;
+    user.verifyTokenExpiresAt = null;
+    await user.save();
+
+    return res.json({ message: "Email verified successfully. You can login now." });
+  } catch (err) {
+    console.error("Verify email error:", err.message);
+    return res.status(500).json({ message: "Server error." });
+  }
+});
+
+// RESEND VERIFICATION EMAIL
+app.post("/api/resend-verification-email", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required." });
+    }
+
+    const cleanEmail = String(email || "").trim().toLowerCase();
+    const user = await User.findOne({ email: cleanEmail });
+
+    if (!user) {
+      return res.json({ message: "If the email exists, a verification email has been sent." });
+    }
+
+    if (user.emailVerified) {
+      return res.json({ message: "This email is already verified." });
+    }
+
+    const rawVerifyToken = makeVerifyToken();
+    user.verifyTokenHash = hashToken(rawVerifyToken);
+    user.verifyTokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await user.save();
+
+    const verifyUrl = `${APP_URL}/verify-email.html?token=${encodeURIComponent(
+      rawVerifyToken
+    )}&email=${encodeURIComponent(user.email)}`;
+
+    await sendEmail({
+      to: user.email,
+      subject: "Verify your Practice Online email",
+      text: `Hi ${user.username}, verify your email here: ${verifyUrl}`,
+      html: `
+        <div style="font-family:Arial,sans-serif; line-height:1.6;">
+          <p>Hi ${user.username},</p>
+          <p>Please verify your email address by clicking the link below:</p>
+          <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
+          <p>This link expires in 24 hours.</p>
+          <p>Regards,<br/>Practice Online Team</p>
+        </div>
+      `,
+    });
+
+    return res.json({ message: "If the email exists, a verification email has been sent." });
+  } catch (err) {
+    console.error("Resend verification error:", err.message);
+    return res.status(500).json({ message: "Server error." });
   }
 });
 
@@ -478,6 +616,12 @@ app.post("/api/login", async (req, res) => {
 
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) return res.status(401).json({ message: "Invalid email or password." });
+
+    if (!user.emailVerified) {
+      return res.status(403).json({
+        message: "Please verify your email address before logging in.",
+      });
+    }
 
     const token = jwt.sign(
       { userId: user._id, role: user.role },
@@ -510,8 +654,11 @@ app.post("/api/login", async (req, res) => {
         studentNumber: user.studentNumber,
         grade: user.grade,
         province: user.province || "",
+        district: user.district || "",
+        gender: user.gender || "",
         cellphone: user.cellphone || "",
         guardianCellphone: user.guardianCellphone || "",
+        emailVerified: !!user.emailVerified,
         subscriptionStatus: effectiveStatus,
         paidUntil: effectivePaidUntil,
         lastPaymentId: user.lastPaymentId || "",
@@ -550,8 +697,6 @@ app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
 
 /* ------------------ QUIZZES ------------------ */
 
-// Learner: returns quizzes for learner grade
-// Admin: if you want all, use /api/quizzes?all=1
 app.get("/api/quizzes", authRequired, async (req, res) => {
   try {
     const u = await User.findById(req.user.userId).select("role grade");
@@ -568,7 +713,6 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
     const quizzes = await Quiz.find(filter)
       .sort({ createdAt: -1 })
       .select(
-        // ✅ include paper + difficulty
         "grade title topic paper difficulty questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt"
       );
 
@@ -579,7 +723,6 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
   }
 });
 
-// Get single quiz (attempt.html uses this)
 app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id);
@@ -588,7 +731,6 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
     const u = await User.findById(req.user.userId).select("role grade");
     if (!u) return res.status(401).json({ message: "User not found" });
 
-    // learners can only access their grade
     if (u.role !== "admin" && Number(quiz.grade) !== Number(u.grade)) {
       return res.status(403).json({ message: "Not allowed" });
     }
@@ -599,10 +741,8 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   }
 });
 
-// Admin creates quiz (admin-quiz.html POSTs here) ✅ NOW EMAILS STUDENTS BY GRADE
 app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   try {
-    // ✅ accept difficulty + paper
     const { grade, title, topic, paper, timeLimitMinutes, instructions, questions, difficulty } =
       req.body;
 
@@ -624,7 +764,6 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
     const quizDifficulty = normalizeDifficulty(difficulty);
     const quizPaper = normalizePaper(paper);
 
-    // ✅ Validate blocks (mcq/text/note) + points + solution + multi-select
     for (const q of questions) {
       const type = String(q?.type || "mcq").toLowerCase();
 
@@ -632,7 +771,6 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
         return res.status(400).json({ message: "Each block must have text." });
       }
 
-      // ✅ solution allowed for any type
       if ("solution" in q && q.solution !== undefined && q.solution !== null) {
         q.solution = String(q.solution);
       }
@@ -661,7 +799,6 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
           }
         }
       } else {
-        // ✅ MCQ (single or multi)
         const opts = Array.isArray(q?.options) ? q.options : [];
         if (opts.length < 2 || opts.some((o) => !cleanSpaces(o))) {
           return res.status(400).json({ message: "MCQ must have at least 2 options." });
@@ -680,16 +817,12 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
           }
           q.isMultiSelect = true;
           q.correctIndexes = idxs;
-
-          // compat: keep correctIndex if only 1
           if (idxs.length === 1) q.correctIndex = idxs[0];
         } else {
-          // single-correct
           const ci = safeInt(q?.correctIndex, null);
           if (ci === null || ci < 0 || ci >= opts.length) {
             return res.status(400).json({ message: "MCQ correctIndex must be within options." });
           }
-          // also store correctIndexes for easier review
           q.correctIndexes = [ci];
           q.isMultiSelect = false;
         }
@@ -700,7 +833,7 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
       grade: g,
       title: quizTitle,
       topic: quizTopic,
-      paper: quizPaper, // ✅ NEW
+      paper: quizPaper,
       difficulty: quizDifficulty,
       timeLimitMinutes: Number(timeLimitMinutes) || 10,
       questions,
@@ -720,6 +853,7 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
           accountType: "student",
           grade: g,
           email: { $exists: true, $ne: "" },
+          emailVerified: true,
         }).select("email");
 
         const emails = learners
@@ -766,7 +900,6 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   }
 });
 
-// Admin updates quiz (edit-assessment.html PUTs here)
 app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const id = req.params.id;
@@ -776,7 +909,7 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
       "grade",
       "title",
       "topic",
-      "paper", // ✅ NEW
+      "paper",
       "instructions",
       "timeLimitMinutes",
       "availableFrom",
@@ -914,7 +1047,6 @@ app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   }
 });
 
-// Admin deletes quiz
 app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const quiz = await Quiz.findByIdAndDelete(req.params.id);
@@ -944,7 +1076,6 @@ function isUnavailableBySchedule(quiz) {
   return false;
 }
 
-// ✅ parse numbers AND fractions like 1/2 or -3/4
 function parseNumberOrFraction(input) {
   const s = String(input || "")
     .trim()
@@ -953,7 +1084,6 @@ function parseNumberOrFraction(input) {
 
   if (!s) return null;
 
-  // fraction a/b
   const m = s.match(/^([+-]?\d+(?:\.\d+)?)\s*\/\s*([+-]?\d+(?:\.\d+)?)$/);
   if (m) {
     const a = Number(m[1]);
@@ -962,17 +1092,15 @@ function parseNumberOrFraction(input) {
     return a / b;
   }
 
-  // normal number (0.5, -2, 3.14)
   const n = Number(s);
   return Number.isFinite(n) ? n : null;
 }
 
-// ✅ normalize typed answers so case/spaces don't matter
 function normalizeTextAnswer(s) {
   return String(s || "")
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, "") // remove all spaces
+    .replace(/\s+/g, "")
     .replace(/−/g, "-");
 }
 
@@ -990,7 +1118,6 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
     return Math.abs(uNum - cNum) <= tol;
   }
 
-  // If both are numeric-like, treat as equal (fraction/decimal)
   if (uNum !== null && cNum !== null) {
     return Math.abs(uNum - cNum) <= 1e-12;
   }
@@ -1000,12 +1127,9 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
 
   if (mode === "contains") return ua.includes(ca);
 
-  return ua === ca; // exact (case-insensitive, space-insensitive)
+  return ua === ca;
 }
 
-// Submit attempt (attempt.html POSTs here)
-// ✅ Learners: ONE attempt only
-// ✅ Admin: MANY attempts allowed (each attempt saved)
 app.post("/api/results", authRequired, async (req, res) => {
   try {
     const { quizId, answers, timeTakenSeconds } = req.body;
@@ -1016,20 +1140,16 @@ app.post("/api/results", authRequired, async (req, res) => {
 
     const userId = req.user.userId;
 
-    // ✅ Always check role from DB.
     const me = await User.findById(userId).select("role");
     if (!me) return res.status(401).json({ message: "User not found" });
 
     const isAdmin = me.role === "admin";
 
-    // ✅ Learners blocked after first attempt
-    // ✅ Admin can retry unlimited times
     if (!isAdmin) {
       const existing = await Result.findOne({ userId, quizId }).select("_id");
       if (existing) return res.status(409).json({ message: "Already attempted" });
     }
 
-    // ✅ Admin attempt number
     let attemptNo = 1;
     if (isAdmin) {
       const prev = await Result.countDocuments({ userId, quizId, isAdminAttempt: true });
@@ -1046,7 +1166,6 @@ app.post("/api/results", authRequired, async (req, res) => {
     const qs = Array.isArray(quiz.questions) ? quiz.questions : [];
     if (!qs.length) return res.status(400).json({ message: "Assessment has no questions." });
 
-    // total points (exclude notes)
     const gradedQs = qs.filter((q) => String(q.type || "mcq").toLowerCase() !== "note");
     const totalPoints = gradedQs.reduce((sum, q) => sum + (Number(q.points) || 1), 0);
 
@@ -1058,29 +1177,22 @@ app.post("/api/results", authRequired, async (req, res) => {
       const hint = q.hint || "";
       const questionText = q.text || "";
       const options = Array.isArray(q.options) ? q.options : [];
-      const qPoints = type === "note" ? 0 : (Number(q.points) || 1);
-
-      // ✅ snapshot solution/workings
+      const qPoints = type === "note" ? 0 : Number(q.points) || 1;
       const solution = String(q.solution || "").trim();
 
       const ans = answers.find((a) => Number(a.questionIndex) === i) || {};
 
-      // NOTE (not graded)
       if (type === "note") {
         return {
           questionIndex: i,
           type: "note",
           points: 0,
           earnedPoints: 0,
-
           chosenIndex: -1,
           correctIndex: -1,
-
-          // ✅ keep arrays empty
           isMultiSelect: false,
           chosenIndexes: [],
           correctIndexes: [],
-
           textAnswer: "",
           correctText: "",
           hint: "",
@@ -1094,7 +1206,6 @@ app.post("/api/results", authRequired, async (req, res) => {
         };
       }
 
-      // TEXT
       if (type === "text") {
         const userText = cleanSpaces(ans.textAnswer || "");
         const correctText = cleanSpaces(q.correctText || "");
@@ -1117,14 +1228,11 @@ app.post("/api/results", authRequired, async (req, res) => {
           type: "text",
           points: qPoints,
           earnedPoints: earned,
-
-          // compat (not used)
           chosenIndex: -1,
           correctIndex: -1,
           isMultiSelect: false,
           chosenIndexes: [],
           correctIndexes: [],
-
           textAnswer: userText,
           correctText,
           hint,
@@ -1138,33 +1246,25 @@ app.post("/api/results", authRequired, async (req, res) => {
         };
       }
 
-      // ✅ MCQ (SINGLE OR MULTI)
       const correctIndexes = normalizeIndexArray(q.correctIndexes || []);
       const multiByCorrects = correctIndexes.length > 1;
       const isMultiSelect = Boolean(q.isMultiSelect) || multiByCorrects;
 
       let isCorrect = false;
-
-      // defaults
       let chosenIndex = -1;
       let correctIndex = Number.isInteger(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
-
       let chosenIndexes = [];
       let correctIndexesSnap = correctIndexes;
 
       if (isMultiSelect) {
         chosenIndexes = normalizeIndexArray(ans.chosenIndexes || []);
         isCorrect = isMultiMcqCorrect(chosenIndexes, correctIndexes);
-
-        // compat fields (optional)
         chosenIndex = chosenIndexes.length ? chosenIndexes[0] : -1;
         correctIndex = correctIndexes.length ? correctIndexes[0] : -1;
       } else {
         chosenIndex = Number.isFinite(Number(ans.chosenIndex)) ? Number(ans.chosenIndex) : -1;
         correctIndex = Number.isFinite(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
         isCorrect = chosenIndex === correctIndex && correctIndex >= 0;
-
-        // also store arrays (nice for review)
         chosenIndexes = chosenIndex >= 0 ? [chosenIndex] : [];
         correctIndexesSnap = correctIndex >= 0 ? [correctIndex] : [];
       }
@@ -1177,16 +1277,11 @@ app.post("/api/results", authRequired, async (req, res) => {
         type: "mcq",
         points: qPoints,
         earnedPoints: earned,
-
-        // ✅ old fields (still there)
         chosenIndex,
         correctIndex,
-
-        // ✅ new fields (proper review/results)
         isMultiSelect,
         chosenIndexes,
         correctIndexes: correctIndexesSnap,
-
         textAnswer: "",
         correctText: "",
         hint,
@@ -1210,19 +1305,13 @@ app.post("/api/results", authRequired, async (req, res) => {
       topic: quiz.topic || "General",
       title: quiz.title || "Assessment",
       instructions: String(quiz.instructions || "").trim(),
-
-      // ✅ NEW snapshot paper (requires Result schema to include it)
       paper: quiz.paper || "paper1",
-
-      // ✅ points-based
       score: scorePoints,
       total: totalPoints,
       percent,
       status,
-
       answers: savedAnswers,
       timeTakenSeconds: Number(timeTakenSeconds) || 0,
-
       isAdminAttempt: isAdmin,
       attemptNo,
       attemptedAt: new Date(),
@@ -1245,14 +1334,15 @@ app.post("/api/results", authRequired, async (req, res) => {
   }
 });
 
-// Results list for logged-in learner (results.html calls this)
 app.get("/api/results/my", authRequired, async (req, res) => {
   try {
     const userId = req.user.userId;
 
     const rows = await Result.find({ userId })
       .sort({ createdAt: -1 })
-      .select("_id createdAt grade topic title paper percent score total status quizId attemptNo isAdminAttempt");
+      .select(
+        "_id createdAt grade topic title paper percent score total status quizId attemptNo isAdminAttempt"
+      );
 
     return res.json(rows);
   } catch {
@@ -1260,7 +1350,6 @@ app.get("/api/results/my", authRequired, async (req, res) => {
   }
 });
 
-// Single result for review.html
 app.get("/api/results/:id", authRequired, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -1338,7 +1427,8 @@ app.post("/api/reset-password-otp", async (req, res) => {
     if (!user) return res.status(400).json({ message: "Invalid or expired code." });
 
     const codeHash = hashToken(String(code).trim());
-    const isExpired = !user.resetPasswordExpires || user.resetPasswordExpires.getTime() < Date.now();
+    const isExpired =
+      !user.resetPasswordExpires || user.resetPasswordExpires.getTime() < Date.now();
     const isMatch = user.resetPasswordTokenHash && user.resetPasswordTokenHash === codeHash;
 
     if (!isMatch || isExpired) {
@@ -1359,7 +1449,6 @@ app.post("/api/reset-password-otp", async (req, res) => {
 
 /* ------------------ PAYFAST ------------------ */
 
-// Start monthly payment
 app.post("/api/payfast/initiate", authRequired, async (req, res) => {
   try {
     if (!PAYFAST_MERCHANT_ID || !PAYFAST_MERCHANT_KEY) {
@@ -1414,10 +1503,14 @@ app.post("/api/payfast/initiate", authRequired, async (req, res) => {
       notify_url: `${API_URL}/api/payfast/itn`,
       m_payment_id: String(m_payment_id).trim(),
       amount: amt.toFixed(2),
-      item_name: String(item_name || "Practice Online Subscription (30 days)").trim().slice(0, 100),
+      item_name: String(item_name || "Practice Online Subscription (30 days)")
+        .trim()
+        .slice(0, 100),
       name_first: String(emailPrefix || "Practice").trim(),
       name_last: "Online",
-      email_address: String(currentUser.email || FROM_EMAIL || "no-reply@practiceonline.co.za").trim(),
+      email_address: String(
+        currentUser.email || FROM_EMAIL || "no-reply@practiceonline.co.za"
+      ).trim(),
     };
 
     data.signature = buildPayfastSignature(data, PAYFAST_PASSPHRASE);
@@ -1432,7 +1525,6 @@ app.post("/api/payfast/initiate", authRequired, async (req, res) => {
   }
 });
 
-// PayFast ITN
 app.post("/api/payfast/itn", async (req, res) => {
   try {
     const pfData = { ...req.body };
@@ -1512,8 +1604,6 @@ app.post("/api/payfast/itn", async (req, res) => {
         user.paidUntil = newUntil;
         user.subscriptionStatus = "active";
         user.lastPaymentId = payment.m_payment_id;
-
-        // keep old premium fields in sync so old pages don’t break
         user.premium = true;
         user.premiumActivatedAt = now;
         user.premiumExpiresAt = newUntil;
@@ -1556,6 +1646,10 @@ mongoose
 
 /*
 ✅ IMPORTANT:
+Run:
+npm install express-rate-limit
+
+✅ IMPORTANT:
 You also need these env vars:
 
 PAYFAST_MERCHANT_ID=10046445
@@ -1570,12 +1664,16 @@ Create models/Payment.js
 
 ✅ IMPORTANT:
 Update models/User.js with:
+- email validation
+- emailVerified
+- verifyTokenHash
+- verifyTokenExpiresAt
 - subscriptionStatus
 - paidUntil
 - lastPaymentId
 
 ✅ IMPORTANT:
 To truly STORE paper in MongoDB you must add:
-- `paper` field to models/Quiz.js schema
-- (optional) `paper` field to models/Result.js schema
+- paper field to models/Quiz.js schema
+- optional paper field to models/Result.js schema
 */
