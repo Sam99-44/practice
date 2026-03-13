@@ -15,16 +15,17 @@
   --red:#e11d2e;
   --bg:#f6f7fb;
   --card:#ffffff;
+  --blue:#eef6ff;
   --border:#d9dee7;
-  --text:#0f172a;
-  --muted:#475569;
-  --panel:#2f2f33;
-  --panelText:#ffffff;
-  --panelMuted:rgba(255,255,255,.82);
-  --radius:14px;
+  --text:#222222;
+  --muted:#5f6b7a;
+  --white:#ffffff;
 }
 
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
+
 html,body{
   margin:0;
   padding:0;
@@ -32,13 +33,21 @@ html,body{
   background:var(--bg);
   color:var(--text);
 }
-a{text-decoration:none;color:inherit}
-button,input{font:inherit}
+
+a{
+  text-decoration:none;
+  color:inherit;
+}
+
+button,input{
+  font:inherit;
+}
 
 .topbar{
   background:var(--nav);
   color:#fff;
 }
+
 .topbar-inner{
   max-width:1100px;
   margin:0 auto;
@@ -49,36 +58,44 @@ button,input{font:inherit}
   gap:12px;
   flex-wrap:wrap;
 }
+
 .brand{
   font-weight:800;
   line-height:1.2;
 }
+
 .brand small{
   display:block;
   font-size:12px;
   font-weight:700;
   opacity:.9;
 }
+
 .nav{
   display:flex;
   gap:10px;
   align-items:center;
   flex-wrap:wrap;
 }
+
 .nav a{
   padding:8px 10px;
   border-radius:8px;
   color:#eef2ff;
   font-weight:700;
   font-size:13px;
+  white-space:nowrap;
 }
+
+.nav a:hover{
+  background:rgba(255,255,255,.08);
+}
+
 .nav a.active{
   border-bottom:3px solid var(--red);
   color:#fff;
 }
-.nav a:hover{
-  background:rgba(255,255,255,.08);
-}
+
 .logoutBtn{
   background:transparent;
   border:1px solid rgba(255,255,255,.28);
@@ -87,6 +104,7 @@ button,input{font:inherit}
   border-radius:12px;
   font-weight:800;
   cursor:pointer;
+  white-space:nowrap;
 }
 
 .wrap{
@@ -96,15 +114,14 @@ button,input{font:inherit}
 }
 
 .profileHero{
-  background:linear-gradient(180deg,#353538 0%, #2c2c2f 100%);
-  color:var(--panelText);
+  background:var(--blue);
+  border:1px solid var(--border);
   border-radius:18px;
-  padding:28px;
+  padding:24px;
   display:grid;
   grid-template-columns:120px 1fr auto;
-  gap:26px;
+  gap:24px;
   align-items:start;
-  position:relative;
 }
 
 .profilePhotoWrap{
@@ -118,7 +135,7 @@ button,input{font:inherit}
   height:120px;
   border-radius:50%;
   object-fit:cover;
-  border:3px solid rgba(255,255,255,.14);
+  border:3px solid #ffffff;
   background:#dbe4f0;
 }
 
@@ -126,48 +143,50 @@ button,input{font:inherit}
   position:absolute;
   right:-4px;
   bottom:-4px;
-  width:42px;
-  height:42px;
+  width:40px;
+  height:40px;
   border-radius:50%;
-  border:3px solid #2c2c2f;
-  background:rgba(255,255,255,.12);
+  border:2px solid #ffffff;
+  background:var(--nav);
   color:#fff;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:18px;
+  font-size:16px;
   cursor:pointer;
 }
 
 .profileMain h1{
-  margin:10px 0 8px;
+  margin:8px 0 8px;
   font-size:28px;
   font-weight:800;
   letter-spacing:-.02em;
+  color:var(--nav);
 }
 
 .profileSub{
   font-size:14px;
-  color:var(--panelMuted);
+  color:var(--muted);
   line-height:1.7;
-  margin-bottom:18px;
+  margin-bottom:14px;
 }
 
 .profileActions{
   display:flex;
-  gap:18px;
+  gap:8px;
   flex-wrap:wrap;
-  color:rgba(255,255,255,.88);
 }
 
-.iconBtn{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width:22px;
-  height:22px;
-  font-size:18px;
-  opacity:.92;
+.badge{
+  display:inline-block;
+  padding:4px 10px;
+  border:1px solid #cfe0f2;
+  background:#ffffff;
+  color:var(--nav);
+  border-radius:6px;
+  font-size:12px;
+  font-weight:700;
+  line-height:1.4;
 }
 
 .profileMenuWrap{
@@ -175,17 +194,14 @@ button,input{font:inherit}
 }
 
 .menuTrigger{
-  background:transparent;
-  border:none;
-  color:#fff;
-  font-size:28px;
+  background:#ffffff;
+  border:1px solid var(--border);
+  color:var(--nav);
+  font-size:24px;
   line-height:1;
   cursor:pointer;
-  padding:4px 6px;
+  padding:6px 10px;
   border-radius:10px;
-}
-.menuTrigger:hover{
-  background:rgba(255,255,255,.08);
 }
 
 .menu{
@@ -196,14 +212,16 @@ button,input{font:inherit}
   background:#fff;
   border:1px solid var(--border);
   border-radius:14px;
-  box-shadow:0 14px 34px rgba(15,23,42,.14);
+  box-shadow:0 14px 34px rgba(15,23,42,.10);
   padding:8px;
   display:none;
   z-index:50;
 }
+
 .menu.open{
   display:block;
 }
+
 .menu button{
   width:100%;
   text-align:left;
@@ -216,8 +234,9 @@ button,input{font:inherit}
   font-weight:700;
   color:var(--text);
 }
+
 .menu button:hover{
-  background:#f8fafc;
+  background:#f4f8fc;
 }
 
 .grid{
@@ -236,15 +255,18 @@ button,input{font:inherit}
 
 .sectionHead{
   padding:16px 18px;
-  background:#f7f9fc;
+  background:var(--blue);
   border-bottom:1px solid var(--border);
 }
+
 .sectionHead h2,
 .sectionHead h3{
   margin:0;
   font-size:16px;
   font-weight:800;
+  color:var(--nav);
 }
+
 .sectionHead p{
   margin:6px 0 0;
   font-size:13px;
@@ -263,6 +285,7 @@ button,input{font:inherit}
   padding:15px 0;
   border-bottom:1px solid #edf2f7;
 }
+
 .row:last-child{
   border-bottom:none;
 }
@@ -272,40 +295,15 @@ button,input{font:inherit}
   color:var(--muted);
   font-weight:700;
 }
+
 .value{
   font-size:13px;
-  font-weight:800;
+  font-weight:700;
   color:var(--text);
   text-align:right;
+  word-break:break-word;
 }
 
-.learnerBoxWrap{
-  padding:18px;
-}
-.learnerBox{
-  background:#f8fafc;
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:16px;
-}
-.learnerNumber{
-  font-size:27px;
-  font-weight:900;
-  margin:0 0 8px;
-  letter-spacing:.02em;
-}
-.note{
-  font-size:13px;
-  color:var(--muted);
-  line-height:1.6;
-  margin-bottom:14px;
-}
-
-.btnRow{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-}
 .btn{
   padding:10px 14px;
   border-radius:12px;
@@ -315,8 +313,24 @@ button,input{font:inherit}
   font-weight:800;
   cursor:pointer;
 }
+
 .btn:hover{
-  background:#f8fafc;
+  background:#f8fbff;
+}
+
+.btnPrimary{
+  background:var(--nav);
+  border-color:var(--nav);
+  color:#fff;
+}
+
+.btnPrimary:hover{
+  background:#15103b;
+}
+
+.btn:disabled{
+  opacity:.7;
+  cursor:not-allowed;
 }
 
 .hiddenInput{
@@ -333,9 +347,11 @@ button,input{font:inherit}
   padding:18px;
   z-index:100;
 }
+
 .modalBackdrop.open{
   display:flex;
 }
+
 .modal{
   width:100%;
   max-width:520px;
@@ -344,18 +360,23 @@ button,input{font:inherit}
   border:1px solid var(--border);
   overflow:hidden;
 }
+
 .modalHead{
   padding:16px 18px;
   border-bottom:1px solid var(--border);
   display:flex;
   justify-content:space-between;
   align-items:center;
+  background:var(--blue);
 }
+
 .modalHead h3{
   margin:0;
   font-size:16px;
   font-weight:800;
+  color:var(--nav);
 }
+
 .closeBtn{
   border:none;
   background:#fff;
@@ -363,12 +384,15 @@ button,input{font:inherit}
   cursor:pointer;
   color:#475569;
 }
+
 .modalBody{
   padding:18px;
 }
+
 .formGroup{
   margin-bottom:14px;
 }
+
 .formGroup label{
   display:block;
   font-size:13px;
@@ -376,6 +400,7 @@ button,input{font:inherit}
   color:var(--text);
   margin-bottom:6px;
 }
+
 .formGroup input{
   width:100%;
   border:1px solid #cbd5e1;
@@ -384,11 +409,13 @@ button,input{font:inherit}
   font-size:14px;
   outline:none;
 }
+
 .modalActions{
   display:flex;
   justify-content:flex-end;
   gap:10px;
   margin-top:16px;
+  flex-wrap:wrap;
 }
 
 .toast{
@@ -403,16 +430,29 @@ button,input{font:inherit}
   font-weight:700;
   display:none;
   z-index:120;
+  max-width:calc(100vw - 36px);
 }
 
+/* Tablet */
 @media (max-width: 860px){
   .grid{
     grid-template-columns:1fr;
   }
 
   .profileHero{
-    grid-template-columns:1fr;
+    grid-template-columns:96px 1fr;
     gap:18px;
+  }
+
+  .profileMenuWrap{
+    grid-column:1 / -1;
+    justify-self:end;
+  }
+
+  .profilePhotoWrap,
+  .profilePhoto{
+    width:96px;
+    height:96px;
   }
 
   .profileMain h1{
@@ -420,18 +460,116 @@ button,input{font:inherit}
   }
 }
 
-@media (max-width: 520px){
+/* Phone */
+@media (max-width: 640px){
+  .topbar-inner{
+    padding:12px 14px;
+    align-items:flex-start;
+  }
+
+  .nav{
+    width:100%;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    padding-bottom:4px;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+
+  .nav::-webkit-scrollbar{
+    display:none;
+  }
+
+  .wrap{
+    padding:14px;
+  }
+
+  .profileHero{
+    grid-template-columns:1fr;
+    padding:18px;
+    gap:14px;
+  }
+
+  .profilePhotoWrap,
+  .profilePhoto{
+    width:84px;
+    height:84px;
+  }
+
+  .profilePhotoWrap{
+    margin:0 auto;
+  }
+
+  .photoEditBtn{
+    width:34px;
+    height:34px;
+    font-size:14px;
+  }
+
+  .profileMain{
+    text-align:center;
+  }
+
+  .profileMain h1{
+    font-size:22px;
+    margin-top:0;
+  }
+
+  .profileSub{
+    font-size:13px;
+    margin-bottom:12px;
+  }
+
+  .profileActions{
+    justify-content:center;
+  }
+
+  .profileMenuWrap{
+    justify-self:center;
+  }
+
+  .menu{
+    right:auto;
+    left:50%;
+    transform:translateX(-50%);
+    width:min(220px, calc(100vw - 40px));
+  }
+
+  .sectionHead{
+    padding:14px 15px;
+  }
+
+  .sectionBody{
+    padding:0 15px;
+  }
+
   .row{
     flex-direction:column;
     align-items:flex-start;
+    gap:6px;
+    padding:13px 0;
   }
 
   .value{
     text-align:left;
+    width:100%;
   }
 
-  .learnerNumber{
-    font-size:22px;
+  .modal{
+    max-width:100%;
+  }
+
+  .modalBody,
+  .modalHead{
+    padding:14px;
+  }
+
+  .modalActions{
+    justify-content:stretch;
+  }
+
+  .modalActions .btn{
+    width:100%;
   }
 }
 </style>
@@ -479,11 +617,8 @@ if(!localStorage.getItem("token")){
       <div class="profileSub" id="displayRole">Loading profile...</div>
 
       <div class="profileActions">
-        <span class="iconBtn">💬</span>
-        <span class="iconBtn">👥</span>
-        <span class="iconBtn">🎥</span>
-        <span class="iconBtn">📞</span>
-        <span class="iconBtn">in</span>
+        <span class="badge" id="badgeAccountType">Learner</span>
+        <span class="badge" id="badgeRole">Profile</span>
       </div>
     </div>
 
@@ -493,7 +628,6 @@ if(!localStorage.getItem("token")){
         <button type="button" onclick="openEditModal()">Edit profile information</button>
         <button type="button" onclick="document.getElementById('photoInput').click()">Upload profile picture</button>
         <button type="button" onclick="removePhoto()">Remove profile picture</button>
-        <button type="button" onclick="copyLearnerNumber()">Copy learner number</button>
         <button type="button" onclick="location.href='reset-password.html'">Change password</button>
       </div>
     </div>
@@ -542,33 +676,12 @@ if(!localStorage.getItem("token")){
           <div class="value" id="infoJoinedYear">-</div>
         </div>
         <div class="row">
-          <div class="label">Status</div>
-          <div class="value">Active</div>
-        </div>
-        <div class="row">
           <div class="label">Role</div>
           <div class="value" id="infoRole">-</div>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" style="margin-top:14px;">
-    <div class="sectionHead">
-      <h2>Learner Number</h2>
-      <p>Your learner identification details.</p>
-    </div>
-
-    <div class="learnerBoxWrap">
-      <div class="learnerBox">
-        <div class="learnerNumber" id="learnerNumber">-</div>
-        <div class="note">
-          Use this number for support, records, announcements, and learner identification.
-        </div>
-
-        <div class="btnRow">
-          <button class="btn" onclick="copyLearnerNumber()">Copy Learner Number</button>
-          <button class="btn" onclick="openEditModal()">Edit Profile</button>
+        <div class="row">
+          <div class="label">Learner Number</div>
+          <div class="value" id="learnerNumber">-</div>
         </div>
       </div>
     </div>
@@ -610,7 +723,7 @@ if(!localStorage.getItem("token")){
 
       <div class="modalActions">
         <button class="btn" onclick="closeEditModal()">Cancel</button>
-        <button class="btn" onclick="saveProfile()">Save Changes</button>
+        <button class="btn btnPrimary" id="saveProfileBtn" onclick="saveProfile()">Save Changes</button>
       </div>
     </div>
   </div>
@@ -628,6 +741,7 @@ const menu = document.getElementById("menu");
 const editModal = document.getElementById("editModal");
 const photoInput = document.getElementById("photoInput");
 const profilePhoto = document.getElementById("profilePhoto");
+const saveProfileBtn = document.getElementById("saveProfileBtn");
 
 let currentUser = null;
 
@@ -676,21 +790,34 @@ function setDefaultPhoto(name) {
   profilePhoto.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 }
 
+function formatText(value) {
+  if (!value) return "-";
+  return String(value)
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 function fillProfile(user) {
   currentUser = user;
 
+  const accountType = formatText(user.accountType);
+  const role = formatText(user.role);
+
   document.getElementById("displayName").textContent = user.fullName || user.username || "User";
   document.getElementById("displayRole").textContent =
-    user.profileHeadline || `${user.accountType || "Learner"} account`;
+    user.profileHeadline || `${accountType} account`;
 
   document.getElementById("infoFullName").textContent = user.fullName || "-";
   document.getElementById("infoUsername").textContent = user.username || "-";
   document.getElementById("infoEmail").textContent = user.email || "-";
   document.getElementById("infoGrade").textContent = user.grade || "-";
-  document.getElementById("infoAccountType").textContent = user.accountType || "-";
+  document.getElementById("infoAccountType").textContent = accountType;
   document.getElementById("infoJoinedYear").textContent = user.joinedYear || "-";
-  document.getElementById("infoRole").textContent = user.role || "-";
+  document.getElementById("infoRole").textContent = role;
   document.getElementById("learnerNumber").textContent = user.learnerNumber || "-";
+
+  document.getElementById("badgeAccountType").textContent = accountType === "-" ? "Learner" : accountType;
+  document.getElementById("badgeRole").textContent = role === "-" ? "Profile" : role;
 
   document.getElementById("editName").value = user.fullName || "";
   document.getElementById("editHeadline").value = user.profileHeadline || "";
@@ -718,11 +845,18 @@ async function loadProfile() {
 
     if (res.status === 401) {
       localStorage.removeItem("token");
+      localStorage.removeItem("me_cache");
       location.href = "login.html";
       return;
     }
 
-    const data = await res.json();
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok || !data) {
+      showToast((data && data.message) || "Failed to load profile");
+      return;
+    }
+
     fillProfile(data);
   } catch (error) {
     console.error("Failed to load profile:", error);
@@ -741,12 +875,21 @@ function closeEditModal() {
 
 async function saveProfile() {
   try {
+    saveProfileBtn.disabled = true;
+    saveProfileBtn.textContent = "Saving...";
+
+    const fullName = document.getElementById("editName").value.trim();
+    const profileHeadline = document.getElementById("editHeadline").value.trim();
+    const username = document.getElementById("editUsername").value.trim();
+    const email = document.getElementById("editEmail").value.trim();
+    const gradeValue = document.getElementById("editGrade").value.trim();
+
     const payload = {
-      fullName: document.getElementById("editName").value.trim(),
-      profileHeadline: document.getElementById("editHeadline").value.trim(),
-      username: document.getElementById("editUsername").value.trim(),
-      email: document.getElementById("editEmail").value.trim(),
-      grade: document.getElementById("editGrade").value.trim(),
+      fullName,
+      profileHeadline,
+      username,
+      email,
+      grade: gradeValue === "" ? undefined : Number(gradeValue),
     };
 
     const res = await fetch(`${API}/api/profile/me`, {
@@ -758,7 +901,7 @@ async function saveProfile() {
       body: JSON.stringify(payload),
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
       showToast(data.message || "Failed to update profile");
@@ -766,11 +909,40 @@ async function saveProfile() {
     }
 
     fillProfile(data.user);
+
+    const existingCache = localStorage.getItem("me_cache");
+    let cachedData = {};
+    try {
+      cachedData = existingCache ? JSON.parse(existingCache).data || {} : {};
+    } catch {}
+
+    localStorage.setItem(
+      "me_cache",
+      JSON.stringify({
+        time: Date.now(),
+        data: {
+          ...cachedData,
+          username: data.user.username || "",
+          email: data.user.email || "",
+          grade: data.user.grade || "",
+          accountType: data.user.accountType || "",
+          role: data.user.role || "",
+          studentNumber: data.user.learnerNumber || "",
+          fullName: data.user.fullName || "",
+          profileHeadline: data.user.profileHeadline || "",
+          profilePhoto: data.user.profilePhoto || "",
+        },
+      })
+    );
+
     closeEditModal();
-    showToast("Profile updated");
+    showToast("Profile updated successfully");
   } catch (error) {
     console.error("Failed to update profile:", error);
     showToast("Failed to update profile");
+  } finally {
+    saveProfileBtn.disabled = false;
+    saveProfileBtn.textContent = "Save Changes";
   }
 }
 
@@ -798,6 +970,10 @@ photoInput.addEventListener("change", async function () {
     }
 
     profilePhoto.src = `${API}${data.profilePhoto}`;
+    currentUser = {
+      ...(currentUser || {}),
+      profilePhoto: data.profilePhoto
+    };
     showToast("Profile photo updated");
   } catch (error) {
     console.error("Failed to upload photo:", error);
@@ -825,19 +1001,17 @@ async function removePhoto() {
       return;
     }
 
+    currentUser = {
+      ...(currentUser || {}),
+      profilePhoto: ""
+    };
+
     setDefaultPhoto(currentUser?.fullName || currentUser?.username || "User");
     showToast("Profile photo removed");
   } catch (error) {
     console.error("Failed to remove photo:", error);
     showToast("Failed to remove photo");
   }
-}
-
-function copyLearnerNumber() {
-  const number = document.getElementById("learnerNumber").textContent.trim();
-  navigator.clipboard.writeText(number);
-  menu.classList.remove("open");
-  showToast("Learner number copied");
 }
 
 loadProfile();
