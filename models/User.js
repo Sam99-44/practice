@@ -31,19 +31,18 @@ const UserSchema = new mongoose.Schema(
       required: true,
     },
 
-    // ✅ UPDATED: added editor role
     role: {
       type: String,
       enum: ["learner", "admin", "editor"],
       default: "learner",
     },
 
-    // ✅ accountType + optional grade (required only for students)
     accountType: {
       type: String,
       enum: ["student", "materials"],
       required: true,
     },
+
     grade: {
       type: Number,
       default: null,
@@ -51,21 +50,42 @@ const UserSchema = new mongoose.Schema(
       max: 12,
     },
 
-    // ✅ 8-digit student number (students only)
+    // 8-digit student number (students only)
     studentNumber: {
       type: String,
       default: null,
     },
 
-    // ✅ LOCATION + PROFILE FIELDS
+    // ✅ NEW profile fields
+    fullName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    profileHeadline: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    profilePhoto: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    // location + profile fields
     province: {
       type: String,
       default: "",
     },
+
     district: {
       type: String,
       default: "",
     },
+
     gender: {
       type: String,
       enum: ["female", "male", "nonbinary", "other", ""],
@@ -76,59 +96,67 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
     guardianCellphone: {
       type: String,
       default: "",
     },
 
-    // ✅ Email verification
+    // Email verification
     emailVerified: {
       type: Boolean,
       default: false,
     },
+
     verifyTokenHash: {
       type: String,
       default: null,
     },
+
     verifyTokenExpiresAt: {
       type: Date,
       default: null,
     },
 
-    // ✅ OLD premium fields (kept so nothing breaks)
+    // old premium fields
     premium: {
       type: Boolean,
       default: false,
     },
+
     premiumActivatedAt: {
       type: Date,
       default: null,
     },
+
     premiumExpiresAt: {
       type: Date,
       default: null,
     },
 
-    // ✅ NEW monthly subscription fields for PayFast
+    // monthly subscription fields for PayFast
     subscriptionStatus: {
       type: String,
       enum: ["none", "active", "expired"],
       default: "none",
     },
+
     paidUntil: {
       type: Date,
       default: null,
     },
+
     lastPaymentId: {
       type: String,
       default: "",
     },
 
-    // ✅ Forgot password fields
+    // Forgot password fields
     resetPasswordTokenHash: {
       type: String,
       default: null,
     },
+
     resetPasswordExpires: {
       type: Date,
       default: null,
@@ -137,7 +165,7 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ✅ Clean values + ensure grade is provided only for student accounts
+// Clean values + ensure grade is provided only for student accounts
 UserSchema.pre("validate", function (next) {
   if (this.email) {
     this.email = String(this.email).trim().toLowerCase();
@@ -145,6 +173,18 @@ UserSchema.pre("validate", function (next) {
 
   if (this.username) {
     this.username = String(this.username).trim();
+  }
+
+  if (this.fullName) {
+    this.fullName = String(this.fullName).trim();
+  }
+
+  if (this.profileHeadline) {
+    this.profileHeadline = String(this.profileHeadline).trim();
+  }
+
+  if (this.profilePhoto) {
+    this.profilePhoto = String(this.profilePhoto).trim();
   }
 
   if (this.accountType === "student") {
