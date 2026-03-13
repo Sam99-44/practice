@@ -10,7 +10,7 @@
 // ✅ NEW: Strong email validation
 // ✅ NEW: Email verification routes
 // ✅ NEW: Login blocks unverified users
-// ✅ NEW: Register route protection with express-rate-limit
+// ✅ NEW: Register route protection with express-rate-limit.
 
 import express from "express";
 import mongoose from "mongoose";
