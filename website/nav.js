@@ -2,6 +2,7 @@
    ✅ Uses backend API
    ✅ Adds Dashboard link to desktop + mobile nav
    ✅ Adds Support link to desktop + mobile nav
+   ✅ Adds Profile link to desktop + mobile nav
    ✅ Adds Subscription link ONLY for admin users
    ✅ Auto-hides Admin link for non-admin users
    ✅ Supports logout buttons
@@ -149,6 +150,17 @@
     });
   });
 
+  // Profile
+  navs.forEach((navRoot) => {
+    ensureLink(navRoot, {
+      href: "profile.html",
+      text: "Profile",
+      insertAfterHrefIncludes: "announcements",
+      insertBeforeHrefIncludes: "payment",
+      dataAuth: true,
+    });
+  });
+
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
@@ -233,7 +245,7 @@
         ensureLink(navRoot, {
           href: "payment.html",
           text: "Subscription",
-          insertAfterHrefIncludes: "dashboard",
+          insertAfterHrefIncludes: "profile",
           insertBeforeHrefIncludes: "support",
           dataAuth: true,
         });
