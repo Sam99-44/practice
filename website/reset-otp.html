@@ -27,13 +27,12 @@
 
 <div class="card">
   <h2>Reset Password</h2>
-  <p>Enter email for code</p>
+  <p>Enter your email to receive a code.</p>
 
   <label>Email</label>
   <input id="email" type="email" autocomplete="email" />
 
   <button id="sendBtn" type="button">Send Code</button>
-  
 
   <hr />
 
@@ -41,7 +40,7 @@
   <div class="muted">Paste the 6-digit code from your email.</div>
 
   <label>6-digit Code</label>
-  <input id="code" inputmode="numeric"  />
+  <input id="code" inputmode="numeric" />
 
   <div class="row">
     <div>
@@ -62,15 +61,20 @@
 </div>
 
 <script>
-  const API = "https://practice-backend-msgn.onrender.com";
+  const API = "https://api.practiceonline.co.za";
 
   const sendBtn = document.getElementById("sendBtn");
   const resetBtn = document.getElementById("resetBtn");
   const msg = document.getElementById("msg");
 
-  function setMsg(text, type="") {
+  function setMsg(text, type = "") {
     msg.className = "msg " + type;
     msg.textContent = text;
+  }
+
+  function isValidEmail(email) {
+    const e = String(email || "").trim().toLowerCase();
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
   }
 
   async function safeJson(res){
@@ -78,8 +82,10 @@
   }
 
   sendBtn.onclick = async () => {
-    const email = document.getElementById("email").value.trim();
+    const email = document.getElementById("email").value.trim().toLowerCase();
+
     if (!email) return setMsg("Enter your email.", "error");
+    if (!isValidEmail(email)) return setMsg("Enter a valid email address.", "error");
 
     sendBtn.disabled = true;
     setMsg("Sending code...");
@@ -90,11 +96,13 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })
       });
-      const data = await safeJson(res);
 
-      // backend returns same message for security
-      setMsg(data.message || "If the email exists, a reset code has been sent ", "ok");
-    } catch (e) {
+      const data = await safeJson(res);
+      setMsg(
+        data.message || "If the email exists, a reset code has been sent.",
+        res.ok ? "ok" : "error"
+      );
+    } catch {
       setMsg("Network error. Try again.", "error");
     } finally {
       sendBtn.disabled = false;
@@ -102,7 +110,7 @@
   };
 
   resetBtn.onclick = async () => {
-    const email = document.getElementById("email").value.trim();
+    const email = document.getElementById("email").value.trim().toLowerCase();
     const code = document.getElementById("code").value.trim();
     const newPassword = document.getElementById("newPassword").value;
     const confirmPassword = document.getElementById("confirmPassword").value;
@@ -110,9 +118,15 @@
     if (!email || !code || !newPassword || !confirmPassword) {
       return setMsg("Fill in email, code, and both password fields.", "error");
     }
+
+    if (!isValidEmail(email)) {
+      return setMsg("Enter a valid email address.", "error");
+    }
+
     if (newPassword.length < 6) {
       return setMsg("Password must be at least 6 characters.", "error");
     }
+
     if (newPassword !== confirmPassword) {
       return setMsg("Passwords do not match.", "error");
     }
@@ -126,22 +140,21 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code, newPassword })
       });
+
       const data = await safeJson(res);
 
       if (res.ok) {
-        setMsg(data.message || "Password reset successful Redirecting...", "ok");
+        setMsg(data.message || "Password reset successful. Redirecting...", "ok");
         setTimeout(() => location.href = "login.html", 1200);
       } else {
-        setMsg((data.message || "Reset failed.") + ` (HTTP ${res.status})`, "error");
+        setMsg(data.message || "Reset failed.", "error");
       }
-    } catch (e) {
+    } catch {
       setMsg("Network error. Try again.", "error");
     } finally {
       resetBtn.disabled = false;
     }
   };
-
-  
 </script>
 
 </body>
