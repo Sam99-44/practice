@@ -1,4 +1,9 @@
 // server.js (FULL UPDATED - COPY & PASTE)
+// ✅ Adds profile routes
+// ✅ Adds profile photo upload/remove
+// ✅ Adds profile info update
+// ✅ Adds static /uploads serving
+// ✅ Keeps current studentNumber system
 // ✅ Adds MCQ MULTI-SELECT support (chosenIndexes + correctIndexes)
 // ✅ Auto-detects multi-select when correctIndexes has 2+ items OR isMultiSelect true
 // ✅ Saves multi-select properly into Result for review/results
@@ -19,6 +24,10 @@ import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
+import multer from "multer";
+import { fileURLToPath } from "url";
 import sgMail from "@sendgrid/mail";
 import rateLimit from "express-rate-limit";
 
@@ -32,6 +41,15 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const uploadsRoot = path.join(__dirname, "uploads");
+const profileUploadDir = path.join(uploadsRoot, "profile");
+fs.mkdirSync(profileUploadDir, { recursive: true });
+
+app.use("/uploads", express.static(uploadsRoot));
 
 /* ------------------ SENDGRID ------------------ */
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || "";
@@ -171,6 +189,47 @@ function isMultiMcqCorrect(chosenIdxs, correctIdxs) {
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
   return true;
 }
+
+function toPublicProfile(user) {
+  return {
+    _id: user._id,
+    fullName: user.fullName || "",
+    username: user.username || "",
+    email: user.email || "",
+    grade: user.grade ?? "",
+    accountType: user.accountType || "",
+    role: user.role || "",
+    learnerNumber: user.learnerNumber || user.studentNumber || "",
+    profileHeadline: user.profileHeadline || "",
+    profilePhoto: user.profilePhoto || "",
+    joinedYear: user.createdAt ? new Date(user.createdAt).getFullYear() : "",
+  };
+}
+
+const profilePhotoStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, profileUploadDir);
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname || "").toLowerCase() || ".jpg";
+    const safeExt = [".jpg", ".jpeg", ".png", ".webp"].includes(ext) ? ext : ".jpg";
+    cb(null, `user-${req.user.userId}-${Date.now()}${safeExt}`);
+  },
+});
+
+function profilePhotoFilter(req, file, cb) {
+  const allowed = ["image/jpeg", "image/png", "image/webp"];
+  if (!allowed.includes(file.mimetype)) {
+    return cb(new Error("Only JPG, PNG, and WEBP images are allowed."));
+  }
+  cb(null, true);
+}
+
+const uploadProfilePhoto = multer({
+  storage: profilePhotoStorage,
+  fileFilter: profilePhotoFilter,
+  limits: { fileSize: 3 * 1024 * 1024 },
+});
 
 /* ------------------ RATE LIMIT ------------------ */
 const registerLimiter = rateLimit({
@@ -371,6 +430,7 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 app.post("/api/register", registerLimiter, async (req, res) => {
   try {
     const {
+      fullName,
       username,
       email,
       grade,
@@ -440,6 +500,7 @@ app.post("/api/register", registerLimiter, async (req, res) => {
     const verifyTokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     const user = await User.create({
+      fullName: cleanSpaces(fullName || ""),
       username: cleanUsername,
       email: cleanEmail,
       passwordHash,
@@ -447,6 +508,9 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       accountType,
       studentNumber,
       grade: gradeNum,
+
+      profileHeadline: "",
+      profilePhoto: "",
 
       province: cleanSpaces(province || ""),
       district: cleanSpaces(district || ""),
@@ -647,12 +711,15 @@ app.post("/api/login", async (req, res) => {
       message: "Login successful",
       token,
       user: {
+        fullName: user.fullName || "",
         username: user.username,
         email: user.email,
         role: user.role,
         accountType: user.accountType,
         studentNumber: user.studentNumber,
         grade: user.grade,
+        profileHeadline: user.profileHeadline || "",
+        profilePhoto: user.profilePhoto || "",
         province: user.province || "",
         district: user.district || "",
         gender: user.gender || "",
@@ -667,6 +734,159 @@ app.post("/api/login", async (req, res) => {
   } catch (err) {
     console.error("Login error:", err.message);
     return res.status(500).json({ message: "Server error. Please try again." });
+  }
+});
+
+/* ------------------ PROFILE ROUTES ------------------ */
+
+app.get("/api/profile/me", authRequired, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select(
+      "fullName username email grade accountType role learnerNumber studentNumber profileHeadline profilePhoto createdAt"
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json(toPublicProfile(user));
+  } catch (error) {
+    console.error("GET /api/profile/me error:", error.message);
+    return res.status(500).json({ message: "Failed to load profile" });
+  }
+});
+
+app.patch("/api/profile/me", authRequired, async (req, res) => {
+  try {
+    const { fullName, username, email, grade, profileHeadline } = req.body;
+
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (typeof fullName === "string") {
+      user.fullName = cleanSpaces(fullName);
+    }
+
+    if (typeof username === "string") {
+      const newUsername = cleanSpaces(username);
+      if (!newUsername) {
+        return res.status(400).json({ message: "Username is required." });
+      }
+
+      const existingUsername = await User.findOne({
+        _id: { $ne: user._id },
+        username: newUsername,
+      }).select("_id");
+
+      if (existingUsername) {
+        return res.status(400).json({ message: "Username already in use." });
+      }
+
+      user.username = newUsername;
+    }
+
+    if (typeof email === "string") {
+      const newEmail = String(email).trim().toLowerCase();
+
+      if (!isValidEmail(newEmail)) {
+        return res.status(400).json({ message: "Please enter a valid email address." });
+      }
+
+      const existingEmail = await User.findOne({
+        _id: { $ne: user._id },
+        email: newEmail,
+      }).select("_id");
+
+      if (existingEmail) {
+        return res.status(400).json({ message: "Email already in use." });
+      }
+
+      user.email = newEmail;
+    }
+
+    if (typeof profileHeadline === "string") {
+      user.profileHeadline = cleanSpaces(profileHeadline);
+    }
+
+    if (grade !== undefined && user.accountType === "student") {
+      const parsedGrade = Number(grade);
+      if (!Number.isInteger(parsedGrade) || parsedGrade < 8 || parsedGrade > 12) {
+        return res.status(400).json({ message: "Grade must be between 8 and 12." });
+      }
+      user.grade = parsedGrade;
+    }
+
+    await user.save();
+
+    return res.json({
+      message: "Profile updated successfully.",
+      user: toPublicProfile(user),
+    });
+  } catch (error) {
+    console.error("PATCH /api/profile/me error:", error.message);
+    return res.status(500).json({ message: "Failed to update profile" });
+  }
+});
+
+app.post(
+  "/api/profile/me/photo",
+  authRequired,
+  uploadProfilePhoto.single("photo"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No image uploaded." });
+      }
+
+      const user = await User.findById(req.user.userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.profilePhoto && user.profilePhoto.startsWith("/uploads/profile/")) {
+        const oldPath = path.join(__dirname, user.profilePhoto.replace(/^\/+/, ""));
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
+
+      user.profilePhoto = `/uploads/profile/${req.file.filename}`;
+      await user.save();
+
+      return res.json({
+        message: "Profile photo uploaded successfully.",
+        profilePhoto: user.profilePhoto,
+      });
+    } catch (error) {
+      console.error("POST /api/profile/me/photo error:", error.message);
+      return res.status(500).json({ message: "Failed to upload profile photo" });
+    }
+  }
+);
+
+app.delete("/api/profile/me/photo", authRequired, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.profilePhoto && user.profilePhoto.startsWith("/uploads/profile/")) {
+      const oldPath = path.join(__dirname, user.profilePhoto.replace(/^\/+/, ""));
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+      }
+    }
+
+    user.profilePhoto = "";
+    await user.save();
+
+    return res.json({ message: "Profile photo removed successfully." });
+  } catch (error) {
+    console.error("DELETE /api/profile/me/photo error:", error.message);
+    return res.status(500).json({ message: "Failed to remove profile photo" });
   }
 });
 
@@ -1645,35 +1865,29 @@ mongoose
   .catch((err) => console.error("Mongo error:", err.message));
 
 /*
-✅ IMPORTANT:
-Run:
-npm install express-rate-limit
+✅ ALSO UPDATE models/User.js with these fields:
 
-✅ IMPORTANT:
-You also need these env vars:
+fullName: {
+  type: String,
+  trim: true,
+  default: "",
+},
 
-PAYFAST_MERCHANT_ID=10046445
-PAYFAST_MERCHANT_KEY=irdjtc52y9kem
-PAYFAST_MODE=true
-PAYFAST_PASSPHRASE=your_passphrase
-APP_URL=https://practiceonline.co.za
-API_URL=https://practice-backend-msgn.onrender.com
+profileHeadline: {
+  type: String,
+  trim: true,
+  default: "",
+},
 
-✅ IMPORTANT:
-Create models/Payment.js
+profilePhoto: {
+  type: String,
+  trim: true,
+  default: "",
+},
 
-✅ IMPORTANT:
-Update models/User.js with:
-- email validation
-- emailVerified
-- verifyTokenHash
-- verifyTokenExpiresAt
-- subscriptionStatus
-- paidUntil
-- lastPaymentId
-
-✅ IMPORTANT:
-To truly STORE paper in MongoDB you must add:
-- paper field to models/Quiz.js schema
-- optional paper field to models/Result.js schema
+✅ Profile routes added:
+GET    /api/profile/me
+PATCH  /api/profile/me
+POST   /api/profile/me/photo
+DELETE /api/profile/me/photo
 */
