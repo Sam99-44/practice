@@ -1,9 +1,12 @@
-/* nav.js - shared navigation + auth helpers for Practice Online (SAFE)
+/* nav.js - shared navigation + auth helpers for Practice Online
+   ✅ Uses backend API
+   ✅ Adds Dashboard link to desktop + mobile nav
+   ✅ Adds Support link to desktop + mobile nav
    ✅ Adds Subscription link ONLY for admin users
-   ✅ Adds Support link to BOTH desktop + mobile nav (if present)
-   ✅ Adds Dashboard link to BOTH desktop + mobile nav (if present)
    ✅ Auto-hides Admin link for non-admin users
-   ✅ Keeps existing logic + styling safe
+   ✅ Supports logout buttons
+   ✅ Caches /api/auth/me briefly
+   ✅ Uses dashboard.html
 */
 
 (function () {
@@ -14,13 +17,43 @@
   const mobileMenu = document.getElementById("mobileMenu");
 
   if (menuBtn && mobileMenu) {
-    menuBtn.addEventListener("click", () => mobileMenu.classList.toggle("open"));
+    menuBtn.addEventListener("click", () => {
+      mobileMenu.classList.toggle("open");
+    });
+
     mobileMenu.addEventListener("click", (e) => {
-      if (e.target && e.target.tagName === "A") mobileMenu.classList.remove("open");
+      if (e.target && e.target.tagName === "A") {
+        mobileMenu.classList.remove("open");
+      }
     });
   }
 
-  function ensureLink(navRoot, { href, text, insertAfterHrefIncludes, insertBeforeHrefIncludes, dataAuth = false }) {
+  function getCurrentFile() {
+    const path = (window.location.pathname || "").toLowerCase();
+    const parts = path.split("/");
+    return parts[parts.length - 1] || "";
+  }
+
+  function markActiveLink(navRoot) {
+    if (!navRoot) return;
+
+    const currentFile = getCurrentFile();
+
+    [...navRoot.querySelectorAll("a")].forEach((a) => {
+      const href = (a.getAttribute("href") || "").toLowerCase();
+      if (!href) return;
+
+      const hrefFile = href.split("/").pop();
+      if (hrefFile && hrefFile === currentFile) {
+        a.classList.add("active");
+      }
+    });
+  }
+
+  function ensureLink(
+    navRoot,
+    { href, text, insertAfterHrefIncludes, insertBeforeHrefIncludes, dataAuth = false }
+  ) {
     if (!navRoot) return;
 
     const already = [...navRoot.querySelectorAll("a")].some((a) => {
@@ -28,7 +61,11 @@
       const t = (a.textContent || "").trim().toLowerCase();
       return h.includes(href.toLowerCase()) || t === text.toLowerCase();
     });
-    if (already) return;
+
+    if (already) {
+      markActiveLink(navRoot);
+      return;
+    }
 
     const a = document.createElement("a");
     a.href = href;
@@ -40,13 +77,17 @@
 
     const afterLink = insertAfterHrefIncludes
       ? links.find((x) =>
-          ((x.getAttribute("href") || "").toLowerCase()).includes(insertAfterHrefIncludes.toLowerCase())
+          ((x.getAttribute("href") || "").toLowerCase()).includes(
+            insertAfterHrefIncludes.toLowerCase()
+          )
         )
       : null;
 
     const beforeLink = insertBeforeHrefIncludes
       ? links.find((x) =>
-          ((x.getAttribute("href") || "").toLowerCase()).includes(insertBeforeHrefIncludes.toLowerCase())
+          ((x.getAttribute("href") || "").toLowerCase()).includes(
+            insertBeforeHrefIncludes.toLowerCase()
+          )
         )
       : null;
 
@@ -58,11 +99,7 @@
       navRoot.appendChild(a);
     }
 
-    try {
-      const path = (window.location.pathname || "").toLowerCase();
-      const isActive = path.endsWith("/" + href.toLowerCase()) || path.endsWith(href.toLowerCase());
-      if (isActive) a.classList.add("active");
-    } catch {}
+    markActiveLink(navRoot);
   }
 
   function removeLinkIfExists(navRoot, hrefOrText) {
@@ -79,15 +116,21 @@
     });
   }
 
+  function setDisplay(nodeList, show) {
+    nodeList.forEach((el) => {
+      el.style.display = show ? "" : "none";
+    });
+  }
+
   const navDesktop1 = document.querySelector("nav.nav");
   const navDesktop2 = document.getElementById("desktopNav");
   const navMobile = document.getElementById("mobileMenu");
   const navs = [navDesktop1, navDesktop2, navMobile];
 
-  // ✅ Always add Dashboard
+  // Dashboard
   navs.forEach((navRoot) => {
     ensureLink(navRoot, {
-      href: "progress-dashboard.html",
+      href: "dashboard.html",
       text: "Dashboard",
       insertAfterHrefIncludes: "results",
       insertBeforeHrefIncludes: "support",
@@ -95,7 +138,7 @@
     });
   });
 
-  // ✅ Always add Support
+  // Support
   navs.forEach((navRoot) => {
     ensureLink(navRoot, {
       href: "support.html",
@@ -116,16 +159,15 @@
   document.getElementById("logoutBtn")?.addEventListener("click", logout);
   document.getElementById("logoutBtnMobile")?.addEventListener("click", logout);
 
-  function setDisplay(nodeList, show) {
-    nodeList.forEach((el) => (el.style.display = show ? "" : "none"));
-  }
-
   async function getMe(token) {
     const cached = localStorage.getItem("me_cache");
+
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
-        if (Date.now() - parsed.time < 120000) return parsed.data;
+        if (Date.now() - parsed.time < 120000) {
+          return parsed.data;
+        }
       } catch {}
     }
 
@@ -139,7 +181,14 @@
     const data = await res.json().catch(() => null);
     if (!data) return null;
 
-    localStorage.setItem("me_cache", JSON.stringify({ time: Date.now(), data }));
+    localStorage.setItem(
+      "me_cache",
+      JSON.stringify({
+        time: Date.now(),
+        data,
+      })
+    );
+
     return data;
   }
 
@@ -152,14 +201,16 @@
 
     setDisplay(adminEls, false);
 
+    navs.forEach((navRoot) => {
+      markActiveLink(navRoot);
+    });
+
     if (!token) {
       setDisplay(authEls, false);
       setDisplay(guestEls, true);
 
-      // hide subscription for guests
       navs.forEach((navRoot) => removeLinkIfExists(navRoot, "payment.html"));
       navs.forEach((navRoot) => removeLinkIfExists(navRoot, "subscription"));
-
       return;
     }
 
@@ -167,13 +218,17 @@
     setDisplay(guestEls, false);
 
     const me = await getMe(token);
-    if (me === "UNAUTH") return logout();
+
+    if (me === "UNAUTH") {
+      logout();
+      return;
+    }
+
     if (!me) return;
 
     if (me.role === "admin") {
       setDisplay(adminEls, true);
 
-      // ✅ add subscription only for admin
       navs.forEach((navRoot) => {
         ensureLink(navRoot, {
           href: "payment.html",
@@ -184,13 +239,15 @@
         });
       });
     } else {
-      // ✅ remove subscription for non-admin users
+      setDisplay(adminEls, false);
       navs.forEach((navRoot) => removeLinkIfExists(navRoot, "payment.html"));
       navs.forEach((navRoot) => removeLinkIfExists(navRoot, "subscription"));
     }
 
     const navUsername = document.getElementById("navUsername");
-    if (navUsername) navUsername.textContent = me.username || "";
+    if (navUsername) {
+      navUsername.textContent = me.username || "";
+    }
   }
 
   setupNav();
