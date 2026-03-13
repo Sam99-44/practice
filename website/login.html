@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Login | Practice Online</title>
 
-  <!-- SEO: do not index login pages -->
   <meta name="robots" content="noindex, nofollow" />
 
-  <!-- Font (same as other pages) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -38,7 +36,6 @@
       color:var(--text);
     }
 
-    /* ---------- TOP NAV (same style) ---------- */
     .topbar{background:var(--nav); padding:14px 20px;}
     .nav{
       max-width:1100px;
@@ -68,14 +65,12 @@
     .tabs a:hover{color:#fff}
     .tabs a.active{color:#fff; border-bottom:3px solid var(--red);}
 
-    /* ---------- PAGE ---------- */
     .wrap{
       max-width:1100px;
       margin:0 auto;
       padding:24px;
     }
 
-    /* ---------- CARD (same card system) ---------- */
     .card{
       max-width:420px;
       margin:46px auto;
@@ -126,6 +121,18 @@
     button:hover{transform:translateY(-1px); box-shadow:0 10px 24px rgba(11,60,93,.18);}
     button:disabled{opacity:.6; cursor:not-allowed; transform:none; box-shadow:none;}
 
+    .ghostBtn{
+      background:#fff;
+      color:var(--accent);
+      border:1px solid #d8dee8;
+      display:none;
+    }
+    .ghostBtn:hover{
+      background:var(--accent-soft);
+      box-shadow:none;
+      transform:none;
+    }
+
     .msg{margin-top:12px; font-size:14px;}
     .error{color:var(--error)}
     .ok{color:var(--ok)}
@@ -154,7 +161,6 @@
 </head>
 
 <body>
-  <!-- TOP NAV -->
   <header class="topbar">
     <div class="nav">
       <a href="index.html" class="brand">Practice Online</a>
@@ -171,12 +177,21 @@
       <p>Access your Practice Online account</p>
 
       <label for="email">Email</label>
-      <input id="email" type="email" autocomplete="email" />
+      <input
+        id="email"
+        type="email"
+        autocomplete="email"
+        inputmode="email"
+        spellcheck="false"
+        autocapitalize="none"
+        placeholder="name@example.com"
+      />
 
       <label for="password">Password</label>
       <input id="password" type="password" autocomplete="current-password" />
 
       <button id="loginBtn" type="button">Login</button>
+      <button id="resendBtn" class="ghostBtn" type="button">Resend Verification Email</button>
 
       <p id="msg" class="msg"></p>
 
@@ -188,36 +203,56 @@
   </main>
 
 <script>
-  // ✅ API domain
   const API = "https://api.practiceonline.co.za";
 
   const loginBtn = document.getElementById("loginBtn");
+  const resendBtn = document.getElementById("resendBtn");
   const msg = document.getElementById("msg");
+  const emailEl = document.getElementById("email");
+  const passwordEl = document.getElementById("password");
 
-  function setMsg(text, type="") {
+  function setMsg(text, type = "") {
     msg.className = "msg " + type;
     msg.textContent = text;
   }
 
-  async function safeJson(res){
-    try { return await res.json(); }
-    catch { return {}; }
+  function showResend(show) {
+    resendBtn.style.display = show ? "block" : "none";
   }
 
-  // Enter key support
+  function isValidEmail(email) {
+    const e = String(email || "").trim().toLowerCase();
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  }
+
+  async function safeJson(res) {
+    try {
+      return await res.json();
+    } catch {
+      return {};
+    }
+  }
+
   document.addEventListener("keydown", (e) => {
     if (e.key === "Enter") loginBtn.click();
   });
 
   loginBtn.onclick = async () => {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
+    const email = emailEl.value.trim().toLowerCase();
+    const password = passwordEl.value;
+
+    showResend(false);
 
     if (!email || !password) {
       return setMsg("Email and password are required.", "error");
     }
 
+    if (!isValidEmail(email)) {
+      return setMsg("Please enter a valid email address.", "error");
+    }
+
     loginBtn.disabled = true;
+    resendBtn.disabled = true;
     setMsg("Signing in...");
 
     try {
@@ -231,19 +266,72 @@
 
       if (!res.ok) {
         loginBtn.disabled = false;
-        return setMsg(data.message || "Invalid email or password.", "error");
+        resendBtn.disabled = false;
+
+        const errorMessage = data.message || "Invalid email or password.";
+        setMsg(errorMessage, "error");
+
+        if (
+          res.status === 403 &&
+          String(errorMessage).toLowerCase().includes("verify your email")
+        ) {
+          showResend(true);
+        }
+
+        return;
       }
 
-      // ✅ Save session
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user || {}));
       localStorage.setItem("username", data.user?.username || "");
 
-      // ✅ Redirect (respect ?next=... if present)
       const next = new URLSearchParams(window.location.search).get("next");
       window.location.href = next ? decodeURIComponent(next) : "learner-quizzes.html";
 
     } catch {
+      loginBtn.disabled = false;
+      resendBtn.disabled = false;
+      setMsg("Network error. Please try again.", "error");
+    }
+  };
+
+  resendBtn.onclick = async () => {
+    const email = emailEl.value.trim().toLowerCase();
+
+    if (!email) {
+      return setMsg("Please enter your email first.", "error");
+    }
+
+    if (!isValidEmail(email)) {
+      return setMsg("Please enter a valid email address.", "error");
+    }
+
+    resendBtn.disabled = true;
+    loginBtn.disabled = true;
+    setMsg("Sending verification email...");
+
+    try {
+      const res = await fetch(`${API}/api/resend-verification-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await safeJson(res);
+
+      resendBtn.disabled = false;
+      loginBtn.disabled = false;
+
+      if (!res.ok) {
+        return setMsg(data.message || "Could not resend verification email.", "error");
+      }
+
+      setMsg(
+        data.message || "Verification email sent. Please check your inbox.",
+        "ok"
+      );
+    } catch {
+      resendBtn.disabled = false;
       loginBtn.disabled = false;
       setMsg("Network error. Please try again.", "error");
     }
