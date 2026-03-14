@@ -1,43 +1,78 @@
-// routes/payments.js
-import express from "express";
-import User from "../models/User.js";
-import { requireAuth } from "../middleware/requireAuth.js";
+// models/Payment.js
+import mongoose from "mongoose";
 
-const router = express.Router();
+const PaymentSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
 
-// Example manual activation route
-router.post("/activate-paid-access", requireAuth, async (req, res) => {
-  try {
-    const userId = req.user?.id || req.user?._id;
-    const { months = 1, paymentId = "" } = req.body;
+    m_payment_id: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    plan: {
+      type: String,
+      default: "monthly",
+      trim: true,
+    },
 
-    const now = new Date();
-    const paidUntil = new Date(now);
-    paidUntil.setMonth(paidUntil.getMonth() + Number(months));
+    amount: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
 
-    user.subscriptionStatus = "active";
-    user.paidUntil = paidUntil;
-    user.lastPaymentId = paymentId || user.lastPaymentId || "";
-    user.trialActive = false;
+    status: {
+      type: String,
+      enum: ["PENDING", "COMPLETE", "FAILED", "CANCELLED"],
+      default: "PENDING",
+      index: true,
+    },
 
-    await user.save();
+    payment_status_raw: {
+      type: String,
+      default: "",
+      trim: true,
+    },
 
-    return res.json({
-      message: "Paid access activated successfully",
-      paidUntil: user.paidUntil,
-      subscriptionStatus: user.subscriptionStatus,
-    });
-  } catch (error) {
-    console.error("activate-paid-access error:", error);
-    return res.status(500).json({
-      message: "Failed to activate paid access",
-    });
+    pf_payment_id: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    amount_gross: {
+      type: Number,
+      default: 0,
+    },
+
+    amount_fee: {
+      type: Number,
+      default: 0,
+    },
+
+    amount_net: {
+      type: Number,
+      default: 0,
+    },
+
+    raw: {
+      type: Object,
+      default: {},
+    },
+  },
+  {
+    timestamps: true,
   }
-});
+);
 
-export default router;
+const Payment = mongoose.model("Payment", PaymentSchema);
+
+export default Payment;
