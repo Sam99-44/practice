@@ -1,75 +1,43 @@
-// models/Payment.js
-import mongoose from "mongoose";
+// routes/payments.js
+import express from "express";
+import User from "../models/User.js";
+import { requireAuth } from "../middleware/requireAuth.js";
 
-const PaymentSchema = new mongoose.Schema(
-  {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-      index: true
-    },
+const router = express.Router();
 
-    // PayFast merchant payment id
-    m_payment_id: {
-      type: String,
-      required: true,
-      unique: true,
-      index: true
-    },
+// Example manual activation route
+router.post("/activate-paid-access", requireAuth, async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?._id;
+    const { months = 1, paymentId = "" } = req.body;
 
-    plan: {
-      type: String,
-      enum: ["monthly"],
-      default: "monthly"
-    },
-
-    amount: {
-      type: Number,
-      required: true
-    },
-
-    status: {
-      type: String,
-      enum: ["PENDING", "COMPLETE", "FAILED", "CANCELLED"],
-      default: "PENDING",
-      index: true
-    },
-
-    // PayFast payment id
-    pf_payment_id: {
-      type: String,
-      default: ""
-    },
-
-    payment_status_raw: {
-      type: String,
-      default: ""
-    },
-
-    // financial info from PayFast
-    amount_gross: {
-      type: Number,
-      default: 0
-    },
-
-    amount_fee: {
-      type: Number,
-      default: 0
-    },
-
-    amount_net: {
-      type: Number,
-      default: 0
-    },
-
-    // full ITN payload snapshot
-    raw: {
-      type: Object,
-      default: {}
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-  },
-  { timestamps: true }
-);
 
-export default mongoose.model("Payment", PaymentSchema);
+    const now = new Date();
+    const paidUntil = new Date(now);
+    paidUntil.setMonth(paidUntil.getMonth() + Number(months));
+
+    user.subscriptionStatus = "active";
+    user.paidUntil = paidUntil;
+    user.lastPaymentId = paymentId || user.lastPaymentId || "";
+    user.trialActive = false;
+
+    await user.save();
+
+    return res.json({
+      message: "Paid access activated successfully",
+      paidUntil: user.paidUntil,
+      subscriptionStatus: user.subscriptionStatus,
+    });
+  } catch (error) {
+    console.error("activate-paid-access error:", error);
+    return res.status(500).json({
+      message: "Failed to activate paid access",
+    });
+  }
+});
+
+export default router;
