@@ -5,7 +5,7 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Example manual activation route
+// Manual activation route
 router.post("/activate-paid-access", protect, async (req, res) => {
   try {
     const userId = req.user?.userId || req.user?._id || req.user?.id;
@@ -16,16 +16,18 @@ router.post("/activate-paid-access", protect, async (req, res) => {
     }
 
     const user = await User.findById(userId);
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     const monthsNum = Number(months);
     if (!Number.isFinite(monthsNum) || monthsNum < 1) {
-      return res.status(400).json({ message: "Months must be 1 or more" });
+      return res.status(400).json({ message: "Months must be at least 1" });
     }
 
     const now = new Date();
+
     const base =
       user.paidUntil && new Date(user.paidUntil) > now
         ? new Date(user.paidUntil)
@@ -36,19 +38,20 @@ router.post("/activate-paid-access", protect, async (req, res) => {
 
     user.subscriptionStatus = "active";
     user.paidUntil = paidUntil;
-    user.lastPaymentId = String(paymentId || user.lastPaymentId || "").trim();
+    user.lastPaymentId = paymentId || user.lastPaymentId || "";
     user.trialActive = false;
 
     await user.save();
 
-    return res.json({
+    res.json({
       message: "Paid access activated successfully",
       paidUntil: user.paidUntil,
       subscriptionStatus: user.subscriptionStatus,
     });
   } catch (error) {
     console.error("activate-paid-access error:", error);
-    return res.status(500).json({
+
+    res.status(500).json({
       message: "Failed to activate paid access",
     });
   }
