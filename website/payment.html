@@ -1,827 +1,271 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Subscription | Practice Online</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-<style>
-:root{
-  --bg:#f5f7fb;
-  --card:#ffffff;
-  --border:#e2e8f0;
-  --text:#0f172a;
-  --muted:#64748b;
-  --accent:#0b3c5d;
-  --accent-soft:#edf5fa;
-  --success:#166534;
-  --success-bg:#f0fdf4;
-  --error:#b91c1c;
-  --error-bg:#fef2f2;
-  --warning:#92400e;
-  --warning-bg:#fff7ed;
-  --shadow:0 10px 30px rgba(15,23,42,0.08);
-  --radius:20px;
-}
-
-*{box-sizing:border-box}
-
-html,body{
-  margin:0;
-  padding:0;
-  font-family:Inter,Arial,sans-serif;
-  background:
-    radial-gradient(circle at top left, rgba(11,60,93,0.05), transparent 28%),
-    linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-  color:var(--text);
-}
-
-body{
-  min-height:100vh;
-}
-
-.wrap{
-  max-width:1120px;
-  margin:0 auto;
-  padding:32px 18px 48px;
-}
-
-.page-head{
-  max-width:760px;
-  margin:0 auto 26px;
-  text-align:center;
-}
-
-.page-head h1{
-  margin:16px 0 10px;
-  font-size:34px;
-  line-height:1.1;
-  letter-spacing:-0.02em;
-}
-
-.page-head p{
-  margin:0;
-  color:var(--muted);
-  font-size:15px;
-  line-height:1.7;
-}
-
-.top-card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:24px;
-  box-shadow:var(--shadow);
-  padding:20px;
-  margin-bottom:22px;
-}
-
-.account-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:14px;
-  flex-wrap:wrap;
-}
-
-.account-box{
-  flex:1 1 320px;
-}
-
-.account-label{
-  font-size:12px;
-  text-transform:uppercase;
-  letter-spacing:.08em;
-  font-weight:700;
-  color:var(--muted);
-  margin-bottom:8px;
-}
-
-#welcome{
-  margin:0;
-  font-size:15px;
-  line-height:1.6;
-  color:var(--text);
-}
-
-#status{
-  flex:1 1 280px;
-  margin:0;
-  padding:14px 16px;
-  border-radius:14px;
-  border:1px solid var(--border);
-  background:#f8fafc;
-  color:var(--muted);
-  font-size:14px;
-  line-height:1.6;
-}
-
-#status.ok{
-  background:var(--success-bg);
-  border-color:#bbf7d0;
-  color:var(--success);
-}
-
-#status.error{
-  background:var(--error-bg);
-  border-color:#fecaca;
-  color:var(--error);
-}
-
-#status.warn{
-  background:var(--warning-bg);
-  border-color:#fed7aa;
-  color:var(--warning);
-}
-
-.plans{
-  display:grid;
-  grid-template-columns:repeat(2, minmax(0, 1fr));
-  gap:22px;
-  margin-bottom:26px;
-}
-
-.plan{
-  position:relative;
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:24px;
-  padding:26px;
-  box-shadow:var(--shadow);
-  display:flex;
-  flex-direction:column;
-  min-height:100%;
-}
-
-.plan.featured{
-  border:1.5px solid var(--accent);
-}
-
-.popular-badge{
-  position:absolute;
-  top:18px;
-  right:18px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding:7px 12px;
-  border-radius:999px;
-  background:var(--accent);
-  color:#fff;
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:.03em;
-}
-
-.plan-type{
-  font-size:12px;
-  font-weight:700;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  color:var(--muted);
-  margin-bottom:12px;
-}
-
-.plan h2{
-  margin:0 0 8px;
-  font-size:26px;
-  line-height:1.2;
-  letter-spacing:-0.02em;
-}
-
-.plan-sub{
-  margin:0 0 20px;
-  color:var(--muted);
-  font-size:14px;
-  line-height:1.7;
-}
-
-.price{
-  display:flex;
-  align-items:flex-end;
-  gap:8px;
-  margin-bottom:6px;
-}
-
-.amount{
-  font-size:42px;
-  line-height:1;
-  font-weight:800;
-  letter-spacing:-0.03em;
-}
-
-.period{
-  font-size:14px;
-  color:var(--muted);
-  margin-bottom:6px;
-}
-
-.access-note{
-  margin:0 0 18px;
-  font-size:14px;
-  color:var(--muted);
-  line-height:1.6;
-}
-
-.feature-list{
-  list-style:none;
-  padding:0;
-  margin:0 0 22px;
-}
-
-.feature-list li{
-  display:flex;
-  align-items:flex-start;
-  gap:10px;
-  padding:10px 0;
-  border-bottom:1px solid #f1f5f9;
-  font-size:14px;
-  color:#1e293b;
-  line-height:1.6;
-}
-
-.feature-list li:last-child{
-  border-bottom:none;
-}
-
-.tick{
-  width:20px;
-  height:20px;
-  border-radius:999px;
-  background:#ecfdf5;
-  color:#15803d;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  font-size:12px;
-  font-weight:800;
-  flex:0 0 20px;
-  margin-top:1px;
-}
-
-.plan-footer{
-  margin-top:auto;
-}
-
-.btn{
-  width:100%;
-  border:none;
-  border-radius:14px;
-  background:var(--accent);
-  color:#fff;
-  padding:14px 16px;
-  font-size:14px;
-  font-weight:700;
-  cursor:pointer;
-  transition:transform .15s ease, opacity .15s ease, box-shadow .15s ease;
-  box-shadow:0 10px 20px rgba(11,60,93,0.18);
-}
-
-.btn:hover:not(:disabled){
-  transform:translateY(-1px);
-}
-
-.btn:disabled{
-  opacity:.65;
-  cursor:not-allowed;
-  transform:none;
-  box-shadow:none;
-}
-
-.btn.secondary{
-  background:#fff;
-  color:var(--text);
-  border:1px solid var(--border);
-  box-shadow:none;
-}
-
-.manual-card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:24px;
-  box-shadow:var(--shadow);
-  padding:24px;
-  margin-top:10px;
-}
-
-.manual-head{
-  margin-bottom:18px;
-}
-
-.manual-head h3{
-  margin:0 0 8px;
-  font-size:24px;
-  line-height:1.2;
-}
-
-.manual-head p{
-  margin:0;
-  font-size:14px;
-  color:var(--muted);
-  line-height:1.7;
-}
-
-.payment-box{
-  background:var(--accent-soft);
-  border:1px solid #d8e8f4;
-  border-radius:18px;
-  padding:18px;
-  margin-bottom:20px;
-}
-
-.payment-box h4{
-  margin:0 0 10px;
-  font-size:16px;
-}
-
-.payment-box p{
-  margin:6px 0;
-  font-size:14px;
-  line-height:1.6;
-  color:#1e293b;
-}
-
-.form-grid{
-  display:grid;
-  grid-template-columns:repeat(2, minmax(0, 1fr));
-  gap:16px;
-}
-
-.field{
-  display:flex;
-  flex-direction:column;
-  gap:7px;
-}
-
-.field.full{
-  grid-column:1 / -1;
-}
-
-label{
-  font-size:13px;
-  font-weight:700;
-  color:#334155;
-}
-
-input, select{
-  width:100%;
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:13px 14px;
-  font-size:14px;
-  background:#fff;
-  color:var(--text);
-  outline:none;
-}
-
-input:focus, select:focus{
-  border-color:#94a3b8;
-}
-
-.helper{
-  font-size:12px;
-  color:var(--muted);
-  line-height:1.6;
-}
-
-.bottom-actions{
-  display:flex;
-  justify-content:center;
-  gap:12px;
-  margin-top:24px;
-  flex-wrap:wrap;
-}
-
-.bottom-actions .btn{
-  width:auto;
-  min-width:180px;
-}
-
-#msg{
-  margin:18px auto 0;
-  max-width:720px;
-  text-align:center;
-  font-size:14px;
-  line-height:1.6;
-  color:var(--muted);
-}
-
-#msg.error{ color:var(--error); }
-#msg.ok{ color:var(--success); }
-
-.note{
-  margin:16px auto 0;
-  max-width:760px;
-  text-align:center;
-  font-size:12px;
-  color:var(--muted);
-  line-height:1.7;
-}
-
-@media (max-width: 900px){
-  .plans,
-  .form-grid{
-    grid-template-columns:1fr;
-  }
-
-  .page-head h1{
-    font-size:28px;
-  }
-}
-
-@media (max-width: 640px){
-  .wrap{
-    padding:22px 14px 40px;
-  }
-
-  .top-card,
-  .plan,
-  .manual-card{
-    padding:18px;
-    border-radius:20px;
-  }
-
-  .amount{
-    font-size:36px;
-  }
-
-  .page-head h1{
-    font-size:24px;
-  }
-
-  .bottom-actions{
-    flex-direction:column;
-  }
-
-  .bottom-actions .btn{
-    width:100%;
-  }
-}
-</style>
-</head>
-
-<body>
-
-<div class="wrap">
-
-  <div class="page-head">
-    <h1>Choose a plan for your learning</h1>
-    <p>
-      Select a plan, make payment manually, and upload your proof of payment for verification.
-    </p>
-  </div>
-
-  <div class="top-card">
-    <div class="account-row">
-      <div class="account-box">
-        <div class="account-label">Your account</div>
-        <p id="welcome">Loading your account details...</p>
-      </div>
-
-      <p id="status">Checking your subscription...</p>
-    </div>
-  </div>
-
-  <div class="plans">
-
-    <div class="plan">
-      <div class="plan-type">Quiz Access</div>
-      <h2>Quiz Subscription</h2>
-      <p class="plan-sub">
-        A good choice for learners who want to practise, revise, and get quick feedback.
-      </p>
-
-      <div class="price">
-        <div class="amount">R95</div>
-        <div class="period">/ 30 days</div>
-      </div>
-
-      <p class="access-note">
-        Gives you quiz access for 30 days from the payment approval date.
-      </p>
-
-      <ul class="feature-list">
-        <li><span class="tick">✓</span><span>Access to all quizzes</span></li>
-        <li><span class="tick">✓</span><span>Instant marking and feedback</span></li>
-        <li><span class="tick">✓</span><span>Step-by-step solutions where available</span></li>
-        <li><span class="tick">✓</span><span>Progress tracking and revision support</span></li>
-      </ul>
-
-      <div class="plan-footer">
-        <button class="btn" type="button" onclick="selectPlan('quiz', 95)">Choose Quiz Plan</button>
-      </div>
-    </div>
-
-    <div class="plan featured">
-      <div class="popular-badge">Most Popular</div>
-      <div class="plan-type">Full Learning Access</div>
-      <h2>Lessons + Full Platform</h2>
-      <p class="plan-sub">
-        Best for learners who want lessons, guidance, and full access to the Practice Online platform.
-      </p>
-
-      <div class="price">
-        <div class="amount">R599</div>
-        <div class="period">/ month</div>
-      </div>
-
-      <p class="access-note">
-        Includes live maths lessons, guided support, quizzes, practice work, and worked solutions.
-      </p>
-
-      <ul class="feature-list">
-        <li><span class="tick">✓</span><span>Everything in the quiz subscription</span></li>
-        <li><span class="tick">✓</span><span>Live maths lessons</span></li>
-        <li><span class="tick">✓</span><span>Simple tutorial guidance</span></li>
-        <li><span class="tick">✓</span><span>Practice exercises and solutions</span></li>
-        <li><span class="tick">✓</span><span>Exam preparation support</span></li>
-      </ul>
-
-      <div class="plan-footer">
-        <button class="btn" type="button" onclick="selectPlan('lessons', 599)">Choose Full Plan</button>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="manual-card">
-    <div class="manual-head">
-      <h3>Upload proof of payment</h3>
-      <p>
-        After making your manual payment, complete the form below and upload your proof of payment.
-        Your subscription will be activated after verification.
-      </p>
-    </div>
-
-    <div class="payment-box">
-      <h4>Banking / payment details</h4>
-      <p><strong>Account Name:</strong> Practice Online</p>
-      <p><strong>Bank:</strong> Your Bank Name</p>
-      <p><strong>Account Number:</strong> 1234567890</p>
-      <p><strong>Branch Code:</strong> 000000</p>
-      <p><strong>Reference:</strong> Use your email or student number</p>
-    </div>
-
-    <form id="manualPaymentForm">
-      <div class="form-grid">
-
-        <div class="field">
-          <label for="fullName">Full name</label>
-          <input type="text" id="fullName" name="fullName" required />
-        </div>
-
-        <div class="field">
-          <label for="email">Email address</label>
-          <input type="email" id="email" name="email" required />
-        </div>
-
-        <div class="field">
-          <label for="phone">Phone number</label>
-          <input type="text" id="phone" name="phone" placeholder="Optional" />
-        </div>
-
-        <div class="field">
-          <label for="planType">Selected plan</label>
-          <select id="planType" name="planType" required>
-            <option value="">Select a plan</option>
-            <option value="quiz">Quiz Subscription - R95</option>
-            <option value="lessons">Lessons + Full Platform - R599</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label for="amount">Amount paid</label>
-          <input type="number" id="amount" name="amount" min="1" step="0.01" required />
-        </div>
-
-        <div class="field">
-          <label for="paymentDate">Payment date</label>
-          <input type="date" id="paymentDate" name="paymentDate" required />
-        </div>
-
-        <div class="field full">
-          <label for="paymentReference">Payment reference / transaction reference</label>
-          <input type="text" id="paymentReference" name="paymentReference" required />
-          <div class="helper">Enter the reference used when you made the payment.</div>
-        </div>
-
-        <div class="field full">
-          <label for="proof">Upload proof of payment</label>
-          <input type="file" id="proof" name="proof" accept=".jpg,.jpeg,.png,.pdf" required />
-          <div class="helper">Accepted files: PDF, JPG, JPEG, PNG</div>
-        </div>
-
-      </div>
-
-      <div style="margin-top:18px;">
-        <button class="btn" id="submitProofBtn" type="submit">Submit Proof of Payment</button>
-      </div>
-    </form>
-  </div>
-
-  <div class="bottom-actions">
-    <button class="btn secondary" type="button" onclick="window.location.href='learner-quizzes.html'">
-      Back to Quizzes
-    </button>
-  </div>
-
-  <p id="msg"></p>
-
-  <p class="note">
-    Your access starts after payment verification. If your subscription has ended, you can renew anytime by uploading a new proof of payment.
-  </p>
-
-</div>
-
-<script>
-const API = "https://practice-backend-msgn.onrender.com";
-const token = localStorage.getItem("token");
-
-if (!token) {
-  window.location.href = "login.html";
-}
-
-const welcomeEl = document.getElementById("welcome");
-const statusEl = document.getElementById("status");
-const msgEl = document.getElementById("msg");
-const form = document.getElementById("manualPaymentForm");
-const submitProofBtn = document.getElementById("submitProofBtn");
-
-const fullNameInput = document.getElementById("fullName");
-const emailInput = document.getElementById("email");
-const planTypeInput = document.getElementById("planType");
-const amountInput = document.getElementById("amount");
-const paymentDateInput = document.getElementById("paymentDate");
-
-function formatDate(v) {
-  if (!v) return "";
-  const d = new Date(v);
-  if (isNaN(d.getTime())) return "";
-  return d.toLocaleString("en-ZA", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-}
-
-function setMessage(text, type = "") {
-  msgEl.className = type ? type : "";
-  msgEl.textContent = text;
-}
-
-function setSubmitting(isSubmitting) {
-  submitProofBtn.disabled = isSubmitting;
-  submitProofBtn.textContent = isSubmitting ? "Submitting..." : "Submit Proof of Payment";
-}
-
-function setStatus(text, type = "") {
-  statusEl.className = type || "";
-  statusEl.textContent = text;
-}
-
-async function safeJson(res) {
-  const text = await res.text();
-  try {
-    return text ? JSON.parse(text) : {};
-  } catch {
-    return { message: text || "Unexpected server response" };
-  }
-}
-
-function selectPlan(planType, amount) {
-  planTypeInput.value = planType;
-  amountInput.value = amount.toFixed(2);
-  setMessage(
-    `Selected plan: ${planType === "quiz" ? "Quiz Subscription" : "Lessons + Full Platform"}`,
-    "ok"
-  );
-  window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-}
-
-async function loadUser() {
-  try {
-    const res = await fetch(`${API}/api/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`
+/* nav.js - shared navigation + auth helpers for Practice Online
+   ✅ Uses backend API
+   ✅ Adds Dashboard link to desktop + mobile nav
+   ✅ Adds Support link to desktop + mobile nav
+   ✅ Adds Profile link to desktop + mobile nav
+   ✅ Adds Subscription link for authenticated users
+   ✅ Auto-hides Admin link for non-admin users
+   ✅ Supports logout buttons
+   ✅ Caches /api/auth/me briefly
+   ✅ Uses dashboard.html
+*/
+
+(function () {
+  const API = "https://practice-backend-msgn.onrender.com";
+  window.API = API;
+
+  const menuBtn = document.getElementById("menuBtn");
+  const mobileMenu = document.getElementById("mobileMenu");
+
+  if (menuBtn && mobileMenu) {
+    menuBtn.addEventListener("click", () => {
+      mobileMenu.classList.toggle("open");
+    });
+
+    mobileMenu.addEventListener("click", (e) => {
+      if (e.target && e.target.tagName === "A") {
+        mobileMenu.classList.remove("open");
       }
     });
-
-    if (res.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("username");
-      window.location.href = "login.html";
-      return;
-    }
-
-    const u = await safeJson(res);
-
-    if (!res.ok) {
-      throw new Error(u.message || "Could not load account details");
-    }
-
-    const username = localStorage.getItem("username") || u.username || "Learner";
-    const email = (u.email || "").toLowerCase();
-
-    welcomeEl.textContent = `Welcome, ${username}${email ? ` (${email})` : ""}`;
-
-    fullNameInput.value = u.fullName || u.username || "";
-    emailInput.value = u.email || "";
-
-    if (u.role === "admin") {
-      setStatus("Admin accounts do not need a subscription.", "ok");
-      form.style.display = "none";
-      return;
-    }
-
-    if (u.accountType !== "student") {
-      setStatus("This account does not need a learner subscription.", "ok");
-      form.style.display = "none";
-      return;
-    }
-
-    if (u.subscriptionStatus === "active") {
-      setStatus(`Your subscription is active until ${formatDate(u.paidUntil)}.`, "ok");
-    } else if (u.accessStatus === "trial") {
-      const daysLeft = Number(u.trialDaysLeft || 0);
-      setStatus(
-        `You are on a free trial${daysLeft > 0 ? ` with ${daysLeft} day${daysLeft === 1 ? "" : "s"} left` : ""}. You can still upload proof of payment to continue after the trial.`,
-        "warn"
-      );
-    } else if (u.subscriptionStatus === "expired" || u.accessStatus === "expired") {
-      setStatus(
-        `Your access has expired${u.paidUntil ? ` on ${formatDate(u.paidUntil)}` : ""}. Renew by uploading a new proof of payment.`,
-        "error"
-      );
-    } else {
-      setStatus("No active subscription found. Choose a plan below and upload your proof of payment.", "error");
-    }
-  } catch (e) {
-    console.error(e);
-    welcomeEl.textContent = "Could not load your account details.";
-    setStatus("We could not connect to the server right now. Please try again.", "error");
-  }
-}
-
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const proofFile = document.getElementById("proof").files[0];
-  if (!proofFile) {
-    setMessage("Please upload proof of payment.", "error");
-    return;
   }
 
-  try {
-    setSubmitting(true);
-    setMessage("Submitting your proof of payment...");
+  function getCurrentFile() {
+    const path = (window.location.pathname || "").toLowerCase();
+    const parts = path.split("/");
+    return parts[parts.length - 1] || "";
+  }
 
-    const formData = new FormData();
-    formData.append("fullName", document.getElementById("fullName").value.trim());
-    formData.append("email", document.getElementById("email").value.trim());
-    formData.append("phone", document.getElementById("phone").value.trim());
-    formData.append("planType", document.getElementById("planType").value);
-    formData.append("amount", document.getElementById("amount").value);
-    formData.append("paymentDate", document.getElementById("paymentDate").value);
-    formData.append("paymentReference", document.getElementById("paymentReference").value.trim());
-    formData.append("proof", proofFile);
+  function markActiveLink(navRoot) {
+    if (!navRoot) return;
 
-    const res = await fetch(`${API}/api/manual-payments/submit`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      body: formData
+    const currentFile = getCurrentFile();
+
+    [...navRoot.querySelectorAll("a")].forEach((a) => {
+      const href = (a.getAttribute("href") || "").toLowerCase();
+      if (!href) return;
+
+      const hrefFile = href.split("/").pop();
+      if (hrefFile && hrefFile === currentFile) {
+        a.classList.add("active");
+      }
+    });
+  }
+
+  function ensureLink(
+    navRoot,
+    { href, text, insertAfterHrefIncludes, insertBeforeHrefIncludes, dataAuth = false }
+  ) {
+    if (!navRoot) return;
+
+    const already = [...navRoot.querySelectorAll("a")].some((a) => {
+      const h = (a.getAttribute("href") || "").toLowerCase();
+      const t = (a.textContent || "").trim().toLowerCase();
+      return h.includes(href.toLowerCase()) || t === text.toLowerCase();
     });
 
-    const data = await safeJson(res);
-
-    if (!res.ok) {
-      throw new Error(data.message || "Could not submit proof of payment");
+    if (already) {
+      markActiveLink(navRoot);
+      return;
     }
 
-    setMessage(
-      "Your proof of payment was submitted successfully. We will verify it and activate your subscription.",
-      "ok"
+    const a = document.createElement("a");
+    a.href = href;
+    a.textContent = text;
+
+    if (dataAuth) a.setAttribute("data-auth", "1");
+
+    const links = [...navRoot.querySelectorAll("a")];
+
+    const afterLink = insertAfterHrefIncludes
+      ? links.find((x) =>
+          ((x.getAttribute("href") || "").toLowerCase()).includes(
+            insertAfterHrefIncludes.toLowerCase()
+          )
+        )
+      : null;
+
+    const beforeLink = insertBeforeHrefIncludes
+      ? links.find((x) =>
+          ((x.getAttribute("href") || "").toLowerCase()).includes(
+            insertBeforeHrefIncludes.toLowerCase()
+          )
+        )
+      : null;
+
+    if (afterLink && afterLink.parentNode === navRoot) {
+      afterLink.insertAdjacentElement("afterend", a);
+    } else if (beforeLink && beforeLink.parentNode === navRoot) {
+      beforeLink.insertAdjacentElement("beforebegin", a);
+    } else {
+      navRoot.appendChild(a);
+    }
+
+    markActiveLink(navRoot);
+  }
+
+  function removeLinkIfExists(navRoot, hrefOrText) {
+    if (!navRoot) return;
+
+    [...navRoot.querySelectorAll("a")].forEach((a) => {
+      const h = (a.getAttribute("href") || "").toLowerCase();
+      const t = (a.textContent || "").trim().toLowerCase();
+      const key = hrefOrText.toLowerCase();
+
+      if (h.includes(key) || t === key) {
+        a.remove();
+      }
+    });
+  }
+
+  function setDisplay(nodeList, show) {
+    nodeList.forEach((el) => {
+      el.style.display = show ? "" : "none";
+    });
+  }
+
+  const navDesktop1 = document.querySelector("nav.nav");
+  const navDesktop2 = document.getElementById("desktopNav");
+  const navMobile = document.getElementById("mobileMenu");
+  const navs = [navDesktop1, navDesktop2, navMobile];
+
+  navs.forEach((navRoot) => {
+    ensureLink(navRoot, {
+      href: "dashboard.html",
+      text: "Dashboard",
+      insertAfterHrefIncludes: "results",
+      insertBeforeHrefIncludes: "support",
+      dataAuth: true,
+    });
+  });
+
+  navs.forEach((navRoot) => {
+    ensureLink(navRoot, {
+      href: "support.html",
+      text: "Support",
+      insertAfterHrefIncludes: "dashboard",
+      insertBeforeHrefIncludes: "about",
+      dataAuth: true,
+    });
+  });
+
+  navs.forEach((navRoot) => {
+    ensureLink(navRoot, {
+      href: "profile.html",
+      text: "Profile",
+      insertAfterHrefIncludes: "announcements",
+      insertBeforeHrefIncludes: "subscription",
+      dataAuth: true,
+    });
+  });
+
+  function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    localStorage.removeItem("me_cache");
+    window.location.href = "login.html";
+  }
+
+  document.getElementById("logoutBtn")?.addEventListener("click", logout);
+  document.getElementById("logoutBtnMobile")?.addEventListener("click", logout);
+
+  async function getMe(token) {
+    const cached = localStorage.getItem("me_cache");
+
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.time < 120000) {
+          return parsed.data;
+        }
+      } catch {}
+    }
+
+    const res = await fetch(`${API}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (res.status === 401 || res.status === 403) return "UNAUTH";
+    if (!res.ok) return null;
+
+    const data = await res.json().catch(() => null);
+    if (!data) return null;
+
+    localStorage.setItem(
+      "me_cache",
+      JSON.stringify({
+        time: Date.now(),
+        data,
+      })
     );
 
-    form.reset();
-    setStatus("Your payment submission is awaiting verification.", "warn");
-  } catch (err) {
-    console.error(err);
-    setMessage("Submission error: " + err.message, "error");
-  } finally {
-    setSubmitting(false);
+    return data;
   }
-});
 
-loadUser();
-</script>
+  async function setupNav() {
+    const token = localStorage.getItem("token");
 
-<script src="nav.js"></script>
-</body>
-</html>
+    const authEls = document.querySelectorAll("[data-auth]");
+    const guestEls = document.querySelectorAll("[data-guest]");
+    const adminEls = document.querySelectorAll("[data-admin]");
+
+    setDisplay(adminEls, false);
+
+    navs.forEach((navRoot) => {
+      markActiveLink(navRoot);
+    });
+
+    if (!token) {
+      setDisplay(authEls, false);
+      setDisplay(guestEls, true);
+
+      navs.forEach((navRoot) => removeLinkIfExists(navRoot, "subscription.html"));
+      navs.forEach((navRoot) => removeLinkIfExists(navRoot, "subscription"));
+      return;
+    }
+
+    setDisplay(authEls, true);
+    setDisplay(guestEls, false);
+
+    const me = await getMe(token);
+
+    if (me === "UNAUTH") {
+      logout();
+      return;
+    }
+
+    if (!me) return;
+
+    navs.forEach((navRoot) => {
+      ensureLink(navRoot, {
+        href: "subscription.html",
+        text: "Subscription",
+        insertAfterHrefIncludes: "profile",
+        insertBeforeHrefIncludes: "support",
+        dataAuth: true,
+      });
+    });
+
+    if (me.role === "admin") {
+      setDisplay(adminEls, true);
+    } else {
+      setDisplay(adminEls, false);
+    }
+
+    const navUsername = document.getElementById("navUsername");
+    if (navUsername) {
+      navUsername.textContent = me.username || "";
+    }
+  }
+
+  setupNav();
+
+  window.auth = {
+    API,
+    token: () => localStorage.getItem("token"),
+    logout,
+    authHeader: () => {
+      const t = localStorage.getItem("token");
+      return t ? { Authorization: `Bearer ${t}` } : {};
+    },
+  };
+})();
