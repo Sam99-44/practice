@@ -1,10 +1,14 @@
 // middleware/requireActiveAccess.js
 import User from "../models/User.js";
-import { getAccessStatus, getTrialDaysLeft, syncUserAccessState } from "../utils/access.js";
+import {
+  getAccessStatus,
+  getTrialDaysLeft,
+  syncUserAccessState,
+} from "../utils/access.js";
 
 export async function requireActiveAccess(req, res, next) {
   try {
-    const userId = req.user?.id || req.user?._id;
+    const userId = req.user?.userId || req.user?._id || req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -14,6 +18,14 @@ export async function requireActiveAccess(req, res, next) {
 
     if (!user) {
       return res.status(401).json({ message: "User not found" });
+    }
+
+    // Allow admins through without learner access checks
+    if (user.role === "admin") {
+      req.currentUser = user;
+      req.accessStatus = "admin";
+      req.trialDaysLeft = 0;
+      return next();
     }
 
     await syncUserAccessState(user);
