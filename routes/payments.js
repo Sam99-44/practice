@@ -1,27 +1,42 @@
+// routes/payments.js
 import express from "express";
 import User from "../models/User.js";
-import { requireAuth } from "../middleware/requireAuth.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/activate-paid-access", requireAuth, async (req, res) => {
+// Example manual activation route
+router.post("/activate-paid-access", protect, async (req, res) => {
   try {
-    const userId = req.user?.id || req.user?._id;
+    const userId = req.user?.userId || req.user?._id || req.user?.id;
     const { months = 1, paymentId = "" } = req.body;
 
-    const user = await User.findById(userId);
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const monthsNum = Number(months);
+    if (!Number.isFinite(monthsNum) || monthsNum < 1) {
+      return res.status(400).json({ message: "Months must be 1 or more" });
+    }
+
     const now = new Date();
-    const paidUntil = new Date(now);
-    paidUntil.setMonth(paidUntil.getMonth() + Number(months));
+    const base =
+      user.paidUntil && new Date(user.paidUntil) > now
+        ? new Date(user.paidUntil)
+        : now;
+
+    const paidUntil = new Date(base);
+    paidUntil.setMonth(paidUntil.getMonth() + monthsNum);
 
     user.subscriptionStatus = "active";
     user.paidUntil = paidUntil;
-    user.lastPaymentId = paymentId || user.lastPaymentId || "";
+    user.lastPaymentId = String(paymentId || user.lastPaymentId || "").trim();
     user.trialActive = false;
 
     await user.save();
@@ -33,7 +48,9 @@ router.post("/activate-paid-access", requireAuth, async (req, res) => {
     });
   } catch (error) {
     console.error("activate-paid-access error:", error);
-    return res.status(500).json({ message: "Failed to activate paid access" });
+    return res.status(500).json({
+      message: "Failed to activate paid access",
+    });
   }
 });
 
