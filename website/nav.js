@@ -3,8 +3,8 @@
    ✅ Adds Dashboard link to desktop + mobile nav
    ✅ Adds Support link to desktop + mobile nav
    ✅ Adds Profile link to desktop + mobile nav
-   ✅ Adds Subscription link ONLY for admin users
-   ✅ Auto-hides Admin link for non-admin users
+   ✅ Adds Subscription link for authenticated users
+   ✅ Keeps admin controls hidden for non-admin users
    ✅ Supports logout buttons
    ✅ Caches /api/auth/me briefly
    ✅ Uses dashboard.html
@@ -156,7 +156,7 @@
       href: "profile.html",
       text: "Profile",
       insertAfterHrefIncludes: "announcements",
-      insertBeforeHrefIncludes: "payment",
+      insertBeforeHrefIncludes: "support",
       dataAuth: true,
     });
   });
@@ -221,7 +221,7 @@
       setDisplay(authEls, false);
       setDisplay(guestEls, true);
 
-      navs.forEach((navRoot) => removeLinkIfExists(navRoot, "payment.html"));
+      navs.forEach((navRoot) => removeLinkIfExists(navRoot, "subscription.html"));
       navs.forEach((navRoot) => removeLinkIfExists(navRoot, "subscription"));
       return;
     }
@@ -238,22 +238,21 @@
 
     if (!me) return;
 
+    // Show Subscription to all authenticated users for testing
+    navs.forEach((navRoot) => {
+      ensureLink(navRoot, {
+        href: "subscription.html",
+        text: "Subscription",
+        insertAfterHrefIncludes: "profile",
+        insertBeforeHrefIncludes: "support",
+        dataAuth: true,
+      });
+    });
+
     if (me.role === "admin") {
       setDisplay(adminEls, true);
-
-      navs.forEach((navRoot) => {
-        ensureLink(navRoot, {
-          href: "payment.html",
-          text: "Subscription",
-          insertAfterHrefIncludes: "profile",
-          insertBeforeHrefIncludes: "support",
-          dataAuth: true,
-        });
-      });
     } else {
       setDisplay(adminEls, false);
-      navs.forEach((navRoot) => removeLinkIfExists(navRoot, "payment.html"));
-      navs.forEach((navRoot) => removeLinkIfExists(navRoot, "subscription"));
     }
 
     const navUsername = document.getElementById("navUsername");
