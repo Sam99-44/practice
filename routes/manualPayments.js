@@ -56,7 +56,7 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
+    fileSize: 10 * 1024 * 1024,
   },
 });
 
@@ -309,6 +309,8 @@ router.patch("/:id/approve", protect, async (req, res) => {
     learner.subscriptionStatus = "active";
     learner.subscriptionPlan = payment.planType;
     learner.paidUntil = paidUntil;
+    learner.trialActive = false;
+    learner.trialExpiredAt = null;
 
     await learner.save();
 
