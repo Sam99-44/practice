@@ -5,7 +5,6 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Manual activation route
 router.post("/activate-paid-access", protect, async (req, res) => {
   try {
     const userId = req.user?.userId || req.user?._id || req.user?.id;
@@ -27,7 +26,6 @@ router.post("/activate-paid-access", protect, async (req, res) => {
     }
 
     const now = new Date();
-
     const base =
       user.paidUntil && new Date(user.paidUntil) > now
         ? new Date(user.paidUntil)
@@ -43,17 +41,14 @@ router.post("/activate-paid-access", protect, async (req, res) => {
 
     await user.save();
 
-    res.json({
+    return res.json({
       message: "Paid access activated successfully",
       paidUntil: user.paidUntil,
       subscriptionStatus: user.subscriptionStatus,
     });
   } catch (error) {
     console.error("activate-paid-access error:", error);
-
-    res.status(500).json({
-      message: "Failed to activate paid access",
-    });
+    return res.status(500).json({ message: "Failed to activate paid access" });
   }
 });
 
