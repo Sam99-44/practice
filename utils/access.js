@@ -12,8 +12,12 @@ export function isPaidUser(user) {
   return Boolean(
     user &&
       (
-        user.subscriptionStatus === "active" ||
-        user.premium === true ||
+        (user.subscriptionStatus === "active" &&
+          user.paidUntil &&
+          new Date(user.paidUntil) > now) ||
+        (user.premium === true &&
+          user.premiumExpiresAt &&
+          new Date(user.premiumExpiresAt) > now) ||
         (user.paidUntil && new Date(user.paidUntil) > now) ||
         (user.premiumExpiresAt && new Date(user.premiumExpiresAt) > now)
       )
@@ -25,7 +29,7 @@ export function isTrialActive(user) {
 
   return Boolean(
     user &&
-      user.trialActive &&
+      user.trialActive === true &&
       user.trialEndDate &&
       new Date(user.trialEndDate) >= now
   );
@@ -53,10 +57,9 @@ export async function syncUserAccessState(user) {
   if (!user) return user;
 
   const now = new Date();
-  const accessStatus = getAccessStatus(user);
+  let changed = false;
 
   if (
-    accessStatus === "expired" &&
     user.trialActive === true &&
     user.trialEndDate &&
     new Date(user.trialEndDate) < now
@@ -66,6 +69,8 @@ export async function syncUserAccessState(user) {
     if (!user.trialExpiredAt) {
       user.trialExpiredAt = now;
     }
+
+    changed = true;
   }
 
   if (
@@ -74,6 +79,7 @@ export async function syncUserAccessState(user) {
     new Date(user.paidUntil) < now
   ) {
     user.subscriptionStatus = "expired";
+    changed = true;
   }
 
   if (
@@ -82,8 +88,16 @@ export async function syncUserAccessState(user) {
     new Date(user.premiumExpiresAt) < now
   ) {
     user.premium = false;
+    changed = true;
   }
 
-  await user.save();
+  user.accessStatus = getAccessStatus(user);
+  user.trialDaysLeft = getTrialDaysLeft(user);
+  changed = true;
+
+  if (changed) {
+    await user.save();
+  }
+
   return user;
 }
