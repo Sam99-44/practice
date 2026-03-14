@@ -4,10 +4,11 @@
    ✅ Adds Support link to desktop + mobile nav
    ✅ Adds Profile link to desktop + mobile nav
    ✅ Adds Subscription link for authenticated users
-   ✅ Keeps admin controls hidden for non-admin users
+   ✅ Auto-hides Admin link for non-admin users
    ✅ Supports logout buttons
    ✅ Caches /api/auth/me briefly
    ✅ Uses dashboard.html
+   ✅ Uses subscription.html
 */
 
 (function () {
@@ -156,7 +157,7 @@
       href: "profile.html",
       text: "Profile",
       insertAfterHrefIncludes: "announcements",
-      insertBeforeHrefIncludes: "support",
+      insertBeforeHrefIncludes: "subscription",
       dataAuth: true,
     });
   });
@@ -238,7 +239,7 @@
 
     if (!me) return;
 
-    // Show Subscription to all authenticated users for testing
+    // Subscription for authenticated users
     navs.forEach((navRoot) => {
       ensureLink(navRoot, {
         href: "subscription.html",
