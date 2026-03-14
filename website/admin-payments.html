@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Admin Payments | Practice Online</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --nav:#1b1648;
+  --bg:#f5f7fb;
+  --card:#ffffff;
+  --border:#e2e8f0;
+  --text:#0f172a;
+  --muted:#64748b;
+  --accent:#0b3c5d;
+  --accent-2:#0f766e;
+  --danger:#b91c1c;
+  --danger-soft:#fef2f2;
+  --warning:#92400e;
+  --warning-soft:#fff7ed;
+  --success:#166534;
+  --success-soft:#f0fdf4;
+  --shadow:0 12px 30px rgba(15,23,42,.08);
+  --radius:18px;
+}
+
+*{box-sizing:border-box}
+
+html,body{
+  margin:0;
+  padding:0;
+  font-family:Inter,Arial,sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(11,60,93,0.05), transparent 28%),
+    linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%);
+}
+
+body{
+  min-height:100vh;
+}
+
+.wrap{
+  max-width:1220px;
+  margin:0 auto;
+  padding:28px 16px 48px;
+}
+
+.page-head{
+  margin-bottom:22px;
+}
+
+.page-head h1{
+  margin:0 0 8px;
+  font-size:32px;
+  line-height:1.1;
+  letter-spacing:-0.03em;
+}
+
+.page-head p{
+  margin:0;
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.7;
+}
+
+.topbar{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  padding:16px 18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-bottom:20px;
+}
+
+.admin-info{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.admin-label{
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  font-weight:700;
+  color:var(--muted);
+}
+
+#adminWelcome{
+  margin:0;
+  font-size:15px;
+  line-height:1.5;
+}
+
+.top-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.btn{
+  border:none;
+  border-radius:14px;
+  padding:12px 16px;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  transition:transform .15s ease, opacity .15s ease, box-shadow .15s ease;
+}
+
+.btn:hover:not(:disabled){
+  transform:translateY(-1px);
+}
+
+.btn:disabled{
+  opacity:.65;
+  cursor:not-allowed;
+  transform:none;
+}
+
+.btn.primary{
+  background:var(--accent);
+  color:#fff;
+  box-shadow:0 10px 20px rgba(11,60,93,.16);
+}
+
+.btn.secondary{
+  background:#fff;
+  color:var(--text);
+  border:1px solid var(--border);
+}
+
+.btn.success{
+  background:var(--success);
+  color:#fff;
+}
+
+.btn.danger{
+  background:var(--danger);
+  color:#fff;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:14px;
+  margin-bottom:20px;
+}
+
+.stat{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  padding:18px;
+}
+
+.stat-label{
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  font-weight:700;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+
+.stat-value{
+  font-size:28px;
+  font-weight:800;
+  letter-spacing:-0.03em;
+}
+
+.toolbar{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:20px;
+  box-shadow:var(--shadow);
+  padding:16px;
+  margin-bottom:20px;
+  display:grid;
+  grid-template-columns:1.3fr .8fr .8fr auto;
+  gap:12px;
+  align-items:end;
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+
+label{
+  font-size:12px;
+  font-weight:700;
+  color:#334155;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+input,select,textarea{
+  width:100%;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px 13px;
+  font-size:14px;
+  color:var(--text);
+  background:#fff;
+  outline:none;
+  font-family:Inter,Arial,sans-serif;
+}
+
+input:focus,select:focus,textarea:focus{
+  border-color:#94a3b8;
+}
+
+#msg{
+  margin:0 0 18px;
+  padding:13px 15px;
+  border-radius:14px;
+  font-size:14px;
+  line-height:1.6;
+  display:none;
+}
+
+#msg.show{ display:block; }
+#msg.ok{
+  background:var(--success-soft);
+  color:var(--success);
+  border:1px solid #bbf7d0;
+}
+#msg.error{
+  background:var(--danger-soft);
+  color:var(--danger);
+  border:1px solid #fecaca;
+}
+
+.empty{
+  background:var(--card);
+  border:1px dashed #cbd5e1;
+  border-radius:20px;
+  padding:34px 18px;
+  text-align:center;
+  color:var(--muted);
+  box-shadow:var(--shadow);
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  padding:20px;
+}
+
+.card-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom:16px;
+}
+
+.card-title{
+  margin:0 0 6px;
+  font-size:20px;
+  line-height:1.2;
+  letter-spacing:-0.02em;
+}
+
+.card-sub{
+  margin:0;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.6;
+}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:7px 12px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+.badge.pending{
+  background:var(--warning-soft);
+  color:var(--warning);
+}
+
+.badge.approved{
+  background:var(--success-soft);
+  color:var(--success);
+}
+
+.badge.rejected{
+  background:var(--danger-soft);
+  color:var(--danger);
+}
+
+.meta{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  margin-bottom:16px;
+}
+
+.meta-item{
+  background:#f8fafc;
+  border:1px solid #eef2f7;
+  border-radius:14px;
+  padding:12px;
+}
+
+.meta-label{
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:6px;
+}
+
+.meta-value{
+  font-size:14px;
+  line-height:1.55;
+  color:var(--text);
+  word-break:break-word;
+}
+
+.proof-box{
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:16px;
+  background:#fcfdff;
+}
+
+.proof-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+
+.proof-title{
+  font-size:13px;
+  font-weight:800;
+  color:#334155;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+.proof-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.link-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--text);
+  font-size:13px;
+  font-weight:700;
+  text-decoration:none;
+}
+
+.proof-preview{
+  width:100%;
+  max-height:260px;
+  object-fit:cover;
+  border-radius:12px;
+  border:1px solid #e5e7eb;
+  display:block;
+  background:#f8fafc;
+}
+
+.no-preview{
+  font-size:13px;
+  color:var(--muted);
+  padding:10px 0 2px;
+}
+
+.reject-box{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid #eef2f7;
+}
+
+.reject-box textarea{
+  min-height:90px;
+  resize:vertical;
+}
+
+.reject-actions,
+.card-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.card-actions{
+  margin-top:16px;
+}
+
+.small{
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.6;
+}
+
+.review-note{
+  margin-top:14px;
+  padding:12px 13px;
+  border-radius:14px;
+  background:#fafafa;
+  border:1px solid #eceff3;
+  font-size:13px;
+  line-height:1.6;
+  color:#334155;
+}
+
+@media (max-width: 980px){
+  .stats{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .toolbar{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .grid{
+    grid-template-columns:1fr;
+  }
+}
+
+@media (max-width: 640px){
+  .wrap{
+    padding:20px 12px 38px;
+  }
+
+  .page-head h1{
+    font-size:24px;
+  }
+
+  .toolbar{
+    grid-template-columns:1fr;
+  }
+
+  .stats{
+    grid-template-columns:1fr;
+  }
+
+  .meta{
+    grid-template-columns:1fr;
+  }
+
+  .card{
+    padding:16px;
+    border-radius:18px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <h1>Manual Payment Verification</h1>
+    <p>Review learner proof of payment submissions, approve valid payments, or reject incorrect ones.</p>
+  </div>
+
+  <div class="topbar">
+    <div class="admin-info">
+      <div class="admin-label">Admin account</div>
+      <p id="adminWelcome">Loading admin details...</p>
+    </div>
+
+    <div class="top-actions">
+      <button class="btn secondary" type="button" onclick="window.location.href='admin.html'">Back to Admin</button>
+      <button class="btn primary" type="button" id="refreshBtn">Refresh</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Total Submissions</div>
+      <div class="stat-value" id="statTotal">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Pending</div>
+      <div class="stat-value" id="statPending">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Approved</div>
+      <div class="stat-value" id="statApproved">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Rejected</div>
+      <div class="stat-value" id="statRejected">0</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="field">
+      <label for="searchInput">Search</label>
+      <input id="searchInput" type="text" placeholder="Search by name, email, reference, plan..." />
+    </div>
+
+    <div class="field">
+      <label for="statusFilter">Status</label>
+      <select id="statusFilter">
+        <option value="all">All statuses</option>
+        <option value="pending">Pending only</option>
+        <option value="approved">Approved only</option>
+        <option value="rejected">Rejected only</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="planFilter">Plan</label>
+      <select id="planFilter">
+        <option value="all">All plans</option>
+        <option value="quiz">Quiz</option>
+        <option value="lessons">Lessons</option>
+      </select>
+    </div>
+
+    <button class="btn primary" type="button" id="clearFiltersBtn">Clear Filters</button>
+  </div>
+
+  <div id="msg"></div>
+
+  <div id="paymentsWrap">
+    <div class="empty">Loading payment submissions...</div>
+  </div>
+
+</div>
+
+<script>
+const API = "https://practice-backend-msgn.onrender.com";
+const token = localStorage.getItem("token");
+
+if (!token) {
+  window.location.href = "login.html";
+}
+
+const adminWelcomeEl = document.getElementById("adminWelcome");
+const paymentsWrap = document.getElementById("paymentsWrap");
+const msgEl = document.getElementById("msg");
+
+const statTotal = document.getElementById("statTotal");
+const statPending = document.getElementById("statPending");
+const statApproved = document.getElementById("statApproved");
+const statRejected = document.getElementById("statRejected");
+
+const refreshBtn = document.getElementById("refreshBtn");
+const searchInput = document.getElementById("searchInput");
+const statusFilter = document.getElementById("statusFilter");
+const planFilter = document.getElementById("planFilter");
+const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+
+let allPayments = [];
+
+function setMessage(text, type = "") {
+  msgEl.className = "";
+  msgEl.textContent = text;
+
+  if (!text) {
+    msgEl.style.display = "none";
+    return;
+  }
+
+  msgEl.classList.add("show");
+  if (type) msgEl.classList.add(type);
+  msgEl.style.display = "block";
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function formatDate(v) {
+  if (!v) return "—";
+  const d = new Date(v);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleString("en-ZA", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+function formatMoney(v) {
+  const n = Number(v || 0);
+  return `R${n.toFixed(2)}`;
+}
+
+function planLabel(plan) {
+  if (plan === "quiz") return "Quiz";
+  if (plan === "lessons") return "Lessons";
+  return plan || "—";
+}
+
+function statusBadge(status) {
+  const s = (status || "pending").toLowerCase();
+  return `<span class="badge ${s}">${escapeHtml(s)}</span>`;
+}
+
+function isImageFile(url = "") {
+  return /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(url);
+}
+
+function buildProofUrl(payment) {
+  const raw = payment.proofUrl || payment.proof || payment.fileUrl || payment.proofPath || "";
+  if (!raw) return "";
+  if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+  return `${API}${raw.startsWith("/") ? "" : "/"}${raw}`;
+}
+
+async function safeJson(res) {
+  const text = await res.text();
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    return { message: text || "Unexpected server response" };
+  }
+}
+
+function updateStats(items) {
+  statTotal.textContent = items.length;
+  statPending.textContent = items.filter(i => (i.status || "pending") === "pending").length;
+  statApproved.textContent = items.filter(i => i.status === "approved").length;
+  statRejected.textContent = items.filter(i => i.status === "rejected").length;
+}
+
+function filterPayments() {
+  const q = searchInput.value.trim().toLowerCase();
+  const status = statusFilter.value;
+  const plan = planFilter.value;
+
+  const filtered = allPayments.filter(item => {
+    const matchesSearch =
+      !q ||
+      (item.fullName || "").toLowerCase().includes(q) ||
+      (item.email || "").toLowerCase().includes(q) ||
+      (item.paymentReference || "").toLowerCase().includes(q) ||
+      (item.planType || "").toLowerCase().includes(q) ||
+      (item.phone || "").toLowerCase().includes(q);
+
+    const matchesStatus =
+      status === "all" || (item.status || "pending") === status;
+
+    const matchesPlan =
+      plan === "all" || (item.planType || "") === plan;
+
+    return matchesSearch && matchesStatus && matchesPlan;
+  });
+
+  renderPayments(filtered);
+}
+
+function renderPayments(items) {
+  updateStats(allPayments);
+
+  if (!items.length) {
+    paymentsWrap.innerHTML = `<div class="empty">No payment submissions found for the current filter.</div>`;
+    return;
+  }
+
+  paymentsWrap.innerHTML = `
+    <div class="grid">
+      ${items.map(payment => {
+        const id = payment._id || payment.id;
+        const proofUrl = buildProofUrl(payment);
+        const reason = payment.rejectionReason || payment.rejectReason || "";
+        const reviewedBy = payment.reviewedBy?.username || payment.reviewedBy?.email || payment.reviewedBy || "";
+        const imagePreview = proofUrl && isImageFile(proofUrl)
+          ? `<img class="proof-preview" src="${escapeHtml(proofUrl)}" alt="Proof of payment preview" />`
+          : `<div class="no-preview">${proofUrl ? "Preview not available for this file type. Use the open button to view the proof." : "No proof file found."}</div>`;
+
+        return `
+          <div class="card">
+            <div class="card-top">
+              <div>
+                <h2 class="card-title">${escapeHtml(payment.fullName || "Learner")}</h2>
+                <p class="card-sub">${escapeHtml(payment.email || "No email")} · Submitted ${formatDate(payment.createdAt)}</p>
+              </div>
+              ${statusBadge(payment.status)}
+            </div>
+
+            <div class="meta">
+              <div class="meta-item">
+                <div class="meta-label">Plan</div>
+                <div class="meta-value">${escapeHtml(planLabel(payment.planType))}</div>
+              </div>
+
+              <div class="meta-item">
+                <div class="meta-label">Amount</div>
+                <div class="meta-value">${escapeHtml(formatMoney(payment.amount))}</div>
+              </div>
+
+              <div class="meta-item">
+                <div class="meta-label">Phone</div>
+                <div class="meta-value">${escapeHtml(payment.phone || "—")}</div>
+              </div>
+
+              <div class="meta-item">
+                <div class="meta-label">Payment date</div>
+                <div class="meta-value">${escapeHtml(payment.paymentDate ? formatDate(payment.paymentDate) : "—")}</div>
+              </div>
+
+              <div class="meta-item" style="grid-column:1 / -1;">
+                <div class="meta-label">Reference</div>
+                <div class="meta-value">${escapeHtml(payment.paymentReference || "—")}</div>
+              </div>
+            </div>
+
+            <div class="proof-box">
+              <div class="proof-head">
+                <div class="proof-title">Proof of payment</div>
+                <div class="proof-actions">
+                  ${proofUrl ? `<a class="link-btn" href="${escapeHtml(proofUrl)}" target="_blank" rel="noopener noreferrer">Open Proof</a>` : ""}
+                </div>
+              </div>
+              ${imagePreview}
+            </div>
+
+            ${
+              payment.status === "approved"
+                ? `
+                  <div class="review-note">
+                    <strong>Approved.</strong>
+                    ${payment.reviewedAt ? `Reviewed on ${formatDate(payment.reviewedAt)}.` : ""}
+                    ${reviewedBy ? ` Reviewed by ${escapeHtml(typeof reviewedBy === "string" ? reviewedBy : "")}.` : ""}
+                  </div>
+                `
+                : ""
+            }
+
+            ${
+              payment.status === "rejected"
+                ? `
+                  <div class="review-note">
+                    <strong>Rejected.</strong>
+                    ${reason ? ` Reason: ${escapeHtml(reason)}` : " No rejection reason was saved."}
+                    ${payment.reviewedAt ? ` Reviewed on ${formatDate(payment.reviewedAt)}.` : ""}
+                  </div>
+                `
+                : ""
+            }
+
+            ${
+              payment.status === "pending"
+                ? `
+                  <div class="card-actions">
+                    <button class="btn success" type="button" onclick="approvePayment('${id}')">Approve</button>
+                    <button class="btn danger" type="button" onclick="toggleRejectBox('${id}')">Reject</button>
+                  </div>
+
+                  <div class="reject-box" id="rejectBox-${id}" style="display:none;">
+                    <label for="rejectReason-${id}">Reject reason</label>
+                    <textarea id="rejectReason-${id}" placeholder="Example: Reference does not match, proof unclear, amount incorrect..."></textarea>
+                    <div class="small" style="margin:8px 0 12px;">This reason can be saved and shown in admin records.</div>
+                    <div class="reject-actions">
+                      <button class="btn danger" type="button" onclick="rejectPayment('${id}')">Confirm Reject</button>
+                      <button class="btn secondary" type="button" onclick="toggleRejectBox('${id}', false)">Cancel</button>
+                    </div>
+                  </div>
+                `
+                : ""
+            }
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function toggleRejectBox(id, forceOpen = null) {
+  const box = document.getElementById(`rejectBox-${id}`);
+  if (!box) return;
+
+  if (forceOpen === false) {
+    box.style.display = "none";
+    return;
+  }
+
+  if (forceOpen === true) {
+    box.style.display = "block";
+    return;
+  }
+
+  box.style.display = box.style.display === "none" ? "block" : "none";
+}
+
+async function loadAdmin() {
+  try {
+    const res = await fetch(`${API}/api/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (res.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      window.location.href = "login.html";
+      return false;
+    }
+
+    const user = await safeJson(res);
+
+    if (!res.ok) {
+      throw new Error(user.message || "Could not load admin details");
+    }
+
+    if (user.role !== "admin") {
+      alert("Access denied. Admin only.");
+      window.location.href = "index.html";
+      return false;
+    }
+
+    const username = localStorage.getItem("username") || user.username || "Admin";
+    const email = user.email ? ` (${user.email})` : "";
+    adminWelcomeEl.textContent = `Welcome, ${username}${email}`;
+
+    return true;
+  } catch (err) {
+    console.error(err);
+    adminWelcomeEl.textContent = "Could not load admin details.";
+    setMessage("Could not load admin account details.", "error");
+    return false;
+  }
+}
+
+async function loadPayments() {
+  paymentsWrap.innerHTML = `<div class="empty">Loading payment submissions...</div>`;
+
+  try {
+    const res = await fetch(`${API}/api/manual-payments`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const data = await safeJson(res);
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to load payment submissions");
+    }
+
+    allPayments = Array.isArray(data) ? data : (data.payments || []);
+    filterPayments();
+  } catch (err) {
+    console.error(err);
+    paymentsWrap.innerHTML = `<div class="empty">Could not load payment submissions.</div>`;
+    setMessage(err.message || "Could not load payment submissions.", "error");
+  }
+}
+
+async function approvePayment(id) {
+  const ok = confirm("Approve this payment and activate the learner subscription?");
+  if (!ok) return;
+
+  try {
+    setMessage("Approving payment...");
+    const res = await fetch(`${API}/api/manual-payments/${id}/approve`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const data = await safeJson(res);
+
+    if (!res.ok) {
+      throw new Error(data.message || "Approval failed");
+    }
+
+    setMessage("Payment approved successfully.", "ok");
+    await loadPayments();
+  } catch (err) {
+    console.error(err);
+    setMessage(err.message || "Could not approve payment.", "error");
+  }
+}
+
+async function rejectPayment(id) {
+  const textarea = document.getElementById(`rejectReason-${id}`);
+  const rejectionReason = textarea ? textarea.value.trim() : "";
+
+  const ok = confirm("Reject this payment submission?");
+  if (!ok) return;
+
+  try {
+    setMessage("Rejecting payment...");
+    const res = await fetch(`${API}/api/manual-payments/${id}/reject`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ rejectionReason })
+    });
+
+    const data = await safeJson(res);
+
+    if (!res.ok) {
+      throw new Error(data.message || "Rejection failed");
+    }
+
+    setMessage("Payment rejected successfully.", "ok");
+    await loadPayments();
+  } catch (err) {
+    console.error(err);
+    setMessage(err.message || "Could not reject payment.", "error");
+  }
+}
+
+refreshBtn.addEventListener("click", loadPayments);
+searchInput.addEventListener("input", filterPayments);
+statusFilter.addEventListener("change", filterPayments);
+planFilter.addEventListener("change", filterPayments);
+
+clearFiltersBtn.addEventListener("click", () => {
+  searchInput.value = "";
+  statusFilter.value = "all";
+  planFilter.value = "all";
+  filterPayments();
+});
+
+(async function init() {
+  const ok = await loadAdmin();
+  if (!ok) return;
+  await loadPayments();
+})();
+</script>
+
+<script src="nav.js"></script>
+</body>
+</html>
