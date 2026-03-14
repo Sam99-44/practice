@@ -89,7 +89,6 @@ async function sendEmail({ to, subject, html, text }) {
   }
 }
 
-// ✅ BULK SEND (for notifying many learners)
 async function sendBulkEmail({ recipients, subject, html, text }) {
   if (!SENDGRID_API_KEY) throw new Error("Missing SENDGRID_API_KEY on server");
   if (!FROM_EMAIL) throw new Error("Missing FROM_EMAIL on server");
@@ -131,7 +130,6 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 }
 
-// Generate unique 8-digit student number (digits only)
 async function generateStudentNumber8() {
   while (true) {
     const num = String(Math.floor(10000000 + Math.random() * 90000000));
@@ -140,7 +138,6 @@ async function generateStudentNumber8() {
   }
 }
 
-// Generate 6-digit OTP
 function makeOtp6() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
@@ -161,14 +158,12 @@ function safeNum(v, fallback = 0) {
   return n;
 }
 
-// ✅ normalize difficulty
 function normalizeDifficulty(v) {
   const d = String(v || "").toLowerCase().trim();
   if (d === "easy" || d === "moderate" || d === "hard") return d;
   return "moderate";
 }
 
-// ✅ NEW: normalize paper
 function normalizePaper(v) {
   const p = String(v || "").toLowerCase().trim();
   if (p === "paper1" || p === "paper2") return p;
@@ -180,7 +175,6 @@ function paperLabel(p) {
   return pp === "paper2" ? "Paper 2" : "Paper 1";
 }
 
-// ✅ normalize index arrays (for multi-select)
 function normalizeIndexArray(v) {
   if (!Array.isArray(v)) return [];
   const out = [];
@@ -278,7 +272,6 @@ function pfEncode(val) {
   return encodeURIComponent(String(val).trim()).replace(/%20/g, "+");
 }
 
-// ✅ FIXED: no sorting, trims values, matches posted field order
 function buildPayfastSignature(data, passphrase = "") {
   let output = "";
 
@@ -395,7 +388,7 @@ async function adminOnly(req, res, next) {
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select(
-      "username email role grade accountType studentNumber province district gender cellphone guardianCellphone emailVerified subscriptionStatus paidUntil lastPaymentId premium premiumExpiresAt trialActive trialStartDate trialEndDate trialExpiredAt accessStatus trialDaysLeft"
+      "fullName username email role grade accountType studentNumber province district gender cellphone guardianCellphone emailVerified subscriptionStatus paidUntil lastPaymentId premium premiumExpiresAt trialActive trialStartDate trialEndDate trialExpiredAt accessStatus trialDaysLeft"
     );
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -415,6 +408,7 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 
     return res.json({
       _id: user._id,
+      fullName: user.fullName || "",
       username: user.username,
       email: user.email,
       role: user.role,
@@ -430,7 +424,6 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
       subscriptionStatus: effectiveStatus,
       paidUntil: effectivePaidUntil,
       lastPaymentId: user.lastPaymentId || "",
-
       trialActive: !!user.trialActive,
       trialStartDate: user.trialStartDate || null,
       trialEndDate: user.trialEndDate || null,
@@ -752,7 +745,6 @@ app.post("/api/login", async (req, res) => {
         subscriptionStatus: effectiveStatus,
         paidUntil: effectivePaidUntil,
         lastPaymentId: user.lastPaymentId || "",
-
         trialActive: !!user.trialActive,
         trialStartDate: user.trialStartDate || null,
         trialEndDate: user.trialEndDate || null,
