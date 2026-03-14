@@ -19,6 +19,7 @@
 // ✅ NEW: Free trial system
 // ✅ NEW: Access-status routes
 // ✅ NEW: Trial expiry blocks protected learner routes
+// ✅ NEW: Manual payment routes
 
 import express from "express";
 import mongoose from "mongoose";
@@ -41,6 +42,7 @@ import Payment from "./models/Payment.js";
 
 import accessRoutes from "./routes/access.js";
 import paymentRoutes from "./routes/payments.js";
+import manualPaymentsRoutes from "./routes/manualPayments.js";
 import { addDays } from "./utils/access.js";
 import { requireActiveAccess } from "./middleware/requireActiveAccess.js";
 
@@ -1870,6 +1872,7 @@ app.post("/api/payfast/itn", async (req, res) => {
 /* ------------------ ACCESS + PAYMENT ROUTES ------------------ */
 app.use("/api/access", accessRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/manual-payments", manualPaymentsRoutes);
 
 /* ------------------ OPTIONAL: FRIENDLY 404 FOR API ------------------ */
 app.use("/api", (req, res) => {
@@ -1895,37 +1898,3 @@ mongoose
     app.listen(PORT, () => console.log(`Server running on ${PORT}`));
   })
   .catch((err) => console.error("Mongo error:", err.message));
-
-/*
-✅ ALSO UPDATE models/User.js with these fields:
-
-trialActive: {
-  type: Boolean,
-  default: true,
-},
-
-trialStartDate: {
-  type: Date,
-  default: null,
-},
-
-trialEndDate: {
-  type: Date,
-  default: null,
-},
-
-trialExpiredAt: {
-  type: Date,
-  default: null,
-},
-
-✅ Profile routes added:
-GET    /api/profile/me
-PATCH  /api/profile/me
-POST   /api/profile/me/photo
-DELETE /api/profile/me/photo
-
-✅ Free trial routes mounted:
-GET    /api/access/me/access-status
-POST   /api/payments/activate-paid-access
-*/
