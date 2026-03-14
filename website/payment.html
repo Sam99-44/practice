@@ -22,6 +22,8 @@
   --success-bg:#f0fdf4;
   --error:#b91c1c;
   --error-bg:#fef2f2;
+  --warning:#92400e;
+  --warning-bg:#fff7ed;
   --shadow:0 10px 30px rgba(15,23,42,0.08);
   --radius:20px;
 }
@@ -129,10 +131,17 @@ body{
   color:var(--error);
 }
 
+#status.warn{
+  background:var(--warning-bg);
+  border-color:#fed7aa;
+  color:var(--warning);
+}
+
 .plans{
   display:grid;
   grid-template-columns:repeat(2, minmax(0, 1fr));
   gap:22px;
+  margin-bottom:26px;
 }
 
 .plan{
@@ -289,6 +298,95 @@ body{
   box-shadow:none;
 }
 
+.manual-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:24px;
+  box-shadow:var(--shadow);
+  padding:24px;
+  margin-top:10px;
+}
+
+.manual-head{
+  margin-bottom:18px;
+}
+
+.manual-head h3{
+  margin:0 0 8px;
+  font-size:24px;
+  line-height:1.2;
+}
+
+.manual-head p{
+  margin:0;
+  font-size:14px;
+  color:var(--muted);
+  line-height:1.7;
+}
+
+.payment-box{
+  background:var(--accent-soft);
+  border:1px solid #d8e8f4;
+  border-radius:18px;
+  padding:18px;
+  margin-bottom:20px;
+}
+
+.payment-box h4{
+  margin:0 0 10px;
+  font-size:16px;
+}
+
+.payment-box p{
+  margin:6px 0;
+  font-size:14px;
+  line-height:1.6;
+  color:#1e293b;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:16px;
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+
+.field.full{
+  grid-column:1 / -1;
+}
+
+label{
+  font-size:13px;
+  font-weight:700;
+  color:#334155;
+}
+
+input, select{
+  width:100%;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:13px 14px;
+  font-size:14px;
+  background:#fff;
+  color:var(--text);
+  outline:none;
+}
+
+input:focus, select:focus{
+  border-color:#94a3b8;
+}
+
+.helper{
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.6;
+}
+
 .bottom-actions{
   display:flex;
   justify-content:center;
@@ -324,7 +422,8 @@ body{
 }
 
 @media (max-width: 900px){
-  .plans{
+  .plans,
+  .form-grid{
     grid-template-columns:1fr;
   }
 
@@ -339,7 +438,8 @@ body{
   }
 
   .top-card,
-  .plan{
+  .plan,
+  .manual-card{
     padding:18px;
     border-radius:20px;
   }
@@ -370,7 +470,7 @@ body{
   <div class="page-head">
     <h1>Choose a plan for your learning</h1>
     <p>
-      Get full quiz access, or choose the complete learning plan with live lessons and extra support.
+      Select a plan, make payment manually, and upload your proof of payment for verification.
     </p>
   </div>
 
@@ -400,7 +500,7 @@ body{
       </div>
 
       <p class="access-note">
-        Gives you quiz access for 30 days from the payment date.
+        Gives you quiz access for 30 days from the payment approval date.
       </p>
 
       <ul class="feature-list">
@@ -411,7 +511,7 @@ body{
       </ul>
 
       <div class="plan-footer">
-        <button class="btn" id="payQuizBtn" disabled>Subscribe for R95</button>
+        <button class="btn" type="button" onclick="selectPlan('quiz', 95)">Choose Quiz Plan</button>
       </div>
     </div>
 
@@ -441,10 +541,85 @@ body{
       </ul>
 
       <div class="plan-footer">
-        <button class="btn" id="payLessonBtn" disabled>Start Learning for R599</button>
+        <button class="btn" type="button" onclick="selectPlan('lessons', 599)">Choose Full Plan</button>
       </div>
     </div>
 
+  </div>
+
+  <div class="manual-card">
+    <div class="manual-head">
+      <h3>Upload proof of payment</h3>
+      <p>
+        After making your manual payment, complete the form below and upload your proof of payment.
+        Your subscription will be activated after verification.
+      </p>
+    </div>
+
+    <div class="payment-box">
+      <h4>Banking / payment details</h4>
+      <p><strong>Account Name:</strong> Practice Online</p>
+      <p><strong>Bank:</strong> Your Bank Name</p>
+      <p><strong>Account Number:</strong> 1234567890</p>
+      <p><strong>Branch Code:</strong> 000000</p>
+      <p><strong>Reference:</strong> Use your email or student number</p>
+    </div>
+
+    <form id="manualPaymentForm">
+      <div class="form-grid">
+
+        <div class="field">
+          <label for="fullName">Full name</label>
+          <input type="text" id="fullName" name="fullName" required />
+        </div>
+
+        <div class="field">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" required />
+        </div>
+
+        <div class="field">
+          <label for="phone">Phone number</label>
+          <input type="text" id="phone" name="phone" placeholder="Optional" />
+        </div>
+
+        <div class="field">
+          <label for="planType">Selected plan</label>
+          <select id="planType" name="planType" required>
+            <option value="">Select a plan</option>
+            <option value="quiz">Quiz Subscription - R95</option>
+            <option value="lessons">Lessons + Full Platform - R599</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="amount">Amount paid</label>
+          <input type="number" id="amount" name="amount" min="1" step="0.01" required />
+        </div>
+
+        <div class="field">
+          <label for="paymentDate">Payment date</label>
+          <input type="date" id="paymentDate" name="paymentDate" required />
+        </div>
+
+        <div class="field full">
+          <label for="paymentReference">Payment reference / transaction reference</label>
+          <input type="text" id="paymentReference" name="paymentReference" required />
+          <div class="helper">Enter the reference used when you made the payment.</div>
+        </div>
+
+        <div class="field full">
+          <label for="proof">Upload proof of payment</label>
+          <input type="file" id="proof" name="proof" accept=".jpg,.jpeg,.png,.pdf" required />
+          <div class="helper">Accepted files: PDF, JPG, JPEG, PNG</div>
+        </div>
+
+      </div>
+
+      <div style="margin-top:18px;">
+        <button class="btn" id="submitProofBtn" type="submit">Submit Proof of Payment</button>
+      </div>
+    </form>
   </div>
 
   <div class="bottom-actions">
@@ -456,7 +631,7 @@ body{
   <p id="msg"></p>
 
   <p class="note">
-    Your access starts after successful payment. If your subscription has ended, you can renew anytime.
+    Your access starts after payment verification. If your subscription has ended, you can renew anytime by uploading a new proof of payment.
   </p>
 
 </div>
@@ -471,9 +646,15 @@ if (!token) {
 
 const welcomeEl = document.getElementById("welcome");
 const statusEl = document.getElementById("status");
-const payQuizBtn = document.getElementById("payQuizBtn");
-const payLessonBtn = document.getElementById("payLessonBtn");
 const msgEl = document.getElementById("msg");
+const form = document.getElementById("manualPaymentForm");
+const submitProofBtn = document.getElementById("submitProofBtn");
+
+const fullNameInput = document.getElementById("fullName");
+const emailInput = document.getElementById("email");
+const planTypeInput = document.getElementById("planType");
+const amountInput = document.getElementById("amount");
+const paymentDateInput = document.getElementById("paymentDate");
 
 function formatDate(v) {
   if (!v) return "";
@@ -493,9 +674,33 @@ function setMessage(text, type = "") {
   msgEl.textContent = text;
 }
 
-function setButtonsLoading(isLoading) {
-  payQuizBtn.disabled = isLoading;
-  payLessonBtn.disabled = isLoading;
+function setSubmitting(isSubmitting) {
+  submitProofBtn.disabled = isSubmitting;
+  submitProofBtn.textContent = isSubmitting ? "Submitting..." : "Submit Proof of Payment";
+}
+
+function setStatus(text, type = "") {
+  statusEl.className = type || "";
+  statusEl.textContent = text;
+}
+
+async function safeJson(res) {
+  const text = await res.text();
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    return { message: text || "Unexpected server response" };
+  }
+}
+
+function selectPlan(planType, amount) {
+  planTypeInput.value = planType;
+  amountInput.value = amount.toFixed(2);
+  setMessage(
+    `Selected plan: ${planType === "quiz" ? "Quiz Subscription" : "Lessons + Full Platform"}`,
+    "ok"
+  );
+  window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
 }
 
 async function loadUser() {
@@ -513,113 +718,105 @@ async function loadUser() {
       return;
     }
 
-    const u = await res.json();
+    const u = await safeJson(res);
+
+    if (!res.ok) {
+      throw new Error(u.message || "Could not load account details");
+    }
 
     const username = localStorage.getItem("username") || u.username || "Learner";
     const email = (u.email || "").toLowerCase();
 
     welcomeEl.textContent = `Welcome, ${username}${email ? ` (${email})` : ""}`;
 
+    fullNameInput.value = u.fullName || u.username || "";
+    emailInput.value = u.email || "";
+
     if (u.role === "admin") {
-      statusEl.className = "ok";
-      statusEl.textContent = "Admin accounts do not need a subscription.";
-      payQuizBtn.style.display = "none";
-      payLessonBtn.style.display = "none";
+      setStatus("Admin accounts do not need a subscription.", "ok");
+      form.style.display = "none";
       return;
     }
 
     if (u.accountType !== "student") {
-      statusEl.className = "ok";
-      statusEl.textContent = "This account does not need a learner subscription.";
-      payQuizBtn.style.display = "none";
-      payLessonBtn.style.display = "none";
+      setStatus("This account does not need a learner subscription.", "ok");
+      form.style.display = "none";
       return;
     }
 
     if (u.subscriptionStatus === "active") {
-      statusEl.className = "ok";
-      statusEl.textContent = `Your subscription is active until ${formatDate(u.paidUntil)}.`;
-    } else if (u.subscriptionStatus === "expired") {
-      statusEl.className = "error";
-      statusEl.textContent = `Your subscription ended on ${formatDate(u.paidUntil)}. Renew to continue learning.`;
+      setStatus(`Your subscription is active until ${formatDate(u.paidUntil)}.`, "ok");
+    } else if (u.accessStatus === "trial") {
+      const daysLeft = Number(u.trialDaysLeft || 0);
+      setStatus(
+        `You are on a free trial${daysLeft > 0 ? ` with ${daysLeft} day${daysLeft === 1 ? "" : "s"} left` : ""}. You can still upload proof of payment to continue after the trial.`,
+        "warn"
+      );
+    } else if (u.subscriptionStatus === "expired" || u.accessStatus === "expired") {
+      setStatus(
+        `Your access has expired${u.paidUntil ? ` on ${formatDate(u.paidUntil)}` : ""}. Renew by uploading a new proof of payment.`,
+        "error"
+      );
     } else {
-      statusEl.className = "error";
-      statusEl.textContent = "No active subscription found. Choose a plan below to continue.";
+      setStatus("No active subscription found. Choose a plan below and upload your proof of payment.", "error");
     }
-
-    payQuizBtn.disabled = false;
-    payLessonBtn.disabled = false;
   } catch (e) {
     console.error(e);
     welcomeEl.textContent = "Could not load your account details.";
-    statusEl.className = "error";
-    statusEl.textContent = "We could not connect to the server right now. Please try again.";
+    setStatus("We could not connect to the server right now. Please try again.", "error");
   }
 }
 
-async function startPayment(amount, itemName, planType) {
-  setButtonsLoading(true);
-  setMessage("Preparing your payment...");
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const proofFile = document.getElementById("proof").files[0];
+  if (!proofFile) {
+    setMessage("Please upload proof of payment.", "error");
+    return;
+  }
 
   try {
-    const res = await fetch(`${API}/api/payfast/initiate`, {
+    setSubmitting(true);
+    setMessage("Submitting your proof of payment...");
+
+    const formData = new FormData();
+    formData.append("fullName", document.getElementById("fullName").value.trim());
+    formData.append("email", document.getElementById("email").value.trim());
+    formData.append("phone", document.getElementById("phone").value.trim());
+    formData.append("planType", document.getElementById("planType").value);
+    formData.append("amount", document.getElementById("amount").value);
+    formData.append("paymentDate", document.getElementById("paymentDate").value);
+    formData.append("paymentReference", document.getElementById("paymentReference").value.trim());
+    formData.append("proof", proofFile);
+
+    const res = await fetch(`${API}/api/manual-payments/submit`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`
       },
-      body: JSON.stringify({
-        amount,
-        item_name: itemName,
-        planType
-      })
+      body: formData
     });
 
-    const data = await res.json();
+    const data = await safeJson(res);
 
     if (!res.ok) {
-      throw new Error(data.message || "Payment creation failed");
+      throw new Error(data.message || "Could not submit proof of payment");
     }
 
-    if (!data.action || !data.fields) {
-      throw new Error("Invalid payment response from server");
-    }
+    setMessage(
+      "Your proof of payment was submitted successfully. We will verify it and activate your subscription.",
+      "ok"
+    );
 
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = data.action;
-
-    Object.entries(data.fields).forEach(([key, value]) => {
-      const input = document.createElement("input");
-      input.type = "hidden";
-      input.name = key;
-      input.value = value;
-      form.appendChild(input);
-    });
-
-    document.body.appendChild(form);
-    form.submit();
+    form.reset();
+    setStatus("Your payment submission is awaiting verification.", "warn");
   } catch (err) {
     console.error(err);
-    setMessage("Payment error: " + err.message, "error");
-    setButtonsLoading(false);
+    setMessage("Submission error: " + err.message, "error");
+  } finally {
+    setSubmitting(false);
   }
-}
-
-payQuizBtn.addEventListener("click", () => {
-  startPayment(
-    95.00,
-    "Practice Online Quiz Subscription (30 days)",
-    "quiz"
-  );
-});
-
-payLessonBtn.addEventListener("click", () => {
-  startPayment(
-    599.00,
-    "Practice Online Lessons + Full Platform (30 days)",
-    "lessons"
-  );
 });
 
 loadUser();
