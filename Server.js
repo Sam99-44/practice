@@ -16,6 +16,9 @@
 // ✅ NEW: Email verification routes
 // ✅ NEW: Login blocks unverified users
 // ✅ NEW: Register route protection with express-rate-limit.
+// ✅ NEW: Free trial system
+// ✅ NEW: Access-status routes
+// ✅ NEW: Trial expiry blocks protected learner routes
 
 import express from "express";
 import mongoose from "mongoose";
@@ -35,6 +38,11 @@ import Quiz from "./models/Quiz.js";
 import User from "./models/User.js";
 import Result from "./models/Result.js";
 import Payment from "./models/Payment.js";
+
+import accessRoutes from "./routes/access.js";
+import paymentRoutes from "./routes/payments.js";
+import { addDays } from "./utils/access.js";
+import { requireActiveAccess } from "./middleware/requireActiveAccess.js";
 
 dotenv.config();
 
@@ -385,7 +393,7 @@ async function adminOnly(req, res, next) {
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select(
-      "username email role grade accountType studentNumber province district gender cellphone guardianCellphone emailVerified subscriptionStatus paidUntil lastPaymentId premium premiumExpiresAt"
+      "username email role grade accountType studentNumber province district gender cellphone guardianCellphone emailVerified subscriptionStatus paidUntil lastPaymentId premium premiumExpiresAt trialActive trialStartDate trialEndDate trialExpiredAt accessStatus trialDaysLeft"
     );
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -420,6 +428,12 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
       subscriptionStatus: effectiveStatus,
       paidUntil: effectivePaidUntil,
       lastPaymentId: user.lastPaymentId || "",
+
+      trialActive: !!user.trialActive,
+      trialStartDate: user.trialStartDate || null,
+      trialEndDate: user.trialEndDate || null,
+      accessStatus: user.accessStatus || "expired",
+      trialDaysLeft: user.trialDaysLeft || 0,
     });
   } catch {
     return res.status(500).json({ message: "Server error" });
@@ -499,6 +513,9 @@ app.post("/api/register", registerLimiter, async (req, res) => {
     const verifyTokenHash = hashToken(rawVerifyToken);
     const verifyTokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
+    const now = new Date();
+    const trialDays = 7;
+
     const user = await User.create({
       fullName: cleanSpaces(fullName || ""),
       username: cleanUsername,
@@ -521,6 +538,10 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       emailVerified: false,
       verifyTokenHash,
       verifyTokenExpiresAt,
+
+      trialActive: true,
+      trialStartDate: now,
+      trialEndDate: addDays(now, trialDays),
     });
 
     const verifyUrl = `${APP_URL}/verify-email.html?token=${encodeURIComponent(
@@ -729,6 +750,12 @@ app.post("/api/login", async (req, res) => {
         subscriptionStatus: effectiveStatus,
         paidUntil: effectivePaidUntil,
         lastPaymentId: user.lastPaymentId || "",
+
+        trialActive: !!user.trialActive,
+        trialStartDate: user.trialStartDate || null,
+        trialEndDate: user.trialEndDate || null,
+        accessStatus: user.accessStatus || "expired",
+        trialDaysLeft: user.trialDaysLeft || 0,
       },
     });
   } catch (err) {
@@ -917,7 +944,7 @@ app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
 
 /* ------------------ QUIZZES ------------------ */
 
-app.get("/api/quizzes", authRequired, async (req, res) => {
+app.get("/api/quizzes", authRequired, requireActiveAccess, async (req, res) => {
   try {
     const u = await User.findById(req.user.userId).select("role grade");
     if (!u) return res.status(401).json({ message: "User not found" });
@@ -943,7 +970,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
   }
 });
 
-app.get("/api/quizzes/:id", authRequired, async (req, res) => {
+app.get("/api/quizzes/:id", authRequired, requireActiveAccess, async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id);
     if (!quiz) return res.status(404).json({ message: "Not found" });
@@ -1350,7 +1377,7 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
   return ua === ca;
 }
 
-app.post("/api/results", authRequired, async (req, res) => {
+app.post("/api/results", authRequired, requireActiveAccess, async (req, res) => {
   try {
     const { quizId, answers, timeTakenSeconds } = req.body;
 
@@ -1554,7 +1581,7 @@ app.post("/api/results", authRequired, async (req, res) => {
   }
 });
 
-app.get("/api/results/my", authRequired, async (req, res) => {
+app.get("/api/results/my", authRequired, requireActiveAccess, async (req, res) => {
   try {
     const userId = req.user.userId;
 
@@ -1570,7 +1597,7 @@ app.get("/api/results/my", authRequired, async (req, res) => {
   }
 });
 
-app.get("/api/results/:id", authRequired, async (req, res) => {
+app.get("/api/results/:id", authRequired, requireActiveAccess, async (req, res) => {
   try {
     const userId = req.user.userId;
 
@@ -1811,7 +1838,7 @@ app.post("/api/payfast/itn", async (req, res) => {
 
     if (payment.status === "COMPLETE") {
       const user = await User.findById(payment.userId).select(
-        "paidUntil subscriptionStatus lastPaymentId premium premiumActivatedAt premiumExpiresAt"
+        "paidUntil subscriptionStatus lastPaymentId premium premiumActivatedAt premiumExpiresAt trialActive"
       );
 
       if (user) {
@@ -1827,6 +1854,7 @@ app.post("/api/payfast/itn", async (req, res) => {
         user.premium = true;
         user.premiumActivatedAt = now;
         user.premiumExpiresAt = newUntil;
+        user.trialActive = false;
 
         await user.save();
       }
@@ -1838,6 +1866,10 @@ app.post("/api/payfast/itn", async (req, res) => {
     return res.status(500).send("Server error");
   }
 });
+
+/* ------------------ ACCESS + PAYMENT ROUTES ------------------ */
+app.use("/api/access", accessRoutes);
+app.use("/api/payments", paymentRoutes);
 
 /* ------------------ OPTIONAL: FRIENDLY 404 FOR API ------------------ */
 app.use("/api", (req, res) => {
@@ -1867,22 +1899,24 @@ mongoose
 /*
 ✅ ALSO UPDATE models/User.js with these fields:
 
-fullName: {
-  type: String,
-  trim: true,
-  default: "",
+trialActive: {
+  type: Boolean,
+  default: true,
 },
 
-profileHeadline: {
-  type: String,
-  trim: true,
-  default: "",
+trialStartDate: {
+  type: Date,
+  default: null,
 },
 
-profilePhoto: {
-  type: String,
-  trim: true,
-  default: "",
+trialEndDate: {
+  type: Date,
+  default: null,
+},
+
+trialExpiredAt: {
+  type: Date,
+  default: null,
 },
 
 ✅ Profile routes added:
@@ -1890,4 +1924,8 @@ GET    /api/profile/me
 PATCH  /api/profile/me
 POST   /api/profile/me/photo
 DELETE /api/profile/me/photo
+
+✅ Free trial routes mounted:
+GET    /api/access/me/access-status
+POST   /api/payments/activate-paid-access
 */
