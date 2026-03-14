@@ -56,7 +56,7 @@ const UserSchema = new mongoose.Schema(
       default: null,
     },
 
-    // ✅ NEW profile fields
+    // profile fields
     fullName: {
       type: String,
       trim: true,
@@ -118,6 +118,33 @@ const UserSchema = new mongoose.Schema(
       default: null,
     },
 
+    // =========================
+    // FREE TRIAL FIELDS
+    // =========================
+    trialActive: {
+      type: Boolean,
+      default: true,
+    },
+
+    trialStartDate: {
+      type: Date,
+      default: null,
+    },
+
+    trialEndDate: {
+      type: Date,
+      default: null,
+    },
+
+    trialExpiredAt: {
+      type: Date,
+      default: null,
+    },
+
+    // =========================
+    // PAID ACCESS FIELDS
+    // =========================
+
     // old premium fields
     premium: {
       type: Boolean,
@@ -164,6 +191,40 @@ const UserSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Virtual access status
+UserSchema.virtual("accessStatus").get(function () {
+  const now = new Date();
+
+  // Paid user has access
+  if (
+    this.subscriptionStatus === "active" ||
+    this.premium === true ||
+    (this.paidUntil && new Date(this.paidUntil) > now) ||
+    (this.premiumExpiresAt && new Date(this.premiumExpiresAt) > now)
+  ) {
+    return "active";
+  }
+
+  // Trial user has access
+  if (this.trialActive && this.trialEndDate && new Date(this.trialEndDate) >= now) {
+    return "trial";
+  }
+
+  return "expired";
+});
+
+UserSchema.virtual("trialDaysLeft").get(function () {
+  if (!this.trialEndDate) return 0;
+
+  const now = new Date();
+  const end = new Date(this.trialEndDate);
+  const diff = end.getTime() - now.getTime();
+
+  if (diff <= 0) return 0;
+
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+});
 
 // Clean values + ensure grade is provided only for student accounts
 UserSchema.pre("validate", function (next) {
