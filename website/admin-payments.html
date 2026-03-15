@@ -395,6 +395,11 @@ input:focus,select:focus,textarea:focus{
   text-decoration:none;
 }
 
+.link-btn.disabled{
+  opacity:.55;
+  pointer-events:none;
+}
+
 .proof-preview{
   width:100%;
   max-height:260px;
@@ -409,6 +414,16 @@ input:focus,select:focus,textarea:focus{
   font-size:13px;
   color:var(--muted);
   padding:10px 0 2px;
+}
+
+.proof-missing{
+  border:1px dashed #f5c2c7;
+  background:#fff5f5;
+  color:#b91c1c;
+  border-radius:12px;
+  padding:14px;
+  font-size:13px;
+  line-height:1.6;
 }
 
 .reject-box{
@@ -645,24 +660,13 @@ function statusBadge(status) {
   return `<span class="badge ${s}">${escapeHtml(s)}</span>`;
 }
 
-function isImageFile(url = "") {
-  return /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(url);
+function isImageFile(url = "", mimeType = "") {
+  if ((mimeType || "").startsWith("image/")) return true;
+  return /\.(jpg|jpeg|png|webp|gif)$/i.test(url);
 }
 
 function buildProofUrl(payment) {
-  const raw = payment.proofUrl || payment.proof || payment.fileUrl || payment.proofPath || "";
-  if (!raw) return "";
-  if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
-  return `${API}${raw.startsWith("/") ? "" : "/"}${raw}`;
-}
-
-async function safeJson(res) {
-  const text = await res.text();
-  try {
-    return text ? JSON.parse(text) : {};
-  } catch {
-    return { message: text || "Unexpected server response" };
-  }
+  return payment.proofUrl || payment.proof || payment.fileUrl || payment.proofPath || "";
 }
 
 function updateStats(items) {
@@ -698,6 +702,55 @@ function filterPayments() {
   renderPayments(filtered);
 }
 
+function renderProofSection(payment) {
+  const proofUrl = buildProofUrl(payment);
+  const mimeType = payment.mimeType || "";
+  const hasProof = !!proofUrl;
+  const proofMissing = payment.proofMissing === true;
+  const canPreviewImage = hasProof && !proofMissing && isImageFile(proofUrl, mimeType);
+
+  let previewHtml = `<div class="no-preview">No proof file found.</div>`;
+
+  if (proofMissing) {
+    previewHtml = `
+      <div class="proof-missing">
+        Proof file could not be found on the server. This may be from an older broken upload or a missing server file.
+      </div>
+    `;
+  } else if (canPreviewImage) {
+    previewHtml = `
+      <img
+        class="proof-preview"
+        src="${escapeHtml(proofUrl)}"
+        alt="Proof of payment preview"
+        onerror="handleProofImageError(this, '${escapeHtml(payment._id || payment.id || "")}')"
+      />
+    `;
+  } else if (hasProof) {
+    previewHtml = `
+      <div class="no-preview">
+        Preview not available for this file type. Use the open button to view the proof.
+      </div>
+    `;
+  }
+
+  return `
+    <div class="proof-box">
+      <div class="proof-head">
+        <div class="proof-title">Proof of payment</div>
+        <div class="proof-actions">
+          ${
+            hasProof && !proofMissing
+              ? `<a class="link-btn" href="${escapeHtml(proofUrl)}" target="_blank" rel="noopener noreferrer">Open Proof</a>`
+              : `<span class="link-btn disabled">Proof Missing</span>`
+          }
+        </div>
+      </div>
+      ${previewHtml}
+    </div>
+  `;
+}
+
 function renderPayments(items) {
   updateStats(allPayments);
 
@@ -710,12 +763,8 @@ function renderPayments(items) {
     <div class="grid">
       ${items.map(payment => {
         const id = payment._id || payment.id;
-        const proofUrl = buildProofUrl(payment);
         const reason = payment.rejectionReason || payment.rejectReason || "";
         const reviewedBy = payment.reviewedBy?.username || payment.reviewedBy?.email || payment.reviewedBy || "";
-        const imagePreview = proofUrl && isImageFile(proofUrl)
-          ? `<img class="proof-preview" src="${escapeHtml(proofUrl)}" alt="Proof of payment preview" />`
-          : `<div class="no-preview">${proofUrl ? "Preview not available for this file type. Use the open button to view the proof." : "No proof file found."}</div>`;
 
         return `
           <div class="card">
@@ -754,15 +803,7 @@ function renderPayments(items) {
               </div>
             </div>
 
-            <div class="proof-box">
-              <div class="proof-head">
-                <div class="proof-title">Proof of payment</div>
-                <div class="proof-actions">
-                  ${proofUrl ? `<a class="link-btn" href="${escapeHtml(proofUrl)}" target="_blank" rel="noopener noreferrer">Open Proof</a>` : ""}
-                </div>
-              </div>
-              ${imagePreview}
-            </div>
+            ${renderProofSection(payment)}
 
             ${
               payment.status === "approved"
@@ -815,6 +856,17 @@ function renderPayments(items) {
   `;
 }
 
+function markProofMissing(id) {
+  const item = allPayments.find(p => String(p._id || p.id) === String(id));
+  if (!item) return;
+  item.proofMissing = true;
+  filterPayments();
+}
+
+window.handleProofImageError = function(img, id) {
+  markProofMissing(id);
+};
+
 function toggleRejectBox(id, forceOpen = null) {
   const box = document.getElementById(`rejectBox-${id}`);
   if (!box) return;
@@ -830,6 +882,26 @@ function toggleRejectBox(id, forceOpen = null) {
   }
 
   box.style.display = box.style.display === "none" ? "block" : "none";
+}
+
+async function safeJson(res) {
+  const text = await res.text();
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    return { message: text || "Unexpected server response" };
+  }
+}
+
+async function checkProofExists(url) {
+  if (!url) return false;
+
+  try {
+    const res = await fetch(url, { method: "HEAD" });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 async function loadAdmin() {
@@ -850,7 +922,7 @@ async function loadAdmin() {
     const user = await safeJson(res);
 
     if (!res.ok) {
-      throw new Error(user.message || "Could not load admin details");
+      throw new Error(user.message || "Could not load admin account");
     }
 
     if (user.role !== "admin") {
@@ -889,6 +961,20 @@ async function loadPayments() {
     }
 
     allPayments = Array.isArray(data) ? data : (data.payments || []);
+
+    await Promise.all(
+      allPayments.map(async (payment) => {
+        const proofUrl = buildProofUrl(payment);
+        if (!proofUrl) {
+          payment.proofMissing = true;
+          return;
+        }
+
+        const exists = await checkProofExists(proofUrl);
+        payment.proofMissing = !exists;
+      })
+    );
+
     filterPayments();
   } catch (err) {
     console.error(err);
