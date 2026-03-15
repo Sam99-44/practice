@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Announcements | Practice Online</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --nav:#1b1648;
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --border:#d9dee7;
+  --text:#0f172a;
+  --muted:#64748b;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+.topbar{
+  background:var(--nav);
+  color:#fff;
+}
+.topbar-inner{
+  max-width:1100px;
+  margin:auto;
+  padding:14px 18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.wrap{
+  max-width:1100px;
+  margin:auto;
+  padding:20px;
+}
+.section{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:18px;
+  overflow:hidden;
+  margin-bottom:18px;
+}
+.sectionHead{
+  padding:20px;
+  border-bottom:1px solid var(--border);
+  background:#f8fafc;
+}
+.sectionHead h2{
+  margin:0;
+  font-size:20px;
+  font-weight:800;
+}
+.sectionHead p{
+  margin-top:6px;
+  font-size:13px;
+  color:var(--muted);
+}
+.sectionBody{
+  padding:18px;
+}
+.focusBox{
+  border:1px solid #e6e9ef;
+  border-radius:12px;
+  padding:16px;
+  background:#fafbfc;
+}
+.focusLabel{
+  font-size:11px;
+  font-weight:800;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  margin-bottom:6px;
+}
+.focusTitle{
+  margin:0 0 8px;
+  font-size:22px;
+}
+.focusText{
+  font-size:14px;
+  line-height:1.7;
+  color:#334155;
+}
+.gradeGrid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:16px;
+}
+.gradeCard{
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:16px;
+  background:#fff;
+}
+.gradeTitle{
+  font-size:16px;
+  font-weight:800;
+  margin-bottom:10px;
+}
+.gradeBlock{
+  border:1px solid #e6e9ef;
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:10px;
+  background:#fafbfc;
+}
+.gradeBlock:last-child{
+  margin-bottom:0;
+}
+.gradeLabel{
+  font-size:11px;
+  font-weight:800;
+  color:var(--muted);
+  margin-bottom:6px;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+.gradeText{
+  font-size:13px;
+  line-height:1.6;
+}
+.meetingLink{
+  font-weight:600;
+  color:#1b1648;
+}
+.noteBox{
+  border:1px dashed #cfd7e3;
+  background:#fbfcfe;
+  border-radius:14px;
+  padding:14px;
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.8;
+}
+.empty{
+  font-size:14px;
+  color:var(--muted);
+}
+@media(max-width:900px){
+  .gradeGrid{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <strong>Practice Online</strong>
+    <span>Announcements</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="section">
+    <div class="sectionHead">
+      <h2>Weekly Focus</h2>
+      <p>Main teaching and learning focus for the current week.</p>
+    </div>
+    <div class="sectionBody">
+      <div class="focusBox">
+        <div class="focusLabel">This Week</div>
+        <h3 class="focusTitle">Current Topic</h3>
+        <div class="focusText" id="weeklyFocusText">Loading weekly focus...</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="sectionHead">
+      <h2>Class Announcements</h2>
+      <p>Weekly updates, meeting links and quiz notices for all grades.</p>
+    </div>
+    <div class="sectionBody">
+      <div class="gradeGrid" id="gradeGrid">
+        <div class="empty">Loading announcements...</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="sectionHead">
+      <h2>Admin Note</h2>
+      <p>Simple reminder area.</p>
+    </div>
+    <div class="sectionBody">
+      <div class="noteBox">
+        Update this page weekly with class announcements, meeting links,
+        quiz reminders and the main topic for each grade.
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const API = "https://practice-backend-msgn.onrender.com";
+
+const weeklyFocusText = document.getElementById("weeklyFocusText");
+const gradeGrid = document.getElementById("gradeGrid");
+
+const gradeLabels = {
+  grade8: "Grade 8",
+  grade9: "Grade 9",
+  grade10: "Grade 10",
+  grade11: "Grade 11",
+  grade12: "Grade 12",
+  allGrades: "All Grades"
+};
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function normalizeUrl(url) {
+  const clean = String(url || "").trim();
+  if (!clean) return "";
+  if (/^https?:\/\//i.test(clean)) return clean;
+  return clean;
+}
+
+function cardTemplate(title, grade) {
+  const meetingLink = normalizeUrl(grade.meetingLink);
+
+  return `
+    <div class="gradeCard">
+      <div class="gradeTitle">${escapeHtml(title)}</div>
+
+      <div class="gradeBlock">
+        <div class="gradeLabel">Weekly Update</div>
+        <div class="gradeText">${escapeHtml(grade.weeklyUpdate || "No update yet.")}</div>
+      </div>
+
+      <div class="gradeBlock">
+        <div class="gradeLabel">Meeting Link</div>
+        <div class="gradeText">
+          ${
+            meetingLink
+              ? `<a href="${escapeHtml(meetingLink)}" class="meetingLink" target="_blank" rel="noopener noreferrer">Open meeting link</a>`
+              : `No meeting link yet.`
+          }
+        </div>
+      </div>
+
+      <div class="gradeBlock">
+        <div class="gradeLabel">Quiz Announcement</div>
+        <div class="gradeText">${escapeHtml(grade.quizAnnouncement || "No quiz announcement yet.")}</div>
+      </div>
+    </div>
+  `;
+}
+
+async function safeJson(res) {
+  const text = await res.text();
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    return {};
+  }
+}
+
+async function loadAnnouncements() {
+  try {
+    const res = await fetch(`${API}/api/announcements`);
+    const data = await safeJson(res);
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to load announcements.");
+    }
+
+    weeklyFocusText.textContent = data.weeklyFocus || "No weekly focus yet.";
+
+    gradeGrid.innerHTML = Object.entries(gradeLabels)
+      .map(([key, label]) => cardTemplate(label, data?.grades?.[key] || {}))
+      .join("");
+  } catch (err) {
+    console.error(err);
+    weeklyFocusText.textContent = "Could not load weekly focus.";
+    gradeGrid.innerHTML = `<div class="empty">Could not load announcements.</div>`;
+  }
+}
+
+loadAnnouncements();
+</script>
+</body>
+</html>
