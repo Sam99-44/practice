@@ -5,12 +5,11 @@
    ✅ Admin links added only for admins
    ✅ Prevents duplicate links
    ✅ Uses progress-dashboard.html
-   ✅ Adds admin-leaderboard.html
-   ✅ Subscription only visible to admin
-   ✅ Leaderboard only visible to admin
+   ✅ Admin-only pages hidden from students
 */
 
 (function () {
+
   const API = "https://practice-backend-msgn.onrender.com";
   window.API = API;
 
@@ -23,7 +22,7 @@
     });
 
     mobileMenu.addEventListener("click", (e) => {
-      if (e.target && e.target.tagName === "A") {
+      if (e.target.tagName === "A") {
         mobileMenu.classList.remove("open");
       }
     });
@@ -48,6 +47,7 @@
   document.getElementById("logoutBtnMobile")?.addEventListener("click", logout);
 
   async function getMe(token) {
+
     const cached = localStorage.getItem("me_cache");
 
     if (cached) {
@@ -93,76 +93,63 @@
     return [...new Set(roots)];
   }
 
-  function isLogoutButton(node) {
-    if (!node) return false;
-    if (node.tagName !== "BUTTON") return false;
-    return (
-      node.id === "logoutBtn" ||
-      node.id === "logoutBtnMobile" ||
-      node.classList.contains("logoutBtn") ||
-      node.classList.contains("btnTop")
+  function getLogoutButton(navRoot) {
+    const buttons = [...navRoot.querySelectorAll("button")];
+    return buttons.find(btn =>
+      btn.id === "logoutBtn" ||
+      btn.id === "logoutBtnMobile" ||
+      btn.classList.contains("logoutBtn") ||
+      btn.classList.contains("btnTop")
     );
   }
 
-  function getLogoutButton(navRoot) {
-    const buttons = [...navRoot.querySelectorAll("button")];
-    return buttons.find(isLogoutButton) || null;
-  }
-
   function clearNavLinks(navRoot) {
-    [...navRoot.children].forEach((child) => {
-      if (child.tagName === "A") {
-        child.remove();
-      }
+    [...navRoot.children].forEach(child => {
+      if (child.tagName === "A") child.remove();
     });
   }
 
-  function createNavLink({ href, text, active, hidden = false, dataAdmin = false }) {
+  function createNavLink({ href, text, active }) {
     const link = document.createElement("a");
     link.href = href;
     link.textContent = text;
     if (active) link.classList.add("active");
-    if (hidden) link.style.display = "none";
-    if (dataAdmin) link.setAttribute("data-admin", "");
     return link;
   }
 
   function buildNav(navRoot, links) {
-    if (!navRoot) return;
 
     const currentFile = getCurrentFile();
     const logoutButton = getLogoutButton(navRoot);
 
     clearNavLinks(navRoot);
 
-    links.forEach((item) => {
-      const hrefFile = (item.href || "").toLowerCase().split("/").pop();
+    links.forEach(item => {
+
+      const hrefFile = item.href.toLowerCase().split("/").pop();
       const active = hrefFile === currentFile;
 
       const link = createNavLink({
         href: item.href,
         text: item.text,
-        active,
-        hidden: item.hidden,
-        dataAdmin: item.dataAdmin
+        active
       });
 
       navRoot.appendChild(link);
     });
 
-    if (logoutButton) {
-      navRoot.appendChild(logoutButton);
-    }
+    if (logoutButton) navRoot.appendChild(logoutButton);
   }
 
   async function setupNav() {
+
     const token = localStorage.getItem("token");
     const navs = getNavRoots();
 
     if (!navs.length) return;
 
     if (!token) {
-      navs.forEach((nav) => buildNav(nav, []));
+      navs.forEach(nav => buildNav(nav, []));
       return;
     }
 
@@ -182,7 +169,6 @@
       { href: "learner-quizzes.html", text: "Practice" },
       { href: "results.html", text: "Results" },
       { href: "progress-dashboard.html", text: "Dashboard" },
-      { href: "announcements.html", text: "Announcements" },
       { href: "support.html", text: "Support" }
     ];
 
@@ -192,11 +178,12 @@
         { href: "admin.html", text: "Admin" },
         { href: "admin-leaderboard.html", text: "Admin Statistics" },
         { href: "admin-payments.html", text: "Admin Payments" },
-        { href: "subscription.html", text: "Subscription" }
+        { href: "subscription.html", text: "Subscription" },
+        { href: "announcements.html", text: "Announcements" }
       );
     }
 
-    navs.forEach((nav) => buildNav(nav, links));
+    navs.forEach(nav => buildNav(nav, links));
 
     const navUsername = document.getElementById("navUsername");
     if (navUsername) {
@@ -215,4 +202,5 @@
       return t ? { Authorization: `Bearer ${t}` } : {};
     },
   };
+
 })();
