@@ -5,6 +5,7 @@
    ✅ Admin links added only for admins
    ✅ Prevents duplicate links
    ✅ Uses progress-dashboard.html
+   ✅ Adds admin-leaderboard.html
 */
 
 (function () {
@@ -188,6 +189,7 @@
     if (role === "admin") {
       links.push(
         { href: "admin.html", text: "Admin" },
+        { href: "admin-leaderboard.html", text: "Admin Statistics" },
         { href: "admin-payments.html", text: "Admin Payments" }
       );
     }
