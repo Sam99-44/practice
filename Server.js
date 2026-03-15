@@ -20,6 +20,8 @@
 // ✅ NEW: Access-status routes
 // ✅ NEW: Trial expiry blocks protected learner routes
 // ✅ NEW: Manual payment routes
+// ✅ NEW: Admin leaderboard filters
+// ✅ NEW: Admin leaderboard statistics (weekly / monthly / all time, province, district, grade)
 
 import express from "express";
 import mongoose from "mongoose";
@@ -208,6 +210,31 @@ function toPublicProfile(user) {
     profilePhoto: user.profilePhoto || "",
     joinedYear: user.createdAt ? new Date(user.createdAt).getFullYear() : "",
   };
+}
+
+function getPeriodStart(period) {
+  const now = new Date();
+
+  if (period === "weekly") {
+    const d = new Date(now);
+    const day = d.getDay();
+    const diff = day === 0 ? 6 : day - 1; // Monday start
+    d.setDate(d.getDate() - diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  if (period === "monthly") {
+    const d = new Date(now.getFullYear(), now.getMonth(), 1);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  return null;
+}
+
+function safeTrim(v) {
+  return String(v || "").trim();
 }
 
 const profilePhotoStorage = multer.diskStorage({
@@ -932,6 +959,236 @@ app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
     });
   } catch (e) {
     console.error("GET /api/admin/stats error:", e.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.get("/api/admin/leaderboard/filters", authRequired, adminOnly, async (req, res) => {
+  try {
+    const [gradesRaw, provincesRaw, districtRows] = await Promise.all([
+      User.distinct("grade", {
+        role: "learner",
+        accountType: "student",
+        grade: { $ne: null },
+      }),
+      User.distinct("province", {
+        role: "learner",
+        accountType: "student",
+        province: { $exists: true, $ne: "" },
+      }),
+      User.find(
+        {
+          role: "learner",
+          accountType: "student",
+          district: { $exists: true, $ne: "" },
+        },
+        "district province"
+      ).lean(),
+    ]);
+
+    const grades = gradesRaw
+      .map((g) => Number(g))
+      .filter((g) => Number.isInteger(g))
+      .sort((a, b) => a - b);
+
+    const provinces = provincesRaw
+      .map((p) => cleanSpaces(p))
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+
+    const districts = districtRows
+      .map((row) => ({
+        name: cleanSpaces(row.district || ""),
+        province: cleanSpaces(row.province || ""),
+      }))
+      .filter((row) => row.name)
+      .sort((a, b) => {
+        const p = a.province.localeCompare(b.province);
+        if (p !== 0) return p;
+        return a.name.localeCompare(b.name);
+      });
+
+    return res.json({
+      grades,
+      provinces,
+      districts,
+    });
+  } catch (e) {
+    console.error("GET /api/admin/leaderboard/filters error:", e.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.get("/api/admin/leaderboard", authRequired, adminOnly, async (req, res) => {
+  try {
+    const period = String(req.query.period || "monthly").toLowerCase().trim();
+    const grade = safeTrim(req.query.grade);
+    const province = cleanSpaces(req.query.province || "");
+    const district = cleanSpaces(req.query.district || "");
+    const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 100);
+
+    const startDate = getPeriodStart(period);
+
+    const resultMatch = {};
+    if (startDate) {
+      resultMatch.createdAt = { $gte: startDate };
+    }
+
+    const userFieldMatch = {
+      "user.role": "learner",
+      "user.accountType": "student",
+    };
+
+    if (grade) userFieldMatch["user.grade"] = Number(grade);
+    if (province) userFieldMatch["user.province"] = province;
+    if (district) userFieldMatch["user.district"] = district;
+
+    const learnerRows = await Result.aggregate([
+      { $match: resultMatch },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: "$user" },
+      { $match: userFieldMatch },
+      {
+        $group: {
+          _id: "$user._id",
+          fullName: { $first: "$user.fullName" },
+          username: { $first: "$user.username" },
+          province: { $first: "$user.province" },
+          district: { $first: "$user.district" },
+          grade: { $first: "$user.grade" },
+          average: { $avg: "$percent" },
+          best: { $max: "$percent" },
+          quizzesCounted: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          userId: "$_id",
+          fullName: { $ifNull: ["$fullName", ""] },
+          username: { $ifNull: ["$username", ""] },
+          province: { $ifNull: ["$province", ""] },
+          district: { $ifNull: ["$district", ""] },
+          grade: { $ifNull: ["$grade", null] },
+          average: { $round: ["$average", 0] },
+          best: { $round: ["$best", 0] },
+          quizzesCounted: 1,
+        },
+      },
+      { $sort: { average: -1, best: -1, quizzesCounted: -1, fullName: 1, username: 1 } },
+    ]);
+
+    const rows = learnerRows.slice(0, limit).map((row, index) => ({
+      rank: index + 1,
+      fullName: cleanSpaces(row.fullName || ""),
+      username: cleanSpaces(row.username || ""),
+      province: cleanSpaces(row.province || ""),
+      district: cleanSpaces(row.district || ""),
+      grade: row.grade ?? "",
+      average: Number(row.average || 0),
+      best: Number(row.best || 0),
+      quizzesCounted: Number(row.quizzesCounted || 0),
+    }));
+
+    const learnersCounted = learnerRows.length;
+    const topLearner = rows.length ? rows[0] : null;
+
+    const provinceAgg = await Result.aggregate([
+      { $match: resultMatch },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: "$user" },
+      {
+        $match: {
+          ...userFieldMatch,
+          "user.province": { $exists: true, $ne: "" },
+        },
+      },
+      {
+        $group: {
+          _id: "$user.province",
+          average: { $avg: "$percent" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          name: "$_id",
+          average: { $round: ["$average", 0] },
+        },
+      },
+      { $sort: { average: -1, name: 1 } },
+      { $limit: 1 },
+    ]);
+
+    const districtAgg = await Result.aggregate([
+      { $match: resultMatch },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: "$user" },
+      {
+        $match: {
+          ...userFieldMatch,
+          "user.district": { $exists: true, $ne: "" },
+        },
+      },
+      {
+        $group: {
+          _id: "$user.district",
+          average: { $avg: "$percent" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          name: "$_id",
+          average: { $round: ["$average", 0] },
+        },
+      },
+      { $sort: { average: -1, name: 1 } },
+      { $limit: 1 },
+    ]);
+
+    return res.json({
+      period,
+      rows,
+      topLearner: topLearner
+        ? {
+            fullName: topLearner.fullName || "",
+            username: topLearner.username || "",
+            province: topLearner.province || "",
+            district: topLearner.district || "",
+            grade: topLearner.grade ?? "",
+            average: topLearner.average || 0,
+            best: topLearner.best || 0,
+            quizzesCounted: topLearner.quizzesCounted || 0,
+          }
+        : null,
+      topProvince: provinceAgg[0] || null,
+      topDistrict: districtAgg[0] || null,
+      learnersCounted,
+    });
+  } catch (e) {
+    console.error("GET /api/admin/leaderboard error:", e.message);
     return res.status(500).json({ message: "Server error" });
   }
 });
