@@ -1,11 +1,7 @@
 /* nav.js - shared navigation + auth helpers for Practice Online
-   ✅ Profile is the first page
-   ✅ Uses backend API
-   ✅ Supports mobile + desktop navigation
-   ✅ Admin links added only for admins
-   ✅ Prevents duplicate links
-   ✅ Uses progress-dashboard.html
-   ✅ Admin-only pages hidden from students
+   ✅ Profile first
+   ✅ Supports learner, editor, admin roles
+   ✅ Admin-only development pages hidden from students
 */
 
 (function () {
@@ -164,23 +160,43 @@
 
     const role = String(me.role || "").toLowerCase();
 
-    const links = [
-      { href: "profile.html", text: "Profile" },
-      { href: "learner-quizzes.html", text: "Practice" },
-      { href: "results.html", text: "Results" },
-      { href: "progress-dashboard.html", text: "Dashboard" },
-      { href: "support.html", text: "Support" }
-    ];
+    let links = [];
 
+    // LEARNER NAV
+    if (role === "learner") {
+      links = [
+        { href: "profile.html", text: "Profile" },
+        { href: "learner-quizzes.html", text: "Practice" },
+        { href: "results.html", text: "Results" },
+        { href: "progress-dashboard.html", text: "Dashboard" },
+        { href: "support.html", text: "Support" }
+      ];
+    }
+
+    // EDITOR NAV
+    if (role === "editor") {
+      links = [
+        { href: "profile.html", text: "Profile" },
+        { href: "learner-quizzes.html", text: "Practice" },
+        { href: "results.html", text: "Results" },
+        { href: "admin.html", text: "Admin" }
+      ];
+    }
+
+    // ADMIN NAV
     if (role === "admin") {
-      links.push(
+      links = [
+        { href: "profile.html", text: "Profile" },
+        { href: "learner-quizzes.html", text: "Practice" },
+        { href: "results.html", text: "Results" },
+        { href: "progress-dashboard.html", text: "Dashboard" },
         { href: "leaderboard.html", text: "Leaderboard" },
         { href: "admin.html", text: "Admin" },
         { href: "admin-leaderboard.html", text: "Admin Statistics" },
         { href: "admin-payments.html", text: "Admin Payments" },
         { href: "subscription.html", text: "Subscription" },
         { href: "announcements.html", text: "Announcements" }
-      );
+      ];
     }
 
     navs.forEach(nav => buildNav(nav, links));
