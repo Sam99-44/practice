@@ -233,6 +233,14 @@
     }
   }
 
+  function getDefaultRedirect(user = {}) {
+    const role = String(user.role || "").toLowerCase();
+
+    if (role === "admin") return "admin-dashboard.html";
+    if (role === "editor") return "admin-dashboard.html";
+    return "profile.html";
+  }
+
   document.addEventListener("keydown", (e) => {
     if (e.key === "Enter") loginBtn.click();
   });
@@ -284,9 +292,10 @@
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user || {}));
       localStorage.setItem("username", data.user?.username || "");
+      localStorage.setItem("role", data.user?.role || "");
 
       const next = new URLSearchParams(window.location.search).get("next");
-      window.location.href = next ? decodeURIComponent(next) : "learner-quizzes.html";
+      window.location.href = next ? decodeURIComponent(next) : getDefaultRedirect(data.user || {});
 
     } catch {
       loginBtn.disabled = false;
