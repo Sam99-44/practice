@@ -4,7 +4,7 @@
    ✅ Supports mobile + desktop navigation
    ✅ Admin links added only for admins
    ✅ Prevents duplicate links
-   ✅ Rebuilds nav in the correct order
+   ✅ Uses progress-dashboard.html
 */
 
 (function () {
@@ -96,7 +96,8 @@
     return (
       node.id === "logoutBtn" ||
       node.id === "logoutBtnMobile" ||
-      node.classList.contains("logoutBtn")
+      node.classList.contains("logoutBtn") ||
+      node.classList.contains("btnTop")
     );
   }
 
@@ -113,11 +114,13 @@
     });
   }
 
-  function createNavLink({ href, text, active }) {
+  function createNavLink({ href, text, active, hidden = false, dataAdmin = false }) {
     const link = document.createElement("a");
     link.href = href;
     link.textContent = text;
     if (active) link.classList.add("active");
+    if (hidden) link.style.display = "none";
+    if (dataAdmin) link.setAttribute("data-admin", "");
     return link;
   }
 
@@ -132,11 +135,15 @@
     links.forEach((item) => {
       const hrefFile = (item.href || "").toLowerCase().split("/").pop();
       const active = hrefFile === currentFile;
+
       const link = createNavLink({
         href: item.href,
         text: item.text,
-        active
+        active,
+        hidden: item.hidden,
+        dataAdmin: item.dataAdmin
       });
+
       navRoot.appendChild(link);
     });
 
@@ -152,9 +159,7 @@
     if (!navs.length) return;
 
     if (!token) {
-      navs.forEach((nav) => {
-        buildNav(nav, []);
-      });
+      navs.forEach((nav) => buildNav(nav, []));
       return;
     }
 
@@ -167,18 +172,20 @@
 
     if (!me) return;
 
+    const role = String(me.role || "").toLowerCase();
+
     const links = [
       { href: "profile.html", text: "Profile" },
       { href: "learner-quizzes.html", text: "Practice" },
       { href: "results.html", text: "Results" },
-      { href: "dashboard.html", text: "Dashboard" },
+      { href: "progress-dashboard.html", text: "Dashboard" },
       { href: "leaderboard.html", text: "Leaderboard" },
       { href: "announcements.html", text: "Announcements" },
       { href: "support.html", text: "Support" },
       { href: "subscription.html", text: "Subscription" }
     ];
 
-    if (String(me.role || "").toLowerCase() === "admin") {
+    if (role === "admin") {
       links.push(
         { href: "admin.html", text: "Admin" },
         { href: "admin-payments.html", text: "Admin Payments" }
