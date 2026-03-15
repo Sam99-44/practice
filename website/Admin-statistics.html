@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Admin Leaderboard | Practice Online</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --nav:#1b1648;
+  --red:#e11d2e;
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --blue:#eef6ff;
+  --border:#d9dee7;
+  --text:#222222;
+  --muted:#5f6b7a;
+  --head:#f7f9fc;
+  --white:#ffffff;
+  --shadow:0 8px 22px rgba(15,23,42,.06);
+  --green:#065f46;
+  --orange:#9a3412;
+}
+
+*{box-sizing:border-box}
+
+html,body{
+  margin:0;
+  padding:0;
+  font-family:Inter,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+a{
+  text-decoration:none;
+  color:inherit;
+}
+
+button,
+select{
+  font:inherit;
+}
+
+.topbar{
+  background:var(--nav);
+  color:#fff;
+}
+
+.topbar-inner{
+  max-width:1180px;
+  margin:0 auto;
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.brand{
+  font-weight:800;
+  line-height:1.2;
+}
+
+.brand small{
+  display:block;
+  font-size:12px;
+  font-weight:700;
+  opacity:.9;
+}
+
+.nav{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.nav a{
+  padding:8px 10px;
+  border-radius:8px;
+  color:#eef2ff;
+  font-weight:700;
+  font-size:13px;
+  white-space:nowrap;
+}
+
+.nav a.active{
+  border-bottom:3px solid var(--red);
+  color:#fff;
+}
+
+.nav a:hover{
+  background:rgba(255,255,255,.08);
+}
+
+.logoutBtn{
+  background:transparent;
+  border:1px solid rgba(255,255,255,.28);
+  color:#fff;
+  padding:8px 14px;
+  border-radius:12px;
+  font-weight:800;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.wrap{
+  max-width:1180px;
+  margin:0 auto;
+  padding:18px;
+}
+
+.hero{
+  background:linear-gradient(180deg,#eef6ff 0%, #f8fbff 100%);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:16px;
+  flex-wrap:wrap;
+  box-shadow:var(--shadow);
+}
+
+.hero h1{
+  margin:0;
+  font-size:24px;
+  color:var(--nav);
+}
+
+.hero p{
+  margin:6px 0 0;
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.5;
+}
+
+.heroBadge{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:10px 14px;
+  font-size:13px;
+  font-weight:800;
+  color:var(--nav);
+}
+
+.section{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  overflow:hidden;
+  margin-top:16px;
+  box-shadow:var(--shadow);
+}
+
+.sectionHead{
+  padding:18px;
+  background:var(--blue);
+  border-bottom:1px solid var(--border);
+}
+
+.sectionHead h2{
+  margin:0;
+  font-size:18px;
+  font-weight:800;
+  color:var(--nav);
+}
+
+.sectionHead p{
+  margin:6px 0 0;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.sectionBody{
+  padding:16px;
+}
+
+.filters{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:10px;
+  margin-bottom:16px;
+}
+
+.selectLike{
+  width:100%;
+  padding:11px 14px;
+  border:1px solid #cbd5e1;
+  border-radius:12px;
+  background:#fff;
+  font-size:13px;
+  font-weight:700;
+  color:var(--text);
+  outline:none;
+}
+
+.selectLike:focus{
+  border-color:#bfdcff;
+  box-shadow:0 0 0 4px rgba(191,220,255,.35);
+}
+
+.statsGrid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:14px;
+  margin-bottom:16px;
+}
+
+.statCard{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:16px;
+}
+
+.statLabel{
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+
+.statValue{
+  font-size:24px;
+  font-weight:800;
+  color:var(--nav);
+  line-height:1.2;
+}
+
+.statSub{
+  margin-top:6px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:14px;
+}
+
+.card{
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+  background:#fff;
+}
+
+.cardHead{
+  padding:13px 14px;
+  background:var(--blue);
+  border-bottom:1px solid var(--border);
+}
+
+.cardHead h3{
+  margin:0;
+  font-size:15px;
+  font-weight:800;
+  color:var(--nav);
+}
+
+.cardBody{
+  padding:0;
+}
+
+.tableWrap{
+  width:100%;
+  overflow-x:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+  min-width:760px;
+}
+
+th,
+td{
+  padding:12px;
+  border-bottom:1px solid #edf2f7;
+  text-align:left;
+  vertical-align:top;
+}
+
+th{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--muted);
+  font-weight:800;
+  background:#fff;
+  white-space:nowrap;
+}
+
+tbody tr:last-child td{
+  border-bottom:none;
+}
+
+.rank{
+  width:56px;
+  font-weight:700;
+  color:var(--nav);
+}
+
+.score{
+  font-weight:500;
+}
+
+.empty{
+  margin:14px;
+  padding:14px;
+  border:1px dashed var(--border);
+  border-radius:12px;
+  background:#fafafa;
+  color:var(--muted);
+  font-weight:700;
+}
+
+.loading{
+  margin:14px;
+  padding:14px;
+  border-radius:12px;
+  background:#fff7ed;
+  border:1px solid #fed7aa;
+  color:var(--orange);
+  font-weight:700;
+}
+
+.ok{
+  margin-top:8px;
+  font-size:13px;
+  color:var(--green);
+  font-weight:700;
+}
+
+@media (max-width: 1080px){
+  .filters{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+
+  .statsGrid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media (max-width: 700px){
+  .topbar-inner{
+    padding:12px 14px;
+    align-items:flex-start;
+  }
+
+  .nav{
+    width:100%;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    padding-bottom:4px;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+
+  .nav::-webkit-scrollbar{
+    display:none;
+  }
+
+  .wrap{
+    padding:14px;
+  }
+
+  .filters{
+    grid-template-columns:1fr;
+  }
+
+  .statsGrid{
+    grid-template-columns:1fr;
+  }
+
+  .sectionHead,
+  .sectionBody{
+    padding:14px;
+  }
+
+  table{
+    min-width:700px;
+  }
+}
+</style>
+
+<script>
+if(!localStorage.getItem("token")){
+  location.href = "login.html";
+}
+</script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      Practice Online
+      <small>Admin Statistics</small>
+    </div>
+
+    <nav class="nav">
+      <a href="profile.html">Profile</a>
+      <a href="learner-quizzes.html">Practice</a>
+      <a href="results.html">Results</a>
+      <a href="progress-dashboard.html">Dashboard</a>
+      <a href="leaderboard.html">Leaderboard</a>
+      <a href="admin-leaderboard.html" class="active">Admin Stats</a>
+      <a href="admin-payments.html">Admin Payments</a>
+      <a href="announcements.html">Announcements</a>
+      <button class="logoutBtn" id="logoutBtn" type="button">Logout</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <div>
+      <h1>Admin Leaderboard</h1>
+      <p>
+        View the best-performing learners by province, district, grade, and time period.
+      </p>
+      <div id="statusMsg" class="ok"></div>
+    </div>
+
+    <div class="heroBadge" id="adminNameBadge">Admin</div>
+  </section>
+
+  <section class="section">
+    <div class="sectionHead">
+      <h2>Filters</h2>
+      <p>Use these filters to compare weekly, monthly, and all-time performance.</p>
+    </div>
+
+    <div class="sectionBody">
+      <div class="filters">
+        <select id="periodFilter" class="selectLike">
+          <option value="weekly">Weekly</option>
+          <option value="monthly" selected>Monthly</option>
+          <option value="all">All Time</option>
+        </select>
+
+        <select id="gradeFilter" class="selectLike">
+          <option value="">All Grades</option>
+        </select>
+
+        <select id="provinceFilter" class="selectLike">
+          <option value="">All Provinces</option>
+        </select>
+
+        <select id="districtFilter" class="selectLike">
+          <option value="">All Districts</option>
+        </select>
+
+        <select id="limitFilter" class="selectLike">
+          <option value="10" selected>Top 10</option>
+          <option value="20">Top 20</option>
+          <option value="50">Top 50</option>
+        </select>
+      </div>
+
+      <div class="statsGrid">
+        <div class="statCard">
+          <div class="statLabel">Best Learner</div>
+          <div class="statValue" id="bestLearner">-</div>
+          <div class="statSub" id="bestLearnerSub">No data yet</div>
+        </div>
+
+        <div class="statCard">
+          <div class="statLabel">Top Province</div>
+          <div class="statValue" id="topProvince">-</div>
+          <div class="statSub" id="topProvinceSub">No data yet</div>
+        </div>
+
+        <div class="statCard">
+          <div class="statLabel">Top District</div>
+          <div class="statValue" id="topDistrict">-</div>
+          <div class="statSub" id="topDistrictSub">No data yet</div>
+        </div>
+
+        <div class="statCard">
+          <div class="statLabel">Learners Counted</div>
+          <div class="statValue" id="learnersCounted">0</div>
+          <div class="statSub" id="learnersCountedSub">Current filtered results</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="cardHead">
+            <h3>Top Learners</h3>
+          </div>
+
+          <div class="cardBody">
+            <div class="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Learner</th>
+                    <th>Province</th>
+                    <th>District</th>
+                    <th>Grade</th>
+                    <th>Average</th>
+                    <th>Best</th>
+                    <th>Quizzes</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboardBody">
+                  <tr>
+                    <td colspan="8">
+                      <div class="loading">Loading leaderboard...</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="nav.js"></script>
+
+<script>
+const API = window.API || "https://practice-backend-msgn.onrender.com";
+const token = localStorage.getItem("token");
+
+const periodFilter = document.getElementById("periodFilter");
+const gradeFilter = document.getElementById("gradeFilter");
+const provinceFilter = document.getElementById("provinceFilter");
+const districtFilter = document.getElementById("districtFilter");
+const limitFilter = document.getElementById("limitFilter");
+
+const leaderboardBody = document.getElementById("leaderboardBody");
+const statusMsg = document.getElementById("statusMsg");
+
+const adminNameBadge = document.getElementById("adminNameBadge");
+
+const bestLearner = document.getElementById("bestLearner");
+const bestLearnerSub = document.getElementById("bestLearnerSub");
+
+const topProvince = document.getElementById("topProvince");
+const topProvinceSub = document.getElementById("topProvinceSub");
+
+const topDistrict = document.getElementById("topDistrict");
+const topDistrictSub = document.getElementById("topDistrictSub");
+
+const learnersCounted = document.getElementById("learnersCounted");
+const learnersCountedSub = document.getElementById("learnersCountedSub");
+
+document.getElementById("logoutBtn").onclick = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  localStorage.removeItem("me_cache");
+  localStorage.removeItem("user");
+  localStorage.removeItem("role");
+  location.href = "login.html";
+};
+
+periodFilter.addEventListener("change", loadLeaderboard);
+gradeFilter.addEventListener("change", loadLeaderboard);
+provinceFilter.addEventListener("change", onProvinceChange);
+districtFilter.addEventListener("change", loadLeaderboard);
+limitFilter.addEventListener("change", loadLeaderboard);
+
+let provincesFromApi = [];
+let districtsFromApi = [];
+
+init();
+
+async function init(){
+  try{
+    await loadMe();
+    await loadFilterOptions();
+    await loadLeaderboard();
+  }catch(e){
+    statusMsg.textContent = "Could not load admin statistics.";
+  }
+}
+
+async function loadMe(){
+  const res = await fetch(`${API}/api/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (res.status === 401 || res.status === 403) {
+    logoutNow();
+    return;
+  }
+
+  const me = await safeJson(res);
+
+  if (!res.ok || !me) {
+    logoutNow();
+    return;
+  }
+
+  const role = String(me.role || "").toLowerCase();
+  if (role !== "admin") {
+    alert("Only admins can open this page.");
+    location.href = "profile.html";
+    return;
+  }
+
+  adminNameBadge.textContent = me.username || me.fullName || "Admin";
+}
+
+async function loadFilterOptions(){
+  try{
+    const res = await fetch(`${API}/api/admin/leaderboard/filters`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const data = await safeJson(res);
+
+    if (!res.ok) return;
+
+    const grades = Array.isArray(data.grades) ? data.grades : [];
+    provincesFromApi = Array.isArray(data.provinces) ? data.provinces : [];
+    districtsFromApi = Array.isArray(data.districts) ? data.districts : [];
+
+    gradeFilter.innerHTML =
+      `<option value="">All Grades</option>` +
+      grades.map(g => `<option value="${escapeHtml(String(g))}">Grade ${escapeHtml(String(g))}</option>`).join("");
+
+    provinceFilter.innerHTML =
+      `<option value="">All Provinces</option>` +
+      provincesFromApi.map(p => `<option value="${escapeHtml(p.name || p)}">${escapeHtml(p.name || p)}</option>`).join("");
+
+    fillDistricts("");
+  }catch{}
+}
+
+function fillDistricts(selectedProvince){
+  const provinceName = String(selectedProvince || "").trim().toLowerCase();
+
+  let districts = [];
+
+  if (!provinceName) {
+    districts = districtsFromApi.map(d => d.name || d);
+  } else {
+    districts = districtsFromApi
+      .filter(d => String(d.province || "").trim().toLowerCase() === provinceName)
+      .map(d => d.name || d);
+  }
+
+  const uniqueDistricts = [...new Set(districts)].filter(Boolean).sort((a,b) => a.localeCompare(b));
+
+  districtFilter.innerHTML =
+    `<option value="">All Districts</option>` +
+    uniqueDistricts.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join("");
+}
+
+function onProvinceChange(){
+  fillDistricts(provinceFilter.value);
+  loadLeaderboard();
+}
+
+async function loadLeaderboard(){
+  leaderboardBody.innerHTML = `
+    <tr>
+      <td colspan="8">
+        <div class="loading">Loading leaderboard...</div>
+      </td>
+    </tr>
+  `;
+
+  try{
+    const params = new URLSearchParams({
+      period: periodFilter.value || "monthly",
+      grade: gradeFilter.value || "",
+      province: provinceFilter.value || "",
+      district: districtFilter.value || "",
+      limit: limitFilter.value || "10"
+    });
+
+    const res = await fetch(`${API}/api/admin/leaderboard?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (res.status === 401 || res.status === 403) {
+      logoutNow();
+      return;
+    }
+
+    const data = await safeJson(res);
+
+    if (!res.ok) {
+      leaderboardBody.innerHTML = `
+        <tr>
+          <td colspan="8">
+            <div class="empty">${escapeHtml(data.message || "Could not load leaderboard.")}</div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    const rows = Array.isArray(data.rows) ? data.rows : [];
+    renderRows(rows);
+    renderSummaryCards(data, rows);
+
+    statusMsg.textContent = "Statistics loaded successfully.";
+  }catch(e){
+    leaderboardBody.innerHTML = `
+      <tr>
+        <td colspan="8">
+          <div class="empty">Network error. Please try again.</div>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+function renderRows(rows){
+  if (!rows.length) {
+    leaderboardBody.innerHTML = `
+      <tr>
+        <td colspan="8">
+          <div class="empty">No learners found for the selected filters.</div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  leaderboardBody.innerHTML = rows.map((row, index) => `
+    <tr>
+      <td class="rank">${Number(row.rank || index + 1)}</td>
+      <td>${escapeHtml(row.fullName || row.username || "Learner")}</td>
+      <td>${escapeHtml(row.province || "-")}</td>
+      <td>${escapeHtml(row.district || "-")}</td>
+      <td>${escapeHtml(String(row.grade || "-"))}</td>
+      <td class="score">${Number(row.average || 0)}%</td>
+      <td>${Number(row.best || 0)}%</td>
+      <td>${Number(row.quizzesCounted || 0)}</td>
+    </tr>
+  `).join("");
+}
+
+function renderSummaryCards(data, rows){
+  const topLearnerData = data.topLearner || rows[0] || null;
+  const topProvinceData = data.topProvince || null;
+  const topDistrictData = data.topDistrict || null;
+
+  bestLearner.textContent = topLearnerData ? (topLearnerData.fullName || topLearnerData.username || "Learner") : "-";
+  bestLearnerSub.textContent = topLearnerData
+    ? `${Number(topLearnerData.average || 0)}% average • ${Number(topLearnerData.best || 0)}% best`
+    : "No data yet";
+
+  topProvince.textContent = topProvinceData?.name || "-";
+  topProvinceSub.textContent = topProvinceData
+    ? `${Number(topProvinceData.average || 0)}% average`
+    : "No data yet";
+
+  topDistrict.textContent = topDistrictData?.name || "-";
+  topDistrictSub.textContent = topDistrictData
+    ? `${Number(topDistrictData.average || 0)}% average`
+    : "No data yet";
+
+  learnersCounted.textContent = String(Number(data.learnersCounted || rows.length || 0));
+  learnersCountedSub.textContent = "Current filtered results";
+}
+
+function logoutNow(){
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  localStorage.removeItem("me_cache");
+  localStorage.removeItem("user");
+  localStorage.removeItem("role");
+  location.href = "login.html";
+}
+
+async function safeJson(res){
+  try{
+    return await res.json();
+  }catch{
+    return {};
+  }
+}
+
+function escapeHtml(str){
+  return String(str ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+</script>
+
+</body>
+</html>
