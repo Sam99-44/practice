@@ -1,334 +1,280 @@
-/* nav.js - Practice Online Navigation System
-   Works with layout.js
-
-   FEATURES
-   - Dashboard link
-   - Profile link
-   - Support link
-   - Subscription link
-   - Announcements link
-   - Admin dropdown (admin only)
-   - Mobile navigation support
-   - Logout
+/* nav.js - shared navigation + auth helpers for Practice Online
+   ✅ Profile is now the first page
+   ✅ Uses backend API
+   ✅ Supports mobile + desktop navigation
+   ✅ Admin links added only for admins
+   ✅ Prevents duplicate links
 */
 
 (function () {
 
-const API = "https://practice-backend-msgn.onrender.com";
-window.API = API;
+  const API = "https://practice-backend-msgn.onrender.com";
+  window.API = API;
 
-/* -----------------------------
-MENU TOGGLE
------------------------------ */
+  const menuBtn = document.getElementById("menuBtn");
+  const mobileMenu = document.getElementById("mobileMenu");
 
-const menuBtn = document.getElementById("menuBtn");
-const mobileMenu = document.getElementById("mobileMenu");
+  if (menuBtn && mobileMenu) {
 
-if (menuBtn && mobileMenu) {
+    menuBtn.addEventListener("click", () => {
+      mobileMenu.classList.toggle("open");
+    });
 
-menuBtn.addEventListener("click", () => {
-mobileMenu.classList.toggle("open");
-});
+    mobileMenu.addEventListener("click", (e) => {
+      if (e.target && e.target.tagName === "A") {
+        mobileMenu.classList.remove("open");
+      }
+    });
 
-mobileMenu.addEventListener("click", (e) => {
-if (e.target.tagName === "A") {
-mobileMenu.classList.remove("open");
-}
-});
+  }
 
-}
+  function getCurrentFile() {
+    const path = (window.location.pathname || "").toLowerCase();
+    const parts = path.split("/");
+    return parts[parts.length - 1] || "index.html";
+  }
 
-/* -----------------------------
-ACTIVE PAGE
------------------------------ */
+  function markActive(navRoot) {
 
-function getCurrentFile() {
-const path = window.location.pathname.toLowerCase();
-const parts = path.split("/");
-return parts.pop() || "index.html";
-}
+    if (!navRoot) return;
 
-function markActive(navRoot){
+    const currentFile = getCurrentFile();
 
-if(!navRoot) return;
+    [...navRoot.querySelectorAll("a")].forEach((a) => {
 
-const current = getCurrentFile();
+      const href = (a.getAttribute("href") || "").toLowerCase();
 
-[...navRoot.querySelectorAll("a")].forEach(a => {
+      if (!href) return;
 
-const href = (a.getAttribute("href") || "").toLowerCase();
-const file = href.split("/").pop();
+      const hrefFile = href.split("/").pop();
 
-if(file === current){
+      if (hrefFile === currentFile) {
+        a.classList.add("active");
+      }
 
-a.classList.add("active");
+    });
 
-const dropdown = a.closest(".nav-dropdown");
-if(dropdown) dropdown.classList.add("active");
+  }
 
-}
+  function ensureLink(navRoot, { href, text }) {
 
-});
+    if (!navRoot) return;
 
-}
+    const exists = [...navRoot.querySelectorAll("a")].some((a) => {
 
-/* -----------------------------
-ADD LINK IF MISSING
------------------------------ */
+      const h = (a.getAttribute("href") || "").toLowerCase();
+      const t = (a.textContent || "").trim().toLowerCase();
 
-function ensureLink(navRoot,{href,text}){
+      return h === href.toLowerCase() || t === text.toLowerCase();
 
-if(!navRoot) return;
+    });
 
-const exists = [...navRoot.querySelectorAll("a")].some(a=>{
-const h=(a.getAttribute("href")||"").toLowerCase();
-const t=(a.textContent||"").trim().toLowerCase();
-return h===href.toLowerCase()||t===text.toLowerCase();
-});
+    if (exists) {
+      markActive(navRoot);
+      return;
+    }
 
-if(exists){
-markActive(navRoot);
-return;
-}
+    const link = document.createElement("a");
+    link.href = href;
+    link.textContent = text;
 
-const link=document.createElement("a");
-link.href=href;
-link.textContent=text;
+    navRoot.appendChild(link);
 
-navRoot.appendChild(link);
+    markActive(navRoot);
 
-markActive(navRoot);
+  }
 
-}
+  function removeLink(navRoot, hrefOrText) {
 
-/* -----------------------------
-REMOVE LINK
------------------------------ */
+    if (!navRoot) return;
 
-function removeLink(navRoot,key){
+    [...navRoot.querySelectorAll("a")].forEach((a) => {
 
-if(!navRoot) return;
+      const h = (a.getAttribute("href") || "").toLowerCase();
+      const t = (a.textContent || "").trim().toLowerCase();
+      const key = hrefOrText.toLowerCase();
 
-key=key.toLowerCase();
+      if (h.includes(key) || t === key) {
+        a.remove();
+      }
 
-[...navRoot.querySelectorAll("a")].forEach(a=>{
+    });
 
-const h=(a.getAttribute("href")||"").toLowerCase();
-const t=(a.textContent||"").trim().toLowerCase();
+  }
 
-if(h.includes(key)||t===key){
-a.remove();
-}
+  function logout() {
 
-});
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    localStorage.removeItem("me_cache");
 
-}
+    window.location.href = "login.html";
 
-/* -----------------------------
-LOGOUT
------------------------------ */
+  }
 
-function logout(){
+  document.getElementById("logoutBtn")?.addEventListener("click", logout);
+  document.getElementById("logoutBtnMobile")?.addEventListener("click", logout);
 
-localStorage.removeItem("token");
-localStorage.removeItem("username");
-localStorage.removeItem("me_cache");
+  async function getMe(token) {
 
-window.location.href="login.html";
+    const cached = localStorage.getItem("me_cache");
 
-}
+    if (cached) {
 
-document.getElementById("logoutBtn")?.addEventListener("click",logout);
-document.getElementById("logoutBtnMobile")?.addEventListener("click",logout);
+      try {
 
-/* -----------------------------
-GET CURRENT USER
------------------------------ */
+        const parsed = JSON.parse(cached);
 
-async function getMe(token){
+        if (Date.now() - parsed.time < 120000) {
+          return parsed.data;
+        }
 
-const cached=localStorage.getItem("me_cache");
+      } catch {}
 
-if(cached){
+    }
 
-try{
+    const res = await fetch(`${API}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-const parsed=JSON.parse(cached);
+    if (res.status === 401 || res.status === 403) return "UNAUTH";
+    if (!res.ok) return null;
 
-if(Date.now()-parsed.time<120000){
-return parsed.data;
-}
+    const data = await res.json().catch(() => null);
 
-}catch{}
+    if (!data) return null;
 
-}
+    localStorage.setItem(
+      "me_cache",
+      JSON.stringify({
+        time: Date.now(),
+        data,
+      })
+    );
 
-const res=await fetch(`${API}/api/auth/me`,{
-headers:{Authorization:`Bearer ${token}`}
-});
+    return data;
 
-if(res.status===401||res.status===403) return "UNAUTH";
+  }
 
-if(!res.ok) return null;
+  function getNavRoots() {
 
-const data=await res.json().catch(()=>null);
+    const roots = [
 
-if(!data) return null;
+      document.getElementById("desktopNav"),
+      document.getElementById("mobileMenu"),
+      document.querySelector("nav.nav"),
+      document.querySelector("nav"),
+      document.querySelector(".nav-links"),
+      document.querySelector(".top-nav-links")
 
-localStorage.setItem("me_cache",JSON.stringify({
-time:Date.now(),
-data
-}));
+    ].filter(Boolean);
 
-return data;
+    return [...new Set(roots)];
 
-}
+  }
 
-/* -----------------------------
-NAV ROOTS
------------------------------ */
+  async function setupNav() {
 
-function getNavRoots(){
+    const token = localStorage.getItem("token");
 
-const roots=[
-document.getElementById("desktopNav"),
-document.getElementById("mobileMenu"),
-document.querySelector("nav.nav"),
-document.querySelector("nav")
-].filter(Boolean);
+    const navs = getNavRoots();
 
-return [...new Set(roots)];
+    navs.forEach(markActive);
 
-}
+    if (!token) {
 
-/* -----------------------------
-ADMIN DROPDOWN
------------------------------ */
+      navs.forEach((nav) => {
 
-function ensureAdminDropdown(navRoot){
+        removeLink(nav, "profile.html");
+        removeLink(nav, "dashboard.html");
+        removeLink(nav, "subscription.html");
+        removeLink(nav, "admin.html");
+        removeLink(nav, "admin-payments.html");
 
-if(!navRoot) return;
+      });
 
-if(navRoot.querySelector(".nav-dropdown")) return;
+      return;
 
-const dropdown=document.createElement("div");
-dropdown.className="nav-dropdown";
+    }
 
-const btn=document.createElement("button");
-btn.className="nav-dropdown-toggle";
-btn.textContent="Admin";
+    const me = await getMe(token);
 
-const menu=document.createElement("div");
-menu.className="nav-dropdown-menu";
+    if (me === "UNAUTH") {
+      logout();
+      return;
+    }
 
-menu.innerHTML=`
-<a href="admin.html">Admin Dashboard</a>
-<a href="admin-payments.html">Admin Payments</a>
-<a href="admin-announcements.html">Admin Announcements</a>
-`;
+    if (!me) return;
 
-btn.onclick=(e)=>{
-e.stopPropagation();
-dropdown.classList.toggle("open");
-};
+    /* NAVIGATION ORDER */
 
-dropdown.appendChild(btn);
-dropdown.appendChild(menu);
+    navs.forEach((nav) => {
 
-navRoot.appendChild(dropdown);
+      ensureLink(nav, { href: "profile.html", text: "Profile" });
 
-}
+      ensureLink(nav, { href: "learner-quizzes.html", text: "Practice" });
 
-/* close dropdown if clicking outside */
+      ensureLink(nav, { href: "results.html", text: "Results" });
 
-document.addEventListener("click",()=>{
-document.querySelectorAll(".nav-dropdown.open")
-.forEach(d=>d.classList.remove("open"));
-});
+      ensureLink(nav, { href: "dashboard.html", text: "Dashboard" });
 
-/* -----------------------------
-MAIN NAV SETUP
------------------------------ */
+      ensureLink(nav, { href: "leaderboard.html", text: "Leaderboard" });
 
-async function setupNav(){
+      ensureLink(nav, { href: "announcements.html", text: "Announcements" });
 
-const token=localStorage.getItem("token");
+      ensureLink(nav, { href: "support.html", text: "Support" });
 
-const navs=getNavRoots();
+      ensureLink(nav, { href: "subscription.html", text: "Subscription" });
 
-navs.forEach(markActive);
+    });
 
-if(!token){
+    if (me.role === "admin") {
 
-navs.forEach(nav=>{
+      navs.forEach((nav) => {
 
-removeLink(nav,"dashboard.html");
-removeLink(nav,"profile.html");
-removeLink(nav,"subscription.html");
-removeLink(nav,"support.html");
-removeLink(nav,"announcements.html");
+        ensureLink(nav, { href: "admin.html", text: "Admin" });
 
-});
+        ensureLink(nav, { href: "admin-payments.html", text: "Admin Payments" });
 
-return;
+      });
 
-}
+    } else {
 
-const me=await getMe(token);
+      navs.forEach((nav) => {
 
-if(me==="UNAUTH"){
-logout();
-return;
-}
+        removeLink(nav, "admin.html");
+        removeLink(nav, "admin-payments.html");
 
-if(!me) return;
+      });
 
-/* normal user links */
+    }
 
-navs.forEach(nav=>{
+    const navUsername = document.getElementById("navUsername");
 
-ensureLink(nav,{href:"dashboard.html",text:"Dashboard"});
-ensureLink(nav,{href:"profile.html",text:"Profile"});
-ensureLink(nav,{href:"support.html",text:"Support"});
-ensureLink(nav,{href:"subscription.html",text:"Subscription"});
-ensureLink(nav,{href:"announcements.html",text:"Announcements"});
+    if (navUsername) {
+      navUsername.textContent = me.username || "";
+    }
 
-});
+  }
 
-/* admin dropdown */
+  setupNav();
 
-if(me.role==="admin"){
+  window.auth = {
 
-navs.forEach(nav=>{
-ensureAdminDropdown(nav);
-});
+    API,
 
-}
+    token: () => localStorage.getItem("token"),
 
-/* username */
+    logout,
 
-const navUsername=document.getElementById("navUsername");
+    authHeader: () => {
 
-if(navUsername){
-navUsername.textContent=me.username||"";
-}
+      const t = localStorage.getItem("token");
 
-}
+      return t ? { Authorization: `Bearer ${t}` } : {};
 
-setupNav();
+    },
 
-/* -----------------------------
-AUTH HELPERS
------------------------------ */
-
-window.auth={
-API,
-token:()=>localStorage.getItem("token"),
-logout,
-authHeader:()=>{
-const t=localStorage.getItem("token");
-return t?{Authorization:`Bearer ${t}`}:{};
-}
-};
+  };
 
 })();
