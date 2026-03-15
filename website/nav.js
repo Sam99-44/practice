@@ -6,6 +6,8 @@
    ✅ Prevents duplicate links
    ✅ Uses progress-dashboard.html
    ✅ Adds admin-leaderboard.html
+   ✅ Subscription only visible to admin
+   ✅ Leaderboard only visible to admin
 */
 
 (function () {
@@ -180,17 +182,17 @@
       { href: "learner-quizzes.html", text: "Practice" },
       { href: "results.html", text: "Results" },
       { href: "progress-dashboard.html", text: "Dashboard" },
-      { href: "leaderboard.html", text: "Leaderboard" },
       { href: "announcements.html", text: "Announcements" },
-      { href: "support.html", text: "Support" },
-      { href: "subscription.html", text: "Subscription" }
+      { href: "support.html", text: "Support" }
     ];
 
     if (role === "admin") {
       links.push(
+        { href: "leaderboard.html", text: "Leaderboard" },
         { href: "admin.html", text: "Admin" },
         { href: "admin-leaderboard.html", text: "Admin Statistics" },
-        { href: "admin-payments.html", text: "Admin Payments" }
+        { href: "admin-payments.html", text: "Admin Payments" },
+        { href: "subscription.html", text: "Subscription" }
       );
     }
 
