@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Announcements | Practice Online</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --nav:#1b1648;
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --border:#d9dee7;
+  --text:#0f172a;
+  --muted:#64748b;
+  --soft:#f8fafc;
+  --ok:#166534;
+  --okbg:#f0fdf4;
+  --err:#b91c1c;
+  --errbg:#fef2f2;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+.topbar{
+  background:var(--nav);
+  color:#fff;
+}
+.topbar-inner{
+  max-width:1200px;
+  margin:auto;
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.wrap{
+  max-width:1200px;
+  margin:auto;
+  padding:20px;
+}
+.page-title{
+  margin:0 0 16px;
+  font-size:28px;
+}
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  margin-bottom:18px;
+  overflow:hidden;
+}
+.card-head{
+  padding:16px 18px;
+  border-bottom:1px solid var(--border);
+  background:#fbfcfe;
+}
+.card-head h2{
+  margin:0;
+  font-size:18px;
+}
+.card-body{
+  padding:18px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;
+}
+.gradeCard{
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px;
+  background:#fff;
+}
+.gradeCard h3{
+  margin:0 0 12px;
+  font-size:16px;
+}
+.field{
+  margin-bottom:12px;
+}
+.field:last-child{
+  margin-bottom:0;
+}
+label{
+  display:block;
+  margin-bottom:6px;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  color:var(--muted);
+}
+input, textarea{
+  width:100%;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  font:inherit;
+  background:#fff;
+}
+textarea{
+  min-height:92px;
+  resize:vertical;
+}
+.actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+button{
+  border:none;
+  border-radius:12px;
+  padding:12px 16px;
+  font:inherit;
+  font-weight:800;
+  cursor:pointer;
+}
+.primary{
+  background:var(--nav);
+  color:#fff;
+}
+.secondary{
+  background:#fff;
+  border:1px solid var(--border);
+}
+#msg{
+  display:none;
+  margin-bottom:16px;
+  padding:12px 14px;
+  border-radius:12px;
+  font-size:14px;
+}
+#msg.show{display:block}
+#msg.ok{
+  background:var(--okbg);
+  color:var(--ok);
+  border:1px solid #bbf7d0;
+}
+#msg.error{
+  background:var(--errbg);
+  color:var(--err);
+  border:1px solid #fecaca;
+}
+@media (max-width: 900px){
+  .grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <strong>Practice Online</strong>
+    <span>Admin Announcements</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1 class="page-title">Manage Announcements</h1>
+
+  <div id="msg"></div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Weekly Focus</h2>
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <label for="weeklyFocus">Weekly Focus</label>
+        <textarea id="weeklyFocus" placeholder="Example: This week we will be focusing on trigonometry."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Class Announcements</h2>
+    </div>
+    <div class="card-body">
+      <div class="grid" id="gradeGrid"></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="primary" id="saveBtn">Save Announcements</button>
+    <button class="secondary" id="reloadBtn">Reload</button>
+  </div>
+</main>
+
+<script>
+const API = "https://practice-backend-msgn.onrender.com";
+const token = localStorage.getItem("token");
+
+if (!token) {
+  window.location.href = "login.html";
+}
+
+const msg = document.getElementById("msg");
+const weeklyFocus = document.getElementById("weeklyFocus");
+const gradeGrid = document.getElementById("gradeGrid");
+const saveBtn = document.getElementById("saveBtn");
+const reloadBtn = document.getElementById("reloadBtn");
+
+const gradeLabels = {
+  grade8: "Grade 8",
+  grade9: "Grade 9",
+  grade10: "Grade 10",
+  grade11: "Grade 11",
+  grade12: "Grade 12",
+  allGrades: "All Grades"
+};
+
+function setMessage(text, type="") {
+  msg.className = "";
+  msg.textContent = text;
+  if (!text) {
+    msg.style.display = "none";
+    return;
+  }
+  msg.classList.add("show");
+  if (type) msg.classList.add(type);
+}
+
+function gradeCardTemplate(key, label) {
+  return `
+    <div class="gradeCard">
+      <h3>${label}</h3>
+
+      <div class="field">
+        <label for="${key}-weeklyUpdate">Weekly Update</label>
+        <textarea id="${key}-weeklyUpdate"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="${key}-meetingLink">Meeting Link</label>
+        <input id="${key}-meetingLink" type="text" placeholder="https://..." />
+      </div>
+
+      <div class="field">
+        <label for="${key}-quizAnnouncement">Quiz Announcement</label>
+        <textarea id="${key}-quizAnnouncement"></textarea>
+      </div>
+    </div>
+  `;
+}
+
+function renderGradeEditors() {
+  gradeGrid.innerHTML = Object.entries(gradeLabels)
+    .map(([key, label]) => gradeCardTemplate(key, label))
+    .join("");
+}
+
+function fillForm(data) {
+  weeklyFocus.value = data.weeklyFocus || "";
+
+  Object.keys(gradeLabels).forEach((key) => {
+    const grade = data?.grades?.[key] || {};
+    document.getElementById(`${key}-weeklyUpdate`).value = grade.weeklyUpdate || "";
+    document.getElementById(`${key}-meetingLink`).value = grade.meetingLink || "";
+    document.getElementById(`${key}-quizAnnouncement`).value = grade.quizAnnouncement || "";
+  });
+}
+
+function collectForm() {
+  const grades = {};
+
+  Object.keys(gradeLabels).forEach((key) => {
+    grades[key] = {
+      weeklyUpdate: document.getElementById(`${key}-weeklyUpdate`).value.trim(),
+      meetingLink: document.getElementById(`${key}-meetingLink`).value.trim(),
+      quizAnnouncement: document.getElementById(`${key}-quizAnnouncement`).value.trim(),
+    };
+  });
+
+  return {
+    weeklyFocus: weeklyFocus.value.trim(),
+    grades
+  };
+}
+
+async function safeJson(res) {
+  const text = await res.text();
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    return { message: text || "Unexpected server response" };
+  }
+}
+
+async function loadAnnouncements() {
+  setMessage("");
+  try {
+    const res = await fetch(`${API}/api/announcements/admin/current`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const data = await safeJson(res);
+
+    if (res.status === 401) {
+      localStorage.removeItem("token");
+      window.location.href = "login.html";
+      return;
+    }
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to load announcements.");
+    }
+
+    fillForm(data);
+  } catch (err) {
+    console.error(err);
+    setMessage(err.message || "Could not load announcements.", "error");
+  }
+}
+
+async function saveAnnouncements() {
+  setMessage("Saving announcements...");
+  try {
+    const payload = collectForm();
+
+    const res = await fetch(`${API}/api/announcements/admin/current`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await safeJson(res);
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to save announcements.");
+    }
+
+    setMessage("Announcements updated successfully.", "ok");
+  } catch (err) {
+    console.error(err);
+    setMessage(err.message || "Could not save announcements.", "error");
+  }
+}
+
+renderGradeEditors();
+saveBtn.addEventListener("click", saveAnnouncements);
+reloadBtn.addEventListener("click", loadAnnouncements);
+loadAnnouncements();
+</script>
+</body>
+</html>
