@@ -1,202 +1,334 @@
-/* nav.js - shared navigation + auth helpers for Practice Online
-   ✅ Uses backend API
-   ✅ Adds Dashboard link
-   ✅ Adds Support link
-   ✅ Adds Profile link
-   ✅ Adds Subscription link
-   ✅ Adds Admin Payments link (admin only)
-   ✅ Supports logout
+/* nav.js - Practice Online Navigation System
+   Works with layout.js
+
+   FEATURES
+   - Dashboard link
+   - Profile link
+   - Support link
+   - Subscription link
+   - Announcements link
+   - Admin dropdown (admin only)
+   - Mobile navigation support
+   - Logout
 */
 
 (function () {
-  const API = "https://practice-backend-msgn.onrender.com";
-  window.API = API;
 
-  const menuBtn = document.getElementById("menuBtn");
-  const mobileMenu = document.getElementById("mobileMenu");
+const API = "https://practice-backend-msgn.onrender.com";
+window.API = API;
 
-  if (menuBtn && mobileMenu) {
-    menuBtn.addEventListener("click", () => {
-      mobileMenu.classList.toggle("open");
-    });
+/* -----------------------------
+MENU TOGGLE
+----------------------------- */
 
-    mobileMenu.addEventListener("click", (e) => {
-      if (e.target && e.target.tagName === "A") {
-        mobileMenu.classList.remove("open");
-      }
-    });
-  }
+const menuBtn = document.getElementById("menuBtn");
+const mobileMenu = document.getElementById("mobileMenu");
 
-  function getCurrentFile() {
-    const path = (window.location.pathname || "").toLowerCase();
-    const parts = path.split("/");
-    return parts[parts.length - 1] || "index.html";
-  }
+if (menuBtn && mobileMenu) {
 
-  function markActive(navRoot) {
-    if (!navRoot) return;
-    const currentFile = getCurrentFile();
+menuBtn.addEventListener("click", () => {
+mobileMenu.classList.toggle("open");
+});
 
-    [...navRoot.querySelectorAll("a")].forEach((a) => {
-      const href = (a.getAttribute("href") || "").toLowerCase();
-      if (!href) return;
-      const hrefFile = href.split("/").pop();
-      if (hrefFile === currentFile) {
-        a.classList.add("active");
-      }
-    });
-  }
+mobileMenu.addEventListener("click", (e) => {
+if (e.target.tagName === "A") {
+mobileMenu.classList.remove("open");
+}
+});
 
-  function ensureLink(navRoot, { href, text }) {
-    if (!navRoot) return;
+}
 
-    const exists = [...navRoot.querySelectorAll("a")].some((a) => {
-      const h = (a.getAttribute("href") || "").toLowerCase();
-      const t = (a.textContent || "").trim().toLowerCase();
-      return h === href.toLowerCase() || t === text.toLowerCase();
-    });
+/* -----------------------------
+ACTIVE PAGE
+----------------------------- */
 
-    if (exists) {
-      markActive(navRoot);
-      return;
-    }
+function getCurrentFile() {
+const path = window.location.pathname.toLowerCase();
+const parts = path.split("/");
+return parts.pop() || "index.html";
+}
 
-    const link = document.createElement("a");
-    link.href = href;
-    link.textContent = text;
-    navRoot.appendChild(link);
-    markActive(navRoot);
-  }
+function markActive(navRoot){
 
-  function removeLink(navRoot, hrefOrText) {
-    if (!navRoot) return;
+if(!navRoot) return;
 
-    [...navRoot.querySelectorAll("a")].forEach((a) => {
-      const h = (a.getAttribute("href") || "").toLowerCase();
-      const t = (a.textContent || "").trim().toLowerCase();
-      const key = hrefOrText.toLowerCase();
+const current = getCurrentFile();
 
-      if (h.includes(key) || t === key) {
-        a.remove();
-      }
-    });
-  }
+[...navRoot.querySelectorAll("a")].forEach(a => {
 
-  function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
-    localStorage.removeItem("me_cache");
-    window.location.href = "login.html";
-  }
+const href = (a.getAttribute("href") || "").toLowerCase();
+const file = href.split("/").pop();
 
-  document.getElementById("logoutBtn")?.addEventListener("click", logout);
-  document.getElementById("logoutBtnMobile")?.addEventListener("click", logout);
+if(file === current){
 
-  async function getMe(token) {
-    const cached = localStorage.getItem("me_cache");
+a.classList.add("active");
 
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        if (Date.now() - parsed.time < 120000) {
-          return parsed.data;
-        }
-      } catch {}
-    }
+const dropdown = a.closest(".nav-dropdown");
+if(dropdown) dropdown.classList.add("active");
 
-    const res = await fetch(`${API}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+}
 
-    if (res.status === 401 || res.status === 403) return "UNAUTH";
-    if (!res.ok) return null;
+});
 
-    const data = await res.json().catch(() => null);
-    if (!data) return null;
+}
 
-    localStorage.setItem(
-      "me_cache",
-      JSON.stringify({
-        time: Date.now(),
-        data,
-      })
-    );
+/* -----------------------------
+ADD LINK IF MISSING
+----------------------------- */
 
-    return data;
-  }
+function ensureLink(navRoot,{href,text}){
 
-  function getNavRoots() {
-    const roots = [
-      document.getElementById("desktopNav"),
-      document.getElementById("mobileMenu"),
-      document.querySelector("nav.nav"),
-      document.querySelector("nav"),
-      document.querySelector(".nav-links"),
-      document.querySelector(".top-nav-links")
-    ].filter(Boolean);
+if(!navRoot) return;
 
-    return [...new Set(roots)];
-  }
+const exists = [...navRoot.querySelectorAll("a")].some(a=>{
+const h=(a.getAttribute("href")||"").toLowerCase();
+const t=(a.textContent||"").trim().toLowerCase();
+return h===href.toLowerCase()||t===text.toLowerCase();
+});
 
-  async function setupNav() {
-    const token = localStorage.getItem("token");
-    const navs = getNavRoots();
+if(exists){
+markActive(navRoot);
+return;
+}
 
-    navs.forEach(markActive);
+const link=document.createElement("a");
+link.href=href;
+link.textContent=text;
 
-    if (!token) {
-      navs.forEach((nav) => {
-        removeLink(nav, "dashboard.html");
-        removeLink(nav, "profile.html");
-        removeLink(nav, "subscription.html");
-        removeLink(nav, "admin-payments.html");
-      });
-      return;
-    }
+navRoot.appendChild(link);
 
-    const me = await getMe(token);
+markActive(navRoot);
 
-    if (me === "UNAUTH") {
-      logout();
-      return;
-    }
+}
 
-    if (!me) return;
+/* -----------------------------
+REMOVE LINK
+----------------------------- */
 
-    navs.forEach((nav) => {
-      ensureLink(nav, { href: "dashboard.html", text: "Dashboard" });
-      ensureLink(nav, { href: "profile.html", text: "Profile" });
-      ensureLink(nav, { href: "support.html", text: "Support" });
-      ensureLink(nav, { href: "subscription.html", text: "Subscription" });
-    });
+function removeLink(navRoot,key){
 
-    if (me.role === "admin") {
-      navs.forEach((nav) => {
-        ensureLink(nav, { href: "admin.html", text: "Admin" });
-        ensureLink(nav, { href: "admin-payments.html", text: "Admin Payments" });
-      });
-    } else {
-      navs.forEach((nav) => {
-        removeLink(nav, "admin.html");
-        removeLink(nav, "admin-payments.html");
-      });
-    }
+if(!navRoot) return;
 
-    const navUsername = document.getElementById("navUsername");
-    if (navUsername) {
-      navUsername.textContent = me.username || "";
-    }
-  }
+key=key.toLowerCase();
 
-  setupNav();
+[...navRoot.querySelectorAll("a")].forEach(a=>{
 
-  window.auth = {
-    API,
-    token: () => localStorage.getItem("token"),
-    logout,
-    authHeader: () => {
-      const t = localStorage.getItem("token");
-      return t ? { Authorization: `Bearer ${t}` } : {};
-    },
-  };
+const h=(a.getAttribute("href")||"").toLowerCase();
+const t=(a.textContent||"").trim().toLowerCase();
+
+if(h.includes(key)||t===key){
+a.remove();
+}
+
+});
+
+}
+
+/* -----------------------------
+LOGOUT
+----------------------------- */
+
+function logout(){
+
+localStorage.removeItem("token");
+localStorage.removeItem("username");
+localStorage.removeItem("me_cache");
+
+window.location.href="login.html";
+
+}
+
+document.getElementById("logoutBtn")?.addEventListener("click",logout);
+document.getElementById("logoutBtnMobile")?.addEventListener("click",logout);
+
+/* -----------------------------
+GET CURRENT USER
+----------------------------- */
+
+async function getMe(token){
+
+const cached=localStorage.getItem("me_cache");
+
+if(cached){
+
+try{
+
+const parsed=JSON.parse(cached);
+
+if(Date.now()-parsed.time<120000){
+return parsed.data;
+}
+
+}catch{}
+
+}
+
+const res=await fetch(`${API}/api/auth/me`,{
+headers:{Authorization:`Bearer ${token}`}
+});
+
+if(res.status===401||res.status===403) return "UNAUTH";
+
+if(!res.ok) return null;
+
+const data=await res.json().catch(()=>null);
+
+if(!data) return null;
+
+localStorage.setItem("me_cache",JSON.stringify({
+time:Date.now(),
+data
+}));
+
+return data;
+
+}
+
+/* -----------------------------
+NAV ROOTS
+----------------------------- */
+
+function getNavRoots(){
+
+const roots=[
+document.getElementById("desktopNav"),
+document.getElementById("mobileMenu"),
+document.querySelector("nav.nav"),
+document.querySelector("nav")
+].filter(Boolean);
+
+return [...new Set(roots)];
+
+}
+
+/* -----------------------------
+ADMIN DROPDOWN
+----------------------------- */
+
+function ensureAdminDropdown(navRoot){
+
+if(!navRoot) return;
+
+if(navRoot.querySelector(".nav-dropdown")) return;
+
+const dropdown=document.createElement("div");
+dropdown.className="nav-dropdown";
+
+const btn=document.createElement("button");
+btn.className="nav-dropdown-toggle";
+btn.textContent="Admin";
+
+const menu=document.createElement("div");
+menu.className="nav-dropdown-menu";
+
+menu.innerHTML=`
+<a href="admin.html">Admin Dashboard</a>
+<a href="admin-payments.html">Admin Payments</a>
+<a href="admin-announcements.html">Admin Announcements</a>
+`;
+
+btn.onclick=(e)=>{
+e.stopPropagation();
+dropdown.classList.toggle("open");
+};
+
+dropdown.appendChild(btn);
+dropdown.appendChild(menu);
+
+navRoot.appendChild(dropdown);
+
+}
+
+/* close dropdown if clicking outside */
+
+document.addEventListener("click",()=>{
+document.querySelectorAll(".nav-dropdown.open")
+.forEach(d=>d.classList.remove("open"));
+});
+
+/* -----------------------------
+MAIN NAV SETUP
+----------------------------- */
+
+async function setupNav(){
+
+const token=localStorage.getItem("token");
+
+const navs=getNavRoots();
+
+navs.forEach(markActive);
+
+if(!token){
+
+navs.forEach(nav=>{
+
+removeLink(nav,"dashboard.html");
+removeLink(nav,"profile.html");
+removeLink(nav,"subscription.html");
+removeLink(nav,"support.html");
+removeLink(nav,"announcements.html");
+
+});
+
+return;
+
+}
+
+const me=await getMe(token);
+
+if(me==="UNAUTH"){
+logout();
+return;
+}
+
+if(!me) return;
+
+/* normal user links */
+
+navs.forEach(nav=>{
+
+ensureLink(nav,{href:"dashboard.html",text:"Dashboard"});
+ensureLink(nav,{href:"profile.html",text:"Profile"});
+ensureLink(nav,{href:"support.html",text:"Support"});
+ensureLink(nav,{href:"subscription.html",text:"Subscription"});
+ensureLink(nav,{href:"announcements.html",text:"Announcements"});
+
+});
+
+/* admin dropdown */
+
+if(me.role==="admin"){
+
+navs.forEach(nav=>{
+ensureAdminDropdown(nav);
+});
+
+}
+
+/* username */
+
+const navUsername=document.getElementById("navUsername");
+
+if(navUsername){
+navUsername.textContent=me.username||"";
+}
+
+}
+
+setupNav();
+
+/* -----------------------------
+AUTH HELPERS
+----------------------------- */
+
+window.auth={
+API,
+token:()=>localStorage.getItem("token"),
+logout,
+authHeader:()=>{
+const t=localStorage.getItem("token");
+return t?{Authorization:`Bearer ${t}`}:{};
+}
+};
+
 })();
