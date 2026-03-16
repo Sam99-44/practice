@@ -9,24 +9,27 @@
 // ✅ Saves multi-select properly into Result for review/results
 // ✅ Backward compatible with old single-correct fields (chosenIndex/correctIndex)
 // ✅ Saves + returns quiz difficulty (easy/moderate/hard)
-// ✅ NEW: Saves + returns quiz paper (paper1/paper2)
-// ✅ NEW: PayFast monthly payments
-// ✅ NEW: Returns subscription info on /api/auth/me
-// ✅ NEW: Strong email validation
-// ✅ NEW: Email verification routes
-// ✅ NEW: Login blocks unverified users
-// ✅ NEW: Register route protection with express-rate-limit.
-// ✅ NEW: Free trial system
-// ✅ NEW: Access-status routes
-// ✅ NEW: Trial expiry blocks protected learner routes
-// ✅ NEW: Manual payment routes
-// ✅ NEW: Admin leaderboard filters
-// ✅ NEW: Admin leaderboard statistics (weekly / monthly / all time, province, district, grade)
-// ✅ NEW: Admin sees all pages
-// ✅ NEW: Tester sees all pages
-// ✅ NEW: Tester can test subscription/payments/features
-// ✅ NEW: Editor can add/edit quizzes
-// ✅ NEW: Learners can practice without subscription during development
+// ✅ Saves + returns quiz paper (paper1/paper2)
+// ✅ PayFast monthly payments
+// ✅ Returns subscription info on /api/auth/me
+// ✅ Strong email validation
+// ✅ Email verification routes
+// ✅ Login blocks unverified users
+// ✅ Register route protection with express-rate-limit
+// ✅ Free trial system
+// ✅ Access-status routes
+// ✅ Manual payment routes
+// ✅ Admin leaderboard filters
+// ✅ Admin leaderboard statistics
+// ✅ Admin sees all pages
+// ✅ Tester sees all pages
+// ✅ Tester can test subscription/payments/features
+// ✅ Editor can add/edit quizzes
+// ✅ Learners can practice without subscription during development
+// ✅ Draft / publish / scheduled publish support
+// ✅ Available from / until support
+// ✅ Optional learner email on publish
+// ✅ Auto-publish scheduled quizzes
 
 import express from "express";
 import mongoose from "mongoose";
@@ -222,7 +225,7 @@ function getPeriodStart(period) {
   if (period === "weekly") {
     const d = new Date(now);
     const day = d.getDay();
-    const diff = day === 0 ? 6 : day - 1; // Monday start
+    const diff = day === 0 ? 6 : day - 1;
     d.setDate(d.getDate() - diff);
     d.setHours(0, 0, 0, 0);
     return d;
@@ -249,6 +252,12 @@ function canManageQuizzes(role) {
   return ["admin", "editor", "tester"].includes(
     String(role || "").toLowerCase().trim()
   );
+}
+
+function validDateOrNull(value) {
+  if (!value) return null;
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? "INVALID" : d;
 }
 
 const profilePhotoStorage = multer.diskStorage({
@@ -443,6 +452,79 @@ async function quizManagerOnly(req, res, next) {
   }
 }
 
+/* ------------------ PUBLISH HELPERS ------------------ */
+async function sendPublishedQuizEmails(quiz) {
+  if (!quiz || !quiz.sendPublishEmail) return;
+
+  try {
+    const learners = await User.find({
+      role: "learner",
+      accountType: "student",
+      grade: quiz.grade,
+      email: { $exists: true, $ne: "" },
+      emailVerified: true,
+    }).select("email");
+
+    const emails = learners
+      .map((u) => String(u.email).toLowerCase().trim())
+      .filter(Boolean);
+
+    if (!emails.length) {
+      console.log(`No learners found for grade ${quiz.grade} to notify.`);
+      return;
+    }
+
+    const subject = `New assessment for Grade ${quiz.grade}`;
+    const link =
+      "https://practiceonline.co.za/login.html?next=" +
+      encodeURIComponent("learner-quizzes.html");
+
+    const html = `
+      <div style="font-family:Arial,sans-serif; line-height:1.6;">
+        <p>Hello,</p>
+        <p>A new assessment is available for <b>Grade ${quiz.grade}</b>.</p>
+        <p><b>${quiz.title}</b><br/>Topic: ${quiz.topic}</p>
+        <p>Paper: <b>${paperLabel(quiz.paper)}</b></p>
+        <p>Difficulty: <b>${quiz.difficulty}</b></p>
+        <p><a href="${link}" target="_blank">Log in to Practice Online</a></p>
+        <p>Regards,<br/>Practice Online Team</p>
+      </div>
+    `;
+
+    const text = `New assessment for Grade ${quiz.grade}: ${quiz.title} (Topic: ${quiz.topic}). Paper: ${paperLabel(
+      quiz.paper
+    )}. Difficulty: ${quiz.difficulty}. Login: ${link}`;
+
+    await sendBulkEmail({ recipients: emails, subject, html, text });
+    console.log(`Notified ${emails.length} learners for grade ${quiz.grade}.`);
+  } catch (e) {
+    console.error("Quiz publish email failed:", e.message);
+  }
+}
+
+async function autoPublishScheduledQuizzes() {
+  try {
+    const now = new Date();
+
+    const dueQuizzes = await Quiz.find({
+      isPublished: true,
+      publishAt: { $ne: null, $lte: now },
+      publishedAt: null,
+    });
+
+    for (const quiz of dueQuizzes) {
+      quiz.publishedAt = now;
+      await quiz.save();
+
+      if (quiz.sendPublishEmail) {
+        await sendPublishedQuizEmails(quiz);
+      }
+    }
+  } catch (e) {
+    console.error("autoPublishScheduledQuizzes error:", e.message);
+  }
+}
+
 /* ------------------ AUTH ROUTES ------------------ */
 
 app.get("/api/auth/me", authRequired, async (req, res) => {
@@ -580,20 +662,16 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       accountType,
       studentNumber,
       grade: gradeNum,
-
       profileHeadline: "",
       profilePhoto: "",
-
       province: cleanSpaces(province || ""),
       district: cleanSpaces(district || ""),
       gender: String(gender || "").trim(),
       cellphone: cleanSpaces(cellphone || ""),
       guardianCellphone: cleanSpaces(guardianCellphone || ""),
-
       emailVerified: false,
       verifyTokenHash,
       verifyTokenExpiresAt,
-
       trialActive: true,
       trialStartDate: now,
       trialEndDate: addDays(now, trialDays),
@@ -1307,15 +1385,25 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
     const wantsAll = String(req.query.all || "") === "1";
 
     let filter = {};
-    if (!(isPrivilegedRole(u.role) && wantsAll)) {
+
+    if (isPrivilegedRole(u.role) && wantsAll) {
+      filter = {};
+    } else if (canManageQuizzes(u.role)) {
+      if (req.query.onlyPublished === "1") {
+        filter.isPublished = true;
+      }
+    } else {
       if (!u.grade) return res.json([]);
+      const now = new Date();
       filter.grade = u.grade;
+      filter.isPublished = true;
+      filter.$or = [{ publishAt: null }, { publishAt: { $lte: now } }];
     }
 
     const quizzes = await Quiz.find(filter)
       .sort({ createdAt: -1 })
       .select(
-        "grade title topic paper difficulty questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt"
+        "grade title topic paper difficulty questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
       );
 
     return res.json(quizzes);
@@ -1333,8 +1421,22 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
     const u = await User.findById(req.user.userId).select("role grade");
     if (!u) return res.status(401).json({ message: "User not found" });
 
-    if (!isPrivilegedRole(u.role) && Number(quiz.grade) !== Number(u.grade)) {
+    if (canManageQuizzes(u.role) || isPrivilegedRole(u.role)) {
+      return res.json(quiz);
+    }
+
+    if (Number(quiz.grade) !== Number(u.grade)) {
       return res.status(403).json({ message: "Not allowed" });
+    }
+
+    const now = new Date();
+
+    if (!quiz.isPublished) {
+      return res.status(403).json({ message: "This assessment is not yet published." });
+    }
+
+    if (quiz.publishAt && new Date(quiz.publishAt) > now) {
+      return res.status(403).json({ message: "This assessment is not yet published." });
     }
 
     return res.json(quiz);
@@ -1345,8 +1447,21 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
 
 app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
   try {
-    const { grade, title, topic, paper, timeLimitMinutes, instructions, questions, difficulty } =
-      req.body;
+    const {
+      grade,
+      title,
+      topic,
+      paper,
+      timeLimitMinutes,
+      instructions,
+      questions,
+      difficulty,
+      publishNow,
+      publishAt,
+      availableFrom,
+      availableUntil,
+      sendPublishEmail,
+    } = req.body;
 
     if (!grade || !title || !topic || !Array.isArray(questions) || questions.length === 0) {
       return res
@@ -1431,6 +1546,35 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
       }
     }
 
+    const publishAtRaw = validDateOrNull(publishAt);
+    const availableFromRaw = validDateOrNull(availableFrom);
+    const availableUntilRaw = validDateOrNull(availableUntil);
+
+    if (publishAtRaw === "INVALID") {
+      return res.status(400).json({ message: "Invalid publish date/time." });
+    }
+    if (availableFromRaw === "INVALID") {
+      return res.status(400).json({ message: "Invalid Available From date/time." });
+    }
+    if (availableUntilRaw === "INVALID") {
+      return res.status(400).json({ message: "Invalid Available Until date/time." });
+    }
+    if (availableFromRaw && availableUntilRaw && availableUntilRaw <= availableFromRaw) {
+      return res.status(400).json({ message: "Available Until must be after Available From." });
+    }
+
+    let isPublished = false;
+    let publishedAt = null;
+    let finalPublishAt = null;
+
+    if (Boolean(publishNow)) {
+      isPublished = true;
+      publishedAt = new Date();
+    } else if (publishAtRaw) {
+      isPublished = true;
+      finalPublishAt = publishAtRaw;
+    }
+
     const quiz = await Quiz.create({
       grade: g,
       title: quizTitle,
@@ -1442,58 +1586,31 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
       instructions: quizInstructions,
       isFrozen: false,
       frozenAt: null,
-      availableFrom: null,
-      availableUntil: null,
+      availableFrom: availableFromRaw || null,
+      availableUntil: availableUntilRaw || null,
+      isPublished,
+      publishedAt,
+      publishAt: finalPublishAt,
+      publishedBy: isPublished ? req.user.userId : null,
+      sendPublishEmail: !!sendPublishEmail,
     });
 
-    res.status(201).json({ message: "Saved", quizId: quiz._id });
-
-    setImmediate(async () => {
-      try {
-        const learners = await User.find({
-          role: "learner",
-          accountType: "student",
-          grade: g,
-          email: { $exists: true, $ne: "" },
-          emailVerified: true,
-        }).select("email");
-
-        const emails = learners
-          .map((u) => String(u.email).toLowerCase().trim())
-          .filter(Boolean);
-
-        if (!emails.length) {
-          console.log(`No learners found for grade ${g} to notify.`);
-          return;
-        }
-
-        const subject = `New assessment for Grade ${g}`;
-        const link =
-          "https://practiceonline.co.za/login.html?next=" +
-          encodeURIComponent("learner-quizzes.html");
-
-        const html = `
-          <div style="font-family:Arial,sans-serif; line-height:1.6;">
-            <p>Hello,</p>
-            <p>A new assessment is available for <b>Grade ${g}</b>.</p>
-            <p><b>${quizTitle}</b><br/>Topic: ${quizTopic}</p>
-            <p>Paper: <b>${paperLabel(quizPaper)}</b></p>
-            <p>Difficulty: <b>${quizDifficulty}</b></p>
-            <p><a href="${link}" target="_blank">Log in to Practice Online</a></p>
-            <p>Regards,<br/>Practice Online Team</p>
-          </div>
-        `;
-
-        const text = `New assessment for Grade ${g}: ${quizTitle} (Topic: ${quizTopic}). Paper: ${paperLabel(
-          quizPaper
-        )}. Difficulty: ${quizDifficulty}. Login: ${link}`;
-
-        await sendBulkEmail({ recipients: emails, subject, html, text });
-        console.log(`Notified ${emails.length} learners for grade ${g}.`);
-      } catch (e) {
-        console.error("Quiz notification email failed:", e.message);
-      }
+    res.status(201).json({
+      message: Boolean(publishNow)
+        ? "Assessment published."
+        : finalPublishAt
+        ? "Assessment scheduled for publishing."
+        : "Assessment saved as draft.",
+      quizId: quiz._id,
+      isPublished: quiz.isPublished,
+      publishAt: quiz.publishAt,
     });
+
+    if (Boolean(publishNow) && !!sendPublishEmail) {
+      setImmediate(async () => {
+        await sendPublishedQuizEmails(quiz);
+      });
+    }
 
     return;
   } catch (e) {
@@ -1520,6 +1637,10 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
       "isFrozen",
       "frozenAt",
       "difficulty",
+      "isPublished",
+      "publishedAt",
+      "publishAt",
+      "sendPublishEmail",
     ];
 
     for (const k of allowed) {
@@ -1550,18 +1671,50 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
     }
 
     if ("availableFrom" in update) {
-      update.availableFrom = update.availableFrom ? new Date(update.availableFrom) : null;
-    }
-    if ("availableUntil" in update) {
-      update.availableUntil = update.availableUntil ? new Date(update.availableUntil) : null;
+      const parsed = validDateOrNull(update.availableFrom);
+      if (parsed === "INVALID") {
+        return res.status(400).json({ message: "Invalid Available From date/time." });
+      }
+      update.availableFrom = parsed;
     }
 
-    if ("availableFrom" in update && "availableUntil" in update) {
-      if (update.availableFrom && update.availableUntil) {
-        if (update.availableUntil.getTime() <= update.availableFrom.getTime()) {
-          return res.status(400).json({ message: "Available Until must be after Available From." });
-        }
+    if ("availableUntil" in update) {
+      const parsed = validDateOrNull(update.availableUntil);
+      if (parsed === "INVALID") {
+        return res.status(400).json({ message: "Invalid Available Until date/time." });
       }
+      update.availableUntil = parsed;
+    }
+
+    if ("publishAt" in update) {
+      const parsed = validDateOrNull(update.publishAt);
+      if (parsed === "INVALID") {
+        return res.status(400).json({ message: "Invalid publish date/time." });
+      }
+      update.publishAt = parsed;
+    }
+
+    if ("publishedAt" in update) {
+      const parsed = validDateOrNull(update.publishedAt);
+      if (parsed === "INVALID") {
+        return res.status(400).json({ message: "Invalid publishedAt date/time." });
+      }
+      update.publishedAt = parsed;
+    }
+
+    const availableFromCheck =
+      "availableFrom" in update ? update.availableFrom : undefined;
+    const availableUntilCheck =
+      "availableUntil" in update ? update.availableUntil : undefined;
+
+    if (
+      availableFromCheck !== undefined &&
+      availableUntilCheck !== undefined &&
+      availableFromCheck &&
+      availableUntilCheck &&
+      availableUntilCheck.getTime() <= availableFromCheck.getTime()
+    ) {
+      return res.status(400).json({ message: "Available Until must be after Available From." });
     }
 
     if ("questions" in update) {
@@ -1649,6 +1802,54 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
   }
 });
 
+app.patch("/api/quizzes/:id/publish", authRequired, adminOnly, async (req, res) => {
+  try {
+    const { publishNow, publishAt, sendPublishEmail } = req.body;
+
+    const quiz = await Quiz.findById(req.params.id);
+    if (!quiz) return res.status(404).json({ message: "Assessment not found." });
+
+    const publishAtDate = validDateOrNull(publishAt);
+    if (publishAtDate === "INVALID") {
+      return res.status(400).json({ message: "Invalid publish date/time." });
+    }
+
+    quiz.sendPublishEmail =
+      sendPublishEmail === undefined ? quiz.sendPublishEmail : !!sendPublishEmail;
+    quiz.isPublished = true;
+    quiz.publishedBy = req.user.userId;
+
+    if (publishNow) {
+      quiz.publishedAt = new Date();
+      quiz.publishAt = null;
+    } else {
+      if (!publishAtDate) {
+        return res.status(400).json({ message: "Publish date/time is required." });
+      }
+      quiz.publishAt = publishAtDate;
+      quiz.publishedAt = null;
+    }
+
+    await quiz.save();
+
+    if (publishNow && quiz.sendPublishEmail) {
+      setImmediate(async () => {
+        await sendPublishedQuizEmails(quiz);
+      });
+    }
+
+    return res.json({
+      message: publishNow
+        ? "Assessment published successfully."
+        : "Assessment scheduled for publishing.",
+      quiz,
+    });
+  } catch (e) {
+    console.error("PATCH /api/quizzes/:id/publish error:", e.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const quiz = await Quiz.findByIdAndDelete(req.params.id);
@@ -1666,6 +1867,12 @@ function isUnavailableBySchedule(quiz) {
   const now = new Date();
 
   if (quiz?.isFrozen) return true;
+
+  if (quiz?.isPublished !== true) return true;
+  if (quiz?.publishAt) {
+    const p = new Date(quiz.publishAt);
+    if (!isNaN(p.getTime()) && now < p) return true;
+  }
 
   if (quiz?.availableFrom) {
     const from = new Date(quiz.availableFrom);
@@ -2248,6 +2455,7 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB connected");
+    setInterval(autoPublishScheduledQuizzes, 60 * 1000);
     app.listen(PORT, () => console.log(`Server running on ${PORT}`));
   })
   .catch((err) => console.error("Mongo error:", err.message));
