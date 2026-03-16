@@ -3,9 +3,10 @@
    ✅ Uses backend API
    ✅ Supports mobile + desktop navigation
    ✅ Supports learner, editor, admin, tester roles
-   ✅ Editor can see Profile, Practice, Results, Dashboard, Admin
-   ✅ Admin can see all pages
-   ✅ Tester can see all pages
+   ✅ Learner sees Profile, Practice, Results, Dashboard, Support
+   ✅ Editor sees Profile, Practice, Results, Dashboard, Admin
+   ✅ Admin sees all pages
+   ✅ Tester sees all pages
    ✅ Uses progress-dashboard.html
 */
 
