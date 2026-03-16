@@ -22,6 +22,11 @@
 // ✅ NEW: Manual payment routes
 // ✅ NEW: Admin leaderboard filters
 // ✅ NEW: Admin leaderboard statistics (weekly / monthly / all time, province, district, grade)
+// ✅ NEW: Admin sees all pages
+// ✅ NEW: Tester sees all pages
+// ✅ NEW: Tester can test subscription/payments/features
+// ✅ NEW: Editor can add/edit quizzes
+// ✅ NEW: Learners can practice without subscription during development
 
 import express from "express";
 import mongoose from "mongoose";
@@ -46,7 +51,6 @@ import accessRoutes from "./routes/access.js";
 import paymentRoutes from "./routes/payments.js";
 import manualPaymentsRoutes from "./routes/manualPayments.js";
 import { addDays } from "./utils/access.js";
-import { requireActiveAccess } from "./middleware/requireActiveAccess.js";
 
 dotenv.config();
 
@@ -237,6 +241,16 @@ function safeTrim(v) {
   return String(v || "").trim();
 }
 
+function isPrivilegedRole(role) {
+  return ["admin", "tester"].includes(String(role || "").toLowerCase().trim());
+}
+
+function canManageQuizzes(role) {
+  return ["admin", "editor", "tester"].includes(
+    String(role || "").toLowerCase().trim()
+  );
+}
+
 const profilePhotoStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, profileUploadDir);
@@ -403,7 +417,26 @@ async function adminOnly(req, res, next) {
   try {
     const u = await User.findById(req.user.userId).select("role");
     if (!u) return res.status(401).json({ message: "User not found" });
-    if (u.role !== "admin") return res.status(403).json({ message: "Admin only" });
+
+    if (!isPrivilegedRole(u.role)) {
+      return res.status(403).json({ message: "Admin/tester only" });
+    }
+
+    next();
+  } catch {
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+async function quizManagerOnly(req, res, next) {
+  try {
+    const u = await User.findById(req.user.userId).select("role");
+    if (!u) return res.status(401).json({ message: "User not found" });
+
+    if (!canManageQuizzes(u.role)) {
+      return res.status(403).json({ message: "Admin/editor/tester only" });
+    }
+
     next();
   } catch {
     res.status(500).json({ message: "Server error" });
@@ -941,21 +974,92 @@ app.delete("/api/profile/me/photo", authRequired, async (req, res) => {
 /* ------------------ ADMIN STATS ------------------ */
 app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
   try {
-    const [totalUsers, totalAssessments, byGrade] = await Promise.all([
+    const [
+      totalUsers,
+      totalAssessments,
+      quizzesByGradeRaw,
+      learnersByGradeRaw,
+      accountTypeByGradeRaw,
+    ] = await Promise.all([
       User.countDocuments({}),
       Quiz.countDocuments({}),
       Quiz.aggregate([
+        { $match: { grade: { $gte: 8, $lte: 12 } } },
         { $group: { _id: "$grade", count: { $sum: 1 } } },
         { $sort: { _id: 1 } },
-        { $project: { _id: 0, grade: "$_id", count: 1 } },
+      ]),
+      User.aggregate([
+        {
+          $match: {
+            accountType: "student",
+            grade: { $gte: 8, $lte: 12 },
+          },
+        },
+        { $group: { _id: "$grade", count: { $sum: 1 } } },
+        { $sort: { _id: 1 } },
+      ]),
+      User.aggregate([
+        {
+          $match: {
+            grade: { $gte: 8, $lte: 12 },
+            accountType: { $in: ["student", "materials"] },
+          },
+        },
+        {
+          $group: {
+            _id: { grade: "$grade", accountType: "$accountType" },
+            count: { $sum: 1 },
+          },
+        },
       ]),
     ]);
+
+    const quizzesByGrade = [];
+    const learnersByGrade = [];
+    const accountTypeByGrade = [];
+
+    for (let g = 8; g <= 12; g++) {
+      const quizRow = quizzesByGradeRaw.find((x) => Number(x._id) === g);
+      const learnerRow = learnersByGradeRaw.find((x) => Number(x._id) === g);
+
+      const studentRow = accountTypeByGradeRaw.find(
+        (x) => Number(x._id.grade) === g && x._id.accountType === "student"
+      );
+      const materialsRow = accountTypeByGradeRaw.find(
+        (x) => Number(x._id.grade) === g && x._id.accountType === "materials"
+      );
+
+      const studentCount = studentRow ? Number(studentRow.count) : 0;
+      const materialsCount = materialsRow ? Number(materialsRow.count) : 0;
+
+      quizzesByGrade.push({
+        grade: g,
+        count: quizRow ? Number(quizRow.count) : 0,
+      });
+
+      learnersByGrade.push({
+        grade: g,
+        count: learnerRow ? Number(learnerRow.count) : 0,
+      });
+
+      accountTypeByGrade.push({
+        grade: g,
+        student: studentCount,
+        materials: materialsCount,
+        total: studentCount + materialsCount,
+      });
+    }
+
+    const totalLearners = learnersByGrade.reduce((sum, row) => sum + row.count, 0);
 
     return res.json({
       totalUsers,
       totalAssessments,
       totalQuizzes: totalAssessments,
-      quizzesByGrade: byGrade,
+      totalLearners,
+      quizzesByGrade,
+      learnersByGrade,
+      accountTypeByGrade,
     });
   } catch (e) {
     console.error("GET /api/admin/stats error:", e.message);
@@ -1195,7 +1299,7 @@ app.get("/api/admin/leaderboard", authRequired, adminOnly, async (req, res) => {
 
 /* ------------------ QUIZZES ------------------ */
 
-app.get("/api/quizzes", authRequired, requireActiveAccess, async (req, res) => {
+app.get("/api/quizzes", authRequired, async (req, res) => {
   try {
     const u = await User.findById(req.user.userId).select("role grade");
     if (!u) return res.status(401).json({ message: "User not found" });
@@ -1203,7 +1307,7 @@ app.get("/api/quizzes", authRequired, requireActiveAccess, async (req, res) => {
     const wantsAll = String(req.query.all || "") === "1";
 
     let filter = {};
-    if (!(u.role === "admin" && wantsAll)) {
+    if (!(isPrivilegedRole(u.role) && wantsAll)) {
       if (!u.grade) return res.json([]);
       filter.grade = u.grade;
     }
@@ -1221,7 +1325,7 @@ app.get("/api/quizzes", authRequired, requireActiveAccess, async (req, res) => {
   }
 });
 
-app.get("/api/quizzes/:id", authRequired, requireActiveAccess, async (req, res) => {
+app.get("/api/quizzes/:id", authRequired, async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id);
     if (!quiz) return res.status(404).json({ message: "Not found" });
@@ -1229,7 +1333,7 @@ app.get("/api/quizzes/:id", authRequired, requireActiveAccess, async (req, res) 
     const u = await User.findById(req.user.userId).select("role grade");
     if (!u) return res.status(401).json({ message: "User not found" });
 
-    if (u.role !== "admin" && Number(quiz.grade) !== Number(u.grade)) {
+    if (!isPrivilegedRole(u.role) && Number(quiz.grade) !== Number(u.grade)) {
       return res.status(403).json({ message: "Not allowed" });
     }
 
@@ -1239,7 +1343,7 @@ app.get("/api/quizzes/:id", authRequired, requireActiveAccess, async (req, res) 
   }
 });
 
-app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
+app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
   try {
     const { grade, title, topic, paper, timeLimitMinutes, instructions, questions, difficulty } =
       req.body;
@@ -1398,7 +1502,7 @@ app.post("/api/quizzes", authRequired, adminOnly, async (req, res) => {
   }
 });
 
-app.put("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
+app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
   try {
     const id = req.params.id;
 
@@ -1628,7 +1732,7 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
   return ua === ca;
 }
 
-app.post("/api/results", authRequired, requireActiveAccess, async (req, res) => {
+app.post("/api/results", authRequired, async (req, res) => {
   try {
     const { quizId, answers, timeTakenSeconds } = req.body;
 
@@ -1641,15 +1745,15 @@ app.post("/api/results", authRequired, requireActiveAccess, async (req, res) => 
     const me = await User.findById(userId).select("role");
     if (!me) return res.status(401).json({ message: "User not found" });
 
-    const isAdmin = me.role === "admin";
+    const isAdminAttemptUser = isPrivilegedRole(me.role);
 
-    if (!isAdmin) {
+    if (!isAdminAttemptUser) {
       const existing = await Result.findOne({ userId, quizId }).select("_id");
       if (existing) return res.status(409).json({ message: "Already attempted" });
     }
 
     let attemptNo = 1;
-    if (isAdmin) {
+    if (isAdminAttemptUser) {
       const prev = await Result.countDocuments({ userId, quizId, isAdminAttempt: true });
       attemptNo = prev + 1;
     }
@@ -1810,7 +1914,7 @@ app.post("/api/results", authRequired, requireActiveAccess, async (req, res) => 
       status,
       answers: savedAnswers,
       timeTakenSeconds: Number(timeTakenSeconds) || 0,
-      isAdminAttempt: isAdmin,
+      isAdminAttempt: isAdminAttemptUser,
       attemptNo,
       attemptedAt: new Date(),
     });
@@ -1832,7 +1936,7 @@ app.post("/api/results", authRequired, requireActiveAccess, async (req, res) => 
   }
 });
 
-app.get("/api/results/my", authRequired, requireActiveAccess, async (req, res) => {
+app.get("/api/results/my", authRequired, async (req, res) => {
   try {
     const userId = req.user.userId;
 
@@ -1848,7 +1952,7 @@ app.get("/api/results/my", authRequired, requireActiveAccess, async (req, res) =
   }
 });
 
-app.get("/api/results/:id", authRequired, requireActiveAccess, async (req, res) => {
+app.get("/api/results/:id", authRequired, async (req, res) => {
   try {
     const userId = req.user.userId;
 
@@ -1858,7 +1962,7 @@ app.get("/api/results/:id", authRequired, requireActiveAccess, async (req, res) 
     const u = await User.findById(userId).select("role");
     if (!u) return res.status(401).json({ message: "User not found" });
 
-    if (u.role !== "admin" && String(r.userId) !== String(userId)) {
+    if (!isPrivilegedRole(u.role) && String(r.userId) !== String(userId)) {
       return res.status(403).json({ message: "Not allowed" });
     }
 
