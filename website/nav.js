@@ -2,9 +2,10 @@
    ✅ Profile is the first page
    ✅ Uses backend API
    ✅ Supports mobile + desktop navigation
-   ✅ Supports learner, editor, admin roles
-   ✅ Editor can see Profile, Practice, Results, Admin
-   ✅ Admin-only development pages hidden from learners/editors
+   ✅ Supports learner, editor, admin, tester roles
+   ✅ Editor can see Profile, Practice, Results, Dashboard, Admin
+   ✅ Admin can see all pages
+   ✅ Tester can see all pages
    ✅ Uses progress-dashboard.html
 */
 
@@ -85,7 +86,7 @@
       document.querySelector("nav.nav"),
       document.querySelector("nav"),
       document.querySelector(".nav-links"),
-      document.querySelector(".top-nav-links")
+      document.querySelector(".top-nav-links"),
     ].filter(Boolean);
 
     return [...new Set(roots)];
@@ -94,6 +95,7 @@
   function isLogoutButton(node) {
     if (!node) return false;
     if (node.tagName !== "BUTTON") return false;
+
     return (
       node.id === "logoutBtn" ||
       node.id === "logoutBtnMobile" ||
@@ -138,7 +140,7 @@
       const link = createNavLink({
         href: item.href,
         text: item.text,
-        active
+        active,
       });
 
       navRoot.appendChild(link);
@@ -147,6 +149,16 @@
     if (logoutButton) {
       navRoot.appendChild(logoutButton);
     }
+  }
+
+  function uniqueLinks(list) {
+    const seen = new Set();
+    return list.filter((item) => {
+      const key = `${item.href}|${item.text}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   async function setupNav() {
@@ -169,25 +181,33 @@
 
     if (!me) return;
 
-    const role = String(me.role || "").toLowerCase();
+    const role = String(me.role || "").toLowerCase().trim();
+
+    const isLearner = role === "learner";
+    const isEditor = role === "editor";
+    const isAdmin = role === "admin";
+    const isTester = role === "tester";
+    const isAdminLike = isAdmin || isTester;
+
     let links = [];
 
-    if (role === "learner") {
+    if (isLearner) {
       links = [
         { href: "profile.html", text: "Profile" },
         { href: "learner-quizzes.html", text: "Practice" },
         { href: "results.html", text: "Results" },
         { href: "progress-dashboard.html", text: "Dashboard" },
-        { href: "support.html", text: "Support" }
+        { href: "support.html", text: "Support" },
       ];
-    } else if (role === "editor") {
+    } else if (isEditor) {
       links = [
         { href: "profile.html", text: "Profile" },
         { href: "learner-quizzes.html", text: "Practice" },
         { href: "results.html", text: "Results" },
-        { href: "admin.html", text: "Admin" }
+        { href: "progress-dashboard.html", text: "Dashboard" },
+        { href: "admin.html", text: "Admin" },
       ];
-    } else if (role === "admin") {
+    } else if (isAdminLike) {
       links = [
         { href: "profile.html", text: "Profile" },
         { href: "learner-quizzes.html", text: "Practice" },
@@ -195,16 +215,18 @@
         { href: "progress-dashboard.html", text: "Dashboard" },
         { href: "leaderboard.html", text: "Leaderboard" },
         { href: "admin.html", text: "Admin" },
+        { href: "admin-dashboard.html", text: "Admin Dashboard" },
         { href: "admin-leaderboard.html", text: "Admin Statistics" },
         { href: "admin-payments.html", text: "Admin Payments" },
         { href: "subscription.html", text: "Subscription" },
-        { href: "announcements.html", text: "Announcements" }
+        { href: "announcements.html", text: "Announcements" },
+        { href: "support.html", text: "Support" },
       ];
     } else {
-      links = [
-        { href: "profile.html", text: "Profile" }
-      ];
+      links = [{ href: "profile.html", text: "Profile" }];
     }
+
+    links = uniqueLinks(links);
 
     navs.forEach((nav) => buildNav(nav, links));
 
@@ -212,6 +234,9 @@
     if (navUsername) {
       navUsername.textContent = me.username || "";
     }
+
+    localStorage.setItem("role", role);
+    localStorage.setItem("user", JSON.stringify(me));
   }
 
   setupNav();
@@ -223,6 +248,15 @@
     authHeader: () => {
       const t = localStorage.getItem("token");
       return t ? { Authorization: `Bearer ${t}` } : {};
+    },
+    getRole: () => String(localStorage.getItem("role") || "").toLowerCase(),
+    isAdminLike: () => {
+      const r = String(localStorage.getItem("role") || "").toLowerCase();
+      return r === "admin" || r === "tester";
+    },
+    isEditorLike: () => {
+      const r = String(localStorage.getItem("role") || "").toLowerCase();
+      return r === "editor";
     },
   };
 })();
