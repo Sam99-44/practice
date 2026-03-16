@@ -3,7 +3,10 @@
 // ✅ Allows NOTE blocks to store points=0 and correctIndex=-1 (matches server.js)
 // ✅ Validates correctIndex/correctIndexes are within options length
 // ✅ Adds quiz difficulty (easy/moderate/hard)
-// ✅ NEW: Adds quiz paper (paper1/paper2)
+// ✅ Adds quiz paper (paper1/paper2)
+// ✅ NEW: Adds draft / publish / scheduled publish support
+// ✅ NEW: Adds availableFrom / availableUntil
+// ✅ NEW: Adds sendPublishEmail flag
 
 import mongoose from "mongoose";
 
@@ -31,7 +34,7 @@ const QuestionSchema = new mongoose.Schema(
       min: 0,
       validate: {
         validator: function (v) {
-          if (this.type === "note") return v === 0; // notes must be 0
+          if (this.type === "note") return v === 0;
           return Number.isInteger(v) && v >= 1;
         },
         message: "Points must be a whole number (1 or more) for questions, and 0 for notes.",
@@ -52,16 +55,14 @@ const QuestionSchema = new mongoose.Schema(
     },
 
     // ✅ Single-correct (compat)
-    // IMPORTANT: allow -1 for note/text and for multi-select where correctIndexes is used
     correctIndex: {
       type: Number,
       default: -1,
       min: -1,
       validate: {
         validator: function (v) {
-          if (this.type !== "mcq") return true; // ignore for text/note
+          if (this.type !== "mcq") return true;
 
-          // If multi-select is used (either flag or correctIndexes provided), correctIndex can be -1
           const usesMulti =
             Boolean(this.isMultiSelect) ||
             (Array.isArray(this.correctIndexes) && this.correctIndexes.length > 0);
@@ -70,7 +71,6 @@ const QuestionSchema = new mongoose.Schema(
             return Number.isInteger(v) && v >= -1;
           }
 
-          // single-correct must be within options
           if (!Number.isInteger(v) || v < 0) return false;
           const len = Array.isArray(this.options) ? this.options.length : 0;
           return len >= 2 ? v < len : true;
@@ -79,7 +79,7 @@ const QuestionSchema = new mongoose.Schema(
       },
     },
 
-    // ✅ Multi-correct indexes (preferred for multi-select)
+    // ✅ Multi-correct indexes
     correctIndexes: {
       type: [Number],
       default: [],
@@ -88,16 +88,13 @@ const QuestionSchema = new mongoose.Schema(
           if (this.type !== "mcq") return true;
           if (!Array.isArray(arr)) return false;
 
-          // allow empty when using single correctIndex
           if (arr.length === 0) return true;
 
-          // must be integers >= 0 and within options length
           if (!arr.every((n) => Number.isInteger(n) && n >= 0)) return false;
 
           const len = Array.isArray(this.options) ? this.options.length : 0;
           if (len >= 2 && arr.some((i) => i >= len)) return false;
 
-          // no duplicates
           return new Set(arr).size === arr.length;
         },
         message: "correctIndexes must be valid unique option indexes within options length.",
@@ -161,7 +158,7 @@ const QuizSchema = new mongoose.Schema(
     title: { type: String, required: true, trim: true },
     topic: { type: String, default: "", trim: true },
 
-    // ✅ NEW: paper stored on quiz (Paper 1 / Paper 2)
+    // ✅ Paper
     paper: {
       type: String,
       enum: ["paper1", "paper2"],
@@ -169,7 +166,7 @@ const QuizSchema = new mongoose.Schema(
       trim: true,
     },
 
-    // ✅ difficulty stored on quiz (used for colour labels in learner-quizzes.html)
+    // ✅ Difficulty
     difficulty: {
       type: String,
       enum: ["easy", "moderate", "hard"],
@@ -183,8 +180,21 @@ const QuizSchema = new mongoose.Schema(
 
     isFrozen: { type: Boolean, default: false },
     frozenAt: { type: Date, default: null },
+
+    // ✅ Availability window
     availableFrom: { type: Date, default: null },
     availableUntil: { type: Date, default: null },
+
+    // ✅ Publish workflow
+    isPublished: { type: Boolean, default: false },
+    publishedAt: { type: Date, default: null },
+    publishAt: { type: Date, default: null },
+    publishedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    sendPublishEmail: { type: Boolean, default: true },
 
     questions: { type: [QuestionSchema], default: [] },
   },
