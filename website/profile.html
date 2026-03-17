@@ -73,6 +73,9 @@ button,input{
 }
 
 .nav a{
+  display:flex;
+  align-items:center;
+  gap:8px;
   padding:8px 10px;
   border-radius:8px;
   color:#eef2ff;
@@ -88,14 +91,38 @@ button,input{
   border-bottom:3px solid var(--red);
 }
 
+.navIcon{
+  width:16px;
+  height:16px;
+  display:block;
+  flex-shrink:0;
+}
+
+.navIcon.white{
+  filter:brightness(0) invert(1);
+}
+
 .logoutBtn{
   background:transparent;
-  border:1px solid rgba(255,255,255,.28);
-  color:#fff;
-  padding:8px 14px;
-  border-radius:12px;
-  font-weight:800;
+  border:none;
   cursor:pointer;
+  padding:6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.logoutBtn img{
+  width:24px;
+  height:24px;
+  filter:brightness(0) invert(1) contrast(120%);
+  transform:scale(1.2);
+  transition:.2s ease;
+  display:block;
+}
+
+.logoutBtn:hover img{
+  transform:scale(1.3);
 }
 
 .wrap{
@@ -191,11 +218,31 @@ button,input{
   box-shadow:0 10px 24px rgba(15,23,42,.06);
 }
 
-.quickNum{
-  font-size:13px;
-  font-weight:800;
-  color:var(--muted);
-  margin-bottom:6px;
+.quickIcon{
+  margin-bottom:10px;
+}
+
+.quickIcon img,
+.quickIcon svg{
+  width:30px;
+  height:30px;
+  display:block;
+}
+
+.icon-dark{
+  filter:brightness(0);
+}
+
+.icon-blue{
+  filter: invert(48%) sepia(80%) saturate(1200%) hue-rotate(190deg) brightness(95%) contrast(95%);
+}
+
+.icon-gold{
+  filter:none !important;
+}
+
+.icon-color{
+  filter:none !important;
 }
 
 .quickCard h3{
@@ -331,14 +378,50 @@ if(!localStorage.getItem("token")){
     </div>
 
     <nav class="nav">
-      <a href="profile.html" class="active">Profile</a>
-      <a href="learner-quizzes.html">Practice</a>
-      <a href="results.html">Results</a>
-      <a href="dashboard.html">Dashboard</a>
-      <a href="leaderboard.html">Leaderboard</a>
-      <a href="support.html">Support</a>
-      <a href="announcements.html">Announcements</a>
-      <button class="logoutBtn" id="logoutBtn">Logout</button>
+      <a href="profile.html" class="active">
+        <svg class="navIcon white" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="8" r="4"></circle>
+          <path d="M4 20c2-4 6-5 8-5s6 1 8 5"></path>
+        </svg>
+        <span>Profile</span>
+      </a>
+
+      <a href="learner-quizzes.html">
+        <svg class="navIcon white" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15"></path>
+        </svg>
+        <span>Practice</span>
+      </a>
+
+      <a href="results.html">
+        <img class="navIcon white" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="Results">
+        <span>Results</span>
+      </a>
+
+      <a href="progress-dashboard.html">
+        <img class="navIcon white" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="Dashboard">
+        <span>Dashboard</span>
+      </a>
+
+      <a href="leaderboard.html">
+        <img class="navIcon white" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777661/leaderboard_yfjgjf.svg" alt="Leaderboard">
+        <span>Leaderboard</span>
+      </a>
+
+      <a href="support.html">
+        <img class="navIcon white" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/support_bs175s.svg" alt="Support">
+        <span>Support</span>
+      </a>
+
+      <a href="announcements.html">
+        <img class="navIcon white" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/announcement_gg5tqs.svg" alt="Announcements">
+        <span>Announcements</span>
+      </a>
+
+      <button class="logoutBtn" id="logoutBtn" title="Logout" aria-label="Logout">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773768418/logout_uay6y8.svg" alt="Logout">
+      </button>
     </nav>
   </div>
 </header>
@@ -365,37 +448,52 @@ if(!localStorage.getItem("token")){
 
   <section class="quickGrid">
     <a class="quickCard" href="learner-quizzes.html">
-      <div class="quickNum">1</div>
+      <div class="quickIcon">
+        <svg class="icon-dark" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="black" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15"></path>
+        </svg>
+      </div>
       <h3>Practice</h3>
       <p>Open quizzes and practise questions.</p>
     </a>
 
     <a class="quickCard" href="results.html">
-      <div class="quickNum">2</div>
+      <div class="quickIcon">
+        <img class="icon-blue" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="Results">
+      </div>
       <h3>Results</h3>
       <p>View your scores and previous attempts.</p>
     </a>
 
-    <a class="quickCard" href="dashboard.html">
-      <div class="quickNum">3</div>
+    <a class="quickCard" href="progress-dashboard.html">
+      <div class="quickIcon">
+        <img class="icon-dark" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="Dashboard">
+      </div>
       <h3>Dashboard</h3>
       <p>See your learning progress and activity.</p>
     </a>
 
     <a class="quickCard" href="leaderboard.html">
-      <div class="quickNum">4</div>
+      <div class="quickIcon">
+        <img class="icon-gold" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777661/leaderboard_yfjgjf.svg" alt="Leaderboard">
+      </div>
       <h3>Leaderboard</h3>
       <p>Check rankings and see how you compare.</p>
     </a>
 
     <a class="quickCard" href="support.html">
-      <div class="quickNum">5</div>
+      <div class="quickIcon">
+        <img class="icon-dark" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/support_bs175s.svg" alt="Support">
+      </div>
       <h3>Support</h3>
       <p>Get help and learner assistance.</p>
     </a>
 
     <a class="quickCard" href="announcements.html">
-      <div class="quickNum">6</div>
+      <div class="quickIcon">
+        <img class="icon-color" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/announcement_gg5tqs.svg" alt="Announcements">
+      </div>
       <h3>Announcements</h3>
       <p>Read weekly updates and class notices.</p>
     </a>
@@ -461,8 +559,6 @@ if(!localStorage.getItem("token")){
 
 </main>
 
-<script src="nav.js"></script>
-
 <script>
 const API = window.API || "https://practice-backend-msgn.onrender.com";
 const token = localStorage.getItem("token");
@@ -474,6 +570,8 @@ document.getElementById("logoutBtn").onclick = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("username");
   localStorage.removeItem("me_cache");
+  localStorage.removeItem("user");
+  localStorage.removeItem("role");
   location.href = "login.html";
 };
 
@@ -524,7 +622,6 @@ async function loadProfile(){
     }
 
     const data = await res.json();
-
     const displayName = data.fullName || data.username || "User";
 
     document.getElementById("displayName").textContent = displayName;
