@@ -30,6 +30,7 @@
 // ✅ Available from / until support
 // ✅ Optional learner email on publish
 // ✅ Auto-publish scheduled quizzes
+// ✅ Final PUT route fixed so edit page updates MongoDB correctly
 
 import express from "express";
 import mongoose from "mongoose";
@@ -1492,7 +1493,13 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
         q.solution = String(q.solution);
       }
 
-      if (type === "note") continue;
+      if (type === "note") {
+        q.points = 0;
+        q.correctIndex = -1;
+        q.correctIndexes = [];
+        q.isMultiSelect = false;
+        continue;
+      }
 
       const pts = safeInt(q?.points, 1);
       if (!Number.isInteger(pts) || pts < 1) {
@@ -1500,6 +1507,7 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
           message: "Each question must have marks (points) of 1 or more.",
         });
       }
+      q.points = pts;
 
       if (type === "text") {
         if (!cleanSpaces(q?.correctText)) {
@@ -1515,6 +1523,10 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
             return res.status(400).json({ message: "Invalid numberTolerance." });
           }
         }
+
+        q.correctIndex = -1;
+        q.correctIndexes = [];
+        q.isMultiSelect = false;
       } else {
         const opts = Array.isArray(q?.options) ? q.options : [];
         if (opts.length < 2 || opts.some((o) => !cleanSpaces(o))) {
@@ -1534,13 +1546,14 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
           }
           q.isMultiSelect = true;
           q.correctIndexes = idxs;
-          if (idxs.length === 1) q.correctIndex = idxs[0];
+          q.correctIndex = idxs.length === 1 ? idxs[0] : -1;
         } else {
           const ci = safeInt(q?.correctIndex, null);
           if (ci === null || ci < 0 || ci >= opts.length) {
             return res.status(400).json({ message: "MCQ correctIndex must be within options." });
           }
           q.correctIndexes = [ci];
+          q.correctIndex = ci;
           q.isMultiSelect = false;
         }
       }
@@ -1619,16 +1632,20 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
   }
 });
 
+/* ------------------ FINAL FIXED PUT ROUTE ------------------ */
 app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
   try {
     const id = req.params.id;
 
-    const update = {};
+    const quiz = await Quiz.findById(id);
+    if (!quiz) return res.status(404).json({ message: "Assessment not found." });
+
     const allowed = [
       "grade",
       "title",
       "topic",
       "paper",
+      "difficulty",
       "instructions",
       "timeLimitMinutes",
       "availableFrom",
@@ -1636,164 +1653,221 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
       "questions",
       "isFrozen",
       "frozenAt",
-      "difficulty",
       "isPublished",
       "publishedAt",
       "publishAt",
       "sendPublishEmail",
     ];
 
-    for (const k of allowed) {
-      if (k in req.body) update[k] = req.body[k];
-    }
+    for (const key of allowed) {
+      if (!(key in req.body)) continue;
 
-    if ("grade" in update) {
-      const g = Number(update.grade);
-      if (!Number.isInteger(g) || g < 8 || g > 12) {
-        return res.status(400).json({ message: "Grade must be between 8 and 12." });
+      if (key === "grade") {
+        const g = Number(req.body.grade);
+        if (!Number.isInteger(g) || g < 8 || g > 12) {
+          return res.status(400).json({ message: "Grade must be between 8 and 12." });
+        }
+        quiz.grade = g;
+        continue;
       }
-      update.grade = g;
-    }
 
-    if ("title" in update) update.title = cleanSpaces(update.title);
-    if ("topic" in update) update.topic = cleanSpaces(update.topic);
-    if ("instructions" in update) update.instructions = String(update.instructions || "");
-
-    if ("difficulty" in update) update.difficulty = normalizeDifficulty(update.difficulty);
-    if ("paper" in update) update.paper = normalizePaper(update.paper);
-
-    if ("timeLimitMinutes" in update) {
-      const t = Number(update.timeLimitMinutes);
-      if (!Number.isFinite(t) || t < 1 || t > 180) {
-        return res.status(400).json({ message: "Time limit must be 1–180 minutes." });
+      if (key === "title") {
+        quiz.title = cleanSpaces(req.body.title);
+        continue;
       }
-      update.timeLimitMinutes = t;
-    }
 
-    if ("availableFrom" in update) {
-      const parsed = validDateOrNull(update.availableFrom);
-      if (parsed === "INVALID") {
-        return res.status(400).json({ message: "Invalid Available From date/time." });
+      if (key === "topic") {
+        quiz.topic = cleanSpaces(req.body.topic);
+        continue;
       }
-      update.availableFrom = parsed;
-    }
 
-    if ("availableUntil" in update) {
-      const parsed = validDateOrNull(update.availableUntil);
-      if (parsed === "INVALID") {
-        return res.status(400).json({ message: "Invalid Available Until date/time." });
+      if (key === "paper") {
+        quiz.paper = normalizePaper(req.body.paper);
+        continue;
       }
-      update.availableUntil = parsed;
-    }
 
-    if ("publishAt" in update) {
-      const parsed = validDateOrNull(update.publishAt);
-      if (parsed === "INVALID") {
-        return res.status(400).json({ message: "Invalid publish date/time." });
+      if (key === "difficulty") {
+        quiz.difficulty = normalizeDifficulty(req.body.difficulty);
+        continue;
       }
-      update.publishAt = parsed;
-    }
 
-    if ("publishedAt" in update) {
-      const parsed = validDateOrNull(update.publishedAt);
-      if (parsed === "INVALID") {
-        return res.status(400).json({ message: "Invalid publishedAt date/time." });
+      if (key === "instructions") {
+        quiz.instructions = String(req.body.instructions || "").trim();
+        continue;
       }
-      update.publishedAt = parsed;
-    }
 
-    const availableFromCheck =
-      "availableFrom" in update ? update.availableFrom : undefined;
-    const availableUntilCheck =
-      "availableUntil" in update ? update.availableUntil : undefined;
+      if (key === "timeLimitMinutes") {
+        const t = Number(req.body.timeLimitMinutes);
+        if (!Number.isFinite(t) || t < 1 || t > 180) {
+          return res.status(400).json({ message: "Time limit must be 1–180 minutes." });
+        }
+        quiz.timeLimitMinutes = t;
+        continue;
+      }
+
+      if (key === "availableFrom") {
+        if (!req.body.availableFrom) {
+          quiz.availableFrom = null;
+        } else {
+          const d = new Date(req.body.availableFrom);
+          if (isNaN(d.getTime())) {
+            return res.status(400).json({ message: "Invalid Available From date/time." });
+          }
+          quiz.availableFrom = d;
+        }
+        continue;
+      }
+
+      if (key === "availableUntil") {
+        if (!req.body.availableUntil) {
+          quiz.availableUntil = null;
+        } else {
+          const d = new Date(req.body.availableUntil);
+          if (isNaN(d.getTime())) {
+            return res.status(400).json({ message: "Invalid Available Until date/time." });
+          }
+          quiz.availableUntil = d;
+        }
+        continue;
+      }
+
+      if (key === "isFrozen") {
+        quiz.isFrozen = !!req.body.isFrozen;
+        continue;
+      }
+
+      if (key === "frozenAt") {
+        quiz.frozenAt = req.body.frozenAt ? new Date(req.body.frozenAt) : null;
+        continue;
+      }
+
+      if (key === "isPublished") {
+        quiz.isPublished = !!req.body.isPublished;
+        continue;
+      }
+
+      if (key === "publishedAt") {
+        quiz.publishedAt = req.body.publishedAt ? new Date(req.body.publishedAt) : null;
+        continue;
+      }
+
+      if (key === "publishAt") {
+        quiz.publishAt = req.body.publishAt ? new Date(req.body.publishAt) : null;
+        continue;
+      }
+
+      if (key === "sendPublishEmail") {
+        quiz.sendPublishEmail = !!req.body.sendPublishEmail;
+        continue;
+      }
+
+      if (key === "questions") {
+        if (!Array.isArray(req.body.questions) || req.body.questions.length === 0) {
+          return res.status(400).json({ message: "Questions are required." });
+        }
+
+        for (const q of req.body.questions) {
+          const type = String(q?.type || "mcq").toLowerCase();
+
+          if (!cleanSpaces(q?.text)) {
+            return res.status(400).json({ message: "Each block must have text." });
+          }
+
+          if ("solution" in q && q.solution !== undefined && q.solution !== null) {
+            q.solution = String(q.solution);
+          }
+
+          if (type === "note") {
+            q.points = 0;
+            q.correctIndex = -1;
+            q.correctIndexes = [];
+            q.isMultiSelect = false;
+            continue;
+          }
+
+          const pts = safeInt(q?.points, 1);
+          if (!Number.isInteger(pts) || pts < 1) {
+            return res.status(400).json({
+              message: "Each question must have marks (points) of 1 or more.",
+            });
+          }
+          q.points = pts;
+
+          if (type === "text") {
+            if (!cleanSpaces(q?.correctText)) {
+              return res.status(400).json({ message: "Typed questions must have correctText." });
+            }
+
+            const mode = q?.textAnswerMode || "exact";
+            if (!["exact", "contains", "number_tolerance"].includes(mode)) {
+              return res.status(400).json({ message: "Invalid textAnswerMode." });
+            }
+
+            if (mode === "number_tolerance") {
+              const tol = Number(q?.numberTolerance);
+              if (!Number.isFinite(tol) || tol < 0) {
+                return res.status(400).json({ message: "Invalid numberTolerance." });
+              }
+            }
+
+            q.correctIndex = -1;
+            q.correctIndexes = [];
+            q.isMultiSelect = false;
+          } else {
+            const opts = Array.isArray(q?.options) ? q.options : [];
+            if (opts.length < 2 || opts.some((o) => !cleanSpaces(o))) {
+              return res.status(400).json({ message: "MCQ must have at least 2 options." });
+            }
+
+            const idxs = normalizeIndexArray(q?.correctIndexes || []);
+            const hasMulti = idxs.length >= 2;
+            const wantsMulti = Boolean(q?.isMultiSelect) || hasMulti;
+
+            if (wantsMulti) {
+              if (idxs.length < 1) {
+                return res.status(400).json({ message: "MCQ must have at least 1 correct option." });
+              }
+              if (idxs.some((i) => i < 0 || i >= opts.length)) {
+                return res.status(400).json({ message: "MCQ correctIndexes must be within options." });
+              }
+
+              q.isMultiSelect = true;
+              q.correctIndexes = idxs;
+              q.correctIndex = idxs.length === 1 ? idxs[0] : -1;
+            } else {
+              const ci = Number(q?.correctIndex);
+              if (!Number.isInteger(ci) || ci < 0 || ci >= opts.length) {
+                return res.status(400).json({ message: "MCQ correctIndex must be within options." });
+              }
+
+              q.correctIndex = ci;
+              q.correctIndexes = [ci];
+              q.isMultiSelect = false;
+            }
+          }
+        }
+
+        quiz.questions = req.body.questions;
+      }
+    }
 
     if (
-      availableFromCheck !== undefined &&
-      availableUntilCheck !== undefined &&
-      availableFromCheck &&
-      availableUntilCheck &&
-      availableUntilCheck.getTime() <= availableFromCheck.getTime()
+      quiz.availableFrom &&
+      quiz.availableUntil &&
+      new Date(quiz.availableUntil).getTime() <= new Date(quiz.availableFrom).getTime()
     ) {
       return res.status(400).json({ message: "Available Until must be after Available From." });
     }
 
-    if ("questions" in update) {
-      if (!Array.isArray(update.questions) || update.questions.length === 0) {
-        return res.status(400).json({ message: "Questions are required." });
-      }
-
-      for (const q of update.questions) {
-        const type = String(q?.type || "mcq").toLowerCase();
-
-        if (!cleanSpaces(q?.text)) {
-          return res.status(400).json({ message: "Each block must have text." });
-        }
-
-        if ("solution" in q && q.solution !== undefined && q.solution !== null) {
-          q.solution = String(q.solution);
-        }
-
-        if (type === "note") continue;
-
-        const pts = safeInt(q?.points, 1);
-        if (!Number.isInteger(pts) || pts < 1) {
-          return res
-            .status(400)
-            .json({ message: "Each question must have marks (points) of 1 or more." });
-        }
-
-        if (type === "text") {
-          if (!cleanSpaces(q?.correctText)) {
-            return res.status(400).json({ message: "Typed questions must have correctText." });
-          }
-          const mode = q?.textAnswerMode || "exact";
-          if (!["exact", "contains", "number_tolerance"].includes(mode)) {
-            return res.status(400).json({ message: "Invalid textAnswerMode." });
-          }
-          if (mode === "number_tolerance") {
-            const tol = Number(q?.numberTolerance);
-            if (!Number.isFinite(tol) || tol < 0) {
-              return res.status(400).json({ message: "Invalid numberTolerance." });
-            }
-          }
-        } else {
-          const opts = Array.isArray(q?.options) ? q.options : [];
-          if (opts.length < 2 || opts.some((o) => !cleanSpaces(o))) {
-            return res.status(400).json({ message: "MCQ must have at least 2 options." });
-          }
-
-          const idxs = normalizeIndexArray(q?.correctIndexes || []);
-          const hasMulti = idxs.length >= 2;
-          const wantsMulti = Boolean(q?.isMultiSelect) || hasMulti;
-
-          if (wantsMulti) {
-            if (idxs.length < 1) {
-              return res
-                .status(400)
-                .json({ message: "MCQ must have at least 1 correct option." });
-            }
-            if (idxs.some((i) => i < 0 || i >= opts.length)) {
-              return res
-                .status(400)
-                .json({ message: "MCQ correctIndexes must be within options." });
-            }
-            q.isMultiSelect = true;
-            q.correctIndexes = idxs;
-            if (idxs.length === 1) q.correctIndex = idxs[0];
-          } else {
-            const ci = Number(q?.correctIndex);
-            if (!Number.isInteger(ci) || ci < 0 || ci >= opts.length) {
-              return res.status(400).json({ message: "MCQ correctIndex must be within options." });
-            }
-            q.correctIndexes = [ci];
-            q.isMultiSelect = false;
-          }
-        }
-      }
+    if (quiz.publishAt && isNaN(new Date(quiz.publishAt).getTime())) {
+      return res.status(400).json({ message: "Invalid publish date/time." });
     }
 
-    const quiz = await Quiz.findByIdAndUpdate(id, { $set: update }, { new: true });
-    if (!quiz) return res.status(404).json({ message: "Not found" });
+    if (quiz.publishedAt && isNaN(new Date(quiz.publishedAt).getTime())) {
+      return res.status(400).json({ message: "Invalid publishedAt date/time." });
+    }
+
+    await quiz.save();
 
     return res.json(quiz);
   } catch (e) {
