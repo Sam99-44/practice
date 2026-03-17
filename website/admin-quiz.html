@@ -10,11 +10,14 @@
      ✅ FIX: sends isMultiSelect:true when 2+ correct answers
      ✅ Drag & drop reorder + renumber
      ✅ Difficulty per quiz (easy/moderate/hard)
-     ✅ NEW: Paper selection (paper1/paper2)
-     ✅ Sends MCQ correctIndexes (array). Also sends correctIndex if only 1 selected (compat).
-     ✅ UI FIX: Solution preview is now plain white (no brown paper background)
-     ✅ UI FIX: Solution preview uses normal/small font (not big)
-     ✅ UPDATED: admin + editor can access this page
+     ✅ Paper selection (paper1/paper2)
+     ✅ Publish mode (draft / publish now / schedule)
+     ✅ Publish date & time
+     ✅ Available From / Available Until
+     ✅ Send email to students checkbox
+     ✅ Save draft sends NO learner email
+     ✅ Only admin/tester can publish
+     ✅ Admin + editor + tester can access this page
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -23,7 +26,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Admin | Add Assessment</title>
 
-  <!-- ✅ MathJax for rendering LaTeX -->
   <script>
     window.MathJax = {
       tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
@@ -133,9 +135,21 @@
     .optCorrectWrap input{width:auto; margin:0;}
     .optCorrectWrap span{font-weight:800; font-size:12px; color:#0b3c5d;}
 
-    /* =========================================================
-       ✅ Paper-Style Preview (keep for question/hint/options)
-       ========================================================= */
+    .checkline{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-top:18px;
+      padding:10px 12px;
+      border:1px solid #e6e6e6;
+      border-radius:10px;
+      background:#fbfbff;
+    }
+    .checkline input{
+      width:auto;
+      margin:0;
+    }
+
     :root{
       --paper:#fffdf7;
       --paperEdge:#efe6d7;
@@ -184,10 +198,6 @@
     .previewBox.paperBox mjx-container{display:inline-block;margin:0 !important;}
     .previewBox.paperBox svg{vertical-align:middle;}
 
-    /* =========================================================
-       ✅ Plain solution preview (NO brown/paper background)
-       ✅ Font is normal/small (not big)
-       ========================================================= */
     .previewBox.solBox{
       background:#ffffff;
       border:1px solid #e6e6e6;
@@ -266,7 +276,6 @@
         <div class="muted tiny">Labels the whole assessment: Easy / Moderate / Hard.</div>
       </div>
 
-      <!-- ✅ NEW: Paper selection -->
       <div>
         <label>Paper</label>
         <select id="paper">
@@ -275,7 +284,41 @@
         </select>
         <div class="muted tiny">Example: Financial Mathematics = Paper 1</div>
       </div>
+
+      <div>
+        <label>Publish Option</label>
+        <select id="publishMode">
+          <option value="draft" selected>Save as Draft</option>
+          <option value="now">Publish Now</option>
+          <option value="schedule">Schedule Publish</option>
+        </select>
+        <div class="muted tiny">Draft is visible only to admin/editor/tester. Publish makes it visible to learners.</div>
+      </div>
+
+      <div id="publishAtWrap" class="hide">
+        <label>Publish Date & Time</label>
+        <input id="publishAt" type="datetime-local" />
+        <div class="muted tiny">When this date/time arrives, the assessment will go live automatically.</div>
+      </div>
+
+      <div>
+        <label>Available From (optional)</label>
+        <input id="availableFrom" type="datetime-local" />
+        <div class="muted tiny">Learners can only open the assessment from this date/time.</div>
+      </div>
+
+      <div>
+        <label>Available Until (optional)</label>
+        <input id="availableUntil" type="datetime-local" />
+        <div class="muted tiny">After this date/time, learners can no longer open the assessment.</div>
+      </div>
     </div>
+
+    <div class="checkline">
+      <input id="sendPublishEmail" type="checkbox" checked />
+      <label for="sendPublishEmail" style="margin:0; width:auto; font-weight:700;">Send email to students when published</label>
+    </div>
+    <div class="muted tiny" style="margin-top:6px;">Untick this if you want to publish without sending learner emails.</div>
 
     <div class="infoBox">
       <b>Assessment Instructions (optional)</b>
@@ -312,7 +355,10 @@
 
     <hr>
 
-    <button class="btn" id="saveBtn" disabled type="button">Save Assessment</button>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn" id="saveBtn" disabled type="button">Save Assessment</button>
+      <button class="btn btn2" id="publishBtn" disabled type="button">Publish Assessment</button>
+    </div>
     <p class="msg muted" id="msg"></p>
   </div>
 
@@ -322,6 +368,7 @@
     const msg = document.getElementById("msg");
     const who = document.getElementById("who");
     const saveBtn = document.getElementById("saveBtn");
+    const publishBtn = document.getElementById("publishBtn");
 
     const gradeEl = document.getElementById("grade");
     const topicEl = document.getElementById("topic");
@@ -330,6 +377,14 @@
     const difficultyEl = document.getElementById("difficulty");
     const paperEl = document.getElementById("paper");
 
+    const publishModeEl = document.getElementById("publishMode");
+    const publishAtEl = document.getElementById("publishAt");
+    const publishAtWrap = document.getElementById("publishAtWrap");
+
+    const availableFromEl = document.getElementById("availableFrom");
+    const availableUntilEl = document.getElementById("availableUntil");
+    const sendPublishEmailEl = document.getElementById("sendPublishEmail");
+
     const instructionsEl = document.getElementById("instructions");
     const prevInstructions = document.getElementById("prevInstructions");
 
@@ -337,6 +392,9 @@
     const addMcqBtn = document.getElementById("addMcqBtn");
     const addTextBtn = document.getElementById("addTextBtn");
     const questionsWrap = document.getElementById("questionsWrap");
+
+    let currentRole = "";
+    let canPublish = false;
 
     function setMsg(text, type="muted"){
       msg.className = "msg " + type;
@@ -347,6 +405,8 @@
       localStorage.removeItem("token");
       localStorage.removeItem("username");
       localStorage.removeItem("me_cache");
+      localStorage.removeItem("user");
+      localStorage.removeItem("role");
       window.location.href = "login.html";
     }
     document.getElementById("logoutBtn").addEventListener("click", logout);
@@ -392,7 +452,13 @@
     instructionsEl.addEventListener("input", renderInstructionsPreview);
     renderInstructionsPreview();
 
-    // -------------------- Admin / Editor lock --------------------
+    function updatePublishUI(){
+      const mode = publishModeEl.value;
+      publishAtWrap.classList.toggle("hide", mode !== "schedule");
+    }
+    publishModeEl.addEventListener("change", updatePublishUI);
+    updatePublishUI();
+
     (async () => {
       const token = localStorage.getItem("token");
       if (!token) return window.location.href = "login.html";
@@ -414,17 +480,26 @@
         return logout();
       }
 
-      if (me.role !== "admin" && me.role !== "editor") {
-        alert("Admin or editor only");
+      const role = String(me.role || "").toLowerCase();
+      if (!["admin", "editor", "tester"].includes(role)) {
+        alert("Admin, editor or tester only");
         return window.location.href = "learner-quizzes.html";
       }
 
+      currentRole = role;
+      canPublish = role === "admin" || role === "tester";
+
       who.textContent = `Logged in as: ${me.username} (${me.role})`;
       saveBtn.disabled = false;
+      publishBtn.disabled = !canPublish;
+
+      if (!canPublish) {
+        publishBtn.title = "Only admin/tester can publish assessments.";
+      }
+
       setMsg("Ready to add an assessment.", "ok");
     })();
 
-    // -------------------- Cards --------------------
     let qCount = 0;
 
     function noteCardHtml(id){
@@ -786,7 +861,6 @@
       }
     }
 
-    // -------------------- Drag & Drop --------------------
     let draggedCard = null;
 
     function setupDragAndDrop(){
@@ -843,7 +917,6 @@
       });
     }
 
-    // start with one MCQ by default
     addMcq();
     setupDragAndDrop();
 
@@ -908,7 +981,6 @@
           });
 
         } else {
-          // ✅ FIX: build options + correctIndexes from INCLUDED (non-blank) options only
           const optRows = [...card.querySelectorAll(".optRow")];
 
           const included = optRows.map((r) => {
@@ -948,11 +1020,7 @@
       return questions;
     }
 
-    // -------------------- Save assessment --------------------
-    saveBtn.addEventListener("click", async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return window.location.href = "login.html";
-
+    async function buildPayload(modeOverride = null){
       const grade = Number(gradeEl.value);
       const topic = toTitleCase(topicEl.value);
       const title = toTitleCase(titleEl.value);
@@ -961,19 +1029,96 @@
       const difficulty = normalizeDifficulty(difficultyEl.value);
       const paper = normalizePaper(paperEl.value);
 
-      try{
-        if (!grade) return setMsg("Please select grade.", "error");
-        if (!topic) return setMsg("Please enter topic.", "error");
-        if (!title) return setMsg("Please enter assessment title.", "error");
+      const availableFrom = availableFromEl.value ? availableFromEl.value : null;
+      const availableUntil = availableUntilEl.value ? availableUntilEl.value : null;
 
-        if (!Number.isFinite(timeLimitMinutes) || timeLimitMinutes < 1 || timeLimitMinutes > 180) {
-          return setMsg("Please enter a valid time limit (1–180 minutes).", "error");
+      if (!grade) throw new Error("Please select grade.");
+      if (!topic) throw new Error("Please enter topic.");
+      if (!title) throw new Error("Please enter assessment title.");
+
+      if (!Number.isFinite(timeLimitMinutes) || timeLimitMinutes < 1 || timeLimitMinutes > 180) {
+        throw new Error("Please enter a valid time limit (1–180 minutes).");
+      }
+
+      if (availableFrom && availableUntil) {
+        const fromDate = new Date(availableFrom);
+        const untilDate = new Date(availableUntil);
+
+        if (isNaN(fromDate.getTime()) || isNaN(untilDate.getTime())) {
+          throw new Error("Please enter valid availability dates.");
         }
 
-        const questions = collectQuestions();
+        if (untilDate <= fromDate) {
+          throw new Error("Available Until must be after Available From.");
+        }
+      }
+
+      const questions = collectQuestions();
+
+      const mode = modeOverride || publishModeEl.value;
+      let publishNow = false;
+      let publishAt = null;
+
+      if (mode === "now") {
+        publishNow = true;
+      } else if (mode === "schedule") {
+        if (!publishAtEl.value) {
+          throw new Error("Please select the publish date and time.");
+        }
+        publishAt = publishAtEl.value;
+      }
+
+      return {
+        grade,
+        title,
+        topic,
+        paper,
+        timeLimitMinutes,
+        instructions,
+        difficulty,
+        questions,
+        publishNow,
+        publishAt,
+        availableFrom,
+        availableUntil,
+        sendPublishEmail: !!sendPublishEmailEl.checked,
+      };
+    }
+
+    function resetFormAfterSave(){
+      titleEl.value = "";
+      gradeEl.value = "";
+      topicEl.value = "";
+      timeLimitEl.value = "10";
+      difficultyEl.value = "moderate";
+      paperEl.value = "paper1";
+      instructionsEl.value = "";
+      publishModeEl.value = "draft";
+      publishAtEl.value = "";
+      availableFromEl.value = "";
+      availableUntilEl.value = "";
+      sendPublishEmailEl.checked = true;
+
+      renderInstructionsPreview();
+      updatePublishUI();
+
+      questionsWrap.innerHTML = "";
+      qCount = 0;
+      addMcq();
+      setupDragAndDrop();
+      renumberCards();
+    }
+
+    saveBtn.addEventListener("click", async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return window.location.href = "login.html";
+
+      try{
+        const payload = await buildPayload("draft");
 
         saveBtn.disabled = true;
-        setMsg("Saving assessment...", "muted");
+        publishBtn.disabled = true;
+        setMsg("Saving assessment as draft...", "muted");
 
         const res = await fetch(`${API}/api/quizzes`, {
           method: "POST",
@@ -981,27 +1126,14 @@
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify({ grade, title, topic, paper, timeLimitMinutes, instructions, difficulty, questions })
+          body: JSON.stringify(payload)
         });
 
         const data = await res.json().catch(()=>({}));
 
         if (res.ok) {
-          setMsg("Assessment saved!", "ok");
-          titleEl.value = "";
-          gradeEl.value = "";
-          topicEl.value = "";
-          timeLimitEl.value = "10";
-          difficultyEl.value = "moderate";
-          paperEl.value = "paper1";
-          instructionsEl.value = "";
-          renderInstructionsPreview();
-
-          questionsWrap.innerHTML = "";
-          qCount = 0;
-          addMcq();
-          setupDragAndDrop();
-          renumberCards();
+          setMsg("Assessment saved as draft. No learner email sent.", "ok");
+          resetFormAfterSave();
         } else {
           setMsg("Error: " + (data.message || "Could not save assessment"), "error");
         }
@@ -1009,6 +1141,65 @@
         setMsg(err.message || "Something went wrong.", "error");
       } finally {
         saveBtn.disabled = false;
+        publishBtn.disabled = !canPublish;
+      }
+    });
+
+    publishBtn.addEventListener("click", async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return window.location.href = "login.html";
+
+      if (!canPublish) {
+        return setMsg("Only admin/tester can publish assessments.", "error");
+      }
+
+      try{
+        const mode = publishModeEl.value === "draft" ? "now" : publishModeEl.value;
+        const payload = await buildPayload(mode);
+
+        saveBtn.disabled = true;
+        publishBtn.disabled = true;
+
+        if (mode === "now") {
+          setMsg("Publishing assessment...", "muted");
+        } else {
+          setMsg("Saving scheduled assessment...", "muted");
+        }
+
+        const res = await fetch(`${API}/api/quizzes`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json().catch(()=>({}));
+
+        if (res.ok) {
+          if (mode === "now") {
+            if (payload.sendPublishEmail) {
+              setMsg("Assessment published. Learner emails were triggered.", "ok");
+            } else {
+              setMsg("Assessment published without sending learner emails.", "ok");
+            }
+          } else {
+            if (payload.sendPublishEmail) {
+              setMsg("Assessment saved and scheduled for publishing. Learner emails will be sent on publish.", "ok");
+            } else {
+              setMsg("Assessment saved and scheduled for publishing without learner emails.", "ok");
+            }
+          }
+          resetFormAfterSave();
+        } else {
+          setMsg("Error: " + (data.message || "Could not publish assessment"), "error");
+        }
+      } catch (err){
+        setMsg(err.message || "Something went wrong.", "error");
+      } finally {
+        saveBtn.disabled = false;
+        publishBtn.disabled = !canPublish;
       }
     });
   </script>
