@@ -1,2535 +1,1208 @@
-// server.js (FULL UPDATED - COPY & PASTE)
-// ✅ Adds profile routes
-// ✅ Adds profile photo upload/remove
-// ✅ Adds profile info update
-// ✅ Adds static /uploads serving
-// ✅ Keeps current studentNumber system
-// ✅ Adds MCQ MULTI-SELECT support (chosenIndexes + correctIndexes)
-// ✅ Auto-detects multi-select when correctIndexes has 2+ items OR isMultiSelect true
-// ✅ Saves multi-select properly into Result for review/results
-// ✅ Backward compatible with old single-correct fields (chosenIndex/correctIndex)
-// ✅ Saves + returns quiz difficulty (easy/moderate/hard)
-// ✅ Saves + returns quiz paper (paper1/paper2)
-// ✅ PayFast monthly payments
-// ✅ Returns subscription info on /api/auth/me
-// ✅ Strong email validation
-// ✅ Email verification routes
-// ✅ Login blocks unverified users
-// ✅ Register route protection with express-rate-limit
-// ✅ Free trial system
-// ✅ Access-status routes
-// ✅ Manual payment routes
-// ✅ Admin leaderboard filters
-// ✅ Admin leaderboard statistics
-// ✅ Admin sees all pages
-// ✅ Tester sees all pages
-// ✅ Tester can test subscription/payments/features
-// ✅ Editor can add/edit quizzes
-// ✅ Learners can practice without subscription during development
-// ✅ Draft / publish / scheduled publish support
-// ✅ Available from / until support
-// ✅ Optional learner email on publish
-// ✅ Auto-publish scheduled quizzes
-// ✅ Final PUT route fixed so edit page updates MongoDB correctly
-
-import express from "express";
-import mongoose from "mongoose";
-import cors from "cors";
-import dotenv from "dotenv";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import crypto from "crypto";
-import fs from "fs";
-import path from "path";
-import multer from "multer";
-import { fileURLToPath } from "url";
-import sgMail from "@sendgrid/mail";
-import rateLimit from "express-rate-limit";
-
-import Quiz from "./models/Quiz.js";
-import User from "./models/User.js";
-import Result from "./models/Result.js";
-import Payment from "./models/Payment.js";
-
-import accessRoutes from "./routes/access.js";
-import paymentRoutes from "./routes/payments.js";
-import manualPaymentsRoutes from "./routes/manualPayments.js";
-import { addDays } from "./utils/access.js";
-
-dotenv.config();
-
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const uploadsRoot = path.join(__dirname, "uploads");
-const profileUploadDir = path.join(uploadsRoot, "profile");
-fs.mkdirSync(profileUploadDir, { recursive: true });
-
-app.use("/uploads", express.static(uploadsRoot));
-
-/* ------------------ SENDGRID ------------------ */
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || "";
-const FROM_EMAIL = (process.env.FROM_EMAIL || "").trim();
-
-if (SENDGRID_API_KEY) sgMail.setApiKey(SENDGRID_API_KEY);
-
-async function sendEmail({ to, subject, html, text }) {
-  if (!SENDGRID_API_KEY) throw new Error("Missing SENDGRID_API_KEY on server");
-  if (!FROM_EMAIL) throw new Error("Missing FROM_EMAIL on server");
-
-  try {
-    await sgMail.send({
-      to,
-      from: FROM_EMAIL,
-      subject,
-      text: text || undefined,
-      html: html || undefined,
-    });
-  } catch (err) {
-    const detail =
-      err?.response?.body?.errors?.map((e) => e.message).join(" | ") ||
-      err?.message ||
-      "Unknown SendGrid error";
-    console.error("SendGrid send failed:", detail);
-    throw new Error(detail);
-  }
-}
-
-async function sendBulkEmail({ recipients, subject, html, text }) {
-  if (!SENDGRID_API_KEY) throw new Error("Missing SENDGRID_API_KEY on server");
-  if (!FROM_EMAIL) throw new Error("Missing FROM_EMAIL on server");
-  if (!Array.isArray(recipients) || recipients.length === 0) return;
-
-  const msg = {
-    from: FROM_EMAIL,
-    subject,
-    text: text || undefined,
-    html: html || undefined,
-    personalizations: recipients.map((email) => ({
-      to: [{ email }],
-    })),
-  };
-
-  try {
-    await sgMail.send(msg);
-  } catch (err) {
-    const detail =
-      err?.response?.body?.errors?.map((e) => e.message).join(" | ") ||
-      err?.message ||
-      "Unknown SendGrid error";
-    console.error("SendGrid bulk send failed:", detail);
-    throw new Error(detail);
-  }
-}
-
-/* ------------------ HELPERS ------------------ */
-function hashToken(raw) {
-  return crypto.createHash("sha256").update(String(raw)).digest("hex");
-}
-
-function makeVerifyToken() {
-  return crypto.randomBytes(32).toString("hex");
-}
-
-function isValidEmail(email) {
-  const e = String(email || "").trim().toLowerCase();
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-}
-
-async function generateStudentNumber8() {
-  while (true) {
-    const num = String(Math.floor(10000000 + Math.random() * 90000000));
-    const exists = await User.findOne({ studentNumber: num }).select("_id");
-    if (!exists) return num;
-  }
-}
-
-function makeOtp6() {
-  return String(Math.floor(100000 + Math.random() * 900000));
-}
-
-function cleanSpaces(s) {
-  return String(s || "").trim().replace(/\s+/g, " ");
-}
-
-function safeInt(v, fallback = null) {
-  const n = Number(v);
-  if (!Number.isInteger(n)) return fallback;
-  return n;
-}
-
-function safeNum(v, fallback = 0) {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return fallback;
-  return n;
-}
-
-function normalizeDifficulty(v) {
-  const d = String(v || "").toLowerCase().trim();
-  if (d === "easy" || d === "moderate" || d === "hard") return d;
-  return "moderate";
-}
-
-function normalizePaper(v) {
-  const p = String(v || "").toLowerCase().trim();
-  if (p === "paper1" || p === "paper2") return p;
-  return "paper1";
-}
-
-function paperLabel(p) {
-  const pp = normalizePaper(p);
-  return pp === "paper2" ? "Paper 2" : "Paper 1";
-}
-
-function normalizeIndexArray(v) {
-  if (!Array.isArray(v)) return [];
-  const out = [];
-  for (const x of v) {
-    const n = Number(x);
-    if (Number.isInteger(n) && n >= 0) out.push(n);
-  }
-  return [...new Set(out)].sort((a, b) => a - b);
-}
-
-function isMultiMcqCorrect(chosenIdxs, correctIdxs) {
-  const a = normalizeIndexArray(chosenIdxs);
-  const b = normalizeIndexArray(correctIdxs);
-  if (!b.length) return false;
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
-  return true;
-}
-
-function toPublicProfile(user) {
-  return {
-    _id: user._id,
-    fullName: user.fullName || "",
-    username: user.username || "",
-    email: user.email || "",
-    grade: user.grade ?? "",
-    accountType: user.accountType || "",
-    role: user.role || "",
-    learnerNumber: user.learnerNumber || user.studentNumber || "",
-    profileHeadline: user.profileHeadline || "",
-    profilePhoto: user.profilePhoto || "",
-    joinedYear: user.createdAt ? new Date(user.createdAt).getFullYear() : "",
-  };
-}
-
-function getPeriodStart(period) {
-  const now = new Date();
-
-  if (period === "weekly") {
-    const d = new Date(now);
-    const day = d.getDay();
-    const diff = day === 0 ? 6 : day - 1;
-    d.setDate(d.getDate() - diff);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }
-
-  if (period === "monthly") {
-    const d = new Date(now.getFullYear(), now.getMonth(), 1);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }
-
-  return null;
-}
-
-function safeTrim(v) {
-  return String(v || "").trim();
-}
-
-function isPrivilegedRole(role) {
-  return ["admin", "tester"].includes(String(role || "").toLowerCase().trim());
-}
-
-function canManageQuizzes(role) {
-  return ["admin", "editor", "tester"].includes(
-    String(role || "").toLowerCase().trim()
-  );
-}
-
-function validDateOrNull(value) {
-  if (!value) return null;
-  const d = new Date(value);
-  return isNaN(d.getTime()) ? "INVALID" : d;
-}
-
-const profilePhotoStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, profileUploadDir);
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname || "").toLowerCase() || ".jpg";
-    const safeExt = [".jpg", ".jpeg", ".png", ".webp"].includes(ext) ? ext : ".jpg";
-    cb(null, `user-${req.user.userId}-${Date.now()}${safeExt}`);
-  },
-});
-
-function profilePhotoFilter(req, file, cb) {
-  const allowed = ["image/jpeg", "image/png", "image/webp"];
-  if (!allowed.includes(file.mimetype)) {
-    return cb(new Error("Only JPG, PNG, and WEBP images are allowed."));
-  }
-  cb(null, true);
-}
-
-const uploadProfilePhoto = multer({
-  storage: profilePhotoStorage,
-  fileFilter: profilePhotoFilter,
-  limits: { fileSize: 3 * 1024 * 1024 },
-});
-
-/* ------------------ RATE LIMIT ------------------ */
-const registerLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    message: "Too many registration attempts. Please try again later.",
-  },
-});
-
-/* ------------------ PAYFAST HELPERS ------------------ */
-const PAYFAST_MERCHANT_ID = (process.env.PAYFAST_MERCHANT_ID || "").trim();
-const PAYFAST_MERCHANT_KEY = (process.env.PAYFAST_MERCHANT_KEY || "").trim();
-const PAYFAST_PASSPHRASE = (process.env.PAYFAST_PASSPHRASE || "").trim();
-const PAYFAST_MODE = String(process.env.PAYFAST_MODE || "false").trim() === "true";
-const APP_URL = String(process.env.APP_URL || "").trim().replace(/\/$/, "");
-const API_URL = String(
-  process.env.API_URL || process.env.RENDER_EXTERNAL_URL || ""
-).trim().replace(/\/$/, "");
-
-function payfastProcessUrl(testMode) {
-  return testMode
-    ? "https://sandbox.payfast.co.za/eng/process"
-    : "https://www.payfast.co.za/eng/process";
-}
-
-function payfastValidateUrl(testMode) {
-  return testMode
-    ? "https://sandbox.payfast.co.za/eng/query/validate"
-    : "https://www.payfast.co.za/eng/query/validate";
-}
-
-function pfEncode(val) {
-  return encodeURIComponent(String(val).trim()).replace(/%20/g, "+");
-}
-
-function buildPayfastSignature(data, passphrase = "") {
-  let output = "";
-
-  for (const key in data) {
-    if (
-      Object.prototype.hasOwnProperty.call(data, key) &&
-      key !== "signature" &&
-      data[key] !== undefined &&
-      data[key] !== null &&
-      data[key] !== ""
-    ) {
-      output += `${key}=${pfEncode(data[key])}&`;
-    }
-  }
-
-  if (passphrase) {
-    output += `passphrase=${pfEncode(passphrase)}&`;
-  }
-
-  output = output.slice(0, -1);
-  return crypto.createHash("md5").update(output).digest("hex");
-}
-
-async function validatePayfastData(pfData) {
-  const url = payfastValidateUrl(PAYFAST_MODE);
-  const body = new URLSearchParams(pfData).toString();
-
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body,
-  });
-
-  const text = await resp.text();
-  return resp.ok && String(text || "").trim().toUpperCase() === "VALID";
-}
-
-/* ------------------ CORS ------------------ */
-const ALLOWED_ORIGINS = [
-  process.env.APP_URL,
-  process.env.FRONTEND_URL,
-  "http://localhost:3000",
-  "http://localhost:5500",
-  "http://127.0.0.1:5500",
-].filter(Boolean);
-
-app.use(
-  cors({
-    origin: (origin, cb) => {
-      if (!origin) return cb(null, true);
-      if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-      if (origin.endsWith(".netlify.app")) return cb(null, true);
-      if (origin.endsWith(".onrender.com")) return cb(null, true);
-      return cb(new Error(`CORS blocked: ${origin}`), false);
-    },
-    credentials: true,
-  })
-);
-
-app.options("*", cors());
-
-/* ------------------ HEALTH ------------------ */
-app.get("/", (req, res) => res.send("Practice Online API running"));
-app.get("/api/health", (req, res) =>
-  res.json({ ok: true, time: new Date().toISOString() })
-);
-
-/* ------------------ TEST EMAIL ------------------ */
-app.get("/test-email", async (req, res) => {
-  const to = String(req.query.to || "practiceallonline@gmail.com").trim();
-  try {
-    await sendEmail({
-      to,
-      subject: "SendGrid test",
-      text: "Email sending works.",
-      html: "<strong>Email sending works.</strong>",
-    });
-    res.send("Email sent successfully to " + to);
-  } catch (err) {
-    res.status(500).send("Email failed: " + err.message);
-  }
-});
-
-/* ------------------ AUTH MIDDLEWARE ------------------ */
-function authRequired(req, res, next) {
-  const header = req.headers.authorization || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
-  if (!token) return res.status(401).json({ message: "Missing token" });
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch {
-    res.status(401).json({ message: "Invalid token" });
-  }
-}
-
-async function adminOnly(req, res, next) {
-  try {
-    const u = await User.findById(req.user.userId).select("role");
-    if (!u) return res.status(401).json({ message: "User not found" });
-
-    if (!isPrivilegedRole(u.role)) {
-      return res.status(403).json({ message: "Admin/tester only" });
-    }
-
-    next();
-  } catch {
-    res.status(500).json({ message: "Server error" });
-  }
-}
-
-async function quizManagerOnly(req, res, next) {
-  try {
-    const u = await User.findById(req.user.userId).select("role");
-    if (!u) return res.status(401).json({ message: "User not found" });
-
-    if (!canManageQuizzes(u.role)) {
-      return res.status(403).json({ message: "Admin/editor/tester only" });
-    }
-
-    next();
-  } catch {
-    res.status(500).json({ message: "Server error" });
-  }
-}
-
-/* ------------------ PUBLISH HELPERS ------------------ */
-async function sendPublishedQuizEmails(quiz) {
-  if (!quiz || !quiz.sendPublishEmail) return;
-
-  try {
-    const learners = await User.find({
-      role: "learner",
-      accountType: "student",
-      grade: quiz.grade,
-      email: { $exists: true, $ne: "" },
-      emailVerified: true,
-    }).select("email");
-
-    const emails = learners
-      .map((u) => String(u.email).toLowerCase().trim())
-      .filter(Boolean);
-
-    if (!emails.length) {
-      console.log(`No learners found for grade ${quiz.grade} to notify.`);
-      return;
-    }
-
-    const subject = `New assessment for Grade ${quiz.grade}`;
-    const link =
-      "https://practiceonline.co.za/login.html?next=" +
-      encodeURIComponent("learner-quizzes.html");
-
-    const html = `
-      <div style="font-family:Arial,sans-serif; line-height:1.6;">
-        <p>Hello,</p>
-        <p>A new assessment is available for <b>Grade ${quiz.grade}</b>.</p>
-        <p><b>${quiz.title}</b><br/>Topic: ${quiz.topic}</p>
-        <p>Paper: <b>${paperLabel(quiz.paper)}</b></p>
-        <p>Difficulty: <b>${quiz.difficulty}</b></p>
-        <p><a href="${link}" target="_blank">Log in to Practice Online</a></p>
-        <p>Regards,<br/>Practice Online Team</p>
-      </div>
-    `;
-
-    const text = `New assessment for Grade ${quiz.grade}: ${quiz.title} (Topic: ${quiz.topic}). Paper: ${paperLabel(
-      quiz.paper
-    )}. Difficulty: ${quiz.difficulty}. Login: ${link}`;
-
-    await sendBulkEmail({ recipients: emails, subject, html, text });
-    console.log(`Notified ${emails.length} learners for grade ${quiz.grade}.`);
-  } catch (e) {
-    console.error("Quiz publish email failed:", e.message);
-  }
-}
-
-async function autoPublishScheduledQuizzes() {
-  try {
-    const now = new Date();
-
-    const dueQuizzes = await Quiz.find({
-      isPublished: true,
-      publishAt: { $ne: null, $lte: now },
-      publishedAt: null,
-    });
-
-    for (const quiz of dueQuizzes) {
-      quiz.publishedAt = now;
-      await quiz.save();
-
-      if (quiz.sendPublishEmail) {
-        await sendPublishedQuizEmails(quiz);
-      }
-    }
-  } catch (e) {
-    console.error("autoPublishScheduledQuizzes error:", e.message);
-  }
-}
-
-/* ------------------ AUTH ROUTES ------------------ */
-
-app.get("/api/auth/me", authRequired, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId).select(
-      "fullName username email role grade accountType studentNumber province district gender cellphone guardianCellphone emailVerified subscriptionStatus paidUntil lastPaymentId premium premiumExpiresAt trialActive trialStartDate trialEndDate trialExpiredAt accessStatus trialDaysLeft"
-    );
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const now = new Date();
-    let effectiveStatus = user.subscriptionStatus || "none";
-    let effectivePaidUntil = user.paidUntil || null;
-
-    if (
-      (!effectivePaidUntil || new Date(effectivePaidUntil) <= now) &&
-      user.premium &&
-      user.premiumExpiresAt &&
-      new Date(user.premiumExpiresAt) > now
-    ) {
-      effectiveStatus = "active";
-      effectivePaidUntil = user.premiumExpiresAt;
-    }
-
-    return res.json({
-      _id: user._id,
-      fullName: user.fullName || "",
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      grade: user.grade,
-      accountType: user.accountType,
-      studentNumber: user.studentNumber,
-      province: user.province || "",
-      district: user.district || "",
-      gender: user.gender || "",
-      cellphone: user.cellphone || "",
-      guardianCellphone: user.guardianCellphone || "",
-      emailVerified: !!user.emailVerified,
-      subscriptionStatus: effectiveStatus,
-      paidUntil: effectivePaidUntil,
-      lastPaymentId: user.lastPaymentId || "",
-      trialActive: !!user.trialActive,
-      trialStartDate: user.trialStartDate || null,
-      trialEndDate: user.trialEndDate || null,
-      accessStatus: user.accessStatus || "expired",
-      trialDaysLeft: user.trialDaysLeft || 0,
-    });
-  } catch {
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-// REGISTER
-app.post("/api/register", registerLimiter, async (req, res) => {
-  try {
-    const {
-      fullName,
-      username,
-      email,
-      grade,
-      password,
-      accountType,
-      province,
-      district,
-      gender,
-      cellphone,
-      guardianCellphone,
-    } = req.body;
-
-    if (!username || !email || !password || !accountType) {
-      return res.status(400).json({
-        message: "Username, email, password, and account type are required.",
-      });
-    }
-
-    if (!["student", "materials"].includes(accountType)) {
-      return res.status(400).json({ message: "Invalid account type." });
-    }
-
-    let gradeNum = null;
-    if (accountType === "student") {
-      if (grade === undefined || grade === null || grade === "") {
-        return res
-          .status(400)
-          .json({ message: "Grade is required for Student accounts." });
-      }
-      gradeNum = Number(grade);
-      if (!Number.isInteger(gradeNum) || gradeNum < 8 || gradeNum > 12) {
-        return res
-          .status(400)
-          .json({ message: "Grade must be between 8 and 12." });
-      }
-    }
-
-    if (String(password).length < 6) {
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 6 characters." });
-    }
-
-    const cleanUsername = cleanSpaces(username);
-    const cleanEmail = String(email || "").toLowerCase().trim();
-
-    if (!isValidEmail(cleanEmail)) {
-      return res.status(400).json({ message: "Please enter a valid email address." });
-    }
-
-    const existingEmail = await User.findOne({ email: cleanEmail }).select("_id");
-    if (existingEmail) {
-      return res.status(409).json({ message: "Email already registered." });
-    }
-
-    const existingUsername = await User.findOne({ username: cleanUsername }).select("_id");
-    if (existingUsername) {
-      return res.status(409).json({ message: "Username already taken." });
-    }
-
-    const passwordHash = await bcrypt.hash(password, 10);
-    const studentNumber =
-      accountType === "student" ? await generateStudentNumber8() : null;
-
-    const rawVerifyToken = makeVerifyToken();
-    const verifyTokenHash = hashToken(rawVerifyToken);
-    const verifyTokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-    const now = new Date();
-    const trialDays = 7;
-
-    const user = await User.create({
-      fullName: cleanSpaces(fullName || ""),
-      username: cleanUsername,
-      email: cleanEmail,
-      passwordHash,
-      role: "learner",
-      accountType,
-      studentNumber,
-      grade: gradeNum,
-      profileHeadline: "",
-      profilePhoto: "",
-      province: cleanSpaces(province || ""),
-      district: cleanSpaces(district || ""),
-      gender: String(gender || "").trim(),
-      cellphone: cleanSpaces(cellphone || ""),
-      guardianCellphone: cleanSpaces(guardianCellphone || ""),
-      emailVerified: false,
-      verifyTokenHash,
-      verifyTokenExpiresAt,
-      trialActive: true,
-      trialStartDate: now,
-      trialEndDate: addDays(now, trialDays),
-    });
-
-    const verifyUrl = `${APP_URL}/verify-email.html?token=${encodeURIComponent(
-      rawVerifyToken
-    )}&email=${encodeURIComponent(user.email)}`;
-
-    if (user.accountType === "student") {
-      await sendEmail({
-        to: user.email,
-        subject: "Verify your Practice Online email",
-        text: `Hi ${user.username}, your student number is ${user.studentNumber}. Verify your email here: ${verifyUrl}`,
-        html: `
-          <div style="font-family:Arial,sans-serif; line-height:1.6;">
-            <p>Hi ${user.username},</p>
-            <p>Welcome to Practice Online.</p>
-            <p>Your student number is: <b>${user.studentNumber}</b></p>
-            <p>Please verify your email address by clicking the link below:</p>
-            <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
-            <p>This link expires in 24 hours.</p>
-            <p>Regards,<br/>Practice Online Team</p>
-          </div>
-        `,
-      });
-    } else {
-      await sendEmail({
-        to: user.email,
-        subject: "Verify your Practice Online email",
-        text: `Hi ${user.username}, your account is ready. Verify your email here: ${verifyUrl}`,
-        html: `
-          <div style="font-family:Arial,sans-serif; line-height:1.6;">
-            <p>Hi ${user.username},</p>
-            <p>Welcome to Practice Online.</p>
-            <p>Your account is ready and you have access to learning materials.</p>
-            <p>Please verify your email address by clicking the link below:</p>
-            <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
-            <p>This link expires in 24 hours.</p>
-            <p>Regards,<br/>Practice Online Team</p>
-          </div>
-        `,
-      });
-    }
-
-    return res.status(201).json({
-      message: "Account created. Please verify your email before logging in.",
-      accountType: user.accountType,
-      studentNumber: user.studentNumber,
-    });
-  } catch (err) {
-    console.error("Register error:", err.message);
-    return res.status(500).json({ message: "Server error. Please try again." });
-  }
-});
-
-// VERIFY EMAIL
-app.post("/api/verify-email", async (req, res) => {
-  try {
-    const { email, token } = req.body;
-
-    if (!email || !token) {
-      return res.status(400).json({ message: "Email and token are required." });
-    }
-
-    const cleanEmail = String(email || "").trim().toLowerCase();
-    const tokenHash = hashToken(String(token || "").trim());
-
-    const user = await User.findOne({ email: cleanEmail });
-    if (!user) {
-      return res.status(400).json({ message: "Invalid or expired verification link." });
-    }
-
-    const isExpired =
-      !user.verifyTokenExpiresAt || user.verifyTokenExpiresAt.getTime() < Date.now();
-
-    const isMatch =
-      user.verifyTokenHash && String(user.verifyTokenHash) === String(tokenHash);
-
-    if (!isMatch || isExpired) {
-      return res.status(400).json({ message: "Invalid or expired verification link." });
-    }
-
-    user.emailVerified = true;
-    user.verifyTokenHash = null;
-    user.verifyTokenExpiresAt = null;
-    await user.save();
-
-    return res.json({ message: "Email verified successfully. You can login now." });
-  } catch (err) {
-    console.error("Verify email error:", err.message);
-    return res.status(500).json({ message: "Server error." });
-  }
-});
-
-// RESEND VERIFICATION EMAIL
-app.post("/api/resend-verification-email", async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ message: "Email is required." });
-    }
-
-    const cleanEmail = String(email || "").trim().toLowerCase();
-    const user = await User.findOne({ email: cleanEmail });
-
-    if (!user) {
-      return res.json({ message: "If the email exists, a verification email has been sent." });
-    }
-
-    if (user.emailVerified) {
-      return res.json({ message: "This email is already verified." });
-    }
-
-    const rawVerifyToken = makeVerifyToken();
-    user.verifyTokenHash = hashToken(rawVerifyToken);
-    user.verifyTokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    await user.save();
-
-    const verifyUrl = `${APP_URL}/verify-email.html?token=${encodeURIComponent(
-      rawVerifyToken
-    )}&email=${encodeURIComponent(user.email)}`;
-
-    await sendEmail({
-      to: user.email,
-      subject: "Verify your Practice Online email",
-      text: `Hi ${user.username}, verify your email here: ${verifyUrl}`,
-      html: `
-        <div style="font-family:Arial,sans-serif; line-height:1.6;">
-          <p>Hi ${user.username},</p>
-          <p>Please verify your email address by clicking the link below:</p>
-          <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
-          <p>This link expires in 24 hours.</p>
-          <p>Regards,<br/>Practice Online Team</p>
-        </div>
-      `,
-    });
-
-    return res.json({ message: "If the email exists, a verification email has been sent." });
-  } catch (err) {
-    console.error("Resend verification error:", err.message);
-    return res.status(500).json({ message: "Server error." });
-  }
-});
-
-// LOGIN
-app.post("/api/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required." });
-    }
-
-    const cleanEmail = String(email).toLowerCase().trim();
-    const user = await User.findOne({ email: cleanEmail });
-
-    if (!user) return res.status(401).json({ message: "Invalid email or password." });
-
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) return res.status(401).json({ message: "Invalid email or password." });
-
-    if (!user.emailVerified) {
-      return res.status(403).json({
-        message: "Please verify your email address before logging in.",
-      });
-    }
-
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    const now = new Date();
-    let effectiveStatus = user.subscriptionStatus || "none";
-    let effectivePaidUntil = user.paidUntil || null;
-
-    if (
-      (!effectivePaidUntil || new Date(effectivePaidUntil) <= now) &&
-      user.premium &&
-      user.premiumExpiresAt &&
-      new Date(user.premiumExpiresAt) > now
-    ) {
-      effectiveStatus = "active";
-      effectivePaidUntil = user.premiumExpiresAt;
-    }
-
-    return res.json({
-      message: "Login successful",
-      token,
-      user: {
-        fullName: user.fullName || "",
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        accountType: user.accountType,
-        studentNumber: user.studentNumber,
-        grade: user.grade,
-        profileHeadline: user.profileHeadline || "",
-        profilePhoto: user.profilePhoto || "",
-        province: user.province || "",
-        district: user.district || "",
-        gender: user.gender || "",
-        cellphone: user.cellphone || "",
-        guardianCellphone: user.guardianCellphone || "",
-        emailVerified: !!user.emailVerified,
-        subscriptionStatus: effectiveStatus,
-        paidUntil: effectivePaidUntil,
-        lastPaymentId: user.lastPaymentId || "",
-        trialActive: !!user.trialActive,
-        trialStartDate: user.trialStartDate || null,
-        trialEndDate: user.trialEndDate || null,
-        accessStatus: user.accessStatus || "expired",
-        trialDaysLeft: user.trialDaysLeft || 0,
-      },
-    });
-  } catch (err) {
-    console.error("Login error:", err.message);
-    return res.status(500).json({ message: "Server error. Please try again." });
-  }
-});
-
-/* ------------------ PROFILE ROUTES ------------------ */
-
-app.get("/api/profile/me", authRequired, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId).select(
-      "fullName username email grade accountType role learnerNumber studentNumber profileHeadline profilePhoto createdAt"
-    );
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    return res.json(toPublicProfile(user));
-  } catch (error) {
-    console.error("GET /api/profile/me error:", error.message);
-    return res.status(500).json({ message: "Failed to load profile" });
-  }
-});
-
-app.patch("/api/profile/me", authRequired, async (req, res) => {
-  try {
-    const { fullName, username, email, grade, profileHeadline } = req.body;
-
-    const user = await User.findById(req.user.userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (typeof fullName === "string") {
-      user.fullName = cleanSpaces(fullName);
-    }
-
-    if (typeof username === "string") {
-      const newUsername = cleanSpaces(username);
-      if (!newUsername) {
-        return res.status(400).json({ message: "Username is required." });
-      }
-
-      const existingUsername = await User.findOne({
-        _id: { $ne: user._id },
-        username: newUsername,
-      }).select("_id");
-
-      if (existingUsername) {
-        return res.status(400).json({ message: "Username already in use." });
-      }
-
-      user.username = newUsername;
-    }
-
-    if (typeof email === "string") {
-      const newEmail = String(email).trim().toLowerCase();
-
-      if (!isValidEmail(newEmail)) {
-        return res.status(400).json({ message: "Please enter a valid email address." });
-      }
-
-      const existingEmail = await User.findOne({
-        _id: { $ne: user._id },
-        email: newEmail,
-      }).select("_id");
-
-      if (existingEmail) {
-        return res.status(400).json({ message: "Email already in use." });
-      }
-
-      user.email = newEmail;
-    }
-
-    if (typeof profileHeadline === "string") {
-      user.profileHeadline = cleanSpaces(profileHeadline);
-    }
-
-    if (grade !== undefined && user.accountType === "student") {
-      const parsedGrade = Number(grade);
-      if (!Number.isInteger(parsedGrade) || parsedGrade < 8 || parsedGrade > 12) {
-        return res.status(400).json({ message: "Grade must be between 8 and 12." });
-      }
-      user.grade = parsedGrade;
-    }
-
-    await user.save();
-
-    return res.json({
-      message: "Profile updated successfully.",
-      user: toPublicProfile(user),
-    });
-  } catch (error) {
-    console.error("PATCH /api/profile/me error:", error.message);
-    return res.status(500).json({ message: "Failed to update profile" });
-  }
-});
-
-app.post(
-  "/api/profile/me/photo",
-  authRequired,
-  uploadProfilePhoto.single("photo"),
-  async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ message: "No image uploaded." });
-      }
-
-      const user = await User.findById(req.user.userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      if (user.profilePhoto && user.profilePhoto.startsWith("/uploads/profile/")) {
-        const oldPath = path.join(__dirname, user.profilePhoto.replace(/^\/+/, ""));
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath);
-        }
-      }
-
-      user.profilePhoto = `/uploads/profile/${req.file.filename}`;
-      await user.save();
-
-      return res.json({
-        message: "Profile photo uploaded successfully.",
-        profilePhoto: user.profilePhoto,
-      });
-    } catch (error) {
-      console.error("POST /api/profile/me/photo error:", error.message);
-      return res.status(500).json({ message: "Failed to upload profile photo" });
-    }
-  }
-);
-
-app.delete("/api/profile/me/photo", authRequired, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (user.profilePhoto && user.profilePhoto.startsWith("/uploads/profile/")) {
-      const oldPath = path.join(__dirname, user.profilePhoto.replace(/^\/+/, ""));
-      if (fs.existsSync(oldPath)) {
-        fs.unlinkSync(oldPath);
-      }
-    }
-
-    user.profilePhoto = "";
-    await user.save();
-
-    return res.json({ message: "Profile photo removed successfully." });
-  } catch (error) {
-    console.error("DELETE /api/profile/me/photo error:", error.message);
-    return res.status(500).json({ message: "Failed to remove profile photo" });
-  }
-});
-
-/* ------------------ ADMIN STATS ------------------ */
-app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
-  try {
-    const [
-      totalUsers,
-      totalAssessments,
-      quizzesByGradeRaw,
-      learnersByGradeRaw,
-      accountTypeByGradeRaw,
-    ] = await Promise.all([
-      User.countDocuments({}),
-      Quiz.countDocuments({}),
-      Quiz.aggregate([
-        { $match: { grade: { $gte: 8, $lte: 12 } } },
-        { $group: { _id: "$grade", count: { $sum: 1 } } },
-        { $sort: { _id: 1 } },
-      ]),
-      User.aggregate([
-        {
-          $match: {
-            accountType: "student",
-            grade: { $gte: 8, $lte: 12 },
-          },
-        },
-        { $group: { _id: "$grade", count: { $sum: 1 } } },
-        { $sort: { _id: 1 } },
-      ]),
-      User.aggregate([
-        {
-          $match: {
-            grade: { $gte: 8, $lte: 12 },
-            accountType: { $in: ["student", "materials"] },
-          },
-        },
-        {
-          $group: {
-            _id: { grade: "$grade", accountType: "$accountType" },
-            count: { $sum: 1 },
-          },
-        },
-      ]),
-    ]);
-
-    const quizzesByGrade = [];
-    const learnersByGrade = [];
-    const accountTypeByGrade = [];
-
-    for (let g = 8; g <= 12; g++) {
-      const quizRow = quizzesByGradeRaw.find((x) => Number(x._id) === g);
-      const learnerRow = learnersByGradeRaw.find((x) => Number(x._id) === g);
-
-      const studentRow = accountTypeByGradeRaw.find(
-        (x) => Number(x._id.grade) === g && x._id.accountType === "student"
-      );
-      const materialsRow = accountTypeByGradeRaw.find(
-        (x) => Number(x._id.grade) === g && x._id.accountType === "materials"
-      );
-
-      const studentCount = studentRow ? Number(studentRow.count) : 0;
-      const materialsCount = materialsRow ? Number(materialsRow.count) : 0;
-
-      quizzesByGrade.push({
-        grade: g,
-        count: quizRow ? Number(quizRow.count) : 0,
-      });
-
-      learnersByGrade.push({
-        grade: g,
-        count: learnerRow ? Number(learnerRow.count) : 0,
-      });
-
-      accountTypeByGrade.push({
-        grade: g,
-        student: studentCount,
-        materials: materialsCount,
-        total: studentCount + materialsCount,
-      });
-    }
-
-    const totalLearners = learnersByGrade.reduce((sum, row) => sum + row.count, 0);
-
-    return res.json({
-      totalUsers,
-      totalAssessments,
-      totalQuizzes: totalAssessments,
-      totalLearners,
-      quizzesByGrade,
-      learnersByGrade,
-      accountTypeByGrade,
-    });
-  } catch (e) {
-    console.error("GET /api/admin/stats error:", e.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.get("/api/admin/leaderboard/filters", authRequired, adminOnly, async (req, res) => {
-  try {
-    const [gradesRaw, provincesRaw, districtRows] = await Promise.all([
-      User.distinct("grade", {
-        role: "learner",
-        accountType: "student",
-        grade: { $ne: null },
-      }),
-      User.distinct("province", {
-        role: "learner",
-        accountType: "student",
-        province: { $exists: true, $ne: "" },
-      }),
-      User.find(
-        {
-          role: "learner",
-          accountType: "student",
-          district: { $exists: true, $ne: "" },
-        },
-        "district province"
-      ).lean(),
-    ]);
-
-    const grades = gradesRaw
-      .map((g) => Number(g))
-      .filter((g) => Number.isInteger(g))
-      .sort((a, b) => a - b);
-
-    const provinces = provincesRaw
-      .map((p) => cleanSpaces(p))
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b));
-
-    const districts = districtRows
-      .map((row) => ({
-        name: cleanSpaces(row.district || ""),
-        province: cleanSpaces(row.province || ""),
-      }))
-      .filter((row) => row.name)
-      .sort((a, b) => {
-        const p = a.province.localeCompare(b.province);
-        if (p !== 0) return p;
-        return a.name.localeCompare(b.name);
-      });
-
-    return res.json({
-      grades,
-      provinces,
-      districts,
-    });
-  } catch (e) {
-    console.error("GET /api/admin/leaderboard/filters error:", e.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.get("/api/admin/leaderboard", authRequired, adminOnly, async (req, res) => {
-  try {
-    const period = String(req.query.period || "monthly").toLowerCase().trim();
-    const grade = safeTrim(req.query.grade);
-    const province = cleanSpaces(req.query.province || "");
-    const district = cleanSpaces(req.query.district || "");
-    const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 100);
-
-    const startDate = getPeriodStart(period);
-
-    const resultMatch = {};
-    if (startDate) {
-      resultMatch.createdAt = { $gte: startDate };
-    }
-
-    const userFieldMatch = {
-      "user.role": "learner",
-      "user.accountType": "student",
+<!-- admin-quiz.html (FULL UPDATED - COPY & PASTE)
+     ✅ MathJax enabled (SVG)
+     ✅ Instructions box
+     ✅ Note/Heading blocks (type:"note")
+     ✅ Marks per question (points)
+     ✅ Solution/Workings per question (solution)
+     ✅ MCQ options: ADD/REMOVE choices (min 2)
+     ✅ MCQ: MULTI-CORRECT (checkbox per option)
+     ✅ FIX: correctIndexes mapping ALWAYS matches options (even if blanks removed)
+     ✅ FIX: sends isMultiSelect:true when 2+ correct answers
+     ✅ Drag & drop reorder + renumber
+     ✅ Difficulty per quiz (easy/moderate/hard)
+     ✅ Paper selection (paper1/paper2)
+     ✅ Publish mode (draft / publish now / schedule)
+     ✅ Publish date & time
+     ✅ Available From / Available Until
+     ✅ Send email to students checkbox
+     ✅ Save draft sends NO learner email
+     ✅ Only admin/tester can publish
+     ✅ Admin + editor + tester can access this page
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin | Add Assessment</title>
+
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' }
     };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
-    if (grade) userFieldMatch["user.grade"] = Number(grade);
-    if (province) userFieldMatch["user.province"] = province;
-    if (district) userFieldMatch["user.district"] = district;
+  <style>
+    body{font-family:Arial; padding:20px; max-width:980px; margin:auto; background:#f6f7fb;}
+    .card{background:#fff; border:1px solid #e6e6e6; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.06);}
+    input, textarea, select{width:100%; padding:10px; margin:8px 0; border-radius:10px; border:1px solid #ddd; outline:none;}
+    textarea{resize:vertical}
+    button{padding:10px 14px; cursor:pointer; border:none; border-radius:10px; font-weight:700;}
+    .btn{background:#111827; color:#fff;}
+    .btn:disabled{opacity:0.6; cursor:not-allowed;}
+    .btn2{background:#fff; border:1px solid #ddd; color:#111827;}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+    .msg{margin-top:10px;}
+    .topbar{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+    .muted{color:#555;}
+    .error{color:#b91c1c;}
+    .ok{color:#065f46;}
+    a.btn2{display:inline-block; padding:10px 12px; border-radius:10px; text-decoration:none;}
 
-    const learnerRows = await Result.aggregate([
-      { $match: resultMatch },
-      {
-        $lookup: {
-          from: "users",
-          localField: "userId",
-          foreignField: "_id",
-          as: "user",
-        },
-      },
-      { $unwind: "$user" },
-      { $match: userFieldMatch },
-      {
-        $group: {
-          _id: "$user._id",
-          fullName: { $first: "$user.fullName" },
-          username: { $first: "$user.username" },
-          province: { $first: "$user.province" },
-          district: { $first: "$user.district" },
-          grade: { $first: "$user.grade" },
-          average: { $avg: "$percent" },
-          best: { $max: "$percent" },
-          quizzesCounted: { $sum: 1 },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          userId: "$_id",
-          fullName: { $ifNull: ["$fullName", ""] },
-          username: { $ifNull: ["$username", ""] },
-          province: { $ifNull: ["$province", ""] },
-          district: { $ifNull: ["$district", ""] },
-          grade: { $ifNull: ["$grade", null] },
-          average: { $round: ["$average", 0] },
-          best: { $round: ["$best", 0] },
-          quizzesCounted: 1,
-        },
-      },
-      { $sort: { average: -1, best: -1, quizzesCounted: -1, fullName: 1, username: 1 } },
-    ]);
+    .qcard{border:1px solid #e6e6e6; border-radius:12px; padding:12px; margin-top:12px; background:#fff;}
+    .qhead{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
+    .smallbtn{border:1px solid #ddd; background:#fff; color:#111827; padding:8px 10px; border-radius:10px; font-weight:700;}
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    hr{border:none; border-top:1px solid #eee; margin:14px 0;}
+    .pill{display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid #cfe9ff; background:#eef7ff; color:#0b3c5d; font-size:12px; font-weight:800;}
+    .tiny{font-size:12px;}
+    .hide{display:none !important;}
 
-    const rows = learnerRows.slice(0, limit).map((row, index) => ({
-      rank: index + 1,
-      fullName: cleanSpaces(row.fullName || ""),
-      username: cleanSpaces(row.username || ""),
-      province: cleanSpaces(row.province || ""),
-      district: cleanSpaces(row.district || ""),
-      grade: row.grade ?? "",
-      average: Number(row.average || 0),
-      best: Number(row.best || 0),
-      quizzesCounted: Number(row.quizzesCounted || 0),
-    }));
+    .previewLabel{margin:6px 0 0}
+    .previewBox{
+      border:1px dashed #e6e6e6;
+      background:#fbfbfe;
+      border-radius:10px;
+      padding:10px;
+      margin-top:6px;
+      font-size:13px;
+      line-height:1.35;
+      white-space:pre-wrap;
+    }
+    .previewRow{
+      margin-top:10px;
+      border-top:1px solid #f0f0f0;
+      padding-top:10px;
+    }
+    .prevTitle{
+      font-weight:900;
+      font-size:12px;
+      color:#0b3c5d;
+      margin:0 0 6px 0;
+    }
 
-    const learnersCounted = learnerRows.length;
-    const topLearner = rows.length ? rows[0] : null;
+    .infoBox{
+      border:1px solid #e6e6e6;
+      background:#fbfbff;
+      border-radius:12px;
+      padding:12px;
+      margin:10px 0 6px;
+    }
+    .infoBox b{display:block; margin-bottom:6px;}
+    .helpLine{margin-top:6px;}
 
-    const provinceAgg = await Result.aggregate([
-      { $match: resultMatch },
-      {
-        $lookup: {
-          from: "users",
-          localField: "userId",
-          foreignField: "_id",
-          as: "user",
-        },
-      },
-      { $unwind: "$user" },
-      {
-        $match: {
-          ...userFieldMatch,
-          "user.province": { $exists: true, $ne: "" },
-        },
-      },
-      {
-        $group: {
-          _id: "$user.province",
-          average: { $avg: "$percent" },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          name: "$_id",
-          average: { $round: ["$average", 0] },
-        },
-      },
-      { $sort: { average: -1, name: 1 } },
-      { $limit: 1 },
-    ]);
+    .dragHandle{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid #e6e6e6;
+      background:#f8fafc;
+      color:#111827;
+      padding:6px 10px;
+      border-radius:10px;
+      font-weight:700;
+      cursor:grab;
+      user-select:none;
+    }
+    .dragHandle:active{cursor:grabbing;}
+    .qcard[draggable="true"]{cursor:default;}
+    .qcard.dragging{
+      opacity:.75;
+      transform:scale(0.995);
+      box-shadow:0 10px 22px rgba(0,0,0,.10);
+      border-color:#cfe9ff;
+    }
+    .qcard.dropTarget{
+      outline:3px solid rgba(207,233,255,.85);
+      outline-offset:3px;
+    }
 
-    const districtAgg = await Result.aggregate([
-      { $match: resultMatch },
-      {
-        $lookup: {
-          from: "users",
-          localField: "userId",
-          foreignField: "_id",
-          as: "user",
-        },
-      },
-      { $unwind: "$user" },
-      {
-        $match: {
-          ...userFieldMatch,
-          "user.district": { $exists: true, $ne: "" },
-        },
-      },
-      {
-        $group: {
-          _id: "$user.district",
-          average: { $avg: "$percent" },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          name: "$_id",
-          average: { $round: ["$average", 0] },
-        },
-      },
-      { $sort: { average: -1, name: 1 } },
-      { $limit: 1 },
-    ]);
+    .optRow{display:flex; gap:10px; align-items:center; margin-top:10px;}
+    .optLabel{min-width:44px; font-weight:900;}
+    .optCorrectWrap{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:0 8px;
+      border:1px solid #e6e6e6;
+      background:#f8fafc;
+      border-radius:10px;
+      height:40px;
+      white-space:nowrap;
+    }
+    .optCorrectWrap input{width:auto; margin:0;}
+    .optCorrectWrap span{font-weight:800; font-size:12px; color:#0b3c5d;}
 
-    return res.json({
-      period,
-      rows,
-      topLearner: topLearner
-        ? {
-            fullName: topLearner.fullName || "",
-            username: topLearner.username || "",
-            province: topLearner.province || "",
-            district: topLearner.district || "",
-            grade: topLearner.grade ?? "",
-            average: topLearner.average || 0,
-            best: topLearner.best || 0,
-            quizzesCounted: topLearner.quizzesCounted || 0,
-          }
-        : null,
-      topProvince: provinceAgg[0] || null,
-      topDistrict: districtAgg[0] || null,
-      learnersCounted,
-    });
-  } catch (e) {
-    console.error("GET /api/admin/leaderboard error:", e.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
+    .checkline{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-top:18px;
+      padding:10px 12px;
+      border:1px solid #e6e6e6;
+      border-radius:10px;
+      background:#fbfbff;
+    }
+    .checkline input{
+      width:auto;
+      margin:0;
+    }
 
-/* ------------------ QUIZZES ------------------ */
+    :root{
+      --paper:#fffdf7;
+      --paperEdge:#efe6d7;
+      --ink:#1f2937;
+      --line:rgba(59,130,246,.14);
+      --margin:rgba(239,68,68,.18);
+    }
 
-app.get("/api/quizzes", authRequired, async (req, res) => {
-  try {
-    const u = await User.findById(req.user.userId).select("role grade");
-    if (!u) return res.status(401).json({ message: "User not found" });
+    .previewBox.paperBox{
+      position:relative;
+      background:var(--paper);
+      border:1px solid var(--paperEdge);
+      border-radius:12px;
+      padding:12px 12px 12px 64px;
+      color:var(--ink);
+      font-family:Arial, sans-serif;
+      font-size:13px;
+      line-height:28px;
+      white-space:pre-wrap;
+      overflow:hidden;
+    }
 
-    const wantsAll = String(req.query.all || "") === "1";
+    .previewBox.paperBox::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(to right,
+          transparent 0,
+          transparent 44px,
+          var(--margin) 44px,
+          var(--margin) 46px,
+          transparent 46px
+        ),
+        repeating-linear-gradient(
+          to bottom,
+          transparent 0px,
+          transparent 27px,
+          var(--line) 27px,
+          var(--line) 28px
+        );
+      pointer-events:none;
+      opacity:.95;
+    }
 
-    let filter = {};
+    .previewBox.paperBox mjx-container{display:inline-block;margin:0 !important;}
+    .previewBox.paperBox svg{vertical-align:middle;}
 
-    if (isPrivilegedRole(u.role) && wantsAll) {
-      filter = {};
-    } else if (canManageQuizzes(u.role)) {
-      if (req.query.onlyPublished === "1") {
-        filter.isPublished = true;
+    .previewBox.solBox{
+      background:#ffffff;
+      border:1px solid #e6e6e6;
+      border-radius:12px;
+      padding:12px;
+      font-size:13px;
+      line-height:1.5;
+      color:#111827;
+      white-space:pre-wrap;
+    }
+
+    .previewBox.solBox::before{display:none !important;}
+    .previewBox.solBox mjx-container{display:inline-block;margin:0 !important;}
+    .previewBox.solBox svg{vertical-align:middle;}
+
+    @media (max-width:650px){
+      .previewBox.paperBox{padding-left:56px;}
+      .row{grid-template-columns:1fr;}
+      .optRow{flex-wrap:wrap;}
+      .optCorrectWrap{height:auto; padding:8px 10px;}
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="topbar">
+    <div>
+      <h2 style="margin:0;">Practice Online – Add Assessment</h2>
+      <div class="muted" id="who">Checking login...</div>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a class="btn2" href="admin-dashboard.html">Dashboard</a>
+      <a class="btn2" href="edit-assessment.html">Edit / Freeze</a>
+      <a class="btn2" href="learner-quizzes.html">Learner View</a>
+      <button class="btn" id="logoutBtn" type="button">Logout</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>Grade</label>
+        <select id="grade">
+          <option value="">Select Grade</option>
+          <option value="8">Grade 8</option>
+          <option value="9">Grade 9</option>
+          <option value="10">Grade 10</option>
+          <option value="11">Grade 11</option>
+          <option value="12">Grade 12</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Topic (type it)</label>
+        <input id="topic" placeholder="e.g. Algebra" />
+      </div>
+
+      <div>
+        <label>Time Limit (minutes)</label>
+        <input id="timeLimit" type="number" min="1" max="180" value="10" placeholder="e.g. 10" />
+      </div>
+
+      <div>
+        <label>Assessment Title</label>
+        <input id="title" placeholder="e.g. Term 1 Revision Test" />
+      </div>
+
+      <div>
+        <label>Difficulty Level</label>
+        <select id="difficulty">
+          <option value="easy">Easy</option>
+          <option value="moderate" selected>Moderate</option>
+          <option value="hard">Hard</option>
+        </select>
+        <div class="muted tiny">Labels the whole assessment: Easy / Moderate / Hard.</div>
+      </div>
+
+      <div>
+        <label>Paper</label>
+        <select id="paper">
+          <option value="paper1" selected>Paper 1</option>
+          <option value="paper2">Paper 2</option>
+        </select>
+        <div class="muted tiny">Example: Financial Mathematics = Paper 1</div>
+      </div>
+
+      <div>
+        <label>Publish Option</label>
+        <select id="publishMode">
+          <option value="draft" selected>Save as Draft</option>
+          <option value="now">Publish Now</option>
+          <option value="schedule">Schedule Publish</option>
+        </select>
+        <div class="muted tiny">Draft is visible only to admin/editor/tester. Publish makes it visible to learners.</div>
+      </div>
+
+      <div id="publishAtWrap" class="hide">
+        <label>Publish Date & Time</label>
+        <input id="publishAt" type="datetime-local" />
+        <div class="muted tiny">When this date/time arrives, the assessment will go live automatically.</div>
+      </div>
+
+      <div>
+        <label>Available From (optional)</label>
+        <input id="availableFrom" type="datetime-local" />
+        <div class="muted tiny">Learners can only open the assessment from this date/time.</div>
+      </div>
+
+      <div>
+        <label>Available Until (optional)</label>
+        <input id="availableUntil" type="datetime-local" />
+        <div class="muted tiny">After this date/time, learners can no longer open the assessment.</div>
+      </div>
+    </div>
+
+    <div class="checkline">
+      <input id="sendPublishEmail" type="checkbox" checked />
+      <label for="sendPublishEmail" style="margin:0; width:auto; font-weight:700;">Send email to students when published</label>
+    </div>
+    <div class="muted tiny" style="margin-top:6px;">Untick this if you want to publish without sending learner emails.</div>
+
+    <div class="infoBox">
+      <b>Assessment Instructions (optional)</b>
+      <textarea id="instructions" rows="3" placeholder="Example: Answer all questions. Use $x^2$ form for algebra answers. No calculators."></textarea>
+
+      <div class="helpLine muted tiny">
+        Type math using LaTeX: <b>$x^2$</b>, <b>$\frac{a}{b}$</b>, <b>$\sqrt{x}$</b>, <b>$(x+1)^2$</b>
+      </div>
+
+      <div class="previewRow" style="margin-top:10px;">
+        <div class="prevTitle">Instructions Preview</div>
+        <div class="previewBox" id="prevInstructions">(Instructions preview)</div>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="qhead">
+      <div>
+        <h3 style="margin:0;">Blocks</h3>
+        <div class="muted tiny" style="margin-top:6px;">
+          Drag cards to reorder. Add a Note/Heading before questions if needed. Use $...$ for inline math.
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="smallbtn" id="addNoteBtn" type="button">+ Add Note / Heading</button>
+        <button class="smallbtn" id="addMcqBtn" type="button">+ Add MCQ</button>
+        <button class="smallbtn" id="addTextBtn" type="button">+ Add Typed Answer</button>
+      </div>
+    </div>
+
+    <div id="questionsWrap"></div>
+
+    <hr>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn" id="saveBtn" disabled type="button">Save Assessment</button>
+      <button class="btn btn2" id="publishBtn" disabled type="button">Publish Assessment</button>
+    </div>
+    <p class="msg muted" id="msg"></p>
+  </div>
+
+  <script>
+    const API = window.API || "https://practice-backend-msgn.onrender.com";
+
+    const msg = document.getElementById("msg");
+    const who = document.getElementById("who");
+    const saveBtn = document.getElementById("saveBtn");
+    const publishBtn = document.getElementById("publishBtn");
+
+    const gradeEl = document.getElementById("grade");
+    const topicEl = document.getElementById("topic");
+    const timeLimitEl = document.getElementById("timeLimit");
+    const titleEl = document.getElementById("title");
+    const difficultyEl = document.getElementById("difficulty");
+    const paperEl = document.getElementById("paper");
+
+    const publishModeEl = document.getElementById("publishMode");
+    const publishAtEl = document.getElementById("publishAt");
+    const publishAtWrap = document.getElementById("publishAtWrap");
+
+    const availableFromEl = document.getElementById("availableFrom");
+    const availableUntilEl = document.getElementById("availableUntil");
+    const sendPublishEmailEl = document.getElementById("sendPublishEmail");
+
+    const instructionsEl = document.getElementById("instructions");
+    const prevInstructions = document.getElementById("prevInstructions");
+
+    const addNoteBtn = document.getElementById("addNoteBtn");
+    const addMcqBtn = document.getElementById("addMcqBtn");
+    const addTextBtn = document.getElementById("addTextBtn");
+    const questionsWrap = document.getElementById("questionsWrap");
+
+    let currentRole = "";
+    let canPublish = false;
+
+    function setMsg(text, type="muted"){
+      msg.className = "msg " + type;
+      msg.textContent = text;
+    }
+
+    function logout(){
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("me_cache");
+      localStorage.removeItem("user");
+      localStorage.removeItem("role");
+      window.location.href = "login.html";
+    }
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+
+    function cleanSpaces(s){
+      return String(s || "").trim().replace(/\s+/g, " ");
+    }
+
+    function toTitleCase(s){
+      const t = cleanSpaces(s).toLowerCase();
+      if (!t) return "";
+      return t.replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function normalizeDifficulty(v){
+      const d = String(v || "").toLowerCase().trim();
+      if (d === "easy" || d === "moderate" || d === "hard") return d;
+      return "moderate";
+    }
+
+    function normalizePaper(v){
+      const p = String(v || "").toLowerCase().trim();
+      if (p === "paper1" || p === "paper2") return p;
+      return "paper1";
+    }
+
+    function typesetMath(root=document){
+      if (window.MathJax?.typesetPromise) {
+        window.MathJax.typesetPromise([root]).catch(()=>{});
       }
-    } else {
-      if (!u.grade) return res.json([]);
-      const now = new Date();
-      filter.grade = u.grade;
-      filter.isPublished = true;
-      filter.$or = [{ publishAt: null }, { publishAt: { $lte: now } }];
     }
 
-    const quizzes = await Quiz.find(filter)
-      .sort({ createdAt: -1 })
-      .select(
-        "grade title topic paper difficulty questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
-      );
-
-    return res.json(quizzes);
-  } catch (e) {
-    console.error("GET /api/quizzes error:", e.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.get("/api/quizzes/:id", authRequired, async (req, res) => {
-  try {
-    const quiz = await Quiz.findById(req.params.id);
-    if (!quiz) return res.status(404).json({ message: "Not found" });
-
-    const u = await User.findById(req.user.userId).select("role grade");
-    if (!u) return res.status(401).json({ message: "User not found" });
-
-    if (canManageQuizzes(u.role) || isPrivilegedRole(u.role)) {
-      return res.json(quiz);
+    function setPreviewText(previewEl, text){
+      if (!previewEl) return;
+      previewEl.textContent = text || "";
+      typesetMath(previewEl);
     }
 
-    if (Number(quiz.grade) !== Number(u.grade)) {
-      return res.status(403).json({ message: "Not allowed" });
+    function renderInstructionsPreview(){
+      const t = cleanSpaces(instructionsEl.value || "");
+      setPreviewText(prevInstructions, t || "(Instructions preview)");
     }
+    instructionsEl.addEventListener("input", renderInstructionsPreview);
+    renderInstructionsPreview();
 
-    const now = new Date();
-
-    if (!quiz.isPublished) {
-      return res.status(403).json({ message: "This assessment is not yet published." });
+    function updatePublishUI(){
+      const mode = publishModeEl.value;
+      publishAtWrap.classList.toggle("hide", mode !== "schedule");
     }
+    publishModeEl.addEventListener("change", updatePublishUI);
+    updatePublishUI();
 
-    if (quiz.publishAt && new Date(quiz.publishAt) > now) {
-      return res.status(403).json({ message: "This assessment is not yet published." });
-    }
+    (async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return window.location.href = "login.html";
 
-    return res.json(quiz);
-  } catch {
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
-  try {
-    const {
-      grade,
-      title,
-      topic,
-      paper,
-      timeLimitMinutes,
-      instructions,
-      questions,
-      difficulty,
-      publishNow,
-      publishAt,
-      availableFrom,
-      availableUntil,
-      sendPublishEmail,
-    } = req.body;
-
-    if (!grade || !title || !topic || !Array.isArray(questions) || questions.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "Grade, topic, title, and questions are required." });
-    }
-
-    const g = Number(grade);
-    if (!Number.isInteger(g) || g < 8 || g > 12) {
-      return res.status(400).json({ message: "Grade must be between 8 and 12." });
-    }
-
-    const quizTitle = cleanSpaces(title);
-    const quizTopic = cleanSpaces(topic);
-    const quizInstructions = String(instructions || "").trim();
-
-    const quizDifficulty = normalizeDifficulty(difficulty);
-    const quizPaper = normalizePaper(paper);
-
-    for (const q of questions) {
-      const type = String(q?.type || "mcq").toLowerCase();
-
-      if (!cleanSpaces(q?.text)) {
-        return res.status(400).json({ message: "Each block must have text." });
-      }
-
-      if ("solution" in q && q.solution !== undefined && q.solution !== null) {
-        q.solution = String(q.solution);
-      }
-
-      if (type === "note") {
-        q.points = 0;
-        q.correctIndex = -1;
-        q.correctIndexes = [];
-        q.isMultiSelect = false;
-        continue;
-      }
-
-      const pts = safeInt(q?.points, 1);
-      if (!Number.isInteger(pts) || pts < 1) {
-        return res.status(400).json({
-          message: "Each question must have marks (points) of 1 or more.",
+      let meRes;
+      try{
+        meRes = await fetch(`${API}/api/auth/me`, {
+          headers: { "Authorization": `Bearer ${token}` }
         });
+      } catch {
+        setMsg("Network error. Please refresh and try again.", "error");
+        return;
       }
-      q.points = pts;
 
-      if (type === "text") {
-        if (!cleanSpaces(q?.correctText)) {
-          return res.status(400).json({ message: "Typed questions must have correctText." });
-        }
-        const mode = q?.textAnswerMode || "exact";
-        if (!["exact", "contains", "number_tolerance"].includes(mode)) {
-          return res.status(400).json({ message: "Invalid textAnswerMode." });
-        }
-        if (mode === "number_tolerance") {
-          const tol = safeNum(q?.numberTolerance, null);
-          if (tol === null || tol < 0) {
-            return res.status(400).json({ message: "Invalid numberTolerance." });
-          }
-        }
+      const me = await meRes.json().catch(() => null);
 
-        q.correctIndex = -1;
-        q.correctIndexes = [];
-        q.isMultiSelect = false;
-      } else {
-        const opts = Array.isArray(q?.options) ? q.options : [];
-        if (opts.length < 2 || opts.some((o) => !cleanSpaces(o))) {
-          return res.status(400).json({ message: "MCQ must have at least 2 options." });
-        }
-
-        const idxs = normalizeIndexArray(q?.correctIndexes || []);
-        const hasMulti = idxs.length >= 2;
-        const wantsMulti = Boolean(q?.isMultiSelect) || hasMulti;
-
-        if (wantsMulti) {
-          if (idxs.length < 1) {
-            return res.status(400).json({ message: "MCQ must have at least 1 correct option." });
-          }
-          if (idxs.some((i) => i < 0 || i >= opts.length)) {
-            return res.status(400).json({ message: "MCQ correctIndexes must be within options." });
-          }
-          q.isMultiSelect = true;
-          q.correctIndexes = idxs;
-          q.correctIndex = idxs.length === 1 ? idxs[0] : -1;
-        } else {
-          const ci = safeInt(q?.correctIndex, null);
-          if (ci === null || ci < 0 || ci >= opts.length) {
-            return res.status(400).json({ message: "MCQ correctIndex must be within options." });
-          }
-          q.correctIndexes = [ci];
-          q.correctIndex = ci;
-          q.isMultiSelect = false;
-        }
+      if (!meRes.ok || !me) {
+        alert("Session expired. Please login again.");
+        return logout();
       }
+
+      const role = String(me.role || "").toLowerCase();
+      if (!["admin", "editor", "tester"].includes(role)) {
+        alert("Admin, editor or tester only");
+        return window.location.href = "learner-quizzes.html";
+      }
+
+      currentRole = role;
+      canPublish = role === "admin" || role === "tester";
+
+      who.textContent = `Logged in as: ${me.username} (${me.role})`;
+      saveBtn.disabled = false;
+      publishBtn.disabled = !canPublish;
+
+      if (!canPublish) {
+        publishBtn.title = "Only admin/tester can publish assessments.";
+      }
+
+      setMsg("Ready to add an assessment.", "ok");
+    })();
+
+    let qCount = 0;
+
+    function noteCardHtml(id){
+      return `
+        <div class="qcard" data-type="note" draggable="true">
+          <div class="qhead">
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+              <span class="dragHandle" title="Drag to reorder">↕ Drag</span>
+              <div>
+                <b class="cardLabel">Block ${id}</b>
+                <span class="pill">NOTE / HEADING</span>
+              </div>
+            </div>
+            <button type="button" class="smallbtn removeBtn">Remove</button>
+          </div>
+
+          <label>Text (supports math)</label>
+          <textarea class="noteText" rows="3" placeholder="Example: Given below is the number set $\\{2,4,6,8\\}$..."></textarea>
+
+          <div class="previewRow">
+            <div class="prevTitle">Live Preview</div>
+            <div class="previewBox prevNote paperBox"></div>
+          </div>
+        </div>
+      `;
     }
 
-    const publishAtRaw = validDateOrNull(publishAt);
-    const availableFromRaw = validDateOrNull(availableFrom);
-    const availableUntilRaw = validDateOrNull(availableUntil);
+    function mcqCardHtml(id){
+      return `
+        <div class="qcard" data-type="mcq" draggable="true">
+          <div class="qhead">
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+              <span class="dragHandle" title="Drag to reorder">↕ Drag</span>
+              <div>
+                <b class="cardLabel">Question ${id}</b>
+                <span class="pill">MCQ</span>
+              </div>
+            </div>
+            <button type="button" class="smallbtn removeBtn">Remove</button>
+          </div>
 
-    if (publishAtRaw === "INVALID") {
-      return res.status(400).json({ message: "Invalid publish date/time." });
-    }
-    if (availableFromRaw === "INVALID") {
-      return res.status(400).json({ message: "Invalid Available From date/time." });
-    }
-    if (availableUntilRaw === "INVALID") {
-      return res.status(400).json({ message: "Invalid Available Until date/time." });
-    }
-    if (availableFromRaw && availableUntilRaw && availableUntilRaw <= availableFromRaw) {
-      return res.status(400).json({ message: "Available Until must be after Available From." });
+          <label>Question Text (supports math)</label>
+          <textarea class="qText" rows="3" placeholder="Example: Simplify $x^2 + 2x + 1$"></textarea>
+
+          <label>Hint (supports math)</label>
+          <input class="qHint" placeholder="Example: Use $(a+b)^2$ identity" />
+
+          <label>Image URL (optional)</label>
+          <input class="qImage" />
+
+          <label>Marks (points)</label>
+          <input class="qPoints" type="number" min="1" step="1" value="1" />
+
+          <label>Solution / Workings (optional)</label>
+          <textarea class="qSolution" rows="4" placeholder="Example: Expand $(x+1)^2 = x^2 + 2x + 1$, so the simplified form is $x^2 + 2x + 1$."></textarea>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px;">
+            <b style="font-size:13px;">Options</b>
+            <button class="smallbtn addOptBtn" type="button">+ Add Option</button>
+          </div>
+
+          <div class="optsWrap"></div>
+
+          <div class="muted tiny" style="margin-top:8px;">
+             Tick <b>Correct</b> for one or more options (multi-select).
+          </div>
+
+          <div class="previewRow">
+            <div class="prevTitle">Live Preview</div>
+            <div class="muted tiny">Question:</div>
+            <div class="previewBox prevQ paperBox"></div>
+
+            <div class="muted tiny previewLabel">Hint:</div>
+            <div class="previewBox prevHint paperBox"></div>
+
+            <div class="muted tiny previewLabel">Options:</div>
+            <div class="previewBox prevOpts paperBox"></div>
+
+            <div class="muted tiny previewLabel">Solution / Workings:</div>
+            <div class="previewBox prevSol solBox"></div>
+          </div>
+        </div>
+      `;
     }
 
-    let isPublished = false;
-    let publishedAt = null;
-    let finalPublishAt = null;
+    function textCardHtml(id){
+      return `
+        <div class="qcard" data-type="text" draggable="true">
+          <div class="qhead">
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+              <span class="dragHandle" title="Drag to reorder">↕ Drag</span>
+              <div>
+                <b class="cardLabel">Question ${id}</b>
+                <span class="pill">Typed Answer</span>
+              </div>
+            </div>
+            <button type="button" class="smallbtn removeBtn">Remove</button>
+          </div>
 
-    if (Boolean(publishNow)) {
-      isPublished = true;
-      publishedAt = new Date();
-    } else if (publishAtRaw) {
-      isPublished = true;
-      finalPublishAt = publishAtRaw;
+          <label>Question Text (supports math)</label>
+          <textarea class="qText" rows="3" placeholder="Example: Solve $\\frac{2x}{5}=4$"></textarea>
+
+          <label>Hint (supports math)</label>
+          <input class="qHint" placeholder="Example: Multiply both sides by 5" />
+
+          <label>Marks (points)</label>
+          <input class="qPoints" type="number" min="1" step="1" value="1" />
+
+          <label>Solution / Workings (optional)</label>
+          <textarea class="qSolution" rows="4" placeholder="Example: Multiply both sides by 5: $2x=20$. Divide by 2: $x=10$."></textarea>
+
+          <div class="grid2">
+            <div>
+              <label>Correct Answer (supports math)</label>
+              <input class="correctText" placeholder="Example: 10" />
+            </div>
+            <div>
+              <label>Check Mode</label>
+              <select class="textMode">
+                <option value="exact">Exact (case-insensitive)</option>
+                <option value="contains">Contains</option>
+                <option value="number_tolerance">Number (tolerance)</option>
+              </select>
+              <div class="muted tiny">Use “Number (tolerance)” for calculations.</div>
+            </div>
+          </div>
+
+          <div class="grid2 tolRow hide">
+            <div>
+              <label>Tolerance (only for Number mode)</label>
+              <input class="tolerance" type="number" step="0.0001" />
+              <div class="muted tiny">Example: correct = 3.14, tolerance 0.01 accepts 3.13 to 3.15</div>
+            </div>
+            <div>
+              <label>Image URL (optional)</label>
+              <input class="qImage" />
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div>
+              <label>Image URL (optional)</label>
+              <input class="qImage2" />
+            </div>
+            <div class="muted tiny" style="padding-top:30px;">
+              Learners will type the answer in a text box.
+            </div>
+          </div>
+
+          <div class="previewRow">
+            <div class="prevTitle">Live Preview</div>
+            <div class="muted tiny">Question:</div>
+            <div class="previewBox prevQ paperBox"></div>
+
+            <div class="muted tiny previewLabel">Hint:</div>
+            <div class="previewBox prevHint paperBox"></div>
+
+            <div class="muted tiny previewLabel">Expected Answer:</div>
+            <div class="previewBox prevAns paperBox"></div>
+
+            <div class="muted tiny previewLabel">Solution / Workings:</div>
+            <div class="previewBox prevSol solBox"></div>
+          </div>
+        </div>
+      `;
     }
 
-    const quiz = await Quiz.create({
-      grade: g,
-      title: quizTitle,
-      topic: quizTopic,
-      paper: quizPaper,
-      difficulty: quizDifficulty,
-      timeLimitMinutes: Number(timeLimitMinutes) || 10,
-      questions,
-      instructions: quizInstructions,
-      isFrozen: false,
-      frozenAt: null,
-      availableFrom: availableFromRaw || null,
-      availableUntil: availableUntilRaw || null,
-      isPublished,
-      publishedAt,
-      publishAt: finalPublishAt,
-      publishedBy: isPublished ? req.user.userId : null,
-      sendPublishEmail: !!sendPublishEmail,
+    function addNote(){
+      qCount += 1;
+      questionsWrap.insertAdjacentHTML("beforeend", noteCardHtml(qCount));
+      wireLastCard();
+      renumberCards();
+      setupDragAndDrop();
+    }
+    function addMcq(){
+      qCount += 1;
+      questionsWrap.insertAdjacentHTML("beforeend", mcqCardHtml(qCount));
+      wireLastCard();
+      renumberCards();
+      setupDragAndDrop();
+    }
+    function addText(){
+      qCount += 1;
+      questionsWrap.insertAdjacentHTML("beforeend", textCardHtml(qCount));
+      wireTextModeForLastCard();
+      wireLastCard();
+      renumberCards();
+      setupDragAndDrop();
+    }
+
+    addNoteBtn.addEventListener("click", addNote);
+    addMcqBtn.addEventListener("click", addMcq);
+    addTextBtn.addEventListener("click", addText);
+
+    questionsWrap.addEventListener("click", (e) => {
+      if (e.target.classList.contains("removeBtn")) {
+        e.target.closest(".qcard").remove();
+        renumberCards();
+      }
     });
 
-    res.status(201).json({
-      message: Boolean(publishNow)
-        ? "Assessment published."
-        : finalPublishAt
-        ? "Assessment scheduled for publishing."
-        : "Assessment saved as draft.",
-      quizId: quiz._id,
-      isPublished: quiz.isPublished,
-      publishAt: quiz.publishAt,
-    });
+    function wireTextModeForLastCard(){
+      const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='text']")];
+      const last = cards[cards.length - 1];
+      if (!last) return;
 
-    if (Boolean(publishNow) && !!sendPublishEmail) {
-      setImmediate(async () => {
-        await sendPublishedQuizEmails(quiz);
-      });
+      const modeSel = last.querySelector(".textMode");
+      const tolRow = last.querySelector(".tolRow");
+      const tolInput = last.querySelector(".tolerance");
+
+      const update = () => {
+        const mode = modeSel.value;
+        const showTol = mode === "number_tolerance";
+        tolRow.classList.toggle("hide", !showTol);
+        if (!showTol) tolInput.value = "";
+      };
+
+      modeSel.addEventListener("change", update);
+      update();
     }
 
-    return;
-  } catch (e) {
-    console.error("POST /api/quizzes error:", e.message);
-    return res.status(500).json({ message: "Could not save assessment" });
-  }
-});
+    function letter(i){ return String.fromCharCode(65 + i); }
 
-/* ------------------ FINAL FIXED PUT ROUTE ------------------ */
-app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
-  try {
-    const id = req.params.id;
-
-    const quiz = await Quiz.findById(id);
-    if (!quiz) return res.status(404).json({ message: "Assessment not found." });
-
-    const allowed = [
-      "grade",
-      "title",
-      "topic",
-      "paper",
-      "difficulty",
-      "instructions",
-      "timeLimitMinutes",
-      "availableFrom",
-      "availableUntil",
-      "questions",
-      "isFrozen",
-      "frozenAt",
-      "isPublished",
-      "publishedAt",
-      "publishAt",
-      "sendPublishEmail",
-    ];
-
-    for (const key of allowed) {
-      if (!(key in req.body)) continue;
-
-      if (key === "grade") {
-        const g = Number(req.body.grade);
-        if (!Number.isInteger(g) || g < 8 || g > 12) {
-          return res.status(400).json({ message: "Grade must be between 8 and 12." });
-        }
-        quiz.grade = g;
-        continue;
-      }
-
-      if (key === "title") {
-        quiz.title = cleanSpaces(req.body.title);
-        continue;
-      }
-
-      if (key === "topic") {
-        quiz.topic = cleanSpaces(req.body.topic);
-        continue;
-      }
-
-      if (key === "paper") {
-        quiz.paper = normalizePaper(req.body.paper);
-        continue;
-      }
-
-      if (key === "difficulty") {
-        quiz.difficulty = normalizeDifficulty(req.body.difficulty);
-        continue;
-      }
-
-      if (key === "instructions") {
-        quiz.instructions = String(req.body.instructions || "").trim();
-        continue;
-      }
-
-      if (key === "timeLimitMinutes") {
-        const t = Number(req.body.timeLimitMinutes);
-        if (!Number.isFinite(t) || t < 1 || t > 180) {
-          return res.status(400).json({ message: "Time limit must be 1–180 minutes." });
-        }
-        quiz.timeLimitMinutes = t;
-        continue;
-      }
-
-      if (key === "availableFrom") {
-        if (!req.body.availableFrom) {
-          quiz.availableFrom = null;
-        } else {
-          const d = new Date(req.body.availableFrom);
-          if (isNaN(d.getTime())) {
-            return res.status(400).json({ message: "Invalid Available From date/time." });
-          }
-          quiz.availableFrom = d;
-        }
-        continue;
-      }
-
-      if (key === "availableUntil") {
-        if (!req.body.availableUntil) {
-          quiz.availableUntil = null;
-        } else {
-          const d = new Date(req.body.availableUntil);
-          if (isNaN(d.getTime())) {
-            return res.status(400).json({ message: "Invalid Available Until date/time." });
-          }
-          quiz.availableUntil = d;
-        }
-        continue;
-      }
-
-      if (key === "isFrozen") {
-        quiz.isFrozen = !!req.body.isFrozen;
-        continue;
-      }
-
-      if (key === "frozenAt") {
-        quiz.frozenAt = req.body.frozenAt ? new Date(req.body.frozenAt) : null;
-        continue;
-      }
-
-      if (key === "isPublished") {
-        quiz.isPublished = !!req.body.isPublished;
-        continue;
-      }
-
-      if (key === "publishedAt") {
-        quiz.publishedAt = req.body.publishedAt ? new Date(req.body.publishedAt) : null;
-        continue;
-      }
-
-      if (key === "publishAt") {
-        quiz.publishAt = req.body.publishAt ? new Date(req.body.publishAt) : null;
-        continue;
-      }
-
-      if (key === "sendPublishEmail") {
-        quiz.sendPublishEmail = !!req.body.sendPublishEmail;
-        continue;
-      }
-
-      if (key === "questions") {
-        if (!Array.isArray(req.body.questions) || req.body.questions.length === 0) {
-          return res.status(400).json({ message: "Questions are required." });
-        }
-
-        for (const q of req.body.questions) {
-          const type = String(q?.type || "mcq").toLowerCase();
-
-          if (!cleanSpaces(q?.text)) {
-            return res.status(400).json({ message: "Each block must have text." });
-          }
-
-          if ("solution" in q && q.solution !== undefined && q.solution !== null) {
-            q.solution = String(q.solution);
-          }
-
-          if (type === "note") {
-            q.points = 0;
-            q.correctIndex = -1;
-            q.correctIndexes = [];
-            q.isMultiSelect = false;
-            continue;
-          }
-
-          const pts = safeInt(q?.points, 1);
-          if (!Number.isInteger(pts) || pts < 1) {
-            return res.status(400).json({
-              message: "Each question must have marks (points) of 1 or more.",
-            });
-          }
-          q.points = pts;
-
-          if (type === "text") {
-            if (!cleanSpaces(q?.correctText)) {
-              return res.status(400).json({ message: "Typed questions must have correctText." });
-            }
-
-            const mode = q?.textAnswerMode || "exact";
-            if (!["exact", "contains", "number_tolerance"].includes(mode)) {
-              return res.status(400).json({ message: "Invalid textAnswerMode." });
-            }
-
-            if (mode === "number_tolerance") {
-              const tol = Number(q?.numberTolerance);
-              if (!Number.isFinite(tol) || tol < 0) {
-                return res.status(400).json({ message: "Invalid numberTolerance." });
-              }
-            }
-
-            q.correctIndex = -1;
-            q.correctIndexes = [];
-            q.isMultiSelect = false;
-          } else {
-            const opts = Array.isArray(q?.options) ? q.options : [];
-            if (opts.length < 2 || opts.some((o) => !cleanSpaces(o))) {
-              return res.status(400).json({ message: "MCQ must have at least 2 options." });
-            }
-
-            const idxs = normalizeIndexArray(q?.correctIndexes || []);
-            const hasMulti = idxs.length >= 2;
-            const wantsMulti = Boolean(q?.isMultiSelect) || hasMulti;
-
-            if (wantsMulti) {
-              if (idxs.length < 1) {
-                return res.status(400).json({ message: "MCQ must have at least 1 correct option." });
-              }
-              if (idxs.some((i) => i < 0 || i >= opts.length)) {
-                return res.status(400).json({ message: "MCQ correctIndexes must be within options." });
-              }
-
-              q.isMultiSelect = true;
-              q.correctIndexes = idxs;
-              q.correctIndex = idxs.length === 1 ? idxs[0] : -1;
-            } else {
-              const ci = Number(q?.correctIndex);
-              if (!Number.isInteger(ci) || ci < 0 || ci >= opts.length) {
-                return res.status(400).json({ message: "MCQ correctIndex must be within options." });
-              }
-
-              q.correctIndex = ci;
-              q.correctIndexes = [ci];
-              q.isMultiSelect = false;
-            }
-          }
-        }
-
-        quiz.questions = req.body.questions;
-      }
-    }
-
-    if (
-      quiz.availableFrom &&
-      quiz.availableUntil &&
-      new Date(quiz.availableUntil).getTime() <= new Date(quiz.availableFrom).getTime()
-    ) {
-      return res.status(400).json({ message: "Available Until must be after Available From." });
-    }
-
-    if (quiz.publishAt && isNaN(new Date(quiz.publishAt).getTime())) {
-      return res.status(400).json({ message: "Invalid publish date/time." });
-    }
-
-    if (quiz.publishedAt && isNaN(new Date(quiz.publishedAt).getTime())) {
-      return res.status(400).json({ message: "Invalid publishedAt date/time." });
-    }
-
-    await quiz.save();
-
-    return res.json(quiz);
-  } catch (e) {
-    console.error("PUT /api/quizzes/:id error:", e.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.patch("/api/quizzes/:id/publish", authRequired, adminOnly, async (req, res) => {
-  try {
-    const { publishNow, publishAt, sendPublishEmail } = req.body;
-
-    const quiz = await Quiz.findById(req.params.id);
-    if (!quiz) return res.status(404).json({ message: "Assessment not found." });
-
-    const publishAtDate = validDateOrNull(publishAt);
-    if (publishAtDate === "INVALID") {
-      return res.status(400).json({ message: "Invalid publish date/time." });
-    }
-
-    quiz.sendPublishEmail =
-      sendPublishEmail === undefined ? quiz.sendPublishEmail : !!sendPublishEmail;
-    quiz.isPublished = true;
-    quiz.publishedBy = req.user.userId;
-
-    if (publishNow) {
-      quiz.publishedAt = new Date();
-      quiz.publishAt = null;
-    } else {
-      if (!publishAtDate) {
-        return res.status(400).json({ message: "Publish date/time is required." });
-      }
-      quiz.publishAt = publishAtDate;
-      quiz.publishedAt = null;
-    }
-
-    await quiz.save();
-
-    if (publishNow && quiz.sendPublishEmail) {
-      setImmediate(async () => {
-        await sendPublishedQuizEmails(quiz);
-      });
-    }
-
-    return res.json({
-      message: publishNow
-        ? "Assessment published successfully."
-        : "Assessment scheduled for publishing.",
-      quiz,
-    });
-  } catch (e) {
-    console.error("PATCH /api/quizzes/:id/publish error:", e.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
-  try {
-    const quiz = await Quiz.findByIdAndDelete(req.params.id);
-    if (!quiz) return res.status(404).json({ message: "Not found" });
-    return res.json({ message: "Deleted" });
-  } catch (e) {
-    console.error("DELETE /api/quizzes/:id error:", e.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-/* ------------------ RESULTS ------------------ */
-
-function isUnavailableBySchedule(quiz) {
-  const now = new Date();
-
-  if (quiz?.isFrozen) return true;
-
-  if (quiz?.isPublished !== true) return true;
-  if (quiz?.publishAt) {
-    const p = new Date(quiz.publishAt);
-    if (!isNaN(p.getTime()) && now < p) return true;
-  }
-
-  if (quiz?.availableFrom) {
-    const from = new Date(quiz.availableFrom);
-    if (!isNaN(from.getTime()) && now < from) return true;
-  }
-  if (quiz?.availableUntil) {
-    const until = new Date(quiz.availableUntil);
-    if (!isNaN(until.getTime()) && now > until) return true;
-  }
-  return false;
-}
-
-function parseNumberOrFraction(input) {
-  const s = String(input || "")
-    .trim()
-    .replace(/,/g, ".")
-    .replace(/−/g, "-");
-
-  if (!s) return null;
-
-  const m = s.match(/^([+-]?\d+(?:\.\d+)?)\s*\/\s*([+-]?\d+(?:\.\d+)?)$/);
-  if (m) {
-    const a = Number(m[1]);
-    const b = Number(m[2]);
-    if (!Number.isFinite(a) || !Number.isFinite(b) || b === 0) return null;
-    return a / b;
-  }
-
-  const n = Number(s);
-  return Number.isFinite(n) ? n : null;
-}
-
-function normalizeTextAnswer(s) {
-  return String(s || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "")
-    .replace(/−/g, "-");
-}
-
-function compareTextAnswer(userAns, correctAns, mode, tolerance) {
-  const uaRaw = String(userAns || "");
-  const caRaw = String(correctAns || "");
-  if (!caRaw.trim()) return false;
-
-  const uNum = parseNumberOrFraction(uaRaw);
-  const cNum = parseNumberOrFraction(caRaw);
-
-  if (mode === "number_tolerance") {
-    const tol = Number(tolerance);
-    if (uNum === null || cNum === null || !Number.isFinite(tol) || tol < 0) return false;
-    return Math.abs(uNum - cNum) <= tol;
-  }
-
-  if (uNum !== null && cNum !== null) {
-    return Math.abs(uNum - cNum) <= 1e-12;
-  }
-
-  const ua = normalizeTextAnswer(uaRaw);
-  const ca = normalizeTextAnswer(caRaw);
-
-  if (mode === "contains") return ua.includes(ca);
-
-  return ua === ca;
-}
-
-app.post("/api/results", authRequired, async (req, res) => {
-  try {
-    const { quizId, answers, timeTakenSeconds } = req.body;
-
-    if (!quizId || !Array.isArray(answers)) {
-      return res.status(400).json({ message: "quizId and answers are required." });
-    }
-
-    const userId = req.user.userId;
-
-    const me = await User.findById(userId).select("role");
-    if (!me) return res.status(401).json({ message: "User not found" });
-
-    const isAdminAttemptUser = isPrivilegedRole(me.role);
-
-    if (!isAdminAttemptUser) {
-      const existing = await Result.findOne({ userId, quizId }).select("_id");
-      if (existing) return res.status(409).json({ message: "Already attempted" });
-    }
-
-    let attemptNo = 1;
-    if (isAdminAttemptUser) {
-      const prev = await Result.countDocuments({ userId, quizId, isAdminAttempt: true });
-      attemptNo = prev + 1;
-    }
-
-    const quiz = await Quiz.findById(quizId);
-    if (!quiz) return res.status(404).json({ message: "Assessment not found" });
-
-    if (isUnavailableBySchedule(quiz)) {
-      return res.status(403).json({ message: "This assessment is currently unavailable." });
-    }
-
-    const qs = Array.isArray(quiz.questions) ? quiz.questions : [];
-    if (!qs.length) return res.status(400).json({ message: "Assessment has no questions." });
-
-    const gradedQs = qs.filter((q) => String(q.type || "mcq").toLowerCase() !== "note");
-    const totalPoints = gradedQs.reduce((sum, q) => sum + (Number(q.points) || 1), 0);
-
-    let scorePoints = 0;
-
-    const savedAnswers = qs.map((q, i) => {
-      const type = String(q.type || "mcq").toLowerCase();
-
-      const hint = q.hint || "";
-      const questionText = q.text || "";
-      const options = Array.isArray(q.options) ? q.options : [];
-      const qPoints = type === "note" ? 0 : Number(q.points) || 1;
-      const solution = String(q.solution || "").trim();
-
-      const ans = answers.find((a) => Number(a.questionIndex) === i) || {};
+    function renderCardPreview(card){
+      const type = card.getAttribute("data-type") || "mcq";
 
       if (type === "note") {
-        return {
-          questionIndex: i,
-          type: "note",
-          points: 0,
-          earnedPoints: 0,
-          chosenIndex: -1,
-          correctIndex: -1,
-          isMultiSelect: false,
-          chosenIndexes: [],
-          correctIndexes: [],
-          textAnswer: "",
-          correctText: "",
-          hint: "",
-          solution: "",
-          answerMode: "case-insensitive",
-          tolerance: null,
-          roundTo: null,
-          isCorrect: false,
-          questionText,
-          options: [],
-        };
+        const t = cleanSpaces(card.querySelector(".noteText")?.value || "");
+        setPreviewText(card.querySelector(".prevNote"), t || "(Note preview)");
+        return;
       }
 
-      if (type === "text") {
-        const userText = cleanSpaces(ans.textAnswer || "");
-        const correctText = cleanSpaces(q.correctText || "");
-        const mode = q.textAnswerMode || "exact";
-        const tol = q.numberTolerance ?? 0;
+      const qText = cleanSpaces(card.querySelector(".qText")?.value || "");
+      const hint  = cleanSpaces(card.querySelector(".qHint")?.value || "");
+      const sol   = cleanSpaces(card.querySelector(".qSolution")?.value || "");
 
-        const isCorrect = compareTextAnswer(userText, correctText, mode, tol);
-        const earned = isCorrect ? qPoints : 0;
-        scorePoints += earned;
+      setPreviewText(card.querySelector(".prevQ"), qText || "(Question preview)");
+      setPreviewText(card.querySelector(".prevHint"), hint || "(Hint preview)");
+      setPreviewText(card.querySelector(".prevSol"), sol || "(Solution/workings preview)");
 
-        const answerMode =
-          mode === "number_tolerance"
-            ? "number"
-            : mode === "exact"
-            ? "exact"
-            : "case-insensitive";
+      if (type === "mcq") {
+        const optRows = [...card.querySelectorAll(".optRow")];
+        const included = optRows
+          .map((r) => cleanSpaces(r.querySelector(".optInput")?.value || ""))
+          .map((v, i) => ({ v, i }))
+          .filter(x => !!x.v);
 
-        return {
-          questionIndex: i,
-          type: "text",
-          points: qPoints,
-          earnedPoints: earned,
-          chosenIndex: -1,
-          correctIndex: -1,
-          isMultiSelect: false,
-          chosenIndexes: [],
-          correctIndexes: [],
-          textAnswer: userText,
-          correctText,
-          hint,
-          solution,
-          answerMode,
-          tolerance: mode === "number_tolerance" ? Number(tol) : null,
-          roundTo: null,
-          isCorrect,
-          questionText,
-          options: [],
-        };
-      }
-
-      const correctIndexes = normalizeIndexArray(q.correctIndexes || []);
-      const multiByCorrects = correctIndexes.length > 1;
-      const isMultiSelect = Boolean(q.isMultiSelect) || multiByCorrects;
-
-      let isCorrect = false;
-      let chosenIndex = -1;
-      let correctIndex = Number.isInteger(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
-      let chosenIndexes = [];
-      let correctIndexesSnap = correctIndexes;
-
-      if (isMultiSelect) {
-        chosenIndexes = normalizeIndexArray(ans.chosenIndexes || []);
-        isCorrect = isMultiMcqCorrect(chosenIndexes, correctIndexes);
-        chosenIndex = chosenIndexes.length ? chosenIndexes[0] : -1;
-        correctIndex = correctIndexes.length ? correctIndexes[0] : -1;
+        const optsText = included.map((x, idx) => `${letter(idx)}) ${x.v}`).join("\n");
+        setPreviewText(card.querySelector(".prevOpts"), optsText || "(Options preview)");
       } else {
-        chosenIndex = Number.isFinite(Number(ans.chosenIndex)) ? Number(ans.chosenIndex) : -1;
-        correctIndex = Number.isFinite(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
-        isCorrect = chosenIndex === correctIndex && correctIndex >= 0;
-        chosenIndexes = chosenIndex >= 0 ? [chosenIndex] : [];
-        correctIndexesSnap = correctIndex >= 0 ? [correctIndex] : [];
+        const ans = cleanSpaces(card.querySelector(".correctText")?.value || "");
+        setPreviewText(card.querySelector(".prevAns"), ans || "(Expected answer preview)");
+      }
+    }
+
+    function relabelOptions(card){
+      const rows = [...card.querySelectorAll(".optRow")];
+      rows.forEach((r,i)=>{
+        const label = r.querySelector(".optLabel");
+        const input = r.querySelector(".optInput");
+        const checkText = r.querySelector(".optCorrectText");
+        if (label) label.textContent = `${letter(i)})`;
+        if (input) input.placeholder = `Option ${letter(i)}`;
+        if (checkText) checkText.textContent = "Correct";
+      });
+    }
+
+    function addOption(card, value="", isCorrect=false){
+      const wrap = card.querySelector(".optsWrap");
+      if (!wrap) return;
+
+      const row = document.createElement("div");
+      row.className = "optRow";
+
+      row.innerHTML = `
+        <div class="optLabel">${letter(wrap.querySelectorAll(".optRow").length)})</div>
+
+        <div class="optCorrectWrap" title="Tick if this option is correct">
+          <input type="checkbox" class="optCorrect" />
+          <span class="optCorrectText">Correct</span>
+        </div>
+
+        <input class="optInput" placeholder="Option" />
+        <button type="button" class="smallbtn removeOptBtn">Remove</button>
+      `;
+
+      const input = row.querySelector(".optInput");
+      const cb = row.querySelector(".optCorrect");
+      input.value = String(value || "");
+      cb.checked = !!isCorrect;
+
+      wrap.appendChild(row);
+
+      input.addEventListener("input", ()=> renderCardPreview(card));
+      cb.addEventListener("change", ()=> renderCardPreview(card));
+
+      row.querySelector(".removeOptBtn").addEventListener("click", ()=>{
+        const total = wrap.querySelectorAll(".optRow").length;
+        if (total <= 2) {
+          alert("MCQ must have at least 2 options.");
+          return;
+        }
+        row.remove();
+        relabelOptions(card);
+        renderCardPreview(card);
+      });
+
+      relabelOptions(card);
+      renderCardPreview(card);
+    }
+
+    function ensureMinOptions(card, min=4){
+      const wrap = card.querySelector(".optsWrap");
+      if (!wrap) return;
+      while (wrap.querySelectorAll(".optRow").length < min) addOption(card, "", false);
+    }
+
+    function wireLastCard(){
+      const cards = [...questionsWrap.querySelectorAll(".qcard")];
+      const last = cards[cards.length - 1];
+      if (!last) return;
+
+      if (last.getAttribute("data-type") === "note") {
+        last.querySelector(".noteText")?.addEventListener("input", ()=>renderCardPreview(last));
+        renderCardPreview(last);
+        return;
       }
 
-      const earned = isCorrect ? qPoints : 0;
-      scorePoints += earned;
+      [".qText",".qHint",".qPoints",".correctText",".qSolution"].forEach(sel=>{
+        const el = last.querySelector(sel);
+        if (el) el.addEventListener("input", ()=>renderCardPreview(last));
+      });
+
+      if (last.getAttribute("data-type") === "mcq") {
+        last.querySelector(".addOptBtn")?.addEventListener("click", ()=>addOption(last,"",false));
+        ensureMinOptions(last, 4);
+      }
+
+      renderCardPreview(last);
+    }
+
+    function renumberCards(){
+      const cards = [...questionsWrap.querySelectorAll(".qcard")];
+      let qNum = 0;
+      let bNum = 0;
+
+      for (const card of cards){
+        const type = (card.getAttribute("data-type") || "mcq").toLowerCase();
+        const labelEl = card.querySelector(".cardLabel");
+        if (!labelEl) continue;
+
+        if (type === "note"){
+          bNum += 1;
+          labelEl.textContent = `Block ${bNum}`;
+        } else {
+          qNum += 1;
+          labelEl.textContent = `Question ${qNum}`;
+        }
+      }
+    }
+
+    let draggedCard = null;
+
+    function setupDragAndDrop(){
+      const cards = [...questionsWrap.querySelectorAll(".qcard")];
+
+      cards.forEach(card => {
+        if (card.dataset.dndWired === "1") return;
+        card.dataset.dndWired = "1";
+
+        card.addEventListener("dragstart", (e) => {
+          draggedCard = card;
+          card.classList.add("dragging");
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", "drag");
+        });
+
+        card.addEventListener("dragend", () => {
+          card.classList.remove("dragging");
+          [...questionsWrap.querySelectorAll(".qcard")].forEach(c => c.classList.remove("dropTarget"));
+          draggedCard = null;
+          renumberCards();
+        });
+
+        card.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          if (!draggedCard || draggedCard === card) return;
+
+          card.classList.add("dropTarget");
+
+          const rect = card.getBoundingClientRect();
+          const before = (e.clientY - rect.top) < rect.height / 2;
+
+          const dragging = draggedCard;
+          if (before) {
+            if (card.previousElementSibling !== dragging) {
+              questionsWrap.insertBefore(dragging, card);
+            }
+          } else {
+            if (card.nextElementSibling !== dragging) {
+              questionsWrap.insertBefore(dragging, card.nextElementSibling);
+            }
+          }
+        });
+
+        card.addEventListener("dragleave", () => {
+          card.classList.remove("dropTarget");
+        });
+
+        card.addEventListener("drop", (e) => {
+          e.preventDefault();
+          card.classList.remove("dropTarget");
+          renumberCards();
+        });
+      });
+    }
+
+    addMcq();
+    setupDragAndDrop();
+
+    function collectQuestions(){
+      const cards = [...questionsWrap.querySelectorAll(".qcard")];
+      if (cards.length === 0) throw new Error("Add at least 1 question.");
+
+      const questions = [];
+
+      for (const card of cards) {
+        const type = card.getAttribute("data-type") || "mcq";
+
+        if (type === "note") {
+          const noteText = cleanSpaces(card.querySelector(".noteText")?.value);
+          if (!noteText) throw new Error("Please fill in the note/heading text.");
+          questions.push({ type: "note", text: noteText });
+          continue;
+        }
+
+        const text = cleanSpaces(card.querySelector(".qText")?.value);
+        if (!text) throw new Error("Please fill in all question texts.");
+
+        const hint = cleanSpaces(card.querySelector(".qHint")?.value || "");
+        const imageUrl =
+          cleanSpaces(card.querySelector(".qImage")?.value || "") ||
+          cleanSpaces(card.querySelector(".qImage2")?.value || "");
+
+        const pointsRaw = cleanSpaces(card.querySelector(".qPoints")?.value || "1");
+        const points = Number(pointsRaw);
+        if (!Number.isInteger(points) || points < 1) {
+          throw new Error("Marks must be a whole number (1 or more) for each question.");
+        }
+
+        const solution = cleanSpaces(card.querySelector(".qSolution")?.value || "");
+
+        if (type === "text") {
+          const correctText = cleanSpaces(card.querySelector(".correctText")?.value);
+          const textAnswerMode = card.querySelector(".textMode")?.value || "exact";
+          const toleranceRaw = cleanSpaces(card.querySelector(".tolerance")?.value);
+
+          if (!correctText) throw new Error("Please enter the correct answer for every typed question.");
+
+          let numberTolerance = null;
+          if (textAnswerMode === "number_tolerance") {
+            const tol = Number(toleranceRaw);
+            if (!Number.isFinite(tol) || tol < 0) {
+              throw new Error("Please enter a valid tolerance (0 or more) for Number mode.");
+            }
+            numberTolerance = tol;
+          }
+
+          questions.push({
+            type: "text",
+            text,
+            hint: hint || "",
+            imageUrl: imageUrl || "",
+            points,
+            correctText,
+            textAnswerMode,
+            numberTolerance,
+            solution: solution || ""
+          });
+
+        } else {
+          const optRows = [...card.querySelectorAll(".optRow")];
+
+          const included = optRows.map((r) => {
+            const txt = cleanSpaces(r.querySelector(".optInput")?.value || "");
+            if (!txt) return null;
+            return {
+              text: txt,
+              correct: !!r.querySelector(".optCorrect")?.checked
+            };
+          }).filter(Boolean);
+
+          const options = included.map(o => o.text);
+          const correctedIndexes = [];
+          included.forEach((o, idx) => { if (o.correct) correctedIndexes.push(idx); });
+
+          if (options.length < 2) throw new Error("MCQ must have at least 2 options.");
+          if (correctedIndexes.length < 1) throw new Error("Please tick at least ONE correct option for every MCQ.");
+
+          const payload = {
+            type: "mcq",
+            text,
+            hint: hint || "",
+            imageUrl: imageUrl || "",
+            points,
+            options,
+            correctIndexes: correctedIndexes,
+            isMultiSelect: correctedIndexes.length >= 2,
+            solution: solution || ""
+          };
+
+          if (correctedIndexes.length === 1) payload.correctIndex = correctedIndexes[0];
+
+          questions.push(payload);
+        }
+      }
+
+      return questions;
+    }
+
+    async function buildPayload(modeOverride = null){
+      const grade = Number(gradeEl.value);
+      const topic = toTitleCase(topicEl.value);
+      const title = toTitleCase(titleEl.value);
+      const timeLimitMinutes = Number(timeLimitEl.value);
+      const instructions = cleanSpaces(instructionsEl.value || "");
+      const difficulty = normalizeDifficulty(difficultyEl.value);
+      const paper = normalizePaper(paperEl.value);
+
+      const availableFrom = availableFromEl.value ? availableFromEl.value : null;
+      const availableUntil = availableUntilEl.value ? availableUntilEl.value : null;
+
+      if (!grade) throw new Error("Please select grade.");
+      if (!topic) throw new Error("Please enter topic.");
+      if (!title) throw new Error("Please enter assessment title.");
+
+      if (!Number.isFinite(timeLimitMinutes) || timeLimitMinutes < 1 || timeLimitMinutes > 180) {
+        throw new Error("Please enter a valid time limit (1–180 minutes).");
+      }
+
+      if (availableFrom && availableUntil) {
+        const fromDate = new Date(availableFrom);
+        const untilDate = new Date(availableUntil);
+
+        if (isNaN(fromDate.getTime()) || isNaN(untilDate.getTime())) {
+          throw new Error("Please enter valid availability dates.");
+        }
+
+        if (untilDate <= fromDate) {
+          throw new Error("Available Until must be after Available From.");
+        }
+      }
+
+      const questions = collectQuestions();
+
+      const mode = modeOverride || publishModeEl.value;
+      let publishNow = false;
+      let publishAt = null;
+
+      if (mode === "now") {
+        publishNow = true;
+      } else if (mode === "schedule") {
+        if (!publishAtEl.value) {
+          throw new Error("Please select the publish date and time.");
+        }
+        publishAt = publishAtEl.value;
+      }
 
       return {
-        questionIndex: i,
-        type: "mcq",
-        points: qPoints,
-        earnedPoints: earned,
-        chosenIndex,
-        correctIndex,
-        isMultiSelect,
-        chosenIndexes,
-        correctIndexes: correctIndexesSnap,
-        textAnswer: "",
-        correctText: "",
-        hint,
-        solution,
-        answerMode: "case-insensitive",
-        tolerance: null,
-        roundTo: null,
-        isCorrect,
-        questionText,
-        options,
+        grade,
+        title,
+        topic,
+        paper,
+        timeLimitMinutes,
+        instructions,
+        difficulty,
+        questions,
+        publishNow,
+        publishAt,
+        availableFrom,
+        availableUntil,
+        sendPublishEmail: !!sendPublishEmailEl.checked,
       };
-    });
-
-    const percent = totalPoints > 0 ? Math.round((scorePoints / totalPoints) * 100) : 0;
-    const status = percent >= 50 ? "PASS" : "FAIL";
-
-    const saved = await Result.create({
-      userId,
-      quizId,
-      grade: quiz.grade,
-      topic: quiz.topic || "General",
-      title: quiz.title || "Assessment",
-      instructions: String(quiz.instructions || "").trim(),
-      paper: quiz.paper || "paper1",
-      score: scorePoints,
-      total: totalPoints,
-      percent,
-      status,
-      answers: savedAnswers,
-      timeTakenSeconds: Number(timeTakenSeconds) || 0,
-      isAdminAttempt: isAdminAttemptUser,
-      attemptNo,
-      attemptedAt: new Date(),
-    });
-
-    return res.status(201).json({
-      message: "Saved",
-      score: scorePoints,
-      total: totalPoints,
-      percent,
-      status,
-      resultId: saved._id,
-    });
-  } catch (e) {
-    if (String(e?.code) === "11000") {
-      return res.status(409).json({ message: "Already attempted" });
-    }
-    console.error("POST /api/results error:", e);
-    return res.status(500).json({ message: "Could not save attempt. Please try again." });
-  }
-});
-
-app.get("/api/results/my", authRequired, async (req, res) => {
-  try {
-    const userId = req.user.userId;
-
-    const rows = await Result.find({ userId })
-      .sort({ createdAt: -1 })
-      .select(
-        "_id createdAt grade topic title paper percent score total status quizId attemptNo isAdminAttempt"
-      );
-
-    return res.json(rows);
-  } catch {
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.get("/api/results/:id", authRequired, async (req, res) => {
-  try {
-    const userId = req.user.userId;
-
-    const r = await Result.findById(req.params.id);
-    if (!r) return res.status(404).json({ message: "Not found" });
-
-    const u = await User.findById(userId).select("role");
-    if (!u) return res.status(401).json({ message: "User not found" });
-
-    if (!isPrivilegedRole(u.role) && String(r.userId) !== String(userId)) {
-      return res.status(403).json({ message: "Not allowed" });
     }
 
-    return res.json(r);
-  } catch {
-    return res.status(500).json({ message: "Server error" });
-  }
-});
+    function resetFormAfterSave(){
+      titleEl.value = "";
+      gradeEl.value = "";
+      topicEl.value = "";
+      timeLimitEl.value = "10";
+      difficultyEl.value = "moderate";
+      paperEl.value = "paper1";
+      instructionsEl.value = "";
+      publishModeEl.value = "draft";
+      publishAtEl.value = "";
+      availableFromEl.value = "";
+      availableUntilEl.value = "";
+      sendPublishEmailEl.checked = true;
 
-/* ------------------ PASSWORD RESET (OTP) ------------------ */
+      renderInstructionsPreview();
+      updatePublishUI();
 
-app.post("/api/forgot-password-otp", async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ message: "Email is required." });
-
-    const cleanEmail = String(email).toLowerCase().trim();
-    const user = await User.findOne({ email: cleanEmail });
-
-    if (!user) return res.json({ message: "If the email exists, a reset code has been sent." });
-
-    const otp = makeOtp6();
-    const otpHash = hashToken(otp);
-
-    user.resetPasswordTokenHash = otpHash;
-    user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000);
-    await user.save();
-
-    await sendEmail({
-      to: user.email,
-      subject: "Password reset code",
-      text: `Your reset code is: ${otp}. It expires in 10 minutes.`,
-      html: `
-        <div style="font-family:Arial,sans-serif; line-height:1.6;">
-          <p>Your reset code is:</p>
-          <p style="font-size:26px; font-weight:800; letter-spacing:3px;">${otp}</p>
-          <p>This code expires in 10 minutes.</p>
-        </div>
-      `,
-    });
-
-    return res.json({ message: "If the email exists, a reset code has been sent." });
-  } catch (err) {
-    console.error("forgot-password-otp error:", err.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.post("/api/reset-password-otp", async (req, res) => {
-  try {
-    const { email, code, newPassword } = req.body;
-
-    if (!email || !code || !newPassword) {
-      return res.status(400).json({ message: "Email, code, and new password are required." });
+      questionsWrap.innerHTML = "";
+      qCount = 0;
+      addMcq();
+      setupDragAndDrop();
+      renumberCards();
     }
 
-    if (String(newPassword).length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters." });
-    }
+    saveBtn.addEventListener("click", async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return window.location.href = "login.html";
 
-    const cleanEmail = String(email).toLowerCase().trim();
-    const user = await User.findOne({ email: cleanEmail });
+      try{
+        const payload = await buildPayload("draft");
 
-    if (!user) return res.status(400).json({ message: "Invalid or expired code." });
+        saveBtn.disabled = true;
+        publishBtn.disabled = true;
+        setMsg("Saving assessment as draft...", "muted");
 
-    const codeHash = hashToken(String(code).trim());
-    const isExpired =
-      !user.resetPasswordExpires || user.resetPasswordExpires.getTime() < Date.now();
-    const isMatch = user.resetPasswordTokenHash && user.resetPasswordTokenHash === codeHash;
+        const res = await fetch(`${API}/api/quizzes`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
 
-    if (!isMatch || isExpired) {
-      return res.status(400).json({ message: "Invalid or expired code." });
-    }
+        const data = await res.json().catch(()=>({}));
 
-    user.passwordHash = await bcrypt.hash(newPassword, 10);
-    user.resetPasswordTokenHash = null;
-    user.resetPasswordExpires = null;
-    await user.save();
-
-    return res.json({ message: "Password updated. You can login now." });
-  } catch (err) {
-    console.error("reset-password-otp error:", err.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-/* ------------------ PAYFAST ------------------ */
-
-app.post("/api/payfast/initiate", authRequired, async (req, res) => {
-  try {
-    if (!PAYFAST_MERCHANT_ID || !PAYFAST_MERCHANT_KEY) {
-      return res.status(500).json({ message: "PayFast credentials missing." });
-    }
-
-    if (!APP_URL) {
-      return res.status(500).json({ message: "APP_URL is missing." });
-    }
-
-    if (!API_URL) {
-      return res.status(500).json({ message: "API_URL is missing." });
-    }
-
-    const { amount, item_name } = req.body;
-
-    const amt = Number(amount);
-    if (!Number.isFinite(amt) || amt <= 0) {
-      return res.status(400).json({ message: "Invalid amount." });
-    }
-
-    const currentUser = await User.findById(req.user.userId).select("email role accountType");
-    if (!currentUser) {
-      return res.status(401).json({ message: "User not found." });
-    }
-
-    if (currentUser.role === "admin") {
-      return res.status(400).json({ message: "Admins do not need a subscription." });
-    }
-
-    if (currentUser.accountType !== "student") {
-      return res.status(400).json({ message: "This payment is only for student subscriptions." });
-    }
-
-    const m_payment_id = `M-${req.user.userId}-${Date.now()}`;
-
-    await Payment.create({
-      userId: req.user.userId,
-      m_payment_id,
-      plan: "monthly",
-      amount: amt,
-      status: "PENDING",
-    });
-
-    const emailPrefix = currentUser.email ? currentUser.email.split("@")[0] : "Practice";
-
-    const data = {
-      merchant_id: PAYFAST_MERCHANT_ID,
-      merchant_key: PAYFAST_MERCHANT_KEY,
-      return_url: `${APP_URL}/payment-success.html`,
-      cancel_url: `${APP_URL}/payment-cancel.html`,
-      notify_url: `${API_URL}/api/payfast/itn`,
-      m_payment_id: String(m_payment_id).trim(),
-      amount: amt.toFixed(2),
-      item_name: String(item_name || "Practice Online Subscription (30 days)")
-        .trim()
-        .slice(0, 100),
-      name_first: String(emailPrefix || "Practice").trim(),
-      name_last: "Online",
-      email_address: String(
-        currentUser.email || FROM_EMAIL || "no-reply@practiceonline.co.za"
-      ).trim(),
-    };
-
-    data.signature = buildPayfastSignature(data, PAYFAST_PASSPHRASE);
-
-    return res.json({
-      action: payfastProcessUrl(PAYFAST_MODE),
-      fields: data,
-    });
-  } catch (e) {
-    console.error("POST /api/payfast/initiate error:", e.message);
-    return res.status(500).json({ message: "Could not start payment." });
-  }
-});
-
-app.post("/api/payfast/itn", async (req, res) => {
-  try {
-    const pfData = { ...req.body };
-
-    console.log("PayFast ITN received:", pfData);
-
-    if (!pfData || !pfData.m_payment_id) {
-      return res.status(400).send("Missing ITN data");
-    }
-
-    const receivedSignature = String(pfData.signature || "").trim();
-    const calculatedSignature = buildPayfastSignature(pfData, PAYFAST_PASSPHRASE);
-
-    if (receivedSignature !== calculatedSignature) {
-      console.error("PayFast ITN invalid signature");
-      return res.status(400).send("Invalid signature");
-    }
-
-    const valid = await validatePayfastData(pfData);
-    if (!valid) {
-      console.error("PayFast ITN invalid data");
-      return res.status(400).send("Invalid data");
-    }
-
-    const payment = await Payment.findOne({ m_payment_id: pfData.m_payment_id });
-    if (!payment) {
-      console.error("PayFast ITN payment not found:", pfData.m_payment_id);
-      return res.status(200).send("OK");
-    }
-
-    const paymentStatus = String(pfData.payment_status || "").toUpperCase();
-    const amountGross = Number(pfData.amount_gross || 0);
-
-    if (Number(payment.amount).toFixed(2) !== Number(amountGross).toFixed(2)) {
-      payment.status = "FAILED";
-      payment.payment_status_raw = paymentStatus;
-      payment.pf_payment_id = String(pfData.pf_payment_id || "");
-      payment.amount_gross = amountGross;
-      payment.amount_fee = Number(pfData.amount_fee || 0);
-      payment.amount_net = Number(pfData.amount_net || 0);
-      payment.raw = pfData;
-      await payment.save();
-
-      console.error("PayFast amount mismatch:", payment.m_payment_id);
-      return res.status(200).send("OK");
-    }
-
-    if (paymentStatus === "COMPLETE") {
-      payment.status = "COMPLETE";
-    } else if (paymentStatus === "CANCELLED") {
-      payment.status = "CANCELLED";
-    } else {
-      payment.status = "FAILED";
-    }
-
-    payment.payment_status_raw = paymentStatus;
-    payment.pf_payment_id = String(pfData.pf_payment_id || "");
-    payment.amount_gross = amountGross;
-    payment.amount_fee = Number(pfData.amount_fee || 0);
-    payment.amount_net = Number(pfData.amount_net || 0);
-    payment.raw = pfData;
-
-    await payment.save();
-
-    if (payment.status === "COMPLETE") {
-      const user = await User.findById(payment.userId).select(
-        "paidUntil subscriptionStatus lastPaymentId premium premiumActivatedAt premiumExpiresAt trialActive"
-      );
-
-      if (user) {
-        const now = new Date();
-        const base =
-          user.paidUntil && new Date(user.paidUntil) > now ? new Date(user.paidUntil) : now;
-
-        const newUntil = new Date(base.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-        user.paidUntil = newUntil;
-        user.subscriptionStatus = "active";
-        user.lastPaymentId = payment.m_payment_id;
-        user.premium = true;
-        user.premiumActivatedAt = now;
-        user.premiumExpiresAt = newUntil;
-        user.trialActive = false;
-
-        await user.save();
+        if (res.ok) {
+          setMsg("Assessment saved as draft. No learner email sent.", "ok");
+          resetFormAfterSave();
+        } else {
+          setMsg("Error: " + (data.message || "Could not save assessment"), "error");
+        }
+      } catch (err){
+        setMsg(err.message || "Something went wrong.", "error");
+      } finally {
+        saveBtn.disabled = false;
+        publishBtn.disabled = !canPublish;
       }
-    }
+    });
 
-    return res.status(200).send("OK");
-  } catch (e) {
-    console.error("POST /api/payfast/itn error:", e.message);
-    return res.status(500).send("Server error");
-  }
-});
+    publishBtn.addEventListener("click", async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return window.location.href = "login.html";
 
-/* ------------------ ACCESS + PAYMENT ROUTES ------------------ */
-app.use("/api/access", accessRoutes);
-app.use("/api/payments", paymentRoutes);
-app.use("/api/manual-payments", manualPaymentsRoutes);
+      if (!canPublish) {
+        return setMsg("Only admin/tester can publish assessments.", "error");
+      }
 
-/* ------------------ OPTIONAL: FRIENDLY 404 FOR API ------------------ */
-app.use("/api", (req, res) => {
-  res.status(404).json({ message: "API route not found" });
-});
+      try{
+        const mode = publishModeEl.value === "draft" ? "now" : publishModeEl.value;
+        const payload = await buildPayload(mode);
 
-/* ------------------ ERROR HANDLER (CORS ETC.) ------------------ */
-app.use((err, req, res, next) => {
-  if (String(err?.message || "").startsWith("CORS blocked:")) {
-    return res.status(403).json({ message: err.message });
-  }
-  console.error("Unhandled error:", err?.message || err);
-  res.status(500).json({ message: "Server error" });
-});
+        saveBtn.disabled = true;
+        publishBtn.disabled = true;
 
-/* ------------------ DB + START ------------------ */
-const PORT = process.env.PORT || 5000;
+        if (mode === "now") {
+          setMsg("Publishing assessment...", "muted");
+        } else {
+          setMsg("Saving scheduled assessment...", "muted");
+        }
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("MongoDB connected");
-    setInterval(autoPublishScheduledQuizzes, 60 * 1000);
-    app.listen(PORT, () => console.log(`Server running on ${PORT}`));
-  })
-  .catch((err) => console.error("Mongo error:", err.message));
+        const res = await fetch(`${API}/api/quizzes`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json().catch(()=>({}));
+
+        if (res.ok) {
+          if (mode === "now") {
+            if (payload.sendPublishEmail) {
+              setMsg("Assessment published. Learner emails were triggered.", "ok");
+            } else {
+              setMsg("Assessment published without sending learner emails.", "ok");
+            }
+          } else {
+            if (payload.sendPublishEmail) {
+              setMsg("Assessment saved and scheduled for publishing. Learner emails will be sent on publish.", "ok");
+            } else {
+              setMsg("Assessment saved and scheduled for publishing without learner emails.", "ok");
+            }
+          }
+          resetFormAfterSave();
+        } else {
+          setMsg("Error: " + (data.message || "Could not publish assessment"), "error");
+        }
+      } catch (err){
+        setMsg(err.message || "Something went wrong.", "error");
+      } finally {
+        saveBtn.disabled = false;
+        publishBtn.disabled = !canPublish;
+      }
+    });
+  </script>
+
+</body>
+</html>
