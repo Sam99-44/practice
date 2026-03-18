@@ -1,4 +1,4 @@
-/* nav.js - WITH ICONS */
+/* nav.js - WITH ICONS + ADMIN ANNOUNCEMENTS */
 
 (function () {
   const API = "https://practice-backend-msgn.onrender.com";
@@ -66,6 +66,7 @@
   function clearNavLinks(navRoot) {
     [...navRoot.children].forEach((child) => {
       if (child.tagName === "A") child.remove();
+      if (child.tagName === "BUTTON" && child.id === "logoutBtn") child.remove();
     });
   }
 
@@ -86,11 +87,11 @@
 
   function createLogoutButton() {
     const btn = document.createElement("button");
-    btn.id = "logoutBtn";
     btn.className = "btnTop";
+    btn.type = "button";
 
     btn.innerHTML = `
-      <img src="${ICONS.logout}" class="nav-icon">
+      <img src="${ICONS.logout}" alt="" class="nav-icon">
       <span>Logout</span>
     `;
 
@@ -102,12 +103,29 @@
     if (!navRoot) return;
 
     const currentFile = getCurrentFile();
+    const adminAnnouncementAliases = ["admin-announcements.html", "admin-annoucements.html"];
+    const learnerAnnouncementAliases = ["announcements.html"];
 
     clearNavLinks(navRoot);
 
     links.forEach((item) => {
       const hrefFile = item.href.toLowerCase().split("/").pop();
-      const active = hrefFile === currentFile;
+
+      let active = hrefFile === currentFile;
+
+      if (
+        hrefFile === "admin-announcements.html" &&
+        adminAnnouncementAliases.includes(currentFile)
+      ) {
+        active = true;
+      }
+
+      if (
+        hrefFile === "announcements.html" &&
+        learnerAnnouncementAliases.includes(currentFile)
+      ) {
+        active = true;
+      }
 
       const link = createNavLink({
         href: item.href,
@@ -141,19 +159,19 @@
         { href: "learner-quizzes.html", text: "Practice", icon: ICONS.practice },
         { href: "results.html", text: "Results", icon: ICONS.results },
         { href: "progress-dashboard.html", text: "Dashboard", icon: ICONS.dashboard },
+        { href: "announcements.html", text: "Announcements", icon: ICONS.announcements },
         { href: "support.html", text: "Support", icon: ICONS.support },
       ];
-    } 
-    else if (role === "editor") {
+    } else if (role === "editor") {
       links = [
         { href: "profile.html", text: "Profile", icon: ICONS.profile },
         { href: "learner-quizzes.html", text: "Practice", icon: ICONS.practice },
         { href: "results.html", text: "Results", icon: ICONS.results },
         { href: "progress-dashboard.html", text: "Dashboard", icon: ICONS.dashboard },
         { href: "admin.html", text: "Admin", icon: ICONS.admin },
+        { href: "admin-announcements.html", text: "Announcements", icon: ICONS.announcements },
       ];
-    } 
-    else {
+    } else {
       links = [
         { href: "profile.html", text: "Profile", icon: ICONS.profile },
         { href: "learner-quizzes.html", text: "Practice", icon: ICONS.practice },
@@ -164,8 +182,8 @@
         { href: "admin-dashboard.html", text: "Admin Dashboard", icon: ICONS.dashboard },
         { href: "admin-leaderboard.html", text: "Admin Stats", icon: ICONS.leaderboard },
         { href: "admin-payments.html", text: "Payments", icon: ICONS.payments },
+        { href: "admin-announcements.html", text: "Announcements", icon: ICONS.announcements },
         { href: "subscription.html", text: "Subscription", icon: ICONS.subscription },
-        { href: "announcements.html", text: "Announcements", icon: ICONS.announcements },
         { href: "support.html", text: "Support", icon: ICONS.support },
       ];
     }
