@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Announcements | Practice Online</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
@@ -16,23 +15,26 @@
   --border:#d9dee7;
   --text:#0f172a;
   --muted:#64748b;
-  --radius:14px;
+  --red:#e11d2e;
+  --success:#15803d;
+  --danger:#b91c1c;
+  --info:#1d4ed8;
 }
 *{box-sizing:border-box}
 body{
   margin:0;
-  font-family:Inter,Arial,sans-serif;
+  font-family:Inter,sans-serif;
   background:var(--bg);
   color:var(--text);
 }
 .topbar{
-  background:var(--nav);
+  background:linear-gradient(135deg,var(--nav),#2b2370);
   color:#fff;
 }
 .topbar-inner{
   max-width:1100px;
   margin:auto;
-  padding:14px 18px;
+  padding:16px 20px;
   display:flex;
   justify-content:space-between;
   align-items:center;
@@ -42,113 +44,106 @@ body{
   margin:auto;
   padding:20px;
 }
-.section{
+.hero{
   background:#fff;
   border:1px solid var(--border);
   border-radius:18px;
-  overflow:hidden;
+  padding:20px;
   margin-bottom:18px;
 }
+.hero h2{margin:0 0 8px}
+.hero p{margin:0;color:var(--muted);line-height:1.7;font-size:14px}
+.section{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:16px;
+  margin-bottom:20px;
+  overflow:hidden;
+}
 .sectionHead{
-  padding:20px;
+  padding:18px;
   border-bottom:1px solid var(--border);
   background:#f8fafc;
-}
-.sectionHead h2{
-  margin:0;
-  font-size:20px;
-  font-weight:800;
-}
-.sectionHead p{
-  margin-top:6px;
-  font-size:13px;
-  color:var(--muted);
 }
 .sectionBody{
   padding:18px;
 }
-.focusBox{
-  border:1px solid #e6e9ef;
-  border-radius:12px;
-  padding:16px;
-  background:#fafbfc;
-}
-.focusLabel{
-  font-size:11px;
-  font-weight:800;
-  color:var(--muted);
-  text-transform:uppercase;
-  letter-spacing:.05em;
-  margin-bottom:6px;
-}
-.focusTitle{
-  margin:0 0 8px;
-  font-size:22px;
-}
-.focusText{
-  font-size:14px;
-  line-height:1.7;
-  color:#334155;
-}
-.gradeGrid{
+.grid{
   display:grid;
-  grid-template-columns:repeat(2,1fr);
   gap:16px;
 }
-.gradeCard{
+.card{
   border:1px solid var(--border);
   border-radius:14px;
   padding:16px;
   background:#fff;
 }
-.gradeTitle{
+.title{
+  font-weight:800;
   font-size:16px;
-  font-weight:800;
-  margin-bottom:10px;
+  margin:8px 0;
 }
-.gradeBlock{
-  border:1px solid #e6e9ef;
-  border-radius:12px;
-  padding:12px;
-  margin-bottom:10px;
-  background:#fafbfc;
-}
-.gradeBlock:last-child{
-  margin-bottom:0;
-}
-.gradeLabel{
+.badge{
   font-size:11px;
+  padding:5px 9px;
+  border-radius:999px;
   font-weight:800;
-  color:var(--muted);
-  margin-bottom:6px;
-  text-transform:uppercase;
-  letter-spacing:.05em;
 }
-.gradeText{
-  font-size:13px;
-  line-height:1.6;
-}
-.meetingLink{
-  font-weight:600;
-  color:#1b1648;
-}
-.noteBox{
-  border:1px dashed #cfd7e3;
-  background:#fbfcfe;
-  border-radius:14px;
-  padding:14px;
+.badge-class{background:#eef2ff;color:#4338ca}
+.badge-quiz{background:#ecfeff;color:#0e7490}
+.badge-general{background:#f1f5f9;color:#334155}
+.badge-all{background:#fff7ed;color:#b45309}
+.badge-accept{background:#ecfdf5;color:#15803d}
+.badge-reject{background:#fef2f2;color:#b91c1c}
+.badge-pending{background:#eff6ff;color:#1d4ed8}
+.badge-grade{background:#eef4ff;color:#1d4ed8}
+.meta{
   font-size:13px;
   color:var(--muted);
-  line-height:1.8;
+  margin-top:8px;
+  line-height:1.7;
 }
-.empty{
+.btn{
+  padding:9px 12px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:700;
+}
+.btn-accept{background:var(--success);color:#fff}
+.btn-reject{background:var(--danger);color:#fff}
+.btn-copy{background:#f1f5f9}
+.row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+input,select{
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid var(--border);
+}
+.toolbar{
+  display:flex;
+  gap:10px;
+  margin-bottom:15px;
+  flex-wrap:wrap;
+}
+.status{
+  display:none;
+  padding:13px 14px;
+  border-radius:12px;
+  margin-bottom:14px;
   font-size:14px;
-  color:var(--muted);
 }
-@media(max-width:900px){
-  .gradeGrid{
-    grid-template-columns:1fr;
-  }
+.status.show{display:block}
+.status.info{background:#eef4ff;border:1px solid #c7d7fe;color:var(--info)}
+.status.error{background:#fef2f2;border:1px solid #fecaca;color:var(--danger)}
+.status.success{background:#ecfdf5;border:1px solid #bbf7d0;color:var(--success)}
+.empty{
+  color:var(--muted);
+  font-size:14px;
 }
 </style>
 </head>
@@ -161,142 +156,238 @@ body{
   </div>
 </header>
 
-<main class="wrap">
+<div class="wrap">
+  <div class="hero">
+    <h2>Announcements</h2>
+    <p>View general updates, class announcements, and quiz notices for your grade.</p>
+  </div>
 
-  <section class="section">
-    <div class="sectionHead">
-      <h2>Weekly Focus</h2>
-      <p>Main teaching and learning focus for the current week.</p>
-    </div>
+  <div id="statusBox" class="status info"></div>
+
+  <div class="toolbar">
+    <input id="search" placeholder="Search announcements...">
+    <select id="gradeFilter">
+      <option value="all">My Grade / Allowed</option>
+      <option value="grade8">Grade 8</option>
+      <option value="grade9">Grade 9</option>
+      <option value="grade10">Grade 10</option>
+      <option value="grade11">Grade 11</option>
+      <option value="grade12">Grade 12</option>
+      <option value="allGrades">All Grades</option>
+    </select>
+  </div>
+
+  <div class="section">
+    <div class="sectionHead"><strong>General Announcements</strong></div>
     <div class="sectionBody">
-      <div class="focusBox">
-        <div class="focusLabel">This Week</div>
-        <h3 class="focusTitle">Current Topic</h3>
-        <div class="focusText" id="weeklyFocusText">Loading weekly focus...</div>
-      </div>
+      <div id="generalGrid" class="grid"></div>
     </div>
-  </section>
+  </div>
 
-  <section class="section">
-    <div class="sectionHead">
-      <h2>Class Announcements</h2>
-      <p>Weekly updates, meeting links and quiz notices for all grades.</p>
-    </div>
+  <div class="section">
+    <div class="sectionHead"><strong>Class Announcements</strong></div>
     <div class="sectionBody">
-      <div class="gradeGrid" id="gradeGrid">
-        <div class="empty">Loading announcements...</div>
-      </div>
+      <div id="classGrid" class="grid"></div>
     </div>
-  </section>
+  </div>
 
-  <section class="section">
-    <div class="sectionHead">
-      <h2>Admin Note</h2>
-      <p>Simple reminder area.</p>
-    </div>
+  <div class="section">
+    <div class="sectionHead"><strong>Quiz Announcements</strong></div>
     <div class="sectionBody">
-      <div class="noteBox">
-        Update this page weekly with class announcements, meeting links,
-        quiz reminders and the main topic for each grade.
-      </div>
+      <div id="quizGrid" class="grid"></div>
     </div>
-  </section>
-
-</main>
+  </div>
+</div>
 
 <script>
-const API = "https://practice-backend-msgn.onrender.com";
+const API = window.API || "https://practice-backend-msgn.onrender.com";
+let dataStore = null;
 
-const weeklyFocusText = document.getElementById("weeklyFocusText");
-const gradeGrid = document.getElementById("gradeGrid");
+const statusBox = document.getElementById("statusBox");
 
-const gradeLabels = {
-  grade8: "Grade 8",
-  grade9: "Grade 9",
-  grade10: "Grade 10",
-  grade11: "Grade 11",
-  grade12: "Grade 12",
-  allGrades: "All Grades"
-};
-
-function escapeHtml(value) {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+function showStatus(message, type = "info") {
+  statusBox.className = `status show ${type}`;
+  statusBox.textContent = message;
 }
 
-function normalizeUrl(url) {
-  const clean = String(url || "").trim();
-  if (!clean) return "";
-  if (/^https?:\/\//i.test(clean)) return clean;
-  return clean;
+function hideStatus() {
+  statusBox.className = "status info";
+  statusBox.textContent = "";
 }
 
-function cardTemplate(title, grade) {
-  const meetingLink = normalizeUrl(grade.meetingLink);
+function escapeHtml(text){
+  return String(text||"")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
 
-  return `
-    <div class="gradeCard">
-      <div class="gradeTitle">${escapeHtml(title)}</div>
+function formatDate(d){
+  if(!d) return "—";
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return d;
+  return dt.toLocaleDateString("en-ZA",{year:"numeric",month:"short",day:"numeric"});
+}
 
-      <div class="gradeBlock">
-        <div class="gradeLabel">Weekly Update</div>
-        <div class="gradeText">${escapeHtml(grade.weeklyUpdate || "No update yet.")}</div>
+function tokenHeaders() {
+  const token = localStorage.getItem("token");
+  return {
+    "Content-Type":"application/json",
+    ...(token ? { Authorization:`Bearer ${token}` } : {})
+  };
+}
+
+function responseBadge(value = "pending") {
+  const v = String(value || "pending").toLowerCase();
+  if (v === "accepted") return `<span class="badge badge-accept">Accepted</span>`;
+  if (v === "rejected") return `<span class="badge badge-reject">Rejected</span>`;
+  return `<span class="badge badge-pending">Pending</span>`;
+}
+
+function matchFilter(item){
+  const q = document.getElementById("search").value.toLowerCase();
+  const grade = document.getElementById("gradeFilter").value;
+
+  const text = `${item.title || ""} ${item.message || ""} ${item.meetingDate || ""} ${item.meetingTime || ""} ${item.dueDate || ""}`.toLowerCase();
+  const searchOk = !q || text.includes(q);
+  const gradeOk = grade === "all" || item.grade === grade;
+
+  return searchOk && gradeOk;
+}
+
+function renderGeneral(list){
+  const el = document.getElementById("generalGrid");
+  const items = list.filter(matchFilter);
+
+  el.innerHTML = items.length ? items.map(i=>`
+    <div class="card">
+      <div class="row">
+        <span class="badge badge-general">General</span>
+        <span class="badge badge-grade">${escapeHtml(i.grade || "allGrades")}</span>
+      </div>
+      <div class="title">${escapeHtml(i.title)}</div>
+      <div class="meta">${escapeHtml(i.message)}</div>
+      <div class="meta">Posted: ${escapeHtml(formatDate(i.createdAt))}</div>
+    </div>
+  `).join("") : `<div class="empty">No general announcements.</div>`;
+}
+
+function renderClass(list){
+  const el = document.getElementById("classGrid");
+  const items = list.filter(matchFilter);
+
+  el.innerHTML = items.length ? items.map(i=>`
+    <div class="card">
+      <div class="row">
+        <span class="badge badge-class">Class</span>
+        <span class="badge badge-grade">${escapeHtml(i.grade || "allGrades")}</span>
+        ${responseBadge(i.learnerResponse)}
       </div>
 
-      <div class="gradeBlock">
-        <div class="gradeLabel">Meeting Link</div>
-        <div class="gradeText">
-          ${
-            meetingLink
-              ? `<a href="${escapeHtml(meetingLink)}" class="meetingLink" target="_blank" rel="noopener noreferrer">Open meeting link</a>`
-              : `No meeting link yet.`
-          }
-        </div>
+      <div class="title">${escapeHtml(i.title)}</div>
+      <div class="meta">${escapeHtml(i.message)}</div>
+      <div class="meta">Date: ${escapeHtml(formatDate(i.meetingDate))}</div>
+      <div class="meta">Time: ${escapeHtml(i.meetingTime || "—")}</div>
+
+      <div class="row">
+        ${i.meetingLink ? `<a href="${escapeHtml(i.meetingLink)}" target="_blank" rel="noopener noreferrer">Join Meeting</a>` : `<span class="meta">No meeting link</span>`}
+        ${i.meetingLink ? `<button class="btn btn-copy" onclick="copyLink('${escapeHtml(i.meetingLink)}')">Copy</button>` : ``}
       </div>
 
-      <div class="gradeBlock">
-        <div class="gradeLabel">Quiz Announcement</div>
-        <div class="gradeText">${escapeHtml(grade.quizAnnouncement || "No quiz announcement yet.")}</div>
+      <div class="row">
+        <button class="btn btn-accept" onclick="respond('${i._id}','accepted')">Accept</button>
+        <button class="btn btn-reject" onclick="respond('${i._id}','rejected')">Reject</button>
       </div>
     </div>
-  `;
+  `).join("") : `<div class="empty">No class announcements.</div>`;
 }
 
-async function safeJson(res) {
-  const text = await res.text();
-  try {
-    return text ? JSON.parse(text) : {};
-  } catch {
-    return {};
-  }
+function renderQuiz(list){
+  const el = document.getElementById("quizGrid");
+  const items = list.filter(matchFilter);
+
+  el.innerHTML = items.length ? items.map(i=>`
+    <div class="card">
+      <div class="row">
+        <span class="badge badge-quiz">Quiz</span>
+        <span class="badge badge-grade">${escapeHtml(i.grade || "allGrades")}</span>
+      </div>
+
+      <div class="title">${escapeHtml(i.title)}</div>
+      <div class="meta">${escapeHtml(i.message)}</div>
+      <div class="meta">Due: ${escapeHtml(formatDate(i.dueDate))}</div>
+      <div class="meta">Status: ${escapeHtml(i.quizStatus || "Open")}</div>
+    </div>
+  `).join("") : `<div class="empty">No quiz announcements.</div>`;
 }
 
-async function loadAnnouncements() {
+function renderAll(){
+  if(!dataStore) return;
+  renderGeneral(dataStore.generalAnnouncements || []);
+  renderClass(dataStore.classAnnouncements || []);
+  renderQuiz(dataStore.quizAnnouncements || []);
+}
+
+async function load(){
   try {
-    const res = await fetch(`${API}/api/announcements`);
-    const data = await safeJson(res);
+    showStatus("Loading announcements...", "info");
+
+    const res = await fetch(`${API}/api/announcements`, {
+      headers: tokenHeaders()
+    });
+
+    const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
       throw new Error(data.message || "Failed to load announcements.");
     }
 
-    weeklyFocusText.textContent = data.weeklyFocus || "No weekly focus yet.";
-
-    gradeGrid.innerHTML = Object.entries(gradeLabels)
-      .map(([key, label]) => cardTemplate(label, data?.grades?.[key] || {}))
-      .join("");
+    dataStore = data;
+    renderAll();
+    hideStatus();
   } catch (err) {
     console.error(err);
-    weeklyFocusText.textContent = "Could not load weekly focus.";
-    gradeGrid.innerHTML = `<div class="empty">Could not load announcements.</div>`;
+    showStatus(err.message || "Could not load announcements.", "error");
   }
 }
 
-loadAnnouncements();
+async function respond(id,response){
+  try {
+    showStatus("Saving response...", "info");
+
+    const res = await fetch(`${API}/api/announcements/${id}/respond`,{
+      method:"POST",
+      headers: tokenHeaders(),
+      body:JSON.stringify({response})
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to save response.");
+    }
+
+    showStatus(`Response saved as ${response}.`, "success");
+    await load();
+  } catch (err) {
+    console.error(err);
+    showStatus(err.message || "Could not save response.", "error");
+  }
+}
+
+function copyLink(link){
+  navigator.clipboard.writeText(link)
+    .then(() => showStatus("Meeting link copied.", "success"))
+    .catch(() => showStatus("Could not copy the link.", "error"));
+}
+
+document.getElementById("search").addEventListener("input",renderAll);
+document.getElementById("gradeFilter").addEventListener("change",renderAll);
+
+load();
 </script>
+
 </body>
 </html>
