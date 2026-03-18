@@ -2638,10 +2638,28 @@ app.post("/api/payfast/itn", async (req, res) => {
   }
 });
 
+
 /* ------------------ ANNOUNCEMENTS ------------------ */
 
+async function announcementManagerOnly(req, res, next) {
+  try {
+    const u = await User.findById(req.user.userId).select("role");
+    if (!u) return res.status(401).json({ message: "User not found" });
+
+    const role = String(u.role || "").toLowerCase().trim();
+
+    if (!["admin", "editor", "tester"].includes(role)) {
+      return res.status(403).json({ message: "Admin/editor/tester only" });
+    }
+
+    next();
+  } catch {
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
 // CREATE ANNOUNCEMENT
-app.post("/api/announcements", authRequired, adminOnly, async (req, res) => {
+app.post("/api/announcements", authRequired, announcementManagerOnly, async (req, res) => {
   try {
     const {
       title,
@@ -2682,6 +2700,78 @@ app.post("/api/announcements", authRequired, adminOnly, async (req, res) => {
       createdBy: req.user.userId,
     });
 
+    // sendToStudents = email/notification only
+    if (announcement.sendToStudents) {
+      try {
+        let gradeNumbers = [];
+
+        if (announcement.grade === "allGrades") {
+          gradeNumbers = [8, 9, 10, 11, 12];
+        } else {
+          const n = Number(String(announcement.grade).replace("grade", ""));
+          if (Number.isInteger(n)) gradeNumbers = [n];
+        }
+
+        const learners = await User.find({
+          role: "learner",
+          accountType: "student",
+          grade: { $in: gradeNumbers },
+          email: { $exists: true, $ne: "" },
+          emailVerified: true,
+        }).select("email");
+
+        const recipients = learners
+          .map((u) => String(u.email || "").trim().toLowerCase())
+          .filter(Boolean);
+
+        if (recipients.length) {
+          const subject = `New ${announcement.category} announcement`;
+
+          const html = `
+            <div style="font-family:Arial,sans-serif; line-height:1.6;">
+              <p>Hello,</p>
+              <p>A new announcement has been posted on Practice Online.</p>
+              <p><b>${announcement.title}</b></p>
+              <p>${announcement.message}</p>
+              ${
+                announcement.category === "class" || announcement.category === "all"
+                  ? `
+                    <p>
+                      <b>Meeting date:</b> ${announcement.meetingDate || "Not set"}<br/>
+                      <b>Meeting time:</b> ${announcement.meetingTime || "Not set"}<br/>
+                      <b>Meeting link:</b> ${announcement.meetingLink || "Not set"}
+                    </p>
+                  `
+                  : ""
+              }
+              ${
+                announcement.category === "quiz" || announcement.category === "all"
+                  ? `
+                    <p>
+                      <b>Due date:</b> ${announcement.dueDate || "Not set"}<br/>
+                      <b>Status:</b> ${announcement.quizStatus || "Open"}
+                    </p>
+                  `
+                  : ""
+              }
+              <p>Please log in to Practice Online to view the full announcement.</p>
+            </div>
+          `;
+
+          const text = `${announcement.title}\n\n${announcement.message}`;
+
+          await sendBulkEmail({
+            recipients,
+            subject,
+            html,
+            text,
+          });
+        }
+      } catch (emailErr) {
+        console.error("Announcement email send failed:", emailErr.message);
+      }
+    }
+
     return res.status(201).json({
       message: "Announcement created successfully.",
       announcement,
@@ -2706,7 +2796,7 @@ app.get("/api/announcements", authRequired, async (req, res) => {
 
     const filter = {};
 
-    if (isPrivilegedRole(currentUser.role)) {
+    if (isPrivilegedRole(currentUser.role) || ["editor"].includes(String(currentUser.role || "").toLowerCase())) {
       if (queryGrade) {
         filter.grade = normalizeAnnouncementGrade(queryGrade);
       }
@@ -2715,8 +2805,9 @@ app.get("/api/announcements", authRequired, async (req, res) => {
         filter.isPublished = String(req.query.isPublished) === "true";
       }
     } else {
+      // IMPORTANT:
+      // Published announcements must show in app even if sendToStudents = false
       filter.isPublished = true;
-      filter.sendToStudents = true;
 
       const learnerGrade = gradeToAnnouncementGrade(currentUser.grade);
       filter.grade = { $in: [learnerGrade, "allGrades"] };
@@ -2770,7 +2861,7 @@ app.get("/api/announcements", authRequired, async (req, res) => {
 });
 
 // ADMIN LIST
-app.get("/api/announcements/admin/list", authRequired, adminOnly, async (req, res) => {
+app.get("/api/announcements/admin/list", authRequired, announcementManagerOnly, async (req, res) => {
   try {
     const items = await Announcement.find({})
       .sort({ createdAt: -1 })
@@ -2793,18 +2884,17 @@ app.get("/api/announcements/profile-summary", authRequired, async (req, res) => 
 
     let gradeFilter = ["allGrades"];
 
-    if (!isPrivilegedRole(currentUser.role)) {
+    if (!isPrivilegedRole(currentUser.role) && String(currentUser.role || "").toLowerCase() !== "editor") {
       gradeFilter = [gradeToAnnouncementGrade(currentUser.grade), "allGrades"];
     }
 
+    // IMPORTANT:
+    // Do NOT filter by sendToStudents here.
+    // Published in-app announcements must still count and show.
     const baseFilter = {
       isPublished: true,
       grade: { $in: gradeFilter },
     };
-
-    if (!isPrivilegedRole(currentUser.role)) {
-      baseFilter.sendToStudents = true;
-    }
 
     const latest = await Announcement.findOne(baseFilter).sort({ createdAt: -1 });
     const count = await Announcement.countDocuments(baseFilter);
@@ -2828,7 +2918,7 @@ app.get("/api/announcements/profile-summary", authRequired, async (req, res) => 
 });
 
 // UPDATE ANNOUNCEMENT
-app.put("/api/announcements/:id", authRequired, adminOnly, async (req, res) => {
+app.put("/api/announcements/:id", authRequired, announcementManagerOnly, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -2884,7 +2974,7 @@ app.put("/api/announcements/:id", authRequired, adminOnly, async (req, res) => {
 });
 
 // DELETE ANNOUNCEMENT
-app.delete("/api/announcements/:id", authRequired, adminOnly, async (req, res) => {
+app.delete("/api/announcements/:id", authRequired, announcementManagerOnly, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -2956,7 +3046,7 @@ app.post("/api/announcements/:id/respond", authRequired, async (req, res) => {
 });
 
 // ADMIN VIEW RESPONSES FOR ONE ANNOUNCEMENT
-app.get("/api/announcements/:id/responses", authRequired, adminOnly, async (req, res) => {
+app.get("/api/announcements/:id/responses", authRequired, announcementManagerOnly, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -2984,6 +3074,8 @@ app.get("/api/announcements/:id/responses", authRequired, adminOnly, async (req,
     return res.status(500).json({ message: "Failed to load responses." });
   }
 });
+
+
 
 /* ------------------ ACCESS + PAYMENT ROUTES ------------------ */
 app.use("/api/access", accessRoutes);
