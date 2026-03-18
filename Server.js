@@ -31,6 +31,9 @@
 // ✅ Optional learner email on publish
 // ✅ Auto-publish scheduled quizzes
 // ✅ Final PUT route fixed so edit page updates MongoDB correctly
+// ✅ Announcement system added
+// ✅ Profile announcement summary added
+// ✅ Class RSVP (accept/reject) added
 
 import express from "express";
 import mongoose from "mongoose";
@@ -524,6 +527,138 @@ async function autoPublishScheduledQuizzes() {
   } catch (e) {
     console.error("autoPublishScheduledQuizzes error:", e.message);
   }
+}
+
+/* ------------------ ANNOUNCEMENT MODEL ------------------ */
+const AnnouncementResponseSchema = new mongoose.Schema(
+  {
+    student: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    response: {
+      type: String,
+      enum: ["accepted", "rejected"],
+      required: true,
+    },
+    respondedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false }
+);
+
+const AnnouncementSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 180,
+    },
+    message: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 5000,
+    },
+    grade: {
+      type: String,
+      enum: ["grade8", "grade9", "grade10", "grade11", "grade12", "allGrades"],
+      default: "allGrades",
+      index: true,
+    },
+    category: {
+      type: String,
+      enum: ["general", "class", "quiz", "all"],
+      default: "general",
+      index: true,
+    },
+    isPublished: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
+    sendToStudents: {
+      type: Boolean,
+      default: false,
+    },
+    urgentNotice: {
+      type: Boolean,
+      default: false,
+    },
+    meetingLink: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    meetingDate: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    meetingTime: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    dueDate: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    quizStatus: {
+      type: String,
+      default: "Open",
+      trim: true,
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    responses: [AnnouncementResponseSchema],
+  },
+  { timestamps: true }
+);
+
+AnnouncementSchema.index({ category: 1, grade: 1, isPublished: 1, createdAt: -1 });
+
+const Announcement =
+  mongoose.models.Announcement || mongoose.model("Announcement", AnnouncementSchema);
+
+/* ------------------ ANNOUNCEMENT HELPERS ------------------ */
+function normalizeAnnouncementGrade(value = "") {
+  const v = String(value || "").trim();
+  const allowed = ["grade8", "grade9", "grade10", "grade11", "grade12", "allGrades"];
+  return allowed.includes(v) ? v : "allGrades";
+}
+
+function normalizeAnnouncementCategory(value = "") {
+  const v = String(value || "").trim().toLowerCase();
+  const allowed = ["general", "class", "quiz", "all"];
+  return allowed.includes(v) ? v : "general";
+}
+
+function escapeRegex(value = "") {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function gradeToAnnouncementGrade(grade) {
+  const n = Number(grade);
+  if ([8, 9, 10, 11, 12].includes(n)) return `grade${n}`;
+  return "allGrades";
+}
+
+function stripAnnouncementForUser(announcement, userId) {
+  const obj = announcement.toObject ? announcement.toObject() : { ...announcement };
+  const responses = Array.isArray(obj.responses) ? obj.responses : [];
+  const found = responses.find((r) => String(r.student) === String(userId));
+  obj.learnerResponse = found ? found.response : "pending";
+  delete obj.responses;
+  return obj;
 }
 
 /* ------------------ AUTH ROUTES ------------------ */
@@ -2500,6 +2635,353 @@ app.post("/api/payfast/itn", async (req, res) => {
   } catch (e) {
     console.error("POST /api/payfast/itn error:", e.message);
     return res.status(500).send("Server error");
+  }
+});
+
+/* ------------------ ANNOUNCEMENTS ------------------ */
+
+// CREATE ANNOUNCEMENT
+app.post("/api/announcements", authRequired, adminOnly, async (req, res) => {
+  try {
+    const {
+      title,
+      message,
+      grade,
+      category,
+      isPublished,
+      sendToStudents,
+      urgentNotice,
+      meetingLink,
+      meetingDate,
+      meetingTime,
+      dueDate,
+      quizStatus,
+    } = req.body;
+
+    if (!safeTrim(title)) {
+      return res.status(400).json({ message: "Title is required." });
+    }
+
+    if (!safeTrim(message)) {
+      return res.status(400).json({ message: "Message is required." });
+    }
+
+    const announcement = await Announcement.create({
+      title: cleanSpaces(title),
+      message: String(message).trim(),
+      grade: normalizeAnnouncementGrade(grade),
+      category: normalizeAnnouncementCategory(category),
+      isPublished: typeof isPublished === "boolean" ? isPublished : true,
+      sendToStudents: !!sendToStudents,
+      urgentNotice: !!urgentNotice,
+      meetingLink: String(meetingLink || "").trim(),
+      meetingDate: String(meetingDate || "").trim(),
+      meetingTime: String(meetingTime || "").trim(),
+      dueDate: String(dueDate || "").trim(),
+      quizStatus: String(quizStatus || "Open").trim(),
+      createdBy: req.user.userId,
+    });
+
+    return res.status(201).json({
+      message: "Announcement created successfully.",
+      announcement,
+    });
+  } catch (err) {
+    console.error("POST /api/announcements error:", err.message);
+    return res.status(500).json({ message: "Failed to create announcement." });
+  }
+});
+
+// GET ANNOUNCEMENTS FOR LEARNERS / ADMIN
+app.get("/api/announcements", authRequired, async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user.userId).select("role grade");
+    if (!currentUser) {
+      return res.status(401).json({ message: "User not found." });
+    }
+
+    const queryGrade = safeTrim(req.query.grade);
+    const queryCategory = safeTrim(req.query.category);
+    const q = safeTrim(req.query.q);
+
+    const filter = {};
+
+    if (isPrivilegedRole(currentUser.role)) {
+      if (queryGrade) {
+        filter.grade = normalizeAnnouncementGrade(queryGrade);
+      }
+
+      if (typeof req.query.isPublished !== "undefined") {
+        filter.isPublished = String(req.query.isPublished) === "true";
+      }
+    } else {
+      filter.isPublished = true;
+      filter.sendToStudents = true;
+
+      const learnerGrade = gradeToAnnouncementGrade(currentUser.grade);
+      filter.grade = { $in: [learnerGrade, "allGrades"] };
+    }
+
+    if (queryCategory) {
+      const cat = normalizeAnnouncementCategory(queryCategory);
+      if (cat !== "all") {
+        filter.category = { $in: [cat, "all"] };
+      }
+    }
+
+    if (q) {
+      const rx = new RegExp(escapeRegex(q), "i");
+      filter.$or = [{ title: rx }, { message: rx }];
+    }
+
+    const announcements = await Announcement.find(filter)
+      .sort({ urgentNotice: -1, createdAt: -1 })
+      .populate("createdBy", "username email role");
+
+    const mapped = announcements.map((a) => stripAnnouncementForUser(a, req.user.userId));
+
+    const generalAnnouncements = mapped.filter(
+      (a) => a.category === "general" || a.category === "all"
+    );
+
+    const classAnnouncements = mapped.filter(
+      (a) => a.category === "class" || a.category === "all"
+    );
+
+    const quizAnnouncements = mapped.filter(
+      (a) => a.category === "quiz" || a.category === "all"
+    );
+
+    const latestUrgent = mapped.find((a) => a.urgentNotice);
+
+    return res.json({
+      updatedAt: mapped[0]?.updatedAt || null,
+      urgentNotice: latestUrgent?.message || "",
+      weeklyFocus: latestUrgent?.title || "",
+      generalAnnouncements,
+      classAnnouncements,
+      quizAnnouncements,
+      announcements: mapped,
+    });
+  } catch (err) {
+    console.error("GET /api/announcements error:", err.message);
+    return res.status(500).json({ message: "Failed to load announcements." });
+  }
+});
+
+// ADMIN LIST
+app.get("/api/announcements/admin/list", authRequired, adminOnly, async (req, res) => {
+  try {
+    const items = await Announcement.find({})
+      .sort({ createdAt: -1 })
+      .populate("createdBy", "username email");
+
+    return res.json(items);
+  } catch (err) {
+    console.error("GET /api/announcements/admin/list error:", err.message);
+    return res.status(500).json({ message: "Failed to load admin announcements." });
+  }
+});
+
+// PROFILE SUMMARY
+app.get("/api/announcements/profile-summary", authRequired, async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user.userId).select("role grade");
+    if (!currentUser) {
+      return res.status(401).json({ message: "User not found." });
+    }
+
+    let gradeFilter = ["allGrades"];
+
+    if (!isPrivilegedRole(currentUser.role)) {
+      gradeFilter = [gradeToAnnouncementGrade(currentUser.grade), "allGrades"];
+    }
+
+    const baseFilter = {
+      isPublished: true,
+      grade: { $in: gradeFilter },
+    };
+
+    if (!isPrivilegedRole(currentUser.role)) {
+      baseFilter.sendToStudents = true;
+    }
+
+    const latest = await Announcement.findOne(baseFilter).sort({ createdAt: -1 });
+    const count = await Announcement.countDocuments(baseFilter);
+
+    return res.json({
+      count,
+      latest: latest
+        ? {
+            _id: latest._id,
+            title: latest.title,
+            message: latest.message,
+            category: latest.category,
+            createdAt: latest.createdAt,
+          }
+        : null,
+    });
+  } catch (err) {
+    console.error("GET /api/announcements/profile-summary error:", err.message);
+    return res.status(500).json({ message: "Failed to load announcement summary." });
+  }
+});
+
+// UPDATE ANNOUNCEMENT
+app.put("/api/announcements/:id", authRequired, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid announcement id." });
+    }
+
+    const announcement = await Announcement.findById(id);
+    if (!announcement) {
+      return res.status(404).json({ message: "Announcement not found." });
+    }
+
+    const {
+      title,
+      message,
+      grade,
+      category,
+      isPublished,
+      sendToStudents,
+      urgentNotice,
+      meetingLink,
+      meetingDate,
+      meetingTime,
+      dueDate,
+      quizStatus,
+    } = req.body;
+
+    announcement.title = cleanSpaces(title ?? announcement.title);
+    announcement.message = String(message ?? announcement.message).trim();
+    announcement.grade = normalizeAnnouncementGrade(grade ?? announcement.grade);
+    announcement.category = normalizeAnnouncementCategory(category ?? announcement.category);
+
+    if (typeof isPublished === "boolean") announcement.isPublished = isPublished;
+    if (typeof sendToStudents === "boolean") announcement.sendToStudents = sendToStudents;
+    if (typeof urgentNotice === "boolean") announcement.urgentNotice = urgentNotice;
+
+    announcement.meetingLink = String(meetingLink ?? announcement.meetingLink ?? "").trim();
+    announcement.meetingDate = String(meetingDate ?? announcement.meetingDate ?? "").trim();
+    announcement.meetingTime = String(meetingTime ?? announcement.meetingTime ?? "").trim();
+    announcement.dueDate = String(dueDate ?? announcement.dueDate ?? "").trim();
+    announcement.quizStatus = String(quizStatus ?? announcement.quizStatus ?? "Open").trim();
+
+    await announcement.save();
+
+    return res.json({
+      message: "Announcement updated successfully.",
+      announcement,
+    });
+  } catch (err) {
+    console.error("PUT /api/announcements/:id error:", err.message);
+    return res.status(500).json({ message: "Failed to update announcement." });
+  }
+});
+
+// DELETE ANNOUNCEMENT
+app.delete("/api/announcements/:id", authRequired, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid announcement id." });
+    }
+
+    const deleted = await Announcement.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Announcement not found." });
+    }
+
+    return res.json({ message: "Announcement deleted successfully." });
+  } catch (err) {
+    console.error("DELETE /api/announcements/:id error:", err.message);
+    return res.status(500).json({ message: "Failed to delete announcement." });
+  }
+});
+
+// RESPOND TO CLASS ANNOUNCEMENT
+app.post("/api/announcements/:id/respond", authRequired, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const response = String(req.body.response || "").toLowerCase().trim();
+
+    if (!["accepted", "rejected"].includes(response)) {
+      return res.status(400).json({ message: "Response must be accepted or rejected." });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid announcement id." });
+    }
+
+    const announcement = await Announcement.findById(id);
+    if (!announcement) {
+      return res.status(404).json({ message: "Announcement not found." });
+    }
+
+    if (!["class", "all"].includes(announcement.category)) {
+      return res.status(400).json({ message: "This announcement does not accept class responses." });
+    }
+
+    const existing = announcement.responses.find(
+      (r) => String(r.student) === String(req.user.userId)
+    );
+
+    if (existing) {
+      existing.response = response;
+      existing.respondedAt = new Date();
+    } else {
+      announcement.responses.push({
+        student: req.user.userId,
+        response,
+        respondedAt: new Date(),
+      });
+    }
+
+    await announcement.save();
+
+    return res.json({
+      message: "Response saved successfully.",
+      learnerResponse: response,
+    });
+  } catch (err) {
+    console.error("POST /api/announcements/:id/respond error:", err.message);
+    return res.status(500).json({ message: "Failed to save response." });
+  }
+});
+
+// ADMIN VIEW RESPONSES FOR ONE ANNOUNCEMENT
+app.get("/api/announcements/:id/responses", authRequired, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid announcement id." });
+    }
+
+    const announcement = await Announcement.findById(id).populate(
+      "responses.student",
+      "fullName username email grade studentNumber"
+    );
+
+    if (!announcement) {
+      return res.status(404).json({ message: "Announcement not found." });
+    }
+
+    return res.json({
+      announcementId: announcement._id,
+      title: announcement.title,
+      category: announcement.category,
+      responses: announcement.responses || [],
+    });
+  } catch (err) {
+    console.error("GET /api/announcements/:id/responses error:", err.message);
+    return res.status(500).json({ message: "Failed to load responses." });
   }
 });
 
