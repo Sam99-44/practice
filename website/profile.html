@@ -81,6 +81,7 @@ button,input{
   color:#eef2ff;
   font-weight:700;
   font-size:13px;
+  position:relative;
 }
 
 .nav a:hover{
@@ -100,6 +101,23 @@ button,input{
 
 .navIcon.white{
   filter:brightness(0) invert(1);
+}
+
+.navBadge{
+  min-width:auto;
+  height:auto;
+  padding:0;
+  margin-left:8px;
+  border-radius:0;
+  background:transparent;
+  color:#ffd6db;
+  font-size:12px;
+  font-weight:700;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+  font-family:Arial, "Calibri Light", Calibri, sans-serif;
 }
 
 .logoutBtn{
@@ -211,6 +229,7 @@ button,input{
   border-radius:18px;
   padding:18px;
   transition:.16s ease;
+  position:relative;
 }
 
 .quickCard:hover{
@@ -220,6 +239,8 @@ button,input{
 
 .quickIcon{
   margin-bottom:10px;
+  position:relative;
+  width:30px;
 }
 
 .quickIcon img,
@@ -255,6 +276,114 @@ button,input{
   margin:0;
   font-size:13px;
   color:var(--muted);
+}
+
+.announcementPreview{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:18px;
+  margin-bottom:16px;
+}
+
+.previewTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+
+.previewTopLeft{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+}
+
+.previewIconWrap{
+  width:auto;
+  height:auto;
+  border-radius:0;
+  background:transparent;
+  color:var(--red);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+
+.previewIconWrap img{
+  width:22px;
+  height:22px;
+  display:block;
+}
+
+.previewTitleWrap h3{
+  margin:0;
+  font-size:17px;
+  color:var(--nav);
+}
+
+.previewTitleWrap p{
+  margin:4px 0 0;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.previewCount{
+  min-width:auto;
+  height:auto;
+  padding:0;
+  border-radius:0;
+  background:transparent;
+  color:var(--red);
+  font-size:12px;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+}
+
+.previewBox{
+  border:1px solid #edf2f7;
+  border-radius:14px;
+  background:#fafbfd;
+  padding:14px;
+}
+
+.previewBoxTitle{
+  font-size:14px;
+  font-weight:800;
+  color:var(--nav);
+  margin-bottom:6px;
+}
+
+.previewBoxText{
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.7;
+  margin-bottom:12px;
+}
+
+.previewMeta{
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:12px;
+}
+
+.previewAction{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:10px 14px;
+  border-radius:12px;
+  background:var(--nav);
+  color:#fff;
+  font-size:13px;
+  font-weight:800;
 }
 
 .mainGrid{
@@ -358,6 +487,11 @@ button,input{
     text-align:left;
     width:100%;
   }
+
+  .previewTop{
+    flex-direction:column;
+    align-items:flex-start;
+  }
 }
 </style>
 
@@ -415,8 +549,9 @@ if(!localStorage.getItem("token")){
       </a>
 
       <a href="announcements.html">
-        <img class="navIcon white" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/announcement_gg5tqs.svg" alt="Announcements">
+        <img class="navIcon white" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements">
         <span>Announcements</span>
+        <span class="navBadge" id="navAnnouncementBadge">0</span>
       </a>
 
       <button class="logoutBtn" id="logoutBtn" title="Logout" aria-label="Logout">
@@ -443,6 +578,32 @@ if(!localStorage.getItem("token")){
       <button class="btn" onclick="location.href='learner-quizzes.html'">
         Open Practice
       </button>
+    </div>
+  </section>
+
+  <section class="announcementPreview">
+    <div class="previewTop">
+      <div class="previewTopLeft">
+        <div class="previewIconWrap">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements">
+        </div>
+
+        <div class="previewTitleWrap">
+          <h3>Announcements</h3>
+          <p>Latest updates for your grade and general notices</p>
+        </div>
+      </div>
+
+      <div class="previewCount" id="announcementPreviewCount">0</div>
+    </div>
+
+    <div class="previewBox">
+      <div class="previewBoxTitle" id="announcementPreviewTitle">Loading latest announcement...</div>
+      <div class="previewBoxText" id="announcementPreviewText">
+        Please check the latest notices from admin.
+      </div>
+      <div class="previewMeta" id="announcementPreviewMeta">Waiting for announcement data...</div>
+      <a class="previewAction" href="announcements.html">Open Announcements</a>
     </div>
   </section>
 
@@ -492,7 +653,7 @@ if(!localStorage.getItem("token")){
 
     <a class="quickCard" href="announcements.html">
       <div class="quickIcon">
-        <img class="icon-color" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/announcement_gg5tqs.svg" alt="Announcements">
+        <img class="icon-color" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements">
       </div>
       <h3>Announcements</h3>
       <p>Read weekly updates and class notices.</p>
@@ -607,6 +768,68 @@ function showPhoto(src, fallbackName){
   profilePhoto.src = src;
 }
 
+function formatDateTime(value){
+  if(!value) return "Latest announcement available";
+  const d = new Date(value);
+  if(Number.isNaN(d.getTime())) return "Latest announcement available";
+  return d.toLocaleString("en-ZA", {
+    year:"numeric",
+    month:"short",
+    day:"numeric",
+    hour:"2-digit",
+    minute:"2-digit"
+  });
+}
+
+function trimText(text, max = 140){
+  const value = String(text || "").trim();
+  if(value.length <= max) return value || "There are no announcement details right now.";
+  return value.slice(0, max).trim() + "...";
+}
+
+async function loadAnnouncementSummary(){
+  try{
+    const res = await fetch(`${API}/api/announcements/profile-summary`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if(!res.ok){
+      throw new Error(data.message || "Failed to load announcement summary.");
+    }
+
+    const count = Number(data.count || 0);
+    const latest = data.latest || null;
+
+    document.getElementById("navAnnouncementBadge").textContent = count;
+    document.getElementById("announcementPreviewCount").textContent = count;
+
+    if(latest){
+      document.getElementById("announcementPreviewTitle").textContent =
+        latest.title || "Latest announcement";
+
+      document.getElementById("announcementPreviewText").textContent =
+        trimText(latest.message, 170);
+
+      document.getElementById("announcementPreviewMeta").textContent =
+        `${latest.category ? String(latest.category).toUpperCase() : "ANNOUNCEMENT"} • ${formatDateTime(latest.createdAt)}`;
+    } else {
+      document.getElementById("announcementPreviewTitle").textContent = "No new announcements";
+      document.getElementById("announcementPreviewText").textContent =
+        "There are no announcements for your grade right now.";
+      document.getElementById("announcementPreviewMeta").textContent =
+        "Check again later for new updates.";
+    }
+  } catch(err){
+    document.getElementById("announcementPreviewTitle").textContent = "Announcements unavailable";
+    document.getElementById("announcementPreviewText").textContent =
+      "We could not load announcement information right now.";
+    document.getElementById("announcementPreviewMeta").textContent =
+      "Please try again later.";
+  }
+}
+
 async function loadProfile(){
   try {
     const res = await fetch(`${API}/api/profile/me`, {
@@ -650,6 +873,7 @@ async function loadProfile(){
 }
 
 loadProfile();
+loadAnnouncementSummary();
 </script>
 
 </body>
