@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Announcements | Practice Online</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
 <style>
 :root{
   --nav:#1b1648;
@@ -23,7 +21,7 @@
 *{box-sizing:border-box}
 body{
   margin:0;
-  font-family:Inter,sans-serif;
+  font-family:Arial, "Calibri Light", Calibri, sans-serif;
   background:var(--bg);
   color:var(--text);
 }
@@ -51,8 +49,16 @@ body{
   padding:20px;
   margin-bottom:18px;
 }
-.hero h2{margin:0 0 8px}
-.hero p{margin:0;color:var(--muted);line-height:1.7;font-size:14px}
+.hero h2{
+  margin:0 0 8px;
+  font-size:20px;
+}
+.hero p{
+  margin:0;
+  color:var(--muted);
+  line-height:1.7;
+  font-size:14px;
+}
 .section{
   background:#fff;
   border:1px solid var(--border);
@@ -79,56 +85,61 @@ body{
   background:#fff;
 }
 .title{
-  font-weight:800;
+  font-weight:700;
   font-size:16px;
-  margin:8px 0;
+  margin:0 0 8px;
 }
-.badge{
-  font-size:11px;
-  padding:5px 9px;
-  border-radius:999px;
-  font-weight:800;
-}
-.badge-class{background:#eef2ff;color:#4338ca}
-.badge-quiz{background:#ecfeff;color:#0e7490}
-.badge-general{background:#f1f5f9;color:#334155}
-.badge-all{background:#fff7ed;color:#b45309}
-.badge-accept{background:#ecfdf5;color:#15803d}
-.badge-reject{background:#fef2f2;color:#b91c1c}
-.badge-pending{background:#eff6ff;color:#1d4ed8}
-.badge-grade{background:#eef4ff;color:#1d4ed8}
 .meta{
   font-size:13px;
   color:var(--muted);
   margin-top:8px;
   line-height:1.7;
 }
-.btn{
-  padding:9px 12px;
-  border:none;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:700;
-}
-.btn-accept{background:var(--success);color:#fff}
-.btn-reject{background:var(--danger);color:#fff}
-.btn-copy{background:#f1f5f9}
 .row{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
-  margin-top:10px;
+  margin-top:12px;
+  align-items:center;
 }
 input,select{
   padding:10px 12px;
   border-radius:10px;
   border:1px solid var(--border);
+  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-size:14px;
 }
 .toolbar{
   display:flex;
-  gap:10px;
   margin-bottom:15px;
-  flex-wrap:wrap;
+}
+.searchBox{
+  position:relative;
+  width:100%;
+}
+.searchBox img{
+  position:absolute;
+  left:12px;
+  top:50%;
+  transform:translateY(-50%);
+  width:16px;
+  height:16px;
+  opacity:.75;
+  pointer-events:none;
+}
+.searchBox input{
+  width:100%;
+  padding:12px 14px 12px 38px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-size:14px;
+  background:#fff;
+}
+.searchBox input:focus{
+  outline:none;
+  border-color:#c7d2fe;
+  box-shadow:0 0 0 2px rgba(99,102,241,0.15);
 }
 .status{
   display:none;
@@ -144,6 +155,83 @@ input,select{
 .empty{
   color:var(--muted);
   font-size:14px;
+}
+.actions{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+.iconBtn{
+  min-height:34px;
+  border:none;
+  background:transparent;
+  border-radius:8px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition:.15s ease;
+  padding:6px 8px;
+  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+}
+.iconBtn img{
+  width:18px;
+  height:18px;
+  display:block;
+  flex-shrink:0;
+}
+.iconBtn.copy img{
+  width:20px;
+  height:20px;
+}
+.iconBtn:hover{
+  background:#f1f5f9;
+}
+.actionTextBtn{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  border:none;
+  border-radius:8px;
+  padding:7px 10px;
+  cursor:pointer;
+  font-size:13px;
+  font-weight:700;
+  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+}
+.actionTextBtn img{
+  width:16px;
+  height:16px;
+  display:block;
+}
+.actionTextBtn.accept{
+  background:#ecfdf5;
+  color:var(--success);
+}
+.actionTextBtn.reject{
+  background:#fef2f2;
+  color:var(--danger);
+}
+.actionTextBtn.accept:hover{
+  background:#dcfce7;
+}
+.actionTextBtn.reject:hover{
+  background:#fee2e2;
+}
+.linkText{
+  color:#1d4ed8;
+  text-decoration:underline;
+  font-size:13px;
+  font-weight:700;
+}
+.sectionHead strong{
+  font-size:16px;
+}
+::placeholder{
+  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  color:#94a3b8;
 }
 </style>
 </head>
@@ -165,16 +253,10 @@ input,select{
   <div id="statusBox" class="status info"></div>
 
   <div class="toolbar">
-    <input id="search" placeholder="Search announcements...">
-    <select id="gradeFilter">
-      <option value="all">My Grade / Allowed</option>
-      <option value="grade8">Grade 8</option>
-      <option value="grade9">Grade 9</option>
-      <option value="grade10">Grade 10</option>
-      <option value="grade11">Grade 11</option>
-      <option value="grade12">Grade 12</option>
-      <option value="allGrades">All Grades</option>
-    </select>
+    <div class="searchBox">
+      <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773873674/searchaddress_hae4sp.svg" alt="Search">
+      <input id="search" placeholder="Search by title, message or grade...">
+    </div>
   </div>
 
   <div class="section">
@@ -205,6 +287,12 @@ let dataStore = null;
 
 const statusBox = document.getElementById("statusBox");
 
+const ICONS = {
+  thumbsUp: "https://res.cloudinary.com/dopoxadlr/image/upload/v1773870202/thumbup_p6d1cb.svg",
+  thumbsDown: "https://res.cloudinary.com/dopoxadlr/image/upload/v1773870185/thumbdown_bqpjk9.svg",
+  copy: "https://res.cloudinary.com/dopoxadlr/image/upload/v1773871489/copy_gymbsv.svg"
+};
+
 function showStatus(message, type = "info") {
   statusBox.className = `status show ${type}`;
   statusBox.textContent = message;
@@ -224,6 +312,14 @@ function escapeHtml(text){
     .replace(/'/g,"&#039;");
 }
 
+function safeJsString(text){
+  return String(text || "")
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, "\\n")
+    .replace(/\r/g, "");
+}
+
 function formatDate(d){
   if(!d) return "—";
   const dt = new Date(d);
@@ -239,22 +335,19 @@ function tokenHeaders() {
   };
 }
 
-function responseBadge(value = "pending") {
-  const v = String(value || "pending").toLowerCase();
-  if (v === "accepted") return `<span class="badge badge-accept">Accepted</span>`;
-  if (v === "rejected") return `<span class="badge badge-reject">Rejected</span>`;
-  return `<span class="badge badge-pending">Pending</span>`;
-}
-
 function matchFilter(item){
   const q = document.getElementById("search").value.toLowerCase();
-  const grade = document.getElementById("gradeFilter").value;
 
-  const text = `${item.title || ""} ${item.message || ""} ${item.meetingDate || ""} ${item.meetingTime || ""} ${item.dueDate || ""}`.toLowerCase();
-  const searchOk = !q || text.includes(q);
-  const gradeOk = grade === "all" || item.grade === grade;
+  const text = `
+    ${item.title || ""}
+    ${item.message || ""}
+    ${item.grade || ""}
+    ${item.meetingDate || ""}
+    ${item.meetingTime || ""}
+    ${item.dueDate || ""}
+  `.toLowerCase();
 
-  return searchOk && gradeOk;
+  return !q || text.includes(q);
 }
 
 function renderGeneral(list){
@@ -263,13 +356,15 @@ function renderGeneral(list){
 
   el.innerHTML = items.length ? items.map(i=>`
     <div class="card">
-      <div class="row">
-        <span class="badge badge-general">General</span>
-        <span class="badge badge-grade">${escapeHtml(i.grade || "allGrades")}</span>
-      </div>
       <div class="title">${escapeHtml(i.title)}</div>
       <div class="meta">${escapeHtml(i.message)}</div>
+      <div class="meta">Grade: ${escapeHtml(i.grade || "allGrades")}</div>
       <div class="meta">Posted: ${escapeHtml(formatDate(i.createdAt))}</div>
+      <div class="actions">
+        <button class="iconBtn copy" onclick="copyText('${safeJsString(i.message || "")}')" title="Copy">
+          <img src="${ICONS.copy}" alt="Copy">
+        </button>
+      </div>
     </div>
   `).join("") : `<div class="empty">No general announcements.</div>`;
 }
@@ -280,25 +375,30 @@ function renderClass(list){
 
   el.innerHTML = items.length ? items.map(i=>`
     <div class="card">
-      <div class="row">
-        <span class="badge badge-class">Class</span>
-        <span class="badge badge-grade">${escapeHtml(i.grade || "allGrades")}</span>
-        ${responseBadge(i.learnerResponse)}
-      </div>
-
       <div class="title">${escapeHtml(i.title)}</div>
       <div class="meta">${escapeHtml(i.message)}</div>
+      <div class="meta">Grade: ${escapeHtml(i.grade || "allGrades")}</div>
       <div class="meta">Date: ${escapeHtml(formatDate(i.meetingDate))}</div>
       <div class="meta">Time: ${escapeHtml(i.meetingTime || "—")}</div>
 
-      <div class="row">
-        ${i.meetingLink ? `<a href="${escapeHtml(i.meetingLink)}" target="_blank" rel="noopener noreferrer">Join Meeting</a>` : `<span class="meta">No meeting link</span>`}
-        ${i.meetingLink ? `<button class="btn btn-copy" onclick="copyLink('${escapeHtml(i.meetingLink)}')">Copy</button>` : ``}
-      </div>
+      <div class="actions">
+        ${i.meetingLink ? `<a class="linkText" href="${escapeHtml(i.meetingLink)}" target="_blank" rel="noopener noreferrer">Join Meeting</a>` : ``}
 
-      <div class="row">
-        <button class="btn btn-accept" onclick="respond('${i._id}','accepted')">Accept</button>
-        <button class="btn btn-reject" onclick="respond('${i._id}','rejected')">Reject</button>
+        ${i.meetingLink ? `
+          <button class="iconBtn copy" onclick="copyText('${safeJsString(i.meetingLink)}')" title="Copy link">
+            <img src="${ICONS.copy}" alt="Copy">
+          </button>
+        ` : ``}
+
+        <button class="actionTextBtn accept" onclick="respond('${i._id}','accepted')" title="Accept">
+          <img src="${ICONS.thumbsUp}" alt="Accept">
+          <span>Accept</span>
+        </button>
+
+        <button class="actionTextBtn reject" onclick="respond('${i._id}','rejected')" title="Reject">
+          <img src="${ICONS.thumbsDown}" alt="Reject">
+          <span>Reject</span>
+        </button>
       </div>
     </div>
   `).join("") : `<div class="empty">No class announcements.</div>`;
@@ -310,15 +410,16 @@ function renderQuiz(list){
 
   el.innerHTML = items.length ? items.map(i=>`
     <div class="card">
-      <div class="row">
-        <span class="badge badge-quiz">Quiz</span>
-        <span class="badge badge-grade">${escapeHtml(i.grade || "allGrades")}</span>
-      </div>
-
       <div class="title">${escapeHtml(i.title)}</div>
       <div class="meta">${escapeHtml(i.message)}</div>
+      <div class="meta">Grade: ${escapeHtml(i.grade || "allGrades")}</div>
       <div class="meta">Due: ${escapeHtml(formatDate(i.dueDate))}</div>
       <div class="meta">Status: ${escapeHtml(i.quizStatus || "Open")}</div>
+      <div class="actions">
+        <button class="iconBtn copy" onclick="copyText('${safeJsString(i.message || "")}')" title="Copy">
+          <img src="${ICONS.copy}" alt="Copy">
+        </button>
+      </div>
     </div>
   `).join("") : `<div class="empty">No quiz announcements.</div>`;
 }
@@ -377,14 +478,13 @@ async function respond(id,response){
   }
 }
 
-function copyLink(link){
-  navigator.clipboard.writeText(link)
-    .then(() => showStatus("Meeting link copied.", "success"))
-    .catch(() => showStatus("Could not copy the link.", "error"));
+function copyText(text){
+  navigator.clipboard.writeText(text)
+    .then(() => showStatus("Copied successfully.", "success"))
+    .catch(() => showStatus("Could not copy.", "error"));
 }
 
 document.getElementById("search").addEventListener("input",renderAll);
-document.getElementById("gradeFilter").addEventListener("change",renderAll);
 
 load();
 </script>
