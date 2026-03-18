@@ -4,22 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Admin Announcements | Practice Online</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
 :root{
   --nav:#1b1648;
+  --red:#e11d2e;
   --bg:#f6f7fb;
   --card:#ffffff;
   --border:#d9dee7;
   --text:#0f172a;
   --muted:#64748b;
+  --success:#15803d;
+  --danger:#b91c1c;
+  --info:#1d4ed8;
   --soft:#f8fafc;
-  --ok:#166534;
-  --okbg:#f0fdf4;
-  --err:#b91c1c;
-  --errbg:#fef2f2;
 }
 *{box-sizing:border-box}
 body{
@@ -29,127 +31,199 @@ body{
   color:var(--text);
 }
 .topbar{
-  background:var(--nav);
+  background:linear-gradient(135deg,var(--nav),#2b2370);
   color:#fff;
 }
 .topbar-inner{
   max-width:1200px;
   margin:auto;
-  padding:14px 18px;
+  padding:16px 20px;
   display:flex;
-  align-items:center;
   justify-content:space-between;
+  align-items:center;
+  gap:12px;
 }
 .wrap{
   max-width:1200px;
   margin:auto;
-  padding:20px;
+  padding:22px 20px 40px;
 }
-.page-title{
-  margin:0 0 16px;
+.hero{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:22px;
+  margin-bottom:18px;
+}
+.hero h1{
+  margin:0 0 8px;
   font-size:28px;
 }
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:18px;
-  margin-bottom:18px;
-  overflow:hidden;
-}
-.card-head{
-  padding:16px 18px;
-  border-bottom:1px solid var(--border);
-  background:#fbfcfe;
-}
-.card-head h2{
+.hero p{
   margin:0;
-  font-size:18px;
-}
-.card-body{
-  padding:18px;
+  color:var(--muted);
+  line-height:1.7;
+  font-size:14px;
 }
 .grid{
   display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:16px;
+  grid-template-columns:420px 1fr;
+  gap:18px;
 }
-.gradeCard{
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:14px;
+.panel{
   background:#fff;
+  border:1px solid var(--border);
+  border-radius:18px;
+  overflow:hidden;
 }
-.gradeCard h3{
-  margin:0 0 12px;
-  font-size:16px;
+.panelHead{
+  padding:18px;
+  border-bottom:1px solid var(--border);
+  background:var(--soft);
+}
+.panelHead h2{
+  margin:0;
+  font-size:18px;
+}
+.panelBody{
+  padding:18px;
 }
 .field{
-  margin-bottom:12px;
+  margin-bottom:14px;
 }
-.field:last-child{
-  margin-bottom:0;
-}
-label{
+.label{
   display:block;
-  margin-bottom:6px;
-  font-size:12px;
-  font-weight:800;
-  text-transform:uppercase;
-  letter-spacing:.05em;
-  color:var(--muted);
+  margin-bottom:7px;
+  font-size:13px;
+  font-weight:700;
 }
-input, textarea{
+.input,.textarea,.select{
   width:100%;
-  padding:12px;
   border:1px solid var(--border);
   border-radius:12px;
+  padding:12px 13px;
   font:inherit;
+  outline:none;
   background:#fff;
 }
-textarea{
-  min-height:92px;
+.textarea{
+  min-height:120px;
   resize:vertical;
+}
+.input:focus,.textarea:focus,.select:focus{
+  border-color:#b7c4d7;
+  box-shadow:0 0 0 3px rgba(27,22,72,.08);
+}
+.row2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.checkRow{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  margin-bottom:12px;
+  font-size:14px;
 }
 .actions{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
+  margin-top:8px;
 }
-button{
+.btn{
   border:none;
   border-radius:12px;
-  padding:12px 16px;
-  font:inherit;
+  padding:11px 15px;
   font-weight:800;
   cursor:pointer;
 }
-.primary{
-  background:var(--nav);
-  color:#fff;
-}
-.secondary{
-  background:#fff;
-  border:1px solid var(--border);
-}
-#msg{
+.btn-primary{background:var(--nav);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-light{background:#eef2f7;color:#0f172a}
+.btn:hover{opacity:.96}
+.status{
   display:none;
-  margin-bottom:16px;
-  padding:12px 14px;
+  padding:13px 14px;
   border-radius:12px;
+  margin-bottom:14px;
   font-size:14px;
 }
-#msg.show{display:block}
-#msg.ok{
-  background:var(--okbg);
-  color:var(--ok);
-  border:1px solid #bbf7d0;
+.status.show{display:block}
+.status.info{background:#eef4ff;border:1px solid #c7d7fe;color:var(--info)}
+.status.error{background:#fef2f2;border:1px solid #fecaca;color:var(--danger)}
+.status.success{background:#ecfdf5;border:1px solid #bbf7d0;color:var(--success)}
+
+.list{
+  display:grid;
+  gap:14px;
 }
-#msg.error{
-  background:var(--errbg);
-  color:var(--err);
-  border:1px solid #fecaca;
+.card{
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:16px;
+  background:#fff;
 }
-@media (max-width: 900px){
+.cardTop{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-start;
+  margin-bottom:10px;
+}
+.badges{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.badge{
+  font-size:11px;
+  font-weight:800;
+  border-radius:999px;
+  padding:6px 10px;
+}
+.b-general{background:#f1f5f9;color:#334155}
+.b-class{background:#eef2ff;color:#4338ca}
+.b-quiz{background:#ecfeff;color:#0e7490}
+.b-all{background:#fff7ed;color:#b45309}
+.b-grade{background:#eff6ff;color:#1d4ed8}
+.b-published{background:#ecfdf5;color:#15803d}
+.b-draft{background:#fef2f2;color:#b91c1c}
+.title{
+  font-size:17px;
+  font-weight:800;
+  margin:0 0 8px;
+}
+.message{
+  color:#334155;
+  line-height:1.7;
+  font-size:14px;
+  white-space:pre-wrap;
+}
+.meta{
+  margin-top:10px;
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.7;
+}
+.smallActions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+.smallBtn{
+  border:none;
+  border-radius:10px;
+  padding:9px 12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.smallBtn.edit{background:#eef4ff;color:#1d4ed8}
+.smallBtn.delete{background:#fef2f2;color:#b91c1c}
+.hidden{display:none !important}
+@media(max-width:980px){
   .grid{grid-template-columns:1fr}
 }
 </style>
@@ -164,195 +238,378 @@ button{
 </header>
 
 <main class="wrap">
-  <h1 class="page-title">Manage Announcements</h1>
+  <section class="hero">
+    <h1>Manage Announcements</h1>
+    <p>Create, edit, publish, and manage general, class, and quiz announcements for specific grades or all grades.</p>
+  </section>
 
-  <div id="msg"></div>
-
-  <div class="card">
-    <div class="card-head">
-      <h2>Weekly Focus</h2>
-    </div>
-    <div class="card-body">
-      <div class="field">
-        <label for="weeklyFocus">Weekly Focus</label>
-        <textarea id="weeklyFocus" placeholder="Example: This week we will be focusing on trigonometry."></textarea>
+  <div class="grid">
+    <section class="panel">
+      <div class="panelHead">
+        <h2 id="formTitle">Create Announcement</h2>
       </div>
-    </div>
-  </div>
+      <div class="panelBody">
+        <div id="statusBox" class="status info"></div>
 
-  <div class="card">
-    <div class="card-head">
-      <h2>Class Announcements</h2>
-    </div>
-    <div class="card-body">
-      <div class="grid" id="gradeGrid"></div>
-    </div>
-  </div>
+        <form id="announcementForm">
+          <input type="hidden" id="announcementId">
 
-  <div class="actions">
-    <button class="primary" id="saveBtn">Save Announcements</button>
-    <button class="secondary" id="reloadBtn">Reload</button>
+          <div class="field">
+            <label class="label" for="title">Title</label>
+            <input id="title" class="input" type="text" placeholder="Enter title">
+          </div>
+
+          <div class="field">
+            <label class="label" for="message">Message</label>
+            <textarea id="message" class="textarea" placeholder="Enter announcement message"></textarea>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label class="label" for="grade">Grade</label>
+              <select id="grade" class="select">
+                <option value="allGrades">All Grades</option>
+                <option value="grade8">Grade 8</option>
+                <option value="grade9">Grade 9</option>
+                <option value="grade10">Grade 10</option>
+                <option value="grade11">Grade 11</option>
+                <option value="grade12">Grade 12</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="label" for="category">Category</label>
+              <select id="category" class="select">
+                <option value="general">General</option>
+                <option value="class">Class</option>
+                <option value="quiz">Quiz</option>
+                <option value="all">All</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="classFields" class="hidden">
+            <div class="row2">
+              <div class="field">
+                <label class="label" for="meetingDate">Meeting Date</label>
+                <input id="meetingDate" class="input" type="date">
+              </div>
+              <div class="field">
+                <label class="label" for="meetingTime">Meeting Time</label>
+                <input id="meetingTime" class="input" type="time">
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="label" for="meetingLink">Meeting Link</label>
+              <input id="meetingLink" class="input" type="text" placeholder="https://...">
+            </div>
+          </div>
+
+          <div id="quizFields" class="hidden">
+            <div class="row2">
+              <div class="field">
+                <label class="label" for="dueDate">Quiz Due Date</label>
+                <input id="dueDate" class="input" type="date">
+              </div>
+              <div class="field">
+                <label class="label" for="quizStatus">Quiz Status</label>
+                <input id="quizStatus" class="input" type="text" placeholder="Open / Closing soon / Closed">
+              </div>
+            </div>
+          </div>
+
+          <label class="checkRow">
+            <input id="isPublished" type="checkbox" checked>
+            <span>Publish this announcement</span>
+          </label>
+
+          <label class="checkRow">
+            <input id="sendToStudents" type="checkbox">
+            <span>Send this announcement to students</span>
+          </label>
+
+          <label class="checkRow">
+            <input id="urgentNotice" type="checkbox">
+            <span>Mark as important / urgent notice</span>
+          </label>
+
+          <div class="actions">
+            <button type="submit" class="btn btn-primary" id="saveBtn">Save Announcement</button>
+            <button type="button" class="btn btn-light" id="resetBtn">Clear</button>
+            <button type="button" class="btn btn-danger hidden" id="cancelEditBtn">Cancel Edit</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panelHead">
+        <h2>Existing Announcements</h2>
+      </div>
+      <div class="panelBody">
+        <div id="listBox" class="list"></div>
+      </div>
+    </section>
   </div>
 </main>
 
 <script>
-const API = "https://practice-backend-msgn.onrender.com";
-const token = localStorage.getItem("token");
+const API = window.API || "https://practice-backend-msgn.onrender.com";
 
-if (!token) {
-  window.location.href = "login.html";
+const form = document.getElementById("announcementForm");
+const formTitle = document.getElementById("formTitle");
+const statusBox = document.getElementById("statusBox");
+const listBox = document.getElementById("listBox");
+const cancelEditBtn = document.getElementById("cancelEditBtn");
+
+const categoryEl = document.getElementById("category");
+const classFields = document.getElementById("classFields");
+const quizFields = document.getElementById("quizFields");
+
+function showStatus(message, type = "info") {
+  statusBox.className = `status show ${type}`;
+  statusBox.textContent = message;
 }
 
-const msg = document.getElementById("msg");
-const weeklyFocus = document.getElementById("weeklyFocus");
-const gradeGrid = document.getElementById("gradeGrid");
-const saveBtn = document.getElementById("saveBtn");
-const reloadBtn = document.getElementById("reloadBtn");
-
-const gradeLabels = {
-  grade8: "Grade 8",
-  grade9: "Grade 9",
-  grade10: "Grade 10",
-  grade11: "Grade 11",
-  grade12: "Grade 12",
-  allGrades: "All Grades"
-};
-
-function setMessage(text, type="") {
-  msg.className = "";
-  msg.textContent = text;
-  if (!text) {
-    msg.style.display = "none";
-    return;
-  }
-  msg.classList.add("show");
-  if (type) msg.classList.add(type);
+function hideStatus() {
+  statusBox.className = "status info";
+  statusBox.textContent = "";
 }
 
-function gradeCardTemplate(key, label) {
-  return `
-    <div class="gradeCard">
-      <h3>${label}</h3>
-
-      <div class="field">
-        <label for="${key}-weeklyUpdate">Weekly Update</label>
-        <textarea id="${key}-weeklyUpdate"></textarea>
-      </div>
-
-      <div class="field">
-        <label for="${key}-meetingLink">Meeting Link</label>
-        <input id="${key}-meetingLink" type="text" placeholder="https://..." />
-      </div>
-
-      <div class="field">
-        <label for="${key}-quizAnnouncement">Quiz Announcement</label>
-        <textarea id="${key}-quizAnnouncement"></textarea>
-      </div>
-    </div>
-  `;
-}
-
-function renderGradeEditors() {
-  gradeGrid.innerHTML = Object.entries(gradeLabels)
-    .map(([key, label]) => gradeCardTemplate(key, label))
-    .join("");
-}
-
-function fillForm(data) {
-  weeklyFocus.value = data.weeklyFocus || "";
-
-  Object.keys(gradeLabels).forEach((key) => {
-    const grade = data?.grades?.[key] || {};
-    document.getElementById(`${key}-weeklyUpdate`).value = grade.weeklyUpdate || "";
-    document.getElementById(`${key}-meetingLink`).value = grade.meetingLink || "";
-    document.getElementById(`${key}-quizAnnouncement`).value = grade.quizAnnouncement || "";
-  });
-}
-
-function collectForm() {
-  const grades = {};
-
-  Object.keys(gradeLabels).forEach((key) => {
-    grades[key] = {
-      weeklyUpdate: document.getElementById(`${key}-weeklyUpdate`).value.trim(),
-      meetingLink: document.getElementById(`${key}-meetingLink`).value.trim(),
-      quizAnnouncement: document.getElementById(`${key}-quizAnnouncement`).value.trim(),
-    };
-  });
-
+function tokenHeaders() {
+  const token = localStorage.getItem("token");
   return {
-    weeklyFocus: weeklyFocus.value.trim(),
-    grades
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
 
-async function safeJson(res) {
-  const text = await res.text();
-  try {
-    return text ? JSON.parse(text) : {};
-  } catch {
-    return { message: text || "Unexpected server response" };
+function escapeHtml(value = "") {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function safeDate(value) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleString("en-ZA", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function toggleExtraFields() {
+  const category = categoryEl.value;
+
+  const showClass = category === "class" || category === "all";
+  const showQuiz = category === "quiz" || category === "all";
+
+  classFields.classList.toggle("hidden", !showClass);
+  quizFields.classList.toggle("hidden", !showQuiz);
+}
+
+function resetForm() {
+  form.reset();
+  document.getElementById("announcementId").value = "";
+  document.getElementById("isPublished").checked = true;
+  formTitle.textContent = "Create Announcement";
+  cancelEditBtn.classList.add("hidden");
+  toggleExtraFields();
+  hideStatus();
+}
+
+function readForm() {
+  return {
+    title: document.getElementById("title").value.trim(),
+    message: document.getElementById("message").value.trim(),
+    grade: document.getElementById("grade").value,
+    category: document.getElementById("category").value,
+    isPublished: document.getElementById("isPublished").checked,
+    sendToStudents: document.getElementById("sendToStudents").checked,
+    urgentNotice: document.getElementById("urgentNotice").checked,
+    meetingDate: document.getElementById("meetingDate").value,
+    meetingTime: document.getElementById("meetingTime").value,
+    meetingLink: document.getElementById("meetingLink").value.trim(),
+    dueDate: document.getElementById("dueDate").value,
+    quizStatus: document.getElementById("quizStatus").value.trim() || "Open",
+  };
+}
+
+function fillForm(item) {
+  document.getElementById("announcementId").value = item._id || "";
+  document.getElementById("title").value = item.title || "";
+  document.getElementById("message").value = item.message || "";
+  document.getElementById("grade").value = item.grade || "allGrades";
+  document.getElementById("category").value = item.category || "general";
+  document.getElementById("isPublished").checked = !!item.isPublished;
+  document.getElementById("sendToStudents").checked = !!item.sendToStudents;
+  document.getElementById("urgentNotice").checked = !!item.urgentNotice;
+  document.getElementById("meetingDate").value = item.meetingDate || "";
+  document.getElementById("meetingTime").value = item.meetingTime || "";
+  document.getElementById("meetingLink").value = item.meetingLink || "";
+  document.getElementById("dueDate").value = item.dueDate || "";
+  document.getElementById("quizStatus").value = item.quizStatus || "Open";
+
+  formTitle.textContent = "Edit Announcement";
+  cancelEditBtn.classList.remove("hidden");
+  toggleExtraFields();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function badgeCategory(category) {
+  if (category === "class") return "b-class";
+  if (category === "quiz") return "b-quiz";
+  if (category === "all") return "b-all";
+  return "b-general";
+}
+
+function renderList(items = []) {
+  if (!items.length) {
+    listBox.innerHTML = `<div style="color:#64748b;font-size:14px;">No announcements found.</div>`;
+    return;
   }
+
+  listBox.innerHTML = items.map(item => `
+    <div class="card">
+      <div class="cardTop">
+        <div>
+          <div class="badges">
+            <span class="badge ${badgeCategory(item.category)}">${escapeHtml(item.category || "general")}</span>
+            <span class="badge b-grade">${escapeHtml(item.grade || "allGrades")}</span>
+            <span class="badge ${item.isPublished ? "b-published" : "b-draft"}">${item.isPublished ? "Published" : "Draft"}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="title">${escapeHtml(item.title || "")}</div>
+      <div class="message">${escapeHtml(item.message || "")}</div>
+
+      <div class="meta">
+        Created: ${escapeHtml(safeDate(item.createdAt))}<br>
+        Updated: ${escapeHtml(safeDate(item.updatedAt))}<br>
+        Send to students: ${item.sendToStudents ? "Yes" : "No"}<br>
+        Urgent: ${item.urgentNotice ? "Yes" : "No"}
+        ${item.meetingDate ? `<br>Meeting Date: ${escapeHtml(item.meetingDate)}` : ""}
+        ${item.meetingTime ? `<br>Meeting Time: ${escapeHtml(item.meetingTime)}` : ""}
+        ${item.meetingLink ? `<br>Meeting Link: ${escapeHtml(item.meetingLink)}` : ""}
+        ${item.dueDate ? `<br>Quiz Due Date: ${escapeHtml(item.dueDate)}` : ""}
+        ${item.quizStatus ? `<br>Quiz Status: ${escapeHtml(item.quizStatus)}` : ""}
+      </div>
+
+      <div class="smallActions">
+        <button class="smallBtn edit" onclick='editAnnouncement(${JSON.stringify(item).replace(/'/g, "\\'")})'>Edit</button>
+        <button class="smallBtn delete" onclick="deleteAnnouncement('${item._id}')">Delete</button>
+      </div>
+    </div>
+  `).join("");
 }
 
 async function loadAnnouncements() {
-  setMessage("");
   try {
-    const res = await fetch(`${API}/api/announcements/admin/current`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+    const res = await fetch(`${API}/api/announcements/admin/list`, {
+      headers: tokenHeaders(),
     });
 
-    const data = await safeJson(res);
-
-    if (res.status === 401) {
-      localStorage.removeItem("token");
-      window.location.href = "login.html";
-      return;
-    }
+    const data = await res.json().catch(() => []);
 
     if (!res.ok) {
       throw new Error(data.message || "Failed to load announcements.");
     }
 
-    fillForm(data);
+    renderList(Array.isArray(data) ? data : []);
   } catch (err) {
     console.error(err);
-    setMessage(err.message || "Could not load announcements.", "error");
+    renderList([]);
+    showStatus(err.message || "Could not load announcements.", "error");
   }
 }
 
-async function saveAnnouncements() {
-  setMessage("Saving announcements...");
+async function saveAnnouncement(e) {
+  e.preventDefault();
+
   try {
-    const payload = collectForm();
+    const id = document.getElementById("announcementId").value.trim();
+    const payload = readForm();
 
-    const res = await fetch(`${API}/api/announcements/admin/current`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await safeJson(res);
-
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to save announcements.");
+    if (!payload.title) {
+      showStatus("Title is required.", "error");
+      return;
     }
 
-    setMessage("Announcements updated successfully.", "ok");
+    if (!payload.message) {
+      showStatus("Message is required.", "error");
+      return;
+    }
+
+    showStatus(id ? "Updating announcement..." : "Creating announcement...", "info");
+
+    const res = await fetch(
+      id ? `${API}/api/announcements/${id}` : `${API}/api/announcements`,
+      {
+        method: id ? "PUT" : "POST",
+        headers: tokenHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to save announcement.");
+    }
+
+    showStatus(data.message || "Announcement saved successfully.", "success");
+    resetForm();
+    loadAnnouncements();
   } catch (err) {
     console.error(err);
-    setMessage(err.message || "Could not save announcements.", "error");
+    showStatus(err.message || "Could not save announcement.", "error");
   }
 }
 
-renderGradeEditors();
-saveBtn.addEventListener("click", saveAnnouncements);
-reloadBtn.addEventListener("click", loadAnnouncements);
+window.editAnnouncement = function(item) {
+  fillForm(item);
+};
+
+window.deleteAnnouncement = async function(id) {
+  const ok = confirm("Delete this announcement?");
+  if (!ok) return;
+
+  try {
+    const res = await fetch(`${API}/api/announcements/${id}`, {
+      method: "DELETE",
+      headers: tokenHeaders(),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to delete announcement.");
+    }
+
+    showStatus(data.message || "Announcement deleted.", "success");
+    loadAnnouncements();
+  } catch (err) {
+    console.error(err);
+    showStatus(err.message || "Could not delete announcement.", "error");
+  }
+};
+
+categoryEl.addEventListener("change", toggleExtraFields);
+form.addEventListener("submit", saveAnnouncement);
+document.getElementById("resetBtn").addEventListener("click", resetForm);
+cancelEditBtn.addEventListener("click", resetForm);
+
+toggleExtraFields();
 loadAnnouncements();
 </script>
 </body>
