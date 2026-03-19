@@ -5,359 +5,254 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Results | Practice Online</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
 <style>
 :root{
   --nav:#1b1648;
-  --accent:#0b3c5d;
-  --red:#e11d2e;
   --bg:#f6f7fb;
-  --card:#ffffff;
   --border:#e6e6e6;
   --text:#0f172a;
-  --muted:#475569;
-  --radius:14px;
-  --shadow:0 8px 22px rgba(0,0,0,.06);
 }
 
 *{box-sizing:border-box}
-body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text);}
-a{text-decoration:none;color:inherit}
 
-.topbar{background:var(--nav);color:#fff;}
-.topbar-inner{
-  max-width:1100px;margin:0 auto;padding:14px 18px;
-  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+body{
+  margin:0;
+  font-family:Arial,"Calibri Light",Calibri,sans-serif;
+  background:var(--bg);
+  color:var(--text);
 }
 
-.brand{font-weight:900;letter-spacing:.2px;}
-.nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-.nav a{
-  padding:8px 10px;border-radius:8px;color:#e7e9ff;
-  font-weight:700;font-size:13px;
-}
-.nav a.active{border-bottom:3px solid var(--red);color:#fff;}
-.nav a:hover{background:rgba(255,255,255,.10)}
-
-.logoutBtn{
-  background:rgba(255,255,255,.12);
+header{
+  background:var(--nav);
   color:#fff;
-  border:1px solid rgba(255,255,255,.2);
-  padding:8px 12px;
-  border-radius:8px;
-  cursor:pointer;
-  font-weight:800;
 }
-.logoutBtn:hover{background:rgba(255,255,255,.18)}
+.topbar-inner{
+  max-width:1100px;
+  margin:auto;
+  padding:14px;
+  display:flex;
+  justify-content:space-between;
+}
 
-.wrap{max-width:1100px;margin:0 auto;padding:18px;}
-
+.wrap{
+  max-width:1100px;
+  margin:auto;
+  padding:18px;
+}
 .section{
-  background:var(--card);
+  background:#fff;
   border:1px solid var(--border);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  margin-top:14px;
+  border-radius:14px;
   padding:14px;
 }
 
-.tableWrapInner{
-  overflow:auto;
-  -webkit-overflow-scrolling:touch;
+/* CONTROLS */
+.controls{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin-bottom:12px;
 }
 
-table{width:100%;border-collapse:collapse;font-size:13px;min-width:860px;}
-th, td{padding:8px;border-bottom:1px solid #eee;text-align:left;vertical-align:top;}
+.searchWrap{
+  position:relative;
+  flex:1 1 420px;
+  min-width:260px;
+  max-width:100%;
+}
+
+.searchWrap img{
+  position:absolute;
+  left:10px;
+  top:50%;
+  transform:translateY(-50%);
+  width:16px;
+  height:16px;
+  opacity:0.6;
+  pointer-events:none;
+}
+
+#search{
+  width:100%;
+  min-width:0;
+  padding:9px 10px 9px 36px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  font-family:Arial,"Calibri Light",Calibri,sans-serif;
+  font-size:14px;
+}
+
+.controls select{
+  width:150px;
+  padding:9px 10px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  font-family:Arial,"Calibri Light",Calibri,sans-serif;
+  font-size:14px;
+  flex:0 0 auto;
+}
+
+/* TABLE */
+.tableWrap{
+  overflow-x:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+  font-family:Arial,"Calibri Light",Calibri,sans-serif;
+  table-layout:fixed;
+}
+
+th,td{
+  padding:10px 8px;
+  border-bottom:1px solid #eee;
+  vertical-align:middle;
+}
 
 th{
-  background:#f8fafc;
   font-size:11px;
   text-transform:uppercase;
-  color:var(--muted);
-  font-weight:800;
-  letter-spacing:.06em;
+  color:#64748b;
+  font-weight:700;
+  letter-spacing:.04em;
 }
 
-.status.pass{color:#065f46;font-weight:800;}
-.status.fail{color:#9a3412;font-weight:800;}
+th:nth-child(1), td:nth-child(1){width:23%;}
+th:nth-child(2), td:nth-child(2){width:12%;}
+th:nth-child(3), td:nth-child(3){width:20%;}
+th:nth-child(4), td:nth-child(4){width:10%; text-align:left;}
+th:nth-child(5), td:nth-child(5){width:10%; text-align:left;}
+th:nth-child(6), td:nth-child(6){width:12.5%; text-align:center;}
+th:nth-child(7), td:nth-child(7){width:12.5%; text-align:center;}
 
-.actionBadge{
-  display:inline-block;
-  padding:6px 12px;
-  border-radius:999px;
-  background:#f3f4f6;
+td:nth-child(6),
+td:nth-child(7),
+th:nth-child(6),
+th:nth-child(7){
+  white-space:nowrap;
+}
+
+.status{
+  font-weight:400;
+  color:#0f172a;
+}
+
+.markText{
+  font-weight:400;
+  color:#0f172a;
+}
+
+/* BUTTONS */
+.iconActionBtn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-width:82px;
+  padding:6px 10px;
+  border-radius:6px;
   border:1px solid #e5e7eb;
-  color:#000;
-  font-weight:800;
+  background:#f8fafc;
   cursor:pointer;
-  transition:all .15s ease;
-  user-select:none;
+  font-family:Arial,"Calibri Light",Calibri,sans-serif;
+  font-size:12px;
+  color:#0f172a;
+  line-height:1;
 }
 
-.actionBadge:hover{
-  background:#e5e7eb;
-  transform:translateY(-1px);
+.iconActionBtn img{
+  width:18px;
+  height:18px;
+  display:block;
+}
+
+.eyeBtn img{
+  filter: invert(46%) sepia(83%) saturate(548%) hue-rotate(86deg);
+}
+
+.retryBtn img{
+  filter: invert(28%) sepia(97%) saturate(1784%) hue-rotate(210deg);
+}
+
+.iconActionBtn:hover{
+  background:#eef2f7;
 }
 
 .empty{
   padding:14px;
-  border:1px dashed #ddd;
-  border-radius:12px;
-  background:#fafafa;
-  color:var(--muted);
-  font-weight:700;
+  color:#64748b;
+  font-family:Arial,"Calibri Light",Calibri,sans-serif;
 }
 
-/* Mobile cards */
-.mobileCards{
-  display:none;
-  gap:12px;
-}
-
-.resultCard{
-  border:1px solid var(--border);
-  border-radius:14px;
-  background:#fff;
-  padding:14px;
-  box-shadow:0 4px 12px rgba(15,23,42,.04);
-}
-
-.resultHead{
-  display:block;
-  margin-bottom:10px;
-}
-
-.resultTitle{
-  font-weight:800;
-  color:var(--text);
-  line-height:1.4;
-  font-size:15px;
-}
-
-.resultTopic{
-  color:var(--accent);
-  font-weight:800;
-  font-size:14px;
-  margin-top:3px;
-}
-
-.resultDate{
-  color:var(--muted);
-  font-size:12px;
-  font-weight:600;
-  line-height:1.5;
-  margin-top:4px;
-}
-
-.resultGrid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-top:10px;
-}
-
-.metric{
-  background:#f8fafc;
-  border:1px solid #eef2f7;
-  border-radius:12px;
-  padding:10px;
-}
-
-.metricLabel{
-  font-size:11px;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-  color:var(--muted);
-  font-weight:800;
-  margin-bottom:4px;
-}
-
-.metricValue{
-  font-size:14px;
-  font-weight:800;
-  color:var(--text);
-}
-
-.cardActions{
-  display:flex;
-  justify-content:flex-end;
-  gap:8px;
-  flex-wrap:wrap;
-  margin-top:12px;
-}
-
-.cardActionBtn{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-width:92px;
-  padding:7px 12px;
-  border-radius:999px;
-  background:#f8fafc;
-  border:1px solid #e5e7eb;
-  color:#0f172a;
-  font-weight:800;
-  font-size:12px;
-  line-height:1;
-  cursor:pointer;
-  transition:all .15s ease;
-  user-select:none;
-}
-
-.cardActionBtn:hover{
-  background:#eef2f7;
-  transform:translateY(-1px);
-}
-
-/* ✅ mark + status bottom on phone */
-.mobileResultFooter{
-  margin-top:12px;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-}
-
-.mobileResultBox{
-  background:#f8fafc;
-  border:1px solid #eef2f7;
-  border-radius:12px;
-  padding:10px 12px;
-}
-
-.mobileResultLabel{
-  font-size:11px;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-  color:var(--muted);
-  font-weight:800;
-  margin-bottom:4px;
-}
-
-.mobileResultValue{
-  font-size:15px;
-  font-weight:900;
-  line-height:1.2;
-}
-
-.mobileResultValue.pass{color:#065f46;}
-.mobileResultValue.fail{color:#9a3412;}
-
-@media (max-width: 760px){
-  .topbar-inner{
-    padding:12px 14px;
+@media (max-width:760px){
+  .controls{
+    flex-direction:column;
+    align-items:stretch;
   }
 
-  .nav{
-    gap:8px;
+  .searchWrap{
+    flex:1 1 auto;
+    min-width:0;
   }
 
-  .nav a{
-    font-size:12px;
-    padding:7px 9px;
+  .controls select{
+    width:100%;
   }
 
-  .logoutBtn{
-    padding:7px 10px;
-    font-size:12px;
-  }
-
-  .wrap{
-    padding:14px;
-  }
-
-  .section{
-    padding:12px;
-  }
-
-  .tableWrapInner{
-    display:none;
-  }
-
-  .mobileCards{
-    display:grid;
-  }
-}
-
-@media (max-width: 480px){
-  .resultGrid{
-    grid-template-columns:1fr;
-  }
-
-  .cardActions{
-    justify-content:flex-start;
-    gap:8px;
-  }
-
-  .cardActionBtn{
-    min-width:84px;
-    padding:7px 10px;
-    font-size:11px;
-  }
-
-  .mobileResultFooter{
-    grid-template-columns:1fr 1fr;
-    gap:8px;
-  }
-
-  .mobileResultBox{
-    padding:9px 10px;
-  }
-
-  .mobileResultValue{
-    font-size:14px;
+  table{
+    min-width:860px;
   }
 }
 </style>
-
-<script>
-if(!localStorage.getItem("token")){
-  location.href="login.html";
-}
-</script>
 </head>
 
 <body>
 
-<header class="topbar">
+<header>
   <div class="topbar-inner">
-    <div class="brand">Practice Online</div>
-
-    <nav class="nav">
-      <a href="learner-quizzes.html">Practice</a>
-      <a class="active" href="results.html">Results</a>
-
-      <a href="support.html">Support</a>
-      <a href="about.html">About</a>
-
-      <a href="admin-quiz.html" data-admin style="display:none;">Admin</a>
-
-      <button class="logoutBtn" id="logoutBtn">Logout</button>
-    </nav>
+    <strong>Practice Online</strong>
   </div>
 </header>
 
-<main class="wrap">
-  <section class="section" id="tableWrap">
-    <div class="empty">Loading results…</div>
-  </section>
-</main>
+<div class="wrap">
+  <div class="section">
 
-<script src="nav.js"></script>
+    <div class="controls">
+      <div class="searchWrap">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773873674/searchaddress_hae4sp.svg" alt="">
+        <input id="search" placeholder="Search topic or assessment">
+      </div>
+
+      <select id="topicFilter">
+        <option value="all">All Topics</option>
+      </select>
+
+      <select id="periodFilter">
+        <option value="all">All Time</option>
+        <option value="today">Today</option>
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+      </select>
+    </div>
+
+    <div id="tableWrap">
+      <div class="empty">Loading results…</div>
+    </div>
+
+  </div>
+</div>
 
 <script>
-const API = window.API || "https://api.practiceonline.co.za";
+const API = "https://api.practiceonline.co.za";
 const token = localStorage.getItem("token");
-let allResults = [];
 
-document.getElementById("logoutBtn").onclick = ()=>{
-  localStorage.removeItem("token");
-  localStorage.removeItem("username");
-  localStorage.removeItem("me_cache");
-  location.href="login.html";
-};
+const ICON_EYE = "https://res.cloudinary.com/dopoxadlr/image/upload/v1773884664/eye_wcd3ak.svg";
+const ICON_RETRY = "https://res.cloudinary.com/dopoxadlr/image/upload/v1773884662/retry_hdbczv.svg";
+
+let allResults = [];
 
 loadResults();
 
@@ -366,133 +261,124 @@ async function loadResults(){
     headers:{Authorization:`Bearer ${token}`}
   });
 
-  if(res.status===401){
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
-    localStorage.removeItem("me_cache");
-    location.href="login.html";
-    return;
-  }
-
   const data = await res.json().catch(()=>[]);
-  allResults = Array.isArray(data)?data:[];
-  renderTable(allResults);
+  allResults = Array.isArray(data) ? data : [];
+
+  buildTopics();
+  apply();
 }
 
-function renderTable(data){
-  const wrap=document.getElementById("tableWrap");
+function isWithinPeriod(date, period){
+  if(period==="all") return true;
+
+  const d = new Date(date);
+  const now = new Date();
+
+  if(period==="today"){
+    return d.toDateString() === now.toDateString();
+  }
+
+  if(period==="week"){
+    const weekAgo = new Date();
+    weekAgo.setDate(now.getDate()-7);
+    return d >= weekAgo;
+  }
+
+  if(period==="month"){
+    const monthAgo = new Date();
+    monthAgo.setMonth(now.getMonth()-1);
+    return d >= monthAgo;
+  }
+
+  return true;
+}
+
+function buildTopics(){
+  const topics = [...new Set(allResults.map(r=>r.topic || "General"))];
+
+  document.getElementById("topicFilter").innerHTML =
+    `<option value="all">All Topics</option>` +
+    topics.map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+}
+
+function apply(){
+  const q = document.getElementById("search").value.toLowerCase();
+  const topic = document.getElementById("topicFilter").value;
+  const period = document.getElementById("periodFilter").value;
+
+  let filtered = allResults.filter(r=>{
+    const title = String(r.title || "").toLowerCase();
+    const resultTopic = String(r.topic || "General");
+    return (
+      (!q || title.includes(q) || resultTopic.toLowerCase().includes(q)) &&
+      (topic==="all" || resultTopic===topic) &&
+      isWithinPeriod(r.createdAt,period)
+    );
+  });
+
+  filtered.sort((a,b)=>(Number(b.percent)||0)-(Number(a.percent)||0));
+
+  render(filtered);
+}
+
+function render(data){
+  const wrap = document.getElementById("tableWrap");
 
   if(!data.length){
-    wrap.innerHTML=`<div class="empty">No results found.</div>`;
+    wrap.innerHTML = `<div class="empty">No results found.</div>`;
     return;
   }
 
-  wrap.innerHTML=`
-    <div class="tableWrapInner">
+  wrap.innerHTML = `
+    <div class="tableWrap">
       <table>
         <thead>
           <tr>
             <th>Date</th>
-            <th>Grade</th>
             <th>Topic</th>
             <th>Assessment</th>
             <th>Mark</th>
             <th>Status</th>
-            <th>Solution</th>
+            <th>View</th>
             <th>Retry</th>
           </tr>
         </thead>
         <tbody>
           ${data.map(r=>{
-            const d=new Date(r.createdAt);
-            const dateTxt=isNaN(d)?"":d.toLocaleString();
-            const percent=Number(r.percent)||0;
-            const pass=percent>=50;
-
+            const percent = Math.round(Number(r.percent)||0);
             return `
             <tr>
-              <td>${escapeHtml(dateTxt)}</td>
-              <td>${escapeHtml(String(r.grade??""))}</td>
-              <td>${escapeHtml(String(r.topic||"General"))}</td>
-              <td>${escapeHtml(String(r.title||"Assessment"))}</td>
-              <td>${percent}%</td>
-              <td class="status ${pass?"pass":"fail"}">${pass?"Pass":"Fail"}</td>
-
+              <td>${escapeHtml(formatDateTime(r.createdAt))}</td>
+              <td>${escapeHtml(r.topic||"")}</td>
+              <td>${escapeHtml(r.title||"")}</td>
+              <td class="markText">${percent}%</td>
+              <td class="status">${percent>=50?"Pass":"Fail"}</td>
               <td>
-                <span class="actionBadge"
+                <span class="iconActionBtn eyeBtn"
                   onclick="location.href='review.html?resultId=${encodeURIComponent(r._id)}'">
-                  Solution
+                  <img src="${ICON_EYE}" alt="View">
+                  View
                 </span>
               </td>
-
               <td>
-                <span class="actionBadge"
-                  onclick="location.href='attempt.html?quizId=${encodeURIComponent(r.quizId)}&mode=practice'">
+                <span class="iconActionBtn retryBtn"
+                  onclick="location.href='attempt.html?quizId=${encodeURIComponent(r.quizId)}'">
+                  <img src="${ICON_RETRY}" alt="Retry">
                   Retry
                 </span>
               </td>
-            </tr>
-            `;
+            </tr>`;
           }).join("")}
         </tbody>
       </table>
     </div>
-
-    <div class="mobileCards">
-      ${data.map(r=>{
-        const d=new Date(r.createdAt);
-        const dateTxt=isNaN(d)?"":d.toLocaleString();
-        const percent=Number(r.percent)||0;
-        const pass=percent>=50;
-
-        return `
-          <div class="resultCard">
-            <div class="resultHead">
-              <div class="resultTitle">${escapeHtml(String(r.title||"Assessment"))}</div>
-              <div class="resultTopic">${escapeHtml(String(r.topic||"General"))}</div>
-              <div class="resultDate">${escapeHtml(dateTxt)}</div>
-            </div>
-
-            <div class="resultGrid">
-              <div class="metric">
-                <div class="metricLabel">Grade</div>
-                <div class="metricValue">${escapeHtml(String(r.grade??""))}</div>
-              </div>
-
-              <div class="metric">
-                <div class="metricLabel">Assessment</div>
-                <div class="metricValue">${escapeHtml(String(r.title||"Assessment"))}</div>
-              </div>
-            </div>
-
-            <div class="cardActions">
-              <span class="cardActionBtn"
-                onclick="location.href='review.html?resultId=${encodeURIComponent(r._id)}'">
-                Solution
-              </span>
-
-              <span class="cardActionBtn"
-                onclick="location.href='attempt.html?quizId=${encodeURIComponent(r.quizId)}&mode=practice'">
-                Retry
-              </span>
-            </div>
-
-            <div class="mobileResultFooter">
-              <div class="mobileResultBox">
-                <div class="mobileResultLabel">Mark</div>
-                <div class="mobileResultValue">${percent}%</div>
-              </div>
-
-              <div class="mobileResultBox">
-                <div class="mobileResultLabel">Status</div>
-                <div class="mobileResultValue ${pass?"pass":"fail"}">${pass?"Pass":"Fail"}</div>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join("")}
-    </div>
   `;
+}
+
+function formatDateTime(value){
+  const d = new Date(value);
+  if(Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString();
 }
 
 function escapeHtml(str){
@@ -503,6 +389,10 @@ function escapeHtml(str){
     .replaceAll('"',"&quot;")
     .replaceAll("'","&#039;");
 }
+
+document.getElementById("search").oninput = apply;
+document.getElementById("topicFilter").onchange = apply;
+document.getElementById("periodFilter").onchange = apply;
 </script>
 
 </body>
