@@ -17,7 +17,11 @@
   --easy:#22c55e;
   --moderate:#3b82f6;
   --hard:#ef4444;
+  --track:#e9eef5;
+  --bar:#1b1648;
 }
+
+*{box-sizing:border-box}
 
 body{
   margin:0;
@@ -28,19 +32,41 @@ body{
 /* HEADER */
 header{background:var(--nav);color:#fff}
 .topbar-inner{
-  max-width:1100px;margin:auto;padding:14px;
-  display:flex;justify-content:space-between;
+  max-width:1100px;
+  margin:auto;
+  padding:14px;
+  display:flex;
+  justify-content:space-between;
 }
-nav a{color:#fff;margin-left:10px;text-decoration:none}
+nav a{
+  color:#fff;
+  margin-left:10px;
+  text-decoration:none;
+}
 
 /* PAGE */
-.wrap{max-width:1100px;margin:auto;padding:18px}
-.card{background:#fff;border:1px solid var(--border);border-radius:14px}
-
-.cardHead{padding:14px;border-bottom:1px solid var(--border)}
-
-h1{font-size:20px;margin:0}
-.muted{font-size:14px;color:var(--muted)}
+.wrap{
+  max-width:1100px;
+  margin:auto;
+  padding:18px;
+}
+.card{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:14px;
+}
+.cardHead{
+  padding:14px;
+  border-bottom:1px solid var(--border);
+}
+h1{
+  font-size:20px;
+  margin:0;
+}
+.muted{
+  font-size:14px;
+  color:var(--muted);
+}
 
 /* CONTROLS */
 .controls{
@@ -50,15 +76,33 @@ h1{font-size:20px;margin:0}
   gap:10px;
 }
 
+.searchWrap{
+  position:relative;
+}
+.searchWrap svg{
+  position:absolute;
+  left:12px;
+  top:50%;
+  transform:translateY(-50%);
+  width:16px;
+  height:16px;
+  color:#64748b;
+  pointer-events:none;
+}
+
 input,select{
-  font-family:Arial;
+  font-family:Arial, "Calibri Light", Calibri, sans-serif;
   font-size:14px;
   padding:10px;
   border-radius:10px;
   border:1px solid #ddd;
+  width:100%;
+}
+#search{
+  padding-left:38px;
 }
 
-/* FILTERS */
+/* FILTER BUTTONS */
 .filters{
   padding:0 14px;
   display:flex;
@@ -69,7 +113,7 @@ input,select{
 .fbtn{
   background:none;
   border:none;
-  font-family:Arial;
+  font-family:Arial, "Calibri Light", Calibri, sans-serif;
   font-size:13px;
   cursor:pointer;
   position:relative;
@@ -77,7 +121,6 @@ input,select{
   color:#64748b;
 }
 
-/* underline base */
 .fbtn::after{
   content:"";
   position:absolute;
@@ -86,23 +129,19 @@ input,select{
   bottom:-2px;
   height:3px;
   transform:scaleX(0);
-  transition:0.2s;
+  transition:.2s;
 }
 
-/* underline colors */
 .fbtn[data-diff="easy"]::after{background:var(--easy)}
 .fbtn[data-diff="moderate"]::after{background:var(--moderate)}
 .fbtn[data-diff="hard"]::after{background:var(--hard)}
 .fbtn[data-diff="all"]::after{background:#94a3b8}
-
-/* active */
-.fbtn.active::after{
-  transform:scaleX(1);
-}
+.fbtn.active::after{transform:scaleX(1)}
 
 /* TOPICS */
-.topic-wrap{padding:14px}
-
+.topic-wrap{
+  padding:14px;
+}
 .topic-card{
   border:1px solid var(--border);
   border-radius:12px;
@@ -110,15 +149,71 @@ input,select{
   margin-bottom:12px;
 }
 
-/* 🔥 topic font FIX */
+.topic-top{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+  flex-wrap:wrap;
+}
+
 .topic-title{
-  font-family:Arial;
+  font-family:Arial, "Calibri Light", Calibri, sans-serif;
   font-size:14px;
   font-weight:400;
+  color:#0f172a;
+}
+
+.topic-stats{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-size:13px;
+  color:#475569;
+}
+
+.progressWrap{
+  margin-top:10px;
+}
+.progressLabels{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:6px;
+  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-size:12px;
+  color:#475569;
+}
+.progressTrack{
+  width:100%;
+  height:8px;
+  background:var(--track);
+  border-radius:999px;
+  overflow:hidden;
+}
+.progressBar{
+  height:100%;
+  background:var(--bar);
+  border-radius:999px;
+  width:0%;
 }
 
 /* QUIZ */
-.quiz-squares{display:flex;gap:16px;margin-top:10px}
+.quiz-squares{
+  display:flex;
+  gap:16px;
+  margin-top:12px;
+  flex-wrap:wrap;
+}
+
+.quiz-square{
+  width:80px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  cursor:pointer;
+}
 
 .quiz-icon-wrap{
   position:relative;
@@ -126,7 +221,6 @@ input,select{
   height:70px;
 }
 
-/* color perfectly inside */
 .quiz-fill{
   position:absolute;
   left:10px;
@@ -139,7 +233,6 @@ input,select{
 .quiz-square.pass .quiz-fill{background:#dcfce7}
 .quiz-square.fail .quiz-fill{background:#fee2e2}
 
-/* square */
 .quiz-square-base{
   position:absolute;
   inset:0;
@@ -147,30 +240,43 @@ input,select{
   height:100%;
 }
 
-/* score */
 .quiz-mark{
   position:absolute;
-  top:50%;left:50%;
+  top:50%;
+  left:50%;
   transform:translate(-50%,-50%);
-  font-family:Arial;
+  font-family:Arial, "Calibri Light", Calibri, sans-serif;
   font-weight:700;
   font-size:14px;
 }
 
-/* question */
 .quiz-q{
   position:absolute;
-  top:50%;left:50%;
+  top:50%;
+  left:50%;
   transform:translate(-50%,-50%);
   font-size:18px;
   font-weight:700;
 }
 
 .quiz-number{
-  font-family:Arial;
+  font-family:Arial, "Calibri Light", Calibri, sans-serif;
   font-size:12px;
   text-align:center;
   margin-top:2px;
+}
+
+.empty{
+  font-size:14px;
+  color:var(--muted);
+  padding:8px 0;
+}
+
+@media (max-width:900px){
+  .controls{grid-template-columns:1fr 1fr}
+}
+@media (max-width:640px){
+  .controls{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -188,41 +294,48 @@ input,select{
 </header>
 
 <div class="wrap">
-<div class="card">
+  <div class="card">
 
-<div class="cardHead">
-  <h1>Practice</h1>
-  <div class="muted" id="gradeText">Loading...</div>
-</div>
+    <div class="cardHead">
+      <h1>Practice</h1>
+      <div class="muted" id="gradeText">Loading...</div>
+    </div>
 
-<div class="controls">
-  <input id="search" placeholder="Search topic or assessment">
-  <select id="topicFilter"></select>
+    <div class="controls">
+      <div class="searchWrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="M20 20l-3.5-3.5"></path>
+        </svg>
+        <input id="search" placeholder="Search topic or assessment">
+      </div>
 
-  <select id="paperFilter">
-    <option value="all">All Papers</option>
-    <option value="paper1">Paper 1</option>
-    <option value="paper2">Paper 2</option>
-  </select>
+      <select id="topicFilter"></select>
 
-  <select id="periodFilter">
-    <option value="all">All Time</option>
-    <option value="today">Today</option>
-    <option value="week">This Week</option>
-    <option value="month">This Month</option>
-  </select>
-</div>
+      <select id="paperFilter">
+        <option value="all">All Papers</option>
+        <option value="paper1">Paper 1</option>
+        <option value="paper2">Paper 2</option>
+      </select>
 
-<div class="filters">
-  <button class="fbtn active" data-diff="all">All</button>
-  <button class="fbtn" data-diff="easy">Easy</button>
-  <button class="fbtn" data-diff="moderate">Moderate</button>
-  <button class="fbtn" data-diff="hard">Hard</button>
-</div>
+      <select id="periodFilter">
+        <option value="all">All Time</option>
+        <option value="today">Today</option>
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+      </select>
+    </div>
 
-<div id="quizList" class="topic-wrap"></div>
+    <div class="filters">
+      <button class="fbtn active" data-diff="all">All</button>
+      <button class="fbtn" data-diff="easy">Easy</button>
+      <button class="fbtn" data-diff="moderate">Moderate</button>
+      <button class="fbtn" data-diff="hard">Hard</button>
+    </div>
 
-</div>
+    <div id="quizList" class="topic-wrap"></div>
+
+  </div>
 </div>
 
 <script>
@@ -234,6 +347,7 @@ const ICON="https://res.cloudinary.com/dopoxadlr/image/upload/v1773875474/square
 const searchEl=document.getElementById("search");
 const topicFilter=document.getElementById("topicFilter");
 const paperFilter=document.getElementById("paperFilter");
+const periodFilter=document.getElementById("periodFilter");
 
 let quizzes=[];
 let resultsMap={};
@@ -248,43 +362,120 @@ function getState(id){
   return {
     type:"done",
     score:percent+"%",
-    state:percent>=50?"pass":"fail"
+    state:percent>=50?"pass":"fail",
+    percent
   };
+}
+
+function isWithinPeriod(dateValue, period){
+  if(period==="all") return true;
+  if(!dateValue) return false;
+
+  const d=new Date(dateValue);
+  if(Number.isNaN(d.getTime())) return false;
+
+  const now=new Date();
+  const todayStart=new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  if(period==="today"){
+    return d>=todayStart;
+  }
+
+  if(period==="week"){
+    const day=todayStart.getDay();
+    const diffToMonday=(day===0?6:day-1);
+    const weekStart=new Date(todayStart);
+    weekStart.setDate(todayStart.getDate()-diffToMonday);
+    return d>=weekStart;
+  }
+
+  if(period==="month"){
+    const monthStart=new Date(now.getFullYear(), now.getMonth(), 1);
+    return d>=monthStart;
+  }
+
+  return true;
 }
 
 /* FILTER */
 function apply(){
-  const q=searchEl.value.toLowerCase();
+  const q=searchEl.value.toLowerCase().trim();
 
   const filtered=quizzes.filter(x=>{
-    return (
-      (!q || x.title.toLowerCase().includes(q) || x.topic.toLowerCase().includes(q)) &&
-      (topicFilter.value==="all" || x.topic===topicFilter.value) &&
-      (paperFilter.value==="all" || x.paper===paperFilter.value) &&
-      (diff==="all" || x.difficulty===diff)
-    );
+    const matchesSearch=!q || x.title.toLowerCase().includes(q) || x.topic.toLowerCase().includes(q);
+    const matchesTopic=topicFilter.value==="all" || x.topic===topicFilter.value;
+    const matchesPaper=paperFilter.value==="all" || x.paper===paperFilter.value;
+    const matchesDiff=diff==="all" || x.difficulty===diff;
+    const matchesPeriod=isWithinPeriod(x.createdAt || x.updatedAt, periodFilter.value);
+
+    return matchesSearch && matchesTopic && matchesPaper && matchesDiff && matchesPeriod;
   });
 
   render(filtered);
 }
 
+/* TOPIC STATS */
+function getTopicStats(topicQuizzes){
+  const attempted=topicQuizzes.filter(q=>resultsMap[q._id]);
+  const completed=attempted.length;
+  const total=topicQuizzes.length;
+  const progress=total ? Math.round((completed/total)*100) : 0;
+
+  let avg=0;
+  if(completed){
+    const sum=attempted.reduce((acc,q)=>{
+      const r=resultsMap[q._id];
+      const percent=Math.round((r.score/r.total)*100);
+      return acc+percent;
+    },0);
+    avg=Math.round(sum/completed);
+  }
+
+  return {completed,total,progress,avg};
+}
+
 /* RENDER */
 function render(list){
+  if(!list.length){
+    document.getElementById("quizList").innerHTML=`<div class="empty">No assessments found.</div>`;
+    return;
+  }
+
   const groups={};
   list.forEach(q=>{
     if(!groups[q.topic]) groups[q.topic]=[];
     groups[q.topic].push(q);
   });
 
-  const html=Object.keys(groups).map(t=>`
+  const html=Object.keys(groups).sort().map(topic=>{
+    const topicQuizzes=groups[topic];
+    const stats=getTopicStats(topicQuizzes);
+
+    return `
     <div class="topic-card">
-      <div class="topic-title">${t}</div>
+      <div class="topic-top">
+        <div class="topic-title">${topic}</div>
+        <div class="topic-stats">
+          <span>Average: ${stats.avg}%</span>
+          <span>Completed: ${stats.completed}/${stats.total}</span>
+        </div>
+      </div>
+
+      <div class="progressWrap">
+        <div class="progressLabels">
+          <span>Progress</span>
+          <span>${stats.progress}%</span>
+        </div>
+        <div class="progressTrack">
+          <div class="progressBar" style="width:${stats.progress}%"></div>
+        </div>
+      </div>
 
       <div class="quiz-squares">
-        ${groups[t].map((q,i)=>{
+        ${topicQuizzes.map((q,i)=>{
           const s=getState(q._id);
           return `
-          <div class="quiz-square ${s.state}" onclick="location='attempt.html?quizId=${q._id}'">
+          <div class="quiz-square ${s.state || ""}" onclick="location='attempt.html?quizId=${q._id}'">
             <div class="quiz-icon-wrap">
               <div class="quiz-fill"></div>
               <img src="${ICON}" class="quiz-square-base">
@@ -298,8 +489,8 @@ function render(list){
           </div>`;
         }).join("")}
       </div>
-    </div>
-  `).join("");
+    </div>`;
+  }).join("");
 
   document.getElementById("quizList").innerHTML=html;
 }
@@ -311,32 +502,43 @@ document.querySelectorAll(".fbtn").forEach(b=>{
     document.querySelectorAll(".fbtn").forEach(x=>x.classList.remove("active"));
     b.classList.add("active");
     apply();
-  }
+  };
 });
 
 searchEl.oninput=apply;
 topicFilter.onchange=apply;
 paperFilter.onchange=apply;
+periodFilter.onchange=apply;
 
 /* LOAD */
 (async()=>{
-  const me=await fetch(`${API}/api/auth/me`,{headers:{Authorization:`Bearer ${token}`}}).then(r=>r.json());
-  document.getElementById("gradeText").textContent="Grade: "+me.grade;
+  try{
+    const me=await fetch(`${API}/api/auth/me`,{
+      headers:{Authorization:`Bearer ${token}`}
+    }).then(r=>r.json());
+    document.getElementById("gradeText").textContent="Grade: "+me.grade;
 
-  quizzes=await fetch(`${API}/api/quizzes`,{headers:{Authorization:`Bearer ${token}`}}).then(r=>r.json());
+    quizzes=await fetch(`${API}/api/quizzes`,{
+      headers:{Authorization:`Bearer ${token}`}
+    }).then(r=>r.json());
 
-  const results=await fetch(`${API}/api/results/my`,{headers:{Authorization:`Bearer ${token}`}}).then(r=>r.json());
+    const results=await fetch(`${API}/api/results/my`,{
+      headers:{Authorization:`Bearer ${token}`}
+    }).then(r=>r.json());
 
-  results.forEach(r=>{
-    const id=r.quizId?._id||r.quizId;
-    resultsMap[id]=r;
-  });
+    results.forEach(r=>{
+      const id=r.quizId?._id||r.quizId;
+      if(id) resultsMap[id]=r;
+    });
 
-  const topics=[...new Set(quizzes.map(q=>q.topic))];
-  topicFilter.innerHTML=`<option value="all">All Topics</option>`+
-    topics.map(t=>`<option value="${t}">${t}</option>`).join("");
+    const topics=[...new Set(quizzes.map(q=>q.topic))].sort();
+    topicFilter.innerHTML=`<option value="all">All Topics</option>`+
+      topics.map(t=>`<option value="${t}">${t}</option>`).join("");
 
-  apply();
+    apply();
+  }catch(err){
+    document.getElementById("quizList").innerHTML=`<div class="empty">Could not load quizzes.</div>`;
+  }
 })();
 </script>
 
