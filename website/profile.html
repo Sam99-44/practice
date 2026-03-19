@@ -5,10 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Profile | Practice Online</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
 <style>
 :root{
   --nav:#1b1648;
@@ -25,7 +21,7 @@
 html,body{
   margin:0;
   padding:0;
-  font-family:Inter,Arial,sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   background:var(--bg);
   color:var(--text);
 }
@@ -35,13 +31,17 @@ a{
   color:inherit;
 }
 
-button,input{
+button,input,select{
   font:inherit;
 }
 
 .topbar{
   background:var(--nav);
   color:#fff;
+  position:sticky;
+  top:0;
+  z-index:1000;
+  font-family:Arial, Helvetica, sans-serif;
 }
 
 .topbar-inner{
@@ -51,96 +51,219 @@ button,input{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  flex-wrap:wrap;
   gap:12px;
 }
 
-.brand{
-  font-weight:800;
-}
-
-.brand small{
-  display:block;
-  font-size:12px;
-  opacity:.9;
-}
-
-.nav{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:center;
-}
-
-.nav a{
+.accountLeft{
   display:flex;
   align-items:center;
-  gap:8px;
-  padding:8px 10px;
-  border-radius:8px;
-  color:#eef2ff;
-  font-weight:700;
-  font-size:13px;
-  position:relative;
+  gap:12px;
+  min-width:0;
+  cursor:default;
+  user-select:none;
 }
 
-.nav a:hover{
-  background:rgba(255,255,255,.08);
-}
-
-.nav a.active{
-  border-bottom:3px solid var(--red);
-}
-
-.navIcon{
-  width:16px;
-  height:16px;
-  display:block;
+.accountIconWrap{
+  width:auto;
+  height:auto;
+  background:transparent;
+  border:none;
+  box-shadow:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   flex-shrink:0;
 }
 
-.navIcon.white{
-  filter:brightness(0) invert(1);
+.accountIcon{
+  width:40px;
+  height:40px;
+  display:block;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.accountMeta{
+  min-width:0;
+  line-height:1.1;
+}
+
+.accountName{
+  font-size:16px;
+  font-weight:700;
+  color:#fff;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:220px;
+}
+
+.accountType{
+  font-size:13px;
+  color:#e0e7ff;
+  margin-top:3px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:220px;
+  text-transform:capitalize;
+}
+
+.topbarRight{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  position:relative;
+}
+
+.iconBtn{
+  min-width:50px;
+  height:50px;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  padding:0 4px;
+}
+
+.iconBtn img{
+  width:30px;
+  height:30px;
+  display:block;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.bellBtn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
+.bellBtn:hover{
+  opacity:.92;
 }
 
 .navBadge{
   min-width:auto;
   height:auto;
   padding:0;
-  margin-left:8px;
+  margin-left:2px;
   border-radius:0;
   background:transparent;
   color:#ffd6db;
-  font-size:12px;
+  font-size:13px;
   font-weight:700;
   display:inline-flex;
   align-items:center;
   justify-content:center;
   line-height:1;
-  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
 }
 
-.logoutBtn{
-  background:transparent;
+.menuBtn{
+  min-width:auto;
+  height:50px;
+  padding:0;
+  gap:8px;
   border:none;
-  cursor:pointer;
-  padding:6px;
+  background:transparent;
+  border-radius:0;
+  box-shadow:none;
+  font-family:Arial, Helvetica, sans-serif;
+  color:#fff;
   display:flex;
   align-items:center;
   justify-content:center;
 }
 
-.logoutBtn img{
-  width:24px;
-  height:24px;
-  filter:brightness(0) invert(1) contrast(120%);
-  transform:scale(1.2);
-  transition:.2s ease;
+.menuBtn:hover{
+  background:transparent;
+  opacity:1;
+}
+
+.menuBtnText{
+  font-size:14px;
+  font-weight:700;
+  color:#fff;
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  top:-1px;
+}
+
+.menuBtn img{
+  width:28px;
+  height:28px;
+  filter:brightness(0) invert(1) contrast(180%);
   display:block;
 }
 
-.logoutBtn:hover img{
-  transform:scale(1.3);
+.menuDropdown{
+  position:absolute;
+  top:48px;
+  right:0;
+  width:210px;
+  background:#f7f7f8;
+  color:#111827;
+  border:1px solid #d9dee7;
+  border-radius:16px;
+  box-shadow:0 14px 30px rgba(15,23,42,.14);
+  padding:10px 0;
+  display:none;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.menuDropdown.open{
+  display:block;
+}
+
+.menuItem{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 18px;
+  color:#111827;
+  font-size:14px;
+  font-weight:700;
+  background:transparent;
+  border:none;
+  text-align:left;
+  cursor:pointer;
+}
+
+.menuItem:hover{
+  background:#eef2f7;
+}
+
+.menuItem img{
+  width:18px;
+  height:18px;
+  display:block;
+  flex-shrink:0;
+}
+
+.menuItem.profileTextOnly{
+  padding-left:38px;
+}
+
+.menuDivider{
+  height:1px;
+  background:#dde4ec;
+  margin:8px 0 6px;
+}
+
+.logoutMenuBtn{
+  width:100%;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  text-align:left;
 }
 
 .wrap{
@@ -150,7 +273,7 @@ button,input{
 }
 
 .hero{
-  background:linear-gradient(180deg,#eef6ff 0%, #f8fbff 100%);
+  background:#dfeefd;
   border:1px solid var(--border);
   border-radius:22px;
   padding:22px;
@@ -186,7 +309,7 @@ button,input{
   align-items:center;
   justify-content:center;
   font-size:30px;
-  font-weight:800;
+  font-weight:700;
   letter-spacing:.02em;
 }
 
@@ -196,7 +319,8 @@ button,input{
 
 .heroText h1{
   margin:0;
-  font-size:26px;
+  font-size:20px;
+  font-weight:700;
   color:var(--nav);
 }
 
@@ -212,8 +336,9 @@ button,input{
   border:1px solid #cbd5e1;
   background:#fff;
   font-size:13px;
-  font-weight:800;
+  font-weight:700;
   cursor:pointer;
+  font-family:Arial, Helvetica, sans-serif;
 }
 
 .quickGrid{
@@ -255,7 +380,7 @@ button,input{
 }
 
 .icon-blue{
-  filter: invert(48%) sepia(80%) saturate(1200%) hue-rotate(190deg) brightness(95%) contrast(95%);
+  filter:none !important;
 }
 
 .icon-gold{
@@ -268,7 +393,8 @@ button,input{
 
 .quickCard h3{
   margin:0 0 6px;
-  font-size:15px;
+  font-size:16px;
+  font-weight:700;
   color:var(--nav);
 }
 
@@ -276,6 +402,7 @@ button,input{
   margin:0;
   font-size:13px;
   color:var(--muted);
+  line-height:1.5;
 }
 
 .announcementPreview{
@@ -321,7 +448,8 @@ button,input{
 
 .previewTitleWrap h3{
   margin:0;
-  font-size:17px;
+  font-size:16px;
+  font-weight:700;
   color:var(--nav);
 }
 
@@ -338,13 +466,13 @@ button,input{
   border-radius:0;
   background:transparent;
   color:var(--red);
-  font-size:12px;
+  font-size:13px;
   font-weight:700;
   display:flex;
   align-items:center;
   justify-content:center;
   line-height:1;
-  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
 }
 
 .previewBox{
@@ -355,21 +483,21 @@ button,input{
 }
 
 .previewBoxTitle{
-  font-size:14px;
-  font-weight:800;
+  font-size:16px;
+  font-weight:700;
   color:var(--nav);
   margin-bottom:6px;
 }
 
 .previewBoxText{
-  font-size:13px;
+  font-size:14px;
   color:var(--muted);
   line-height:1.7;
   margin-bottom:12px;
 }
 
 .previewMeta{
-  font-size:12px;
+  font-size:13px;
   color:var(--muted);
   margin-bottom:12px;
 }
@@ -383,7 +511,7 @@ button,input{
   background:var(--nav);
   color:#fff;
   font-size:13px;
-  font-weight:800;
+  font-weight:700;
 }
 
 .mainGrid{
@@ -406,7 +534,7 @@ button,input{
 .sectionHead h3{
   margin:0;
   font-size:16px;
-  font-weight:800;
+  font-weight:700;
 }
 
 .sectionBody{
@@ -431,15 +559,36 @@ button,input{
 }
 
 .value{
-  font-size:13px;
+  font-size:14px;
   font-weight:700;
   text-align:right;
   word-break:break-word;
 }
 
+input,select{
+  font-size:14px;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.status{
+  font-size:14px;
+}
+
+.empty{
+  font-size:14px;
+}
+
+.actionTextBtn{
+  font-size:13px;
+}
+
+.linkText{
+  font-size:13px;
+}
+
 @media (max-width:1000px){
   .quickGrid{
-    grid-template-columns:repeat(2,1fr);
+    grid-template-columns:repeat(2,minmax(0,1fr));
   }
 
   .mainGrid{
@@ -463,19 +612,11 @@ button,input{
 
   .topbar-inner{
     padding:12px 14px;
-    align-items:flex-start;
   }
 
-  .nav{
-    width:100%;
-    overflow-x:auto;
-    flex-wrap:nowrap;
-    padding-bottom:4px;
-    scrollbar-width:none;
-  }
-
-  .nav::-webkit-scrollbar{
-    display:none;
+  .accountName,
+  .accountType{
+    max-width:120px;
   }
 
   .row{
@@ -492,6 +633,14 @@ button,input{
     flex-direction:column;
     align-items:flex-start;
   }
+
+  .menuDropdown{
+    width:200px;
+  }
+
+  .menuBtnText{
+    display:none;
+  }
 }
 </style>
 
@@ -506,58 +655,75 @@ if(!localStorage.getItem("token")){
 
 <header class="topbar">
   <div class="topbar-inner">
-    <div class="brand">
-      Practice Online
-      <small>Progress Dashboard</small>
+    <div class="accountLeft">
+      <div class="accountIconWrap">
+        <img
+          class="accountIcon"
+          src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
+          alt="Account"
+        >
+      </div>
+
+      <div class="accountMeta">
+        <div class="accountName" id="topAccountName">Loading...</div>
+        <div class="accountType" id="topAccountType">Account</div>
+      </div>
     </div>
 
-    <nav class="nav">
-      <a href="profile.html" class="active">
-        <svg class="navIcon white" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <circle cx="12" cy="8" r="4"></circle>
-          <path d="M4 20c2-4 6-5 8-5s6 1 8 5"></path>
-        </svg>
-        <span>Profile</span>
-      </a>
-
-      <a href="learner-quizzes.html">
-        <svg class="navIcon white" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15"></path>
-        </svg>
-        <span>Practice</span>
-      </a>
-
-      <a href="results.html">
-        <img class="navIcon white" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="Results">
-        <span>Results</span>
-      </a>
-
-      <a href="progress-dashboard.html">
-        <img class="navIcon white" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="Dashboard">
-        <span>Dashboard</span>
-      </a>
-
-      <a href="leaderboard.html">
-        <img class="navIcon white" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777661/leaderboard_yfjgjf.svg" alt="Leaderboard">
-        <span>Leaderboard</span>
-      </a>
-
-      <a href="support.html">
-        <img class="navIcon white" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/support_bs175s.svg" alt="Support">
-        <span>Support</span>
-      </a>
-
-      <a href="announcements.html">
-        <img class="navIcon white" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements">
-        <span>Announcements</span>
+    <div class="topbarRight">
+      <a href="announcements.html" class="iconBtn bellBtn" title="Announcements" aria-label="Announcements">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements">
         <span class="navBadge" id="navAnnouncementBadge">0</span>
       </a>
 
-      <button class="logoutBtn" id="logoutBtn" title="Logout" aria-label="Logout">
-        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773768418/logout_uay6y8.svg" alt="Logout">
+      <button class="menuBtn" id="menuToggleBtn" title="Menu" aria-label="Menu" type="button">
+        <span class="menuBtnText">Menu</span>
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt="Menu">
       </button>
-    </nav>
+
+      <div class="menuDropdown" id="menuDropdown">
+        <a class="menuItem profileTextOnly" href="profile.html">
+          <span>Profile</span>
+        </a>
+
+        <a class="menuItem" href="learner-quizzes.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777660/practice_ubgfso.svg" alt="">
+          <span>Practice</span>
+        </a>
+
+        <a class="menuItem" href="results.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="Results">
+          <span>Results</span>
+        </a>
+
+        <a class="menuItem" href="progress-dashboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="">
+          <span>Dashboard</span>
+        </a>
+
+        <a class="menuItem" href="leaderboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777661/leaderboard_yfjgjf.svg" alt="">
+          <span>Leaderboard</span>
+        </a>
+
+        <a class="menuItem" href="support.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/support_bs175s.svg" alt="">
+          <span>Support</span>
+        </a>
+
+        <a class="menuItem" href="announcements.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="">
+          <span>Announcements</span>
+        </a>
+
+        <div class="menuDivider"></div>
+
+        <button class="menuItem logoutMenuBtn" id="logoutBtn" type="button">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773768418/logout_uay6y8.svg" alt="">
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -594,7 +760,7 @@ if(!localStorage.getItem("token")){
         </div>
       </div>
 
-      <div class="previewCount" id="announcementPreviewCount">0</div>
+
     </div>
 
     <div class="previewBox">
@@ -610,10 +776,7 @@ if(!localStorage.getItem("token")){
   <section class="quickGrid">
     <a class="quickCard" href="learner-quizzes.html">
       <div class="quickIcon">
-        <svg class="icon-dark" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="black" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15"></path>
-        </svg>
+        <img class="icon-dark" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777660/practice_ubgfso.svg" alt="Practice">
       </div>
       <h3>Practice</h3>
       <p>Open quizzes and practise questions.</p>
@@ -621,7 +784,7 @@ if(!localStorage.getItem("token")){
 
     <a class="quickCard" href="results.html">
       <div class="quickIcon">
-        <img class="icon-blue" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="Results">
+        <img class="icon-color" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="Results">
       </div>
       <h3>Results</h3>
       <p>View your scores and previous attempts.</p>
@@ -726,6 +889,10 @@ const token = localStorage.getItem("token");
 
 const profilePhoto = document.getElementById("profilePhoto");
 const profileInitials = document.getElementById("profileInitials");
+const topAccountName = document.getElementById("topAccountName");
+const topAccountType = document.getElementById("topAccountType");
+const menuToggleBtn = document.getElementById("menuToggleBtn");
+const menuDropdown = document.getElementById("menuDropdown");
 
 document.getElementById("logoutBtn").onclick = () => {
   localStorage.removeItem("token");
@@ -735,6 +902,17 @@ document.getElementById("logoutBtn").onclick = () => {
   localStorage.removeItem("role");
   location.href = "login.html";
 };
+
+menuToggleBtn.addEventListener("click", function(e){
+  e.stopPropagation();
+  menuDropdown.classList.toggle("open");
+});
+
+document.addEventListener("click", function(e){
+  if(!menuDropdown.contains(e.target) && !menuToggleBtn.contains(e.target)){
+    menuDropdown.classList.remove("open");
+  }
+});
 
 function getInitials(name){
   const text = String(name || "").trim();
@@ -813,7 +991,7 @@ async function loadAnnouncementSummary(){
         trimText(latest.message, 170);
 
       document.getElementById("announcementPreviewMeta").textContent =
-        `${latest.category ? String(latest.category).toUpperCase() : "ANNOUNCEMENT"} • ${formatDateTime(latest.createdAt)}`;
+        `${latest.category ? String(latest.category).toUpperCase() : "ANNOUNCEMENT"} : ${formatDateTime(latest.createdAt)}`;
     } else {
       document.getElementById("announcementPreviewTitle").textContent = "No new announcements";
       document.getElementById("announcementPreviewText").textContent =
@@ -859,6 +1037,9 @@ async function loadProfile(){
     document.getElementById("infoRole").textContent = data.role || "-";
     document.getElementById("learnerNumber").textContent = data.learnerNumber || "-";
 
+    topAccountName.textContent = data.fullName || data.username || "User";
+    topAccountType.textContent = data.accountType || data.role || "Account";
+
     if (data.profilePhoto) {
       const src = data.profilePhoto.startsWith("http")
         ? data.profilePhoto
@@ -868,6 +1049,8 @@ async function loadProfile(){
       showInitials(displayName);
     }
   } catch (err) {
+    topAccountName.textContent = "User";
+    topAccountType.textContent = "Account";
     showInitials("User");
   }
 }
