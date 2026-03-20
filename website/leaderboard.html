@@ -5,21 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Leaderboard | Practice Online</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
 <style>
 :root{
   --nav:#1b1648;
   --red:#e11d2e;
   --bg:#f6f7fb;
   --card:#ffffff;
-  --blue:#eef6ff;
   --border:#d9dee7;
   --text:#222222;
   --muted:#5f6b7a;
-  --head:#f7f9fc;
+  --head:#f8fafc;
   --white:#ffffff;
 }
 
@@ -30,7 +25,7 @@
 html,body{
   margin:0;
   padding:0;
-  font-family:Inter,Arial,sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   background:var(--bg);
   color:var(--text);
 }
@@ -45,72 +40,242 @@ select{
   font:inherit;
 }
 
+/* ===== PROFILE HEADER ===== */
 .topbar{
   background:var(--nav);
   color:#fff;
+  position:sticky;
+  top:0;
+  z-index:1000;
+  font-family:Arial, Helvetica, sans-serif;
 }
 
 .topbar-inner{
-  max-width:1100px;
+  max-width:1150px;
   margin:0 auto;
   padding:14px 18px;
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:12px;
-  flex-wrap:wrap;
 }
 
-.brand{
-  font-weight:800;
-  line-height:1.2;
-}
-
-.brand small{
-  display:block;
-  font-size:12px;
-  font-weight:700;
-  opacity:.9;
-}
-
-.nav{
+.accountLeft{
   display:flex;
-  gap:10px;
   align-items:center;
-  flex-wrap:wrap;
+  gap:12px;
+  min-width:0;
+  cursor:default;
+  user-select:none;
 }
 
-.nav a{
-  padding:8px 10px;
-  border-radius:8px;
-  color:#eef2ff;
-  font-weight:700;
-  font-size:13px;
-  white-space:nowrap;
-}
-
-.nav a.active{
-  border-bottom:3px solid var(--red);
-  color:#fff;
-}
-
-.nav a:hover{
-  background:rgba(255,255,255,.08);
-}
-
-.logoutBtn{
+.accountIconWrap{
+  width:auto;
+  height:auto;
   background:transparent;
-  border:1px solid rgba(255,255,255,.28);
-  color:#fff;
-  padding:8px 14px;
-  border-radius:12px;
-  font-weight:800;
-  cursor:pointer;
-  white-space:nowrap;
+  border:none;
+  box-shadow:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
 }
 
+.accountIcon{
+  width:40px;
+  height:40px;
+  display:block;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.accountMeta{
+  min-width:0;
+  line-height:1.1;
+}
+
+.accountName{
+  font-size:16px;
+  font-weight:700;
+  color:#fff;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:220px;
+}
+
+.accountType{
+  font-size:13px;
+  color:#e0e7ff;
+  margin-top:3px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:220px;
+  text-transform:capitalize;
+}
+
+.topbarRight{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  position:relative;
+}
+
+.iconBtn{
+  min-width:50px;
+  height:50px;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  padding:0 4px;
+}
+
+.iconBtn img{
+  width:30px;
+  height:30px;
+  display:block;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.bellBtn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
+.bellBtn:hover{
+  opacity:.92;
+}
+
+.navBadge{
+  min-width:auto;
+  height:auto;
+  padding:0;
+  margin-left:2px;
+  border-radius:0;
+  background:transparent;
+  color:#ffd6db;
+  font-size:13px;
+  font-weight:700;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.menuBtn{
+  min-width:auto;
+  height:50px;
+  padding:0;
+  gap:8px;
+  border:none;
+  background:transparent;
+  border-radius:0;
+  box-shadow:none;
+  font-family:Arial, Helvetica, sans-serif;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+.menuBtn:hover{
+  background:transparent;
+  opacity:1;
+}
+
+.menuBtnText{
+  font-size:14px;
+  font-weight:700;
+  color:#fff;
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  top:-1px;
+}
+
+.menuBtn img{
+  width:28px;
+  height:28px;
+  filter:brightness(0) invert(1) contrast(180%);
+  display:block;
+}
+
+.menuDropdown{
+  position:absolute;
+  top:48px;
+  right:0;
+  width:210px;
+  background:#f7f7f8;
+  color:#111827;
+  border:1px solid #d9dee7;
+  border-radius:16px;
+  box-shadow:0 14px 30px rgba(15,23,42,.14);
+  padding:10px 0;
+  display:none;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.menuDropdown.open{
+  display:block;
+}
+
+.menuItem{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 18px;
+  color:#111827;
+  font-size:14px;
+  font-weight:700;
+  background:transparent;
+  border:none;
+  text-align:left;
+  cursor:pointer;
+}
+
+.menuItem:hover{
+  background:#eef2f7;
+}
+
+.menuItem img{
+  width:18px;
+  height:18px;
+  display:block;
+  flex-shrink:0;
+}
+
+.menuItem.profileTextOnly{
+  padding-left:38px;
+}
+
+.menuDivider{
+  height:1px;
+  background:#dde4ec;
+  margin:8px 0 6px;
+}
+
+.logoutMenuBtn{
+  width:100%;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  text-align:left;
+}
+
+/* ===== PAGE ===== */
 .wrap{
-  max-width:1100px;
+  max-width:1150px;
   margin:0 auto;
   padding:18px;
 }
@@ -125,21 +290,23 @@ select{
 
 .sectionHead{
   padding:18px;
-  background:var(--blue);
+  background:#fff;
   border-bottom:1px solid var(--border);
 }
 
 .sectionHead h2{
   margin:0;
   font-size:18px;
-  font-weight:800;
+  font-weight:700;
   color:var(--nav);
+  font-family:Arial, Helvetica, sans-serif;
 }
 
 .sectionHead p{
   margin:6px 0 0;
   font-size:13px;
   color:var(--muted);
+  font-family:Arial, Helvetica, sans-serif;
 }
 
 .sectionBody{
@@ -163,6 +330,7 @@ select{
   font-weight:700;
   color:var(--text);
   outline:none;
+  font-family:Arial, Helvetica, sans-serif;
 }
 
 .grid{
@@ -180,15 +348,16 @@ select{
 
 .cardHead{
   padding:13px 14px;
-  background:var(--blue);
+  background:#fff;
   border-bottom:1px solid var(--border);
 }
 
 .cardHead h3{
   margin:0;
   font-size:15px;
-  font-weight:800;
+  font-weight:700;
   color:var(--nav);
+  font-family:Arial, Helvetica, sans-serif;
 }
 
 .cardBody{
@@ -205,6 +374,7 @@ table{
   border-collapse:collapse;
   font-size:13px;
   min-width:520px;
+  font-family:Arial, Helvetica, sans-serif;
 }
 
 th,
@@ -219,7 +389,7 @@ th{
   text-transform:uppercase;
   letter-spacing:.06em;
   color:var(--muted);
-  font-weight:800;
+  font-weight:700;
   background:#fff;
 }
 
@@ -238,7 +408,7 @@ tbody tr:last-child td{
 }
 
 .meRow{
-  background:#f8fbff;
+  background:#f8fafc;
 }
 
 .summary{
@@ -262,12 +432,14 @@ tbody tr:last-child td{
   font-size:13px;
   color:var(--muted);
   font-weight:700;
+  font-family:Arial, Helvetica, sans-serif;
 }
 
 .summaryValue{
   font-size:14px;
   font-weight:600;
   color:var(--text);
+  font-family:Arial, Helvetica, sans-serif;
 }
 
 @media (max-width: 860px){
@@ -279,19 +451,18 @@ tbody tr:last-child td{
 @media (max-width: 640px){
   .topbar-inner{
     padding:12px 14px;
-    align-items:flex-start;
   }
 
-  .nav{
-    width:100%;
-    flex-wrap:nowrap;
-    overflow-x:auto;
-    padding-bottom:4px;
-    -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
+  .accountName,
+  .accountType{
+    max-width:120px;
   }
 
-  .nav::-webkit-scrollbar{
+  .menuDropdown{
+    width:200px;
+  }
+
+  .menuBtnText{
     display:none;
   }
 
@@ -331,27 +502,86 @@ tbody tr:last-child td{
   }
 }
 </style>
+
+<script>
+if(!localStorage.getItem("token")){
+  location.href="login.html";
+}
+</script>
 </head>
 <body>
 
 <header class="topbar">
   <div class="topbar-inner">
-    <div class="brand">
-      Practice Online
-      <small>Progress Dashboard</small>
+    <div class="accountLeft">
+      <div class="accountIconWrap">
+        <img
+          class="accountIcon"
+          src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
+          alt="Account"
+        >
+      </div>
+
+      <div class="accountMeta">
+        <div class="accountName" id="topAccountName">Loading...</div>
+        <div class="accountType" id="topAccountType">Account</div>
+      </div>
     </div>
 
-    <nav class="nav">
-      <a href="learner-quizzes.html">Practice</a>
-      <a href="results.html">Results</a>
-      <a href="dashboard.html">Dashboard</a>
-      <a href="support.html">Support</a>
-      <a href="about.html">About</a>
-      <a href="admin-quiz.html">Admin</a>
-      <a href="leaderboard.html" class="active">Leaderboard</a>
-      <a href="announcements.html">Announcements</a>
-      <button class="logoutBtn">Logout</button>
-    </nav>
+    <div class="topbarRight">
+      <a href="announcements.html" class="iconBtn bellBtn" title="Announcements" aria-label="Announcements">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements">
+        <span class="navBadge" id="navAnnouncementBadge">0</span>
+      </a>
+
+      <button class="menuBtn" id="menuToggleBtn" title="Menu" aria-label="Menu" type="button">
+        <span class="menuBtnText">Menu</span>
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt="Menu">
+      </button>
+
+      <div class="menuDropdown" id="menuDropdown">
+        <a class="menuItem profileTextOnly" href="profile.html">
+          <span>Profile</span>
+        </a>
+
+        <a class="menuItem" href="learner-quizzes.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777660/practice_ubgfso.svg" alt="">
+          <span>Practice</span>
+        </a>
+
+        <a class="menuItem" href="results.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="Results">
+          <span>Results</span>
+        </a>
+
+        <a class="menuItem" href="progress-dashboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="">
+          <span>Dashboard</span>
+        </a>
+
+        <a class="menuItem" href="leaderboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777661/leaderboard_yfjgjf.svg" alt="">
+          <span>Leaderboard</span>
+        </a>
+
+        <a class="menuItem" href="support.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/support_bs175s.svg" alt="">
+          <span>Support</span>
+        </a>
+
+        <a class="menuItem" href="announcements.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="">
+          <span>Announcements</span>
+        </a>
+
+        <div class="menuDivider"></div>
+
+        <button class="menuItem logoutMenuBtn" id="logoutBtn" type="button">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773768418/logout_uay6y8.svg" alt="">
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -491,6 +721,77 @@ tbody tr:last-child td{
     </div>
   </section>
 </main>
+
+<script>
+const API = window.API || "https://practice-backend-msgn.onrender.com";
+const token = localStorage.getItem("token");
+
+const topAccountName = document.getElementById("topAccountName");
+const topAccountType = document.getElementById("topAccountType");
+const menuToggleBtn = document.getElementById("menuToggleBtn");
+const menuDropdown = document.getElementById("menuDropdown");
+
+document.getElementById("logoutBtn").onclick = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  localStorage.removeItem("me_cache");
+  localStorage.removeItem("user");
+  localStorage.removeItem("role");
+  location.href = "login.html";
+};
+
+menuToggleBtn.addEventListener("click", function(e){
+  e.stopPropagation();
+  menuDropdown.classList.toggle("open");
+});
+
+document.addEventListener("click", function(e){
+  if(!menuDropdown.contains(e.target) && !menuToggleBtn.contains(e.target)){
+    menuDropdown.classList.remove("open");
+  }
+});
+
+async function loadTopbarProfile(){
+  try{
+    const res = await fetch(`${API}/api/profile/me`, {
+      headers:{Authorization:`Bearer ${token}`}
+    });
+
+    if(res.status === 401){
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("me_cache");
+      location.href = "login.html";
+      return;
+    }
+
+    const data = await res.json().catch(()=>null);
+    if(!data) return;
+
+    topAccountName.textContent = data.fullName || data.username || "User";
+    topAccountType.textContent = data.accountType || data.role || "Account";
+  }catch{
+    topAccountName.textContent = "User";
+    topAccountType.textContent = "Account";
+  }
+}
+
+async function loadTopbarAnnouncementCount(){
+  try{
+    const res = await fetch(`${API}/api/announcements/profile-summary`, {
+      headers:{Authorization:`Bearer ${token}`}
+    });
+
+    const data = await res.json().catch(() => ({}));
+    document.getElementById("navAnnouncementBadge").textContent = Number(data.count || 0);
+  }catch{
+    document.getElementById("navAnnouncementBadge").textContent = "0";
+  }
+}
+
+loadTopbarProfile();
+loadTopbarAnnouncementCount();
+</script>
 
 </body>
 </html>
