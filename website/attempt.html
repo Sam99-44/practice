@@ -5,10 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Attempt Assessment | Practice Online</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
   <!-- MathJax -->
   <script>
     window.MathJax = {
@@ -25,7 +21,7 @@
 
       --bg:#f6f7fb;
       --card:#ffffff;
-      --border:#e6e6e6;
+      --border:#d9dee7;
       --text:#0f172a;
       --muted:#475569;
 
@@ -35,89 +31,291 @@
       --ok:#065f46;
       --error:#b91c1c;
 
-      --soft:#eef2ff;
-      --focus:0 0 0 4px rgba(207,233,255,.65);
+      --soft:#f8fafc;
+      --focus:0 0 0 4px rgba(226,232,240,.7);
 
       --noteBg:#f8fafc;
       --noteBd:#e5e7eb;
-      --noteText:#0b3c5d;
+      --noteText:#0f172a;
     }
 
     *{box-sizing:border-box}
-    body{margin:0;font-family:Inter, Arial, sans-serif;background:var(--bg);color:var(--text);}
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
     a{color:inherit;text-decoration:none}
-    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    .wrap{max-width:1150px;margin:0 auto;padding:18px}
     .muted{color:var(--muted)}
     .error{color:var(--error)}
     .ok{color:var(--ok)}
     .hidden{display:none!important}
 
-    header.topbar{
+    /* ===== CONSISTENT HEADER ===== */
+    .topbar{
       background:var(--nav);
       color:#fff;
-      border-bottom:1px solid rgba(255,255,255,.10);
+      position:sticky;
+      top:0;
+      z-index:1000;
+      font-family:Arial, Helvetica, sans-serif;
     }
+
     .topbar-inner{
-      max-width:1100px;
+      max-width:1150px;
       margin:0 auto;
       padding:14px 18px;
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:12px;
-      flex-wrap:wrap;
     }
 
-    .brand{display:flex;flex-direction:column;line-height:1.15;}
-    .brand .name{font-weight:900;letter-spacing:.2px;}
-    .brand .sub{font-weight:700;opacity:.85;font-size:12px;margin-top:2px;}
+    .accountLeft{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+      cursor:default;
+      user-select:none;
+    }
 
-    nav.nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-    nav.nav a{
-      padding:8px 10px;
-      border-radius:10px;
-      color:#e7e9ff;
-      font-weight:800;
-      font-size:13px;
-    }
-    nav.nav a:hover{background:rgba(255,255,255,.10)}
-    nav.nav a.active{
-      color:#fff;
-      border-bottom:3px solid var(--red);
-      border-radius:10px 10px 8px 8px;
-      padding-bottom:5px;
-    }
-    .btnTop{
+    .accountIconWrap{
+      width:auto;
+      height:auto;
       background:transparent;
+      border:none;
+      box-shadow:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-shrink:0;
+    }
+
+    .accountIcon{
+      width:40px;
+      height:40px;
+      display:block;
+      filter:brightness(0) invert(1) contrast(180%);
+    }
+
+    .accountMeta{
+      min-width:0;
+      line-height:1.1;
+    }
+
+    .accountName{
+      font-size:16px;
+      font-weight:700;
       color:#fff;
-      border:1px solid rgba(255,255,255,.22);
-      padding:8px 12px;
-      border-radius:10px;
-      font-weight:900;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:220px;
+    }
+
+    .accountType{
+      font-size:13px;
+      color:#e0e7ff;
+      margin-top:3px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:220px;
+      text-transform:capitalize;
+    }
+
+    .topbarRight{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      position:relative;
+    }
+
+    .iconBtn{
+      min-width:50px;
+      height:50px;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      padding:0 4px;
+    }
+
+    .iconBtn img{
+      width:30px;
+      height:30px;
+      display:block;
+      filter:brightness(0) invert(1) contrast(180%);
+    }
+
+    .bellBtn{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+    }
+
+    .bellBtn:hover{
+      opacity:.92;
+    }
+
+    .navBadge{
+      min-width:auto;
+      height:auto;
+      padding:0;
+      margin-left:2px;
+      border-radius:0;
+      background:transparent;
+      color:#ffd6db;
+      font-size:13px;
+      font-weight:700;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      line-height:1;
+      font-family:Arial, Helvetica, sans-serif;
+    }
+
+    .menuBtn{
+      min-width:auto;
+      height:50px;
+      padding:0;
+      gap:8px;
+      border:none;
+      background:transparent;
+      border-radius:0;
+      box-shadow:none;
+      font-family:Arial, Helvetica, sans-serif;
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
       cursor:pointer;
     }
-    .btnTop:hover{background:rgba(255,255,255,.08)}
+
+    .menuBtn:hover{
+      background:transparent;
+      opacity:1;
+    }
+
+    .menuBtnText{
+      font-size:14px;
+      font-weight:700;
+      color:#fff;
+      line-height:1;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      top:-1px;
+    }
+
+    .menuBtn img{
+      width:28px;
+      height:28px;
+      filter:brightness(0) invert(1) contrast(180%);
+      display:block;
+    }
+
+    .menuDropdown{
+      position:absolute;
+      top:48px;
+      right:0;
+      width:210px;
+      background:#f7f7f8;
+      color:#111827;
+      border:1px solid #d9dee7;
+      border-radius:16px;
+      box-shadow:0 14px 30px rgba(15,23,42,.14);
+      padding:10px 0;
+      display:none;
+      font-family:Arial, Helvetica, sans-serif;
+    }
+
+    .menuDropdown.open{
+      display:block;
+    }
+
+    .menuItem{
+      width:100%;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:10px 18px;
+      color:#111827;
+      font-size:14px;
+      font-weight:700;
+      background:transparent;
+      border:none;
+      text-align:left;
+      cursor:pointer;
+    }
+
+    .menuItem:hover{
+      background:#eef2f7;
+    }
+
+    .menuItem img{
+      width:18px;
+      height:18px;
+      display:block;
+      flex-shrink:0;
+    }
+
+    .menuItem.profileTextOnly{
+      padding-left:38px;
+    }
+
+    .menuDivider{
+      height:1px;
+      background:#dde4ec;
+      margin:8px 0 6px;
+    }
+
+    .logoutMenuBtn{
+      width:100%;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      text-align:left;
+    }
 
     .section{
       background:var(--card);
       border:1px solid var(--border);
-      border-radius:var(--radius);
+      border-radius:18px;
       box-shadow:var(--shadow);
       overflow:hidden;
       margin-top:14px;
     }
+
     .sectionHead{
-      background:linear-gradient(180deg,#f4f7ff,#eef4ff);
+      background:#fff;
       border-bottom:1px solid var(--border);
-      padding:12px 14px;
+      padding:16px 18px;
       display:flex;
       align-items:flex-start;
       justify-content:space-between;
       gap:12px;
       flex-wrap:wrap;
     }
-    .sectionHead h1{margin:0;font-size:18px;letter-spacing:-0.01em;}
-    .sectionHead p{margin:6px 0 0 0}
+
+    .sectionHead h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:-0.01em;
+      font-family:Arial, Helvetica, sans-serif;
+    }
+    .sectionHead p{
+      margin:6px 0 0 0;
+      font-family:Arial, Helvetica, sans-serif;
+    }
     .sectionBody{padding:14px}
 
     .metaRight{
@@ -132,6 +330,7 @@
       font-size:12px;
       letter-spacing:.02em;
       text-transform:uppercase;
+      font-family:Arial, Helvetica, sans-serif;
     }
     .statusText.available{color:#065f46}
     .statusText.unavailable{color:#b91c1c}
@@ -139,6 +338,7 @@
       font-weight:800;
       font-size:12px;
       color:#0f172a;
+      font-family:Arial, Helvetica, sans-serif;
     }
     .timeText.warn{color:#b45309}
 
@@ -164,6 +364,7 @@
       display:flex;
       gap:10px;
       align-items:flex-start;
+      font-family:Arial, Helvetica, sans-serif;
     }
     .qNo{flex:0 0 auto;font-weight:700;color:#0f172a;width:28px;}
     .qText{flex:1 1 auto;min-width:0;}
@@ -181,9 +382,16 @@
       font-weight:900;
       color:#0f172a;
       line-height:1;
+      font-family:Arial, Helvetica, sans-serif;
     }
     .marksMeta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:0 0 auto;}
-    .marksLbl{font-weight:800;font-size:12px;color:var(--muted);white-space:nowrap;}
+    .marksLbl{
+      font-weight:800;
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+      font-family:Arial, Helvetica, sans-serif;
+    }
 
     .qimg{
       display:block;
@@ -200,9 +408,10 @@
       border-radius:14px;
       padding:12px 12px;
       color:var(--noteText);
-      font-weight:800;
+      font-weight:700;
       line-height:1.45;
       word-break:break-word;
+      font-family:Arial, Helvetica, sans-serif;
     }
 
     .opt{
@@ -216,8 +425,9 @@
       cursor:pointer;
       background:#fff;
       transition:.12s;
+      font-family:Arial, Helvetica, sans-serif;
     }
-    .opt:hover{background:var(--soft)}
+    .opt:hover{background:#f8fafc}
     .opt input{margin-top:3px}
     .opt.disabled{opacity:.7;cursor:not-allowed}
     .opt.disabled:hover{background:#fff}
@@ -231,19 +441,21 @@
       font-size:14px;
       background:#fff;
       font-weight:600;
+      font-family:Arial, Helvetica, sans-serif;
     }
-    .textAnswer:focus{border-color:#cfe9ff;box-shadow:var(--focus);}
+    .textAnswer:focus{border-color:#cbd5e1;box-shadow:var(--focus);}
     .textAnswer:disabled{opacity:.7;background:#f8fafc}
 
     .hint{
       margin-top:10px;
       padding:10px 12px;
       border-radius:12px;
-      background:var(--soft);
-      border:1px solid #cfe9ff;
-      color:#0b3c5d;
+      background:#f8fafc;
+      border:1px solid #e2e8f0;
+      color:#334155;
       font-size:13px;
       font-weight:700;
+      font-family:Arial, Helvetica, sans-serif;
     }
 
     .btnRow{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;}
@@ -255,6 +467,7 @@
       border-radius:12px;
       cursor:pointer;
       font-weight:900;
+      font-family:Arial, Helvetica, sans-serif;
     }
     .btn:disabled{opacity:.6;cursor:not-allowed}
 
@@ -265,6 +478,7 @@
       border-radius:12px;
       cursor:pointer;
       font-weight:900;
+      font-family:Arial, Helvetica, sans-serif;
     }
     .btn2:disabled{opacity:.6;cursor:not-allowed}
 
@@ -275,6 +489,7 @@
       padding:12px;
       border-radius:12px;
       margin-top:12px;
+      font-family:Arial, Helvetica, sans-serif;
     }
     .notice.red{border-color:#fecaca;background:#fff1f2;color:#991b1b;}
     .lockBox{
@@ -283,16 +498,34 @@
       padding:14px;
       border-radius:12px;
       margin-top:12px;
+      font-family:Arial, Helvetica, sans-serif;
     }
 
     @media(max-width:640px){
       .wrap{padding:14px}
       .sectionBody{padding:12px}
-      .sectionHead{padding:12px}
+      .sectionHead{padding:12px 14px}
       .metaRight{align-items:flex-start;min-width:0}
       .qTitle{font-size:14px}
       .qNo{width:24px}
       .marksBox{width:40px;height:40px}
+
+      .topbar-inner{
+        padding:12px 14px;
+      }
+
+      .accountName,
+      .accountType{
+        max-width:120px;
+      }
+
+      .menuDropdown{
+        width:200px;
+      }
+
+      .menuBtnText{
+        display:none;
+      }
     }
   </style>
 </head>
@@ -300,16 +533,75 @@
 <body>
 <header class="topbar">
   <div class="topbar-inner">
-    <div class="brand">
-      <div class="name">Practice Online</div>
-      <div class="sub" id="welcomeSub">Assessment</div>
+    <div class="accountLeft">
+      <div class="accountIconWrap">
+        <img
+          class="accountIcon"
+          src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
+          alt="Account"
+        >
+      </div>
+
+      <div class="accountMeta">
+        <div class="accountName" id="topAccountName">Loading...</div>
+        <div class="accountType" id="topAccountType">Account</div>
+      </div>
     </div>
 
-    <nav class="nav">
-      <a href="learner-quizzes.html" class="active">Back to Practice</a>
-      <a href="results.html" id="resultsNavLink">Results</a>
-      <button class="btnTop" id="logoutBtn" type="button">Logout</button>
-    </nav>
+    <div class="topbarRight">
+      <a href="announcements.html" class="iconBtn bellBtn" title="Announcements" aria-label="Announcements">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements">
+        <span class="navBadge" id="navAnnouncementBadge">0</span>
+      </a>
+
+      <button class="menuBtn" id="menuToggleBtn" title="Menu" aria-label="Menu" type="button">
+        <span class="menuBtnText">Menu</span>
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt="Menu">
+      </button>
+
+      <div class="menuDropdown" id="menuDropdown">
+        <a class="menuItem profileTextOnly" href="profile.html">
+          <span>Profile</span>
+        </a>
+
+        <a class="menuItem" href="learner-quizzes.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777660/practice_ubgfso.svg" alt="">
+          <span>Practice</span>
+        </a>
+
+        <a class="menuItem" href="results.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="Results">
+          <span>Results</span>
+        </a>
+
+        <a class="menuItem" href="progress-dashboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="">
+          <span>Dashboard</span>
+        </a>
+
+        <a class="menuItem" href="leaderboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777661/leaderboard_yfjgjf.svg" alt="">
+          <span>Leaderboard</span>
+        </a>
+
+        <a class="menuItem" href="support.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/support_bs175s.svg" alt="">
+          <span>Support</span>
+        </a>
+
+        <a class="menuItem" href="announcements.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="">
+          <span>Announcements</span>
+        </a>
+
+        <div class="menuDivider"></div>
+
+        <button class="menuItem logoutMenuBtn" id="logoutBtn" type="button">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773768418/logout_uay6y8.svg" alt="">
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -358,7 +650,7 @@
 
   const qs = new URLSearchParams(window.location.search);
   const quizId = qs.get("quizId");
-  const modeParam = String(qs.get("mode") || "").toLowerCase(); // mode=practice
+  const modeParam = String(qs.get("mode") || "").toLowerCase();
   const wantsPracticeFromLink = (modeParam === "practice");
 
   const token = localStorage.getItem("token");
@@ -380,8 +672,10 @@
   const statusText = document.getElementById("statusText");
   const timeText = document.getElementById("timeText");
 
-  // Top nav Results link (hide in practice mode)
-  const resultsNavLink = document.getElementById("resultsNavLink");
+  const topAccountName = document.getElementById("topAccountName");
+  const topAccountType = document.getElementById("topAccountType");
+  const menuToggleBtn = document.getElementById("menuToggleBtn");
+  const menuDropdown = document.getElementById("menuDropdown");
 
   let timerInterval = null;
   let quizEndAtMs = null;
@@ -405,14 +699,58 @@
     localStorage.removeItem("token");
     localStorage.removeItem("username");
     localStorage.removeItem("me_cache");
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
     window.location.href = "login.html";
   };
 
-  if (!quizId) {
-    quizTitle.textContent = "Assessment not found";
-    submitBtn.disabled = true;
-  } else {
-    loadQuiz();
+  menuToggleBtn.addEventListener("click", function(e){
+    e.stopPropagation();
+    menuDropdown.classList.toggle("open");
+  });
+
+  document.addEventListener("click", function(e){
+    if(!menuDropdown.contains(e.target) && !menuToggleBtn.contains(e.target)){
+      menuDropdown.classList.remove("open");
+    }
+  });
+
+  async function loadTopbarProfile(){
+    try{
+      const res = await fetch(`${API}/api/profile/me`, {
+        headers:{Authorization:`Bearer ${token}`}
+      });
+
+      if(res.status === 401){
+        localStorage.removeItem("token");
+        localStorage.removeItem("username");
+        localStorage.removeItem("me_cache");
+        location.href = "login.html";
+        return;
+      }
+
+      const data = await res.json().catch(()=>null);
+      if(!data) return;
+
+      topAccountName.textContent = data.fullName || data.username || "User";
+      topAccountType.textContent = data.accountType || data.role || "Account";
+    }catch{
+      topAccountName.textContent = "User";
+      topAccountType.textContent = "Account";
+    }
+  }
+
+  async function loadTopbarAnnouncementCount(){
+    try{
+      const res = await fetch(`${API}/api/announcements/profile-summary`, {
+        headers:{Authorization:`Bearer ${token}`}
+      });
+
+      const data = await res.json().catch(() => ({}));
+      document.getElementById("navAnnouncementBadge").textContent = Number(data.count || 0);
+    }catch{
+      document.getElementById("navAnnouncementBadge").textContent = "0";
+    }
   }
 
   function cleanSpaces(s){
@@ -501,7 +839,6 @@
     }
   }
 
-  // -------- Practice scoring --------
   function parseNumberOrFraction(input) {
     const s = String(input || "").trim().replace(/,/g, ".").replace(/−/g, "-");
     if (!s) return null;
@@ -597,7 +934,6 @@
     return { scorePoints, totalPoints, percent };
   }
 
-  // -------- Timer --------
   function calcFallbackSeconds(totalQuestions){
     const raw = totalQuestions * 60;
     return Math.max(5 * 60, Math.min(raw, 30 * 60));
@@ -706,18 +1042,14 @@
     return answered;
   }
 
-  // ✅ Practice mode UI: hide View Results + hide Results nav link
   function applyPracticeUI(){
     viewResultsBtn.classList.add("hidden");
-    resultsNavLink.classList.add("hidden");
   }
 
   function applyNormalUI(){
     viewResultsBtn.classList.remove("hidden");
-    resultsNavLink.classList.remove("hidden");
   }
 
-  // ✅ Start Practice Mode
   function startPracticeMode(){
     if (!quizData) return;
 
@@ -765,7 +1097,6 @@
     timerInterval = null;
     localStorage.removeItem(END_KEY);
 
-    // ✅ PRACTICE submit: show message based on 100% or not
     if (practiceMode) {
       const r = computePracticeResult();
 
@@ -782,7 +1113,6 @@
       return;
     }
 
-    // ✅ NORMAL submit locked if already attempted
     if (alreadyAttempted) {
       msgEl.className = "error";
       msgEl.textContent = "You already submitted this assessment. Use Retry (Practice Mode).";
@@ -980,7 +1310,6 @@
       return;
     }
 
-    // ✅ Already attempted -> lock normal submit, allow retry
     if (alreadyAttempted){
       lockNotice.classList.remove("hidden");
       msgEl.className = "muted";
@@ -1002,7 +1331,6 @@
       return;
     }
 
-    // ✅ Not attempted yet -> normal submit available
     practiceMode = false;
     applyNormalUI();
 
@@ -1031,6 +1359,16 @@
   }
   function escapeAttr(str){
     return String(str || "").replaceAll('"',"&quot;");
+  }
+
+  loadTopbarProfile();
+  loadTopbarAnnouncementCount();
+
+  if (!quizId) {
+    quizTitle.textContent = "Assessment not found";
+    submitBtn.disabled = true;
+  } else {
+    loadQuiz();
   }
 </script>
 </body>
