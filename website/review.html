@@ -5,10 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Review Attempt | Practice Online</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
   <!-- MathJax -->
   <script>
     window.MathJax = {
@@ -25,15 +21,15 @@
 
       --bg:#f6f7fb;
       --card:#ffffff;
-      --border:#e6e6e6;
+      --border:#d9dee7;
       --text:#0f172a;
       --muted:#475569;
 
       --radius:14px;
       --shadow:0 10px 28px rgba(2,6,23,.08);
 
-      --soft:#eef2ff;
-      --focus:0 0 0 4px rgba(207,233,255,.65);
+      --soft:#f8fafc;
+      --focus:0 0 0 4px rgba(226,232,240,.7);
 
       --greenBg:#ecfdf5;
       --greenBd:#bbf7d0;
@@ -50,10 +46,14 @@
 
     *{box-sizing:border-box}
 
-    body{
+    html,body{
       margin:0;
-      font-family:Inter, Arial, sans-serif;
-      font-weight:500;
+      padding:0;
+    }
+
+    body{
+      font-family:Arial, Helvetica, sans-serif;
+      font-weight:400;
       background:var(--bg);
       color:var(--text);
       -webkit-font-smoothing:antialiased;
@@ -61,81 +61,246 @@
     }
 
     a{color:inherit;text-decoration:none}
-    .wrap{max-width:1100px;margin:0 auto;padding:18px}
-    .muted{color:var(--muted); font-weight:500;}
+    .wrap{max-width:1150px;margin:0 auto;padding:18px}
+    .muted{color:var(--muted); font-weight:400;}
     .hidden{display:none!important}
 
-    header.topbar{
+    /* ===== CONSISTENT HEADER ===== */
+    .topbar{
       background:var(--nav);
       color:#fff;
-      border-bottom:1px solid rgba(255,255,255,.10);
+      position:sticky;
+      top:0;
+      z-index:1000;
+      font-family:Arial, Helvetica, sans-serif;
     }
+
     .topbar-inner{
-      max-width:1100px;
+      max-width:1150px;
       margin:0 auto;
       padding:14px 18px;
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:12px;
-      flex-wrap:wrap;
     }
 
-    .brand{display:flex;flex-direction:column;line-height:1.15}
-    .brand .name{font-weight:700; letter-spacing:.15px;}
-    .brand .sub{font-weight:500; opacity:.85; font-size:var(--fs-12); margin-top:2px;}
-
-    nav.nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-    nav.nav a{
-      padding:8px 10px;
-      border-radius:10px;
-      color:#e7e9ff;
-      font-weight:600;
-      font-size:var(--fs-13);
+    .accountLeft{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+      user-select:none;
     }
-    nav.nav a:hover{background:rgba(255,255,255,.10)}
-    nav.nav a.active{
-      color:#fff;
-      border-bottom:3px solid var(--red);
-      border-radius:10px 10px 8px 8px;
-      padding-bottom:5px;
+
+    .accountIconWrap{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-shrink:0;
+    }
+
+    .accountIcon{
+      width:40px;
+      height:40px;
+      display:block;
+      filter:brightness(0) invert(1) contrast(180%);
+    }
+
+    .accountMeta{
+      min-width:0;
+      line-height:1.1;
+    }
+
+    .accountName{
+      font-size:14px;
       font-weight:700;
+      color:#fff;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:220px;
     }
 
-    .btnTop{
+    .accountType{
+      font-size:13px;
+      color:#e0e7ff;
+      margin-top:3px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:220px;
+      text-transform:capitalize;
+      font-weight:400;
+    }
+
+    .topbarRight{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      position:relative;
+    }
+
+    .iconBtn{
+      min-width:50px;
+      height:50px;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      padding:0 4px;
+    }
+
+    .iconBtn img{
+      width:30px;
+      height:30px;
+      display:block;
+      filter:brightness(0) invert(1) contrast(180%);
+    }
+
+    .bellBtn{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+    }
+
+    .navBadge{
+      color:#ffd6db;
+      font-size:13px;
+      font-weight:700;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      line-height:1;
+    }
+
+    .menuBtn{
+      height:50px;
+      padding:0;
+      gap:8px;
+      border:none;
       background:transparent;
       color:#fff;
-      border:1px solid rgba(255,255,255,.22);
-      padding:8px 12px;
-      border-radius:10px;
-      font-weight:700;
+      display:flex;
+      align-items:center;
+      justify-content:center;
       cursor:pointer;
     }
-    .btnTop:hover{background:rgba(255,255,255,.08)}
 
+    .menuBtnText{
+      font-size:13px;
+      font-weight:700;
+      color:#fff;
+      line-height:1;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      top:-1px;
+    }
+
+    .menuBtn img{
+      width:28px;
+      height:28px;
+      filter:brightness(0) invert(1) contrast(180%);
+      display:block;
+    }
+
+    .menuDropdown{
+      position:absolute;
+      top:48px;
+      right:0;
+      width:210px;
+      background:#f7f7f8;
+      color:#111827;
+      border:1px solid #d9dee7;
+      border-radius:16px;
+      box-shadow:0 14px 30px rgba(15,23,42,.14);
+      padding:10px 0;
+      display:none;
+    }
+
+    .menuDropdown.open{
+      display:block;
+    }
+
+    .menuItem{
+      width:100%;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:10px 18px;
+      color:#111827;
+      font-size:14px;
+      font-weight:400;
+      background:transparent;
+      border:none;
+      text-align:left;
+      cursor:pointer;
+      font-family:Arial, Helvetica, sans-serif;
+    }
+
+    .menuItem:hover{
+      background:#eef2f7;
+    }
+
+    .menuItem img{
+      width:18px;
+      height:18px;
+      display:block;
+      flex-shrink:0;
+    }
+
+    .menuItem.profileTextOnly{
+      padding-left:38px;
+    }
+
+    .menuDivider{
+      height:1px;
+      background:#dde4ec;
+      margin:8px 0 6px;
+    }
+
+    .logoutMenuBtn{
+      width:100%;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      text-align:left;
+    }
+
+    /* ===== PAGE ===== */
     .section{
       background:var(--card);
       border:1px solid var(--border);
-      border-radius:var(--radius);
+      border-radius:18px;
       box-shadow:var(--shadow);
       overflow:hidden;
       margin-top:14px;
     }
+
     .sectionHead{
-      background:#f3f6ff;
+      background:#fff;
       border-bottom:1px solid var(--border);
-      padding:12px 14px;
+      padding:16px 18px;
       display:flex;
       align-items:flex-start;
       justify-content:space-between;
       gap:12px;
       flex-wrap:wrap;
     }
+
     .sectionHead h1{
       margin:0;
-      font-size:18px;
+      font-size:20px;
       font-weight:700;
+      font-family:Arial, Helvetica, sans-serif;
     }
+
     .sectionBody{padding:14px}
 
     .controls{
@@ -146,10 +311,13 @@
       flex-wrap:wrap;
       margin-bottom:10px;
     }
+
     .counter{
       font-weight:700;
       font-size:var(--fs-13);
+      font-family:Arial, Helvetica, sans-serif;
     }
+
     select{
       padding:10px 12px;
       border-radius:12px;
@@ -158,9 +326,14 @@
       min-width:240px;
       font-size:var(--fs-14);
       outline:none;
-      font-weight:600;
+      font-weight:400;
+      font-family:Arial, Helvetica, sans-serif;
     }
-    select:focus{box-shadow:var(--focus);border-color:#cfe9ff;}
+
+    select:focus{
+      box-shadow:var(--focus);
+      border-color:#cbd5e1;
+    }
 
     .qBox{
       border:1px solid var(--border);
@@ -176,6 +349,7 @@
       gap:12px;
       margin-bottom:10px;
     }
+
     .qTitle{
       font-weight:700;
       line-height:1.35;
@@ -184,26 +358,30 @@
       flex:1 1 auto;
       word-break:break-word;
       font-size:var(--fs-15);
+      font-family:Arial, Helvetica, sans-serif;
     }
+
     .qRight{
       flex:0 0 auto;
       white-space:nowrap;
-      font-weight:600;
+      font-weight:400;
       font-size:var(--fs-12);
       color:var(--muted);
       padding-top:2px;
+      font-family:Arial, Helvetica, sans-serif;
     }
 
     .hint{
       margin-top:10px;
       padding:10px 12px;
       border-radius:12px;
-      background:#f6f7ff;
-      border:1px solid #e4e7ff;
-      color:#0b3c5d;
+      background:#f8fafc;
+      border:1px solid #e2e8f0;
+      color:#334155;
       font-size:var(--fs-13);
-      font-weight:600;
+      font-weight:400;
       line-height:var(--lh);
+      font-family:Arial, Helvetica, sans-serif;
     }
 
     .opt{
@@ -212,11 +390,13 @@
       border:1px solid #ddd;
       margin-bottom:8px;
       background:#fff;
-      font-weight:600;
+      font-weight:400;
       line-height:var(--lh);
       word-break:break-word;
       font-size:var(--fs-14);
+      font-family:Arial, Helvetica, sans-serif;
     }
+
     .opt.correct{ background:var(--greenBg); border-color:var(--greenBd); }
     .opt.wrong{ background:var(--redBg); border-color:var(--redBd); }
 
@@ -236,7 +416,9 @@
       background:#fff;
       font-size:var(--fs-13);
       line-height:1.4;
+      font-family:Arial, Helvetica, sans-serif;
     }
+
     .answerCard.good{ background:var(--greenBg); border-color:var(--greenBd); }
     .answerCard.bad{ background:var(--redBg); border-color:var(--redBd); }
 
@@ -247,14 +429,17 @@
       background:#ffffff;
       padding:12px;
     }
+
     .solutionTop{
-      font-weight:800;
+      font-weight:700;
       font-size:var(--fs-13);
       margin:0 0 8px 0;
       color:#111827;
+      font-family:Arial, Helvetica, sans-serif;
     }
+
     .solutionBody{
-      font-weight:600;
+      font-weight:400;
       font-size:var(--fs-14);
       line-height:1.8;
       white-space:pre-wrap;
@@ -263,12 +448,14 @@
       border:1px solid #f0f0f0;
       border-radius:10px;
       background:#ffffff;
+      font-family:Arial, Helvetica, sans-serif;
     }
 
     .solutionBody mjx-container{
       margin:0 !important;
       padding:0 !important;
     }
+
     mjx-container[display="true"]{
       margin:0.35rem 0 !important;
     }
@@ -278,6 +465,7 @@
       font-weight:700;
       color:#111827;
       font-size:var(--fs-13);
+      font-family:Arial, Helvetica, sans-serif;
     }
 
     .navBtns{
@@ -296,7 +484,9 @@
       font-weight:700;
       font-size:var(--fs-13);
       white-space:nowrap;
+      font-family:Arial, Helvetica, sans-serif;
     }
+
     button:hover{background:#f8fafc}
     button:disabled{opacity:.6; cursor:not-allowed;}
 
@@ -310,6 +500,7 @@
       font-weight:700;
       display:none;
       font-size:var(--fs-13);
+      font-family:Arial, Helvetica, sans-serif;
     }
 
     @media (max-width:700px){
@@ -317,6 +508,37 @@
       select{min-width:100%;}
       .qHead{flex-wrap:wrap;}
       .qRight{padding-top:0}
+    }
+
+    @media (max-width:640px){
+      .topbar-inner{
+        padding:12px 14px;
+      }
+
+      .accountName,
+      .accountType{
+        max-width:120px;
+      }
+
+      .menuDropdown{
+        width:200px;
+      }
+
+      .menuBtnText{
+        display:none;
+      }
+
+      .wrap{
+        padding:14px;
+      }
+
+      .sectionHead{
+        padding:14px;
+      }
+
+      .sectionBody{
+        padding:12px 14px 14px;
+      }
     }
   </style>
 
@@ -330,15 +552,75 @@
 
 <header class="topbar">
   <div class="topbar-inner">
-    <div class="brand">
-      <div class="name">Practice Online</div>
-      <div class="sub">Review Attempt</div>
+    <div class="accountLeft">
+      <div class="accountIconWrap">
+        <img
+          class="accountIcon"
+          src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
+          alt="Account"
+        >
+      </div>
+
+      <div class="accountMeta">
+        <div class="accountName" id="topAccountName">Loading...</div>
+        <div class="accountType" id="topAccountType">Account</div>
+      </div>
     </div>
 
-    <nav class="nav">
-      <a href="results.html" class="active">Back to Results</a>
-      <button class="btnTop" id="logoutBtn" type="button">Logout</button>
-    </nav>
+    <div class="topbarRight">
+      <a href="announcements.html" class="iconBtn bellBtn" title="Announcements" aria-label="Announcements">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements">
+        <span class="navBadge" id="navAnnouncementBadge">0</span>
+      </a>
+
+      <button class="menuBtn" id="menuToggleBtn" title="Menu" aria-label="Menu" type="button">
+        <span class="menuBtnText">Menu</span>
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt="Menu">
+      </button>
+
+      <div class="menuDropdown" id="menuDropdown">
+        <a class="menuItem profileTextOnly" href="profile.html">
+          <span>Profile</span>
+        </a>
+
+        <a class="menuItem" href="learner-quizzes.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777660/practice_ubgfso.svg" alt="">
+          <span>Practice</span>
+        </a>
+
+        <a class="menuItem" href="results.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="Results">
+          <span>Results</span>
+        </a>
+
+        <a class="menuItem" href="progress-dashboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="">
+          <span>Dashboard</span>
+        </a>
+
+        <a class="menuItem" href="leaderboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777661/leaderboard_yfjgjf.svg" alt="">
+          <span>Leaderboard</span>
+        </a>
+
+        <a class="menuItem" href="support.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/support_bs175s.svg" alt="">
+          <span>Support</span>
+        </a>
+
+        <a class="menuItem" href="announcements.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="">
+          <span>Announcements</span>
+        </a>
+
+        <div class="menuDivider"></div>
+
+        <button class="menuItem logoutMenuBtn" id="logoutBtn" type="button">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773768418/logout_uay6y8.svg" alt="">
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -401,6 +683,11 @@
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
 
+  const topAccountName = document.getElementById("topAccountName");
+  const topAccountType = document.getElementById("topAccountType");
+  const menuToggleBtn = document.getElementById("menuToggleBtn");
+  const menuDropdown = document.getElementById("menuDropdown");
+
   let answers = [];
   let idx = 0;
 
@@ -410,8 +697,60 @@
   document.getElementById("logoutBtn").onclick = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
+    localStorage.removeItem("me_cache");
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
     window.location.href = "login.html";
   };
+
+  menuToggleBtn.addEventListener("click", function(e){
+    e.stopPropagation();
+    menuDropdown.classList.toggle("open");
+  });
+
+  document.addEventListener("click", function(e){
+    if(!menuDropdown.contains(e.target) && !menuToggleBtn.contains(e.target)){
+      menuDropdown.classList.remove("open");
+    }
+  });
+
+  async function loadTopbarProfile(){
+    try{
+      const res = await fetch(`${API}/api/profile/me`, {
+        headers:{ Authorization:`Bearer ${token}` }
+      });
+
+      if(res.status === 401){
+        localStorage.removeItem("token");
+        localStorage.removeItem("username");
+        localStorage.removeItem("me_cache");
+        location.href = "login.html";
+        return;
+      }
+
+      const data = await res.json().catch(()=>null);
+      if(!data) return;
+
+      topAccountName.textContent = data.fullName || data.username || "User";
+      topAccountType.textContent = data.accountType || data.role || "Account";
+    }catch{
+      topAccountName.textContent = "User";
+      topAccountType.textContent = "Account";
+    }
+  }
+
+  async function loadTopbarAnnouncementCount(){
+    try{
+      const res = await fetch(`${API}/api/announcements/profile-summary`, {
+        headers:{ Authorization:`Bearer ${token}` }
+      });
+
+      const data = await res.json().catch(() => ({}));
+      document.getElementById("navAnnouncementBadge").textContent = Number(data.count || 0);
+    }catch{
+      document.getElementById("navAnnouncementBadge").textContent = "0";
+    }
+  }
 
   function cleanSpaces(s){
     return String(s || "").trim().replace(/\s+/g, " ");
@@ -526,9 +865,6 @@
     typesetMath(solutionWrap);
   }
 
-  /* ============================
-     ✅ NEW HELPERS FOR MULTI MCQ
-     ============================ */
   function toIndexSet(arr){
     if (!Array.isArray(arr)) return new Set();
     return new Set(arr.filter(n => Number.isInteger(n) && n >= 0));
@@ -545,10 +881,8 @@
   }
 
   function getCorrectSet(a){
-    // Prefer correctIndexes for MCQ if present
     const set = toIndexSet(a.correctIndexes);
     if (set.size) return set;
-    // Fallback to correctIndex (legacy)
     const ci = Number(a.correctIndex);
     return Number.isFinite(ci) && ci >= 0 ? new Set([ci]) : new Set();
   }
@@ -675,6 +1009,8 @@
       .replaceAll("'","&#039;");
   }
 
+  loadTopbarProfile();
+  loadTopbarAnnouncementCount();
   load();
 </script>
 
