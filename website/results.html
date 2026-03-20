@@ -8,42 +8,294 @@
 <style>
 :root{
   --nav:#1b1648;
+  --red:#e11d2e;
   --bg:#f6f7fb;
-  --border:#e6e6e6;
+  --card:#ffffff;
+  --border:#d9dee7;
   --text:#0f172a;
+  --muted:#5f6b7a;
 }
 
 *{box-sizing:border-box}
 
-body{
+html,body{
   margin:0;
-  font-family:Arial,"Calibri Light",Calibri,sans-serif;
+  padding:0;
+  font-family:Arial, Helvetica, sans-serif;
   background:var(--bg);
   color:var(--text);
 }
 
-header{
-  background:var(--nav);
-  color:#fff;
-}
-.topbar-inner{
-  max-width:1100px;
-  margin:auto;
-  padding:14px;
-  display:flex;
-  justify-content:space-between;
+a{
+  text-decoration:none;
+  color:inherit;
 }
 
+button,input,select{
+  font:inherit;
+}
+
+/* ===== EXACT TOPBAR FROM PROFILE ===== */
+.topbar{
+  background:var(--nav);
+  color:#fff;
+  position:sticky;
+  top:0;
+  z-index:1000;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.topbar-inner{
+  max-width:1150px;
+  margin:0 auto;
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.accountLeft{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+  cursor:default;
+  user-select:none;
+}
+
+.accountIconWrap{
+  width:auto;
+  height:auto;
+  background:transparent;
+  border:none;
+  box-shadow:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+
+.accountIcon{
+  width:40px;
+  height:40px;
+  display:block;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.accountMeta{
+  min-width:0;
+  line-height:1.1;
+}
+
+.accountName{
+  font-size:16px;
+  font-weight:700;
+  color:#fff;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:220px;
+}
+
+.accountType{
+  font-size:13px;
+  color:#e0e7ff;
+  margin-top:3px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:220px;
+  text-transform:capitalize;
+}
+
+.topbarRight{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  position:relative;
+}
+
+.iconBtn{
+  min-width:50px;
+  height:50px;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  padding:0 4px;
+}
+
+.iconBtn img{
+  width:30px;
+  height:30px;
+  display:block;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.bellBtn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
+.bellBtn:hover{
+  opacity:.92;
+}
+
+.navBadge{
+  min-width:auto;
+  height:auto;
+  padding:0;
+  margin-left:2px;
+  border-radius:0;
+  background:transparent;
+  color:#ffd6db;
+  font-size:13px;
+  font-weight:700;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.menuBtn{
+  min-width:auto;
+  height:50px;
+  padding:0;
+  gap:8px;
+  border:none;
+  background:transparent;
+  border-radius:0;
+  box-shadow:none;
+  font-family:Arial, Helvetica, sans-serif;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+.menuBtn:hover{
+  background:transparent;
+  opacity:1;
+}
+
+.menuBtnText{
+  font-size:14px;
+  font-weight:700;
+  color:#fff;
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  top:-1px;
+}
+
+.menuBtn img{
+  width:28px;
+  height:28px;
+  filter:brightness(0) invert(1) contrast(180%);
+  display:block;
+}
+
+.menuDropdown{
+  position:absolute;
+  top:48px;
+  right:0;
+  width:210px;
+  background:#f7f7f8;
+  color:#111827;
+  border:1px solid #d9dee7;
+  border-radius:16px;
+  box-shadow:0 14px 30px rgba(15,23,42,.14);
+  padding:10px 0;
+  display:none;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.menuDropdown.open{
+  display:block;
+}
+
+.menuItem{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 18px;
+  color:#111827;
+  font-size:14px;
+  font-weight:700;
+  background:transparent;
+  border:none;
+  text-align:left;
+  cursor:pointer;
+}
+
+.menuItem:hover{
+  background:#eef2f7;
+}
+
+.menuItem img{
+  width:18px;
+  height:18px;
+  display:block;
+  flex-shrink:0;
+}
+
+.menuItem.profileTextOnly{
+  padding-left:38px;
+}
+
+.menuDivider{
+  height:1px;
+  background:#dde4ec;
+  margin:8px 0 6px;
+}
+
+.logoutMenuBtn{
+  width:100%;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  text-align:left;
+}
+
+/* ===== PAGE ===== */
 .wrap{
-  max-width:1100px;
-  margin:auto;
+  max-width:1150px;
+  margin:0 auto;
   padding:18px;
 }
+
 .section{
   background:#fff;
   border:1px solid var(--border);
-  border-radius:14px;
-  padding:14px;
+  border-radius:18px;
+  padding:18px;
+}
+
+.pageHead{
+  margin-bottom:14px;
+}
+
+.pageHead h1{
+  margin:0;
+  font-size:22px;
+  color:var(--nav);
+}
+
+.pageHead p{
+  margin:5px 0 0;
+  font-size:14px;
+  color:var(--muted);
 }
 
 /* CONTROLS */
@@ -79,8 +331,9 @@ header{
   padding:9px 10px 9px 36px;
   border-radius:8px;
   border:1px solid #ddd;
-  font-family:Arial,"Calibri Light",Calibri,sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   font-size:14px;
+  outline:none;
 }
 
 .controls select{
@@ -88,9 +341,11 @@ header{
   padding:9px 10px;
   border-radius:8px;
   border:1px solid #ddd;
-  font-family:Arial,"Calibri Light",Calibri,sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   font-size:14px;
   flex:0 0 auto;
+  background:#fff;
+  outline:none;
 }
 
 /* TABLE */
@@ -102,7 +357,7 @@ table{
   width:100%;
   border-collapse:collapse;
   font-size:13px;
-  font-family:Arial,"Calibri Light",Calibri,sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   table-layout:fixed;
 }
 
@@ -157,7 +412,7 @@ th:nth-child(7){
   border:1px solid #e5e7eb;
   background:#f8fafc;
   cursor:pointer;
-  font-family:Arial,"Calibri Light",Calibri,sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   font-size:12px;
   color:#0f172a;
   line-height:1;
@@ -184,7 +439,7 @@ th:nth-child(7){
 .empty{
   padding:14px;
   color:#64748b;
-  font-family:Arial,"Calibri Light",Calibri,sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
 }
 
 @media (max-width:760px){
@@ -206,19 +461,117 @@ th:nth-child(7){
     min-width:860px;
   }
 }
+
+@media (max-width:640px){
+  .topbar-inner{
+    padding:12px 14px;
+  }
+
+  .accountName,
+  .accountType{
+    max-width:120px;
+  }
+
+  .menuDropdown{
+    width:200px;
+  }
+
+  .menuBtnText{
+    display:none;
+  }
+}
 </style>
+
+<script>
+if(!localStorage.getItem("token")){
+  location.href="login.html";
+}
+</script>
 </head>
 
 <body>
 
-<header>
+<header class="topbar">
   <div class="topbar-inner">
-    <strong>Practice Online</strong>
+    <div class="accountLeft">
+      <div class="accountIconWrap">
+        <img
+          class="accountIcon"
+          src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
+          alt="Account"
+        >
+      </div>
+
+      <div class="accountMeta">
+        <div class="accountName" id="topAccountName">Loading...</div>
+        <div class="accountType" id="topAccountType">Account</div>
+      </div>
+    </div>
+
+    <div class="topbarRight">
+      <a href="announcements.html" class="iconBtn bellBtn" title="Announcements" aria-label="Announcements">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements">
+        <span class="navBadge" id="navAnnouncementBadge">0</span>
+      </a>
+
+      <button class="menuBtn" id="menuToggleBtn" title="Menu" aria-label="Menu" type="button">
+        <span class="menuBtnText">Menu</span>
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt="Menu">
+      </button>
+
+      <div class="menuDropdown" id="menuDropdown">
+        <a class="menuItem profileTextOnly" href="profile.html">
+          <span>Profile</span>
+        </a>
+
+        <a class="menuItem" href="learner-quizzes.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777660/practice_ubgfso.svg" alt="">
+          <span>Practice</span>
+        </a>
+
+        <a class="menuItem" href="results.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="Results">
+          <span>Results</span>
+        </a>
+
+        <a class="menuItem" href="progress-dashboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="">
+          <span>Dashboard</span>
+        </a>
+
+        <a class="menuItem" href="leaderboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777661/leaderboard_yfjgjf.svg" alt="">
+          <span>Leaderboard</span>
+        </a>
+
+        <a class="menuItem" href="support.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/support_bs175s.svg" alt="">
+          <span>Support</span>
+        </a>
+
+        <a class="menuItem" href="announcements.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="">
+          <span>Announcements</span>
+        </a>
+
+        <div class="menuDivider"></div>
+
+        <button class="menuItem logoutMenuBtn" id="logoutBtn" type="button">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773768418/logout_uay6y8.svg" alt="">
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
 <div class="wrap">
   <div class="section">
+
+    <div class="pageHead">
+      <h1>Results</h1>
+      <p>View your past quiz attempts, marks, and retry any assessment.</p>
+    </div>
 
     <div class="controls">
       <div class="searchWrap">
@@ -239,7 +592,7 @@ th:nth-child(7){
     </div>
 
     <div id="tableWrap">
-      <div class="empty">Loading results…</div>
+      <div class="empty">Loading results...</div>
     </div>
 
   </div>
@@ -252,41 +605,124 @@ const token = localStorage.getItem("token");
 const ICON_EYE = "https://res.cloudinary.com/dopoxadlr/image/upload/v1773884664/eye_wcd3ak.svg";
 const ICON_RETRY = "https://res.cloudinary.com/dopoxadlr/image/upload/v1773884662/retry_hdbczv.svg";
 
+const topAccountName = document.getElementById("topAccountName");
+const topAccountType = document.getElementById("topAccountType");
+const menuToggleBtn = document.getElementById("menuToggleBtn");
+const menuDropdown = document.getElementById("menuDropdown");
+const logoutBtn = document.getElementById("logoutBtn");
+
 let allResults = [];
 
-loadResults();
+/* ===== MENU ===== */
+if(logoutBtn){
+  logoutBtn.onclick = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    localStorage.removeItem("me_cache");
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
+    location.href = "login.html";
+  };
+}
 
-async function loadResults(){
-  const res = await fetch(`${API}/api/results/my`,{
-    headers:{Authorization:`Bearer ${token}`}
+if(menuToggleBtn && menuDropdown){
+  menuToggleBtn.addEventListener("click", function(e){
+    e.stopPropagation();
+    menuDropdown.classList.toggle("open");
   });
 
-  const data = await res.json().catch(()=>[]);
-  allResults = Array.isArray(data) ? data : [];
+  document.addEventListener("click", function(e){
+    if(!menuDropdown.contains(e.target) && !menuToggleBtn.contains(e.target)){
+      menuDropdown.classList.remove("open");
+    }
+  });
+}
 
-  buildTopics();
-  apply();
+/* ===== TOPBAR PROFILE ===== */
+async function loadTopbarProfile(){
+  try{
+    const res = await fetch(`${API}/api/profile/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if(res.status === 401){
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("me_cache");
+      location.href = "login.html";
+      return;
+    }
+
+    const data = await res.json();
+
+    topAccountName.textContent = data.fullName || data.username || "User";
+    topAccountType.textContent = data.accountType || data.role || "Account";
+  }catch(err){
+    topAccountName.textContent = "User";
+    topAccountType.textContent = "Account";
+  }
+}
+
+/* ===== TOPBAR ANNOUNCEMENT COUNT ===== */
+async function loadTopbarAnnouncementCount(){
+  try{
+    const res = await fetch(`${API}/api/announcements/profile-summary`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const data = await res.json().catch(() => ({}));
+    document.getElementById("navAnnouncementBadge").textContent = Number(data.count || 0);
+  }catch(err){
+    document.getElementById("navAnnouncementBadge").textContent = "0";
+  }
+}
+
+/* ===== RESULTS ===== */
+async function loadResults(){
+  try{
+    const res = await fetch(`${API}/api/results/my`,{
+      headers:{Authorization:`Bearer ${token}`}
+    });
+
+    if(res.status === 401){
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("me_cache");
+      location.href = "login.html";
+      return;
+    }
+
+    const data = await res.json().catch(()=>[]);
+    allResults = Array.isArray(data) ? data : [];
+
+    buildTopics();
+    apply();
+  }catch(err){
+    document.getElementById("tableWrap").innerHTML = `<div class="empty">Failed to load results.</div>`;
+  }
 }
 
 function isWithinPeriod(date, period){
-  if(period==="all") return true;
+  if(period === "all") return true;
 
   const d = new Date(date);
   const now = new Date();
 
-  if(period==="today"){
+  if(Number.isNaN(d.getTime())) return false;
+
+  if(period === "today"){
     return d.toDateString() === now.toDateString();
   }
 
-  if(period==="week"){
+  if(period === "week"){
     const weekAgo = new Date();
-    weekAgo.setDate(now.getDate()-7);
+    weekAgo.setDate(now.getDate() - 7);
     return d >= weekAgo;
   }
 
-  if(period==="month"){
+  if(period === "month"){
     const monthAgo = new Date();
-    monthAgo.setMonth(now.getMonth()-1);
+    monthAgo.setMonth(now.getMonth() - 1);
     return d >= monthAgo;
   }
 
@@ -294,11 +730,11 @@ function isWithinPeriod(date, period){
 }
 
 function buildTopics(){
-  const topics = [...new Set(allResults.map(r=>r.topic || "General"))];
+  const topics = [...new Set(allResults.map(r => r.topic || "General"))];
 
   document.getElementById("topicFilter").innerHTML =
     `<option value="all">All Topics</option>` +
-    topics.map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+    topics.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
 }
 
 function apply(){
@@ -306,17 +742,17 @@ function apply(){
   const topic = document.getElementById("topicFilter").value;
   const period = document.getElementById("periodFilter").value;
 
-  let filtered = allResults.filter(r=>{
+  let filtered = allResults.filter(r => {
     const title = String(r.title || "").toLowerCase();
     const resultTopic = String(r.topic || "General");
     return (
       (!q || title.includes(q) || resultTopic.toLowerCase().includes(q)) &&
-      (topic==="all" || resultTopic===topic) &&
-      isWithinPeriod(r.createdAt,period)
+      (topic === "all" || resultTopic === topic) &&
+      isWithinPeriod(r.createdAt, period)
     );
   });
 
-  filtered.sort((a,b)=>(Number(b.percent)||0)-(Number(a.percent)||0));
+  filtered.sort((a,b) => (Number(b.percent) || 0) - (Number(a.percent) || 0));
 
   render(filtered);
 }
@@ -344,25 +780,25 @@ function render(data){
           </tr>
         </thead>
         <tbody>
-          ${data.map(r=>{
-            const percent = Math.round(Number(r.percent)||0);
+          ${data.map(r => {
+            const percent = Math.round(Number(r.percent) || 0);
             return `
             <tr>
               <td>${escapeHtml(formatDateTime(r.createdAt))}</td>
-              <td>${escapeHtml(r.topic||"")}</td>
-              <td>${escapeHtml(r.title||"")}</td>
+              <td>${escapeHtml(r.topic || "")}</td>
+              <td>${escapeHtml(r.title || "")}</td>
               <td class="markText">${percent}%</td>
-              <td class="status">${percent>=50?"Pass":"Fail"}</td>
+              <td class="status">${percent >= 50 ? "Pass" : "Fail"}</td>
               <td>
                 <span class="iconActionBtn eyeBtn"
-                  onclick="location.href='review.html?resultId=${encodeURIComponent(r._id)}'">
+                  onclick="location.href='review.html?resultId=${encodeURIComponent(r._id || "")}'">
                   <img src="${ICON_EYE}" alt="View">
                   View
                 </span>
               </td>
               <td>
                 <span class="iconActionBtn retryBtn"
-                  onclick="location.href='attempt.html?quizId=${encodeURIComponent(r.quizId)}'">
+                  onclick="location.href='attempt.html?quizId=${encodeURIComponent(r.quizId || "")}'">
                   <img src="${ICON_RETRY}" alt="Retry">
                   Retry
                 </span>
@@ -393,6 +829,10 @@ function escapeHtml(str){
 document.getElementById("search").oninput = apply;
 document.getElementById("topicFilter").onchange = apply;
 document.getElementById("periodFilter").onchange = apply;
+
+loadTopbarProfile();
+loadTopbarAnnouncementCount();
+loadResults();
 </script>
 
 </body>
