@@ -5,16 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Maths Support | Practice Online</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-
 <style>
 :root{
   --nav:#1b1648;
   --red:#e11d2e;
   --bg:#f6f7fb;
   --card:#ffffff;
-  --border:#e6e6e6;
+  --border:#d9dee7;
   --text:#0f172a;
   --muted:#475569;
   --radius:14px;
@@ -25,246 +22,417 @@
 }
 
 *{box-sizing:border-box}
-body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text);}
 
-header.topbar{background:var(--nav);color:#fff;}
-.topbar-inner{
-  max-width:1100px;margin:0 auto;padding:14px 18px;
-  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+html,body{
+  margin:0;
+  padding:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:var(--bg);
+  color:var(--text);
 }
-.brand{display:flex;align-items:center;gap:10px;font-weight:900;}
-.brandBadge{
-  width:38px;height:38px;border-radius:12px;
-  display:grid;place-items:center;
-  background:rgba(255,255,255,.10);
-  border:1px solid rgba(255,255,255,.14);
-  font-weight:900;
-}
-nav.nav{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-nav.nav a{
-  padding:8px 10px;border-radius:10px;
-  color:#e7e9ff;font-weight:800;font-size:13px;
+
+a{
   text-decoration:none;
+  color:inherit;
 }
-nav.nav a.active{color:#fff;border-bottom:3px solid var(--red);}
-nav.nav a:hover{background:rgba(255,255,255,.10)}
-.btnTop{
-  background:rgba(255,255,255,.12);
-  color:#fff;border:1px solid rgba(255,255,255,.18);
-  padding:8px 12px;border-radius:12px;font-weight:900;cursor:pointer;
-}
-.btnTop:hover{background:rgba(255,255,255,.18)}
 
-.wrap{max-width:1100px;margin:0 auto;padding:18px}
+button,input,textarea,select,option{
+  font-family:Arial, Helvetica, sans-serif;
+  font-weight:400;
+}
+
+.topbar{
+  background:var(--nav);
+  color:#fff;
+  position:sticky;
+  top:0;
+  z-index:1000;
+}
+
+.topbar-inner{
+  max-width:1150px;
+  margin:0 auto;
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.accountLeft{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+  user-select:none;
+}
+
+.accountIconWrap{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+
+.accountIcon{
+  width:40px;
+  height:40px;
+  display:block;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.accountMeta{
+  min-width:0;
+  line-height:1.1;
+}
+
+.accountName{
+  font-size:14px;
+  font-weight:400;
+  color:#fff;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:220px;
+}
+
+.accountType{
+  font-size:13px;
+  color:#e0e7ff;
+  margin-top:3px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:220px;
+  text-transform:capitalize;
+  font-weight:400;
+}
+
+.topbarRight{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  position:relative;
+}
+
+.iconBtn{
+  min-width:50px;
+  height:50px;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  padding:0 4px;
+}
+
+.iconBtn img{
+  width:30px;
+  height:30px;
+  display:block;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.bellBtn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
+.navBadge{
+  color:#ffd6db;
+  font-size:13px;
+  font-weight:400;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+}
+
+.menuBtn{
+  height:50px;
+  padding:0;
+  gap:8px;
+  border:none;
+  background:transparent;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+.menuBtnText{
+  font-size:13px;
+  font-weight:400;
+  color:#fff;
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  top:-1px;
+}
+
+.menuBtn img{
+  width:28px;
+  height:28px;
+  filter:brightness(0) invert(1) contrast(180%);
+  display:block;
+}
+
+.menuDropdown{
+  position:absolute;
+  top:48px;
+  right:0;
+  width:210px;
+  background:#f7f7f8;
+  color:#111827;
+  border:1px solid #d9dee7;
+  border-radius:16px;
+  box-shadow:0 14px 30px rgba(15,23,42,.14);
+  padding:10px 0;
+  display:none;
+}
+
+.menuDropdown.open{
+  display:block;
+}
+
+.menuItem{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 18px;
+  color:#111827;
+  font-size:14px;
+  font-weight:400;
+  background:transparent;
+  border:none;
+  text-align:left;
+  cursor:pointer;
+}
+
+.menuItem:hover{
+  background:#eef2f7;
+}
+
+.menuItem img{
+  width:18px;
+  height:18px;
+  display:block;
+  flex-shrink:0;
+}
+
+.menuItem.profileTextOnly{
+  padding-left:38px;
+}
+
+.menuDivider{
+  height:1px;
+  background:#dde4ec;
+  margin:8px 0 6px;
+}
+
+.logoutMenuBtn{
+  width:100%;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  text-align:left;
+}
+
+.wrap{
+  max-width:760px;
+  margin:0 auto;
+  padding:18px;
+}
+
 .card{
   background:var(--card);
   border:1px solid var(--border);
-  border-radius:var(--radius);
+  border-radius:18px;
   box-shadow:var(--shadow);
   overflow:hidden;
 }
+
 .cardHead{
-  padding:14px;
+  padding:16px 18px;
   border-bottom:1px solid var(--border);
-  background:linear-gradient(180deg,#f4f7ff,#eef4ff);
+  background:#fff;
 }
-.body{padding:14px}
+
+.cardHead h1{
+  margin:0;
+  font-size:20px;
+  font-weight:700;
+}
+
+.cardHead .subText{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:14px;
+  font-weight:400;
+}
+
+.body{
+  padding:14px 18px 18px;
+}
 
 label{
   display:block;
-  font-size:12px;
-  font-weight:900;
+  font-size:14px;
+  font-weight:400;
   margin-top:14px;
   margin-bottom:6px;
   color:#334155;
 }
 
-input,textarea,select{
+input,
+textarea,
+select{
   width:100%;
   padding:10px 12px;
   border-radius:12px;
   border:1px solid #ddd;
   font-size:14px;
-  font-weight:600;
+  font-weight:400;
   background:#fff;
   outline:none;
-}
-textarea{min-height:110px;resize:vertical}
-input:focus,textarea:focus,select:focus{
-  border-color:#cfe9ff;
-  box-shadow:0 0 0 4px rgba(207,233,255,.65);
+  font-family:Arial, Helvetica, sans-serif;
 }
 
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-@media(max-width:760px){.grid{grid-template-columns:1fr}}
+select option{
+  font-size:14px;
+  font-family:Arial, Helvetica, sans-serif;
+}
 
-.btnRow{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap}
+textarea{
+  min-height:120px;
+  resize:vertical;
+}
+
+input:focus,
+textarea:focus,
+select:focus{
+  border-color:#cbd5e1;
+  box-shadow:0 0 0 4px rgba(226,232,240,.7);
+}
+
+.helperText{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.inlineChangeRow{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  gap:10px;
+  align-items:end;
+  margin-top:6px;
+}
+
+.inlineWord{
+  font-size:14px;
+  color:var(--muted);
+  padding:0 4px 10px;
+  white-space:nowrap;
+}
+
+.hidden{
+  display:none;
+}
+
+.btnRow{
+  margin-top:18px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
 .btn{
   background:var(--red);
   color:#fff;
   padding:10px 14px;
   border:none;
   border-radius:12px;
-  font-weight:900;
+  font-size:14px;
+  font-weight:400;
   cursor:pointer;
 }
-.btn:disabled{opacity:.6;cursor:not-allowed}
+
+.btn:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
 .btn2{
   background:#fff;
   border:1px solid #ddd;
   padding:10px 14px;
   border-radius:12px;
-  font-weight:900;
+  font-size:14px;
+  font-weight:400;
   cursor:pointer;
 }
-.btn2:hover{background:var(--soft)}
 
-.msg{margin-top:14px;font-weight:800;font-size:13px;color:var(--muted)}
+.btn2:hover{
+  background:var(--soft);
+}
+
+.msg{
+  margin-top:14px;
+  font-size:14px;
+  color:var(--muted);
+  font-weight:400;
+}
+
 .msg.ok{color:var(--ok)}
 .msg.error{color:var(--error)}
 
-/* ✅ Multi-select dropdown */
-.multiSelect{position:relative}
-.multiSelectBtn{
-  width:100%;
-  text-align:left;
-  padding:10px 12px;
-  border-radius:12px;
-  border:1px solid #ddd;
-  background:#fff;
-  font-size:14px;
-  font-weight:600;
-  cursor:pointer;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-}
-.multiSelectBtn:focus{
-  outline:none;
-  border-color:#cfe9ff;
-  box-shadow:0 0 0 4px rgba(207,233,255,.65);
-}
-.multiSelectBtn .hint{
-  color:var(--muted);
-  font-size:12px;
-  font-weight:900;
-  white-space:nowrap;
-}
+@media(max-width:640px){
+  .topbar-inner{
+    padding:12px 14px;
+  }
 
-.multiPanel{
-  position:absolute;
-  left:0; right:0;
-  margin-top:8px;
-  background:#fff;
-  border:1px solid #ddd;
-  border-radius:12px;
-  box-shadow:0 14px 30px rgba(0,0,0,.08);
-  z-index:50;
-  display:none;
-  overflow:hidden;
-}
-.multiPanel.open{display:block;}
+  .accountName,
+  .accountType{
+    max-width:120px;
+  }
 
-.multiTop{
-  padding:10px;
-  border-bottom:1px solid #eee;
-  background:#fafafa;
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:center;
-  justify-content:space-between;
-}
-.multiTop .left{flex:1;min-width:200px;}
-.multiTop input{
-  width:100%;
-  padding:10px 12px;
-  border-radius:10px;
-  border:1px solid #ddd;
-  font-weight:600;
-}
+  .menuDropdown{
+    width:200px;
+  }
 
-.multiTop .actions{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  flex-wrap:wrap;
-}
+  .menuBtnText{
+    display:none;
+  }
 
-/* ✅ nicer font for Select all / Clear / Done / Reset */
-.uiBtn{
-  border:1px solid #ddd;
-  background:#fff;
-  padding:8px 12px;
-  border-radius:10px;
-  cursor:pointer;
-  font-family:Inter,Arial,sans-serif;
-  font-weight:800;
-  font-size:13px;
-  letter-spacing:-0.01em;
-  color:#0f172a;
-  white-space:nowrap;
-}
-.uiBtn:hover{background:#f8fafc}
+  .wrap{
+    padding:14px;
+  }
 
-.multiList{
-  max-height:260px;
-  overflow:auto;
-  padding:10px;
-}
-.multiItem{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:6px 8px;
-  border-radius:10px;
-  user-select:none;
-}
-.multiItem:hover{background:#f8fafc}
-.multiItem input{width:auto}
+  .body{
+    padding:12px 14px 14px;
+  }
 
-.multiFooter{
-  padding:10px;
-  border-top:1px solid #eee;
-  background:#fafafa;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  flex-wrap:wrap;
-}
+  .cardHead{
+    padding:14px;
+  }
 
-.selectedWrap{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin-top:10px;
-}
-.selChip{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  border:1px solid #e5e7eb;
-  background:#f8fafc;
-  color:#334155;
-  padding:6px 10px;
-  border-radius:999px;
-  font-weight:900;
-  font-size:12px;
-}
-.selChip button{
-  border:none;
-  background:transparent;
-  cursor:pointer;
-  font-weight:900;
-  color:#64748b;
-}
-.selChip button:hover{color:#0f172a}
-.smallCount{
-  font-size:12px;
-  font-weight:800;
-  color:var(--muted);
+  .inlineChangeRow{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+
+  .inlineWord{
+    padding:0;
+  }
 }
 </style>
 
@@ -277,31 +445,89 @@ if(!localStorage.getItem("token")) location.href="login.html";
 
 <header class="topbar">
   <div class="topbar-inner">
-    <div class="brand">
-      <div class="brandBadge">PO</div>
-      <div>Practice Online</div>
+    <div class="accountLeft">
+      <div class="accountIconWrap">
+        <img
+          class="accountIcon"
+          src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
+          alt="Account"
+        >
+      </div>
+
+      <div class="accountMeta">
+        <div class="accountName" id="topAccountName">Loading...</div>
+        <div class="accountType" id="topAccountType">Account</div>
+      </div>
     </div>
-    <nav class="nav">
-      <a href="learner-quizzes.html">Practice</a>
-      <a href="results.html">Results</a>
-      <a href="support.html" class="active">Support</a>
-      <button class="btnTop" id="logoutBtn" type="button">Logout</button>
-    </nav>
+
+    <div class="topbarRight">
+      <a href="announcements.html" class="iconBtn bellBtn" title="Announcements" aria-label="Announcements">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements">
+        <span class="navBadge" id="navAnnouncementBadge">0</span>
+      </a>
+
+      <button class="menuBtn" id="menuToggleBtn" title="Menu" aria-label="Menu" type="button">
+        <span class="menuBtnText">Menu</span>
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt="Menu">
+      </button>
+
+      <div class="menuDropdown" id="menuDropdown">
+        <a class="menuItem profileTextOnly" href="profile.html">
+          <span>Profile</span>
+        </a>
+
+        <a class="menuItem" href="learner-quizzes.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777660/practice_ubgfso.svg" alt="">
+          <span>Practice</span>
+        </a>
+
+        <a class="menuItem" href="results.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="Results">
+          <span>Results</span>
+        </a>
+
+        <a class="menuItem" href="progress-dashboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="">
+          <span>Dashboard</span>
+        </a>
+
+        <a class="menuItem" href="leaderboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777661/leaderboard_yfjgjf.svg" alt="">
+          <span>Leaderboard</span>
+        </a>
+
+        <a class="menuItem" href="support.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/support_bs175s.svg" alt="">
+          <span>Support</span>
+        </a>
+
+        <a class="menuItem" href="announcements.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="">
+          <span>Announcements</span>
+        </a>
+
+        <div class="menuDivider"></div>
+
+        <button class="menuItem logoutMenuBtn" id="logoutBtn" type="button">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773768418/logout_uay6y8.svg" alt="">
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
 <div class="wrap">
   <div class="card">
     <div class="cardHead">
-      <h1 style="margin:0;font-size:18px;">Maths Support Request</h1>
-      <div style="margin-top:6px;color:var(--muted);font-weight:700;font-size:13px;">
-        Please select your request type and provide the necessary information.
+      <h1>Maths Support</h1>
+      <div class="subText">
+        Please select your request type and enter your message.
       </div>
     </div>
 
     <div class="body">
-
-      <label>Request Type</label>
+      <label for="requestType">Request Type</label>
       <select id="requestType">
         <option value="">Select</option>
         <option value="Math help">Math help</option>
@@ -309,102 +535,45 @@ if(!localStorage.getItem("token")) location.href="login.html";
         <option value="Other">Other</option>
       </select>
 
-      <div id="otherRequestWrap" style="display:none;">
-        <label>Please specify your request</label>
-        <input id="otherRequest" placeholder="Type your request type..." />
+      <div id="otherFollowUpWrap" class="hidden">
+        <label for="otherFollowUp">Please specify your request</label>
+        <input id="otherFollowUp">
       </div>
 
-      <div id="topicsBlock">
-        <label>Topic / Section</label>
+      <div id="changeAccountWrap" class="hidden">
+        <label>Change account</label>
 
-        <div class="multiSelect" id="topicMulti">
-          <button type="button" class="multiSelectBtn" id="topicBtn" aria-haspopup="listbox" aria-expanded="false">
-            <span id="topicBtnText">Select topics…</span>
-            <span class="hint">▼</span>
-          </button>
+        <div class="inlineChangeRow">
+          <select id="currentAccountType">
+            <option value="">Current account</option>
+            <option value="student">Student</option>
+            <option value="materials">Materials</option>
+          </select>
 
-          <div class="multiPanel" id="topicPanel">
-            <div class="multiTop">
-              <div class="left">
-                <input id="topicSearch" placeholder="Search topics…" />
-              </div>
-              <div class="actions">
-                <button type="button" class="uiBtn" id="selectAllBtn">Select all</button>
-                <button type="button" class="uiBtn" id="clearTopicsBtn">Clear</button>
-              </div>
-            </div>
+          <div class="inlineWord">to</div>
 
-            <div class="multiList" id="topicsContainer">Loading topics…</div>
-
-            <div class="multiFooter">
-              <div class="smallCount" id="selectedCount">0 selected</div>
-              <button type="button" class="uiBtn" id="doneTopicsBtn">Done</button>
-            </div>
-          </div>
+          <select id="newAccountType">
+            <option value="">New account</option>
+            <option value="student">Student</option>
+            <option value="materials">Materials</option>
+          </select>
         </div>
 
-        <div class="selectedWrap" id="selectedChips"></div>
+        <div class="helperText"></div>
       </div>
 
-      <label id="messageLabel">Message</label>
+      <label for="contact">Contact Number</label>
+      <input id="contact">
+
+      <label for="message">Message</label>
       <textarea id="message" placeholder="Please explain your request clearly..."></textarea>
 
-      <div class="grid" id="extraBlock">
-        <div>
-          <label>Do you want Extra Classes?</label>
-          <select id="wantExtra">
-            <option value="no">No</option>
-            <option value="yes">Yes</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Preferred Contact (WhatsApp / Phone) (only if Yes)</label>
-          <input id="contact" placeholder="e.g. 0712345678">
-        </div>
-      </div>
-
-      <div id="changeAccountBlock" class="grid" style="display:none;">
-        <div>
-          <label>Current account type</label>
-          <select id="currentAccountType">
-            <option value="">Select</option>
-            <option value="student">Student</option>
-            <option value="materials">Materials</option>
-          </select>
-        </div>
-        <div>
-          <label>Change to</label>
-          <select id="newAccountType">
-            <option value="">Select</option>
-            <option value="student">Student</option>
-            <option value="materials">Materials</option>
-          </select>
-        </div>
-        <div>
-          <label>Grade (only if changing to Student)</label>
-          <select id="newGrade">
-            <option value="">Select</option>
-            <option value="8">Grade 8</option>
-            <option value="9">Grade 9</option>
-            <option value="10">Grade 10</option>
-            <option value="11">Grade 11</option>
-            <option value="12">Grade 12</option>
-          </select>
-        </div>
-        <div>
-          <label>Contact number (required)</label>
-          <input id="changeContact" placeholder="WhatsApp / Phone number" />
-        </div>
-      </div>
-
       <div class="btnRow">
-        <button class="btn" id="submitBtn" type="button">Submit Support Request</button>
-        <button class="btn2 uiBtn" id="resetBtn" type="button">Reset Form</button>
+        <button class="btn" id="submitBtn" type="button">Submit</button>
+        <button class="btn2" id="resetBtn" type="button">Reset</button>
       </div>
 
       <div class="msg" id="msg"></div>
-
     </div>
   </div>
 </div>
@@ -413,318 +582,202 @@ if(!localStorage.getItem("token")) location.href="login.html";
 const API = window.API || "https://api.practiceonline.co.za";
 const token = localStorage.getItem("token");
 
+const topAccountName = document.getElementById("topAccountName");
+const topAccountType = document.getElementById("topAccountType");
+const menuToggleBtn = document.getElementById("menuToggleBtn");
+const menuDropdown = document.getElementById("menuDropdown");
+
 const requestTypeEl = document.getElementById("requestType");
-const otherRequestWrap = document.getElementById("otherRequestWrap");
-const otherRequestEl = document.getElementById("otherRequest");
+const otherFollowUpWrap = document.getElementById("otherFollowUpWrap");
+const otherFollowUpEl = document.getElementById("otherFollowUp");
 
-const topicsBlock = document.getElementById("topicsBlock");
-const topicsContainer = document.getElementById("topicsContainer");
-
-const topicBtn = document.getElementById("topicBtn");
-const topicBtnText = document.getElementById("topicBtnText");
-const topicPanel = document.getElementById("topicPanel");
-const topicSearch = document.getElementById("topicSearch");
-const selectAllBtn = document.getElementById("selectAllBtn");
-const clearTopicsBtn = document.getElementById("clearTopicsBtn");
-const doneTopicsBtn = document.getElementById("doneTopicsBtn");
-
-const selectedCount = document.getElementById("selectedCount");
-const selectedChips = document.getElementById("selectedChips");
-
-const messageLabel = document.getElementById("messageLabel");
-const messageEl = document.getElementById("message");
-
-const extraBlock = document.getElementById("extraBlock");
-const wantExtraEl = document.getElementById("wantExtra");
-const contactEl = document.getElementById("contact");
-
-const changeAccountBlock = document.getElementById("changeAccountBlock");
+const changeAccountWrap = document.getElementById("changeAccountWrap");
 const currentAccountTypeEl = document.getElementById("currentAccountType");
 const newAccountTypeEl = document.getElementById("newAccountType");
-const newGradeEl = document.getElementById("newGrade");
-const changeContactEl = document.getElementById("changeContact");
 
+const contactEl = document.getElementById("contact");
+const messageEl = document.getElementById("message");
 const submitBtn = document.getElementById("submitBtn");
 const resetBtn = document.getElementById("resetBtn");
 const msgEl = document.getElementById("msg");
 
 document.getElementById("logoutBtn").onclick = ()=>{
   localStorage.clear();
-  location.href="login.html";
+  location.href = "login.html";
 };
 
-function clean(s){return String(s||"").trim().replace(/\s+/g," ");}
+menuToggleBtn.addEventListener("click", function(e){
+  e.stopPropagation();
+  menuDropdown.classList.toggle("open");
+});
 
-function setMsg(t,type){
+document.addEventListener("click", function(e){
+  if(!menuDropdown.contains(e.target) && !menuToggleBtn.contains(e.target)){
+    menuDropdown.classList.remove("open");
+  }
+});
+
+function clean(s){
+  return String(s || "").trim().replace(/\s+/g, " ");
+}
+
+function setMsg(text, type){
   msgEl.className = "msg" + (type ? (" " + type) : "");
-  msgEl.textContent = t || "";
+  msgEl.textContent = text || "";
 }
 
-function escapeHtml(str){
-  return String(str ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-function escapeAttr(str){
-  return String(str ?? "").replaceAll('"',"&quot;");
-}
+function syncNewAccountOptions(){
+  const currentValue = clean(currentAccountTypeEl.value);
+  const previousNewValue = clean(newAccountTypeEl.value);
 
-/* Multi-select open/close */
-function openTopicPanel(){
-  topicPanel.classList.add("open");
-  topicBtn.setAttribute("aria-expanded","true");
-  setTimeout(()=>topicSearch.focus(), 30);
-}
-function closeTopicPanel(){
-  topicPanel.classList.remove("open");
-  topicBtn.setAttribute("aria-expanded","false");
-}
-topicBtn.addEventListener("click", ()=>{
-  topicPanel.classList.contains("open") ? closeTopicPanel() : openTopicPanel();
-});
-doneTopicsBtn.addEventListener("click", closeTopicPanel);
+  newAccountTypeEl.innerHTML = `
+    <option value="">New account</option>
+    ${currentValue !== "student" ? '<option value="student">Student</option>' : ""}
+    ${currentValue !== "materials" ? '<option value="materials">Materials</option>' : ""}
+  `;
 
-document.addEventListener("click", (e)=>{
-  const box = document.getElementById("topicMulti");
-  if(!box.contains(e.target)) closeTopicPanel();
-});
-
-function getAllCheckboxes(){
-  return [...document.querySelectorAll("#topicsContainer input[type=checkbox]")];
-}
-function selectedTopics(){
-  return getAllCheckboxes().filter(cb=>cb.checked).map(cb=>cb.value);
-}
-
-function applyTopicSearchFilter(){
-  const q = topicSearch.value.trim().toLowerCase();
-  document.querySelectorAll("#topicsContainer .multiItem").forEach(row=>{
-    const t = (row.getAttribute("data-topic") || "").toLowerCase();
-    row.style.display = (!q || t.includes(q)) ? "" : "none";
-  });
-}
-
-function updateSelectedUI(){
-  const sel = selectedTopics();
-  selectedCount.textContent = `${sel.length} selected`;
-
-  if(!sel.length) topicBtnText.textContent = "Select topics…";
-  else if(sel.length <= 2) topicBtnText.textContent = sel.join(", ");
-  else topicBtnText.textContent = `${sel.length} topics selected`;
-
-  selectedChips.innerHTML = sel.map(t=>`
-    <span class="selChip">
-      ${escapeHtml(t)}
-      <button type="button" data-remove="${escapeAttr(t)}" aria-label="Remove">×</button>
-    </span>
-  `).join("");
-
-  applyTopicSearchFilter();
-}
-
-selectedChips.addEventListener("click", (e)=>{
-  const btn = e.target.closest("[data-remove]");
-  if(!btn) return;
-  const val = btn.getAttribute("data-remove") || "";
-  const cb = document.querySelector(`#topicsContainer input[type=checkbox][value="${CSS.escape(val)}"]`);
-  if(cb) cb.checked = false;
-  updateSelectedUI();
-});
-
-clearTopicsBtn.addEventListener("click", ()=>{
-  getAllCheckboxes().forEach(cb=>cb.checked=false);
-  updateSelectedUI();
-});
-
-selectAllBtn.addEventListener("click", ()=>{
-  document.querySelectorAll("#topicsContainer .multiItem").forEach(row=>{
-    if(row.style.display === "none") return;
-    const cb = row.querySelector("input[type=checkbox]");
-    if(cb) cb.checked = true;
-  });
-  updateSelectedUI();
-});
-
-topicSearch.addEventListener("input", applyTopicSearchFilter);
-
-/* Request type UI */
-function setUIForRequestType(){
-  const val = requestTypeEl.value;
-
-  otherRequestWrap.style.display = "none";
-  changeAccountBlock.style.display = "none";
-  topicsBlock.style.display = "block";
-  extraBlock.style.display = "grid";
-  messageLabel.textContent = "Message";
-
-  if (val === "Other") {
-    otherRequestWrap.style.display = "block";
-  }
-
-  if (val === "Change of account") {
-    topicsBlock.style.display = "none";
-    extraBlock.style.display = "none";
-    changeAccountBlock.style.display = "grid";
-    messageLabel.textContent = "Message (optional)";
+  if(previousNewValue && previousNewValue !== currentValue){
+    newAccountTypeEl.value = previousNewValue;
+  } else {
+    newAccountTypeEl.value = "";
   }
 }
-requestTypeEl.addEventListener("change", setUIForRequestType);
 
-/* Load topics */
-async function loadTopics(){
-  topicsContainer.innerHTML = "<div class='smallCount'>Loading topics…</div>";
+function updateRequestTypeUI(){
+  const value = clean(requestTypeEl.value);
 
-  const res = await fetch(`${API}/api/quizzes`,{
-    headers:{Authorization:`Bearer ${token}`}
-  });
+  otherFollowUpWrap.classList.add("hidden");
+  changeAccountWrap.classList.add("hidden");
 
-  const data = await res.json().catch(()=>[]);
-  const topics = [...new Set((Array.isArray(data)?data:[])
-    .map(q=>clean(q.topic))
-    .filter(Boolean)
-  )].sort((a,b)=>a.localeCompare(b));
+  otherFollowUpEl.value = "";
+  currentAccountTypeEl.value = "";
+  syncNewAccountOptions();
 
-  if(!topics.length){
-    topicsContainer.innerHTML = "<div class='smallCount'>No topics found.</div>";
-    updateSelectedUI();
-    return;
+  if(value === "Other"){
+    otherFollowUpWrap.classList.remove("hidden");
   }
 
-  topicsContainer.innerHTML = topics.map(t=>`
-    <label class="multiItem" data-topic="${escapeAttr(t)}">
-      <input type="checkbox" value="${escapeAttr(t)}" />
-      <span>${escapeHtml(t)}</span>
-    </label>
-  `).join("");
+  if(value === "Change of account"){
+    changeAccountWrap.classList.remove("hidden");
+  }
+}
 
-  topicsContainer.addEventListener("change", (e)=>{
-    if(e.target && e.target.type === "checkbox"){
-      updateSelectedUI();
+requestTypeEl.addEventListener("change", updateRequestTypeUI);
+currentAccountTypeEl.addEventListener("change", syncNewAccountOptions);
+
+async function loadTopbarProfile(){
+  try{
+    const res = await fetch(`${API}/api/profile/me`, {
+      headers:{ Authorization:`Bearer ${token}` }
+    });
+
+    if(res.status === 401){
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("me_cache");
+      location.href = "login.html";
+      return;
     }
-  });
 
-  updateSelectedUI();
+    const data = await res.json().catch(()=>null);
+    if(!data) return;
+
+    topAccountName.textContent = data.fullName || data.username || "User";
+    topAccountType.textContent = data.accountType || data.role || "Account";
+
+    const phone =
+      data.cellphone ||
+      data.phone ||
+      data.phoneNumber ||
+      data.contact ||
+      data.contactNumber ||
+      data.whatsapp ||
+      "";
+
+    if(phone){
+      contactEl.value = phone;
+    }
+  }catch{
+    topAccountName.textContent = "User";
+    topAccountType.textContent = "Account";
+  }
 }
 
-/* Reset */
+async function loadTopbarAnnouncementCount(){
+  try{
+    const res = await fetch(`${API}/api/announcements/profile-summary`, {
+      headers:{ Authorization:`Bearer ${token}` }
+    });
+
+    const data = await res.json().catch(() => ({}));
+    document.getElementById("navAnnouncementBadge").textContent = Number(data.count || 0);
+  }catch{
+    document.getElementById("navAnnouncementBadge").textContent = "0";
+  }
+}
+
 function resetForm(){
   requestTypeEl.value = "";
-  otherRequestEl.value = "";
-  otherRequestWrap.style.display = "none";
-
-  messageEl.value = "";
-  wantExtraEl.value = "no";
-  contactEl.value = "";
-
+  otherFollowUpEl.value = "";
   currentAccountTypeEl.value = "";
-  newAccountTypeEl.value = "";
-  newGradeEl.value = "";
-  changeContactEl.value = "";
-
-  topicSearch.value = "";
-  getAllCheckboxes().forEach(cb=>cb.checked=false);
-  updateSelectedUI();
-
+  syncNewAccountOptions();
+  messageEl.value = "";
   setMsg("");
-  setUIForRequestType();
+  updateRequestTypeUI();
 }
+
 resetBtn.addEventListener("click", resetForm);
 
-/* Submit */
 submitBtn.onclick = async ()=>{
   setMsg("");
 
-  const reqType = clean(requestTypeEl.value);
-  const reqOther = clean(otherRequestEl.value);
-
-  if (!reqType) return setMsg("Please select a request type.", "error");
-  if (reqType === "Other" && !reqOther) return setMsg("Please specify your request type (Other).", "error");
-
+  const requestType = clean(requestTypeEl.value);
+  const otherFollowUp = clean(otherFollowUpEl.value);
+  const currentAccountType = clean(currentAccountTypeEl.value);
+  const newAccountType = clean(newAccountTypeEl.value);
+  const contact = clean(contactEl.value);
   const message = clean(messageEl.value);
 
-  if (reqType === "Change of account") {
-    const currentType = clean(currentAccountTypeEl.value);
-    const newType = clean(newAccountTypeEl.value);
-    const grade = clean(newGradeEl.value);
-    const phone = clean(changeContactEl.value);
+  if(!requestType){
+    return setMsg("Please select a request type.", "error");
+  }
 
-    if (!currentType) return setMsg("Please select your current account type.", "error");
-    if (!newType) return setMsg("Please select the account type you want.", "error");
-    if (currentType === newType) return setMsg("Current and new account type cannot be the same.", "error");
-    if (!phone) return setMsg("A contact number is required for account changes.", "error");
-    if (newType === "student" && !grade) return setMsg("Please select a grade for the Student account.", "error");
+  if(requestType === "Other" && !otherFollowUp){
+    return setMsg("Please specify your request:", "error");
+  }
 
-    submitBtn.disabled = true;
-    setMsg("Submitting…");
-
-    const payload = {
-      subject: "Maths",
-      requestType: "Change of account",
-      message: message || "",
-      changeAccount: {
-        currentAccountType: currentType,
-        newAccountType: newType,
-        newGrade: newType === "student" ? Number(grade) : null,
-        contact: phone
-      }
-    };
-
-    try{
-      const r = await fetch(`${API}/api/support`,{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          Authorization:`Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if(!r.ok){
-        submitBtn.disabled = false;
-        return setMsg("We could not submit your request. Please try again.", "error");
-      }
-
-      submitBtn.disabled = false;
-      setMsg("✅ Your request has been submitted successfully. We will contact you shortly.", "ok");
-      resetForm();
-      return;
-
-    }catch{
-      submitBtn.disabled = false;
-      return setMsg("Network error. Please try again.", "error");
+  if(requestType === "Change of account"){
+    if(!currentAccountType || !newAccountType){
+      return setMsg("Please select both account types.", "error");
+    }
+    if(currentAccountType === newAccountType){
+      return setMsg("You cannot change student to student or materials to materials.", "error");
     }
   }
 
-  const topics = selectedTopics();
-
-  if (reqType === "Math help" && topics.length === 0) {
-    return setMsg("Please select at least one topic/section.", "error");
+  if(!message){
+    return setMsg("Please enter your message.", "error");
   }
 
-  if (!message) return setMsg("Please enter a clear message.", "error");
-
-  const wantsExtra = wantExtraEl.value === "yes";
-  const phone = clean(contactEl.value);
-  if (wantsExtra && !phone) return setMsg("Please provide a contact number for Extra Classes.", "error");
-
   submitBtn.disabled = true;
-  setMsg("Submitting…");
+  setMsg("Submitting...");
 
   const payload = {
     subject: "Maths",
-    requestType: (reqType === "Other") ? reqOther : reqType,
-    topics: topics,
+    requestType,
+    requestFollowUp: requestType === "Other" ? otherFollowUp : "",
+    changeAccount: requestType === "Change of account"
+      ? {
+          currentAccountType,
+          newAccountType
+        }
+      : null,
     message,
-    wantExtraClasses: wantsExtra,
-    preferredService: wantsExtra ? "extra_classes" : "",
-    contact: wantsExtra ? phone : ""
+    contact
   };
 
   try{
-    const r = await fetch(`${API}/api/support`,{
+    const r = await fetch(`${API}/api/support`, {
       method:"POST",
       headers:{
         "Content-Type":"application/json",
@@ -739,7 +792,7 @@ submitBtn.onclick = async ()=>{
     }
 
     submitBtn.disabled = false;
-    setMsg("Your support request has been submitted successfully. We will contact you soon.", "ok");
+    setMsg("Your support request has been submitted successfully.", "ok");
     resetForm();
 
   }catch{
@@ -748,8 +801,10 @@ submitBtn.onclick = async ()=>{
   }
 };
 
-loadTopics();
-setUIForRequestType();
+loadTopbarProfile();
+loadTopbarAnnouncementCount();
+syncNewAccountOptions();
+updateRequestTypeUI();
 </script>
 
 </body>
