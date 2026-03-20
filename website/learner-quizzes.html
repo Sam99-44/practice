@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Practice | Practice Online</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
 <style>
 :root{
   --nav:#1b1648;
+  --red:#e11d2e;
   --bg:#f6f7fb;
-  --border:#e6e6e6;
+  --card:#ffffff;
+  --border:#d9dee7;
   --text:#0f172a;
   --muted:#475569;
   --easy:#22c55e;
@@ -23,54 +23,289 @@
 
 *{box-sizing:border-box}
 
-body{
+html,body{
   margin:0;
-  font-family:Inter, Arial, sans-serif;
+  padding:0;
+  font-family:Arial, Helvetica, sans-serif;
   background:var(--bg);
+  color:var(--text);
 }
 
-/* HEADER */
-header{background:var(--nav);color:#fff}
-.topbar-inner{
-  max-width:1100px;
-  margin:auto;
-  padding:14px;
-  display:flex;
-  justify-content:space-between;
-}
-nav a{
-  color:#fff;
-  margin-left:10px;
+a{
   text-decoration:none;
+  color:inherit;
 }
 
-/* PAGE */
+button,input,select{
+  font:inherit;
+}
+
+/* ===== EXACT TOPBAR ===== */
+.topbar{
+  background:var(--nav);
+  color:#fff;
+  position:sticky;
+  top:0;
+  z-index:1000;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.topbar-inner{
+  max-width:1150px;
+  margin:0 auto;
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.accountLeft{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+  cursor:default;
+  user-select:none;
+}
+
+.accountIconWrap{
+  width:auto;
+  height:auto;
+  background:transparent;
+  border:none;
+  box-shadow:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+
+.accountIcon{
+  width:40px;
+  height:40px;
+  display:block;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.accountMeta{
+  min-width:0;
+  line-height:1.1;
+}
+
+.accountName{
+  font-size:16px;
+  font-weight:700;
+  color:#fff;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:220px;
+}
+
+.accountType{
+  font-size:13px;
+  color:#e0e7ff;
+  margin-top:3px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:220px;
+  text-transform:capitalize;
+}
+
+.topbarRight{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  position:relative;
+}
+
+.iconBtn{
+  min-width:50px;
+  height:50px;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  padding:0 4px;
+}
+
+.iconBtn img{
+  width:30px;
+  height:30px;
+  display:block;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.bellBtn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
+.bellBtn:hover{
+  opacity:.92;
+}
+
+.navBadge{
+  min-width:auto;
+  height:auto;
+  padding:0;
+  margin-left:2px;
+  border-radius:0;
+  background:transparent;
+  color:#ffd6db;
+  font-size:13px;
+  font-weight:700;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.menuBtn{
+  min-width:auto;
+  height:50px;
+  padding:0;
+  gap:8px;
+  border:none;
+  background:transparent;
+  border-radius:0;
+  box-shadow:none;
+  font-family:Arial, Helvetica, sans-serif;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+.menuBtn:hover{
+  background:transparent;
+  opacity:1;
+}
+
+.menuBtnText{
+  font-size:14px;
+  font-weight:700;
+  color:#fff;
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  top:-1px;
+}
+
+.menuBtn img{
+  width:28px;
+  height:28px;
+  filter:brightness(0) invert(1) contrast(180%);
+  display:block;
+}
+
+.menuDropdown{
+  position:absolute;
+  top:48px;
+  right:0;
+  width:210px;
+  background:#f7f7f8;
+  color:#111827;
+  border:1px solid #d9dee7;
+  border-radius:16px;
+  box-shadow:0 14px 30px rgba(15,23,42,.14);
+  padding:10px 0;
+  display:none;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.menuDropdown.open{
+  display:block;
+}
+
+.menuItem{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 18px;
+  color:#111827;
+  font-size:14px;
+  font-weight:700;
+  background:transparent;
+  border:none;
+  text-align:left;
+  cursor:pointer;
+}
+
+.menuItem:hover{
+  background:#eef2f7;
+}
+
+.menuItem img{
+  width:18px;
+  height:18px;
+  display:block;
+  flex-shrink:0;
+}
+
+.menuItem.profileTextOnly{
+  padding-left:38px;
+}
+
+.menuDivider{
+  height:1px;
+  background:#dde4ec;
+  margin:8px 0 6px;
+}
+
+.logoutMenuBtn{
+  width:100%;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  text-align:left;
+}
+
+/* ===== PAGE ===== */
 .wrap{
-  max-width:1100px;
-  margin:auto;
+  max-width:1150px;
+  margin:0 auto;
   padding:18px;
 }
+
 .card{
   background:#fff;
   border:1px solid var(--border);
-  border-radius:14px;
+  border-radius:18px;
 }
+
 .cardHead{
-  padding:14px;
+  padding:18px;
   border-bottom:1px solid var(--border);
 }
+
 h1{
-  font-size:20px;
+  font-size:22px;
   margin:0;
+  color:var(--nav);
 }
+
 .muted{
   font-size:14px;
   color:var(--muted);
+  margin-top:5px;
 }
 
 /* CONTROLS */
 .controls{
-  padding:14px;
+  padding:14px 18px;
   display:grid;
   grid-template-columns:1fr 160px 140px 150px;
   gap:10px;
@@ -79,6 +314,7 @@ h1{
 .searchWrap{
   position:relative;
 }
+
 .searchWrap svg{
   position:absolute;
   left:12px;
@@ -91,20 +327,23 @@ h1{
 }
 
 input,select{
-  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   font-size:14px;
   padding:10px;
   border-radius:10px;
   border:1px solid #ddd;
   width:100%;
+  outline:none;
+  background:#fff;
 }
+
 #search{
   padding-left:38px;
 }
 
 /* FILTER BUTTONS */
 .filters{
-  padding:0 14px;
+  padding:0 18px;
   display:flex;
   gap:22px;
   border-bottom:1px solid #eee;
@@ -113,7 +352,7 @@ input,select{
 .fbtn{
   background:none;
   border:none;
-  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   font-size:13px;
   cursor:pointer;
   position:relative;
@@ -140,8 +379,9 @@ input,select{
 
 /* TOPICS */
 .topic-wrap{
-  padding:14px;
+  padding:18px;
 }
+
 .topic-card{
   border:1px solid var(--border);
   border-radius:12px;
@@ -158,7 +398,7 @@ input,select{
 }
 
 .topic-title{
-  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   font-size:14px;
   font-weight:400;
   color:#0f172a;
@@ -168,7 +408,7 @@ input,select{
   display:flex;
   gap:14px;
   flex-wrap:wrap;
-  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   font-size:13px;
   color:#475569;
 }
@@ -176,15 +416,17 @@ input,select{
 .progressWrap{
   margin-top:10px;
 }
+
 .progressLabels{
   display:flex;
   justify-content:space-between;
   align-items:center;
   margin-bottom:6px;
-  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   font-size:12px;
   color:#475569;
 }
+
 .progressTrack{
   width:100%;
   height:8px;
@@ -192,6 +434,7 @@ input,select{
   border-radius:999px;
   overflow:hidden;
 }
+
 .progressBar{
   height:100%;
   background:var(--bar);
@@ -245,7 +488,7 @@ input,select{
   top:50%;
   left:50%;
   transform:translate(-50%,-50%);
-  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   font-weight:700;
   font-size:14px;
 }
@@ -260,7 +503,7 @@ input,select{
 }
 
 .quiz-number{
-  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   font-size:12px;
   text-align:center;
   margin-top:2px;
@@ -273,23 +516,115 @@ input,select{
 }
 
 @media (max-width:900px){
-  .controls{grid-template-columns:1fr 1fr}
+  .controls{
+    grid-template-columns:1fr 1fr;
+  }
 }
+
 @media (max-width:640px){
-  .controls{grid-template-columns:1fr}
+  .controls{
+    grid-template-columns:1fr;
+  }
+
+  .topbar-inner{
+    padding:12px 14px;
+  }
+
+  .accountName,
+  .accountType{
+    max-width:120px;
+  }
+
+  .menuDropdown{
+    width:200px;
+  }
+
+  .menuBtnText{
+    display:none;
+  }
 }
 </style>
+
+<script>
+if(!localStorage.getItem("token")){
+  location.href="login.html";
+}
+</script>
 </head>
 
 <body>
 
-<header>
+<header class="topbar">
   <div class="topbar-inner">
-    <strong>Practice Online</strong>
-    <nav>
-      <a>Practice</a>
-      <a href="results.html">Results</a>
-    </nav>
+    <div class="accountLeft">
+      <div class="accountIconWrap">
+        <img
+          class="accountIcon"
+          src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
+          alt="Account"
+        >
+      </div>
+
+      <div class="accountMeta">
+        <div class="accountName" id="topAccountName">Loading...</div>
+        <div class="accountType" id="topAccountType">Account</div>
+      </div>
+    </div>
+
+    <div class="topbarRight">
+      <a href="announcements.html" class="iconBtn bellBtn" title="Announcements" aria-label="Announcements">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements">
+        <span class="navBadge" id="navAnnouncementBadge">0</span>
+      </a>
+
+      <button class="menuBtn" id="menuToggleBtn" title="Menu" aria-label="Menu" type="button">
+        <span class="menuBtnText">Menu</span>
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt="Menu">
+      </button>
+
+      <div class="menuDropdown" id="menuDropdown">
+        <a class="menuItem profileTextOnly" href="profile.html">
+          <span>Profile</span>
+        </a>
+
+        <a class="menuItem" href="learner-quizzes.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777660/practice_ubgfso.svg" alt="">
+          <span>Practice</span>
+        </a>
+
+        <a class="menuItem" href="results.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="Results">
+          <span>Results</span>
+        </a>
+
+        <a class="menuItem" href="progress-dashboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="">
+          <span>Dashboard</span>
+        </a>
+
+        <a class="menuItem" href="leaderboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777661/leaderboard_yfjgjf.svg" alt="">
+          <span>Leaderboard</span>
+        </a>
+
+        <a class="menuItem" href="support.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/support_bs175s.svg" alt="">
+          <span>Support</span>
+        </a>
+
+        <a class="menuItem" href="announcements.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="">
+          <span>Announcements</span>
+        </a>
+
+        <div class="menuDivider"></div>
+
+        <button class="menuItem logoutMenuBtn" id="logoutBtn" type="button">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773768418/logout_uay6y8.svg" alt="">
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -310,7 +645,9 @@ input,select{
         <input id="search" placeholder="Search topic or assessment">
       </div>
 
-      <select id="topicFilter"></select>
+      <select id="topicFilter">
+        <option value="all">All Topics</option>
+      </select>
 
       <select id="paperFilter">
         <option value="all">All Papers</option>
@@ -339,74 +676,152 @@ input,select{
 </div>
 
 <script>
-const API="https://practice-backend-msgn.onrender.com";
-const token=localStorage.getItem("token");
+const API = "https://practice-backend-msgn.onrender.com";
+const token = localStorage.getItem("token");
 
-const ICON="https://res.cloudinary.com/dopoxadlr/image/upload/v1773875474/square_ho8otg.svg";
+const ICON = "https://res.cloudinary.com/dopoxadlr/image/upload/v1773875474/square_ho8otg.svg";
 
-const searchEl=document.getElementById("search");
-const topicFilter=document.getElementById("topicFilter");
-const paperFilter=document.getElementById("paperFilter");
-const periodFilter=document.getElementById("periodFilter");
+const topAccountName = document.getElementById("topAccountName");
+const topAccountType = document.getElementById("topAccountType");
+const menuToggleBtn = document.getElementById("menuToggleBtn");
+const menuDropdown = document.getElementById("menuDropdown");
+const logoutBtn = document.getElementById("logoutBtn");
 
-let quizzes=[];
-let resultsMap={};
-let diff="all";
+const searchEl = document.getElementById("search");
+const topicFilter = document.getElementById("topicFilter");
+const paperFilter = document.getElementById("paperFilter");
+const periodFilter = document.getElementById("periodFilter");
 
-/* STATE */
+let quizzes = [];
+let resultsMap = {};
+let diff = "all";
+
+/* ===== MENU ===== */
+if(logoutBtn){
+  logoutBtn.onclick = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    localStorage.removeItem("me_cache");
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
+    location.href = "login.html";
+  };
+}
+
+if(menuToggleBtn && menuDropdown){
+  menuToggleBtn.addEventListener("click", function(e){
+    e.stopPropagation();
+    menuDropdown.classList.toggle("open");
+  });
+
+  document.addEventListener("click", function(e){
+    if(!menuDropdown.contains(e.target) && !menuToggleBtn.contains(e.target)){
+      menuDropdown.classList.remove("open");
+    }
+  });
+}
+
+/* ===== TOPBAR PROFILE ===== */
+async function loadTopbarProfile(){
+  try{
+    const res = await fetch(`${API}/api/profile/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if(res.status === 401){
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("me_cache");
+      location.href = "login.html";
+      return;
+    }
+
+    const data = await res.json();
+
+    topAccountName.textContent = data.fullName || data.username || "User";
+    topAccountType.textContent = data.accountType || data.role || "Account";
+  }catch(err){
+    topAccountName.textContent = "User";
+    topAccountType.textContent = "Account";
+  }
+}
+
+/* ===== TOPBAR ANNOUNCEMENT COUNT ===== */
+async function loadTopbarAnnouncementCount(){
+  try{
+    const res = await fetch(`${API}/api/announcements/profile-summary`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const data = await res.json().catch(() => ({}));
+    document.getElementById("navAnnouncementBadge").textContent = Number(data.count || 0);
+  }catch(err){
+    document.getElementById("navAnnouncementBadge").textContent = "0";
+  }
+}
+
+/* ===== QUIZ STATE ===== */
 function getState(id){
-  const r=resultsMap[id];
+  const r = resultsMap[id];
   if(!r) return {type:"new"};
 
-  const percent=Math.round((r.score/r.total)*100);
+  const score = Number(r.score || 0);
+  const total = Number(r.total || 0);
+  const percent = total ? Math.round((score / total) * 100) : Math.round(Number(r.percent || 0));
+
   return {
     type:"done",
-    score:percent+"%",
-    state:percent>=50?"pass":"fail",
+    score: percent + "%",
+    state: percent >= 50 ? "pass" : "fail",
     percent
   };
 }
 
 function isWithinPeriod(dateValue, period){
-  if(period==="all") return true;
+  if(period === "all") return true;
   if(!dateValue) return false;
 
-  const d=new Date(dateValue);
+  const d = new Date(dateValue);
   if(Number.isNaN(d.getTime())) return false;
 
-  const now=new Date();
-  const todayStart=new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  if(period==="today"){
-    return d>=todayStart;
+  if(period === "today"){
+    return d >= todayStart;
   }
 
-  if(period==="week"){
-    const day=todayStart.getDay();
-    const diffToMonday=(day===0?6:day-1);
-    const weekStart=new Date(todayStart);
-    weekStart.setDate(todayStart.getDate()-diffToMonday);
-    return d>=weekStart;
+  if(period === "week"){
+    const day = todayStart.getDay();
+    const diffToMonday = (day === 0 ? 6 : day - 1);
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(todayStart.getDate() - diffToMonday);
+    return d >= weekStart;
   }
 
-  if(period==="month"){
-    const monthStart=new Date(now.getFullYear(), now.getMonth(), 1);
-    return d>=monthStart;
+  if(period === "month"){
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    return d >= monthStart;
   }
 
   return true;
 }
 
-/* FILTER */
+/* ===== FILTER ===== */
 function apply(){
-  const q=searchEl.value.toLowerCase().trim();
+  const q = searchEl.value.toLowerCase().trim();
 
-  const filtered=quizzes.filter(x=>{
-    const matchesSearch=!q || x.title.toLowerCase().includes(q) || x.topic.toLowerCase().includes(q);
-    const matchesTopic=topicFilter.value==="all" || x.topic===topicFilter.value;
-    const matchesPaper=paperFilter.value==="all" || x.paper===paperFilter.value;
-    const matchesDiff=diff==="all" || x.difficulty===diff;
-    const matchesPeriod=isWithinPeriod(x.createdAt || x.updatedAt, periodFilter.value);
+  const filtered = quizzes.filter(x => {
+    const title = String(x.title || "").toLowerCase();
+    const topic = String(x.topic || "").toLowerCase();
+    const paper = String(x.paper || "").toLowerCase();
+    const difficulty = String(x.difficulty || "").toLowerCase();
+
+    const matchesSearch = !q || title.includes(q) || topic.includes(q);
+    const matchesTopic = topicFilter.value === "all" || x.topic === topicFilter.value;
+    const matchesPaper = paperFilter.value === "all" || paper === paperFilter.value;
+    const matchesDiff = diff === "all" || difficulty === diff;
+    const matchesPeriod = isWithinPeriod(x.createdAt || x.updatedAt, periodFilter.value);
 
     return matchesSearch && matchesTopic && matchesPaper && matchesDiff && matchesPeriod;
   });
@@ -414,47 +829,50 @@ function apply(){
   render(filtered);
 }
 
-/* TOPIC STATS */
+/* ===== TOPIC STATS ===== */
 function getTopicStats(topicQuizzes){
-  const attempted=topicQuizzes.filter(q=>resultsMap[q._id]);
-  const completed=attempted.length;
-  const total=topicQuizzes.length;
-  const progress=total ? Math.round((completed/total)*100) : 0;
+  const attempted = topicQuizzes.filter(q => resultsMap[q._id]);
+  const completed = attempted.length;
+  const total = topicQuizzes.length;
+  const progress = total ? Math.round((completed / total) * 100) : 0;
 
-  let avg=0;
+  let avg = 0;
   if(completed){
-    const sum=attempted.reduce((acc,q)=>{
-      const r=resultsMap[q._id];
-      const percent=Math.round((r.score/r.total)*100);
-      return acc+percent;
-    },0);
-    avg=Math.round(sum/completed);
+    const sum = attempted.reduce((acc, q) => {
+      const r = resultsMap[q._id];
+      const score = Number(r.score || 0);
+      const totalMarks = Number(r.total || 0);
+      const percent = totalMarks ? Math.round((score / totalMarks) * 100) : Math.round(Number(r.percent || 0));
+      return acc + percent;
+    }, 0);
+    avg = Math.round(sum / completed);
   }
 
-  return {completed,total,progress,avg};
+  return {completed, total, progress, avg};
 }
 
-/* RENDER */
+/* ===== RENDER ===== */
 function render(list){
   if(!list.length){
-    document.getElementById("quizList").innerHTML=`<div class="empty">No assessments found.</div>`;
+    document.getElementById("quizList").innerHTML = `<div class="empty">No assessments found.</div>`;
     return;
   }
 
-  const groups={};
-  list.forEach(q=>{
-    if(!groups[q.topic]) groups[q.topic]=[];
-    groups[q.topic].push(q);
+  const groups = {};
+  list.forEach(q => {
+    const topic = q.topic || "General";
+    if(!groups[topic]) groups[topic] = [];
+    groups[topic].push(q);
   });
 
-  const html=Object.keys(groups).sort().map(topic=>{
-    const topicQuizzes=groups[topic];
-    const stats=getTopicStats(topicQuizzes);
+  const html = Object.keys(groups).sort().map(topic => {
+    const topicQuizzes = groups[topic];
+    const stats = getTopicStats(topicQuizzes);
 
     return `
     <div class="topic-card">
       <div class="topic-top">
-        <div class="topic-title">${topic}</div>
+        <div class="topic-title">${escapeHtml(topic)}</div>
         <div class="topic-stats">
           <span>Average: ${stats.avg}%</span>
           <span>Completed: ${stats.completed}/${stats.total}</span>
@@ -472,74 +890,109 @@ function render(list){
       </div>
 
       <div class="quiz-squares">
-        ${topicQuizzes.map((q,i)=>{
-          const s=getState(q._id);
+        ${topicQuizzes.map((q, i) => {
+          const s = getState(q._id);
           return `
-          <div class="quiz-square ${s.state || ""}" onclick="location='attempt.html?quizId=${q._id}'">
+          <div class="quiz-square ${s.state || ""}" onclick="location.href='attempt.html?quizId=${encodeURIComponent(q._id || "")}'">
             <div class="quiz-icon-wrap">
               <div class="quiz-fill"></div>
-              <img src="${ICON}" class="quiz-square-base">
+              <img src="${ICON}" class="quiz-square-base" alt="Quiz">
               ${
-                s.type==="new"
-                ? `<div class="quiz-q">?</div>`
-                : `<div class="quiz-mark">${s.score}</div>`
+                s.type === "new"
+                  ? `<div class="quiz-q">?</div>`
+                  : `<div class="quiz-mark">${escapeHtml(s.score)}</div>`
               }
             </div>
-            <div class="quiz-number">${i+1}</div>
+            <div class="quiz-number">${i + 1}</div>
           </div>`;
         }).join("")}
       </div>
     </div>`;
   }).join("");
 
-  document.getElementById("quizList").innerHTML=html;
+  document.getElementById("quizList").innerHTML = html;
 }
 
-/* EVENTS */
-document.querySelectorAll(".fbtn").forEach(b=>{
-  b.onclick=()=>{
-    diff=b.dataset.diff;
-    document.querySelectorAll(".fbtn").forEach(x=>x.classList.remove("active"));
+/* ===== HELPERS ===== */
+function escapeHtml(str){
+  return String(str ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+/* ===== EVENTS ===== */
+document.querySelectorAll(".fbtn").forEach(b => {
+  b.onclick = () => {
+    diff = b.dataset.diff;
+    document.querySelectorAll(".fbtn").forEach(x => x.classList.remove("active"));
     b.classList.add("active");
     apply();
   };
 });
 
-searchEl.oninput=apply;
-topicFilter.onchange=apply;
-paperFilter.onchange=apply;
-periodFilter.onchange=apply;
+searchEl.oninput = apply;
+topicFilter.onchange = apply;
+paperFilter.onchange = apply;
+periodFilter.onchange = apply;
 
-/* LOAD */
-(async()=>{
+/* ===== LOAD ===== */
+async function loadPage(){
   try{
-    const me=await fetch(`${API}/api/auth/me`,{
+    const meRes = await fetch(`${API}/api/auth/me`, {
       headers:{Authorization:`Bearer ${token}`}
-    }).then(r=>r.json());
-    document.getElementById("gradeText").textContent="Grade: "+me.grade;
-
-    quizzes=await fetch(`${API}/api/quizzes`,{
-      headers:{Authorization:`Bearer ${token}`}
-    }).then(r=>r.json());
-
-    const results=await fetch(`${API}/api/results/my`,{
-      headers:{Authorization:`Bearer ${token}`}
-    }).then(r=>r.json());
-
-    results.forEach(r=>{
-      const id=r.quizId?._id||r.quizId;
-      if(id) resultsMap[id]=r;
     });
 
-    const topics=[...new Set(quizzes.map(q=>q.topic))].sort();
-    topicFilter.innerHTML=`<option value="all">All Topics</option>`+
-      topics.map(t=>`<option value="${t}">${t}</option>`).join("");
+    if(meRes.status === 401){
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("me_cache");
+      location.href = "login.html";
+      return;
+    }
+
+    const me = await meRes.json();
+    document.getElementById("gradeText").textContent = "Grade: " + (me.grade || "-");
+
+    const quizzesRes = await fetch(`${API}/api/quizzes`, {
+      headers:{Authorization:`Bearer ${token}`}
+    });
+    quizzes = await quizzesRes.json().catch(() => []);
+    if(!Array.isArray(quizzes)) quizzes = [];
+
+    const resultsRes = await fetch(`${API}/api/results/my`, {
+      headers:{Authorization:`Bearer ${token}`}
+    });
+    const results = await resultsRes.json().catch(() => []);
+    const safeResults = Array.isArray(results) ? results : [];
+
+    resultsMap = {};
+    safeResults.forEach(r => {
+      const id = r.quizId?._id || r.quizId;
+      if(id) resultsMap[id] = r;
+    });
+
+    const topics = [...new Set(
+      quizzes
+        .map(q => q.topic || "General")
+        .filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b));
+
+    topicFilter.innerHTML =
+      `<option value="all">All Topics</option>` +
+      topics.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
 
     apply();
   }catch(err){
-    document.getElementById("quizList").innerHTML=`<div class="empty">Could not load quizzes.</div>`;
+    document.getElementById("quizList").innerHTML = `<div class="empty">Could not load quizzes.</div>`;
   }
-})();
+}
+
+loadTopbarProfile();
+loadTopbarAnnouncementCount();
+loadPage();
 </script>
 
 </body>
