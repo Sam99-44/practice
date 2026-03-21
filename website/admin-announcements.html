@@ -143,6 +143,10 @@ body{
 .btn-danger{background:var(--danger);color:#fff}
 .btn-light{background:#eef2f7;color:#0f172a}
 .btn:hover{opacity:.96}
+.btn:disabled{
+  opacity:.65;
+  cursor:not-allowed;
+}
 .status{
   display:none;
   padding:13px 14px;
@@ -362,10 +366,14 @@ const formTitle = document.getElementById("formTitle");
 const statusBox = document.getElementById("statusBox");
 const listBox = document.getElementById("listBox");
 const cancelEditBtn = document.getElementById("cancelEditBtn");
+const saveBtn = document.getElementById("saveBtn");
 
 const categoryEl = document.getElementById("category");
 const classFields = document.getElementById("classFields");
 const quizFields = document.getElementById("quizFields");
+
+let announcementsCache = [];
+let isSaving = false;
 
 function showStatus(message, type = "info") {
   statusBox.className = `status show ${type}`;
@@ -377,12 +385,57 @@ function hideStatus() {
   statusBox.textContent = "";
 }
 
-function tokenHeaders() {
-  const token = localStorage.getItem("token");
+function getToken() {
+  let token = localStorage.getItem("token") || "";
+  token = String(token).trim();
+
+  if (
+    (token.startsWith('"') && token.endsWith('"')) ||
+    (token.startsWith("'") && token.endsWith("'"))
+  ) {
+    token = token.slice(1, -1).trim();
+  }
+
+  return token;
+}
+
+function tokenHeaders(extra = {}) {
+  const token = getToken();
   return {
     "Content-Type": "application/json",
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...extra,
   };
+}
+
+async function apiFetch(url, options = {}) {
+  const finalOptions = {
+    cache: "no-store",
+    ...options,
+    headers: tokenHeaders(options.headers || {}),
+  };
+
+  const res = await fetch(url, finalOptions);
+  const data = await res.json().catch(() => ({}));
+
+  const responseToken =
+    res.headers.get("x-auth-token") ||
+    data.token ||
+    data.accessToken ||
+    "";
+
+  if (responseToken && typeof responseToken === "string") {
+    localStorage.setItem("token", responseToken);
+  }
+
+  if (!res.ok) {
+    throw new Error(data.message || "Request failed.");
+  }
+
+  return data;
 }
 
 function escapeHtml(value = "") {
@@ -473,12 +526,14 @@ function badgeCategory(category) {
 }
 
 function renderList(items = []) {
-  if (!items.length) {
+  announcementsCache = Array.isArray(items) ? items : [];
+
+  if (!announcementsCache.length) {
     listBox.innerHTML = `<div style="color:#64748b;font-size:14px;">No announcements found.</div>`;
     return;
   }
 
-  listBox.innerHTML = items.map(item => `
+  listBox.innerHTML = announcementsCache.map((item, index) => `
     <div class="card">
       <div class="cardTop">
         <div>
@@ -506,8 +561,8 @@ function renderList(items = []) {
       </div>
 
       <div class="smallActions">
-        <button class="smallBtn edit" onclick='editAnnouncement(${JSON.stringify(item).replace(/'/g, "\\'")})'>Edit</button>
-        <button class="smallBtn delete" onclick="deleteAnnouncement('${item._id}')">Delete</button>
+        <button class="smallBtn edit" type="button" data-action="edit" data-index="${index}">Edit</button>
+        <button class="smallBtn delete" type="button" data-action="delete" data-id="${escapeHtml(item._id || "")}">Delete</button>
       </div>
     </div>
   `).join("");
@@ -515,15 +570,9 @@ function renderList(items = []) {
 
 async function loadAnnouncements() {
   try {
-    const res = await fetch(`${API}/api/announcements/admin/list`, {
-      headers: tokenHeaders(),
+    const data = await apiFetch(`${API}/api/announcements/admin/list`, {
+      method: "GET",
     });
-
-    const data = await res.json().catch(() => []);
-
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to load announcements.");
-    }
 
     renderList(Array.isArray(data) ? data : []);
   } catch (err) {
@@ -535,6 +584,8 @@ async function loadAnnouncements() {
 
 async function saveAnnouncement(e) {
   e.preventDefault();
+
+  if (isSaving) return;
 
   try {
     const id = document.getElementById("announcementId").value.trim();
@@ -550,59 +601,67 @@ async function saveAnnouncement(e) {
       return;
     }
 
+    isSaving = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = id ? "Updating..." : "Saving...";
+
     showStatus(id ? "Updating announcement..." : "Creating announcement...", "info");
 
-    const res = await fetch(
+    const data = await apiFetch(
       id ? `${API}/api/announcements/${id}` : `${API}/api/announcements`,
       {
         method: id ? "PUT" : "POST",
-        headers: tokenHeaders(),
         body: JSON.stringify(payload),
       }
     );
 
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to save announcement.");
-    }
-
-    showStatus(data.message || "Announcement saved successfully.", "success");
     resetForm();
-    loadAnnouncements();
+    await loadAnnouncements();
+    showStatus(data.message || "Announcement saved successfully.", "success");
   } catch (err) {
     console.error(err);
     showStatus(err.message || "Could not save announcement.", "error");
+  } finally {
+    isSaving = false;
+    saveBtn.disabled = false;
+    saveBtn.textContent = "Save Announcement";
   }
 }
 
-window.editAnnouncement = function(item) {
-  fillForm(item);
-};
-
-window.deleteAnnouncement = async function(id) {
+async function deleteAnnouncement(id) {
   const ok = confirm("Delete this announcement?");
   if (!ok) return;
 
   try {
-    const res = await fetch(`${API}/api/announcements/${id}`, {
+    const data = await apiFetch(`${API}/api/announcements/${id}`, {
       method: "DELETE",
-      headers: tokenHeaders(),
     });
 
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to delete announcement.");
-    }
-
     showStatus(data.message || "Announcement deleted.", "success");
-    loadAnnouncements();
+    await loadAnnouncements();
   } catch (err) {
     console.error(err);
     showStatus(err.message || "Could not delete announcement.", "error");
   }
-};
+}
+
+listBox.addEventListener("click", function(e) {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+
+  const action = btn.dataset.action;
+
+  if (action === "edit") {
+    const index = Number(btn.dataset.index);
+    const item = announcementsCache[index];
+    if (item) fillForm(item);
+  }
+
+  if (action === "delete") {
+    const id = btn.dataset.id;
+    if (id) deleteAnnouncement(id);
+  }
+});
 
 categoryEl.addEventListener("change", toggleExtraFields);
 form.addEventListener("submit", saveAnnouncement);
