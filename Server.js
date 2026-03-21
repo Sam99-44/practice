@@ -717,22 +717,38 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 app.post("/api/register", registerLimiter, async (req, res) => {
   try {
     const {
-      fullName,
       username,
       email,
       grade,
-      password,
       accountType,
       province,
       district,
       gender,
       cellphone,
       guardianCellphone,
+
+      // ✅ NEW FIELDS
+      firstName,
+      surname,
+      schoolName,
+      currentMarkRange,
     } = req.body;
 
-    if (!username || !email || !password || !accountType) {
+    // ✅ REQUIRED VALIDATION
+    if (
+      !username ||
+      !email ||
+      !accountType ||
+      !firstName ||
+      !surname ||
+      !schoolName ||
+      !cellphone ||
+      !guardianCellphone ||
+      !province ||
+      !currentMarkRange
+    ) {
       return res.status(400).json({
-        message: "Username, email, password, and account type are required.",
+        message: "Please fill all required fields.",
       });
     }
 
@@ -742,55 +758,54 @@ app.post("/api/register", registerLimiter, async (req, res) => {
 
     let gradeNum = null;
     if (accountType === "student") {
-      if (grade === undefined || grade === null || grade === "") {
-        return res
-          .status(400)
-          .json({ message: "Grade is required for Student accounts." });
-      }
       gradeNum = Number(grade);
       if (!Number.isInteger(gradeNum) || gradeNum < 8 || gradeNum > 12) {
-        return res
-          .status(400)
-          .json({ message: "Grade must be between 8 and 12." });
+        return res.status(400).json({ message: "Grade must be 8–12." });
       }
-    }
-
-    if (String(password).length < 6) {
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 6 characters." });
     }
 
     const cleanUsername = cleanSpaces(username);
     const cleanEmail = String(email || "").toLowerCase().trim();
 
     if (!isValidEmail(cleanEmail)) {
-      return res.status(400).json({ message: "Please enter a valid email address." });
+      return res.status(400).json({ message: "Invalid email." });
     }
 
-    const existingEmail = await User.findOne({ email: cleanEmail }).select("_id");
+    const existingEmail = await User.findOne({ email: cleanEmail });
     if (existingEmail) {
-      return res.status(409).json({ message: "Email already registered." });
+      return res.status(409).json({ message: "Email already exists." });
     }
 
-    const existingUsername = await User.findOne({ username: cleanUsername }).select("_id");
+    const existingUsername = await User.findOne({ username: cleanUsername });
     if (existingUsername) {
-      return res.status(409).json({ message: "Username already taken." });
+      return res.status(409).json({ message: "Username taken." });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    // ✅ AUTO PASSWORD
+    const year = new Date().getFullYear();
+    const lastTwo = String(year).slice(-2);
+    const random5 = Math.floor(10000 + Math.random() * 90000);
+
+    let generatedPassword = "";
+
+    if (accountType === "student") {
+      generatedPassword = `PO2026${lastTwo}${random5}`;
+    } else {
+      generatedPassword = `P${lastTwo}${random5}`;
+    }
+
+    const passwordHash = await bcrypt.hash(generatedPassword, 10);
+
     const studentNumber =
       accountType === "student" ? await generateStudentNumber8() : null;
 
-    const rawVerifyToken = makeVerifyToken();
-    const verifyTokenHash = hashToken(rawVerifyToken);
-    const verifyTokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-    const now = new Date();
-    const trialDays = 7;
-
     const user = await User.create({
-      fullName: cleanSpaces(fullName || ""),
+      fullName: cleanSpaces(`${firstName} ${surname}`),
+      firstName: cleanSpaces(firstName),
+      surname: cleanSpaces(surname),
+      schoolName: cleanSpaces(schoolName),
+      currentMarkRange: cleanSpaces(currentMarkRange),
+
       username: cleanUsername,
       email: cleanEmail,
       passwordHash,
@@ -798,108 +813,33 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       accountType,
       studentNumber,
       grade: gradeNum,
-      profileHeadline: "",
-      profilePhoto: "",
+
       province: cleanSpaces(province || ""),
       district: cleanSpaces(district || ""),
       gender: String(gender || "").trim(),
       cellphone: cleanSpaces(cellphone || ""),
       guardianCellphone: cleanSpaces(guardianCellphone || ""),
+
       emailVerified: false,
-      verifyTokenHash,
-      verifyTokenExpiresAt,
-      trialActive: true,
-      trialStartDate: now,
-      trialEndDate: addDays(now, trialDays),
     });
 
-    const verifyUrl = `${APP_URL}/verify-email.html?token=${encodeURIComponent(
-      rawVerifyToken
-    )}&email=${encodeURIComponent(user.email)}`;
-
-    if (user.accountType === "student") {
-      await sendEmail({
-        to: user.email,
-        subject: "Verify your Practice Online email",
-        text: `Hi ${user.username}, your student number is ${user.studentNumber}. Verify your email here: ${verifyUrl}`,
-        html: `
-          <div style="font-family:Arial,sans-serif; line-height:1.6;">
-            <p>Hi ${user.username},</p>
-            <p>Welcome to Practice Online.</p>
-            <p>Your student number is: <b>${user.studentNumber}</b></p>
-            <p>Please verify your email address by clicking the link below:</p>
-            <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
-            <p>This link expires in 24 hours.</p>
-            <p>Regards,<br/>Practice Online Team</p>
-          </div>
-        `,
-      });
-    } else {
-      await sendEmail({
-        to: user.email,
-        subject: "Verify your Practice Online email",
-        text: `Hi ${user.username}, your account is ready. Verify your email here: ${verifyUrl}`,
-        html: `
-          <div style="font-family:Arial,sans-serif; line-height:1.6;">
-            <p>Hi ${user.username},</p>
-            <p>Welcome to Practice Online.</p>
-            <p>Your account is ready and you have access to learning materials.</p>
-            <p>Please verify your email address by clicking the link below:</p>
-            <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
-            <p>This link expires in 24 hours.</p>
-            <p>Regards,<br/>Practice Online Team</p>
-          </div>
-        `,
-      });
-    }
+    await sendEmail({
+      to: user.email,
+      subject: "Practice Online Account",
+      html: `
+        <p>Hello ${user.username},</p>
+        <p>Your account has been created.</p>
+        <p><b>Password:</b> ${generatedPassword}</p>
+      `,
+    });
 
     return res.status(201).json({
-      message: "Account created. Please verify your email before logging in.",
-      accountType: user.accountType,
+      message: "Account created successfully.",
       studentNumber: user.studentNumber,
     });
   } catch (err) {
-    console.error("Register error:", err.message);
-    return res.status(500).json({ message: "Server error. Please try again." });
-  }
-});
-
-// VERIFY EMAIL
-app.post("/api/verify-email", async (req, res) => {
-  try {
-    const { email, token } = req.body;
-
-    if (!email || !token) {
-      return res.status(400).json({ message: "Email and token are required." });
-    }
-
-    const cleanEmail = String(email || "").trim().toLowerCase();
-    const tokenHash = hashToken(String(token || "").trim());
-
-    const user = await User.findOne({ email: cleanEmail });
-    if (!user) {
-      return res.status(400).json({ message: "Invalid or expired verification link." });
-    }
-
-    const isExpired =
-      !user.verifyTokenExpiresAt || user.verifyTokenExpiresAt.getTime() < Date.now();
-
-    const isMatch =
-      user.verifyTokenHash && String(user.verifyTokenHash) === String(tokenHash);
-
-    if (!isMatch || isExpired) {
-      return res.status(400).json({ message: "Invalid or expired verification link." });
-    }
-
-    user.emailVerified = true;
-    user.verifyTokenHash = null;
-    user.verifyTokenExpiresAt = null;
-    await user.save();
-
-    return res.json({ message: "Email verified successfully. You can login now." });
-  } catch (err) {
-    console.error("Verify email error:", err.message);
-    return res.status(500).json({ message: "Server error." });
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -1537,7 +1477,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
     }
 
     const quizzes = await Quiz.find(filter)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: 1 })
       .select(
         "grade title topic paper difficulty questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
       );
@@ -2780,6 +2720,10 @@ app.post("/api/announcements", authRequired, announcementManagerOnly, async (req
     console.error("POST /api/announcements error:", err.message);
     return res.status(500).json({ message: "Failed to create announcement." });
   }
+});
+
+app.post("/api/announcements/mark-seen", authRequired, async (req, res) => {
+  return res.json({ success: true });
 });
 
 // GET ANNOUNCEMENTS FOR LEARNERS / ADMIN
