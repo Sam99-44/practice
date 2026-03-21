@@ -2010,6 +2010,45 @@ app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   }
 });
 
+app.post("/api/quiz/start", authRequired, async (req, res) => {
+  try {
+    const { quizId } = req.body;
+
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+
+    const existing = await Result.findOne({
+      userId: req.user.userId,
+      quizId,
+      completed: false,
+    });
+
+    if (existing) {
+      return res.json({
+        remainingTime:
+          Math.max(0, (existing.expiresAt - Date.now()) / 1000),
+      });
+    }
+
+    const start = new Date();
+    const end = new Date(start.getTime() + quiz.timeLimitMinutes * 60000);
+
+    await Result.create({
+      userId: req.user.userId,
+      quizId,
+      startedAt: start,
+      expiresAt: end,
+      completed: false,
+    });
+
+    return res.json({
+      remainingTime: quiz.timeLimitMinutes * 60,
+    });
+  } catch {
+    res.status(500).json({ message: "Error starting quiz" });
+  }
+});
+
 /* ------------------ RESULTS ------------------ */
 
 function isUnavailableBySchedule(quiz) {
