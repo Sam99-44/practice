@@ -138,11 +138,26 @@ function makeVerifyToken() {
   return crypto.randomBytes(32).toString("hex");
 }
 
-function makeStudentPassword() {
-  const year = new Date().getFullYear();
-  const lastTwo = String(year).slice(-2);
-  const random5 = String(Math.floor(10000 + Math.random() * 90000));
-  return `PO2026${lastTwo}${random5}`;
+async function generateLearnerNumber(accountType = "student") {
+  const yearShort = String(new Date().getFullYear()).slice(-2);
+
+  while (true) {
+    const random5 = String(Math.floor(10000 + Math.random() * 90000));
+
+    const learnerNumber =
+      accountType === "materials"
+        ? `P${yearShort}${random5}`
+        : `PO${yearShort}${random5}`;
+
+    const exists = await User.findOne({
+      $or: [
+        { studentNumber: learnerNumber },
+        { learnerNumber: learnerNumber },
+      ],
+    }).select("_id");
+
+    if (!exists) return learnerNumber;
+  }
 }
 
 function makeMaterialsPassword() {
@@ -733,6 +748,7 @@ app.post("/api/register", registerLimiter, async (req, res) => {
     const {
       username,
       email,
+      password,
       grade,
       accountType,
       province,
@@ -775,6 +791,11 @@ app.post("/api/register", registerLimiter, async (req, res) => {
         message: "Email and account type are required.",
       });
     }
+    if (!password || String(password).length < 6) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters.",
+      });
+    }
 
     if (!["student", "materials"].includes(accountType)) {
       return res.status(400).json({ message: "Invalid account type." });
@@ -812,16 +833,8 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       return res.status(409).json({ message: "Username already taken." });
     }
 
-    let generatedPassword = "";
-    if (accountType === "student") {
-      generatedPassword = makeStudentPassword();
-    } else {
-      generatedPassword = makeMaterialsPassword();
-    }
-
-    const passwordHash = await bcrypt.hash(generatedPassword, 10);
-    const studentNumber =
-      accountType === "student" ? await generateStudentNumber8() : null;
+    const passwordHash = await bcrypt.hash(String(password), 10);
+    const learnerNumber = await generateLearnerNumber(accountType);
 
     const rawVerifyToken = makeVerifyToken();
     const verifyTokenHash = hashToken(rawVerifyToken);
@@ -841,7 +854,8 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       passwordHash,
       role: "learner",
       accountType,
-      studentNumber,
+      learnerNumber,
+      studentNumber: learnerNumber,
       grade: gradeNum,
       profileHeadline: "",
       profilePhoto: "",
@@ -865,20 +879,12 @@ app.post("/api/register", registerLimiter, async (req, res) => {
     await sendEmail({
       to: user.email,
       subject: "Verify your Practice Online email",
-      text:
-        accountType === "student"
-          ? `Hi ${user.username}, your student number is ${user.studentNumber}. Your password is ${generatedPassword}. Verify your email here: ${verifyUrl}`
-          : `Hi ${user.username}, your password is ${generatedPassword}. Verify your email here: ${verifyUrl}`,
+      text: `Hi ${user.username}, your learner number is ${learnerNumber}. Verify your email here: ${verifyUrl}`,
       html: `
         <div style="font-family:Arial,sans-serif; line-height:1.6;">
           <p>Hi ${user.username},</p>
           <p>Welcome to Practice Online.</p>
-          ${
-            accountType === "student"
-              ? `<p>Your student number is: <b>${user.studentNumber}</b></p>`
-              : ""
-          }
-          <p>Your password is: <b>${generatedPassword}</b></p>
+          <p>Your learner number is: <b>${learnerNumber}</b></p>
           <p>Please verify your email address by clicking the link below:</p>
           <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
           <p>This link expires in 24 hours.</p>
@@ -890,7 +896,8 @@ app.post("/api/register", registerLimiter, async (req, res) => {
     return res.status(201).json({
       message: "Account created. Please verify your email before logging in.",
       accountType: user.accountType,
-      studentNumber: user.studentNumber,
+      learnerNumber,
+      studentNumber: learnerNumber,
     });
   } catch (err) {
     console.error("Register error:", err.message);
