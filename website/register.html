@@ -43,7 +43,6 @@
       font-family:Arial, Helvetica, sans-serif;
     }
 
-    /* ===== SAME HEADER STYLE ===== */
     .topbar{
       background:var(--nav);
       color:#fff;
@@ -134,7 +133,6 @@
       border-bottom:3px solid var(--red);
     }
 
-    /* ===== PAGE ===== */
     .wrap{
       max-width:1100px;
       margin:0 auto;
@@ -175,7 +173,6 @@
       font-size:14px;
     }
 
-    /* only fields below account type not bold */
     .normalFields label{
       font-weight:400;
     }
@@ -269,6 +266,7 @@
       margin-top:10px;
       font-size:14px;
       font-weight:400;
+      line-height:1.5;
     }
 
     .error{color:var(--error)}
@@ -303,12 +301,24 @@
       margin:10px 0 12px;
       color:#0f172a;
       font-size:14px;
+      line-height:1.5;
     }
 
     .noteBox b{
       display:block;
       margin-bottom:4px;
       font-size:14px;
+    }
+
+    .autoPassInfo{
+      margin-top:14px;
+      padding:12px;
+      border-radius:12px;
+      background:#f8fafc;
+      border:1px solid #e2e8f0;
+      color:#334155;
+      font-size:13px;
+      line-height:1.5;
     }
 
     @media(max-width:640px){
@@ -465,21 +475,14 @@
         </select>
       </div>
 
-      <div class="row">
-        <div>
-          <label for="password">Password</label>
-          <input id="password" type="password" autocomplete="new-password" />
-        </div>
-        <div>
-          <label for="confirmPassword">Confirm Password</label>
-          <input id="confirmPassword" type="password" autocomplete="new-password" />
-        </div>
+      <div class="autoPassInfo">
+        Your password will be generated automatically and sent to your email after registration.
       </div>
     </div>
 
     <div class="row">
       <button id="registerBtn" class="btn" type="button">Register</button>
-      <button id="toggleBtn" class="ghost" type="button">Show Password</button>
+      <button id="resetBtn" class="ghost" type="button">Reset</button>
     </div>
 
     <p id="msg" class="msg"></p>
@@ -492,10 +495,11 @@
 </main>
 
 <script>
-  const API = "https://api.practiceonline.co.za";
+  const API = "https://practice-backend-msgn.onrender.com";
 
   const msg = document.getElementById("msg");
   const btn = document.getElementById("registerBtn");
+  const resetBtn = document.getElementById("resetBtn");
 
   const acctNoteTitle = document.getElementById("acctNoteTitle");
   const acctNoteText  = document.getElementById("acctNoteText");
@@ -507,9 +511,6 @@
   const schoolNameEl = document.getElementById("schoolName");
   const currentMarkRangeEl = document.getElementById("currentMarkRange");
   const gradeEl = document.getElementById("grade");
-  const passwordEl = document.getElementById("password");
-  const confirmEl = document.getElementById("confirmPassword");
-  const toggleBtn = document.getElementById("toggleBtn");
   const gradeWrap = document.getElementById("gradeWrap");
 
   const saWrap = document.getElementById("saWrap");
@@ -527,6 +528,14 @@
 
   function cleanSpaces(s){
     return String(s || "").trim().replace(/\s+/g," ");
+  }
+
+  function isValidEmail(email){
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim().toLowerCase());
+  }
+
+  function isValidSAPhone(phone){
+    return /^\+27\d{9}$/.test(String(phone || "").trim());
   }
 
   function accountType(){
@@ -560,8 +569,6 @@
       updateAccountNote();
     });
   });
-  toggleGrade();
-  updateAccountNote();
 
   function ensurePlus27(el){
     el.addEventListener("focus", () => {
@@ -571,17 +578,12 @@
       if(el.value.trim() === "+27") el.value = "";
     });
   }
+
   ensurePlus27(cellphoneEl);
   ensurePlus27(guardianCellEl);
 
-  toggleBtn.onclick = () => {
-    const show = passwordEl.type === "password";
-    passwordEl.type = confirmEl.type = show ? "text" : "password";
-    toggleBtn.textContent = show ? "Hide Password" : "Show Password";
-  };
-
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") btn.click();
+    if (e.key === "Enter" && e.target.tagName !== "SELECT") btn.click();
   });
 
   const DISTRICTS_BY_PROVINCE = {
@@ -695,13 +697,35 @@
   document.querySelectorAll('input[name="isSA"]').forEach(r=>{
     r.addEventListener("change", toggleSAFields);
   });
-  toggleSAFields();
+
+  function resetForm(){
+    usernameEl.value = "";
+    emailEl.value = "";
+    firstNameEl.value = "";
+    surnameEl.value = "";
+    schoolNameEl.value = "";
+    currentMarkRangeEl.value = "";
+    genderEl.value = "";
+    cellphoneEl.value = "";
+    guardianCellEl.value = "";
+    gradeEl.value = "";
+    provinceEl.value = "";
+    resetDistrict();
+    document.querySelector('input[name="accountType"][value="student"]').checked = true;
+    document.querySelector('input[name="isSA"][value="yes"]').checked = true;
+    toggleGrade();
+    updateAccountNote();
+    toggleSAFields();
+    setMsg("");
+  }
+
+  resetBtn.addEventListener("click", resetForm);
 
   btn.onclick = async () => {
     const type = accountType();
 
     const username = cleanSpaces(usernameEl.value);
-    const email = emailEl.value.trim();
+    const email = emailEl.value.trim().toLowerCase();
     const firstName = cleanSpaces(firstNameEl.value);
     const surname = cleanSpaces(surnameEl.value);
     const schoolName = cleanSpaces(schoolNameEl.value);
@@ -714,10 +738,23 @@
     const province = isSA() ? provinceEl.value.trim() : "";
     const district = isSA() ? districtEl.value.trim() : "";
 
+    if(!username) return setMsg("Username is required.","error");
+    if(!email) return setMsg("Email is required.","error");
+    if(!isValidEmail(email)) return setMsg("Please enter a valid email address.","error");
+    if(!firstName) return setMsg("Name is required.","error");
+    if(!surname) return setMsg("Surname is required.","error");
+    if(!schoolName) return setMsg("School name is required.","error");
+    if(!currentMarkRange) return setMsg("Please select your current mark.","error");
+    if(!cellphone) return setMsg("Your cellphone number is required.","error");
+    if(!guardianCellphone) return setMsg("Guardian cellphone is required.","error");
+    if(!isValidSAPhone(cellphone)) return setMsg("Your cellphone must use format +27XXXXXXXXX","error");
+    if(!isValidSAPhone(guardianCellphone)) return setMsg("Guardian cellphone must use format +27XXXXXXXXX","error");
+    if(isSA() && !province) return setMsg("Please select your province.","error");
+    if(isSA() && province && !district) return setMsg("Please select your district.","error");
+
     const payload = {
       username,
       email,
-      password: passwordEl.value,
       accountType: type,
       ...(type === "student" ? { grade: Number(gradeEl.value) } : {}),
       ...(firstName ? { firstName } : {}),
@@ -731,55 +768,12 @@
       ...(guardianCellphone ? { guardianCellphone } : {})
     };
 
-    if(!username){
-      return setMsg("Username is required.","error");
-    }
-
-    if(!firstName){
-      return setMsg("Name is required.","error");
-    }
-
-    if(!surname){
-      return setMsg("Surname is required.","error");
-    }
-
-    if(!schoolName){
-      return setMsg("School name is required.","error");
-    }
-
-    if(!currentMarkRange){
-      return setMsg("Please select your current mark.","error");
-    }
-
-    if(!cellphone){
-      return setMsg("Your cellphone number is required.","error");
-    }
-
-    if(!guardianCellphone){
-      return setMsg("Guardian cellphone is required.","error");
-    }
-
-    if(isSA() && !province){
-      return setMsg("Please select your province.","error");
-    }
-
-    if(!email || !passwordEl.value){
-      return setMsg("Email and password are required.","error");
-    }
-
-    if(payload.password !== confirmEl.value){
-      return setMsg("Passwords do not match.","error");
-    }
-
     if(type === "student" && !Number.isFinite(payload.grade)){
       return setMsg("Please select a grade.","error");
     }
 
-    if(isSA() && province && !district){
-      return setMsg("Please select your district.","error");
-    }
-
     btn.disabled = true;
+    btn.textContent = "Creating account...";
     setMsg("Creating account...");
 
     try{
@@ -793,17 +787,34 @@
 
       if(!res.ok){
         btn.disabled = false;
+        btn.textContent = "Register";
         return setMsg(data.message || "Registration failed.","error");
       }
 
-      setMsg("Account created successfully!","ok");
-      setTimeout(() => location.href = "login.html", 1200);
+      const extra =
+        type === "student" && data.studentNumber
+          ? ` Your student number is ${data.studentNumber}.`
+          : "";
+
+      setMsg(
+        (data.message || "Account created successfully.") +
+        extra +
+        " Your password will be sent to your email.",
+        "ok"
+      );
+
+      setTimeout(() => location.href = "login.html", 1600);
 
     }catch{
       btn.disabled = false;
+      btn.textContent = "Register";
       setMsg("Network error. Please try again.","error");
     }
   };
+
+  toggleGrade();
+  updateAccountNote();
+  toggleSAFields();
 </script>
 
 </body>
