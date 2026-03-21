@@ -138,35 +138,6 @@ function makeVerifyToken() {
   return crypto.randomBytes(32).toString("hex");
 }
 
-async function generateLearnerNumber(accountType = "student") {
-  const yearShort = String(new Date().getFullYear()).slice(-2);
-
-  while (true) {
-    const random5 = String(Math.floor(10000 + Math.random() * 90000));
-
-    const learnerNumber =
-      accountType === "materials"
-        ? `P${yearShort}${random5}`
-        : `PO${yearShort}${random5}`;
-
-    const exists = await User.findOne({
-      $or: [
-        { studentNumber: learnerNumber },
-        { learnerNumber: learnerNumber },
-      ],
-    }).select("_id");
-
-    if (!exists) return learnerNumber;
-  }
-}
-
-function makeMaterialsPassword() {
-  const year = new Date().getFullYear();
-  const lastTwo = String(year).slice(-2);
-  const random5 = String(Math.floor(10000 + Math.random() * 90000));
-  return `P${lastTwo}${random5}`;
-}
-
 function isValidEmail(email) {
   const e = String(email || "").trim().toLowerCase();
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
@@ -746,54 +717,22 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 app.post("/api/register", registerLimiter, async (req, res) => {
   try {
     const {
+      fullName,
       username,
       email,
-      password,
       grade,
+      password,
       accountType,
       province,
       district,
       gender,
       cellphone,
       guardianCellphone,
-      firstName,
-      surname,
-      schoolName,
-      currentMarkRange,
     } = req.body;
 
-    if (!username) {
-      return res.status(400).json({ message: "Username is required." });
-    }
-    if (!firstName) {
-      return res.status(400).json({ message: "Name is required." });
-    }
-    if (!surname) {
-      return res.status(400).json({ message: "Surname is required." });
-    }
-    if (!schoolName) {
-      return res.status(400).json({ message: "School name is required." });
-    }
-    if (!cellphone) {
-      return res.status(400).json({ message: "Cellphone number is required." });
-    }
-    if (!guardianCellphone) {
-      return res.status(400).json({ message: "Guardian cellphone is required." });
-    }
-    if (!province) {
-      return res.status(400).json({ message: "Province is required." });
-    }
-    if (!currentMarkRange) {
-      return res.status(400).json({ message: "Current mark is required." });
-    }
-    if (!email || !accountType) {
+    if (!username || !email || !password || !accountType) {
       return res.status(400).json({
-        message: "Email and account type are required.",
-      });
-    }
-    if (!password || String(password).length < 6) {
-      return res.status(400).json({
-        message: "Password must be at least 6 characters.",
+        message: "Username, email, password, and account type are required.",
       });
     }
 
@@ -816,6 +755,12 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       }
     }
 
+    if (String(password).length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters." });
+    }
+
     const cleanUsername = cleanSpaces(username);
     const cleanEmail = String(email || "").toLowerCase().trim();
 
@@ -833,8 +778,9 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       return res.status(409).json({ message: "Username already taken." });
     }
 
-    const passwordHash = await bcrypt.hash(String(password), 10);
-    const learnerNumber = await generateLearnerNumber(accountType);
+    const passwordHash = await bcrypt.hash(password, 10);
+    const studentNumber =
+      accountType === "student" ? await generateStudentNumber8() : null;
 
     const rawVerifyToken = makeVerifyToken();
     const verifyTokenHash = hashToken(rawVerifyToken);
@@ -844,18 +790,13 @@ app.post("/api/register", registerLimiter, async (req, res) => {
     const trialDays = 7;
 
     const user = await User.create({
-      fullName: cleanSpaces(`${firstName} ${surname}`),
-      firstName: cleanSpaces(firstName),
-      surname: cleanSpaces(surname),
-      schoolName: cleanSpaces(schoolName),
-      currentMarkRange: cleanSpaces(currentMarkRange),
+      fullName: cleanSpaces(fullName || ""),
       username: cleanUsername,
       email: cleanEmail,
       passwordHash,
       role: "learner",
       accountType,
-      learnerNumber,
-      studentNumber: learnerNumber,
+      studentNumber,
       grade: gradeNum,
       profileHeadline: "",
       profilePhoto: "",
@@ -876,28 +817,46 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       rawVerifyToken
     )}&email=${encodeURIComponent(user.email)}`;
 
-    await sendEmail({
-      to: user.email,
-      subject: "Verify your Practice Online email",
-      text: `Hi ${user.username}, your learner number is ${learnerNumber}. Verify your email here: ${verifyUrl}`,
-      html: `
-        <div style="font-family:Arial,sans-serif; line-height:1.6;">
-          <p>Hi ${user.username},</p>
-          <p>Welcome to Practice Online.</p>
-          <p>Your learner number is: <b>${learnerNumber}</b></p>
-          <p>Please verify your email address by clicking the link below:</p>
-          <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
-          <p>This link expires in 24 hours.</p>
-          <p>Regards,<br/>Practice Online Team</p>
-        </div>
-      `,
-    });
+    if (user.accountType === "student") {
+      await sendEmail({
+        to: user.email,
+        subject: "Verify your Practice Online email",
+        text: `Hi ${user.username}, your student number is ${user.studentNumber}. Verify your email here: ${verifyUrl}`,
+        html: `
+          <div style="font-family:Arial,sans-serif; line-height:1.6;">
+            <p>Hi ${user.username},</p>
+            <p>Welcome to Practice Online.</p>
+            <p>Your student number is: <b>${user.studentNumber}</b></p>
+            <p>Please verify your email address by clicking the link below:</p>
+            <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
+            <p>This link expires in 24 hours.</p>
+            <p>Regards,<br/>Practice Online Team</p>
+          </div>
+        `,
+      });
+    } else {
+      await sendEmail({
+        to: user.email,
+        subject: "Verify your Practice Online email",
+        text: `Hi ${user.username}, your account is ready. Verify your email here: ${verifyUrl}`,
+        html: `
+          <div style="font-family:Arial,sans-serif; line-height:1.6;">
+            <p>Hi ${user.username},</p>
+            <p>Welcome to Practice Online.</p>
+            <p>Your account is ready and you have access to learning materials.</p>
+            <p>Please verify your email address by clicking the link below:</p>
+            <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
+            <p>This link expires in 24 hours.</p>
+            <p>Regards,<br/>Practice Online Team</p>
+          </div>
+        `,
+      });
+    }
 
     return res.status(201).json({
       message: "Account created. Please verify your email before logging in.",
       accountType: user.accountType,
-      learnerNumber,
-      studentNumber: learnerNumber,
+      studentNumber: user.studentNumber,
     });
   } catch (err) {
     console.error("Register error:", err.message);
@@ -905,39 +864,39 @@ app.post("/api/register", registerLimiter, async (req, res) => {
   }
 });
 
-// EMAIL VERIFY
-app.get("/api/auth/verify", async (req, res) => {
+// VERIFY EMAIL
+app.post("/api/verify-email", async (req, res) => {
   try {
-    const token = String(req.query.token || "").trim();
-    const email = String(req.query.email || "").trim().toLowerCase();
+    const { email, token } = req.body;
 
-    if (!token || !email) {
-      return res.status(400).json({ message: "Invalid link." });
+    if (!email || !token) {
+      return res.status(400).json({ message: "Email and token are required." });
     }
 
-    const user = await User.findOne({ email });
+    const cleanEmail = String(email || "").trim().toLowerCase();
+    const tokenHash = hashToken(String(token || "").trim());
+
+    const user = await User.findOne({ email: cleanEmail });
     if (!user) {
-      return res.status(400).json({ message: "Invalid link." });
+      return res.status(400).json({ message: "Invalid or expired verification link." });
     }
 
-    const hashed = hashToken(token);
+    const isExpired =
+      !user.verifyTokenExpiresAt || user.verifyTokenExpiresAt.getTime() < Date.now();
 
-    if (
-      user.emailVerified ||
-      !user.verifyTokenHash ||
-      user.verifyTokenHash !== hashed ||
-      !user.verifyTokenExpiresAt ||
-      user.verifyTokenExpiresAt < new Date()
-    ) {
-      return res.status(400).json({ message: "Token expired or invalid." });
+    const isMatch =
+      user.verifyTokenHash && String(user.verifyTokenHash) === String(tokenHash);
+
+    if (!isMatch || isExpired) {
+      return res.status(400).json({ message: "Invalid or expired verification link." });
     }
 
     user.emailVerified = true;
-    user.verifyTokenHash = "";
+    user.verifyTokenHash = null;
     user.verifyTokenExpiresAt = null;
     await user.save();
 
-    return res.json({ message: "Email verified successfully." });
+    return res.json({ message: "Email verified successfully. You can login now." });
   } catch (err) {
     console.error("Verify email error:", err.message);
     return res.status(500).json({ message: "Server error." });
@@ -1078,17 +1037,14 @@ app.post("/api/login", async (req, res) => {
 app.get("/api/profile/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select(
-      "fullName username email grade accountType role learnerNumber studentNumber profileHeadline profilePhoto createdAt cellphone"
+      "fullName username email grade accountType role learnerNumber studentNumber profileHeadline profilePhoto createdAt"
     );
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    return res.json({
-      ...toPublicProfile(user),
-      cellphone: user.cellphone || "",
-    });
+    return res.json(toPublicProfile(user));
   } catch (error) {
     console.error("GET /api/profile/me error:", error.message);
     return res.status(500).json({ message: "Failed to load profile" });
@@ -1581,7 +1537,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
     }
 
     const quizzes = await Quiz.find(filter)
-      .sort({ publishedAt: 1, createdAt: 1 })
+      .sort({ createdAt: -1 })
       .select(
         "grade title topic paper difficulty questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
       );
@@ -2114,407 +2070,596 @@ app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   }
 });
 
-/* ------------------ QUIZ START TIMER ------------------ */
-app.post("/api/quiz/start", authRequired, async (req, res) => {
+/* ------------------ RESULTS ------------------ */
+
+function isUnavailableBySchedule(quiz) {
+  const now = new Date();
+
+  if (quiz?.isFrozen) return true;
+
+  if (quiz?.isPublished !== true) return true;
+  if (quiz?.publishAt) {
+    const p = new Date(quiz.publishAt);
+    if (!isNaN(p.getTime()) && now < p) return true;
+  }
+
+  if (quiz?.availableFrom) {
+    const from = new Date(quiz.availableFrom);
+    if (!isNaN(from.getTime()) && now < from) return true;
+  }
+  if (quiz?.availableUntil) {
+    const until = new Date(quiz.availableUntil);
+    if (!isNaN(until.getTime()) && now > until) return true;
+  }
+  return false;
+}
+
+function parseNumberOrFraction(input) {
+  const s = String(input || "")
+    .trim()
+    .replace(/,/g, ".")
+    .replace(/−/g, "-");
+
+  if (!s) return null;
+
+  const m = s.match(/^([+-]?\d+(?:\.\d+)?)\s*\/\s*([+-]?\d+(?:\.\d+)?)$/);
+  if (m) {
+    const a = Number(m[1]);
+    const b = Number(m[2]);
+    if (!Number.isFinite(a) || !Number.isFinite(b) || b === 0) return null;
+    return a / b;
+  }
+
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+function normalizeTextAnswer(s) {
+  return String(s || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/−/g, "-");
+}
+
+function compareTextAnswer(userAns, correctAns, mode, tolerance) {
+  const uaRaw = String(userAns || "");
+  const caRaw = String(correctAns || "");
+  if (!caRaw.trim()) return false;
+
+  const uNum = parseNumberOrFraction(uaRaw);
+  const cNum = parseNumberOrFraction(caRaw);
+
+  if (mode === "number_tolerance") {
+    const tol = Number(tolerance);
+    if (uNum === null || cNum === null || !Number.isFinite(tol) || tol < 0) return false;
+    return Math.abs(uNum - cNum) <= tol;
+  }
+
+  if (uNum !== null && cNum !== null) {
+    return Math.abs(uNum - cNum) <= 1e-12;
+  }
+
+  const ua = normalizeTextAnswer(uaRaw);
+  const ca = normalizeTextAnswer(caRaw);
+
+  if (mode === "contains") return ua.includes(ca);
+
+  return ua === ca;
+}
+
+app.post("/api/results", authRequired, async (req, res) => {
   try {
-    const { quizId } = req.body;
+    const { quizId, answers, timeTakenSeconds } = req.body;
 
-    if (!quizId) {
-      return res.status(400).json({ message: "quizId is required." });
+    if (!quizId || !Array.isArray(answers)) {
+      return res.status(400).json({ message: "quizId and answers are required." });
     }
 
-    const quiz = await Quiz.findById(quizId).select(
-      "grade title topic instructions isPublished publishAt availableFrom availableUntil isFrozen timeLimitMinutes questions"
-    );
+    const userId = req.user.userId;
 
-    if (!quiz) {
-      return res.status(404).json({ message: "Quiz not found." });
+    const me = await User.findById(userId).select("role");
+    if (!me) return res.status(401).json({ message: "User not found" });
+
+    const isAdminAttemptUser = isPrivilegedRole(me.role);
+
+    if (!isAdminAttemptUser) {
+      const existing = await Result.findOne({ userId, quizId }).select("_id");
+      if (existing) return res.status(409).json({ message: "Already attempted" });
     }
 
-    const user = await User.findById(req.user.userId).select("role grade");
-    if (!user) {
-      return res.status(401).json({ message: "User not found." });
+    let attemptNo = 1;
+    if (isAdminAttemptUser) {
+      const prev = await Result.countDocuments({ userId, quizId, isAdminAttempt: true });
+      attemptNo = prev + 1;
     }
 
-    const canManage = canManageQuizzes(user.role) || isPrivilegedRole(user.role);
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) return res.status(404).json({ message: "Assessment not found" });
 
-    if (!canManage) {
-      if (Number(quiz.grade) !== Number(user.grade)) {
-        return res.status(403).json({ message: "Not allowed." });
-      }
-
-      const now = new Date();
-
-      if (!quiz.isPublished) {
-        return res.status(403).json({ message: "This assessment is not yet published." });
-      }
-
-      if (quiz.publishAt && new Date(quiz.publishAt) > now) {
-        return res.status(403).json({ message: "This assessment is not yet published." });
-      }
-
-      if (quiz.isFrozen) {
-        return res.status(403).json({ message: "This assessment is not available right now." });
-      }
-
-      if (quiz.availableFrom && new Date(quiz.availableFrom) > now) {
-        return res.status(403).json({ message: "This assessment is not available right now." });
-      }
-
-      if (quiz.availableUntil && new Date(quiz.availableUntil) < now) {
-        return res.status(403).json({ message: "This assessment is not available right now." });
-      }
+    if (isUnavailableBySchedule(quiz)) {
+      return res.status(403).json({ message: "This assessment is currently unavailable." });
     }
 
-    const existingSubmitted = await Result.findOne({
-      userId: req.user.userId,
+    const qs = Array.isArray(quiz.questions) ? quiz.questions : [];
+    if (!qs.length) return res.status(400).json({ message: "Assessment has no questions." });
+
+    const gradedQs = qs.filter((q) => String(q.type || "mcq").toLowerCase() !== "note");
+    const totalPoints = gradedQs.reduce((sum, q) => sum + (Number(q.points) || 1), 0);
+
+    let scorePoints = 0;
+
+    const savedAnswers = qs.map((q, i) => {
+      const type = String(q.type || "mcq").toLowerCase();
+
+      const hint = q.hint || "";
+      const questionText = q.text || "";
+      const options = Array.isArray(q.options) ? q.options : [];
+      const qPoints = type === "note" ? 0 : Number(q.points) || 1;
+      const solution = String(q.solution || "").trim();
+
+      const ans = answers.find((a) => Number(a.questionIndex) === i) || {};
+
+      if (type === "note") {
+        return {
+          questionIndex: i,
+          type: "note",
+          points: 0,
+          earnedPoints: 0,
+          chosenIndex: -1,
+          correctIndex: -1,
+          isMultiSelect: false,
+          chosenIndexes: [],
+          correctIndexes: [],
+          textAnswer: "",
+          correctText: "",
+          hint: "",
+          solution: "",
+          answerMode: "case-insensitive",
+          tolerance: null,
+          roundTo: null,
+          isCorrect: false,
+          questionText,
+          options: [],
+        };
+      }
+
+      if (type === "text") {
+        const userText = cleanSpaces(ans.textAnswer || "");
+        const correctText = cleanSpaces(q.correctText || "");
+        const mode = q.textAnswerMode || "exact";
+        const tol = q.numberTolerance ?? 0;
+
+        const isCorrect = compareTextAnswer(userText, correctText, mode, tol);
+        const earned = isCorrect ? qPoints : 0;
+        scorePoints += earned;
+
+        const answerMode =
+          mode === "number_tolerance"
+            ? "number"
+            : mode === "exact"
+            ? "exact"
+            : "case-insensitive";
+
+        return {
+          questionIndex: i,
+          type: "text",
+          points: qPoints,
+          earnedPoints: earned,
+          chosenIndex: -1,
+          correctIndex: -1,
+          isMultiSelect: false,
+          chosenIndexes: [],
+          correctIndexes: [],
+          textAnswer: userText,
+          correctText,
+          hint,
+          solution,
+          answerMode,
+          tolerance: mode === "number_tolerance" ? Number(tol) : null,
+          roundTo: null,
+          isCorrect,
+          questionText,
+          options: [],
+        };
+      }
+
+      const correctIndexes = normalizeIndexArray(q.correctIndexes || []);
+      const multiByCorrects = correctIndexes.length > 1;
+      const isMultiSelect = Boolean(q.isMultiSelect) || multiByCorrects;
+
+      let isCorrect = false;
+      let chosenIndex = -1;
+      let correctIndex = Number.isInteger(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
+      let chosenIndexes = [];
+      let correctIndexesSnap = correctIndexes;
+
+      if (isMultiSelect) {
+        chosenIndexes = normalizeIndexArray(ans.chosenIndexes || []);
+        isCorrect = isMultiMcqCorrect(chosenIndexes, correctIndexes);
+        chosenIndex = chosenIndexes.length ? chosenIndexes[0] : -1;
+        correctIndex = correctIndexes.length ? correctIndexes[0] : -1;
+      } else {
+        chosenIndex = Number.isFinite(Number(ans.chosenIndex)) ? Number(ans.chosenIndex) : -1;
+        correctIndex = Number.isFinite(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
+        isCorrect = chosenIndex === correctIndex && correctIndex >= 0;
+        chosenIndexes = chosenIndex >= 0 ? [chosenIndex] : [];
+        correctIndexesSnap = correctIndex >= 0 ? [correctIndex] : [];
+      }
+
+      const earned = isCorrect ? qPoints : 0;
+      scorePoints += earned;
+
+      return {
+        questionIndex: i,
+        type: "mcq",
+        points: qPoints,
+        earnedPoints: earned,
+        chosenIndex,
+        correctIndex,
+        isMultiSelect,
+        chosenIndexes,
+        correctIndexes: correctIndexesSnap,
+        textAnswer: "",
+        correctText: "",
+        hint,
+        solution,
+        answerMode: "case-insensitive",
+        tolerance: null,
+        roundTo: null,
+        isCorrect,
+        questionText,
+        options,
+      };
+    });
+
+    const percent = totalPoints > 0 ? Math.round((scorePoints / totalPoints) * 100) : 0;
+    const status = percent >= 50 ? "PASS" : "FAIL";
+
+    const saved = await Result.create({
+      userId,
       quizId,
-      isAdminAttempt: { $ne: true },
-      attemptState: { $in: ["submitted", "auto_submitted"] },
-    }).sort({ createdAt: -1 });
-
-    if (existingSubmitted && !canManage) {
-      return res.status(409).json({
-        message: "You already submitted this assessment.",
-        alreadySubmitted: true,
-      });
-    }
-
-    let existing = await Result.findOne({
-      userId: req.user.userId,
-      quizId,
-      isAdminAttempt: false,
-      attemptState: "in_progress",
-    }).sort({ createdAt: -1 });
-
-    const totalQuestions = Array.isArray(quiz.questions)
-      ? quiz.questions.filter((q) => String(q.type || "mcq").toLowerCase() !== "note").length
-      : 0;
-
-    const fallbackSeconds = Math.max(5 * 60, Math.min(totalQuestions * 60, 30 * 60));
-    const totalSeconds =
-      Number.isFinite(Number(quiz.timeLimitMinutes)) && Number(quiz.timeLimitMinutes) > 0
-        ? Number(quiz.timeLimitMinutes) * 60
-        : fallbackSeconds;
-
-    if (existing && existing.expiresAt) {
-      const remainingTime = Math.max(
-        0,
-        Math.floor((new Date(existing.expiresAt).getTime() - Date.now()) / 1000)
-      );
-
-      return res.json({
-        startedAt: existing.startedAt,
-        expiresAt: existing.expiresAt,
-        remainingTime,
-        totalSeconds,
-      });
-    }
-
-    const startedAt = new Date();
-    const expiresAt = new Date(startedAt.getTime() + totalSeconds * 1000);
-
-    existing = await Result.create({
-      userId: req.user.userId,
-      quizId,
-      grade: quiz.grade ?? null,
+      grade: quiz.grade,
       topic: quiz.topic || "General",
       title: quiz.title || "Assessment",
-      instructions: quiz.instructions || "",
-      score: 0,
-      total: 0,
-      percent: 0,
-      status: "PENDING",
-      answers: [],
-      timeTakenSeconds: 0,
-      isAdminAttempt: false,
-      attemptNo: 1,
-      attemptedAt: startedAt,
-      startedAt,
-      expiresAt,
-      submittedAt: null,
-      attemptState: "in_progress",
+      instructions: String(quiz.instructions || "").trim(),
+      paper: quiz.paper || "paper1",
+      score: scorePoints,
+      total: totalPoints,
+      percent,
+      status,
+      answers: savedAnswers,
+      timeTakenSeconds: Number(timeTakenSeconds) || 0,
+      isAdminAttempt: isAdminAttemptUser,
+      attemptNo,
+      attemptedAt: new Date(),
     });
 
-    return res.json({
-      startedAt,
-      expiresAt,
-      remainingTime: totalSeconds,
-      totalSeconds,
+    return res.status(201).json({
+      message: "Saved",
+      score: scorePoints,
+      total: totalPoints,
+      percent,
+      status,
+      resultId: saved._id,
     });
-  } catch (error) {
-    console.error("POST /api/quiz/start error:", error.message);
-    return res.status(500).json({ message: "Failed to start quiz." });
+  } catch (e) {
+    if (String(e?.code) === "11000") {
+      return res.status(409).json({ message: "Already attempted" });
+    }
+    console.error("POST /api/results error:", e);
+    return res.status(500).json({ message: "Could not save attempt. Please try again." });
   }
 });
 
-/* ------------------ RESULTS ------------------ */
-
 app.get("/api/results/my", authRequired, async (req, res) => {
   try {
-    const results = await Result.find({
-      userId: req.user.userId,
-      attemptState: { $in: ["submitted", "auto_submitted"] },
-    }).sort({ attemptedAt: -1, createdAt: -1 });
+    const userId = req.user.userId;
 
-    return res.json(results);
-  } catch (e) {
-    console.error("GET /api/results/my error:", e.message);
+    const rows = await Result.find({ userId })
+      .sort({ createdAt: -1 })
+      .select(
+        "_id createdAt grade topic title paper percent score total status quizId attemptNo isAdminAttempt"
+      );
+
+    return res.json(rows);
+  } catch {
     return res.status(500).json({ message: "Server error" });
   }
 });
 
 app.get("/api/results/:id", authRequired, async (req, res) => {
   try {
-    const result = await Result.findById(req.params.id);
-    if (!result) return res.status(404).json({ message: "Not found" });
+    const userId = req.user.userId;
 
-    if (String(result.userId) !== String(req.user.userId)) {
+    const r = await Result.findById(req.params.id);
+    if (!r) return res.status(404).json({ message: "Not found" });
+
+    const u = await User.findById(userId).select("role");
+    if (!u) return res.status(401).json({ message: "User not found" });
+
+    if (!isPrivilegedRole(u.role) && String(r.userId) !== String(userId)) {
       return res.status(403).json({ message: "Not allowed" });
     }
 
-    return res.json(result);
-  } catch (e) {
-    console.error("GET /api/results/:id error:", e.message);
+    return res.json(r);
+  } catch {
     return res.status(500).json({ message: "Server error" });
   }
 });
 
-app.post("/api/results", authRequired, async (req, res) => {
+/* ------------------ PASSWORD RESET (OTP) ------------------ */
+
+app.post("/api/forgot-password-otp", async (req, res) => {
   try {
-    const { quizId, answers = [], timeTakenSeconds = 0 } = req.body;
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required." });
 
-    if (!quizId || !Array.isArray(answers)) {
-      return res.status(400).json({ message: "quizId and answers are required." });
+    const cleanEmail = String(email).toLowerCase().trim();
+    const user = await User.findOne({ email: cleanEmail });
+
+    if (!user) return res.json({ message: "If the email exists, a reset code has been sent." });
+
+    const otp = makeOtp6();
+    const otpHash = hashToken(otp);
+
+    user.resetPasswordTokenHash = otpHash;
+    user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000);
+    await user.save();
+
+    await sendEmail({
+      to: user.email,
+      subject: "Password reset code",
+      text: `Your reset code is: ${otp}. It expires in 10 minutes.`,
+      html: `
+        <div style="font-family:Arial,sans-serif; line-height:1.6;">
+          <p>Your reset code is:</p>
+          <p style="font-size:26px; font-weight:800; letter-spacing:3px;">${otp}</p>
+          <p>This code expires in 10 minutes.</p>
+        </div>
+      `,
+    });
+
+    return res.json({ message: "If the email exists, a reset code has been sent." });
+  } catch (err) {
+    console.error("forgot-password-otp error:", err.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.post("/api/reset-password-otp", async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ message: "Email, code, and new password are required." });
     }
 
-    const quiz = await Quiz.findById(quizId);
-    if (!quiz) {
-      return res.status(404).json({ message: "Quiz not found." });
+    if (String(newPassword).length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters." });
     }
 
-    const user = await User.findById(req.user.userId).select("role grade");
-    if (!user) {
+    const cleanEmail = String(email).toLowerCase().trim();
+    const user = await User.findOne({ email: cleanEmail });
+
+    if (!user) return res.status(400).json({ message: "Invalid or expired code." });
+
+    const codeHash = hashToken(String(code).trim());
+    const isExpired =
+      !user.resetPasswordExpires || user.resetPasswordExpires.getTime() < Date.now();
+    const isMatch = user.resetPasswordTokenHash && user.resetPasswordTokenHash === codeHash;
+
+    if (!isMatch || isExpired) {
+      return res.status(400).json({ message: "Invalid or expired code." });
+    }
+
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    user.resetPasswordTokenHash = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    return res.json({ message: "Password updated. You can login now." });
+  } catch (err) {
+    console.error("reset-password-otp error:", err.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ------------------ PAYFAST ------------------ */
+
+app.post("/api/payfast/initiate", authRequired, async (req, res) => {
+  try {
+    if (!PAYFAST_MERCHANT_ID || !PAYFAST_MERCHANT_KEY) {
+      return res.status(500).json({ message: "PayFast credentials missing." });
+    }
+
+    if (!APP_URL) {
+      return res.status(500).json({ message: "APP_URL is missing." });
+    }
+
+    if (!API_URL) {
+      return res.status(500).json({ message: "API_URL is missing." });
+    }
+
+    const { amount, item_name } = req.body;
+
+    const amt = Number(amount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      return res.status(400).json({ message: "Invalid amount." });
+    }
+
+    const currentUser = await User.findById(req.user.userId).select("email role accountType");
+    if (!currentUser) {
       return res.status(401).json({ message: "User not found." });
     }
 
-    const canManage = canManageQuizzes(user.role) || isPrivilegedRole(user.role);
+    if (currentUser.role === "admin") {
+      return res.status(400).json({ message: "Admins do not need a subscription." });
+    }
 
-    let existingResult = await Result.findOne({
+    if (currentUser.accountType !== "student") {
+      return res.status(400).json({ message: "This payment is only for student subscriptions." });
+    }
+
+    const m_payment_id = `M-${req.user.userId}-${Date.now()}`;
+
+    await Payment.create({
       userId: req.user.userId,
-      quizId,
-      isAdminAttempt: false,
-      attemptState: "in_progress",
-    }).sort({ createdAt: -1 });
-
-    if (!existingResult && !canManage) {
-      const alreadySubmitted = await Result.findOne({
-        userId: req.user.userId,
-        quizId,
-        isAdminAttempt: { $ne: true },
-        attemptState: { $in: ["submitted", "auto_submitted"] },
-      }).select("_id");
-
-      if (alreadySubmitted) {
-        return res.status(409).json({ message: "You already submitted this assessment." });
-      }
-    }
-
-    if (existingResult?.expiresAt && new Date() > new Date(existingResult.expiresAt)) {
-      existingResult.attemptState = "auto_submitted";
-      existingResult.submittedAt = existingResult.expiresAt;
-    }
-
-    const byQuestionIndex = new Map();
-    for (const a of answers) {
-      const qi = Number(a?.questionIndex);
-      if (Number.isInteger(qi) && qi >= 0) {
-        byQuestionIndex.set(qi, a);
-      }
-    }
-
-    const scoredAnswers = [];
-    let score = 0;
-    let total = 0;
-
-    for (let i = 0; i < quiz.questions.length; i++) {
-      const q = quiz.questions[i];
-      const type = String(q?.type || "mcq").toLowerCase();
-
-      if (type === "note") {
-        continue;
-      }
-
-      const incoming = byQuestionIndex.get(i) || {};
-      const points = Number(q.points || 0);
-      total += points;
-
-      let earnedPoints = 0;
-      let isCorrect = false;
-
-      const base = {
-        questionIndex: i,
-        type,
-        points,
-        earnedPoints: 0,
-        chosenIndex: -1,
-        correctIndex: -1,
-        isMultiSelect: false,
-        chosenIndexes: [],
-        correctIndexes: [],
-        textAnswer: "",
-        correctText: "",
-        hint: String(q.hint || ""),
-        solution: String(q.solution || ""),
-        answerMode: "case-insensitive",
-        roundTo: null,
-        tolerance: null,
-        isCorrect: false,
-        questionText: String(q.text || ""),
-        options: Array.isArray(q.options) ? q.options : [],
-      };
-
-      if (type === "text") {
-        const userText = cleanSpaces(incoming.textAnswer || "");
-        const correctText = cleanSpaces(q.correctText || "");
-        const mode = String(q.textAnswerMode || "exact");
-        const tolerance = q.numberTolerance ?? null;
-
-        if (mode === "number_tolerance") {
-          const userNum = Number(userText);
-          const correctNum = Number(correctText);
-          const tol = Number(tolerance ?? 0);
-          if (
-            Number.isFinite(userNum) &&
-            Number.isFinite(correctNum) &&
-            Number.isFinite(tol)
-          ) {
-            isCorrect = Math.abs(userNum - correctNum) <= tol;
-          }
-        } else if (mode === "contains") {
-          isCorrect =
-            userText.toLowerCase().includes(correctText.toLowerCase()) && !!correctText;
-        } else {
-          isCorrect = userText.toLowerCase() === correctText.toLowerCase() && !!correctText;
-        }
-
-        earnedPoints = isCorrect ? points : 0;
-        score += earnedPoints;
-
-        scoredAnswers.push({
-          ...base,
-          earnedPoints,
-          textAnswer: userText,
-          correctText,
-          answerMode:
-            mode === "number_tolerance"
-              ? "number"
-              : mode === "contains"
-              ? "case-insensitive"
-              : "exact",
-          tolerance: tolerance ?? null,
-          isCorrect,
-        });
-      } else {
-        const opts = Array.isArray(q.options) ? q.options : [];
-        const correctIndexes = normalizeIndexArray(
-          Array.isArray(q.correctIndexes) && q.correctIndexes.length
-            ? q.correctIndexes
-            : Number.isInteger(Number(q.correctIndex))
-            ? [Number(q.correctIndex)]
-            : []
-        );
-
-        const chosenIndexes = normalizeIndexArray(
-          Array.isArray(incoming.chosenIndexes) && incoming.chosenIndexes.length
-            ? incoming.chosenIndexes
-            : Number.isInteger(Number(incoming.chosenIndex))
-            ? [Number(incoming.chosenIndex)]
-            : []
-        );
-
-        const isMultiSelect = Boolean(q.isMultiSelect) || correctIndexes.length >= 2;
-
-        if (isMultiSelect) {
-          isCorrect = isMultiMcqCorrect(chosenIndexes, correctIndexes);
-        } else {
-          isCorrect =
-            chosenIndexes.length === 1 &&
-            correctIndexes.length === 1 &&
-            chosenIndexes[0] === correctIndexes[0];
-        }
-
-        earnedPoints = isCorrect ? points : 0;
-        score += earnedPoints;
-
-        scoredAnswers.push({
-          ...base,
-          earnedPoints,
-          chosenIndex: chosenIndexes.length === 1 ? chosenIndexes[0] : -1,
-          correctIndex: correctIndexes.length === 1 ? correctIndexes[0] : -1,
-          isMultiSelect,
-          chosenIndexes,
-          correctIndexes,
-          options: opts,
-          isCorrect,
-        });
-      }
-    }
-
-    const percent = total > 0 ? Math.round((score / total) * 100) : 0;
-    const status = percent >= 50 ? "PASS" : "FAIL";
-
-    if (existingResult) {
-      existingResult.score = score;
-      existingResult.total = total;
-      existingResult.percent = percent;
-      existingResult.status = status;
-      existingResult.answers = scoredAnswers;
-      existingResult.timeTakenSeconds = Number(timeTakenSeconds || 0);
-      existingResult.startedAt = existingResult.startedAt || new Date();
-      existingResult.submittedAt = new Date();
-      existingResult.attemptState =
-        new Date() > new Date(existingResult.expiresAt || new Date())
-          ? "auto_submitted"
-          : "submitted";
-      existingResult.attemptedAt = existingResult.submittedAt;
-      await existingResult.save();
-
-      return res.status(201).json(existingResult);
-    }
-
-    const saved = await Result.create({
-      userId: req.user.userId,
-      quizId,
-      grade: quiz.grade ?? null,
-      topic: quiz.topic || "General",
-      title: quiz.title || "Assessment",
-      instructions: quiz.instructions || "",
-      score,
-      total,
-      percent,
-      status,
-      answers: scoredAnswers,
-      timeTakenSeconds: Number(timeTakenSeconds || 0),
-      isAdminAttempt: false,
-      attemptNo: 1,
-      attemptedAt: new Date(),
-      startedAt: new Date(),
-      expiresAt: null,
-      submittedAt: new Date(),
-      attemptState: "submitted",
+      m_payment_id,
+      plan: "monthly",
+      amount: amt,
+      status: "PENDING",
     });
 
-    return res.status(201).json(saved);
+    const emailPrefix = currentUser.email ? currentUser.email.split("@")[0] : "Practice";
+
+    const data = {
+      merchant_id: PAYFAST_MERCHANT_ID,
+      merchant_key: PAYFAST_MERCHANT_KEY,
+      return_url: `${APP_URL}/payment-success.html`,
+      cancel_url: `${APP_URL}/payment-cancel.html`,
+      notify_url: `${API_URL}/api/payfast/itn`,
+      m_payment_id: String(m_payment_id).trim(),
+      amount: amt.toFixed(2),
+      item_name: String(item_name || "Practice Online Subscription (30 days)")
+        .trim()
+        .slice(0, 100),
+      name_first: String(emailPrefix || "Practice").trim(),
+      name_last: "Online",
+      email_address: String(
+        currentUser.email || FROM_EMAIL || "no-reply@practiceonline.co.za"
+      ).trim(),
+    };
+
+    data.signature = buildPayfastSignature(data, PAYFAST_PASSPHRASE);
+
+    return res.json({
+      action: payfastProcessUrl(PAYFAST_MODE),
+      fields: data,
+    });
   } catch (e) {
-    console.error("POST /api/results error:", e.message);
-    return res.status(500).json({ message: "Server error" });
+    console.error("POST /api/payfast/initiate error:", e.message);
+    return res.status(500).json({ message: "Could not start payment." });
   }
 });
 
+app.post("/api/payfast/itn", async (req, res) => {
+  try {
+    const pfData = { ...req.body };
+
+    console.log("PayFast ITN received:", pfData);
+
+    if (!pfData || !pfData.m_payment_id) {
+      return res.status(400).send("Missing ITN data");
+    }
+
+    const receivedSignature = String(pfData.signature || "").trim();
+    const calculatedSignature = buildPayfastSignature(pfData, PAYFAST_PASSPHRASE);
+
+    if (receivedSignature !== calculatedSignature) {
+      console.error("PayFast ITN invalid signature");
+      return res.status(400).send("Invalid signature");
+    }
+
+    const valid = await validatePayfastData(pfData);
+    if (!valid) {
+      console.error("PayFast ITN invalid data");
+      return res.status(400).send("Invalid data");
+    }
+
+    const payment = await Payment.findOne({ m_payment_id: pfData.m_payment_id });
+    if (!payment) {
+      console.error("PayFast ITN payment not found:", pfData.m_payment_id);
+      return res.status(200).send("OK");
+    }
+
+    const paymentStatus = String(pfData.payment_status || "").toUpperCase();
+    const amountGross = Number(pfData.amount_gross || 0);
+
+    if (Number(payment.amount).toFixed(2) !== Number(amountGross).toFixed(2)) {
+      payment.status = "FAILED";
+      payment.payment_status_raw = paymentStatus;
+      payment.pf_payment_id = String(pfData.pf_payment_id || "");
+      payment.amount_gross = amountGross;
+      payment.amount_fee = Number(pfData.amount_fee || 0);
+      payment.amount_net = Number(pfData.amount_net || 0);
+      payment.raw = pfData;
+      await payment.save();
+
+      console.error("PayFast amount mismatch:", payment.m_payment_id);
+      return res.status(200).send("OK");
+    }
+
+    if (paymentStatus === "COMPLETE") {
+      payment.status = "COMPLETE";
+    } else if (paymentStatus === "CANCELLED") {
+      payment.status = "CANCELLED";
+    } else {
+      payment.status = "FAILED";
+    }
+
+    payment.payment_status_raw = paymentStatus;
+    payment.pf_payment_id = String(pfData.pf_payment_id || "");
+    payment.amount_gross = amountGross;
+    payment.amount_fee = Number(pfData.amount_fee || 0);
+    payment.amount_net = Number(pfData.amount_net || 0);
+    payment.raw = pfData;
+
+    await payment.save();
+
+    if (payment.status === "COMPLETE") {
+      const user = await User.findById(payment.userId).select(
+        "paidUntil subscriptionStatus lastPaymentId premium premiumActivatedAt premiumExpiresAt trialActive"
+      );
+
+      if (user) {
+        const now = new Date();
+        const base =
+          user.paidUntil && new Date(user.paidUntil) > now ? new Date(user.paidUntil) : now;
+
+        const newUntil = new Date(base.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+        user.paidUntil = newUntil;
+        user.subscriptionStatus = "active";
+        user.lastPaymentId = payment.m_payment_id;
+        user.premium = true;
+        user.premiumActivatedAt = now;
+        user.premiumExpiresAt = newUntil;
+        user.trialActive = false;
+
+        await user.save();
+      }
+    }
+
+    return res.status(200).send("OK");
+  } catch (e) {
+    console.error("POST /api/payfast/itn error:", e.message);
+    return res.status(500).send("Server error");
+  }
+});
+
+
 /* ------------------ ANNOUNCEMENTS ------------------ */
 
-app.post("/api/announcements", authRequired, quizManagerOnly, async (req, res) => {
+async function announcementManagerOnly(req, res, next) {
+  try {
+    const u = await User.findById(req.user.userId).select("role");
+    if (!u) return res.status(401).json({ message: "User not found" });
+
+    const role = String(u.role || "").toLowerCase().trim();
+
+    if (!["admin", "editor", "tester"].includes(role)) {
+      return res.status(403).json({ message: "Admin/editor/tester only" });
+    }
+
+    next();
+  } catch {
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+// CREATE ANNOUNCEMENT
+app.post("/api/announcements", authRequired, announcementManagerOnly, async (req, res) => {
   try {
     const {
       title,
@@ -2531,195 +2676,231 @@ app.post("/api/announcements", authRequired, quizManagerOnly, async (req, res) =
       quizStatus,
     } = req.body;
 
-    if (!cleanSpaces(title) || !cleanSpaces(message)) {
-      return res.status(400).json({ message: "Title and message are required." });
+    if (!safeTrim(title)) {
+      return res.status(400).json({ message: "Title is required." });
+    }
+
+    if (!safeTrim(message)) {
+      return res.status(400).json({ message: "Message is required." });
     }
 
     const announcement = await Announcement.create({
       title: cleanSpaces(title),
-      message: cleanSpaces(message),
+      message: String(message).trim(),
       grade: normalizeAnnouncementGrade(grade),
       category: normalizeAnnouncementCategory(category),
-      isPublished: isPublished !== false,
+      isPublished: typeof isPublished === "boolean" ? isPublished : true,
       sendToStudents: !!sendToStudents,
       urgentNotice: !!urgentNotice,
-      meetingLink: cleanSpaces(meetingLink || ""),
-      meetingDate: cleanSpaces(meetingDate || ""),
-      meetingTime: cleanSpaces(meetingTime || ""),
-      dueDate: cleanSpaces(dueDate || ""),
-      quizStatus: cleanSpaces(quizStatus || "Open"),
+      meetingLink: String(meetingLink || "").trim(),
+      meetingDate: String(meetingDate || "").trim(),
+      meetingTime: String(meetingTime || "").trim(),
+      dueDate: String(dueDate || "").trim(),
+      quizStatus: String(quizStatus || "Open").trim(),
       createdBy: req.user.userId,
     });
 
-    return res.status(201).json(announcement);
-  } catch (e) {
-    console.error("POST /api/announcements error:", e.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
+    // sendToStudents = email/notification only
+    if (announcement.sendToStudents) {
+      try {
+        let gradeNumbers = [];
 
-app.get("/api/announcements", authRequired, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId).select("role grade");
-    if (!user) return res.status(404).json({ message: "User not found" });
+        if (announcement.grade === "allGrades") {
+          gradeNumbers = [8, 9, 10, 11, 12];
+        } else {
+          const n = Number(String(announcement.grade).replace("grade", ""));
+          if (Number.isInteger(n)) gradeNumbers = [n];
+        }
 
-    const isManager = canManageQuizzes(user.role) || isPrivilegedRole(user.role);
+        const learners = await User.find({
+          role: "learner",
+          accountType: "student",
+          grade: { $in: gradeNumbers },
+          email: { $exists: true, $ne: "" },
+          emailVerified: true,
+        }).select("email");
 
-    let filter = {};
-    if (!isManager) {
-      const learnerGrade = gradeToAnnouncementGrade(user.grade);
-      filter = {
-        isPublished: true,
-        $or: [{ grade: "allGrades" }, { grade: learnerGrade }],
-      };
-    }
+        const recipients = learners
+          .map((u) => String(u.email || "").trim().toLowerCase())
+          .filter(Boolean);
 
-    const rows = await Announcement.find(filter).sort({ urgentNotice: -1, createdAt: -1 });
+        if (recipients.length) {
+          const subject = `New ${announcement.category} announcement`;
 
-    if (isManager) {
-      return res.json(rows);
-    }
+          const html = `
+            <div style="font-family:Arial,sans-serif; line-height:1.6;">
+              <p>Hello,</p>
+              <p>A new announcement has been posted on Practice Online.</p>
+              <p><b>${announcement.title}</b></p>
+              <p>${announcement.message}</p>
+              ${
+                announcement.category === "class" || announcement.category === "all"
+                  ? `
+                    <p>
+                      <b>Meeting date:</b> ${announcement.meetingDate || "Not set"}<br/>
+                      <b>Meeting time:</b> ${announcement.meetingTime || "Not set"}<br/>
+                      <b>Meeting link:</b> ${announcement.meetingLink || "Not set"}
+                    </p>
+                  `
+                  : ""
+              }
+              ${
+                announcement.category === "quiz" || announcement.category === "all"
+                  ? `
+                    <p>
+                      <b>Due date:</b> ${announcement.dueDate || "Not set"}<br/>
+                      <b>Status:</b> ${announcement.quizStatus || "Open"}
+                    </p>
+                  `
+                  : ""
+              }
+              <p>Please log in to Practice Online to view the full announcement.</p>
+            </div>
+          `;
 
-    return res.json(rows.map((a) => stripAnnouncementForUser(a, req.user.userId)));
-  } catch (e) {
-    console.error("GET /api/announcements error:", e.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
+          const text = `${announcement.title}\n\n${announcement.message}`;
 
-app.get("/api/announcements/admin/list", authRequired, quizManagerOnly, async (req, res) => {
-  try {
-    const rows = await Announcement.find({}).sort({ createdAt: -1 });
-    return res.json(rows);
-  } catch (e) {
-    console.error("GET /api/announcements/admin/list error:", e.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.put("/api/announcements/:id", authRequired, quizManagerOnly, async (req, res) => {
-  try {
-    const announcement = await Announcement.findById(req.params.id);
-    if (!announcement) return res.status(404).json({ message: "Announcement not found" });
-
-    const fields = [
-      "title",
-      "message",
-      "grade",
-      "category",
-      "meetingLink",
-      "meetingDate",
-      "meetingTime",
-      "dueDate",
-      "quizStatus",
-    ];
-
-    for (const key of fields) {
-      if (key in req.body) {
-        if (key === "grade") announcement.grade = normalizeAnnouncementGrade(req.body.grade);
-        else if (key === "category")
-          announcement.category = normalizeAnnouncementCategory(req.body.category);
-        else announcement[key] = cleanSpaces(req.body[key] || "");
+          await sendBulkEmail({
+            recipients,
+            subject,
+            html,
+            text,
+          });
+        }
+      } catch (emailErr) {
+        console.error("Announcement email send failed:", emailErr.message);
       }
     }
 
-    if ("isPublished" in req.body) announcement.isPublished = !!req.body.isPublished;
-    if ("sendToStudents" in req.body) announcement.sendToStudents = !!req.body.sendToStudents;
-    if ("urgentNotice" in req.body) announcement.urgentNotice = !!req.body.urgentNotice;
-
-    await announcement.save();
-    return res.json(announcement);
-  } catch (e) {
-    console.error("PUT /api/announcements/:id error:", e.message);
-    return res.status(500).json({ message: "Server error" });
+    return res.status(201).json({
+      message: "Announcement created successfully.",
+      announcement,
+    });
+  } catch (err) {
+    console.error("POST /api/announcements error:", err.message);
+    return res.status(500).json({ message: "Failed to create announcement." });
   }
 });
 
-app.delete("/api/announcements/:id", authRequired, quizManagerOnly, async (req, res) => {
+// GET ANNOUNCEMENTS FOR LEARNERS / ADMIN
+app.get("/api/announcements", authRequired, async (req, res) => {
   try {
-    const deleted = await Announcement.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: "Announcement not found" });
-    return res.json({ message: "Deleted" });
-  } catch (e) {
-    console.error("DELETE /api/announcements/:id error:", e.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.post("/api/announcements/respond/:id", authRequired, async (req, res) => {
-  try {
-    const { response } = req.body;
-    if (!["accepted", "rejected"].includes(String(response || "").toLowerCase())) {
-      return res.status(400).json({ message: "Invalid response" });
+    const currentUser = await User.findById(req.user.userId).select("role grade");
+    if (!currentUser) {
+      return res.status(401).json({ message: "User not found." });
     }
 
-    const announcement = await Announcement.findById(req.params.id);
-    if (!announcement) return res.status(404).json({ message: "Announcement not found" });
+    const queryGrade = safeTrim(req.query.grade);
+    const queryCategory = safeTrim(req.query.category);
+    const q = safeTrim(req.query.q);
 
-    const existing = announcement.responses.find(
-      (r) => String(r.student) === String(req.user.userId)
+    const filter = {};
+
+    if (isPrivilegedRole(currentUser.role) || ["editor"].includes(String(currentUser.role || "").toLowerCase())) {
+      if (queryGrade) {
+        filter.grade = normalizeAnnouncementGrade(queryGrade);
+      }
+
+      if (typeof req.query.isPublished !== "undefined") {
+        filter.isPublished = String(req.query.isPublished) === "true";
+      }
+    } else {
+      // IMPORTANT:
+      // Published announcements must show in app even if sendToStudents = false
+      filter.isPublished = true;
+
+      const learnerGrade = gradeToAnnouncementGrade(currentUser.grade);
+      filter.grade = { $in: [learnerGrade, "allGrades"] };
+    }
+
+    if (queryCategory) {
+      const cat = normalizeAnnouncementCategory(queryCategory);
+      if (cat !== "all") {
+        filter.category = { $in: [cat, "all"] };
+      }
+    }
+
+    if (q) {
+      const rx = new RegExp(escapeRegex(q), "i");
+      filter.$or = [{ title: rx }, { message: rx }];
+    }
+
+    const announcements = await Announcement.find(filter)
+      .sort({ urgentNotice: -1, createdAt: -1 })
+      .populate("createdBy", "username email role");
+
+    const mapped = announcements.map((a) => stripAnnouncementForUser(a, req.user.userId));
+
+    const generalAnnouncements = mapped.filter(
+      (a) => a.category === "general" || a.category === "all"
     );
 
-    if (existing) {
-      existing.response = String(response).toLowerCase();
-      existing.respondedAt = new Date();
-    } else {
-      announcement.responses.push({
-        student: req.user.userId,
-        response: String(response).toLowerCase(),
-        respondedAt: new Date(),
-      });
-    }
+    const classAnnouncements = mapped.filter(
+      (a) => a.category === "class" || a.category === "all"
+    );
 
-    await announcement.save();
+    const quizAnnouncements = mapped.filter(
+      (a) => a.category === "quiz" || a.category === "all"
+    );
+
+    const latestUrgent = mapped.find((a) => a.urgentNotice);
+
     return res.json({
-      message: "Response saved",
-      learnerResponse: String(response).toLowerCase(),
+      updatedAt: mapped[0]?.updatedAt || null,
+      urgentNotice: latestUrgent?.message || "",
+      weeklyFocus: latestUrgent?.title || "",
+      generalAnnouncements,
+      classAnnouncements,
+      quizAnnouncements,
+      announcements: mapped,
     });
-  } catch (e) {
-    console.error("POST /api/announcements/respond/:id error:", e.message);
-    return res.status(500).json({ message: "Server error" });
+  } catch (err) {
+    console.error("GET /api/announcements error:", err.message);
+    return res.status(500).json({ message: "Failed to load announcements." });
   }
 });
 
-app.post("/api/announcements/mark-seen", authRequired, async (req, res) => {
+// ADMIN LIST
+app.get("/api/announcements/admin/list", authRequired, announcementManagerOnly, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const items = await Announcement.find({})
+      .sort({ createdAt: -1 })
+      .populate("createdBy", "username email");
 
-    user.lastSeenAnnouncementsAt = new Date();
-    await user.save();
-
-    return res.json({ message: "Announcements marked as seen." });
-  } catch (e) {
-    console.error("POST /api/announcements/mark-seen error:", e.message);
-    return res.status(500).json({ message: "Server error" });
+    return res.json(items);
+  } catch (err) {
+    console.error("GET /api/announcements/admin/list error:", err.message);
+    return res.status(500).json({ message: "Failed to load admin announcements." });
   }
 });
 
+// PROFILE SUMMARY
 app.get("/api/announcements/profile-summary", authRequired, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select("grade lastSeenAnnouncementsAt");
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const currentUser = await User.findById(req.user.userId).select("role grade");
+    if (!currentUser) {
+      return res.status(401).json({ message: "User not found." });
+    }
 
-    const learnerGrade = gradeToAnnouncementGrade(user.grade);
+    let gradeFilter = ["allGrades"];
 
-    const announcements = await Announcement.find({
+    if (!isPrivilegedRole(currentUser.role) && String(currentUser.role || "").toLowerCase() !== "editor") {
+      gradeFilter = [gradeToAnnouncementGrade(currentUser.grade), "allGrades"];
+    }
+
+    // IMPORTANT:
+    // Do NOT filter by sendToStudents here.
+    // Published in-app announcements must still count and show.
+    const baseFilter = {
       isPublished: true,
-      $or: [{ grade: "allGrades" }, { grade: learnerGrade }],
-    })
-      .sort({ urgentNotice: -1, createdAt: -1 })
-      .limit(50);
+      grade: { $in: gradeFilter },
+    };
 
-    const latest = announcements.length ? announcements[0] : null;
-
-    const unreadCount = announcements.filter((a) => {
-      if (!user.lastSeenAnnouncementsAt) return true;
-      return new Date(a.createdAt) > new Date(user.lastSeenAnnouncementsAt);
-    }).length;
+    const latest = await Announcement.findOne(baseFilter).sort({ createdAt: -1 });
+    const count = await Announcement.countDocuments(baseFilter);
 
     return res.json({
-      count: unreadCount,
+      count,
       latest: latest
         ? {
             _id: latest._id,
@@ -2730,166 +2911,199 @@ app.get("/api/announcements/profile-summary", authRequired, async (req, res) => 
           }
         : null,
     });
-  } catch (e) {
-    console.error("GET /api/announcements/profile-summary error:", e.message);
-    return res.status(500).json({ message: "Server error" });
+  } catch (err) {
+    console.error("GET /api/announcements/profile-summary error:", err.message);
+    return res.status(500).json({ message: "Failed to load announcement summary." });
   }
 });
 
-/* ------------------ ACCESS / PAYMENTS ROUTES ------------------ */
-app.use("/api/access", accessRoutes);
-app.use("/api/payments", paymentRoutes);
-app.use("/api/manual-payments", manualPaymentsRoutes);
-
-/* ------------------ PASSWORD RESET ------------------ */
-app.post("/api/forgot-password", async (req, res) => {
+// UPDATE ANNOUNCEMENT
+app.put("/api/announcements/:id", authRequired, announcementManagerOnly, async (req, res) => {
   try {
-    const email = String(req.body.email || "").trim().toLowerCase();
+    const { id } = req.params;
 
-    if (!email || !isValidEmail(email)) {
-      return res.status(400).json({ message: "Please enter a valid email." });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid announcement id." });
     }
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.json({
-        message: "If the email exists, a reset link has been sent.",
+    const announcement = await Announcement.findById(id);
+    if (!announcement) {
+      return res.status(404).json({ message: "Announcement not found." });
+    }
+
+    const {
+      title,
+      message,
+      grade,
+      category,
+      isPublished,
+      sendToStudents,
+      urgentNotice,
+      meetingLink,
+      meetingDate,
+      meetingTime,
+      dueDate,
+      quizStatus,
+    } = req.body;
+
+    announcement.title = cleanSpaces(title ?? announcement.title);
+    announcement.message = String(message ?? announcement.message).trim();
+    announcement.grade = normalizeAnnouncementGrade(grade ?? announcement.grade);
+    announcement.category = normalizeAnnouncementCategory(category ?? announcement.category);
+
+    if (typeof isPublished === "boolean") announcement.isPublished = isPublished;
+    if (typeof sendToStudents === "boolean") announcement.sendToStudents = sendToStudents;
+    if (typeof urgentNotice === "boolean") announcement.urgentNotice = urgentNotice;
+
+    announcement.meetingLink = String(meetingLink ?? announcement.meetingLink ?? "").trim();
+    announcement.meetingDate = String(meetingDate ?? announcement.meetingDate ?? "").trim();
+    announcement.meetingTime = String(meetingTime ?? announcement.meetingTime ?? "").trim();
+    announcement.dueDate = String(dueDate ?? announcement.dueDate ?? "").trim();
+    announcement.quizStatus = String(quizStatus ?? announcement.quizStatus ?? "Open").trim();
+
+    await announcement.save();
+
+    return res.json({
+      message: "Announcement updated successfully.",
+      announcement,
+    });
+  } catch (err) {
+    console.error("PUT /api/announcements/:id error:", err.message);
+    return res.status(500).json({ message: "Failed to update announcement." });
+  }
+});
+
+// DELETE ANNOUNCEMENT
+app.delete("/api/announcements/:id", authRequired, announcementManagerOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid announcement id." });
+    }
+
+    const deleted = await Announcement.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Announcement not found." });
+    }
+
+    return res.json({ message: "Announcement deleted successfully." });
+  } catch (err) {
+    console.error("DELETE /api/announcements/:id error:", err.message);
+    return res.status(500).json({ message: "Failed to delete announcement." });
+  }
+});
+
+// RESPOND TO CLASS ANNOUNCEMENT
+app.post("/api/announcements/:id/respond", authRequired, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const response = String(req.body.response || "").toLowerCase().trim();
+
+    if (!["accepted", "rejected"].includes(response)) {
+      return res.status(400).json({ message: "Response must be accepted or rejected." });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid announcement id." });
+    }
+
+    const announcement = await Announcement.findById(id);
+    if (!announcement) {
+      return res.status(404).json({ message: "Announcement not found." });
+    }
+
+    if (!["class", "all"].includes(announcement.category)) {
+      return res.status(400).json({ message: "This announcement does not accept class responses." });
+    }
+
+    const existing = announcement.responses.find(
+      (r) => String(r.student) === String(req.user.userId)
+    );
+
+    if (existing) {
+      existing.response = response;
+      existing.respondedAt = new Date();
+    } else {
+      announcement.responses.push({
+        student: req.user.userId,
+        response,
+        respondedAt: new Date(),
       });
     }
 
-    const rawOtp = makeOtp6();
-    user.resetOtpHash = hashToken(rawOtp);
-    user.resetOtpExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
-    await user.save();
-
-    await sendEmail({
-      to: user.email,
-      subject: "Practice Online password reset OTP",
-      text: `Your OTP is ${rawOtp}. It expires in 15 minutes.`,
-      html: `
-        <div style="font-family:Arial,sans-serif;line-height:1.6">
-          <p>Hello ${user.username || "User"},</p>
-          <p>Your password reset OTP is:</p>
-          <p style="font-size:24px;font-weight:700">${rawOtp}</p>
-          <p>This OTP expires in 15 minutes.</p>
-        </div>
-      `,
-    });
+    await announcement.save();
 
     return res.json({
-      message: "If the email exists, a reset link has been sent.",
+      message: "Response saved successfully.",
+      learnerResponse: response,
     });
-  } catch (e) {
-    console.error("POST /api/forgot-password error:", e.message);
-    return res.status(500).json({ message: "Server error" });
+  } catch (err) {
+    console.error("POST /api/announcements/:id/respond error:", err.message);
+    return res.status(500).json({ message: "Failed to save response." });
   }
 });
 
-app.post("/api/reset-password", async (req, res) => {
+// ADMIN VIEW RESPONSES FOR ONE ANNOUNCEMENT
+app.get("/api/announcements/:id/responses", authRequired, announcementManagerOnly, async (req, res) => {
   try {
-    const email = String(req.body.email || "").trim().toLowerCase();
-    const otp = String(req.body.otp || "").trim();
-    const newPassword = String(req.body.newPassword || "");
+    const { id } = req.params;
 
-    if (!email || !otp || !newPassword) {
-      return res.status(400).json({ message: "Email, OTP and new password are required." });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid announcement id." });
     }
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "Invalid request." });
+    const announcement = await Announcement.findById(id).populate(
+      "responses.student",
+      "fullName username email grade studentNumber"
+    );
 
-    if (
-      !user.resetOtpHash ||
-      !user.resetOtpExpiresAt ||
-      user.resetOtpExpiresAt < new Date() ||
-      user.resetOtpHash !== hashToken(otp)
-    ) {
-      return res.status(400).json({ message: "Invalid or expired OTP." });
+    if (!announcement) {
+      return res.status(404).json({ message: "Announcement not found." });
     }
 
-    user.passwordHash = await bcrypt.hash(newPassword, 10);
-    user.resetOtpHash = "";
-    user.resetOtpExpiresAt = null;
-    await user.save();
-
-    return res.json({ message: "Password reset successfully." });
-  } catch (e) {
-    console.error("POST /api/reset-password error:", e.message);
-    return res.status(500).json({ message: "Server error" });
+    return res.json({
+      announcementId: announcement._id,
+      title: announcement.title,
+      category: announcement.category,
+      responses: announcement.responses || [],
+    });
+  } catch (err) {
+    console.error("GET /api/announcements/:id/responses error:", err.message);
+    return res.status(500).json({ message: "Failed to load responses." });
   }
 });
 
-/* ------------------ SUPPORT ------------------ */
-const SupportRequestSchema = new mongoose.Schema(
-  {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    subject: { type: String, default: "Maths", trim: true },
-    requestType: { type: String, default: "", trim: true },
-    requestFollowUp: { type: String, default: "", trim: true },
-    changeAccount: {
-      currentAccountType: { type: String, default: "", trim: true },
-      newAccountType: { type: String, default: "", trim: true },
-    },
-    message: { type: String, required: true, trim: true },
-    contact: { type: String, default: "", trim: true },
-    status: { type: String, default: "pending", trim: true },
-  },
-  { timestamps: true }
-);
 
-const SupportRequest =
-  mongoose.models.SupportRequest || mongoose.model("SupportRequest", SupportRequestSchema);
 
-app.post("/api/support", authRequired, async (req, res) => {
-  try {
-    const support = await SupportRequest.create({
-      userId: req.user.userId,
-      subject: cleanSpaces(req.body.subject || "Maths"),
-      requestType: cleanSpaces(req.body.requestType || ""),
-      requestFollowUp: cleanSpaces(req.body.requestFollowUp || ""),
-      changeAccount: req.body.changeAccount || null,
-      message: cleanSpaces(req.body.message || ""),
-      contact: cleanSpaces(req.body.contact || ""),
-      status: "pending",
-    });
-
-    return res.status(201).json({
-      message: "Support request submitted successfully.",
-      support,
-    });
-  } catch (e) {
-    console.error("POST /api/support error:", e.message);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-/* ------------------ MOUNT OTHER ROUTES ------------------ */
+/* ------------------ ACCESS + PAYMENT ROUTES ------------------ */
 app.use("/api/access", accessRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/manual-payments", manualPaymentsRoutes);
 
-/* ------------------ DB + SERVER ------------------ */
-const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
+/* ------------------ OPTIONAL: FRIENDLY 404 FOR API ------------------ */
+app.use("/api", (req, res) => {
+  res.status(404).json({ message: "API route not found" });
+});
 
-if (!MONGO_URI) {
-  console.error("Missing MONGO_URI / MONGODB_URI in environment.");
-  process.exit(1);
-}
+/* ------------------ ERROR HANDLER (CORS ETC.) ------------------ */
+app.use((err, req, res, next) => {
+  if (String(err?.message || "").startsWith("CORS blocked:")) {
+    return res.status(403).json({ message: err.message });
+  }
+  console.error("Unhandled error:", err?.message || err);
+  res.status(500).json({ message: "Server error" });
+});
+
+/* ------------------ DB + START ------------------ */
+const PORT = process.env.PORT || 5000;
 
 mongoose
-  .connect(MONGO_URI)
-  .then(async () => {
+  .connect(process.env.MONGO_URI)
+  .then(() => {
     console.log("MongoDB connected");
-
-    await autoPublishScheduledQuizzes();
     setInterval(autoPublishScheduledQuizzes, 60 * 1000);
-
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
+    app.listen(PORT, () => console.log(`Server running on ${PORT}`));
   })
-  .catch((err) => {
-    console.error("MongoDB connection error:", err.message);
-    process.exit(1);
-  });
+  .catch((err) => console.error("Mongo error:", err.message));
