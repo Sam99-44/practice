@@ -19,46 +19,255 @@
   --info:#1d4ed8;
 }
 *{box-sizing:border-box}
-body{
+
+html,body{
   margin:0;
-  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  padding:0;
+  font-family:Arial, Helvetica, sans-serif;
   background:var(--bg);
   color:var(--text);
 }
+
+a{
+  text-decoration:none;
+  color:inherit;
+}
+
+/* ===== CONSISTENT HEADER ===== */
 .topbar{
-  background:linear-gradient(135deg,var(--nav),#2b2370);
+  background:var(--nav);
   color:#fff;
+  position:sticky;
+  top:0;
+  z-index:1000;
 }
+
 .topbar-inner{
-  max-width:1100px;
-  margin:auto;
-  padding:16px 20px;
+  max-width:1150px;
+  margin:0 auto;
+  padding:14px 18px;
   display:flex;
-  justify-content:space-between;
   align-items:center;
+  justify-content:space-between;
+  gap:12px;
 }
+
+.accountLeft{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+  user-select:none;
+}
+
+.accountIconWrap{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+
+.accountIcon{
+  width:40px;
+  height:40px;
+  display:block;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.accountMeta{
+  min-width:0;
+  line-height:1.1;
+}
+
+.accountName{
+  font-size:14px;
+  font-weight:700;
+  color:#fff;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:220px;
+}
+
+.accountType{
+  font-size:13px;
+  color:#e0e7ff;
+  margin-top:3px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:220px;
+  text-transform:capitalize;
+  font-weight:400;
+}
+
+.topbarRight{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  position:relative;
+}
+
+.iconBtnTop{
+  min-width:50px;
+  height:50px;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  padding:0 4px;
+}
+
+.iconBtnTop img{
+  width:30px;
+  height:30px;
+  display:block;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.bellBtn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
+.navBadge{
+  color:#ffd6db;
+  font-size:13px;
+  font-weight:700;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+}
+
+.menuBtn{
+  height:50px;
+  padding:0;
+  gap:8px;
+  border:none;
+  background:transparent;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.menuBtnText{
+  font-size:13px;
+  font-weight:700;
+  color:#fff;
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  top:-1px;
+}
+
+.menuBtn img{
+  width:28px;
+  height:28px;
+  filter:brightness(0) invert(1) contrast(180%);
+  display:block;
+}
+
+.menuDropdown{
+  position:absolute;
+  top:48px;
+  right:0;
+  width:210px;
+  background:#f7f7f8;
+  color:#111827;
+  border:1px solid #d9dee7;
+  border-radius:16px;
+  box-shadow:0 14px 30px rgba(15,23,42,.14);
+  padding:10px 0;
+  display:none;
+}
+
+.menuDropdown.open{
+  display:block;
+}
+
+.menuItem{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 18px;
+  color:#111827;
+  font-size:14px;
+  font-weight:400;
+  background:transparent;
+  border:none;
+  text-align:left;
+  cursor:pointer;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.menuItem:hover{
+  background:#eef2f7;
+}
+
+.menuItem img{
+  width:18px;
+  height:18px;
+  display:block;
+  flex-shrink:0;
+}
+
+.menuItem.profileTextOnly{
+  padding-left:38px;
+}
+
+.menuDivider{
+  height:1px;
+  background:#dde4ec;
+  margin:8px 0 6px;
+}
+
+.logoutMenuBtn{
+  width:100%;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  text-align:left;
+}
+
 .wrap{
-  max-width:1100px;
-  margin:auto;
-  padding:20px;
+  max-width:1150px;
+  margin:0 auto;
+  padding:18px;
 }
+
 .hero{
   background:#fff;
   border:1px solid var(--border);
   border-radius:18px;
-  padding:20px;
+  padding:18px;
   margin-bottom:18px;
 }
+
 .hero h2{
   margin:0 0 8px;
   font-size:20px;
+  font-weight:700;
 }
+
 .hero p{
   margin:0;
   color:var(--muted);
   line-height:1.7;
   font-size:14px;
 }
+
 .section{
   background:#fff;
   border:1px solid var(--border);
@@ -66,35 +275,42 @@ body{
   margin-bottom:20px;
   overflow:hidden;
 }
+
 .sectionHead{
-  padding:18px;
+  padding:16px 18px;
   border-bottom:1px solid var(--border);
-  background:#f8fafc;
+  background:#fff;
 }
+
 .sectionBody{
   padding:18px;
 }
+
 .grid{
   display:grid;
   gap:16px;
 }
+
 .card{
   border:1px solid var(--border);
   border-radius:14px;
   padding:16px;
   background:#fff;
 }
+
 .title{
   font-weight:700;
   font-size:16px;
   margin:0 0 8px;
 }
+
 .meta{
   font-size:13px;
   color:var(--muted);
   margin-top:8px;
   line-height:1.7;
 }
+
 .row{
   display:flex;
   gap:10px;
@@ -102,21 +318,25 @@ body{
   margin-top:12px;
   align-items:center;
 }
+
 input,select{
   padding:10px 12px;
   border-radius:10px;
   border:1px solid var(--border);
-  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   font-size:14px;
 }
+
 .toolbar{
   display:flex;
   margin-bottom:15px;
 }
+
 .searchBox{
   position:relative;
   width:100%;
 }
+
 .searchBox img{
   position:absolute;
   left:12px;
@@ -127,20 +347,23 @@ input,select{
   opacity:.75;
   pointer-events:none;
 }
+
 .searchBox input{
   width:100%;
   padding:12px 14px 12px 38px;
   border-radius:12px;
   border:1px solid var(--border);
-  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   font-size:14px;
   background:#fff;
 }
+
 .searchBox input:focus{
   outline:none;
-  border-color:#c7d2fe;
-  box-shadow:0 0 0 2px rgba(99,102,241,0.15);
+  border-color:#cbd5e1;
+  box-shadow:0 0 0 2px rgba(148,163,184,0.15);
 }
+
 .status{
   display:none;
   padding:13px 14px;
@@ -148,14 +371,17 @@ input,select{
   margin-bottom:14px;
   font-size:14px;
 }
+
 .status.show{display:block}
 .status.info{background:#eef4ff;border:1px solid #c7d7fe;color:var(--info)}
 .status.error{background:#fef2f2;border:1px solid #fecaca;color:var(--danger)}
 .status.success{background:#ecfdf5;border:1px solid #bbf7d0;color:var(--success)}
+
 .empty{
   color:var(--muted);
   font-size:14px;
 }
+
 .actions{
   display:flex;
   gap:10px;
@@ -163,6 +389,7 @@ input,select{
   flex-wrap:wrap;
   margin-top:14px;
 }
+
 .iconBtn{
   min-height:34px;
   border:none;
@@ -174,21 +401,25 @@ input,select{
   cursor:pointer;
   transition:.15s ease;
   padding:6px 8px;
-  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
 }
+
 .iconBtn img{
   width:18px;
   height:18px;
   display:block;
   flex-shrink:0;
 }
+
 .iconBtn.copy img{
   width:20px;
   height:20px;
 }
+
 .iconBtn:hover{
   background:#f1f5f9;
 }
+
 .actionTextBtn{
   display:inline-flex;
   align-items:center;
@@ -199,39 +430,77 @@ input,select{
   cursor:pointer;
   font-size:13px;
   font-weight:700;
-  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
 }
+
 .actionTextBtn img{
   width:16px;
   height:16px;
   display:block;
 }
+
 .actionTextBtn.accept{
   background:#ecfdf5;
   color:var(--success);
 }
+
 .actionTextBtn.reject{
   background:#fef2f2;
   color:var(--danger);
 }
+
 .actionTextBtn.accept:hover{
   background:#dcfce7;
 }
+
 .actionTextBtn.reject:hover{
   background:#fee2e2;
 }
+
 .linkText{
   color:#1d4ed8;
   text-decoration:underline;
   font-size:13px;
   font-weight:700;
 }
+
 .sectionHead strong{
   font-size:16px;
 }
+
 ::placeholder{
-  font-family:Arial, "Calibri Light", Calibri, sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   color:#94a3b8;
+}
+
+@media(max-width:640px){
+  .topbar-inner{
+    padding:12px 14px;
+  }
+
+  .accountName,
+  .accountType{
+    max-width:120px;
+  }
+
+  .menuDropdown{
+    width:200px;
+  }
+
+  .menuBtnText{
+    display:none;
+  }
+
+  .wrap{
+    padding:14px;
+  }
+
+  .hero,
+  .sectionBody,
+  .sectionHead{
+    padding-left:14px;
+    padding-right:14px;
+  }
 }
 </style>
 </head>
@@ -239,8 +508,75 @@ input,select{
 
 <header class="topbar">
   <div class="topbar-inner">
-    <strong>Practice Online</strong>
-    <span>Announcements</span>
+    <div class="accountLeft">
+      <div class="accountIconWrap">
+        <img
+          class="accountIcon"
+          src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
+          alt="Account"
+        >
+      </div>
+
+      <div class="accountMeta">
+        <div class="accountName" id="topAccountName">Loading...</div>
+        <div class="accountType" id="topAccountType">Account</div>
+      </div>
+    </div>
+
+    <div class="topbarRight">
+      <a href="announcements.html" class="iconBtnTop bellBtn" title="Announcements" aria-label="Announcements">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements">
+        <span class="navBadge" id="navAnnouncementBadge">0</span>
+      </a>
+
+      <button class="menuBtn" id="menuToggleBtn" title="Menu" aria-label="Menu" type="button">
+        <span class="menuBtnText">Menu</span>
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt="Menu">
+      </button>
+
+      <div class="menuDropdown" id="menuDropdown">
+        <a class="menuItem profileTextOnly" href="profile.html">
+          <span>Profile</span>
+        </a>
+
+        <a class="menuItem" href="learner-quizzes.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777660/practice_ubgfso.svg" alt="">
+          <span>Practice</span>
+        </a>
+
+        <a class="menuItem" href="results.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="Results">
+          <span>Results</span>
+        </a>
+
+        <a class="menuItem" href="progress-dashboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="">
+          <span>Dashboard</span>
+        </a>
+
+        <a class="menuItem" href="leaderboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777661/leaderboard_yfjgjf.svg" alt="">
+          <span>Leaderboard</span>
+        </a>
+
+        <a class="menuItem" href="support.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/support_bs175s.svg" alt="">
+          <span>Support</span>
+        </a>
+
+        <a class="menuItem" href="announcements.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="">
+          <span>Announcements</span>
+        </a>
+
+        <div class="menuDivider"></div>
+
+        <button class="menuItem logoutMenuBtn" id="logoutBtn" type="button">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773768418/logout_uay6y8.svg" alt="">
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -287,11 +623,70 @@ let dataStore = null;
 
 const statusBox = document.getElementById("statusBox");
 
+const topAccountName = document.getElementById("topAccountName");
+const topAccountType = document.getElementById("topAccountType");
+const menuToggleBtn = document.getElementById("menuToggleBtn");
+const menuDropdown = document.getElementById("menuDropdown");
+
 const ICONS = {
   thumbsUp: "https://res.cloudinary.com/dopoxadlr/image/upload/v1773870202/thumbup_p6d1cb.svg",
   thumbsDown: "https://res.cloudinary.com/dopoxadlr/image/upload/v1773870185/thumbdown_bqpjk9.svg",
   copy: "https://res.cloudinary.com/dopoxadlr/image/upload/v1773871489/copy_gymbsv.svg"
 };
+
+document.getElementById("logoutBtn").onclick = ()=>{
+  localStorage.clear();
+  location.href = "login.html";
+};
+
+menuToggleBtn.addEventListener("click", function(e){
+  e.stopPropagation();
+  menuDropdown.classList.toggle("open");
+});
+
+document.addEventListener("click", function(e){
+  if(!menuDropdown.contains(e.target) && !menuToggleBtn.contains(e.target)){
+    menuDropdown.classList.remove("open");
+  }
+});
+
+async function loadTopbarProfile(){
+  try{
+    const res = await fetch(`${API}/api/profile/me`, {
+      headers: tokenHeaders()
+    });
+
+    if(res.status === 401){
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("me_cache");
+      location.href = "login.html";
+      return;
+    }
+
+    const data = await res.json().catch(()=>null);
+    if(!data) return;
+
+    topAccountName.textContent = data.fullName || data.username || "User";
+    topAccountType.textContent = data.accountType || data.role || "Account";
+  }catch{
+    topAccountName.textContent = "User";
+    topAccountType.textContent = "Account";
+  }
+}
+
+async function loadTopbarAnnouncementCount(){
+  try{
+    const res = await fetch(`${API}/api/announcements/profile-summary`, {
+      headers: tokenHeaders()
+    });
+
+    const data = await res.json().catch(() => ({}));
+    document.getElementById("navAnnouncementBadge").textContent = Number(data.count || 0);
+  }catch{
+    document.getElementById("navAnnouncementBadge").textContent = "0";
+  }
+}
 
 function showStatus(message, type = "info") {
   statusBox.className = `status show ${type}`;
@@ -486,6 +881,8 @@ function copyText(text){
 
 document.getElementById("search").addEventListener("input",renderAll);
 
+loadTopbarProfile();
+loadTopbarAnnouncementCount();
 load();
 </script>
 
