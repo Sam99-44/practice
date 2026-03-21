@@ -129,6 +129,22 @@ async function sendBulkEmail({ recipients, subject, html, text }) {
   }
 }
 
+// 1) Add these helpers near your other helper functions
+function makeStudentPassword() {
+  const year = new Date().getFullYear();
+  const lastTwo = String(year).slice(-2);
+  const random5 = String(Math.floor(10000 + Math.random() * 90000));
+  return `PO2026${lastTwo}${random5}`;
+}
+
+function makeMaterialsPassword() {
+  const year = new Date().getFullYear();
+  const lastTwo = String(year).slice(-2);
+  const random5 = String(Math.floor(10000 + Math.random() * 90000));
+  return `P${lastTwo}${random5}`;
+}
+
+
 /* ------------------ HELPERS ------------------ */
 function hashToken(raw) {
   return crypto.createHash("sha256").update(String(raw)).digest("hex");
@@ -714,6 +730,7 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 });
 
 // REGISTER
+// 2) Replace your current /api/register route with this version
 app.post("/api/register", registerLimiter, async (req, res) => {
   try {
     const {
@@ -726,29 +743,39 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       gender,
       cellphone,
       guardianCellphone,
-
-      // ✅ NEW FIELDS
       firstName,
       surname,
       schoolName,
       currentMarkRange,
     } = req.body;
 
-    // ✅ REQUIRED VALIDATION
-    if (
-      !username ||
-      !email ||
-      !accountType ||
-      !firstName ||
-      !surname ||
-      !schoolName ||
-      !cellphone ||
-      !guardianCellphone ||
-      !province ||
-      !currentMarkRange
-    ) {
+    if (!username) {
+      return res.status(400).json({ message: "Username is required." });
+    }
+    if (!firstName) {
+      return res.status(400).json({ message: "Name is required." });
+    }
+    if (!surname) {
+      return res.status(400).json({ message: "Surname is required." });
+    }
+    if (!schoolName) {
+      return res.status(400).json({ message: "School name is required." });
+    }
+    if (!cellphone) {
+      return res.status(400).json({ message: "Cellphone number is required." });
+    }
+    if (!guardianCellphone) {
+      return res.status(400).json({ message: "Guardian cellphone is required." });
+    }
+    if (!province) {
+      return res.status(400).json({ message: "Province is required." });
+    }
+    if (!currentMarkRange) {
+      return res.status(400).json({ message: "Current mark is required." });
+    }
+    if (!email || !accountType) {
       return res.status(400).json({
-        message: "Please fill all required fields.",
+        message: "Email and account type are required.",
       });
     }
 
@@ -758,9 +785,16 @@ app.post("/api/register", registerLimiter, async (req, res) => {
 
     let gradeNum = null;
     if (accountType === "student") {
+      if (grade === undefined || grade === null || grade === "") {
+        return res
+          .status(400)
+          .json({ message: "Grade is required for Student accounts." });
+      }
       gradeNum = Number(grade);
       if (!Number.isInteger(gradeNum) || gradeNum < 8 || gradeNum > 12) {
-        return res.status(400).json({ message: "Grade must be 8–12." });
+        return res
+          .status(400)
+          .json({ message: "Grade must be between 8 and 12." });
       }
     }
 
@@ -768,19 +802,104 @@ app.post("/api/register", registerLimiter, async (req, res) => {
     const cleanEmail = String(email || "").toLowerCase().trim();
 
     if (!isValidEmail(cleanEmail)) {
-      return res.status(400).json({ message: "Invalid email." });
+      return res.status(400).json({ message: "Please enter a valid email address." });
     }
 
-    const existingEmail = await User.findOne({ email: cleanEmail });
+    const existingEmail = await User.findOne({ email: cleanEmail }).select("_id");
     if (existingEmail) {
-      return res.status(409).json({ message: "Email already exists." });
+      return res.status(409).json({ message: "Email already registered." });
     }
 
-    const existingUsername = await User.findOne({ username: cleanUsername });
+    const existingUsername = await User.findOne({ username: cleanUsername }).select("_id");
     if (existingUsername) {
-      return res.status(409).json({ message: "Username taken." });
+      return res.status(409).json({ message: "Username already taken." });
     }
 
+    let generatedPassword = "";
+    if (accountType === "student") {
+      generatedPassword = makeStudentPassword();
+    } else {
+      generatedPassword = makeMaterialsPassword();
+    }
+
+    const passwordHash = await bcrypt.hash(generatedPassword, 10);
+    const studentNumber =
+      accountType === "student" ? await generateStudentNumber8() : null;
+
+    const rawVerifyToken = makeVerifyToken();
+    const verifyTokenHash = hashToken(rawVerifyToken);
+    const verifyTokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    const now = new Date();
+    const trialDays = 7;
+
+    const user = await User.create({
+      fullName: cleanSpaces(`${firstName} ${surname}`),
+      firstName: cleanSpaces(firstName),
+      surname: cleanSpaces(surname),
+      schoolName: cleanSpaces(schoolName),
+      currentMarkRange: cleanSpaces(currentMarkRange),
+      username: cleanUsername,
+      email: cleanEmail,
+      passwordHash,
+      role: "learner",
+      accountType,
+      studentNumber,
+      grade: gradeNum,
+      profileHeadline: "",
+      profilePhoto: "",
+      province: cleanSpaces(province || ""),
+      district: cleanSpaces(district || ""),
+      gender: String(gender || "").trim(),
+      cellphone: cleanSpaces(cellphone || ""),
+      guardianCellphone: cleanSpaces(guardianCellphone || ""),
+      emailVerified: false,
+      verifyTokenHash,
+      verifyTokenExpiresAt,
+      trialActive: true,
+      trialStartDate: now,
+      trialEndDate: addDays(now, trialDays),
+    });
+
+    const verifyUrl = `${APP_URL}/verify-email.html?token=${encodeURIComponent(
+      rawVerifyToken
+    )}&email=${encodeURIComponent(user.email)}`;
+
+    await sendEmail({
+      to: user.email,
+      subject: "Verify your Practice Online email",
+      text:
+        accountType === "student"
+          ? `Hi ${user.username}, your student number is ${user.studentNumber}. Your password is ${generatedPassword}. Verify your email here: ${verifyUrl}`
+          : `Hi ${user.username}, your password is ${generatedPassword}. Verify your email here: ${verifyUrl}`,
+      html: `
+        <div style="font-family:Arial,sans-serif; line-height:1.6;">
+          <p>Hi ${user.username},</p>
+          <p>Welcome to Practice Online.</p>
+          ${
+            accountType === "student"
+              ? `<p>Your student number is: <b>${user.studentNumber}</b></p>`
+              : ""
+          }
+          <p>Your password is: <b>${generatedPassword}</b></p>
+          <p>Please verify your email address by clicking the link below:</p>
+          <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
+          <p>This link expires in 24 hours.</p>
+          <p>Regards,<br/>Practice Online Team</p>
+        </div>
+      `,
+    });
+
+    return res.status(201).json({
+      message: "Account created. Please verify your email before logging in.",
+      accountType: user.accountType,
+      studentNumber: user.studentNumber,
+    });
+  } catch (err) {
+    console.error("Register error:", err.message);
+    return res.status(500).json({ message: "Server error. Please try again." });
+  }
+});
     // ✅ AUTO PASSWORD
     const year = new Date().getFullYear();
     const lastTwo = String(year).slice(-2);
@@ -2010,42 +2129,67 @@ app.delete("/api/quizzes/:id", authRequired, adminOnly, async (req, res) => {
   }
 });
 
+// 5) Add this quiz start route for persistent timer
 app.post("/api/quiz/start", authRequired, async (req, res) => {
   try {
     const { quizId } = req.body;
 
-    const quiz = await Quiz.findById(quizId);
-    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+    if (!quizId) {
+      return res.status(400).json({ message: "quizId is required." });
+    }
 
-    const existing = await Result.findOne({
+    const quiz = await Quiz.findById(quizId).select("timeLimitMinutes");
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found." });
+    }
+
+    let existing = await Result.findOne({
       userId: req.user.userId,
       quizId,
-      completed: false,
-    });
+      isSubmitted: false,
+    }).sort({ createdAt: -1 });
 
-    if (existing) {
+    if (existing && existing.expiresAt) {
+      const remainingTime = Math.max(
+        0,
+        Math.floor((new Date(existing.expiresAt).getTime() - Date.now()) / 1000)
+      );
       return res.json({
-        remainingTime:
-          Math.max(0, (existing.expiresAt - Date.now()) / 1000),
+        startedAt: existing.startedAt || existing.createdAt,
+        expiresAt: existing.expiresAt,
+        remainingTime,
       });
     }
 
-    const start = new Date();
-    const end = new Date(start.getTime() + quiz.timeLimitMinutes * 60000);
+    const startedAt = new Date();
+    const expiresAt = new Date(
+      startedAt.getTime() + Number(quiz.timeLimitMinutes || 10) * 60 * 1000
+    );
 
-    await Result.create({
+    existing = await Result.create({
       userId: req.user.userId,
       quizId,
-      startedAt: start,
-      expiresAt: end,
-      completed: false,
+      startedAt,
+      expiresAt,
+      isSubmitted: false,
+      score: 0,
+      totalQuestions: 0,
+      percent: 0,
+      answers: [],
+      review: [],
+      totalPoints: 0,
+      earnedPoints: 0,
+      timeTakenSeconds: 0,
     });
 
     return res.json({
-      remainingTime: quiz.timeLimitMinutes * 60,
+      startedAt,
+      expiresAt,
+      remainingTime: Number(quiz.timeLimitMinutes || 10) * 60,
     });
-  } catch {
-    res.status(500).json({ message: "Error starting quiz" });
+  } catch (e) {
+    console.error("POST /api/quiz/start error:", e.message);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -2762,7 +2906,11 @@ app.post("/api/announcements", authRequired, announcementManagerOnly, async (req
 });
 
 app.post("/api/announcements/mark-seen", authRequired, async (req, res) => {
-  return res.json({ success: true });
+  try {
+    return res.json({ ok: true });
+  } catch {
+    return res.status(500).json({ message: "Server error" });
+  }
 });
 
 // GET ANNOUNCEMENTS FOR LEARNERS / ADMIN
