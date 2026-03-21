@@ -45,6 +45,7 @@
       font-family:Arial, Helvetica, sans-serif;
       background:var(--bg);
       color:var(--text);
+      font-weight:400;
     }
     a{color:inherit;text-decoration:none}
     .wrap{max-width:1150px;margin:0 auto;padding:18px}
@@ -52,6 +53,18 @@
     .error{color:var(--error)}
     .ok{color:var(--ok)}
     .hidden{display:none!important}
+
+    /* Make MathJax blend with normal text */
+    mjx-container[jax="SVG"]{
+      font-size:1em !important;
+    }
+
+    .qText mjx-container,
+    .optText mjx-container,
+    .hintText mjx-container,
+    .noteBox mjx-container{
+      font-size:1em !important;
+    }
 
     /* ===== CONSISTENT HEADER ===== */
     .topbar{
@@ -311,10 +324,12 @@
       font-size:18px;
       letter-spacing:-0.01em;
       font-family:Arial, Helvetica, sans-serif;
+      font-weight:700;
     }
     .sectionHead p{
       margin:6px 0 0 0;
       font-family:Arial, Helvetica, sans-serif;
+      font-weight:400;
     }
     .sectionBody{padding:14px}
 
@@ -335,7 +350,7 @@
     .statusText.available{color:#065f46}
     .statusText.unavailable{color:#b91c1c}
     .timeText{
-      font-weight:800;
+      font-weight:400;
       font-size:12px;
       color:#0f172a;
       font-family:Arial, Helvetica, sans-serif;
@@ -354,7 +369,7 @@
     }
 
     .qTitle{
-      font-weight:600;
+      font-weight:400;
       line-height:1.45;
       margin:0;
       min-width:0;
@@ -366,8 +381,17 @@
       align-items:flex-start;
       font-family:Arial, Helvetica, sans-serif;
     }
-    .qNo{flex:0 0 auto;font-weight:700;color:#0f172a;width:28px;}
-    .qText{flex:1 1 auto;min-width:0;}
+    .qNo{
+      flex:0 0 auto;
+      font-weight:700;
+      color:#0f172a;
+      width:28px;
+    }
+    .qText{
+      flex:1 1 auto;
+      min-width:0;
+      font-weight:400;
+    }
 
     .marksBox{
       flex:0 0 auto;
@@ -379,14 +403,14 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      font-weight:900;
+      font-weight:700;
       color:#0f172a;
       line-height:1;
       font-family:Arial, Helvetica, sans-serif;
     }
     .marksMeta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:0 0 auto;}
     .marksLbl{
-      font-weight:800;
+      font-weight:400;
       font-size:12px;
       color:var(--muted);
       white-space:nowrap;
@@ -408,7 +432,7 @@
       border-radius:14px;
       padding:12px 12px;
       color:var(--noteText);
-      font-weight:700;
+      font-weight:400;
       line-height:1.45;
       word-break:break-word;
       font-family:Arial, Helvetica, sans-serif;
@@ -426,11 +450,16 @@
       background:#fff;
       transition:.12s;
       font-family:Arial, Helvetica, sans-serif;
+      font-weight:400;
     }
     .opt:hover{background:#f8fafc}
     .opt input{margin-top:3px}
     .opt.disabled{opacity:.7;cursor:not-allowed}
     .opt.disabled:hover{background:#fff}
+    .optText{
+      font-weight:400;
+      line-height:1.45;
+    }
 
     .textAnswer{
       width:100%;
@@ -440,8 +469,9 @@
       outline:none;
       font-size:14px;
       background:#fff;
-      font-weight:600;
+      font-weight:400;
       font-family:Arial, Helvetica, sans-serif;
+      color:var(--text);
     }
     .textAnswer:focus{border-color:#cbd5e1;box-shadow:var(--focus);}
     .textAnswer:disabled{opacity:.7;background:#f8fafc}
@@ -454,8 +484,12 @@
       border:1px solid #e2e8f0;
       color:#334155;
       font-size:13px;
-      font-weight:700;
+      font-weight:400;
       font-family:Arial, Helvetica, sans-serif;
+      line-height:1.45;
+    }
+    .hintText{
+      font-weight:400;
     }
 
     .btnRow{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;}
@@ -466,7 +500,7 @@
       border:none;
       border-radius:12px;
       cursor:pointer;
-      font-weight:900;
+      font-weight:700;
       font-family:Arial, Helvetica, sans-serif;
     }
     .btn:disabled{opacity:.6;cursor:not-allowed}
@@ -477,7 +511,7 @@
       padding:10px 14px;
       border-radius:12px;
       cursor:pointer;
-      font-weight:900;
+      font-weight:700;
       font-family:Arial, Helvetica, sans-serif;
     }
     .btn2:disabled{opacity:.6;cursor:not-allowed}
@@ -490,8 +524,18 @@
       border-radius:12px;
       margin-top:12px;
       font-family:Arial, Helvetica, sans-serif;
+      font-weight:400;
+      line-height:1.45;
     }
-    .notice.red{border-color:#fecaca;background:#fff1f2;color:#991b1b;}
+    .notice.red{
+      border-color:#fecaca;
+      background:#fff1f2;
+      color:#991b1b;
+    }
+    .notice.red b{
+      font-weight:700;
+    }
+
     .lockBox{
       border:1px dashed #ddd;
       background:#fafafa;
@@ -499,6 +543,17 @@
       border-radius:12px;
       margin-top:12px;
       font-family:Arial, Helvetica, sans-serif;
+      font-weight:400;
+      line-height:1.45;
+    }
+
+    #quizInfo b{
+      font-weight:700;
+    }
+
+    #msg{
+      font-weight:400;
+      line-height:1.45;
     }
 
     @media(max-width:640px){
@@ -1228,7 +1283,7 @@
     }
 
     quizTitle.textContent = cleanSpaces(quizData.title || "Assessment");
-    quizInfo.textContent = cleanSpaces(quizData.topic || "") ? `Topic: ${cleanSpaces(quizData.topic)}` : "";
+    quizInfo.innerHTML = cleanSpaces(quizData.topic || "") ? `<b>Topic:</b> ${escapeHtml(cleanSpaces(quizData.topic))}` : "";
 
     const unavailable = isUnavailableBySchedule(quizData);
     setAvailability(!unavailable);
