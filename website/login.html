@@ -7,15 +7,11 @@
 
   <meta name="robots" content="noindex, nofollow" />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
   <style>
     :root{
       --bg:#f6f7fb;
       --card:#ffffff;
-      --border:#e6e6e6;
+      --border:#d9dee7;
       --text:#0f172a;
       --muted:#475569;
       --accent:#0b3c5d;
@@ -29,42 +25,116 @@
     }
 
     *{box-sizing:border-box}
-    body{
+
+    html,body{
       margin:0;
-      font-family:Inter,Arial,sans-serif;
+      padding:0;
+      font-family:Arial, Helvetica, sans-serif;
       background:var(--bg);
       color:var(--text);
     }
 
-    .topbar{background:var(--nav); padding:14px 20px;}
-    .nav{
-      max-width:1100px;
-      margin:auto;
+    a{
+      text-decoration:none;
+      color:inherit;
+    }
+
+    button,input{
+      font-family:Arial, Helvetica, sans-serif;
+    }
+
+    /* ===== SAME HEADER STYLE ===== */
+    .topbar{
+      background:var(--nav);
+      color:#fff;
+      position:sticky;
+      top:0;
+      z-index:1000;
+    }
+
+    .topbar-inner{
+      max-width:1150px;
+      margin:0 auto;
+      padding:14px 18px;
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:12px;
+    }
+
+    .accountLeft{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+      user-select:none;
+    }
+
+    .accountIconWrap{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-shrink:0;
+    }
+
+    .accountIcon{
+      width:40px;
+      height:40px;
+      display:block;
+      filter:brightness(0) invert(1) contrast(180%);
+    }
+
+    .accountMeta{
+      min-width:0;
+      line-height:1.1;
+    }
+
+    .accountName{
+      font-size:14px;
+      font-weight:700;
+      color:#fff;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:220px;
+    }
+
+    .accountType{
+      font-size:13px;
+      color:#e0e7ff;
+      margin-top:3px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:220px;
+      font-weight:400;
+    }
+
+    .topbarRight{
+      display:flex;
+      align-items:center;
+      gap:14px;
       flex-wrap:wrap;
     }
-    .brand{
-      color:#fff;
-      font-weight:900;
-      text-decoration:none;
-      font-size:18px;
-      letter-spacing:.2px;
-    }
 
-    .tabs{display:flex; gap:18px; align-items:center; flex-wrap:wrap;}
-    .tabs a{
-      color:#c7c9e3;
-      text-decoration:none;
+    .topLink{
+      color:#e7e9ff;
+      font-size:13px;
       font-weight:700;
-      padding-bottom:6px;
+      padding:8px 0;
       border-bottom:3px solid transparent;
     }
-    .tabs a:hover{color:#fff}
-    .tabs a.active{color:#fff; border-bottom:3px solid var(--red);}
 
+    .topLink:hover{
+      color:#fff;
+    }
+
+    .topLink.active{
+      color:#fff;
+      border-bottom:3px solid var(--red);
+    }
+
+    /* ===== PAGE ===== */
     .wrap{
       max-width:1100px;
       margin:0 auto;
@@ -76,13 +146,23 @@
       margin:46px auto;
       background:var(--card);
       border:1px solid var(--border);
-      border-radius:var(--radius);
+      border-radius:18px;
       padding:18px;
       box-shadow:var(--shadow);
     }
 
-    h2{margin:0 0 6px; font-size:22px;}
-    p{margin:6px 0 14px; color:var(--muted);}
+    h2{
+      margin:0 0 6px;
+      font-size:22px;
+      font-weight:700;
+    }
+
+    p{
+      margin:6px 0 14px;
+      color:var(--muted);
+      font-size:14px;
+      font-weight:400;
+    }
 
     label{
       display:block;
@@ -100,10 +180,12 @@
       background:#fff;
       font-size:14px;
       outline:none;
+      font-weight:400;
     }
+
     input:focus{
-      border-color:#cfe9ff;
-      box-shadow:0 0 0 4px rgba(11,60,93,.10);
+      border-color:#cbd5e1;
+      box-shadow:0 0 0 4px rgba(226,232,240,.7);
     }
 
     button{
@@ -114,12 +196,23 @@
       border:none;
       background:var(--accent);
       color:#fff;
-      font-weight:900;
+      font-weight:700;
       cursor:pointer;
       transition:transform .08s ease, box-shadow .2s ease;
+      font-size:14px;
     }
-    button:hover{transform:translateY(-1px); box-shadow:0 10px 24px rgba(11,60,93,.18);}
-    button:disabled{opacity:.6; cursor:not-allowed; transform:none; box-shadow:none;}
+
+    button:hover{
+      transform:translateY(-1px);
+      box-shadow:0 10px 24px rgba(11,60,93,.18);
+    }
+
+    button:disabled{
+      opacity:.6;
+      cursor:not-allowed;
+      transform:none;
+      box-shadow:none;
+    }
 
     .ghostBtn{
       background:#fff;
@@ -127,13 +220,19 @@
       border:1px solid #d8dee8;
       display:none;
     }
+
     .ghostBtn:hover{
       background:var(--accent-soft);
       box-shadow:none;
       transform:none;
     }
 
-    .msg{margin-top:12px; font-size:14px;}
+    .msg{
+      margin-top:12px;
+      font-size:14px;
+      font-weight:400;
+    }
+
     .error{color:var(--error)}
     .ok{color:var(--ok)}
 
@@ -145,28 +244,64 @@
       font-size:14px;
       flex-wrap:wrap;
     }
+
     .links a{
       color:var(--accent);
       text-decoration:none;
       font-weight:700;
     }
-    .links a:hover{text-decoration:underline}
 
-    @media(max-width:520px){
-      .wrap{padding:16px;}
-      .card{margin:26px auto; padding:16px;}
-      .tabs{gap:12px;}
+    .links a:hover{
+      text-decoration:underline;
+    }
+
+    @media(max-width:640px){
+      .topbar-inner{
+        padding:12px 14px;
+      }
+
+      .accountName,
+      .accountType{
+        max-width:120px;
+      }
+
+      .wrap{
+        padding:16px;
+      }
+
+      .card{
+        margin:26px auto;
+        padding:16px;
+      }
+
+      .topbarRight{
+        gap:12px;
+      }
     }
   </style>
 </head>
 
 <body>
   <header class="topbar">
-    <div class="nav">
-      <a href="index.html" class="brand">Practice Online</a>
-      <div class="tabs">
-        <a href="login.html" class="active">Login</a>
-        <a href="register.html">Register</a>
+    <div class="topbar-inner">
+      <div class="accountLeft">
+        <div class="accountIconWrap">
+          <img
+            class="accountIcon"
+            src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
+            alt="Practice Online"
+          >
+        </div>
+
+        <div class="accountMeta">
+          <div class="accountName">Practice Online</div>
+          <div class="accountType">Sign in</div>
+        </div>
+      </div>
+
+      <div class="topbarRight">
+        <a href="login.html" class="topLink active">Login</a>
+        <a href="register.html" class="topLink">Register</a>
       </div>
     </div>
   </header>
