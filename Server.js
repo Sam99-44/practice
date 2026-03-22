@@ -877,6 +877,12 @@ return res.status(201).json({
   studentNumber: user.studentNumber,
 });
 
+} catch (err) {
+  console.error("Register error:", err);
+  return res.status(500).json({ message: "Server error. Please try again." });
+}
+});
+
 // VERIFY EMAIL
 app.post("/api/verify-email", async (req, res) => {
   try {
