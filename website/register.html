@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Create Account | Practice Online</title>
 
-  <!-- SEO: do not index auth pages -->
   <meta name="robots" content="noindex, nofollow" />
 
-  <!-- Font (same as other pages) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -38,7 +36,6 @@
       color:var(--text);
     }
 
-    /* ---------- TOP NAV (same style) ---------- */
     .topbar{background:var(--nav); padding:14px 20px;}
     .navBar{
       max-width:1100px;
@@ -67,7 +64,6 @@
     .tabs a:hover{color:#fff}
     .tabs a.active{color:#fff; border-bottom:3px solid var(--red);}
 
-    /* ---------- PAGE ---------- */
     .wrap{
       max-width:1100px;
       margin:0 auto;
@@ -135,6 +131,7 @@
       gap:10px;
       margin-top:12px;
     }
+
     @media(max-width:520px){
       .wrap{padding:16px;}
       .row{grid-template-columns:1fr}
@@ -184,11 +181,8 @@
     }
     .links a:hover{text-decoration:underline}
 
-    .hint{margin-top:6px; font-size:12px; color:var(--muted);}
-    .tiny{margin-top:6px; font-size:12px; color:var(--muted);}
     .hide{display:none !important;}
 
-    /* ✅ Note box */
     .noteBox{
       background:var(--accent-soft);
       border:1px solid #d8e6f3;
@@ -218,7 +212,6 @@
     <h2>Register Account</h2>
     <p>Create your Practice Online account</p>
 
-    <!-- ✅ NOTE (updates based on account type) -->
     <div class="noteBox" id="acctNote">
       <b id="acctNoteTitle">Student Account</b>
       <span id="acctNoteText">Practice the Quizzes + Online Tutorials.</span>
@@ -226,28 +219,33 @@
 
     <label>Account Type</label>
     <div class="radioRow">
-      <!-- keep value="student" -->
       <label><input type="radio" name="accountType" value="student" checked> Student</label>
-
-      <!-- ✅ RENAMED label, but keep value="materials" for backend compatibility -->
       <label><input type="radio" name="accountType" value="materials"> Practice Account</label>
     </div>
 
-    <!-- ✅ Username ONCE -->
+    <div class="row">
+      <div>
+        <label for="firstName">First Name</label>
+        <input id="firstName" />
+      </div>
+      <div>
+        <label for="surname">Surname</label>
+        <input id="surname" />
+      </div>
+    </div>
+
     <label for="username">Username</label>
     <input id="username" autocomplete="username" />
 
     <label for="email">Email</label>
     <input id="email" type="email" autocomplete="email" />
 
-    <!-- ✅ SA question -->
     <label>Are you in South Africa?</label>
     <div class="radioRow">
       <label><input type="radio" name="isSA" value="yes" checked> Yes</label>
       <label><input type="radio" name="isSA" value="no"> No</label>
     </div>
 
-    <!-- ✅ Province + District (show only if SA = Yes) -->
     <div id="saWrap">
       <label for="province">Province</label>
       <select id="province">
@@ -269,17 +267,14 @@
       </select>
     </div>
 
-    <!-- ✅ Gender -->
     <label for="gender">Gender</label>
     <select id="gender">
       <option value="">Prefer not to say</option>
       <option value="female">Female</option>
       <option value="male">Male</option>
-
       <option value="other">Other</option>
     </select>
 
-    <!-- ✅ Cellphone + Guardian (optional) -->
     <div class="row">
       <div>
         <label for="cellphone">Your Cellphone</label>
@@ -302,6 +297,21 @@
         <option value="12">Grade 12</option>
       </select>
     </div>
+
+    <label for="schoolName">School Name</label>
+    <input id="schoolName" />
+
+    <label for="currentMarkRange">Current Mark Range</label>
+    <select id="currentMarkRange">
+      <option value="">Select</option>
+      <option value="0-29">0-29</option>
+      <option value="30-39">30-39</option>
+      <option value="40-49">40-49</option>
+      <option value="50-59">50-59</option>
+      <option value="60-69">60-69</option>
+      <option value="70-79">70-79</option>
+      <option value="80-100">80-100</option>
+    </select>
 
     <div class="row">
       <div>
@@ -334,66 +344,64 @@
   const msg = document.getElementById("msg");
   const btn = document.getElementById("registerBtn");
 
-  // Note
   const acctNoteTitle = document.getElementById("acctNoteTitle");
   const acctNoteText  = document.getElementById("acctNoteText");
 
-  // Username
+  const firstNameEl = document.getElementById("firstName");
+  const surnameEl = document.getElementById("surname");
   const usernameEl = document.getElementById("username");
-
   const emailEl = document.getElementById("email");
   const gradeEl = document.getElementById("grade");
+  const schoolNameEl = document.getElementById("schoolName");
+  const currentMarkRangeEl = document.getElementById("currentMarkRange");
   const passwordEl = document.getElementById("password");
   const confirmEl = document.getElementById("confirmPassword");
   const toggleBtn = document.getElementById("toggleBtn");
   const gradeWrap = document.getElementById("gradeWrap");
 
-  // SA location
   const saWrap = document.getElementById("saWrap");
   const provinceEl = document.getElementById("province");
   const districtEl = document.getElementById("district");
 
-  // Other fields
   const genderEl = document.getElementById("gender");
   const cellphoneEl = document.getElementById("cellphone");
   const guardianCellEl = document.getElementById("guardianCellphone");
 
-  function setMsg(text,type=""){
+  function setMsg(text, type = "") {
     msg.className = "msg " + type;
     msg.textContent = text;
   }
 
-  function cleanSpaces(s){
-    return String(s || "").trim().replace(/\s+/g," ");
+  function cleanSpaces(s) {
+    return String(s || "").trim().replace(/\s+/g, " ");
   }
 
-  function accountType(){
+  function accountType() {
     return document.querySelector('input[name="accountType"]:checked').value;
   }
 
-  function isSA(){
+  function isSA() {
     return document.querySelector('input[name="isSA"]:checked')?.value === "yes";
   }
 
-  // ✅ Update note text + grade visibility based on account type
-  function updateAccountNote(){
+  function updateAccountNote() {
     const t = accountType();
     if (t === "student") {
       acctNoteTitle.textContent = "Student Account";
-      acctNoteText.textContent  = "Practice the Quizzes + Online Tutorials.";
+      acctNoteText.textContent = "Practice the Quizzes + Online Tutorials.";
     } else {
       acctNoteTitle.textContent = "Practice Account";
-      acctNoteText.textContent  = "Practice the Quizzes.";
+      acctNoteText.textContent = "Practice the Quizzes.";
     }
   }
 
-  function toggleGrade(){
+  function toggleGrade() {
     const isStudent = accountType() === "student";
     gradeWrap.style.display = isStudent ? "block" : "none";
-    if(!isStudent) gradeEl.value = "";
+    if (!isStudent) gradeEl.value = "";
   }
 
-  document.querySelectorAll('input[name="accountType"]').forEach(r=>{
+  document.querySelectorAll('input[name="accountType"]').forEach(r => {
     r.addEventListener("change", () => {
       toggleGrade();
       updateAccountNote();
@@ -402,13 +410,12 @@
   toggleGrade();
   updateAccountNote();
 
-  // ✅ Pre-fill +27 (not required)
-  function ensurePlus27(el){
+  function ensurePlus27(el) {
     el.addEventListener("focus", () => {
-      if(!el.value.trim()) el.value = "+27";
+      if (!el.value.trim()) el.value = "+27";
     });
     el.addEventListener("blur", () => {
-      if(el.value.trim() === "+27") el.value = "";
+      if (el.value.trim() === "+27") el.value = "";
     });
   }
   ensurePlus27(cellphoneEl);
@@ -420,12 +427,10 @@
     toggleBtn.textContent = show ? "Hide Password" : "Show Password";
   };
 
-  // Enter key support
   document.addEventListener("keydown", (e) => {
     if (e.key === "Enter") btn.click();
   });
 
-  /* ✅ Districts by Province (SA) */
   const DISTRICTS_BY_PROVINCE = {
     "Eastern Cape": [
       "Buffalo City (Metro)",
@@ -498,16 +503,16 @@
     ]
   };
 
-  function resetDistrict(){
+  function resetDistrict() {
     districtEl.innerHTML = `<option value="">Select District</option>`;
     districtEl.disabled = true;
   }
 
-  function populateDistricts(){
+  function populateDistricts() {
     const prov = provinceEl.value;
     const list = DISTRICTS_BY_PROVINCE[prov] || [];
     resetDistrict();
-    if(!prov || list.length === 0) return;
+    if (!prov || list.length === 0) return;
 
     const frag = document.createDocumentFragment();
     list.forEach(d => {
@@ -522,11 +527,11 @@
 
   provinceEl.addEventListener("change", populateDistricts);
 
-  function toggleSAFields(){
+  function toggleSAFields() {
     const yes = isSA();
     saWrap.classList.toggle("hide", !yes);
 
-    if(!yes){
+    if (!yes) {
       provinceEl.value = "";
       resetDistrict();
     } else {
@@ -534,7 +539,7 @@
     }
   }
 
-  document.querySelectorAll('input[name="isSA"]').forEach(r=>{
+  document.querySelectorAll('input[name="isSA"]').forEach(r => {
     r.addEventListener("change", toggleSAFields);
   });
   toggleSAFields();
@@ -542,24 +547,32 @@
   btn.onclick = async () => {
     const type = accountType();
 
+    const firstName = cleanSpaces(firstNameEl.value);
+    const surname = cleanSpaces(surnameEl.value);
+    const fullName = cleanSpaces(firstName + " " + surname);
     const username = cleanSpaces(usernameEl.value);
     const email = emailEl.value.trim();
+    const schoolName = cleanSpaces(schoolNameEl.value);
+    const currentMarkRange = currentMarkRangeEl.value;
 
-    // Optional values
     const gender = genderEl.value.trim();
     const cellphone = cellphoneEl.value.trim();
     const guardianCellphone = guardianCellEl.value.trim();
 
-    // SA fields
     const province = isSA() ? provinceEl.value.trim() : "";
     const district = isSA() ? districtEl.value.trim() : "";
 
     const payload = {
+      firstName,
+      surname,
+      fullName,
       username,
       email,
       password: passwordEl.value,
-      accountType: type, // student OR materials (Practice Account label)
+      accountType: type,
       ...(type === "student" ? { grade: Number(gradeEl.value) } : {}),
+      ...(schoolName ? { schoolName } : {}),
+      ...(currentMarkRange ? { currentMarkRange } : {}),
       ...(gender ? { gender } : {}),
       ...(province ? { province } : {}),
       ...(district ? { district } : {}),
@@ -567,45 +580,48 @@
       ...(guardianCellphone ? { guardianCellphone } : {})
     };
 
-    if(!payload.username || !payload.email || !payload.password){
-      return setMsg("Please complete username, email and password.","error");
+    if (!firstName || !surname) {
+      return setMsg("Please enter your first name and surname.", "error");
     }
 
-    if(payload.password !== confirmEl.value){
-      return setMsg("Passwords do not match.","error");
+    if (!payload.username || !payload.email || !payload.password) {
+      return setMsg("Please complete username, email and password.", "error");
     }
 
-    if(type === "student" && !Number.isFinite(payload.grade)){
-      return setMsg("Please select a grade.","error");
+    if (payload.password !== confirmEl.value) {
+      return setMsg("Passwords do not match.", "error");
     }
 
-    if(isSA() && province && !district){
-      return setMsg("Please select your district.","error");
+    if (type === "student" && !Number.isFinite(payload.grade)) {
+      return setMsg("Please select a grade.", "error");
+    }
+
+    if (isSA() && province && !district) {
+      return setMsg("Please select your district.", "error");
     }
 
     btn.disabled = true;
     setMsg("Creating account...");
 
-    try{
+    try {
       const res = await fetch(API + "/api/register", {
         method: "POST",
-        headers: {"Content-Type":"application/json"},
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 
-      const data = await res.json().catch(()=>({}));
+      const data = await res.json().catch(() => ({}));
 
-      if(!res.ok){
+      if (!res.ok) {
         btn.disabled = false;
-        return setMsg(data.message || "Registration failed.","error");
+        return setMsg(data.message || "Registration failed.", "error");
       }
 
-      setMsg("Account created successfully!","ok");
+      setMsg("Account created successfully!", "ok");
       setTimeout(() => location.href = "login.html", 1200);
-
-    }catch{
+    } catch {
       btn.disabled = false;
-      setMsg("Network error. Please try again.","error");
+      setMsg("Network error. Please try again.", "error");
     }
   };
 </script>
