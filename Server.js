@@ -717,12 +717,16 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 app.post("/api/register", registerLimiter, async (req, res) => {
   try {
     const {
+      firstName,
+      surname,
       fullName,
       username,
       email,
       grade,
       password,
       accountType,
+      schoolName,
+      currentMarkRange,
       province,
       district,
       gender,
@@ -763,6 +767,10 @@ app.post("/api/register", registerLimiter, async (req, res) => {
 
     const cleanUsername = cleanSpaces(username);
     const cleanEmail = String(email || "").toLowerCase().trim();
+    const cleanFirstName = cleanSpaces(firstName || "");
+    const cleanSurname = cleanSpaces(surname || "");
+    const cleanFullName =
+      cleanSpaces(fullName || "") || cleanSpaces(`${cleanFirstName} ${cleanSurname}`);
 
     if (!isValidEmail(cleanEmail)) {
       return res.status(400).json({ message: "Please enter a valid email address." });
@@ -790,7 +798,9 @@ app.post("/api/register", registerLimiter, async (req, res) => {
     const trialDays = 7;
 
     const user = await User.create({
-      fullName: cleanSpaces(fullName || ""),
+      firstName: cleanFirstName,
+      surname: cleanSurname,
+      fullName: cleanFullName,
       username: cleanUsername,
       email: cleanEmail,
       passwordHash,
@@ -798,6 +808,8 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       accountType,
       studentNumber,
       grade: gradeNum,
+      schoolName: cleanSpaces(schoolName || ""),
+      currentMarkRange: String(currentMarkRange || "").trim(),
       profileHeadline: "",
       profilePhoto: "",
       province: cleanSpaces(province || ""),
@@ -817,44 +829,48 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       rawVerifyToken
     )}&email=${encodeURIComponent(user.email)}`;
 
-    if (user.accountType === "student") {
-      await sendEmail({
-        to: user.email,
-        subject: "Verify your Practice Online email",
-        text: `Hi ${user.username}, your student number is ${user.studentNumber}. Verify your email here: ${verifyUrl}`,
-        html: `
-          <div style="font-family:Arial,sans-serif; line-height:1.6;">
-            <p>Hi ${user.username},</p>
-            <p>Welcome to Practice Online.</p>
-            <p>Your student number is: <b>${user.studentNumber}</b></p>
-            <p>Please verify your email address by clicking the link below:</p>
-            <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
-            <p>This link expires in 24 hours.</p>
-            <p>Regards,<br/>Practice Online Team</p>
-          </div>
-        `,
-      });
-    } else {
-      await sendEmail({
-        to: user.email,
-        subject: "Verify your Practice Online email",
-        text: `Hi ${user.username}, your account is ready. Verify your email here: ${verifyUrl}`,
-        html: `
-          <div style="font-family:Arial,sans-serif; line-height:1.6;">
-            <p>Hi ${user.username},</p>
-            <p>Welcome to Practice Online.</p>
-            <p>Your account is ready and you have access to learning materials.</p>
-            <p>Please verify your email address by clicking the link below:</p>
-            <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
-            <p>This link expires in 24 hours.</p>
-            <p>Regards,<br/>Practice Online Team</p>
-          </div>
-        `,
-      });
+    try {
+      if (user.accountType === "student") {
+        await sendEmail({
+          to: user.email,
+          subject: "Verify your Practice Online email",
+          text: `Hi ${user.username}, your student number is ${user.studentNumber}. Verify your email here: ${verifyUrl}`,
+          html: `
+            <div style="font-family:Arial,sans-serif; line-height:1.6;">
+              <p>Hi ${user.username},</p>
+              <p>Welcome to Practice Online.</p>
+              <p>Your student number is: <b>${user.studentNumber}</b></p>
+              <p>Please verify your email address by clicking the link below:</p>
+              <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
+              <p>This link expires in 24 hours.</p>
+              <p>Regards,<br/>Practice Online Team</p>
+            </div>
+          `,
+        });
+      } else {
+        await sendEmail({
+          to: user.email,
+          subject: "Verify your Practice Online email",
+          text: `Hi ${user.username}, your account is ready. Verify your email here: ${verifyUrl}`,
+          html: `
+            <div style="font-family:Arial,sans-serif; line-height:1.6;">
+              <p>Hi ${user.username},</p>
+              <p>Welcome to Practice Online.</p>
+              <p>Your account is ready and you have access to learning materials.</p>
+              <p>Please verify your email address by clicking the link below:</p>
+              <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
+              <p>This link expires in 24 hours.</p>
+              <p>Regards,<br/>Practice Online Team</p>
+            </div>
+          `,
+        });
+      }
+    } catch (emailErr) {
+      console.error("Verification email failed:", emailErr.message);
     }
 
     return res.status(201).json({
-      message: "Account created. Please verify your email before logging in.",
+      message: "Account created successfully.",
       accountType: user.accountType,
       studentNumber: user.studentNumber,
     });
