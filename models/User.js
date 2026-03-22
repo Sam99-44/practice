@@ -63,30 +63,6 @@ const UserSchema = new mongoose.Schema(
       default: "",
     },
 
-    firstName: {
-      type: String,
-      trim: true,
-      default: "",
-    },
-
-    surname: {
-      type: String,
-      trim: true,
-      default: "",
-    },
-
-    schoolName: {
-      type: String,
-      trim: true,
-      default: "",
-    },
-
-    currentMarkRange: {
-      type: String,
-      enum: ["", "0-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80-100"],
-      default: "",
-    },
-
     profileHeadline: {
       type: String,
       trim: true,
@@ -264,30 +240,12 @@ UserSchema.pre("validate", function (next) {
     this.fullName = String(this.fullName).trim();
   }
 
-  if (this.firstName) {
-    this.firstName = String(this.firstName).trim();
-  }
-
-  if (this.surname) {
-    this.surname = String(this.surname).trim();
-  }
-
-  if (this.schoolName) {
-    this.schoolName = String(this.schoolName).trim();
-  }
-
   if (this.profileHeadline) {
     this.profileHeadline = String(this.profileHeadline).trim();
   }
 
   if (this.profilePhoto) {
     this.profilePhoto = String(this.profilePhoto).trim();
-  }
-
-  // auto build fullName from firstName + surname
-  const builtFullName = [this.firstName, this.surname].filter(Boolean).join(" ").trim();
-  if (builtFullName) {
-    this.fullName = builtFullName;
   }
 
   if (this.accountType === "student") {
