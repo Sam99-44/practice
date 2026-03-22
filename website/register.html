@@ -2,809 +2,444 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Create Account | Practice Online</title>
-
-  <meta name="robots" content="noindex, nofollow" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register | Practice Online</title>
 
   <style>
     :root{
+      --nav:#1b1648;
+      --red:#e11d2e;
       --bg:#f6f7fb;
       --card:#ffffff;
       --border:#d9dee7;
       --text:#0f172a;
       --muted:#475569;
-      --accent:#0b3c5d;
-      --accent-soft:#e7eef5;
-      --nav:#1b1648;
-      --red:#e11d2e;
-      --radius:14px;
-      --shadow:0 6px 18px rgba(0,0,0,0.06);
-      --error:#b91c1c;
       --ok:#065f46;
+      --error:#b91c1c;
+      --radius:14px;
+      --shadow:0 8px 22px rgba(0,0,0,.06);
     }
 
     *{box-sizing:border-box}
 
-    html,body{
+    body{
       margin:0;
-      padding:0;
       font-family:Arial, Helvetica, sans-serif;
       background:var(--bg);
       color:var(--text);
     }
 
-    a{
-      text-decoration:none;
-      color:inherit;
-    }
-
-    button,input,select,option{
-      font-family:Arial, Helvetica, sans-serif;
-    }
-
-    /* ===== SAME HEADER STYLE ===== */
     .topbar{
       background:var(--nav);
       color:#fff;
-      position:sticky;
-      top:0;
-      z-index:1000;
-    }
-
-    .topbar-inner{
-      max-width:1150px;
-      margin:0 auto;
-      padding:14px 18px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-    }
-
-    .accountLeft{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      min-width:0;
-      user-select:none;
-    }
-
-    .accountIconWrap{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      flex-shrink:0;
-    }
-
-    .accountIcon{
-      width:40px;
-      height:40px;
-      display:block;
-      filter:brightness(0) invert(1) contrast(180%);
-    }
-
-    .accountMeta{
-      min-width:0;
-      line-height:1.1;
-    }
-
-    .accountName{
-      font-size:14px;
+      padding:16px 20px;
       font-weight:700;
-      color:#fff;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width:220px;
+      font-size:18px;
     }
 
-    .accountType{
-      font-size:13px;
-      color:#e0e7ff;
-      margin-top:3px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width:220px;
-      font-weight:400;
-    }
-
-    .topbarRight{
-      display:flex;
-      align-items:center;
-      gap:14px;
-      flex-wrap:wrap;
-    }
-
-    .topLink{
-      color:#e7e9ff;
-      font-size:13px;
-      font-weight:700;
-      padding:8px 0;
-      border-bottom:3px solid transparent;
-    }
-
-    .topLink:hover{
-      color:#fff;
-    }
-
-    .topLink.active{
-      color:#fff;
-      border-bottom:3px solid var(--red);
-    }
-
-    /* ===== PAGE ===== */
     .wrap{
-      max-width:1100px;
-      margin:0 auto;
-      padding:24px;
-      min-height:calc(100vh - 72px);
-      display:flex;
-      align-items:flex-start;
-      justify-content:center;
+      max-width:720px;
+      margin:30px auto;
+      padding:0 16px;
     }
 
     .card{
-      width:100%;
-      max-width:560px;
       background:var(--card);
       border:1px solid var(--border);
-      border-radius:18px;
-      padding:18px;
+      border-radius:var(--radius);
       box-shadow:var(--shadow);
+      padding:22px;
     }
 
-    h2{
-      margin:0 0 6px;
-      font-size:22px;
-      font-weight:700;
+    h1{
+      margin:0 0 8px;
+      font-size:24px;
     }
 
-    p{
-      margin:6px 0 14px;
+    .sub{
+      margin:0 0 18px;
       color:var(--muted);
       font-size:14px;
-      font-weight:400;
+      line-height:1.5;
+    }
+
+    form{
+      display:grid;
+      gap:14px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
     }
 
     label{
       display:block;
-      margin-top:12px;
-      font-weight:700;
       font-size:14px;
+      font-weight:700;
+      margin-bottom:6px;
     }
 
-    /* only fields below account type not bold */
-    .normalFields label{
-      font-weight:400;
-    }
-
-    input,select{
+    input, select{
       width:100%;
-      padding:12px;
-      margin-top:6px;
+      padding:12px 13px;
+      border:1px solid var(--border);
       border-radius:12px;
-      border:1px solid #ddd;
-      background:#fff;
       font-size:14px;
       outline:none;
-      font-weight:400;
+      background:#fff;
     }
 
-    input:focus,select:focus{
-      border-color:#cbd5e1;
-      box-shadow:0 0 0 4px rgba(226,232,240,.7);
+    input:focus, select:focus{
+      border-color:var(--nav);
     }
 
-    .radioRow{
+    .hint{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:5px;
+      line-height:1.4;
+    }
+
+    .actions{
       display:flex;
-      gap:16px;
-      margin-top:10px;
-      flex-wrap:wrap;
-    }
-
-    .radioRow label{
-      font-weight:700;
-      margin-top:0;
-      display:flex;
-      align-items:center;
-      gap:8px;
-      color:#334155;
-    }
-
-    .radioRow input{
-      width:auto;
-      margin:0;
-    }
-
-    .row{
-      display:grid;
-      grid-template-columns:1fr 1fr;
       gap:10px;
-      margin-top:12px;
+      flex-wrap:wrap;
+      margin-top:4px;
     }
 
-    .btn{
-      background:var(--accent);
-      color:#fff;
+    button{
       border:none;
       border-radius:12px;
-      padding:12px;
+      padding:12px 16px;
+      font-size:14px;
       font-weight:700;
       cursor:pointer;
-      width:100%;
-      transition:transform .08s ease, box-shadow .2s ease;
-      font-size:14px;
     }
 
-    .btn:hover{
-      transform:translateY(-1px);
-      box-shadow:0 10px 24px rgba(11,60,93,.18);
+    .btn-primary{
+      background:var(--nav);
+      color:#fff;
     }
 
-    .btn:disabled{
-      opacity:.6;
+    .btn-primary:disabled{
+      opacity:.7;
       cursor:not-allowed;
-      transform:none;
-      box-shadow:none;
     }
 
-    .ghost{
-      background:#fff;
-      border:1px solid #ddd;
-      border-radius:12px;
-      padding:12px;
-      font-weight:700;
-      cursor:pointer;
-      width:100%;
-      font-size:14px;
-    }
-
-    .ghost:hover{
-      background:var(--accent-soft);
-    }
-
-    .msg{
-      margin-top:10px;
-      font-size:14px;
-      font-weight:400;
-    }
-
-    .error{color:var(--error)}
-    .ok{color:var(--ok)}
-
-    .links{
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      margin-top:12px;
-      font-size:14px;
-      flex-wrap:wrap;
-    }
-
-    .links a{
-      color:var(--accent);
+    .btn-link{
+      background:#eef2ff;
+      color:var(--nav);
       text-decoration:none;
-      font-weight:700;
-    }
-
-    .links a:hover{
-      text-decoration:underline;
-    }
-
-    .hide{display:none !important;}
-
-    .noteBox{
-      background:var(--accent-soft);
-      border:1px solid #d8e6f3;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:12px 16px;
       border-radius:12px;
-      padding:12px;
-      margin:10px 0 12px;
-      color:#0f172a;
+      font-weight:700;
       font-size:14px;
     }
 
-    .noteBox b{
-      display:block;
-      margin-bottom:4px;
+    .message{
+      display:none;
+      padding:12px 14px;
+      border-radius:12px;
       font-size:14px;
+      line-height:1.5;
     }
 
-    @media(max-width:640px){
-      .topbar-inner{
-        padding:12px 14px;
-      }
+    .message.show{display:block}
+    .message.ok{
+      background:#ecfdf5;
+      color:var(--ok);
+      border:1px solid #bbf7d0;
+    }
+    .message.error{
+      background:#fef2f2;
+      color:var(--error);
+      border:1px solid #fecaca;
+    }
 
-      .accountName,
-      .accountType{
-        max-width:120px;
-      }
+    .hidden{display:none !important}
 
-      .wrap{
-        padding:16px;
-      }
-
-      .row{
+    @media (max-width:700px){
+      .grid{
         grid-template-columns:1fr;
       }
     }
   </style>
 </head>
-
 <body>
+  <div class="topbar">Practice Online</div>
 
-<header class="topbar">
-  <div class="topbar-inner">
-    <div class="accountLeft">
-      <div class="accountIconWrap">
-        <img
-          class="accountIcon"
-          src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
-          alt="Practice Online"
-        >
-      </div>
+  <div class="wrap">
+    <div class="card">
+      <h1>Create account</h1>
+      <p class="sub">
+        Register your account below. Student accounts require a grade. Materials accounts do not require a grade.
+      </p>
 
-      <div class="accountMeta">
-        <div class="accountName">Practice Online</div>
-        <div class="accountType">Create account</div>
-      </div>
-    </div>
+      <div id="msg" class="message"></div>
 
-    <div class="topbarRight">
-      <a href="login.html" class="topLink">Login</a>
-      <a href="register.html" class="topLink active">Register</a>
+      <form id="registerForm">
+        <div class="grid">
+          <div>
+            <label for="firstName">First name</label>
+            <input type="text" id="firstName" name="firstName" required />
+          </div>
+
+          <div>
+            <label for="surname">Surname</label>
+            <input type="text" id="surname" name="surname" required />
+          </div>
+        </div>
+
+        <div class="grid">
+          <div>
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required />
+          </div>
+
+          <div>
+            <label for="email">Email address</label>
+            <input type="email" id="email" name="email" required />
+          </div>
+        </div>
+
+        <div class="grid">
+          <div>
+            <label for="accountType">Account type</label>
+            <select id="accountType" name="accountType" required>
+              <option value="">Select account type</option>
+              <option value="student">Student</option>
+              <option value="materials">Materials</option>
+            </select>
+          </div>
+
+          <div id="gradeWrap">
+            <label for="grade">Grade</label>
+            <select id="grade" name="grade">
+              <option value="">Select grade</option>
+              <option value="8">Grade 8</option>
+              <option value="9">Grade 9</option>
+              <option value="10">Grade 10</option>
+              <option value="11">Grade 11</option>
+              <option value="12">Grade 12</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div>
+            <label for="schoolName">School name</label>
+            <input type="text" id="schoolName" name="schoolName" />
+          </div>
+
+          <div>
+            <label for="currentMarkRange">Current mark range</label>
+            <select id="currentMarkRange" name="currentMarkRange">
+              <option value="">Select mark range</option>
+              <option value="0-29">0-29</option>
+              <option value="30-39">30-39</option>
+              <option value="40-49">40-49</option>
+              <option value="50-59">50-59</option>
+              <option value="60-69">60-69</option>
+              <option value="70-79">70-79</option>
+              <option value="80-100">80-100</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div>
+            <label for="cellphone">Cellphone</label>
+            <input type="text" id="cellphone" name="cellphone" />
+          </div>
+
+          <div>
+            <label for="guardianCellphone">Guardian cellphone</label>
+            <input type="text" id="guardianCellphone" name="guardianCellphone" />
+          </div>
+        </div>
+
+        <div class="grid">
+          <div>
+            <label for="province">Province</label>
+            <input type="text" id="province" name="province" />
+          </div>
+
+          <div>
+            <label for="district">District</label>
+            <input type="text" id="district" name="district" />
+          </div>
+        </div>
+
+        <div class="grid">
+          <div>
+            <label for="gender">Gender</label>
+            <select id="gender" name="gender">
+              <option value="">Select gender</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="nonbinary">Nonbinary</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="profileHeadline">Profile headline</label>
+            <input type="text" id="profileHeadline" name="profileHeadline" placeholder="Optional" />
+          </div>
+        </div>
+
+        <div class="grid">
+          <div>
+            <label for="passwordHash">Password</label>
+            <input type="password" id="passwordHash" name="passwordHash" required minlength="6" />
+            <div class="hint">This field is sent as <strong>passwordHash</strong>.</div>
+          </div>
+
+          <div>
+            <label for="confirmPassword">Confirm password</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" required minlength="6" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit" id="submitBtn" class="btn-primary">Create account</button>
+          <a class="btn-link" href="login.html">Go to login</a>
+        </div>
+      </form>
     </div>
   </div>
-</header>
 
-<main class="wrap">
-  <div class="card">
-    <h2>Register Account</h2>
-    <p>Create your Practice Online account</p>
+  <script>
+    const API = window.API || "https://practice-backend-msgn.onrender.com";
 
-    <div class="noteBox" id="acctNote">
-      <b id="acctNoteTitle">Student Account</b>
-      <span id="acctNoteText">Practice the Quizzes + Online Tutorials.</span>
-    </div>
+    const form = document.getElementById("registerForm");
+    const msg = document.getElementById("msg");
+    const submitBtn = document.getElementById("submitBtn");
+    const accountType = document.getElementById("accountType");
+    const gradeWrap = document.getElementById("gradeWrap");
+    const gradeInput = document.getElementById("grade");
 
-    <label>Account Type</label>
-    <div class="radioRow">
-      <label><input type="radio" name="accountType" value="student" checked> Student</label>
-      <label><input type="radio" name="accountType" value="materials"> Practice Account</label>
-    </div>
-
-    <div class="normalFields">
-      <label for="username">Username</label>
-      <input id="username" autocomplete="username" />
-
-      <label for="email">Email</label>
-      <input id="email" type="email" autocomplete="email" />
-
-      <div class="row">
-        <div>
-          <label for="firstName">Name</label>
-          <input id="firstName" autocomplete="given-name" />
-        </div>
-        <div>
-          <label for="surname">Surname</label>
-          <input id="surname" autocomplete="family-name" />
-        </div>
-      </div>
-
-      <label for="schoolName">School Name</label>
-      <input id="schoolName" autocomplete="organization" />
-
-      <label for="currentMarkRange">Current Mark</label>
-      <select id="currentMarkRange">
-        <option value="">Select Current Mark</option>
-        <option value="0-29">0-29</option>
-        <option value="30-39">30-39</option>
-        <option value="40-49">40-49</option>
-        <option value="50-59">50-59</option>
-        <option value="60-69">60-69</option>
-        <option value="70-79">70-79</option>
-        <option value="80-100">80-100</option>
-      </select>
-
-      <label>Are you in South Africa?</label>
-      <div class="radioRow">
-        <label><input type="radio" name="isSA" value="yes" checked> Yes</label>
-        <label><input type="radio" name="isSA" value="no"> No</label>
-      </div>
-
-      <div id="saWrap">
-        <label for="province">Province</label>
-        <select id="province">
-          <option value="">Select Province</option>
-          <option value="Eastern Cape">Eastern Cape</option>
-          <option value="Free State">Free State</option>
-          <option value="Gauteng">Gauteng</option>
-          <option value="KwaZulu-Natal">KwaZulu-Natal</option>
-          <option value="Limpopo">Limpopo</option>
-          <option value="Mpumalanga">Mpumalanga</option>
-          <option value="Northern Cape">Northern Cape</option>
-          <option value="North West">North West</option>
-          <option value="Western Cape">Western Cape</option>
-        </select>
-
-        <label for="district">District</label>
-        <select id="district" disabled>
-          <option value="">Select District</option>
-        </select>
-      </div>
-
-      <label for="gender">Gender</label>
-      <select id="gender">
-        <option value="">Prefer not to say</option>
-        <option value="female">Female</option>
-        <option value="male">Male</option>
-        <option value="other">Other</option>
-      </select>
-
-      <div class="row">
-        <div>
-          <label for="cellphone">Your Cellphone</label>
-          <input id="cellphone" inputmode="tel" placeholder="+27" />
-        </div>
-        <div>
-          <label for="guardianCellphone">Guardian Cellphone</label>
-          <input id="guardianCellphone" inputmode="tel" placeholder="+27" />
-        </div>
-      </div>
-
-      <div id="gradeWrap">
-        <label for="grade">Grade</label>
-        <select id="grade">
-          <option value="">Select Grade</option>
-          <option value="8">Grade 8</option>
-          <option value="9">Grade 9</option>
-          <option value="10">Grade 10</option>
-          <option value="11">Grade 11</option>
-          <option value="12">Grade 12</option>
-        </select>
-      </div>
-
-      <div class="row">
-        <div>
-          <label for="password">Password</label>
-          <input id="password" type="password" autocomplete="new-password" />
-        </div>
-        <div>
-          <label for="confirmPassword">Confirm Password</label>
-          <input id="confirmPassword" type="password" autocomplete="new-password" />
-        </div>
-      </div>
-    </div>
-
-    <div class="row">
-      <button id="registerBtn" class="btn" type="button">Register</button>
-      <button id="toggleBtn" class="ghost" type="button">Show Password</button>
-    </div>
-
-    <p id="msg" class="msg"></p>
-
-    <div class="links">
-      <a href="login.html">Login</a>
-      <a href="reset-otp.html">Forgot password?</a>
-    </div>
-  </div>
-</main>
-
-<script>
-  const API = "https://api.practiceonline.co.za";
-
-  const msg = document.getElementById("msg");
-  const btn = document.getElementById("registerBtn");
-
-  const acctNoteTitle = document.getElementById("acctNoteTitle");
-  const acctNoteText  = document.getElementById("acctNoteText");
-
-  const usernameEl = document.getElementById("username");
-  const emailEl = document.getElementById("email");
-  const firstNameEl = document.getElementById("firstName");
-  const surnameEl = document.getElementById("surname");
-  const schoolNameEl = document.getElementById("schoolName");
-  const currentMarkRangeEl = document.getElementById("currentMarkRange");
-  const gradeEl = document.getElementById("grade");
-  const passwordEl = document.getElementById("password");
-  const confirmEl = document.getElementById("confirmPassword");
-  const toggleBtn = document.getElementById("toggleBtn");
-  const gradeWrap = document.getElementById("gradeWrap");
-
-  const saWrap = document.getElementById("saWrap");
-  const provinceEl = document.getElementById("province");
-  const districtEl = document.getElementById("district");
-
-  const genderEl = document.getElementById("gender");
-  const cellphoneEl = document.getElementById("cellphone");
-  const guardianCellEl = document.getElementById("guardianCellphone");
-
-  function setMsg(text,type=""){
-    msg.className = "msg " + type;
-    msg.textContent = text;
-  }
-
-  function cleanSpaces(s){
-    return String(s || "").trim().replace(/\s+/g," ");
-  }
-
-  function accountType(){
-    return document.querySelector('input[name="accountType"]:checked').value;
-  }
-
-  function isSA(){
-    return document.querySelector('input[name="isSA"]:checked')?.value === "yes";
-  }
-
-  function updateAccountNote(){
-    const t = accountType();
-    if (t === "student") {
-      acctNoteTitle.textContent = "Student Account";
-      acctNoteText.textContent  = "Practice the Quizzes + Online Tutorials.";
-    } else {
-      acctNoteTitle.textContent = "Practice Account";
-      acctNoteText.textContent  = "Practice the Quizzes.";
-    }
-  }
-
-  function toggleGrade(){
-    const isStudent = accountType() === "student";
-    gradeWrap.style.display = isStudent ? "block" : "none";
-    if(!isStudent) gradeEl.value = "";
-  }
-
-  document.querySelectorAll('input[name="accountType"]').forEach(r=>{
-    r.addEventListener("change", () => {
-      toggleGrade();
-      updateAccountNote();
-    });
-  });
-  toggleGrade();
-  updateAccountNote();
-
-  function ensurePlus27(el){
-    el.addEventListener("focus", () => {
-      if(!el.value.trim()) el.value = "+27";
-    });
-    el.addEventListener("blur", () => {
-      if(el.value.trim() === "+27") el.value = "";
-    });
-  }
-  ensurePlus27(cellphoneEl);
-  ensurePlus27(guardianCellEl);
-
-  toggleBtn.onclick = () => {
-    const show = passwordEl.type === "password";
-    passwordEl.type = confirmEl.type = show ? "text" : "password";
-    toggleBtn.textContent = show ? "Hide Password" : "Show Password";
-  };
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") btn.click();
-  });
-
-  const DISTRICTS_BY_PROVINCE = {
-    "Eastern Cape": [
-      "Buffalo City (Metro)",
-      "Nelson Mandela Bay (Metro)",
-      "Amathole",
-      "Chris Hani",
-      "Joe Gqabi",
-      "OR Tambo",
-      "Sarah Baartman"
-    ],
-    "Free State": [
-      "Mangaung (Metro)",
-      "Fezile Dabi",
-      "Lejweleputswa",
-      "Thabo Mofutsanyana",
-      "Xhariep"
-    ],
-    "Gauteng": [
-      "City of Johannesburg (Metro)",
-      "City of Tshwane (Metro)",
-      "Ekurhuleni (Metro)",
-      "Sedibeng",
-      "West Rand"
-    ],
-    "KwaZulu-Natal": [
-      "eThekwini (Metro)",
-      "Amajuba",
-      "Harry Gwala",
-      "iLembe",
-      "King Cetshwayo",
-      "Ugu",
-      "uMgungundlovu",
-      "uMkhanyakude",
-      "uMzinyathi",
-      "uThukela",
-      "Zululand"
-    ],
-    "Limpopo": [
-      "Capricorn",
-      "Mopani",
-      "Sekhukhune",
-      "Vhembe",
-      "Waterberg"
-    ],
-    "Mpumalanga": [
-      "Ehlanzeni",
-      "Gert Sibande",
-      "Nkangala"
-    ],
-    "Northern Cape": [
-      "Frances Baard",
-      "John Taolo Gaetsewe",
-      "Namakwa",
-      "Pixley ka Seme",
-      "ZF Mgcawu"
-    ],
-    "North West": [
-      "Bojanala Platinum",
-      "Dr Kenneth Kaunda",
-      "Dr Ruth Segomotsi Mompati",
-      "Ngaka Modiri Molema"
-    ],
-    "Western Cape": [
-      "City of Cape Town (Metro)",
-      "Cape Winelands",
-      "Central Karoo",
-      "Garden Route",
-      "Overberg",
-      "West Coast"
-    ]
-  };
-
-  function resetDistrict(){
-    districtEl.innerHTML = `<option value="">Select District</option>`;
-    districtEl.disabled = true;
-  }
-
-  function populateDistricts(){
-    const prov = provinceEl.value;
-    const list = DISTRICTS_BY_PROVINCE[prov] || [];
-    resetDistrict();
-    if(!prov || list.length === 0) return;
-
-    const frag = document.createDocumentFragment();
-    list.forEach(d => {
-      const opt = document.createElement("option");
-      opt.value = d;
-      opt.textContent = d;
-      frag.appendChild(opt);
-    });
-    districtEl.appendChild(frag);
-    districtEl.disabled = false;
-  }
-
-  provinceEl.addEventListener("change", populateDistricts);
-
-  function toggleSAFields(){
-    const yes = isSA();
-    saWrap.classList.toggle("hide", !yes);
-
-    if(!yes){
-      provinceEl.value = "";
-      resetDistrict();
-    } else {
-      populateDistricts();
-    }
-  }
-
-  document.querySelectorAll('input[name="isSA"]').forEach(r=>{
-    r.addEventListener("change", toggleSAFields);
-  });
-  toggleSAFields();
-
-  btn.onclick = async () => {
-    const type = accountType();
-
-    const username = cleanSpaces(usernameEl.value);
-    const email = emailEl.value.trim();
-    const firstName = cleanSpaces(firstNameEl.value);
-    const surname = cleanSpaces(surnameEl.value);
-    const schoolName = cleanSpaces(schoolNameEl.value);
-    const currentMarkRange = currentMarkRangeEl.value.trim();
-
-    const gender = genderEl.value.trim();
-    const cellphone = cellphoneEl.value.trim();
-    const guardianCellphone = guardianCellEl.value.trim();
-
-    const province = isSA() ? provinceEl.value.trim() : "";
-    const district = isSA() ? districtEl.value.trim() : "";
-
-    const payload = {
-      username,
-      email,
-      password: passwordEl.value,
-      accountType: type,
-      ...(type === "student" ? { grade: Number(gradeEl.value) } : {}),
-      ...(firstName ? { firstName } : {}),
-      ...(surname ? { surname } : {}),
-      ...(schoolName ? { schoolName } : {}),
-      ...(currentMarkRange ? { currentMarkRange } : {}),
-      ...(gender ? { gender } : {}),
-      ...(province ? { province } : {}),
-      ...(district ? { district } : {}),
-      ...(cellphone ? { cellphone } : {}),
-      ...(guardianCellphone ? { guardianCellphone } : {})
-    };
-
-    if(!username){
-      return setMsg("Username is required.","error");
+    function showMessage(text, type) {
+      msg.className = "message show " + type;
+      msg.textContent = text;
     }
 
-    if(!firstName){
-      return setMsg("Name is required.","error");
+    function clearMessage() {
+      msg.className = "message";
+      msg.textContent = "";
     }
 
-    if(!surname){
-      return setMsg("Surname is required.","error");
+    function toggleGrade() {
+      const val = accountType.value;
+      if (val === "student") {
+        gradeWrap.classList.remove("hidden");
+        gradeInput.required = true;
+      } else {
+        gradeWrap.classList.add("hidden");
+        gradeInput.required = false;
+        gradeInput.value = "";
+      }
     }
 
-    if(!schoolName){
-      return setMsg("School name is required.","error");
-    }
+    accountType.addEventListener("change", toggleGrade);
+    toggleGrade();
 
-    if(!currentMarkRange){
-      return setMsg("Please select your current mark.","error");
-    }
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      clearMessage();
 
-    if(!cellphone){
-      return setMsg("Your cellphone number is required.","error");
-    }
+      const firstName = document.getElementById("firstName").value.trim();
+      const surname = document.getElementById("surname").value.trim();
+      const username = document.getElementById("username").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const accountTypeValue = document.getElementById("accountType").value;
+      const gradeValue = document.getElementById("grade").value;
+      const schoolName = document.getElementById("schoolName").value.trim();
+      const currentMarkRange = document.getElementById("currentMarkRange").value;
+      const cellphone = document.getElementById("cellphone").value.trim();
+      const guardianCellphone = document.getElementById("guardianCellphone").value.trim();
+      const province = document.getElementById("province").value.trim();
+      const district = document.getElementById("district").value.trim();
+      const gender = document.getElementById("gender").value;
+      const profileHeadline = document.getElementById("profileHeadline").value.trim();
+      const passwordHash = document.getElementById("passwordHash").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
 
-    if(!guardianCellphone){
-      return setMsg("Guardian cellphone is required.","error");
-    }
-
-    if(isSA() && !province){
-      return setMsg("Please select your province.","error");
-    }
-
-    if(!email || !passwordEl.value){
-      return setMsg("Email and password are required.","error");
-    }
-
-    if(payload.password !== confirmEl.value){
-      return setMsg("Passwords do not match.","error");
-    }
-
-    if(type === "student" && !Number.isFinite(payload.grade)){
-      return setMsg("Please select a grade.","error");
-    }
-
-    if(isSA() && province && !district){
-      return setMsg("Please select your district.","error");
-    }
-
-    btn.disabled = true;
-    setMsg("Creating account...");
-
-    try{
-      const res = await fetch(API + "/api/register", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify(payload)
-      });
-
-      const data = await res.json().catch(()=>({}));
-
-      if(!res.ok){
-        btn.disabled = false;
-        return setMsg(data.message || "Registration failed.","error");
+      if (!firstName || !surname || !username || !email || !accountTypeValue || !passwordHash || !confirmPassword) {
+        showMessage("Please fill in all required fields.", "error");
+        return;
       }
 
-      setMsg("Account created successfully!","ok");
-      setTimeout(() => location.href = "login.html", 1200);
+      if (accountTypeValue === "student" && !gradeValue) {
+        showMessage("Please select a grade for a student account.", "error");
+        return;
+      }
 
-    }catch{
-      btn.disabled = false;
-      setMsg("Network error. Please try again.","error");
-    }
-  };
-</script>
+      if (passwordHash !== confirmPassword) {
+        showMessage("Passwords do not match.", "error");
+        return;
+      }
 
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Creating account...";
+
+      try {
+        const payload = {
+          firstName,
+          surname,
+          fullName: (firstName + " " + surname).trim(),
+          username,
+          email,
+          accountType: accountTypeValue,
+          schoolName,
+          currentMarkRange,
+          cellphone,
+          guardianCellphone,
+          province,
+          district,
+          gender,
+          profileHeadline,
+          passwordHash
+        };
+
+        if (accountTypeValue === "student") {
+          payload.grade = Number(gradeValue);
+        }
+
+        const res = await fetch(`${API}/api/auth/register`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          showMessage(data.message || "Registration failed.", "error");
+          return;
+        }
+
+        showMessage(
+          data.message || "Registration successful. Please check your email if verification is required.",
+          "ok"
+        );
+
+        form.reset();
+        toggleGrade();
+      } catch (err) {
+        showMessage("Unable to register right now. Please try again.", "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Create account";
+      }
+    });
+  </script>
 </body>
 </html>
