@@ -747,22 +747,22 @@ app.post("/api/register", registerLimiter, async (req, res) => {
     let gradeNum = null;
     if (accountType === "student") {
       if (grade === undefined || grade === null || grade === "") {
-        return res
-          .status(400)
-          .json({ message: "Grade is required for Student accounts." });
+        return res.status(400).json({
+          message: "Grade is required for Student accounts.",
+        });
       }
       gradeNum = Number(grade);
       if (!Number.isInteger(gradeNum) || gradeNum < 8 || gradeNum > 12) {
-        return res
-          .status(400)
-          .json({ message: "Grade must be between 8 and 12." });
+        return res.status(400).json({
+          message: "Grade must be between 8 and 12.",
+        });
       }
     }
 
     if (String(password).length < 6) {
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 6 characters." });
+      return res.status(400).json({
+        message: "Password must be at least 6 characters.",
+      });
     }
 
     const cleanUsername = cleanSpaces(username);
@@ -829,7 +829,14 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       rawVerifyToken
     )}&email=${encodeURIComponent(user.email)}`;
 
+    let emailSent = false;
+    let emailError = "";
+
     try {
+      console.log("APP_URL:", APP_URL);
+      console.log("Sending verification email to:", user.email);
+      console.log("Student number:", user.studentNumber);
+
       if (user.accountType === "student") {
         await sendEmail({
           to: user.email,
@@ -865,17 +872,25 @@ app.post("/api/register", registerLimiter, async (req, res) => {
           `,
         });
       }
+
+      emailSent = true;
+      console.log("Verification email sent successfully to:", user.email);
     } catch (emailErr) {
-      console.error("Verification email failed:", emailErr.message);
+      emailError = emailErr?.message || "Unknown email error";
+      console.error("Verification email failed:", emailErr);
     }
 
     return res.status(201).json({
-      message: "Account created successfully.",
+      message: emailSent
+        ? "Account created successfully. Verification email sent."
+        : "Account created successfully, but verification email failed to send.",
       accountType: user.accountType,
       studentNumber: user.studentNumber,
+      emailSent,
+      emailError,
     });
   } catch (err) {
-    console.error("Register error:", err.message);
+    console.error("Register error:", err);
     return res.status(500).json({ message: "Server error. Please try again." });
   }
 });
