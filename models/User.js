@@ -50,16 +50,43 @@ const UserSchema = new mongoose.Schema(
       max: 12,
     },
 
-    // 8-digit student number (students only)
+    // learner / materials number
     studentNumber: {
       type: String,
       default: null,
+      trim: true,
     },
 
-    // profile fields
+    // =========================
+    // BASIC PROFILE FIELDS
+    // =========================
     fullName: {
       type: String,
       trim: true,
+      default: "",
+    },
+
+    firstName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    surname: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    schoolName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    currentMarkRange: {
+      type: String,
+      enum: ["", "0-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80-100"],
       default: "",
     },
 
@@ -75,14 +102,18 @@ const UserSchema = new mongoose.Schema(
       default: "",
     },
 
-    // location + profile fields
+    // =========================
+    // LOCATION / CONTACT
+    // =========================
     province: {
       type: String,
+      trim: true,
       default: "",
     },
 
     district: {
       type: String,
+      trim: true,
       default: "",
     },
 
@@ -94,15 +125,19 @@ const UserSchema = new mongoose.Schema(
 
     cellphone: {
       type: String,
+      trim: true,
       default: "",
     },
 
     guardianCellphone: {
       type: String,
+      trim: true,
       default: "",
     },
 
-    // Email verification
+    // =========================
+    // EMAIL VERIFICATION
+    // =========================
     emailVerified: {
       type: Boolean,
       default: false,
@@ -144,8 +179,6 @@ const UserSchema = new mongoose.Schema(
     // =========================
     // PAID ACCESS FIELDS
     // =========================
-
-    // old premium fields
     premium: {
       type: Boolean,
       default: false,
@@ -161,7 +194,6 @@ const UserSchema = new mongoose.Schema(
       default: null,
     },
 
-    // monthly subscription fields for PayFast
     subscriptionStatus: {
       type: String,
       enum: ["none", "active", "expired"],
@@ -178,7 +210,9 @@ const UserSchema = new mongoose.Schema(
       default: "",
     },
 
-    // Forgot password fields
+    // =========================
+    // FORGOT PASSWORD
+    // =========================
     resetPasswordTokenHash: {
       type: String,
       default: null,
@@ -189,14 +223,19 @@ const UserSchema = new mongoose.Schema(
       default: null,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
 
-// Virtual access status
+// =========================
+// VIRTUALS
+// =========================
 UserSchema.virtual("accessStatus").get(function () {
   const now = new Date();
 
-  // Paid user has access
   if (
     this.subscriptionStatus === "active" ||
     this.premium === true ||
@@ -206,7 +245,6 @@ UserSchema.virtual("accessStatus").get(function () {
     return "active";
   }
 
-  // Trial user has access
   if (this.trialActive && this.trialEndDate && new Date(this.trialEndDate) >= now) {
     return "trial";
   }
@@ -226,7 +264,9 @@ UserSchema.virtual("trialDaysLeft").get(function () {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 });
 
-// Clean values + ensure grade is provided only for student accounts
+// =========================
+// PRE-VALIDATE
+// =========================
 UserSchema.pre("validate", function (next) {
   if (this.email) {
     this.email = String(this.email).trim().toLowerCase();
@@ -234,6 +274,18 @@ UserSchema.pre("validate", function (next) {
 
   if (this.username) {
     this.username = String(this.username).trim();
+  }
+
+  if (this.firstName) {
+    this.firstName = String(this.firstName).trim();
+  }
+
+  if (this.surname) {
+    this.surname = String(this.surname).trim();
+  }
+
+  if (this.schoolName) {
+    this.schoolName = String(this.schoolName).trim();
   }
 
   if (this.fullName) {
@@ -248,13 +300,34 @@ UserSchema.pre("validate", function (next) {
     this.profilePhoto = String(this.profilePhoto).trim();
   }
 
+  if (this.province) {
+    this.province = String(this.province).trim();
+  }
+
+  if (this.district) {
+    this.district = String(this.district).trim();
+  }
+
+  if (this.cellphone) {
+    this.cellphone = String(this.cellphone).trim();
+  }
+
+  if (this.guardianCellphone) {
+    this.guardianCellphone = String(this.guardianCellphone).trim();
+  }
+
+  // build fullName from firstName + surname if fullName is empty
+  if (!this.fullName) {
+    this.fullName = [this.firstName, this.surname].filter(Boolean).join(" ").trim();
+  }
+
+  // student accounts must have grade
   if (this.accountType === "student") {
     if (this.grade === null || this.grade === undefined || this.grade === "") {
       return next(new Error("Grade is required for student accounts."));
     }
   } else {
     this.grade = null;
-    this.studentNumber = null;
   }
 
   next();
