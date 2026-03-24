@@ -1,22 +1,31 @@
 // utils/mailer.js
-import nodemailer from "nodemailer";
 
-export function getTransporter() {
-  const port = Number(process.env.SMTP_PORT || 465);
-  const secure =
-    String(process.env.SMTP_SECURE || "").toLowerCase() === "true" || port === 465;
-
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port,
-    secure, // ✅ true for 465
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+const sendEmail = async ({ to, subject, html }) => {
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "api-key": process.env.BREVO_API_KEY,
+      "content-type": "application/json",
     },
-    // Helps some hosts with TLS
-    tls: {
-      servername: process.env.SMTP_HOST,
-    },
+    body: JSON.stringify({
+      sender: {
+        email: process.env.BREVO_SENDER_EMAIL,
+        name: process.env.BREVO_SENDER_NAME || "Practice Online",
+      },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    }),
   });
-}
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(JSON.stringify(data));
+  }
+
+  return data;
+};
+
+module.exports = sendEmail;
