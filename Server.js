@@ -46,7 +46,6 @@ import fs from "fs";
 import path from "path";
 import multer from "multer";
 import { fileURLToPath } from "url";
-import sgMail from "@sendgrid/mail";
 import rateLimit from "express-rate-limit";
 
 import Quiz from "./models/Quiz.js";
@@ -74,59 +73,88 @@ fs.mkdirSync(profileUploadDir, { recursive: true });
 
 app.use("/uploads", express.static(uploadsRoot));
 
-/* ------------------ SENDGRID ------------------ */
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || "";
-const FROM_EMAIL = (process.env.FROM_EMAIL || "").trim();
-
-if (SENDGRID_API_KEY) sgMail.setApiKey(SENDGRID_API_KEY);
+/* ------------------ BREVO ------------------ */
+const BREVO_API_KEY = (process.env.BREVO_API_KEY || "").trim();
+const BREVO_SENDER_EMAIL = (process.env.BREVO_SENDER_EMAIL || "").trim();
+const BREVO_SENDER_NAME = (process.env.BREVO_SENDER_NAME || "Practice Online").trim();
 
 async function sendEmail({ to, subject, html, text }) {
-  if (!SENDGRID_API_KEY) throw new Error("Missing SENDGRID_API_KEY on server");
-  if (!FROM_EMAIL) throw new Error("Missing FROM_EMAIL on server");
+  if (!BREVO_API_KEY) throw new Error("Missing BREVO_API_KEY on server");
+  if (!BREVO_SENDER_EMAIL) throw new Error("Missing BREVO_SENDER_EMAIL on server");
+  if (!to) throw new Error("Recipient email is required");
 
-  try {
-    await sgMail.send({
-      to,
-      from: FROM_EMAIL,
-      subject,
-      text: text || undefined,
-      html: html || undefined,
-    });
-  } catch (err) {
-    const detail =
-      err?.response?.body?.errors?.map((e) => e.message).join(" | ") ||
-      err?.message ||
-      "Unknown SendGrid error";
-    console.error("SendGrid send failed:", detail);
-    throw new Error(detail);
+  const payload = {
+    sender: {
+      email: BREVO_SENDER_EMAIL,
+      name: BREVO_SENDER_NAME,
+    },
+    to: [{ email: String(to).trim() }],
+    subject: String(subject || "").trim(),
+    htmlContent: html || undefined,
+    textContent: text || undefined,
+  };
+
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "api-key": BREVO_API_KEY,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    console.error("Brevo send failed:", data);
+    throw new Error(typeof data === "string" ? data : JSON.stringify(data));
   }
+
+  return data;
 }
 
 async function sendBulkEmail({ recipients, subject, html, text }) {
-  if (!SENDGRID_API_KEY) throw new Error("Missing SENDGRID_API_KEY on server");
-  if (!FROM_EMAIL) throw new Error("Missing FROM_EMAIL on server");
+  if (!BREVO_API_KEY) throw new Error("Missing BREVO_API_KEY on server");
+  if (!BREVO_SENDER_EMAIL) throw new Error("Missing BREVO_SENDER_EMAIL on server");
   if (!Array.isArray(recipients) || recipients.length === 0) return;
 
-  const msg = {
-    from: FROM_EMAIL,
-    subject,
-    text: text || undefined,
-    html: html || undefined,
-    personalizations: recipients.map((email) => ({
-      to: [{ email }],
-    })),
+  const cleanRecipients = recipients
+    .map((email) => String(email || "").trim())
+    .filter(Boolean)
+    .map((email) => ({ email }));
+
+  if (!cleanRecipients.length) return;
+
+  const payload = {
+    sender: {
+      email: BREVO_SENDER_EMAIL,
+      name: BREVO_SENDER_NAME,
+    },
+    to: cleanRecipients,
+    subject: String(subject || "").trim(),
+    htmlContent: html || undefined,
+    textContent: text || undefined,
   };
 
-  try {
-    await sgMail.send(msg);
-  } catch (err) {
-    const detail =
-      err?.response?.body?.errors?.map((e) => e.message).join(" | ") ||
-      err?.message ||
-      "Unknown SendGrid error";
-    console.error("SendGrid bulk send failed:", detail);
-    throw new Error(detail);
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "api-key": BREVO_API_KEY,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    console.error("Brevo bulk send failed:", data);
+    throw new Error(typeof data === "string" ? data : JSON.stringify(data));
   }
+
+  return data;
 }
 
 /* ------------------ HELPERS ------------------ */
@@ -401,12 +429,13 @@ app.get("/test-email", async (req, res) => {
   try {
     await sendEmail({
       to,
-      subject: "SendGrid test",
+      subject: "Brevo test",
       text: "Email sending works.",
       html: "<strong>Email sending works.</strong>",
     });
     res.send("Email sent successfully to " + to);
   } catch (err) {
+    console.error("Brevo test email failed:", err.message);
     res.status(500).send("Email failed: " + err.message);
   }
 });
@@ -972,7 +1001,6 @@ app.post("/api/resend-verification-email", async (req, res) => {
     return res.status(500).json({ message: "Server error." });
   }
 });
-
 // LOGIN
 app.post("/api/login", async (req, res) => {
   try {
@@ -2546,7 +2574,7 @@ app.post("/api/payfast/initiate", authRequired, async (req, res) => {
       name_first: String(emailPrefix || "Practice").trim(),
       name_last: "Online",
       email_address: String(
-        currentUser.email || FROM_EMAIL || "no-reply@practiceonline.co.za"
+        currentUser.email || BREVO_SENDER_EMAIL || "no-reply@practiceonline.co.za"
       ).trim(),
     };
 
