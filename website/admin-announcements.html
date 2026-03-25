@@ -5,10 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Admin Announcements | Practice Online</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
 <style>
 :root{
   --nav:#1b1648;
@@ -22,11 +18,12 @@
   --danger:#b91c1c;
   --info:#1d4ed8;
   --soft:#f8fafc;
+  --shadow:0 8px 22px rgba(15,23,42,.06);
 }
 *{box-sizing:border-box}
 body{
   margin:0;
-  font-family:Inter,Arial,sans-serif;
+  font-family:Arial, Helvetica, sans-serif;
   background:var(--bg);
   color:var(--text);
 }
@@ -54,10 +51,12 @@ body{
   border-radius:20px;
   padding:22px;
   margin-bottom:18px;
+  box-shadow:var(--shadow);
 }
 .hero h1{
   margin:0 0 8px;
   font-size:28px;
+  font-weight:700;
 }
 .hero p{
   margin:0;
@@ -75,6 +74,7 @@ body{
   border:1px solid var(--border);
   border-radius:18px;
   overflow:hidden;
+  box-shadow:var(--shadow);
 }
 .panelHead{
   padding:18px;
@@ -84,6 +84,7 @@ body{
 .panelHead h2{
   margin:0;
   font-size:18px;
+  font-weight:700;
 }
 .panelBody{
   padding:18px;
@@ -105,6 +106,7 @@ body{
   font:inherit;
   outline:none;
   background:#fff;
+  font-family:Arial, Helvetica, sans-serif;
 }
 .textarea{
   min-height:120px;
@@ -117,6 +119,11 @@ body{
 .row2{
   display:grid;
   grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.row3{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
   gap:12px;
 }
 .checkRow{
@@ -136,12 +143,14 @@ body{
   border:none;
   border-radius:12px;
   padding:11px 15px;
-  font-weight:800;
+  font-weight:700;
   cursor:pointer;
+  font-family:Arial, Helvetica, sans-serif;
 }
 .btn-primary{background:var(--nav);color:#fff}
 .btn-danger{background:var(--danger);color:#fff}
 .btn-light{background:#eef2f7;color:#0f172a}
+.btn-success{background:var(--success);color:#fff}
 .btn:hover{opacity:.96}
 .btn:disabled{
   opacity:.65;
@@ -183,7 +192,7 @@ body{
 }
 .badge{
   font-size:11px;
-  font-weight:800;
+  font-weight:700;
   border-radius:999px;
   padding:6px 10px;
 }
@@ -196,7 +205,7 @@ body{
 .b-draft{background:#fef2f2;color:#b91c1c}
 .title{
   font-size:17px;
-  font-weight:800;
+  font-weight:700;
   margin:0 0 8px;
 }
 .message{
@@ -223,12 +232,102 @@ body{
   padding:9px 12px;
   font-weight:700;
   cursor:pointer;
+  font-family:Arial, Helvetica, sans-serif;
 }
 .smallBtn.edit{background:#eef4ff;color:#1d4ed8}
 .smallBtn.delete{background:#fef2f2;color:#b91c1c}
 .hidden{display:none !important}
+
+.tableSection{
+  margin-top:18px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.tableHead{
+  padding:18px;
+  border-bottom:1px solid var(--border);
+  background:var(--soft);
+}
+.tableHead h3{
+  margin:0;
+  font-size:18px;
+  font-weight:700;
+}
+.tableBody{
+  padding:18px;
+}
+.filterBar{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr auto;
+  gap:12px;
+  margin-bottom:16px;
+}
+.filterCard{
+  background:#f8fafc;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+}
+.filterCard .label{
+  margin-bottom:6px;
+}
+.tableWrap{
+  width:100%;
+  overflow:auto;
+  border:1px solid var(--border);
+  border-radius:14px;
+}
+.responseTable{
+  width:100%;
+  min-width:860px;
+  border-collapse:collapse;
+  background:#fff;
+}
+.responseTable th{
+  background:#f8fafc;
+  color:#0f172a;
+  text-align:left;
+  font-size:13px;
+  font-weight:700;
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+}
+.responseTable td{
+  padding:12px 14px;
+  border-bottom:1px solid #edf2f7;
+  font-size:13px;
+  color:#334155;
+  vertical-align:top;
+}
+.responseTable tr:hover td{
+  background:#fcfdff;
+}
+.countAvail{
+  color:var(--success);
+  font-weight:700;
+}
+.countUnavail{
+  color:var(--danger);
+  font-weight:700;
+}
+.emptyTable{
+  color:var(--muted);
+  font-size:14px;
+  padding:16px 4px 2px;
+}
+
 @media(max-width:980px){
   .grid{grid-template-columns:1fr}
+}
+@media(max-width:900px){
+  .filterBar{grid-template-columns:1fr 1fr}
+}
+@media(max-width:640px){
+  .wrap{padding:16px}
+  .row2,.row3,.filterBar{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -356,6 +455,69 @@ body{
       </div>
     </section>
   </div>
+
+  <section class="tableSection">
+    <div class="tableHead">
+      <h3>Announcement Responses Table</h3>
+    </div>
+    <div class="tableBody">
+      <div class="filterBar">
+        <div class="filterCard">
+          <label class="label" for="filterGrade">Filter by Grade</label>
+          <select id="filterGrade" class="select">
+            <option value="">All Grades</option>
+            <option value="allGrades">All Grades</option>
+            <option value="grade8">Grade 8</option>
+            <option value="grade9">Grade 9</option>
+            <option value="grade10">Grade 10</option>
+            <option value="grade11">Grade 11</option>
+            <option value="grade12">Grade 12</option>
+          </select>
+        </div>
+
+        <div class="filterCard">
+          <label class="label" for="filterPeriod">Filter by Date</label>
+          <select id="filterPeriod" class="select">
+            <option value="">All Time</option>
+            <option value="today">Today</option>
+            <option value="thisWeek">This Week</option>
+            <option value="thisMonth">This Month</option>
+            <option value="lastMonth">Last Month</option>
+          </select>
+        </div>
+
+        <div class="filterCard">
+          <label class="label" for="tableSearch">Search</label>
+          <input id="tableSearch" class="input" type="text" placeholder="Search title or message">
+        </div>
+
+        <div class="filterCard" style="display:flex;align-items:flex-end;">
+          <button type="button" class="btn btn-success" id="exportBtn" style="width:100%;">Export to Excel</button>
+        </div>
+      </div>
+
+      <div class="tableWrap">
+        <table class="responseTable">
+          <thead>
+            <tr>
+              <th>Announcement</th>
+              <th>Grade</th>
+              <th>Category</th>
+              <th>Created</th>
+              <th>Available</th>
+              <th>Unavailable</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr>
+              <td colspan="6">Loading...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="emptyTable" class="emptyTable hidden">No announcements found for the selected filters.</div>
+    </div>
+  </section>
 </main>
 
 <script>
@@ -371,6 +533,13 @@ const saveBtn = document.getElementById("saveBtn");
 const categoryEl = document.getElementById("category");
 const classFields = document.getElementById("classFields");
 const quizFields = document.getElementById("quizFields");
+
+const filterGradeEl = document.getElementById("filterGrade");
+const filterPeriodEl = document.getElementById("filterPeriod");
+const tableSearchEl = document.getElementById("tableSearch");
+const exportBtn = document.getElementById("exportBtn");
+const tableBody = document.getElementById("tableBody");
+const emptyTable = document.getElementById("emptyTable");
 
 let announcementsCache = [];
 let isSaving = false;
@@ -460,9 +629,15 @@ function safeDate(value) {
   });
 }
 
+function csvDate(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toISOString().slice(0, 10);
+}
+
 function toggleExtraFields() {
   const category = categoryEl.value;
-
   const showClass = category === "class" || category === "all";
   const showQuiz = category === "quiz" || category === "all";
 
@@ -525,11 +700,17 @@ function badgeCategory(category) {
   return "b-general";
 }
 
+function countResponses(item, type) {
+  const list = Array.isArray(item.responses) ? item.responses : [];
+  return list.filter(r => String(r.response || "") === type).length;
+}
+
 function renderList(items = []) {
   announcementsCache = Array.isArray(items) ? items : [];
 
   if (!announcementsCache.length) {
     listBox.innerHTML = `<div style="color:#64748b;font-size:14px;">No announcements found.</div>`;
+    renderTable();
     return;
   }
 
@@ -552,7 +733,9 @@ function renderList(items = []) {
         Created: ${escapeHtml(safeDate(item.createdAt))}<br>
         Updated: ${escapeHtml(safeDate(item.updatedAt))}<br>
         Send to students: ${item.sendToStudents ? "Yes" : "No"}<br>
-        Urgent: ${item.urgentNotice ? "Yes" : "No"}
+        Urgent: ${item.urgentNotice ? "Yes" : "No"}<br>
+        Available: ${countResponses(item, "accepted")}<br>
+        Unavailable: ${countResponses(item, "rejected")}
         ${item.meetingDate ? `<br>Meeting Date: ${escapeHtml(item.meetingDate)}` : ""}
         ${item.meetingTime ? `<br>Meeting Time: ${escapeHtml(item.meetingTime)}` : ""}
         ${item.meetingLink ? `<br>Meeting Link: ${escapeHtml(item.meetingLink)}` : ""}
@@ -566,6 +749,132 @@ function renderList(items = []) {
       </div>
     </div>
   `).join("");
+
+  renderTable();
+}
+
+function isInPeriod(dateValue, period) {
+  if (!period) return true;
+  const d = new Date(dateValue);
+  if (Number.isNaN(d.getTime())) return false;
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(todayStart.getDate() + 1);
+
+  if (period === "today") {
+    return d >= todayStart && d < tomorrowStart;
+  }
+
+  if (period === "thisWeek") {
+    const day = todayStart.getDay();
+    const diffToMonday = day === 0 ? 6 : day - 1;
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(todayStart.getDate() - diffToMonday);
+    return d >= weekStart && d < tomorrowStart;
+  }
+
+  if (period === "thisMonth") {
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    return d >= monthStart && d < tomorrowStart;
+  }
+
+  if (period === "lastMonth") {
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    return d >= lastMonthStart && d < thisMonthStart;
+  }
+
+  return true;
+}
+
+function getFilteredRows() {
+  const grade = filterGradeEl.value;
+  const period = filterPeriodEl.value;
+  const q = String(tableSearchEl.value || "").trim().toLowerCase();
+
+  return announcementsCache.filter(item => {
+    const matchGrade = !grade || String(item.grade || "") === grade;
+    const matchPeriod = isInPeriod(item.createdAt, period);
+
+    const hay = `
+      ${item.title || ""}
+      ${item.message || ""}
+      ${item.grade || ""}
+      ${item.category || ""}
+    `.toLowerCase();
+
+    const matchSearch = !q || hay.includes(q);
+
+    return matchGrade && matchPeriod && matchSearch;
+  });
+}
+
+function renderTable() {
+  const rows = getFilteredRows();
+
+  if (!rows.length) {
+    tableBody.innerHTML = "";
+    emptyTable.classList.remove("hidden");
+    return;
+  }
+
+  emptyTable.classList.add("hidden");
+
+  tableBody.innerHTML = rows.map(item => `
+    <tr>
+      <td>
+        <strong>${escapeHtml(item.title || "")}</strong><br>
+        <span style="color:#64748b;">${escapeHtml((item.message || "").slice(0, 120))}${(item.message || "").length > 120 ? "..." : ""}</span>
+      </td>
+      <td>${escapeHtml(item.grade || "allGrades")}</td>
+      <td>${escapeHtml(item.category || "general")}</td>
+      <td>${escapeHtml(safeDate(item.createdAt))}</td>
+      <td class="countAvail">${countResponses(item, "accepted")}</td>
+      <td class="countUnavail">${countResponses(item, "rejected")}</td>
+    </tr>
+  `).join("");
+}
+
+function exportTable() {
+  const rows = getFilteredRows();
+
+  if (!rows.length) {
+    showStatus("No data to export.", "error");
+    return;
+  }
+
+  const csvRows = [
+    ["Announcement", "Grade", "Category", "Created", "Available", "Unavailable"]
+  ];
+
+  rows.forEach(item => {
+    csvRows.push([
+      item.title || "",
+      item.grade || "",
+      item.category || "",
+      csvDate(item.createdAt),
+      String(countResponses(item, "accepted")),
+      String(countResponses(item, "rejected"))
+    ]);
+  });
+
+  const csv = csvRows.map(row =>
+    row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+  ).join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "announcement_responses.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showStatus("Exported successfully.", "success");
 }
 
 async function loadAnnouncements() {
@@ -574,10 +883,16 @@ async function loadAnnouncements() {
       method: "GET",
     });
 
-    renderList(Array.isArray(data) ? data : []);
+    const sorted = (Array.isArray(data) ? data : []).sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    renderList(sorted);
   } catch (err) {
     console.error(err);
-    renderList([]);
+    listBox.innerHTML = `<div style="color:#64748b;font-size:14px;">No announcements available.</div>`;
+    announcementsCache = [];
+    renderTable();
     showStatus(err.message || "Could not load announcements.", "error");
   }
 }
@@ -617,7 +932,12 @@ async function saveAnnouncement(e) {
 
     resetForm();
     await loadAnnouncements();
+    window.scrollTo({ top: 0, behavior: "smooth" });
     showStatus(data.message || "Announcement saved successfully.", "success");
+
+    setTimeout(() => {
+      hideStatus();
+    }, 3000);
   } catch (err) {
     console.error(err);
     showStatus(err.message || "Could not save announcement.", "error");
@@ -667,6 +987,11 @@ categoryEl.addEventListener("change", toggleExtraFields);
 form.addEventListener("submit", saveAnnouncement);
 document.getElementById("resetBtn").addEventListener("click", resetForm);
 cancelEditBtn.addEventListener("click", resetForm);
+
+filterGradeEl.addEventListener("change", renderTable);
+filterPeriodEl.addEventListener("change", renderTable);
+tableSearchEl.addEventListener("input", renderTable);
+exportBtn.addEventListener("click", exportTable);
 
 toggleExtraFields();
 loadAnnouncements();
