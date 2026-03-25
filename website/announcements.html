@@ -457,6 +457,41 @@ input,select{
   background:#fee2e2;
 }
 
+.actionTextBtn.selected.accept{
+  background:#bbf7d0;
+  box-shadow:inset 0 0 0 1px #86efac;
+}
+
+.actionTextBtn.selected.reject{
+  background:#fecaca;
+  box-shadow:inset 0 0 0 1px #fca5a5;
+}
+
+.actionTextBtn:disabled{
+  opacity:.9;
+  cursor:not-allowed;
+}
+
+.responseBadge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border-radius:999px;
+  padding:6px 10px;
+  font-size:12px;
+  font-weight:700;
+}
+
+.responseBadge.available{
+  background:#ecfdf5;
+  color:var(--success);
+}
+
+.responseBadge.unavailable{
+  background:#fef2f2;
+  color:var(--danger);
+}
+
 .linkText{
   color:#1d4ed8;
   text-decoration:underline;
@@ -745,6 +780,13 @@ function matchFilter(item){
   return !q || text.includes(q);
 }
 
+function getMyResponse(item){
+  const mine = item?.myResponse || item?.response || "";
+  if (mine === "accepted") return "accepted";
+  if (mine === "rejected") return "rejected";
+  return "";
+}
+
 function renderGeneral(list){
   const el = document.getElementById("generalGrid");
   const items = list.filter(matchFilter);
@@ -768,35 +810,60 @@ function renderClass(list){
   const el = document.getElementById("classGrid");
   const items = list.filter(matchFilter);
 
-  el.innerHTML = items.length ? items.map(i=>`
-    <div class="card">
-      <div class="title">${escapeHtml(i.title)}</div>
-      <div class="meta">${escapeHtml(i.message)}</div>
-      <div class="meta">Grade: ${escapeHtml(i.grade || "allGrades")}</div>
-      <div class="meta">Date: ${escapeHtml(formatDate(i.meetingDate))}</div>
-      <div class="meta">Time: ${escapeHtml(i.meetingTime || "—")}</div>
+  el.innerHTML = items.length ? items.map(i=>{
+    const myResponse = getMyResponse(i);
+    const isAvailable = myResponse === "accepted";
+    const isUnavailable = myResponse === "rejected";
+    const hasResponse = !!myResponse;
 
-      <div class="actions">
-        ${i.meetingLink ? `<a class="linkText" href="${escapeHtml(i.meetingLink)}" target="_blank" rel="noopener noreferrer">Join Meeting</a>` : ``}
+    return `
+      <div class="card">
+        <div class="title">${escapeHtml(i.title)}</div>
+        <div class="meta">${escapeHtml(i.message)}</div>
+        <div class="meta">Grade: ${escapeHtml(i.grade || "allGrades")}</div>
+        <div class="meta">Date: ${escapeHtml(formatDate(i.meetingDate))}</div>
+        <div class="meta">Time: ${escapeHtml(i.meetingTime || "—")}</div>
 
-        ${i.meetingLink ? `
-          <button class="iconBtn copy" onclick="copyText('${safeJsString(i.meetingLink)}')" title="Copy link">
-            <img src="${ICONS.copy}" alt="Copy">
-          </button>
+        ${hasResponse ? `
+          <div class="row">
+            <span class="responseBadge ${isAvailable ? "available" : "unavailable"}">
+              ${isAvailable ? "You are Available" : "You are Unavailable"}
+            </span>
+          </div>
         ` : ``}
 
-        <button class="actionTextBtn accept" onclick="respond('${i._id}','accepted')" title="Accept">
-          <img src="${ICONS.thumbsUp}" alt="Accept">
-          <span>Accept</span>
-        </button>
+        <div class="actions">
+          ${i.meetingLink ? `<a class="linkText" href="${escapeHtml(i.meetingLink)}" target="_blank" rel="noopener noreferrer">Join Meeting</a>` : ``}
 
-        <button class="actionTextBtn reject" onclick="respond('${i._id}','rejected')" title="Reject">
-          <img src="${ICONS.thumbsDown}" alt="Reject">
-          <span>Reject</span>
-        </button>
+          ${i.meetingLink ? `
+            <button class="iconBtn copy" onclick="copyText('${safeJsString(i.meetingLink)}')" title="Copy link">
+              <img src="${ICONS.copy}" alt="Copy">
+            </button>
+          ` : ``}
+
+          <button
+            class="actionTextBtn accept ${isAvailable ? "selected" : ""}"
+            onclick="respond('${i._id}','accepted')"
+            title="Available"
+            ${hasResponse ? "disabled" : ""}
+          >
+            <img src="${ICONS.thumbsUp}" alt="Available">
+            <span>Available</span>
+          </button>
+
+          <button
+            class="actionTextBtn reject ${isUnavailable ? "selected" : ""}"
+            onclick="respond('${i._id}','rejected')"
+            title="Unavailable"
+            ${hasResponse ? "disabled" : ""}
+          >
+            <img src="${ICONS.thumbsDown}" alt="Unavailable">
+            <span>Unavailable</span>
+          </button>
+        </div>
       </div>
-    </div>
-  `).join("") : `<div class="empty">No class announcements.</div>`;
+    `;
+  }).join("") : `<div class="empty">No class announcements.</div>`;
 }
 
 function renderQuiz(list){
@@ -865,7 +932,13 @@ async function respond(id,response){
       throw new Error(data.message || "Failed to save response.");
     }
 
-    showStatus(`Response saved as ${response}.`, "success");
+    showStatus(
+      response === "accepted"
+        ? "Saved as Available."
+        : "Saved as Unavailable.",
+      "success"
+    );
+
     await load();
   } catch (err) {
     console.error(err);
