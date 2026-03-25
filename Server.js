@@ -3066,52 +3066,52 @@ app.delete("/api/announcements/:id", authRequired, announcementManagerOnly, asyn
 });
 
 // RESPOND TO CLASS ANNOUNCEMENT
+// RESPOND TO CLASS ANNOUNCEMENT
 app.post("/api/announcements/:id/respond", authRequired, async (req, res) => {
   try {
-    const { id } = req.params;
-    const response = String(req.body.response || "").toLowerCase().trim();
+    const { response } = req.body;
 
     if (!["accepted", "rejected"].includes(response)) {
-      return res.status(400).json({ message: "Response must be accepted or rejected." });
+      return res.status(400).json({ message: "Invalid response." });
     }
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid announcement id." });
-    }
+    const announcement = await Announcement.findById(req.params.id);
 
-    const announcement = await Announcement.findById(id);
     if (!announcement) {
       return res.status(404).json({ message: "Announcement not found." });
     }
 
-    if (!["class", "all"].includes(announcement.category)) {
-      return res.status(400).json({ message: "This announcement does not accept class responses." });
+    // only allow class announcements
+    if (announcement.category !== "class") {
+      return res.status(400).json({ message: "Not a class announcement." });
     }
 
+    const userId = req.user.userId;
+
     const existing = announcement.responses.find(
-      (r) => String(r.student) === String(req.user.userId)
+      r => String(r.student) === String(userId)
     );
 
     if (existing) {
+      // update response
       existing.response = response;
       existing.respondedAt = new Date();
     } else {
+      // create new response
       announcement.responses.push({
-        student: req.user.userId,
+        student: userId,
         response,
-        respondedAt: new Date(),
+        respondedAt: new Date()
       });
     }
 
     await announcement.save();
 
-    return res.json({
-      message: "Response saved successfully.",
-      learnerResponse: response,
-    });
+    res.json({ message: "Response saved successfully." });
+
   } catch (err) {
-    console.error("POST /api/announcements/:id/respond error:", err.message);
-    return res.status(500).json({ message: "Failed to save response." });
+    console.error("Respond error:", err.message);
+    res.status(500).json({ message: "Server error." });
   }
 });
 
