@@ -742,7 +742,7 @@
   let submitted = false;
   let blocked = false;
 
-  const END_KEY = `quiz_end_${quizId}`;
+  const END_KEY = `quiz_end_${quizId}_${localStorage.getItem("username") || "user"}`;
 
   function typesetMath(root=document){
     if (window.MathJax?.typesetPromise) {
@@ -998,8 +998,9 @@
     const now = Date.now();
     const savedEnd = Number(localStorage.getItem(END_KEY));
 
-    if (savedEnd && savedEnd > now) quizEndAtMs = savedEnd;
-    else {
+    if (savedEnd && Number.isFinite(savedEnd)) {
+      quizEndAtMs = savedEnd;
+    } else {
       const mins = Number(quiz.timeLimitMinutes || 0);
       const totalQuestions = (quiz.questions || []).filter(q => String(q.type || "mcq").toLowerCase() !== "note").length;
 
@@ -1007,12 +1008,22 @@
       if (Number.isFinite(mins) && mins > 0) secs = mins * 60;
       else secs = calcFallbackSeconds(totalQuestions);
 
-      quizEndAtMs = now + secs * 1000;
+      quizEndAtMs = now + (secs * 1000);
       localStorage.setItem(END_KEY, String(quizEndAtMs));
     }
 
     timeText.style.display = "block";
     timeText.classList.remove("warn");
+
+    if (quizEndAtMs <= now) {
+      timeText.textContent = "Time: 00:00";
+      timeText.classList.add("warn");
+      msgEl.className = "error";
+      msgEl.textContent = "Time is up. Submitting…";
+      submitQuiz("auto");
+      return;
+    }
+
     tickTimer();
     clearInterval(timerInterval);
     timerInterval = setInterval(tickTimer, 1000);
@@ -1022,14 +1033,17 @@
     if (!quizEndAtMs || submitted || blocked) return;
 
     const remainingMs = quizEndAtMs - Date.now();
+
     if (remainingMs <= 0) {
       timeText.textContent = "Time: 00:00";
       timeText.classList.add("warn");
+
       clearInterval(timerInterval);
       timerInterval = null;
 
       msgEl.className = "error";
       msgEl.textContent = "Time is up. Submitting…";
+
       submitQuiz("auto");
       return;
     }
@@ -1037,7 +1051,9 @@
     const remainingSec = Math.ceil(remainingMs / 1000);
     const mm = String(Math.floor(remainingSec / 60)).padStart(2, "0");
     const ss = String(remainingSec % 60).padStart(2, "0");
+
     timeText.textContent = `Time: ${mm}:${ss}`;
+
     if (remainingSec <= 60) timeText.classList.add("warn");
     else timeText.classList.remove("warn");
   }
@@ -1415,6 +1431,12 @@
   function escapeAttr(str){
     return String(str || "").replaceAll('"',"&quot;");
   }
+
+  window.addEventListener("beforeunload", function(){
+    if (quizEndAtMs && !submitted && !blocked) {
+      localStorage.setItem(END_KEY, String(quizEndAtMs));
+    }
+  });
 
   loadTopbarProfile();
   loadTopbarAnnouncementCount();
