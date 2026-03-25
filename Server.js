@@ -2899,7 +2899,59 @@ app.get("/api/announcements", authRequired, async (req, res) => {
       .sort({ urgentNotice: -1, createdAt: -1 })
       .populate("createdBy", "username email role");
 
-    const mapped = announcements.map((a) => stripAnnouncementForUser(a, req.user.userId));
+    // ===============================================
+// RESPOND TO CLASS ANNOUNCEMENT (AVAILABLE / UNAVAILABLE)
+// ===============================================
+app.post("/api/announcements/:id/respond", authRequired, async (req, res) => {
+  try {
+    const { response } = req.body;
+
+    // validate
+    if (!["accepted", "rejected"].includes(String(response))) {
+      return res.status(400).json({ message: "Invalid response." });
+    }
+
+    const announcement = await Announcement.findById(req.params.id);
+
+    if (!announcement) {
+      return res.status(404).json({ message: "Announcement not found." });
+    }
+
+    // only allow class announcements
+    if (announcement.category !== "class" && announcement.category !== "all") {
+      return res.status(400).json({ message: "Not allowed for this announcement." });
+    }
+
+    const userId = req.user.userId;
+
+    // check if already responded
+    const existing = announcement.responses.find(
+      (r) => String(r.student) === String(userId)
+    );
+
+    if (existing) {
+      existing.response = response;
+      existing.respondedAt = new Date();
+    } else {
+      announcement.responses.push({
+        student: userId,
+        response,
+        respondedAt: new Date(),
+      });
+    }
+
+    await announcement.save();
+
+    return res.json({
+      message: "Response saved successfully.",
+      myResponse: response,
+    });
+
+  } catch (err) {
+    console.error("RESPOND ERROR:", err.message);
+    return res.status(500).json({ message: "Failed to save response." });
+  }
+});
 
     const generalAnnouncements = mapped.filter(
       (a) => a.category === "general" || a.category === "all"
@@ -2927,6 +2979,60 @@ app.get("/api/announcements", authRequired, async (req, res) => {
   } catch (err) {
     console.error("GET /api/announcements error:", err.message);
     return res.status(500).json({ message: "Failed to load announcements." });
+  }
+});
+
+// ===============================================
+// RESPOND TO CLASS ANNOUNCEMENT (AVAILABLE / UNAVAILABLE)
+// ===============================================
+app.post("/api/announcements/:id/respond", authRequired, async (req, res) => {
+  try {
+    const { response } = req.body;
+
+    // validate
+    if (!["accepted", "rejected"].includes(String(response))) {
+      return res.status(400).json({ message: "Invalid response." });
+    }
+
+    const announcement = await Announcement.findById(req.params.id);
+
+    if (!announcement) {
+      return res.status(404).json({ message: "Announcement not found." });
+    }
+
+    // only allow class announcements
+    if (announcement.category !== "class" && announcement.category !== "all") {
+      return res.status(400).json({ message: "Not allowed for this announcement." });
+    }
+
+    const userId = req.user.userId;
+
+    // check if already responded
+    const existing = announcement.responses.find(
+      (r) => String(r.student) === String(userId)
+    );
+
+    if (existing) {
+      existing.response = response;
+      existing.respondedAt = new Date();
+    } else {
+      announcement.responses.push({
+        student: userId,
+        response,
+        respondedAt: new Date(),
+      });
+    }
+
+    await announcement.save();
+
+    return res.json({
+      message: "Response saved successfully.",
+      myResponse: response,
+    });
+
+  } catch (err) {
+    console.error("RESPOND ERROR:", err.message);
+    return res.status(500).json({ message: "Failed to save response." });
   }
 });
 
