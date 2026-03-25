@@ -6,55 +6,226 @@
 <title>Reset Password | Practice Online</title>
 
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:#f6f7fb;color:#0f172a}
-.card{max-width:520px;margin:40px auto;background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:20px}
-h2{margin:0 0 6px}
-p{margin:6px 0 14px;color:#334155}
-label{display:block;margin-top:12px;font-weight:600}
-input,button{width:100%;padding:10px;margin-top:6px;border-radius:10px;border:1px solid #ddd}
-button{background:#0b3c5d;color:#fff;border:none;font-weight:700;cursor:pointer}
-button:disabled{opacity:.6;cursor:not-allowed}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-@media(max-width:520px){.row{grid-template-columns:1fr}}
-.msg{margin-top:12px;white-space:pre-wrap}
+:root{
+  --nav:#1b1648;
+  --bg:#f3f5f9;
+  --card:#ffffff;
+  --border:#d9dee7;
+  --text:#0f172a;
+  --muted:#475569;
+  --accent:#0b3c5d;
+  --shadow:0 8px 22px rgba(0,0,0,.06);
+  --radius:18px;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* TOPBAR */
+.topbar{
+  background:var(--nav);
+  color:#fff;
+}
+
+.topbar-inner{
+  max-width:1200px;
+  margin:auto;
+  padding:14px 18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.brand{
+  font-size:14px;
+  font-weight:600;
+}
+
+.sub{
+  font-size:13px;
+  font-weight:600;
+}
+
+.links-top a{
+  color:#fff;
+  margin-left:16px;
+  font-size:14px;
+  font-weight:600;
+  text-decoration:none;
+}
+
+/* PAGE */
+.wrap{
+  display:flex;
+  justify-content:center;
+  padding:80px 16px 30px;
+}
+
+.card{
+  width:100%;
+  max-width:520px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:20px;
+  box-shadow:var(--shadow);
+}
+
+h2{
+  margin:0;
+  font-size:22px;
+  font-weight:600;
+}
+
+h3{
+  margin:0 0 6px;
+  font-weight:600;
+  font-size:16px;
+}
+
+p{
+  margin:10px 0 16px;
+  color:#48607d;
+  font-size:14px;
+}
+
+label{
+  display:block;
+  margin-top:12px;
+  font-size:14px;
+  font-weight:500;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  margin-top:6px;
+  border-radius:14px;
+  border:1px solid #d6d6d6;
+  font-size:14px;
+}
+
+input:focus{
+  outline:none;
+  border-color:#cfd9ea;
+  box-shadow:0 0 0 3px rgba(11,60,93,.08);
+}
+
+button{
+  width:100%;
+  padding:12px;
+  margin-top:14px;
+  border:none;
+  border-radius:14px;
+  background:var(--accent);
+  color:#fff;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+button:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
+.row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+
+@media(max-width:520px){
+  .row{grid-template-columns:1fr}
+}
+
+.msg{
+  margin-top:12px;
+  font-size:14px;
+  white-space:pre-wrap;
+}
+
 .error{color:#b91c1c}
 .ok{color:#065f46}
-.hidden{display:none}
+
+.muted{
+  color:#64748b;
+  font-size:12px;
+  margin-top:8px;
+}
+
+hr{
+  margin:18px 0;
+  border:none;
+  border-top:1px solid #eee;
+}
+
+a{
+  color:#0b3c5d;
+  text-decoration:none;
+}
 </style>
 </head>
 
 <body>
 
+<header class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <div class="brand">Practice Online</div>
+      <div class="sub">Reset password</div>
+    </div>
+    <div class="links-top">
+      <a href="login.html">Login</a>
+      <a href="register.html">Register</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
 <div class="card">
+
   <h2>Reset Password</h2>
   <p>Enter your email to receive a code.</p>
 
-  <!-- STEP 1 -->
-  <div id="step1">
-    <label>Email</label>
-    <input id="email" type="email" autocomplete="email" />
-    <button id="sendBtn">Send Code</button>
-  </div>
+  <label>Email</label>
+  <input id="email" type="email" autocomplete="email" />
 
-  <!-- STEP 2 -->
-  <div id="step2" class="hidden">
-    <hr />
+  <button id="sendBtn" type="button">Send Code</button>
 
-    <h3>Change Password</h3>
-    <p>Enter the 6-digit code sent to your email.</p>
+  <hr />
 
-    <label>6-digit Code</label>
-    <input id="code" inputmode="numeric" maxlength="6" />
+  <h3>Change Password</h3>
+  <div class="muted">Paste the 6-digit code from your email.</div>
 
-    <div class="row">
-      <input id="newPassword" type="password" placeholder="New password" />
-      <input id="confirmPassword" type="password" placeholder="Confirm password" />
+  <label>6-digit Code</label>
+  <input id="code" inputmode="numeric" />
+
+  <div class="row">
+    <div>
+      <label>New Password</label>
+      <input id="newPassword" type="password" />
     </div>
-
-    <button id="resetBtn">Reset Password</button>
+    <div>
+      <label>Confirm Password</label>
+      <input id="confirmPassword" type="password" />
+    </div>
   </div>
+
+  <button id="resetBtn" type="button">Reset Password</button>
 
   <p id="msg" class="msg"></p>
+
+  <div class="muted"><a href="login.html">Back to login</a></div>
+
+</div>
 </div>
 
 <script>
@@ -64,32 +235,24 @@ const sendBtn = document.getElementById("sendBtn");
 const resetBtn = document.getElementById("resetBtn");
 const msg = document.getElementById("msg");
 
-const emailInput = document.getElementById("email");
-const codeInput = document.getElementById("code");
-const newPasswordInput = document.getElementById("newPassword");
-const confirmPasswordInput = document.getElementById("confirmPassword");
-
-const step2 = document.getElementById("step2");
-
 function setMsg(text, type = "") {
   msg.className = "msg " + type;
   msg.textContent = text;
 }
 
 function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim());
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 async function safeJson(res){
   try { return await res.json(); } catch { return {}; }
 }
 
-/* SEND CODE */
 sendBtn.onclick = async () => {
-  const email = emailInput.value.trim().toLowerCase();
+  const email = document.getElementById("email").value.trim().toLowerCase();
 
   if (!email) return setMsg("Enter your email.", "error");
-  if (!isValidEmail(email)) return setMsg("Enter a valid email.", "error");
+  if (!isValidEmail(email)) return setMsg("Enter a valid email address.", "error");
 
   sendBtn.disabled = true;
   setMsg("Sending code...");
@@ -103,47 +266,38 @@ sendBtn.onclick = async () => {
 
     const data = await safeJson(res);
 
-    setMsg(data.message || "Code sent.", res.ok ? "ok" : "error");
-
-    if (res.ok) {
-      step2.classList.remove("hidden");   // ✅ show step 2
-      emailInput.readOnly = true;         // ✅ lock email
-      codeInput.focus();
-    }
-
+    setMsg(
+      data.message || "If the email exists, a reset code has been sent.",
+      res.ok ? "ok" : "error"
+    );
   } catch {
-    setMsg("Network error.", "error");
+    setMsg("Network error. Try again.", "error");
   } finally {
     sendBtn.disabled = false;
   }
 };
 
-/* RESET PASSWORD */
 resetBtn.onclick = async () => {
-  const email = emailInput.value.trim().toLowerCase();
-  const code = codeInput.value.trim();
-  const newPassword = newPasswordInput.value;
-  const confirmPassword = confirmPasswordInput.value;
+  const email = document.getElementById("email").value.trim().toLowerCase();
+  const code = document.getElementById("code").value.trim();
+  const newPassword = document.getElementById("newPassword").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
 
-  if (!code || !newPassword || !confirmPassword) {
-    return setMsg("Fill all fields.", "error");
+  if (!email || !code || !newPassword || !confirmPassword) {
+    return setMsg("Fill in all fields.", "error");
   }
 
-  if (newPassword.length < 6) {
-    return setMsg("Password must be at least 6 characters.", "error");
-  }
-
-  if (newPassword !== confirmPassword) {
-    return setMsg("Passwords do not match.", "error");
-  }
+  if (!isValidEmail(email)) return setMsg("Invalid email.", "error");
+  if (newPassword.length < 6) return setMsg("Password must be at least 6 characters.", "error");
+  if (newPassword !== confirmPassword) return setMsg("Passwords do not match.", "error");
 
   resetBtn.disabled = true;
-  setMsg("Resetting...");
+  setMsg("Resetting password...");
 
   try {
     const res = await fetch(API + "/api/reset-password-otp", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ email, code, newPassword })
     });
 
@@ -155,9 +309,8 @@ resetBtn.onclick = async () => {
     } else {
       setMsg(data.message || "Reset failed.", "error");
     }
-
   } catch {
-    setMsg("Network error.", "error");
+    setMsg("Network error. Try again.", "error");
   } finally {
     resetBtn.disabled = false;
   }
