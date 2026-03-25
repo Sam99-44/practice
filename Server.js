@@ -3065,13 +3065,15 @@ app.delete("/api/announcements/:id", authRequired, announcementManagerOnly, asyn
   }
 });
 
-// RESPOND TO CLASS ANNOUNCEMENT
-// RESPOND TO CLASS ANNOUNCEMENT
+// ===============================================
+// RESPOND TO CLASS ANNOUNCEMENT (AVAILABLE / UNAVAILABLE)
+// ===============================================
 app.post("/api/announcements/:id/respond", authRequired, async (req, res) => {
   try {
     const { response } = req.body;
 
-    if (!["accepted", "rejected"].includes(response)) {
+    // validate
+    if (!["accepted", "rejected"].includes(String(response))) {
       return res.status(400).json({ message: "Invalid response." });
     }
 
@@ -3082,39 +3084,40 @@ app.post("/api/announcements/:id/respond", authRequired, async (req, res) => {
     }
 
     // only allow class announcements
-    if (announcement.category !== "class") {
-      return res.status(400).json({ message: "Not a class announcement." });
+    if (announcement.category !== "class" && announcement.category !== "all") {
+      return res.status(400).json({ message: "Not allowed for this announcement." });
     }
 
     const userId = req.user.userId;
 
+    // check if already responded
     const existing = announcement.responses.find(
-      r => String(r.student) === String(userId)
+      (r) => String(r.student) === String(userId)
     );
 
     if (existing) {
-      // update response
       existing.response = response;
       existing.respondedAt = new Date();
     } else {
-      // create new response
       announcement.responses.push({
         student: userId,
         response,
-        respondedAt: new Date()
+        respondedAt: new Date(),
       });
     }
 
     await announcement.save();
 
-    res.json({ message: "Response saved successfully." });
+    return res.json({
+      message: "Response saved successfully.",
+      myResponse: response,
+    });
 
   } catch (err) {
-    console.error("Respond error:", err.message);
-    res.status(500).json({ message: "Server error." });
+    console.error("RESPOND ERROR:", err.message);
+    return res.status(500).json({ message: "Failed to save response." });
   }
 });
-
 // ADMIN VIEW RESPONSES FOR ONE ANNOUNCEMENT
 app.get("/api/announcements/:id/responses", authRequired, announcementManagerOnly, async (req, res) => {
   try {
