@@ -1,4 +1,3 @@
-// models/User.js
 import mongoose from "mongoose";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -50,10 +49,17 @@ const UserSchema = new mongoose.Schema(
       max: 12,
     },
 
-    // 8-digit student number (students only)
+    // 8-digit student number (legacy)
     studentNumber: {
       type: String,
       default: null,
+    },
+
+    // ✅ NEW: learner number (PO26xxxxx)
+    learnerNumber: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
 
     // profile fields
@@ -145,7 +151,6 @@ const UserSchema = new mongoose.Schema(
     // PAID ACCESS FIELDS
     // =========================
 
-    // old premium fields
     premium: {
       type: Boolean,
       default: false,
@@ -161,7 +166,6 @@ const UserSchema = new mongoose.Schema(
       default: null,
     },
 
-    // monthly subscription fields for PayFast
     subscriptionStatus: {
       type: String,
       enum: ["none", "active", "expired"],
@@ -178,7 +182,7 @@ const UserSchema = new mongoose.Schema(
       default: "",
     },
 
-    // Forgot password fields
+    // Forgot password
     resetPasswordTokenHash: {
       type: String,
       default: null,
@@ -192,11 +196,13 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Virtual access status
+// =========================
+// VIRTUALS
+// =========================
+
 UserSchema.virtual("accessStatus").get(function () {
   const now = new Date();
 
-  // Paid user has access
   if (
     this.subscriptionStatus === "active" ||
     this.premium === true ||
@@ -206,7 +212,6 @@ UserSchema.virtual("accessStatus").get(function () {
     return "active";
   }
 
-  // Trial user has access
   if (this.trialActive && this.trialEndDate && new Date(this.trialEndDate) >= now) {
     return "trial";
   }
@@ -226,7 +231,10 @@ UserSchema.virtual("trialDaysLeft").get(function () {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 });
 
-// Clean values + ensure grade is provided only for student accounts
+// =========================
+// PRE-VALIDATION
+// =========================
+
 UserSchema.pre("validate", function (next) {
   if (this.email) {
     this.email = String(this.email).trim().toLowerCase();
