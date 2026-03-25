@@ -1,1057 +1,1002 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Edit Assessment | Practice Online</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Practice | Practice Online</title>
 
-  <!-- ✅ MathJax -->
-  <script>
-    window.MathJax = {
-      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
-      svg: { fontCache: 'global' }
-    };
-  </script>
-  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+:root{
+  --nav:#1b1648;
+  --red:#e11d2e;
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --border:#d9dee7;
+  --text:#0f172a;
+  --muted:#475569;
+  --easy:#22c55e;
+  --moderate:#3b82f6;
+  --hard:#ef4444;
+  --track:#e9eef5;
+  --bar:#1b1648;
+}
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+*{box-sizing:border-box}
 
-  <style>
-    :root{
-      --bg:#f6f7fb; --card:#fff; --border:#e6e6e6; --text:#0f172a;
-      --muted:#475569; --muted2:#64748b;
-      --accent:#1b1648; --accent2:#0f0c2b; --red:#e11d2e;
-      --shadow:0 10px 30px rgba(2,6,23,.08);
-      --radius:16px; --ok:#065f46; --warn:#b45309; --danger:#b91c1c;
-      --focus:0 0 0 4px rgba(225,29,46,.18);
-      --soft:#eef2ff;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:"Inter",Arial,sans-serif;background:var(--bg);color:var(--text);padding:22px 14px 34px;}
-    .wrap{max-width:1100px;margin:0 auto;}
-    .header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
-    .title{margin:0;font-size:22px;letter-spacing:-.02em;}
-    .sub{margin-top:6px;color:var(--muted);font-size:13px;line-height:1.5;}
-    .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--text);
-      font-weight:800;font-size:13px;cursor:pointer;text-decoration:none;transition:transform .06s ease, box-shadow .2s ease, opacity .2s ease;white-space:nowrap;}
-    .btn:hover{transform:translateY(-1px); box-shadow:0 8px 18px rgba(2,6,23,.08);}
-    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:rgba(255,255,255,.14);box-shadow:0 12px 22px rgba(27,22,72,.22);}
-    .btn.warn{background:rgba(180,83,9,.10);border-color:rgba(180,83,9,.30);color:#7c2d12;}
-    .btn.danger{background:rgba(185,28,28,.10);border-color:rgba(185,28,28,.30);color:#7f1d1d;}
-    .btn:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none;}
+html,body{
+  margin:0;
+  padding:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
 
-    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
-    .cardHead{padding:16px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#fff,#fbfbff);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;}
-    .cardHead h3{margin:0;font-size:15px;font-weight:900;letter-spacing:-.01em;}
-    .cardHead .mini{color:var(--muted2);font-size:12px;margin-top:6px;line-height:1.5;}
-    .pad{padding:16px;}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-    @media(max-width:900px){.grid2{grid-template-columns:1fr;}.actions{gap:8px;}}
-    label{display:block;font-size:12px;font-weight:900;letter-spacing:.2px;margin:0 0 6px;color:#111827;}
-    input, textarea, select{width:100%;padding:11px 12px;border-radius:12px;border:1px solid #d9d9e3;outline:none;font-size:14px;background:#fff;color:var(--text);transition:box-shadow .15s ease,border-color .15s ease;}
-    textarea{min-height:92px;resize:vertical;}
-    input:focus, textarea:focus, select:focus{border-color:rgba(225,29,46,.45);box-shadow:var(--focus);}
-    .help{margin-top:6px;font-size:12px;color:var(--muted2);line-height:1.5;}
+a{
+  text-decoration:none;
+  color:inherit;
+}
 
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border-radius:999px;border:1px solid #e5e7eb;background:#f8fafc;font-size:12px;font-weight:900;color:#334155;white-space:nowrap;}
-    .dot{width:9px;height:9px;border-radius:999px;background:#94a3b8;}
-    .pill.ok{border-color:#bbf7d0;background:#f0fdf4;color:#065f46;}
-    .pill.ok .dot{background:#22c55e;}
-    .pill.bad{border-color:#fecaca;background:#fff1f2;color:#b91c1c;}
-    .pill.bad .dot{background:#ef4444;}
-    .pill.mid{border-color:#fde68a;background:#fffbeb;color:#92400e;}
-    .pill.mid .dot{background:#f59e0b;}
+button,input,select{
+  font:inherit;
+}
 
-    .msgbar{margin-top:10px;border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
-    .msgbar .text{font-size:13px;color:var(--muted);}
-    .msgbar .text.ok{color:var(--ok);font-weight:800;}
-    .msgbar .text.error{color:var(--danger);font-weight:800;}
-    .msgbar .text.warn{color:var(--warn);font-weight:800;}
+/* ===== EXACT TOPBAR ===== */
+.topbar{
+  background:var(--nav);
+  color:#fff;
+  position:sticky;
+  top:0;
+  z-index:1000;
+  font-family:Arial, Helvetica, sans-serif;
+}
 
-    .sectionTitle{margin:0 0 10px;font-size:14px;font-weight:900;letter-spacing:-.01em;}
-    .hr{border:none;border-top:1px solid var(--border);margin:14px 0;}
+.topbar-inner{
+  max-width:1150px;
+  margin:0 auto;
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
 
-    .qcard{border:1px solid var(--border);border-radius:14px;padding:14px;background:#fff;margin-top:12px;}
-    .qhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
-    .tag{display:inline-flex;align-items:center;gap:8px;padding:5px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#f8fafc;font-size:12px;font-weight:900;color:#334155;white-space:nowrap;}
-    .smallbtn{border:1px solid var(--border);background:#fff;color:var(--text);padding:9px 11px;border-radius:12px;font-weight:900;font-size:12px;cursor:pointer;}
-    .smallbtn:hover{box-shadow:0 8px 16px rgba(2,6,23,.06);}
-    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.accountLeft{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+  cursor:default;
+  user-select:none;
+}
 
-    .previewBox{border:1px dashed #e6e6e6;background:#fbfbfe;border-radius:12px;padding:12px;margin-top:8px;font-size:13px;line-height:1.45;white-space:pre-wrap;color:#1f2937;}
-    .disabledBox{opacity:.55;pointer-events:none;}
-    .hide{display:none!important;}
+.accountIconWrap{
+  width:auto;
+  height:auto;
+  background:transparent;
+  border:none;
+  box-shadow:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
 
-    .optRow{display:flex; gap:10px; align-items:center; margin-top:10px;}
-    .optLabel{min-width:44px; font-weight:900;}
-  </style>
+.accountIcon{
+  width:40px;
+  height:40px;
+  display:block;
+  filter:brightness(0) invert(1) contrast(180%);
+}
 
-  <script>
-    if (!localStorage.getItem("token")) window.location.href = "login.html";
-  </script>
+.accountMeta{
+  min-width:0;
+  line-height:1.1;
+}
+
+.accountName{
+  font-size:16px;
+  font-weight:700;
+  color:#fff;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:220px;
+}
+
+.accountType{
+  font-size:13px;
+  color:#e0e7ff;
+  margin-top:3px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:220px;
+  text-transform:capitalize;
+}
+
+.topbarRight{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  position:relative;
+}
+
+.iconBtn{
+  min-width:50px;
+  height:50px;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  padding:0 4px;
+}
+
+.iconBtn img{
+  width:30px;
+  height:30px;
+  display:block;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.bellBtn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
+.bellBtn:hover{
+  opacity:.92;
+}
+
+.navBadge{
+  min-width:auto;
+  height:auto;
+  padding:0;
+  margin-left:2px;
+  border-radius:0;
+  background:transparent;
+  color:#ffd6db;
+  font-size:13px;
+  font-weight:700;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.menuBtn{
+  min-width:auto;
+  height:50px;
+  padding:0;
+  gap:8px;
+  border:none;
+  background:transparent;
+  border-radius:0;
+  box-shadow:none;
+  font-family:Arial, Helvetica, sans-serif;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+.menuBtn:hover{
+  background:transparent;
+  opacity:1;
+}
+
+.menuBtnText{
+  font-size:14px;
+  font-weight:700;
+  color:#fff;
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  top:-1px;
+}
+
+.menuBtn img{
+  width:28px;
+  height:28px;
+  filter:brightness(0) invert(1) contrast(180%);
+  display:block;
+}
+
+.menuDropdown{
+  position:absolute;
+  top:48px;
+  right:0;
+  width:210px;
+  background:#f7f7f8;
+  color:#111827;
+  border:1px solid #d9dee7;
+  border-radius:16px;
+  box-shadow:0 14px 30px rgba(15,23,42,.14);
+  padding:10px 0;
+  display:none;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.menuDropdown.open{
+  display:block;
+}
+
+.menuItem{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 18px;
+  color:#111827;
+  font-size:14px;
+  font-weight:700;
+  background:transparent;
+  border:none;
+  text-align:left;
+  cursor:pointer;
+}
+
+.menuItem:hover{
+  background:#eef2f7;
+}
+
+.menuItem img{
+  width:18px;
+  height:18px;
+  display:block;
+  flex-shrink:0;
+}
+
+.menuItem.profileTextOnly{
+  padding-left:38px;
+}
+
+.menuDivider{
+  height:1px;
+  background:#dde4ec;
+  margin:8px 0 6px;
+}
+
+.logoutMenuBtn{
+  width:100%;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  text-align:left;
+}
+
+/* ===== PAGE ===== */
+.wrap{
+  max-width:1150px;
+  margin:0 auto;
+  padding:18px;
+}
+
+.card{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:18px;
+}
+
+.cardHead{
+  padding:18px;
+  border-bottom:1px solid var(--border);
+}
+
+h1{
+  font-size:22px;
+  margin:0;
+  color:var(--nav);
+}
+
+.muted{
+  font-size:14px;
+  color:var(--muted);
+  margin-top:5px;
+}
+
+/* CONTROLS */
+.controls{
+  padding:14px 18px;
+  display:grid;
+  grid-template-columns:1fr 160px 140px 150px;
+  gap:10px;
+}
+
+.searchWrap{
+  position:relative;
+}
+
+.searchWrap svg{
+  position:absolute;
+  left:12px;
+  top:50%;
+  transform:translateY(-50%);
+  width:16px;
+  height:16px;
+  color:#64748b;
+  pointer-events:none;
+}
+
+input,select{
+  font-family:Arial, Helvetica, sans-serif;
+  font-size:14px;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  width:100%;
+  outline:none;
+  background:#fff;
+}
+
+#search{
+  padding-left:38px;
+}
+
+/* FILTER BUTTONS */
+.filters{
+  padding:0 18px;
+  display:flex;
+  gap:22px;
+  border-bottom:1px solid #eee;
+}
+
+.fbtn{
+  background:none;
+  border:none;
+  font-family:Arial, Helvetica, sans-serif;
+  font-size:13px;
+  cursor:pointer;
+  position:relative;
+  padding:10px 0;
+  color:#64748b;
+}
+
+.fbtn::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:-2px;
+  height:3px;
+  transform:scaleX(0);
+  transition:.2s;
+}
+
+.fbtn[data-diff="easy"]::after{background:var(--easy)}
+.fbtn[data-diff="moderate"]::after{background:var(--moderate)}
+.fbtn[data-diff="hard"]::after{background:var(--hard)}
+.fbtn[data-diff="all"]::after{background:#94a3b8}
+.fbtn.active::after{transform:scaleX(1)}
+
+/* TOPICS */
+.topic-wrap{
+  padding:18px;
+}
+
+.topic-card{
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:12px;
+}
+
+.topic-top{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+  flex-wrap:wrap;
+}
+
+.topic-title{
+  font-family:Arial, Helvetica, sans-serif;
+  font-size:14px;
+  font-weight:400;
+  color:#0f172a;
+}
+
+.topic-stats{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  font-family:Arial, Helvetica, sans-serif;
+  font-size:13px;
+  color:#475569;
+}
+
+.progressWrap{
+  margin-top:10px;
+}
+
+.progressLabels{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:6px;
+  font-family:Arial, Helvetica, sans-serif;
+  font-size:12px;
+  color:#475569;
+}
+
+.progressTrack{
+  width:100%;
+  height:8px;
+  background:var(--track);
+  border-radius:999px;
+  overflow:hidden;
+}
+
+.progressBar{
+  height:100%;
+  background:var(--bar);
+  border-radius:999px;
+  width:0%;
+}
+
+/* QUIZ */
+.quiz-squares{
+  display:flex;
+  gap:6px;
+  margin-top:12px;
+  flex-wrap:wrap;
+}
+
+.quiz-square{
+  width:80px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  cursor:pointer;
+}
+
+.quiz-icon-wrap{
+  position:relative;
+  width:64px;
+  height:70px;
+}
+
+.quiz-fill{
+  position:absolute;
+  left:10px;
+  top:10px;
+  width:44px;
+  height:50px;
+  border-radius:6px;
+}
+
+.quiz-square.pass .quiz-fill{background:#dcfce7}
+.quiz-square.fail .quiz-fill{background:#fee2e2}
+
+.quiz-square-base{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+}
+
+.quiz-mark{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  font-family:Arial, Helvetica, sans-serif;
+  font-weight:700;
+  font-size:14px;
+}
+
+.quiz-q{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  font-size:18px;
+  font-weight:700;
+}
+
+.quiz-number{
+  font-family:Arial, Helvetica, sans-serif;
+  font-size:12px;
+  text-align:center;
+  margin-top:2px;
+}
+
+.empty{
+  font-size:14px;
+  color:var(--muted);
+  padding:8px 0;
+}
+
+@media (max-width:900px){
+  .controls{
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+@media (max-width:640px){
+  .controls{
+    grid-template-columns:1fr;
+  }
+
+  .topbar-inner{
+    padding:12px 14px;
+  }
+
+  .accountName,
+  .accountType{
+    max-width:120px;
+  }
+
+  .menuDropdown{
+    width:200px;
+  }
+
+  .menuBtnText{
+    display:none;
+  }
+}
+</style>
+
+<script>
+if(!localStorage.getItem("token")){
+  location.href="login.html";
+}
+</script>
 </head>
+
 <body>
-  <div class="wrap">
 
-    <div class="header">
-      <div>
-        <h1 class="title">Edit Assessment</h1>
-        <div class="sub" id="who">Checking login…</div>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="accountLeft">
+      <div class="accountIconWrap">
+        <img
+          class="accountIcon"
+          src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
+          alt="Account"
+        >
       </div>
 
-      <div class="actions">
-        <a class="btn" href="admin-dashboard.html">Dashboard</a>
-        <a class="btn" href="admin-quiz.html">Add Assessment</a>
-        <a class="btn" href="learner-quizzes.html">Learner View</a>
-        <button class="btn primary" id="logoutBtn" type="button">Logout</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="cardHead">
-        <div>
-          <h3>Find and manage assessments</h3>
-          <div class="mini">Filter, search and update availability. Changes are saved when you click “Save Changes”.</div>
-        </div>
-        <div>
-          <div id="freezePill" class="pill"><span class="dot"></span> —</div>
-          <div class="mini" id="availabilityNote"></div>
-        </div>
-      </div>
-
-      <div class="pad">
-
-        <div class="grid2">
-          <div>
-            <label>Filter by grade</label>
-            <select id="gradeFilter">
-              <option value="">All grades</option>
-              <option value="8">Grade 8</option>
-              <option value="9">Grade 9</option>
-              <option value="10">Grade 10</option>
-              <option value="11">Grade 11</option>
-              <option value="12">Grade 12</option>
-            </select>
-          </div>
-          <div>
-            <label>Search by topic or title</label>
-            <input id="searchBox" placeholder="Type to search…" />
-          </div>
-        </div>
-
-        <div class="grid2" style="margin-top:10px;">
-          <div>
-            <label>Select assessment</label>
-            <select id="assessmentSelect">
-              <option value="">Loading…</option>
-            </select>
-          </div>
-
-          <div>
-            <label>Actions</label>
-            <div class="actions" style="margin-top:6px;">
-              <button class="btn warn" id="freezeBtn" type="button" disabled>Make Unavailable</button>
-              <button class="btn danger" id="deleteBtn" type="button" disabled>Delete</button>
-            </div>
-            <div class="help">Tip: If unavailable, make it available again to edit.</div>
-          </div>
-        </div>
-
-        <div class="msgbar" style="margin-top:12px;">
-          <div class="text" id="msg">Loading…</div>
-        </div>
-
-        <div class="hr"></div>
-
-        <div id="editArea" class="disabledBox">
-
-          <h3 class="sectionTitle">Assessment details</h3>
-
-          <div class="grid2">
-            <div>
-              <label>Grade</label>
-              <select id="grade">
-                <option value="">Select grade</option>
-                <option value="8">Grade 8</option>
-                <option value="9">Grade 9</option>
-                <option value="10">Grade 10</option>
-                <option value="11">Grade 11</option>
-                <option value="12">Grade 12</option>
-              </select>
-            </div>
-
-            <div>
-              <label>Topic</label>
-              <input id="topic" placeholder="e.g. Algebra" />
-            </div>
-          </div>
-
-          <div style="margin-top:10px;">
-            <label>Assessment title</label>
-            <input id="title" placeholder="e.g. Algebra – Linear Equations" />
-          </div>
-
-          <div style="margin-top:10px;">
-            <label>Instructions (shown before starting)</label>
-            <textarea id="instructions" placeholder="Example: Read all questions carefully. Use $x^2$ for maths."></textarea>
-            <div class="help">LaTeX is supported (example: $\\frac{a}{b}$, $\\sqrt{x}$).</div>
-          </div>
-
-          <div style="margin-top:10px;">
-            <div class="tag">Instructions preview</div>
-            <div class="previewBox" id="prevInstructions">(Preview)</div>
-          </div>
-
-          <div class="grid2" style="margin-top:12px;">
-            <div>
-              <label>Available from (optional)</label>
-              <input id="availableFrom" type="datetime-local" />
-            </div>
-            <div>
-              <label>Available until (optional)</label>
-              <input id="availableUntil" type="datetime-local" />
-            </div>
-          </div>
-
-          <div style="margin-top:10px;">
-            <label>Time limit (minutes)</label>
-            <input id="timeLimitMinutes" type="number" min="1" max="180" />
-          </div>
-
-          <div class="hr"></div>
-
-          <div class="toolbar">
-            <div>
-              <h3 class="sectionTitle" style="margin-bottom:6px;">Blocks</h3>
-              <div class="help">Notes/headings + MCQ + typed answers. Solutions/workings supported.</div>
-            </div>
-            <div class="actions">
-              <button class="smallbtn" id="addNoteBtn" type="button">+ Add Note / Heading</button>
-              <button class="smallbtn" id="addMcqBtn" type="button">+ Add MCQ</button>
-              <button class="smallbtn" id="addTextBtn" type="button">+ Add Typed Answer</button>
-            </div>
-          </div>
-
-          <div id="questionsWrap"></div>
-
-          <div class="hr"></div>
-
-          <div class="actions">
-            <button class="btn primary" id="saveBtn" type="button">Save Changes</button>
-          </div>
-        </div>
-
+      <div class="accountMeta">
+        <div class="accountName" id="topAccountName">Loading...</div>
+        <div class="accountType" id="topAccountType">Account</div>
       </div>
     </div>
+
+    <div class="topbarRight">
+      <a href="announcements.html" class="iconBtn bellBtn" title="Announcements" aria-label="Announcements">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements">
+        <span class="navBadge" id="navAnnouncementBadge">0</span>
+      </a>
+
+      <button class="menuBtn" id="menuToggleBtn" title="Menu" aria-label="Menu" type="button">
+        <span class="menuBtnText">Menu</span>
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt="Menu">
+      </button>
+
+      <div class="menuDropdown" id="menuDropdown">
+        <a class="menuItem profileTextOnly" href="profile.html">
+          <span>Profile</span>
+        </a>
+
+        <a class="menuItem" href="learner-quizzes.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777660/practice_ubgfso.svg" alt="">
+          <span>Practice</span>
+        </a>
+
+        <a class="menuItem" href="results.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="Results">
+          <span>Results</span>
+        </a>
+
+        <a class="menuItem" href="progress-dashboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="">
+          <span>Dashboard</span>
+        </a>
+
+        <a class="menuItem" href="leaderboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777661/leaderboard_yfjgjf.svg" alt="">
+          <span>Leaderboard</span>
+        </a>
+
+        <a class="menuItem" href="support.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/support_bs175s.svg" alt="">
+          <span>Support</span>
+        </a>
+
+        <a class="menuItem" href="announcements.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="">
+          <span>Announcements</span>
+        </a>
+
+        <div class="menuDivider"></div>
+
+        <button class="menuItem logoutMenuBtn" id="logoutBtn" type="button">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773768418/logout_uay6y8.svg" alt="">
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="card">
+
+    <div class="cardHead">
+      <h1>Practice</h1>
+      <div class="muted" id="gradeText">Loading...</div>
+    </div>
+
+    <div class="controls">
+      <div class="searchWrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="M20 20l-3.5-3.5"></path>
+        </svg>
+        <input id="search" placeholder="Search topic or assessment">
+      </div>
+
+      <select id="topicFilter">
+        <option value="all">All Topics</option>
+      </select>
+
+      <select id="paperFilter">
+        <option value="all">All Papers</option>
+        <option value="paper1">Paper 1</option>
+        <option value="paper2">Paper 2</option>
+      </select>
+
+      <select id="periodFilter">
+        <option value="all">All Time</option>
+        <option value="today">Today</option>
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+      </select>
+    </div>
+
+    <div class="filters">
+      <button class="fbtn active" data-diff="all">All</button>
+      <button class="fbtn" data-diff="easy">Easy</button>
+      <button class="fbtn" data-diff="moderate">Moderate</button>
+      <button class="fbtn" data-diff="hard">Hard</button>
+    </div>
+
+    <div id="quizList" class="topic-wrap"></div>
 
   </div>
+</div>
 
-  <script>
-    const API = window.API || "https://api.practiceonline.co.za";
-    const token = localStorage.getItem("token");
+<script>
+const API = "https://practice-backend-msgn.onrender.com";
+const token = localStorage.getItem("token");
 
-    const who = document.getElementById("who");
-    const msg = document.getElementById("msg");
+const ICON = "https://res.cloudinary.com/dopoxadlr/image/upload/v1773875474/square_ho8otg.svg";
 
-    const gradeFilter = document.getElementById("gradeFilter");
-    const searchBox = document.getElementById("searchBox");
-    const assessmentSelect = document.getElementById("assessmentSelect");
+const topAccountName = document.getElementById("topAccountName");
+const topAccountType = document.getElementById("topAccountType");
+const menuToggleBtn = document.getElementById("menuToggleBtn");
+const menuDropdown = document.getElementById("menuDropdown");
+const logoutBtn = document.getElementById("logoutBtn");
 
-    const freezeBtn = document.getElementById("freezeBtn");
-    const deleteBtn = document.getElementById("deleteBtn");
-    const freezePill = document.getElementById("freezePill");
-    const availabilityNote = document.getElementById("availabilityNote");
+const searchEl = document.getElementById("search");
+const topicFilter = document.getElementById("topicFilter");
+const paperFilter = document.getElementById("paperFilter");
+const periodFilter = document.getElementById("periodFilter");
 
-    const editArea = document.getElementById("editArea");
-    const gradeEl = document.getElementById("grade");
-    const topicEl = document.getElementById("topic");
-    const titleEl = document.getElementById("title");
-    const instructionsEl = document.getElementById("instructions");
-    const prevInstructions = document.getElementById("prevInstructions");
-    const availableFromEl = document.getElementById("availableFrom");
-    const availableUntilEl = document.getElementById("availableUntil");
-    const timeLimitEl = document.getElementById("timeLimitMinutes");
+let quizzes = [];
+let resultsMap = {};
+let diff = "all";
 
-    const saveBtn = document.getElementById("saveBtn");
-    const addNoteBtn = document.getElementById("addNoteBtn");
-    const addMcqBtn = document.getElementById("addMcqBtn");
-    const addTextBtn = document.getElementById("addTextBtn");
-    const questionsWrap = document.getElementById("questionsWrap");
+/* ===== MENU ===== */
+if(logoutBtn){
+  logoutBtn.onclick = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    localStorage.removeItem("me_cache");
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
+    location.href = "login.html";
+  };
+}
 
-    let currentQuiz = null;
-    let allQuizzes = [];
+if(menuToggleBtn && menuDropdown){
+  menuToggleBtn.addEventListener("click", function(e){
+    e.stopPropagation();
+    menuDropdown.classList.toggle("open");
+  });
 
-    function setMsg(t, cls="muted"){
-      msg.className = "text " + cls;
-      msg.textContent = t;
+  document.addEventListener("click", function(e){
+    if(!menuDropdown.contains(e.target) && !menuToggleBtn.contains(e.target)){
+      menuDropdown.classList.remove("open");
     }
+  });
+}
 
-    function logout(){
+/* ===== TOPBAR PROFILE ===== */
+async function loadTopbarProfile(){
+  try{
+    const res = await fetch(`${API}/api/profile/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if(res.status === 401){
       localStorage.removeItem("token");
       localStorage.removeItem("username");
       localStorage.removeItem("me_cache");
-      window.location.href = "login.html";
-    }
-    document.getElementById("logoutBtn").addEventListener("click", logout);
-
-    function cleanSpaces(s){ return String(s || "").trim().replace(/\s+/g, " "); }
-    function pad2(n){ return String(n).padStart(2,"0"); }
-
-    function isoToLocalInput(iso){
-      if (!iso) return "";
-      const d = new Date(iso);
-      if (isNaN(d.getTime())) return "";
-      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-    }
-    function localInputToIso(val){
-      if (!val) return null;
-      const d = new Date(val);
-      if (isNaN(d.getTime())) return null;
-      return d.toISOString();
-    }
-    async function readErrorText(res){
-      const txt = await res.text().catch(()=> "");
-      return txt ? txt.slice(0, 800) : `HTTP ${res.status}`;
+      location.href = "login.html";
+      return;
     }
 
-    function typesetMath(root=document){
-      if (window.MathJax?.typesetPromise) window.MathJax.typesetPromise([root]).catch(()=>{});
-    }
-    function setPreviewText(el, text){
-      el.textContent = text || "";
-      typesetMath(el);
-    }
-    function renderInstructionsPreview(){
-      const t = cleanSpaces(instructionsEl.value || "");
-      setPreviewText(prevInstructions, t || "(Preview)");
-    }
-    instructionsEl.addEventListener("input", renderInstructionsPreview);
+    const data = await res.json();
 
-    function isUnavailable(q){
-      const now = new Date();
-      if (q?.isFrozen) return true;
-      const from = q?.availableFrom ? new Date(q.availableFrom) : null;
-      const until = q?.availableUntil ? new Date(q.availableUntil) : null;
-      if (from && now < from) return true;
-      if (until && now > until) return true;
-      return false;
-    }
+    topAccountName.textContent = data.fullName || data.username || "User";
+    topAccountType.textContent = data.accountType || data.role || "Account";
+  }catch(err){
+    topAccountName.textContent = "User";
+    topAccountType.textContent = "Account";
+  }
+}
 
-    function availabilitySummary(q){
-      if (!q) return { label:"—", cls:"pill", note:"" };
-      const now = new Date();
-      const from = q.availableFrom ? new Date(q.availableFrom) : null;
-      const until = q.availableUntil ? new Date(q.availableUntil) : null;
+/* ===== TOPBAR ANNOUNCEMENT COUNT ===== */
+async function loadTopbarAnnouncementCount(){
+  try{
+    const res = await fetch(`${API}/api/announcements/profile-summary`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-      if (q.isFrozen) return { label:"UNAVAILABLE", cls:"pill bad", note:"Manually set to unavailable." };
-      if (from && now < from) return { label:"SCHEDULED", cls:"pill mid", note:`Available from ${from.toLocaleString()}` };
-      if (until && now > until) return { label:"CLOSED", cls:"pill bad", note:`Closed since ${until.toLocaleString()}` };
-      if (until) return { label:"AVAILABLE", cls:"pill ok", note:`Available until ${until.toLocaleString()}` };
-      return { label:"AVAILABLE", cls:"pill ok", note:"No schedule set." };
-    }
+    const data = await res.json().catch(() => ({}));
+    document.getElementById("navAnnouncementBadge").textContent = Number(data.count || 0);
+  }catch(err){
+    document.getElementById("navAnnouncementBadge").textContent = "0";
+  }
+}
 
-    function setAvailabilityUI(q){
-      const a = availabilitySummary(q);
-      freezePill.innerHTML = `<span class="dot"></span> ${a.label}`;
-      freezePill.className = a.cls;
-      availabilityNote.textContent = a.note || "";
+/* ===== QUIZ STATE ===== */
+function getState(id){
+  const r = resultsMap[id];
+  if(!r) return {type:"new"};
 
-      freezeBtn.textContent = q?.isFrozen ? "Make Available" : "Make Unavailable";
-      freezeBtn.disabled = false;
+  const score = Number(r.score || 0);
+  const total = Number(r.total || 0);
+  const percent = total ? Math.round((score / total) * 100) : Math.round(Number(r.percent || 0));
 
-      const unavailable = !!q?.isFrozen;
-      if (unavailable) {
-        editArea.classList.add("disabledBox");
-        deleteBtn.disabled = true;
-        saveBtn.disabled = true;
-        addNoteBtn.disabled = true;
-        addMcqBtn.disabled = true;
-        addTextBtn.disabled = true;
-      } else {
-        editArea.classList.remove("disabledBox");
-        deleteBtn.disabled = false;
-        saveBtn.disabled = false;
-        addNoteBtn.disabled = false;
-        addMcqBtn.disabled = false;
-        addTextBtn.disabled = false;
-      }
-    }
+  return {
+    type:"done",
+    score: percent + "%",
+    state: percent >= 50 ? "pass" : "fail",
+    percent
+  };
+}
 
-    async function requireAdminOrEditor(){
-      const meRes = await fetch(`${API}/api/auth/me`, {
-        headers: { Authorization: "Bearer " + token }
-      });
-      const me = await meRes.json().catch(()=>null);
+function isWithinPeriod(dateValue, period){
+  if(period === "all") return true;
+  if(!dateValue) return false;
 
-      if (!meRes.ok || !me) {
-        alert("Session expired. Please login again.");
-        logout(); return false;
-      }
-      if (me.role !== "admin" && me.role !== "editor") {
-        alert("Admin or editor only");
-        window.location.href = "learner-quizzes.html";
-        return false;
-      }
-      who.textContent = `Logged in as ${me.username} (${me.role})`;
-      return true;
-    }
+  const d = new Date(dateValue);
+  if(Number.isNaN(d.getTime())) return false;
 
-    function escapeHtml(str){
-      return String(str ?? "")
-        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-    }
-    function escapeAttr(str){ return String(str ?? "").replaceAll('"', "&quot;"); }
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    function renderDropdown(){
-      const g = (gradeFilter.value || "").trim();
-      const q = (searchBox.value || "").trim().toLowerCase();
+  if(period === "today"){
+    return d >= todayStart;
+  }
 
-      const filtered = allQuizzes.filter(x => {
-        const matchGrade = !g || String(x.grade) === String(g);
-        if (!matchGrade) return false;
-        if (!q) return true;
-        const topic = String(x.topic || "General").toLowerCase();
-        const title = String(x.title || "Assessment").toLowerCase();
-        return topic.includes(q) || title.includes(q);
-      });
+  if(period === "week"){
+    const day = todayStart.getDay();
+    const diffToMonday = (day === 0 ? 6 : day - 1);
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(todayStart.getDate() - diffToMonday);
+    return d >= weekStart;
+  }
 
-      if (filtered.length === 0) {
-        assessmentSelect.innerHTML = `<option value="">No match found</option>`;
-        return;
-      }
+  if(period === "month"){
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    return d >= monthStart;
+  }
 
-      assessmentSelect.innerHTML =
-        `<option value="">Select assessment</option>` +
-        filtered.map(x => {
-          const unavailable = isUnavailable(x);
-          const label = `Grade ${x.grade} • ${x.topic || "General"} • ${x.title || "Assessment"}${unavailable ? " • Unavailable" : ""}`;
-          return `<option value="${escapeAttr(x._id)}">${escapeHtml(label)}</option>`;
-        }).join("");
-    }
+  return true;
+}
 
-    async function loadAssessments(){
-      assessmentSelect.innerHTML = `<option value="">Loading…</option>`;
-      setMsg("Loading assessments…", "muted");
-      freezeBtn.disabled = true;
-      deleteBtn.disabled = true;
-      editArea.classList.add("disabledBox");
+/* ===== FILTER ===== */
+function apply(){
+  const q = searchEl.value.toLowerCase().trim();
 
-      const res = await fetch(`${API}/api/quizzes?all=1`, {
-        headers: { Authorization: "Bearer " + token }
-      });
+  const filtered = quizzes.filter(x => {
+    const title = String(x.title || "").toLowerCase();
+    const topic = String(x.topic || "").toLowerCase();
+    const paper = String(x.paper || "").toLowerCase();
+    const difficulty = String(x.difficulty || "").toLowerCase();
 
-      if (res.status === 401) return logout();
-      if (!res.ok){
-        setMsg("Could not load assessments: " + await readErrorText(res), "error");
-        return;
-      }
+    const matchesSearch = !q || title.includes(q) || topic.includes(q);
+    const matchesTopic = topicFilter.value === "all" || x.topic === topicFilter.value;
+    const matchesPaper = paperFilter.value === "all" || paper === paperFilter.value;
+    const matchesDiff = diff === "all" || difficulty === diff;
+    const matchesPeriod = isWithinPeriod(x.createdAt || x.updatedAt, periodFilter.value);
 
-      const list = await res.json().catch(()=>[]);
-      allQuizzes = Array.isArray(list) ? list : [];
+    return matchesSearch && matchesTopic && matchesPaper && matchesDiff && matchesPeriod;
+  });
 
-      renderDropdown();
-      setMsg("Use the filter and search, then select an assessment.", "ok");
-    }
+  render(filtered);
+}
 
-    async function loadAssessmentById(id){
-      setMsg("Loading assessment…", "muted");
-      freezeBtn.disabled = true;
-      deleteBtn.disabled = true;
-      editArea.classList.add("disabledBox");
-      questionsWrap.innerHTML = "";
+/* ===== TOPIC STATS ===== */
+function getTopicStats(topicQuizzes){
+  const attempted = topicQuizzes.filter(q => resultsMap[q._id]);
+  const completed = attempted.length;
+  const total = topicQuizzes.length;
+  const progress = total ? Math.round((completed / total) * 100) : 0;
 
-      const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`, {
-        headers: { Authorization: "Bearer " + token }
-      });
-      if (res.status === 401) return logout();
+  let avg = 0;
+  if(completed){
+    const sum = attempted.reduce((acc, q) => {
+      const r = resultsMap[q._id];
+      const score = Number(r.score || 0);
+      const totalMarks = Number(r.total || 0);
+      const percent = totalMarks ? Math.round((score / totalMarks) * 100) : Math.round(Number(r.percent || 0));
+      return acc + percent;
+    }, 0);
+    avg = Math.round(sum / completed);
+  }
 
-      if (!res.ok) {
-        setMsg("Could not load assessment: " + await readErrorText(res), "error");
-        return;
-      }
+  return {completed, total, progress, avg};
+}
 
-      currentQuiz = await res.json();
+/* ===== RENDER ===== */
+function render(list){
+  if(!list.length){
+    document.getElementById("quizList").innerHTML = `<div class="empty">No assessments found.</div>`;
+    return;
+  }
 
-      gradeEl.value = String(currentQuiz.grade ?? "");
-      topicEl.value = cleanSpaces(currentQuiz.topic || "");
-      titleEl.value = cleanSpaces(currentQuiz.title || "");
-      instructionsEl.value = String(currentQuiz.instructions || "");
-      timeLimitEl.value = String(currentQuiz.timeLimitMinutes ?? 10);
+  const groups = {};
+  list.forEach(q => {
+    const topic = q.topic || "General";
+    if(!groups[topic]) groups[topic] = [];
+    groups[topic].push(q);
+  });
 
-      availableFromEl.value = isoToLocalInput(currentQuiz.availableFrom);
-      availableUntilEl.value = isoToLocalInput(currentQuiz.availableUntil);
+  const html = Object.keys(groups).sort().map(topic => {
+    const topicQuizzes = groups[topic].sort((a, b) => {
+      return new Date(a.createdAt) - new Date(b.createdAt);
+    });
 
-      renderInstructionsPreview();
+    const stats = getTopicStats(topicQuizzes);
 
-      const qs = Array.isArray(currentQuiz.questions) ? currentQuiz.questions : [];
-      questionsWrap.innerHTML = qs.length
-        ? qs.map((q, i) => blockCardHtml(i, q)).join("")
-        : blockCardHtml(0, { type:"mcq", text:"", hint:"", imageUrl:"", solution:"", points:1, options:["","","",""], correctIndex:0 });
-
-      typesetMath(questionsWrap);
-
-      setAvailabilityUI(currentQuiz);
-      setMsg("Loaded.", "ok");
-
-      wireAllCards();
-    }
-
-    function letter(i){ return String.fromCharCode(65 + i); }
-
-    function blockCardHtml(i, q){
-      const type = String(q?.type || "mcq").toLowerCase();
-      const text = cleanSpaces(q?.text);
-      const hint = cleanSpaces(q?.hint);
-      const imageUrl = cleanSpaces(q?.imageUrl);
-      const solution = cleanSpaces(q?.solution);
-      const points = Number.isFinite(Number(q?.points)) ? Number(q.points) : 1;
-
-      if (type === "note"){
-        return `
-          <div class="qcard" data-index="${i}" data-type="note">
-            <div class="qhead">
-              <div><b>Note / Heading</b> <span class="tag">NOTE</span></div>
-              <button type="button" class="smallbtn removeBtn">Remove</button>
-            </div>
-
-            <label>Text (supports math)</label>
-            <textarea class="noteText" placeholder="Type note/heading here...">${escapeHtml(text)}</textarea>
-
-            <div style="margin-top:10px;">
-              <div class="tag">Preview</div>
-              <div class="previewBox prevNote"></div>
-            </div>
-          </div>
-        `;
-      }
-
-      if (type === "text"){
-        const correctText = cleanSpaces(q?.correctText);
-        const mode = String(q?.textAnswerMode || "exact");
-        const tol = (q?.numberTolerance ?? "");
-
-        return `
-          <div class="qcard" data-index="${i}" data-type="text">
-            <div class="qhead">
-              <div><b>Typed Answer</b> <span class="tag">TEXT</span></div>
-              <button type="button" class="smallbtn removeBtn">Remove</button>
-            </div>
-
-            <label>Question text (supports math)</label>
-            <input class="qText" value="${escapeAttr(text)}" placeholder="Type your question here" />
-
-            <label>Hint (optional)</label>
-            <input class="qHint" value="${escapeAttr(hint)}" placeholder="Hint..." />
-
-            <label>Image URL (optional)</label>
-            <input class="qImage" value="${escapeAttr(imageUrl)}" placeholder="https://..." />
-
-            <div class="grid2" style="margin-top:10px;">
-              <div>
-                <label>Marks (points)</label>
-                <input class="qPoints" type="number" min="1" step="1" value="${escapeAttr(String(points))}" />
-              </div>
-              <div>
-                <label>Correct answer</label>
-                <input class="correctText" value="${escapeAttr(correctText)}" placeholder="Example: 10" />
-              </div>
-            </div>
-
-            <div class="grid2" style="margin-top:10px;">
-              <div>
-                <label>Check mode</label>
-                <select class="textMode">
-                  <option value="exact" ${mode==="exact"?"selected":""}>Exact (case-insensitive)</option>
-                  <option value="contains" ${mode==="contains"?"selected":""}>Contains</option>
-                  <option value="number_tolerance" ${mode==="number_tolerance"?"selected":""}>Number (tolerance)</option>
-                </select>
-                <div class="help">Tolerance only applies for Number mode.</div>
-              </div>
-              <div class="tolRow ${mode==="number_tolerance"?"":"hide"}">
-                <label>Tolerance</label>
-                <input class="tolerance" type="number" step="0.0001" value="${escapeAttr(String(tol))}" />
-              </div>
-            </div>
-
-            <div style="margin-top:10px;">
-              <label>Solution / Working (optional, supports math)</label>
-              <textarea class="qSolution" placeholder="Show steps / working...">${escapeHtml(solution)}</textarea>
-            </div>
-
-            <div style="margin-top:10px;">
-              <div class="tag">Preview</div>
-              <div class="previewBox prevQ"></div>
-              <div class="previewBox prevHint" style="margin-top:8px;"></div>
-              <div class="previewBox prevAns" style="margin-top:8px;"></div>
-              <div class="previewBox prevSol" style="margin-top:8px;"></div>
-            </div>
-          </div>
-        `;
-      }
-
-      const opts = Array.isArray(q?.options) ? q.options : ["","","",""];
-      const correctIndex = Number.isInteger(Number(q?.correctIndex)) ? Number(q.correctIndex) : 0;
-
-      return `
-        <div class="qcard" data-index="${i}" data-type="mcq">
-          <div class="qhead">
-            <div><b>MCQ</b> <span class="tag">MCQ</span></div>
-            <button type="button" class="smallbtn removeBtn">Remove</button>
-          </div>
-
-          <label>Question text (supports math)</label>
-          <input class="qText" value="${escapeAttr(text)}" placeholder="Type your question here" />
-
-          <label>Hint (optional)</label>
-          <input class="qHint" value="${escapeAttr(hint)}" placeholder="Hint..." />
-
-          <label>Image URL (optional)</label>
-          <input class="qImage" value="${escapeAttr(imageUrl)}" placeholder="https://..." />
-
-          <div class="grid2" style="margin-top:10px;">
-            <div>
-              <label>Marks (points)</label>
-              <input class="qPoints" type="number" min="1" step="1" value="${escapeAttr(String(points))}" />
-            </div>
-            <div>
-              <label>Correct Answer</label>
-              <select class="correctIndex"></select>
-              <div class="help">Updates automatically when you add/remove options.</div>
-            </div>
-          </div>
-
-          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px;">
-            <b style="font-size:13px;">Options</b>
-            <button class="smallbtn addOptBtn" type="button">+ Add Option</button>
-          </div>
-
-          <div class="optsWrap"></div>
-
-          <div style="margin-top:10px;">
-            <label>Solution / Working (optional, supports math)</label>
-            <textarea class="qSolution" placeholder="Show steps / working...">${escapeHtml(solution)}</textarea>
-          </div>
-
-          <div style="margin-top:10px;">
-            <div class="tag">Preview</div>
-            <div class="previewBox prevQ"></div>
-            <div class="previewBox prevHint" style="margin-top:8px;"></div>
-            <div class="previewBox prevOpts" style="margin-top:8px;"></div>
-            <div class="previewBox prevSol" style="margin-top:8px;"></div>
-          </div>
+    return `
+    <div class="topic-card">
+      <div class="topic-top">
+        <div class="topic-title">${escapeHtml(topic)}</div>
+        <div class="topic-stats">
+          <span>Average: ${stats.avg}%</span>
+          <span>Completed: ${stats.completed}/${stats.total}</span>
         </div>
-      `;
+      </div>
+
+      <div class="progressWrap">
+        <div class="progressLabels">
+          <span>Progress</span>
+          <span>${stats.progress}%</span>
+        </div>
+        <div class="progressTrack">
+          <div class="progressBar" style="width:${stats.progress}%"></div>
+        </div>
+      </div>
+
+      <div class="quiz-squares">
+        ${topicQuizzes.map((q, i) => {
+          const s = getState(q._id);
+          return `
+          <div class="quiz-square ${s.state || ""}" onclick="location.href='attempt.html?quizId=${encodeURIComponent(q._id || "")}'">
+            <div class="quiz-icon-wrap">
+              <div class="quiz-fill"></div>
+              <img src="${ICON}" class="quiz-square-base" alt="Quiz">
+              ${
+                s.type === "new"
+                  ? `<div class="quiz-q">?</div>`
+                  : `<div class="quiz-mark">${escapeHtml(s.score)}</div>`
+              }
+            </div>
+            <div class="quiz-number">${i + 1}</div>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>`;
+  }).join("");
+
+  document.getElementById("quizList").innerHTML = html;
+}
+
+/* ===== HELPERS ===== */
+function escapeHtml(str){
+  return String(str ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+/* ===== EVENTS ===== */
+document.querySelectorAll(".fbtn").forEach(b => {
+  b.onclick = () => {
+    diff = b.dataset.diff;
+    document.querySelectorAll(".fbtn").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    apply();
+  };
+});
+
+searchEl.oninput = apply;
+topicFilter.onchange = apply;
+paperFilter.onchange = apply;
+periodFilter.onchange = apply;
+
+/* ===== LOAD ===== */
+async function loadPage(){
+  try{
+    const meRes = await fetch(`${API}/api/auth/me`, {
+      headers:{Authorization:`Bearer ${token}`}
+    });
+
+    if(meRes.status === 401){
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("me_cache");
+      location.href = "login.html";
+      return;
     }
 
-    function relabelOptions(card){
-      const rows = [...card.querySelectorAll(".optRow")];
-      rows.forEach((r,i)=>{
-        const label = r.querySelector(".optLabel");
-        const input = r.querySelector(".optInput");
-        if (label) label.textContent = `${letter(i)})`;
-        if (input) input.placeholder = `Option ${letter(i)}`;
-      });
-    }
+    const me = await meRes.json();
+    document.getElementById("gradeText").textContent = "Grade: " + (me.grade || "-");
 
-    function syncCorrectDropdown(card){
-      const sel = card.querySelector(".correctIndex");
-      if (!sel) return;
+    const quizzesRes = await fetch(`${API}/api/quizzes`, {
+      headers:{Authorization:`Bearer ${token}`}
+    });
+    quizzes = await quizzesRes.json().catch(() => []);
+    if(!Array.isArray(quizzes)) quizzes = [];
 
-      const inputs = [...card.querySelectorAll(".optInput")];
-      const current = Number(sel.value);
+    const resultsRes = await fetch(`${API}/api/results/my`, {
+      headers:{Authorization:`Bearer ${token}`}
+    });
+    const results = await resultsRes.json().catch(() => []);
+    const safeResults = Array.isArray(results) ? results : [];
 
-      sel.innerHTML = inputs.map((_,i)=>`<option value="${i}">${letter(i)}</option>`).join("");
-
-      const next = (Number.isInteger(current) && current >= 0 && current < inputs.length) ? current : 0;
-      sel.value = String(next);
-    }
-
-    function addOption(card, value=""){
-      const wrap = card.querySelector(".optsWrap");
-      if (!wrap) return;
-
-      const row = document.createElement("div");
-      row.className = "optRow";
-      row.innerHTML = `
-        <div class="optLabel">${letter(wrap.querySelectorAll(".optRow").length)})</div>
-        <input class="optInput" placeholder="Option" />
-        <button type="button" class="smallbtn removeOptBtn">Remove</button>
-      `;
-
-      const input = row.querySelector(".optInput");
-      input.value = String(value || "");
-      wrap.appendChild(row);
-
-      input.addEventListener("input", ()=>wireCardPreview(card));
-
-      row.querySelector(".removeOptBtn").addEventListener("click", ()=>{
-        const total = wrap.querySelectorAll(".optRow").length;
-        if (total <= 2) { alert("MCQ must have at least 2 options."); return; }
-        row.remove();
-        relabelOptions(card);
-        syncCorrectDropdown(card);
-        wireCardPreview(card);
-      });
-
-      relabelOptions(card);
-      syncCorrectDropdown(card);
-      wireCardPreview(card);
-    }
-
-    function wireCardPreview(card){
-      const type = (card.getAttribute("data-type") || "mcq").toLowerCase();
-
-      if (type === "note"){
-        const t = cleanSpaces(card.querySelector(".noteText")?.value || "");
-        const prev = card.querySelector(".prevNote");
-        if (prev) prev.textContent = t || "(Note preview)";
-        typesetMath(card);
-        return;
-      }
-
-      const qText = cleanSpaces(card.querySelector(".qText")?.value || "");
-      const hint  = cleanSpaces(card.querySelector(".qHint")?.value || "");
-      const sol   = cleanSpaces(card.querySelector(".qSolution")?.value || "");
-
-      const prevQ = card.querySelector(".prevQ");
-      const prevHint = card.querySelector(".prevHint");
-      const prevSol = card.querySelector(".prevSol");
-
-      if (prevQ) prevQ.textContent = qText || "(Question preview)";
-      if (prevHint) prevHint.textContent = hint ? ("Hint: " + hint) : "(Hint preview)";
-      if (prevSol) prevSol.textContent = sol ? ("Solution: " + sol) : "(Solution / Working preview)";
-
-      if (type === "mcq"){
-        const prevOpts = card.querySelector(".prevOpts");
-        const optInputs = [...card.querySelectorAll(".optInput")];
-        if (prevOpts){
-          const text = optInputs.map((inp, i)=>{
-            const v = cleanSpaces(inp.value || "");
-            return `${letter(i)}) ${v || "—"}`;
-          }).join("\n");
-          prevOpts.textContent = text || "(Options preview)";
-        }
-        syncCorrectDropdown(card);
-      } else {
-        const ans = cleanSpaces(card.querySelector(".correctText")?.value || "");
-        const prevAns = card.querySelector(".prevAns");
-        if (prevAns) prevAns.textContent = ans ? ("Expected: " + ans) : "(Expected answer preview)";
-
-        const modeSel = card.querySelector(".textMode");
-        const tolRow = card.querySelector(".tolRow");
-        const tolInput = card.querySelector(".tolerance");
-        if (modeSel && tolRow && tolInput){
-          const showTol = modeSel.value === "number_tolerance";
-          tolRow.classList.toggle("hide", !showTol);
-          if (!showTol) tolInput.value = "";
-        }
-      }
-
-      typesetMath(card);
-    }
-
-    function wireAllCards(){
-      [...questionsWrap.querySelectorAll(".qcard")].forEach(card=>{
-        const type = (card.getAttribute("data-type") || "mcq").toLowerCase();
-
-        const watch = (type === "note")
-          ? [".noteText"]
-          : [".qText",".qHint",".qImage",".qPoints",".qSolution",".correctIndex",".correctText",".textMode",".tolerance",".optInput"];
-
-        watch.forEach(sel=>{
-          card.querySelectorAll(sel).forEach(el=>{
-            el.addEventListener("input", ()=>wireCardPreview(card));
-            el.addEventListener("change", ()=>wireCardPreview(card));
-          });
-        });
-
-        if (type === "mcq"){
-          const addBtn = card.querySelector(".addOptBtn");
-          if (addBtn && !addBtn.dataset.wired){
-            addBtn.dataset.wired = "1";
-            addBtn.addEventListener("click", ()=>addOption(card, ""));
-          }
-
-          const wrap = card.querySelector(".optsWrap");
-          if (wrap && wrap.childElementCount === 0){
-            const existing = (currentQuiz?.questions?.[Number(card.dataset.index)]?.options) || [];
-            const use = existing.length ? existing : ["","","",""];
-            use.forEach(v => addOption(card, v));
-            syncCorrectDropdown(card);
-            const correct = Number(currentQuiz?.questions?.[Number(card.dataset.index)]?.correctIndex ?? 0);
-            const sel = card.querySelector(".correctIndex");
-            if (sel) sel.value = String(Math.max(0, Math.min(correct, (wrap.querySelectorAll(".optRow").length - 1))));
-          }
-        }
-
-        wireCardPreview(card);
-      });
-    }
-
-    function collectQuestions(){
-      const cards = [...questionsWrap.querySelectorAll(".qcard")];
-      if (cards.length === 0) throw new Error("Add at least 1 block.");
-
-      const questions = [];
-
-      for (const card of cards) {
-        const type = (card.getAttribute("data-type") || "mcq").toLowerCase();
-
-        if (type === "note"){
-          const noteText = cleanSpaces(card.querySelector(".noteText")?.value || "");
-          if (!noteText) throw new Error("Please fill in the note/heading text.");
-          questions.push({ type:"note", text: noteText });
-          continue;
-        }
-
-        const text = cleanSpaces(card.querySelector(".qText")?.value || "");
-        const hint = cleanSpaces(card.querySelector(".qHint")?.value || "");
-        const imageUrl = cleanSpaces(card.querySelector(".qImage")?.value || "");
-        const solution = cleanSpaces(card.querySelector(".qSolution")?.value || "");
-
-        const pointsRaw = cleanSpaces(card.querySelector(".qPoints")?.value || "1");
-        const points = Number(pointsRaw);
-        if (!Number.isInteger(points) || points < 1) throw new Error("Marks must be a whole number (1 or more).");
-
-        if (!text) throw new Error("Please fill in all question texts.");
-
-        if (type === "text"){
-          const correctText = cleanSpaces(card.querySelector(".correctText")?.value || "");
-          const textAnswerMode = String(card.querySelector(".textMode")?.value || "exact");
-          const tolRaw = cleanSpaces(card.querySelector(".tolerance")?.value || "");
-
-          if (!correctText) throw new Error("Please enter the correct answer for typed questions.");
-
-          let numberTolerance = null;
-          if (textAnswerMode === "number_tolerance"){
-            const tol = Number(tolRaw);
-            if (!Number.isFinite(tol) || tol < 0) throw new Error("Enter a valid tolerance (0 or more).");
-            numberTolerance = tol;
-          }
-
-          questions.push({
-            type:"text",
-            text,
-            hint,
-            imageUrl,
-            points,
-            correctText,
-            textAnswerMode,
-            numberTolerance,
-            solution
-          });
-          continue;
-        }
-
-        const optInputs = [...card.querySelectorAll(".optInput")];
-        const options = optInputs.map(x => cleanSpaces(x.value)).filter(Boolean);
-        if (options.length < 2) throw new Error("MCQ must have at least 2 options.");
-
-        const correctIndex = Number(card.querySelector(".correctIndex")?.value || 0);
-        if (!Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex >= options.length) {
-          throw new Error("Correct answer must be within the options list.");
-        }
-
-        questions.push({
-          type:"mcq",
-          text,
-          hint,
-          imageUrl,
-          points,
-          options,
-          correctIndex,
-          solution
-        });
-      }
-
-      return questions;
-    }
-
-    addNoteBtn.addEventListener("click", () => {
-      if (!currentQuiz) return;
-      const i = questionsWrap.querySelectorAll(".qcard").length;
-      questionsWrap.insertAdjacentHTML("beforeend", blockCardHtml(i, { type:"note", text:"" }));
-      wireAllCards();
+    resultsMap = {};
+    safeResults.forEach(r => {
+      const id = r.quizId?._id || r.quizId;
+      if(id) resultsMap[id] = r;
     });
 
-    addMcqBtn.addEventListener("click", () => {
-      if (!currentQuiz) return;
-      const i = questionsWrap.querySelectorAll(".qcard").length;
-      questionsWrap.insertAdjacentHTML("beforeend",
-        blockCardHtml(i, { type:"mcq", text:"", hint:"", imageUrl:"", solution:"", points:1, options:["","","",""], correctIndex:0 })
-      );
-      wireAllCards();
-    });
+    const topics = [...new Set(
+      quizzes
+        .map(q => q.topic || "General")
+        .filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b));
 
-    addTextBtn.addEventListener("click", () => {
-      if (!currentQuiz) return;
-      const i = questionsWrap.querySelectorAll(".qcard").length;
-      questionsWrap.insertAdjacentHTML("beforeend",
-        blockCardHtml(i, { type:"text", text:"", hint:"", imageUrl:"", solution:"", points:1, correctText:"", textAnswerMode:"exact", numberTolerance:null })
-      );
-      wireAllCards();
-    });
+    topicFilter.innerHTML =
+      `<option value="all">All Topics</option>` +
+      topics.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
 
-    questionsWrap.addEventListener("click", (e) => {
-      if (e.target.classList.contains("removeBtn")) {
-        e.target.closest(".qcard").remove();
-        wireAllCards();
-      }
-    });
+    apply();
+  }catch(err){
+    document.getElementById("quizList").innerHTML = `<div class="empty">Could not load quizzes.</div>`;
+  }
+}
 
-    saveBtn.addEventListener("click", async () => {
-      if (!currentQuiz) return;
+loadTopbarProfile();
+loadTopbarAnnouncementCount();
+loadPage();
+</script>
 
-      if (currentQuiz.isFrozen) {
-        return setMsg("This assessment is unavailable. Make it available to edit.", "error");
-      }
-
-      try{
-        const grade = Number(gradeEl.value);
-        const topic = cleanSpaces(topicEl.value);
-        const title = cleanSpaces(titleEl.value);
-        const instructions = String(instructionsEl.value || "");
-        const timeLimitMinutes = Number(timeLimitEl.value);
-
-        const availableFrom = localInputToIso(availableFromEl.value);
-        const availableUntil = localInputToIso(availableUntilEl.value);
-
-        if (!grade) return setMsg("Select a grade.", "error");
-        if (!topic) return setMsg("Enter a topic.", "error");
-        if (!title) return setMsg("Enter a title.", "error");
-        if (!Number.isFinite(timeLimitMinutes) || timeLimitMinutes < 1 || timeLimitMinutes > 180) {
-          return setMsg("Time limit must be 1–180 minutes.", "error");
-        }
-
-        if (availableFrom && availableUntil) {
-          const a = new Date(availableFrom).getTime();
-          const b = new Date(availableUntil).getTime();
-          if (Number.isFinite(a) && Number.isFinite(b) && b <= a) {
-            return setMsg("Available until must be after available from.", "error");
-          }
-        }
-
-        const questions = collectQuestions();
-
-        setMsg("Saving changes…", "muted");
-        const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-          body: JSON.stringify({ grade, topic, title, instructions, timeLimitMinutes, availableFrom, availableUntil, questions })
-        });
-
-        if (!res.ok){
-          return setMsg("Save failed: " + await readErrorText(res), "error");
-        }
-
-        currentQuiz = await res.json();
-        setMsg("Saved.", "ok");
-
-        await loadAssessments();
-        assessmentSelect.value = currentQuiz._id;
-      } catch(err){
-        setMsg(err.message || "Could not save.", "error");
-      }
-    });
-
-    freezeBtn.addEventListener("click", async () => {
-      if (!currentQuiz) return;
-
-      const nextFrozen = !currentQuiz.isFrozen;
-      const ok = confirm(nextFrozen ? "Make this assessment unavailable?" : "Make this assessment available?");
-      if (!ok) return;
-
-      setMsg("Updating availability…", "muted");
-
-      const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-        body: JSON.stringify({ isFrozen: nextFrozen, frozenAt: nextFrozen ? new Date().toISOString() : null })
-      });
-
-      if (!res.ok){
-        return setMsg("Availability update failed: " + await readErrorText(res), "error");
-      }
-
-      currentQuiz = await res.json();
-      setAvailabilityUI(currentQuiz);
-      setMsg(nextFrozen ? "Set to unavailable." : "Set to available.", "ok");
-
-      await loadAssessments();
-      assessmentSelect.value = currentQuiz._id;
-    });
-
-    deleteBtn.addEventListener("click", async () => {
-      if (!currentQuiz) return;
-
-      const ok = confirm("Delete this assessment permanently?");
-      if (!ok) return;
-
-      setMsg("Deleting…", "muted");
-
-      const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
-        method: "DELETE",
-        headers: { Authorization: "Bearer " + token }
-      });
-
-      if (!res.ok){
-        return setMsg("Delete failed: " + await readErrorText(res), "error");
-      }
-
-      setMsg("Deleted.", "ok");
-      currentQuiz = null;
-
-      gradeEl.value = "";
-      topicEl.value = "";
-      titleEl.value = "";
-      instructionsEl.value = "";
-      renderInstructionsPreview();
-      availableFromEl.value = "";
-      availableUntilEl.value = "";
-      timeLimitEl.value = "";
-
-      questionsWrap.innerHTML = "";
-      freezeBtn.disabled = true;
-      deleteBtn.disabled = true;
-      editArea.classList.add("disabledBox");
-
-      await loadAssessments();
-      assessmentSelect.value = "";
-      freezePill.innerHTML = `<span class="dot"></span> —`;
-      freezePill.className = "pill";
-      availabilityNote.textContent = "";
-    });
-
-    assessmentSelect.addEventListener("change", () => {
-      const id = assessmentSelect.value;
-      if (!id) {
-        currentQuiz = null;
-        setMsg("Select an assessment to edit.", "muted");
-        freezeBtn.disabled = true;
-        deleteBtn.disabled = true;
-        editArea.classList.add("disabledBox");
-        freezePill.innerHTML = `<span class="dot"></span> —`;
-        freezePill.className = "pill";
-        availabilityNote.textContent = "";
-        questionsWrap.innerHTML = "";
-        return;
-      }
-      loadAssessmentById(id);
-    });
-
-    gradeFilter.addEventListener("change", () => { renderDropdown(); assessmentSelect.value = ""; });
-    searchBox.addEventListener("input", () => { renderDropdown(); assessmentSelect.value = ""; });
-
-    (async () => {
-      const ok = await requireAdminOrEditor();
-      if (!ok) return;
-      await loadAssessments();
-      renderInstructionsPreview();
-    })();
-  </script>
 </body>
 </html>
