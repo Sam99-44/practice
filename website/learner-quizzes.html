@@ -866,7 +866,10 @@ function render(list){
   });
 
   const html = Object.keys(groups).sort().map(topic => {
-    const topicQuizzes = groups[topic];
+    const topicQuizzes = groups[topic].sort((a, b) => {
+      return new Date(a.createdAt) - new Date(b.createdAt);
+    });
+
     const stats = getTopicStats(topicQuizzes);
 
     return `
