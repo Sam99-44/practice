@@ -2852,6 +2852,178 @@ app.post("/api/announcements", authRequired, announcementManagerOnly, async (req
   }
 });
 
+// ======================================================
+// LEADERBOARD
+// Filters:
+//   ?grade=8
+//   ?period=thisWeek
+//   ?period=lastWeek
+//   ?period=1 ... 12  (January to December)
+// Ranking:
+//   total average across every attempted quiz in that period
+// ======================================================
+app.get("/api/leaderboard", authRequired, async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user.userId).select(
+      "username fullName grade learnerNumber studentNumber role accountType"
+    );
+
+    if (!currentUser) {
+      return res.status(401).json({ message: "User not found." });
+    }
+
+    const gradeQuery = String(req.query.grade || "").trim();
+    const period = String(req.query.period || "thisWeek").trim();
+
+    const resultFilter = {
+      isAdminAttempt: { $ne: true }
+    };
+
+    // -----------------------------
+    // TIME FILTER
+    // -----------------------------
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    if (period === "thisWeek") {
+      const day = todayStart.getDay();
+      const diffToMonday = day === 0 ? 6 : day - 1;
+      const weekStart = new Date(todayStart);
+      weekStart.setDate(todayStart.getDate() - diffToMonday);
+
+      resultFilter.createdAt = { $gte: weekStart };
+    } else if (period === "lastWeek") {
+      const day = todayStart.getDay();
+      const diffToMonday = day === 0 ? 6 : day - 1;
+
+      const thisWeekStart = new Date(todayStart);
+      thisWeekStart.setDate(todayStart.getDate() - diffToMonday);
+
+      const lastWeekStart = new Date(thisWeekStart);
+      lastWeekStart.setDate(thisWeekStart.getDate() - 7);
+
+      resultFilter.createdAt = {
+        $gte: lastWeekStart,
+        $lt: thisWeekStart,
+      };
+    } else {
+      const monthNumber = Number(period);
+
+      if (Number.isInteger(monthNumber) && monthNumber >= 1 && monthNumber <= 12) {
+        const year = now.getFullYear();
+        const monthStart = new Date(year, monthNumber - 1, 1);
+        const nextMonthStart = new Date(year, monthNumber, 1);
+
+        resultFilter.createdAt = {
+          $gte: monthStart,
+          $lt: nextMonthStart,
+        };
+      }
+    }
+
+    // -----------------------------
+    // LOAD RESULTS
+    // -----------------------------
+    const results = await Result.find(resultFilter).select(
+      "userId score total percent createdAt grade isAdminAttempt"
+    );
+
+    const userIds = [...new Set(
+      results.map(r => String(r.userId || "")).filter(Boolean)
+    )];
+
+    const userFilter = {
+      _id: { $in: userIds },
+      role: "learner",
+      accountType: "student",
+    };
+
+    if (gradeQuery) {
+      userFilter.grade = Number(gradeQuery);
+    }
+
+    // -----------------------------
+    // LOAD USERS
+    // -----------------------------
+    const users = await User.find(userFilter).select(
+      "username fullName name surname grade learnerNumber studentNumber"
+    );
+
+    const userMap = new Map(users.map(u => [String(u._id), u]));
+
+    // -----------------------------
+    // GROUP RESULTS PER USER
+    // -----------------------------
+    const grouped = new Map();
+
+    for (const r of results) {
+      const uid = String(r.userId || "");
+      if (!uid || !userMap.has(uid)) continue;
+
+      const score = Number(r.score || 0);
+      const total = Number(r.total || 0);
+
+      const percent = Number.isFinite(Number(r.percent))
+        ? Number(r.percent)
+        : (total > 0 ? (score / total) * 100 : 0);
+
+      if (!grouped.has(uid)) {
+        grouped.set(uid, []);
+      }
+
+      grouped.get(uid).push(percent);
+    }
+
+    // -----------------------------
+    // BUILD LEADERBOARD
+    // -----------------------------
+    let rows = [...grouped.entries()].map(([uid, percents]) => {
+      const user = userMap.get(uid);
+      const attempts = percents.length;
+
+      const average = attempts
+        ? percents.reduce((sum, n) => sum + n, 0) / attempts
+        : 0;
+
+      const best = attempts
+        ? Math.max(...percents)
+        : 0;
+
+      return {
+        userId: uid,
+        username: user?.username || "",
+        learnerNumber: user?.learnerNumber || user?.studentNumber || "",
+        grade: user?.grade ? `Grade ${user.grade}` : "—",
+        attempts,
+        average: Math.round(average),
+        best: Math.round(best),
+      };
+    });
+
+    rows.sort((a, b) => {
+      if (b.average !== a.average) return b.average - a.average;
+      if (b.best !== a.best) return b.best - a.best;
+      return b.attempts - a.attempts;
+    });
+
+    rows = rows.map((row, index) => ({
+      ...row,
+      rank: index + 1,
+      isMe: String(row.userId) === String(req.user.userId),
+    }));
+
+    const me = rows.find(r => String(r.userId) === String(req.user.userId)) || null;
+
+    return res.json({
+      rows,
+      me,
+    });
+  } catch (err) {
+    console.error("GET /api/leaderboard error:", err.message);
+    return res.status(500).json({ message: "Failed to load leaderboard." });
+  }
+});
+
 // GET ANNOUNCEMENTS FOR LEARNERS / ADMIN
 app.get("/api/announcements", authRequired, async (req, res) => {
   try {
