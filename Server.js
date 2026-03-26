@@ -2946,7 +2946,7 @@ app.get("/api/leaderboard", authRequired, async (req, res) => {
     // LOAD USERS
     // -----------------------------
     const users = await User.find(userFilter).select(
-      "username fullName name surname grade learnerNumber studentNumber"
+      "username fullName name surname grade learnerNumber studentNumber province"
     );
 
     const userMap = new Map(users.map(u => [String(u._id), u]));
@@ -2993,6 +2993,7 @@ app.get("/api/leaderboard", authRequired, async (req, res) => {
         userId: uid,
         username: user?.username || "",
         learnerNumber: user?.learnerNumber || user?.studentNumber || "",
+        province: user?.province || "-",
         grade: user?.grade ? `Grade ${user.grade}` : "—",
         attempts,
         average: Math.round(average),
