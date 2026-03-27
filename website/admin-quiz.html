@@ -18,6 +18,8 @@
      ✅ Save draft sends NO learner email
      ✅ Only admin/tester can publish
      ✅ Admin + editor + tester can access this page
+     ✅ Add buttons moved to bottom
+     ✅ Session check does not auto logout unless 401
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -343,15 +345,15 @@
           Drag cards to reorder. Add a Note/Heading before questions if needed. Use $...$ for inline math.
         </div>
       </div>
-
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button class="smallbtn" id="addNoteBtn" type="button">+ Add Note / Heading</button>
-        <button class="smallbtn" id="addMcqBtn" type="button">+ Add MCQ</button>
-        <button class="smallbtn" id="addTextBtn" type="button">+ Add Typed Answer</button>
-      </div>
     </div>
 
     <div id="questionsWrap"></div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+      <button class="smallbtn" id="addNoteBtn" type="button">+ Add Note / Heading</button>
+      <button class="smallbtn" id="addMcqBtn" type="button">+ Add MCQ</button>
+      <button class="smallbtn" id="addTextBtn" type="button">+ Add Typed Answer</button>
+    </div>
 
     <hr>
 
@@ -473,11 +475,16 @@
         return;
       }
 
+      if (meRes.status === 401) {
+        logout();
+        return;
+      }
+
       const me = await meRes.json().catch(() => null);
 
       if (!meRes.ok || !me) {
-        alert("Session expired. Please login again.");
-        return logout();
+        setMsg("Session check failed. Please refresh page.", "error");
+        return;
       }
 
       const role = String(me.role || "").toLowerCase();
