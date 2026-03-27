@@ -19,7 +19,8 @@
      ✅ Only admin/tester can publish
      ✅ Admin + editor + tester can access this page
      ✅ Add buttons moved to bottom
-     ✅ Session check does not auto logout unless 401
+     ✅ Page stays open while working
+     ✅ No forced logout except manual logout
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -463,7 +464,14 @@
 
     (async () => {
       const token = localStorage.getItem("token");
-      if (!token) return window.location.href = "login.html";
+
+      if (!token) {
+        who.textContent = "Not logged in";
+        saveBtn.disabled = false;
+        publishBtn.disabled = true;
+        setMsg("You are not logged in. The page will stay open, but saving and publishing may not work until you log in again.", "error");
+        return;
+      }
 
       let meRes;
       try{
@@ -471,26 +479,30 @@
           headers: { "Authorization": `Bearer ${token}` }
         });
       } catch {
-        setMsg("Network error. Please refresh and try again.", "error");
-        return;
-      }
-
-      if (meRes.status === 401) {
-        logout();
+        who.textContent = "Session check unavailable";
+        saveBtn.disabled = false;
+        publishBtn.disabled = true;
+        setMsg("Network error during session check. The page will stay open. You can continue working.", "error");
         return;
       }
 
       const me = await meRes.json().catch(() => null);
 
       if (!meRes.ok || !me) {
-        setMsg("Session check failed. Please refresh page.", "error");
+        who.textContent = "Session could not be confirmed";
+        saveBtn.disabled = false;
+        publishBtn.disabled = true;
+        setMsg("Session check failed, but the page will stay open. You can continue loading quizzes. Save/publish may need a fresh login later.", "error");
         return;
       }
 
       const role = String(me.role || "").toLowerCase();
       if (!["admin", "editor", "tester"].includes(role)) {
-        alert("Admin, editor or tester only");
-        return window.location.href = "learner-quizzes.html";
+        who.textContent = `Logged in as: ${me.username || "User"} (${me.role || "unknown"})`;
+        saveBtn.disabled = true;
+        publishBtn.disabled = true;
+        setMsg("This account does not have permission for this page.", "error");
+        return;
       }
 
       currentRole = role;
@@ -1118,7 +1130,10 @@
 
     saveBtn.addEventListener("click", async () => {
       const token = localStorage.getItem("token");
-      if (!token) return window.location.href = "login.html";
+      if (!token) {
+        setMsg("You are not logged in. The page is still open, but saving cannot continue until you log in again.", "error");
+        return;
+      }
 
       try{
         const payload = await buildPayload("draft");
@@ -1154,7 +1169,10 @@
 
     publishBtn.addEventListener("click", async () => {
       const token = localStorage.getItem("token");
-      if (!token) return window.location.href = "login.html";
+      if (!token) {
+        setMsg("You are not logged in. The page is still open, but publishing cannot continue until you log in again.", "error");
+        return;
+      }
 
       if (!canPublish) {
         return setMsg("Only admin/tester can publish assessments.", "error");
