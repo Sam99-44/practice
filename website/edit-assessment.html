@@ -228,14 +228,15 @@
               <h3 class="sectionTitle" style="margin-bottom:6px;">Blocks</h3>
               <div class="help">Notes/headings + MCQ + typed answers. Solutions/workings supported.</div>
             </div>
-            <div class="actions">
-              <button class="smallbtn" id="addNoteBtn" type="button">+ Add Note / Heading</button>
-              <button class="smallbtn" id="addMcqBtn" type="button">+ Add MCQ</button>
-              <button class="smallbtn" id="addTextBtn" type="button">+ Add Typed Answer</button>
-            </div>
           </div>
 
           <div id="questionsWrap"></div>
+
+          <div class="actions" style="margin-top:12px;">
+            <button class="smallbtn" id="addNoteBtn" type="button">+ Add Note / Heading</button>
+            <button class="smallbtn" id="addMcqBtn" type="button">+ Add MCQ</button>
+            <button class="smallbtn" id="addTextBtn" type="button">+ Add Typed Answer</button>
+          </div>
 
           <div class="hr"></div>
 
@@ -381,15 +382,28 @@
     }
 
     async function requireAdminOrEditor(){
-      const meRes = await fetch(`${API}/api/auth/me`, {
-        headers: { Authorization: "Bearer " + token }
-      });
+      let meRes;
+      try {
+        meRes = await fetch(`${API}/api/auth/me`, {
+          headers: { Authorization: "Bearer " + token }
+        });
+      } catch {
+        setMsg("Network error while checking session. Please refresh page.", "error");
+        return false;
+      }
+
+      if (meRes.status === 401) {
+        logout();
+        return false;
+      }
+
       const me = await meRes.json().catch(()=>null);
 
       if (!meRes.ok || !me) {
-        alert("Session expired. Please login again.");
-        logout(); return false;
+        setMsg("Session check failed. Please refresh page.", "error");
+        return false;
       }
+
       if (me.role !== "admin" && me.role !== "editor") {
         alert("Admin or editor only");
         window.location.href = "learner-quizzes.html";
@@ -440,9 +454,15 @@
       deleteBtn.disabled = true;
       editArea.classList.add("disabledBox");
 
-      const res = await fetch(`${API}/api/quizzes?all=1`, {
-        headers: { Authorization: "Bearer " + token }
-      });
+      let res;
+      try {
+        res = await fetch(`${API}/api/quizzes?all=1`, {
+          headers: { Authorization: "Bearer " + token }
+        });
+      } catch {
+        setMsg("Network error while loading assessments. Please refresh page.", "error");
+        return;
+      }
 
       if (res.status === 401) return logout();
       if (!res.ok){
@@ -464,9 +484,16 @@
       editArea.classList.add("disabledBox");
       questionsWrap.innerHTML = "";
 
-      const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`, {
-        headers: { Authorization: "Bearer " + token }
-      });
+      let res;
+      try {
+        res = await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`, {
+          headers: { Authorization: "Bearer " + token }
+        });
+      } catch {
+        setMsg("Network error while loading assessment. Please refresh page.", "error");
+        return;
+      }
+
       if (res.status === 401) return logout();
 
       if (!res.ok) {
@@ -938,11 +965,19 @@
         const questions = collectQuestions();
 
         setMsg("Saving changes…", "muted");
-        const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-          body: JSON.stringify({ grade, topic, title, instructions, timeLimitMinutes, availableFrom, availableUntil, questions })
-        });
+        let res;
+        try {
+          res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+            body: JSON.stringify({ grade, topic, title, instructions, timeLimitMinutes, availableFrom, availableUntil, questions })
+          });
+        } catch {
+          setMsg("Network error while saving. Please refresh page.", "error");
+          return;
+        }
+
+        if (res.status === 401) return logout();
 
         if (!res.ok){
           return setMsg("Save failed: " + await readErrorText(res), "error");
@@ -967,11 +1002,19 @@
 
       setMsg("Updating availability…", "muted");
 
-      const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-        body: JSON.stringify({ isFrozen: nextFrozen, frozenAt: nextFrozen ? new Date().toISOString() : null })
-      });
+      let res;
+      try {
+        res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({ isFrozen: nextFrozen, frozenAt: nextFrozen ? new Date().toISOString() : null })
+        });
+      } catch {
+        setMsg("Network error while updating availability. Please refresh page.", "error");
+        return;
+      }
+
+      if (res.status === 401) return logout();
 
       if (!res.ok){
         return setMsg("Availability update failed: " + await readErrorText(res), "error");
@@ -993,10 +1036,18 @@
 
       setMsg("Deleting…", "muted");
 
-      const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
-        method: "DELETE",
-        headers: { Authorization: "Bearer " + token }
-      });
+      let res;
+      try {
+        res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
+          method: "DELETE",
+          headers: { Authorization: "Bearer " + token }
+        });
+      } catch {
+        setMsg("Network error while deleting. Please refresh page.", "error");
+        return;
+      }
+
+      if (res.status === 401) return logout();
 
       if (!res.ok){
         return setMsg("Delete failed: " + await readErrorText(res), "error");
