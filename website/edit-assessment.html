@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Edit Assessment | Practice Online</title>
 
-  <!-- ✅ MathJax -->
+  <!-- MathJax -->
   <script>
     window.MathJax = {
       tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
@@ -26,37 +26,120 @@
       --shadow:0 10px 30px rgba(2,6,23,.08);
       --radius:16px; --ok:#065f46; --warn:#b45309; --danger:#b91c1c;
       --focus:0 0 0 4px rgba(225,29,46,.18);
-      --soft:#eef2ff;
     }
+
     *{box-sizing:border-box}
-    body{margin:0;font-family:"Inter",Arial,sans-serif;background:var(--bg);color:var(--text);padding:22px 14px 34px;}
+    body{
+      margin:0;
+      font-family:"Inter",Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      padding:22px 14px 34px;
+    }
     .wrap{max-width:1100px;margin:0 auto;}
-    .header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
+    .header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
     .title{margin:0;font-size:22px;letter-spacing:-.02em;}
     .sub{margin-top:6px;color:var(--muted);font-size:13px;line-height:1.5;}
     .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--text);
-      font-weight:800;font-size:13px;cursor:pointer;text-decoration:none;transition:transform .06s ease, box-shadow .2s ease, opacity .2s ease;white-space:nowrap;}
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      font-weight:800;
+      font-size:13px;
+      cursor:pointer;
+      text-decoration:none;
+      transition:transform .06s ease, box-shadow .2s ease, opacity .2s ease;
+      white-space:nowrap;
+    }
     .btn:hover{transform:translateY(-1px); box-shadow:0 8px 18px rgba(2,6,23,.08);}
-    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:rgba(255,255,255,.14);box-shadow:0 12px 22px rgba(27,22,72,.22);}
+    .btn.primary{
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      color:#fff;
+      border-color:rgba(255,255,255,.14);
+      box-shadow:0 12px 22px rgba(27,22,72,.22);
+    }
     .btn.warn{background:rgba(180,83,9,.10);border-color:rgba(180,83,9,.30);color:#7c2d12;}
     .btn.danger{background:rgba(185,28,28,.10);border-color:rgba(185,28,28,.30);color:#7f1d1d;}
     .btn:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none;}
 
-    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
-    .cardHead{padding:16px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#fff,#fbfbff);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .cardHead{
+      padding:16px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(180deg,#fff,#fbfbff);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
     .cardHead h3{margin:0;font-size:15px;font-weight:900;letter-spacing:-.01em;}
     .cardHead .mini{color:var(--muted2);font-size:12px;margin-top:6px;line-height:1.5;}
     .pad{padding:16px;}
+
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-    @media(max-width:900px){.grid2{grid-template-columns:1fr;}.actions{gap:8px;}}
-    label{display:block;font-size:12px;font-weight:900;letter-spacing:.2px;margin:0 0 6px;color:#111827;}
-    input, textarea, select{width:100%;padding:11px 12px;border-radius:12px;border:1px solid #d9d9e3;outline:none;font-size:14px;background:#fff;color:var(--text);transition:box-shadow .15s ease,border-color .15s ease;}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+    @media(max-width:900px){
+      .grid2,.grid3{grid-template-columns:1fr;}
+      .actions{gap:8px;}
+    }
+
+    label{
+      display:block;
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.2px;
+      margin:0 0 6px;
+      color:#111827;
+    }
+    input, textarea, select{
+      width:100%;
+      padding:11px 12px;
+      border-radius:12px;
+      border:1px solid #d9d9e3;
+      outline:none;
+      font-size:14px;
+      background:#fff;
+      color:var(--text);
+      transition:box-shadow .15s ease,border-color .15s ease;
+    }
     textarea{min-height:92px;resize:vertical;}
     input:focus, textarea:focus, select:focus{border-color:rgba(225,29,46,.45);box-shadow:var(--focus);}
     .help{margin-top:6px;font-size:12px;color:var(--muted2);line-height:1.5;}
 
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border-radius:999px;border:1px solid #e5e7eb;background:#f8fafc;font-size:12px;font-weight:900;color:#334155;white-space:nowrap;}
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 11px;
+      border-radius:999px;
+      border:1px solid #e5e7eb;
+      background:#f8fafc;
+      font-size:12px;
+      font-weight:900;
+      color:#334155;
+      white-space:nowrap;
+    }
     .dot{width:9px;height:9px;border-radius:999px;background:#94a3b8;}
     .pill.ok{border-color:#bbf7d0;background:#f0fdf4;color:#065f46;}
     .pill.ok .dot{background:#22c55e;}
@@ -65,23 +148,78 @@
     .pill.mid{border-color:#fde68a;background:#fffbeb;color:#92400e;}
     .pill.mid .dot{background:#f59e0b;}
 
-    .msgbar{margin-top:10px;border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+    .msgbar{
+      margin-top:10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px 12px;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
     .msgbar .text{font-size:13px;color:var(--muted);}
-    .msgbar .text.ok{color:var(--ok);font-weight:800;}
-    .msgbar .text.error{color:var(--danger);font-weight:800;}
-    .msgbar .text.warn{color:var(--warn);font-weight:800;}
+    .msgbar .text.ok{color:#065f46;font-weight:800;}
+    .msgbar .text.error{color:#b91c1c;font-weight:800;}
+    .msgbar .text.warn{color:#b45309;font-weight:800;}
 
     .sectionTitle{margin:0 0 10px;font-size:14px;font-weight:900;letter-spacing:-.01em;}
     .hr{border:none;border-top:1px solid var(--border);margin:14px 0;}
 
-    .qcard{border:1px solid var(--border);border-radius:14px;padding:14px;background:#fff;margin-top:12px;}
-    .qhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
-    .tag{display:inline-flex;align-items:center;gap:8px;padding:5px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#f8fafc;font-size:12px;font-weight:900;color:#334155;white-space:nowrap;}
-    .smallbtn{border:1px solid var(--border);background:#fff;color:var(--text);padding:9px 11px;border-radius:12px;font-weight:900;font-size:12px;cursor:pointer;}
+    .qcard{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:14px;
+      background:#fff;
+      margin-top:12px;
+    }
+    .qhead{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:8px;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:5px 10px;
+      border-radius:999px;
+      border:1px solid #e5e7eb;
+      background:#f8fafc;
+      font-size:12px;
+      font-weight:900;
+      color:#334155;
+      white-space:nowrap;
+    }
+    .smallbtn{
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      padding:9px 11px;
+      border-radius:12px;
+      font-weight:900;
+      font-size:12px;
+      cursor:pointer;
+    }
     .smallbtn:hover{box-shadow:0 8px 16px rgba(2,6,23,.06);}
     .toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
 
-    .previewBox{border:1px dashed #e6e6e6;background:#fbfbfe;border-radius:12px;padding:12px;margin-top:8px;font-size:13px;line-height:1.45;white-space:pre-wrap;color:#1f2937;}
+    .previewBox{
+      border:1px dashed #e6e6e6;
+      background:#fbfbfe;
+      border-radius:12px;
+      padding:12px;
+      margin-top:8px;
+      font-size:13px;
+      line-height:1.45;
+      white-space:pre-wrap;
+      color:#1f2937;
+    }
     .disabledBox{opacity:.55;pointer-events:none;}
     .hide{display:none!important;}
 
@@ -114,7 +252,7 @@
       <div class="cardHead">
         <div>
           <h3>Find and manage assessments</h3>
-          <div class="mini">Filter, search and update availability. Changes are saved when you click “Save Changes”.</div>
+          <div class="mini">Filter, search and update the assessment, then click “Save Changes”.</div>
         </div>
         <div>
           <div id="freezePill" class="pill"><span class="dot"></span> —</div>
@@ -170,7 +308,7 @@
 
           <h3 class="sectionTitle">Assessment details</h3>
 
-          <div class="grid2">
+          <div class="grid3">
             <div>
               <label>Grade</label>
               <select id="grade">
@@ -186,6 +324,15 @@
             <div>
               <label>Topic</label>
               <input id="topic" placeholder="e.g. Algebra" />
+            </div>
+
+            <div>
+              <label>Difficulty Level</label>
+              <select id="difficulty">
+                <option value="easy">Easy</option>
+                <option value="moderate">Moderate</option>
+                <option value="hard">Hard</option>
+              </select>
             </div>
           </div>
 
@@ -269,6 +416,7 @@
     const editArea = document.getElementById("editArea");
     const gradeEl = document.getElementById("grade");
     const topicEl = document.getElementById("topic");
+    const difficultyEl = document.getElementById("difficulty");
     const titleEl = document.getElementById("title");
     const instructionsEl = document.getElementById("instructions");
     const prevInstructions = document.getElementById("prevInstructions");
@@ -298,7 +446,16 @@
     }
     document.getElementById("logoutBtn").addEventListener("click", logout);
 
-    function cleanSpaces(s){ return String(s || "").trim().replace(/\s+/g, " "); }
+    function cleanSpaces(s){
+      return String(s || "").trim().replace(/\s+/g, " ");
+    }
+
+    function normalizeDifficulty(v){
+      const d = String(v || "").toLowerCase().trim();
+      if (d === "easy" || d === "moderate" || d === "hard") return d;
+      return "moderate";
+    }
+
     function pad2(n){ return String(n).padStart(2,"0"); }
 
     function isoToLocalInput(iso){
@@ -307,12 +464,14 @@
       if (isNaN(d.getTime())) return "";
       return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
     }
+
     function localInputToIso(val){
       if (!val) return null;
       const d = new Date(val);
       if (isNaN(d.getTime())) return null;
       return d.toISOString();
     }
+
     async function readErrorText(res){
       const txt = await res.text().catch(()=> "");
       return txt ? txt.slice(0, 800) : `HTTP ${res.status}`;
@@ -321,10 +480,12 @@
     function typesetMath(root=document){
       if (window.MathJax?.typesetPromise) window.MathJax.typesetPromise([root]).catch(()=>{});
     }
+
     function setPreviewText(el, text){
       el.textContent = text || "";
       typesetMath(el);
     }
+
     function renderInstructionsPreview(){
       const t = cleanSpaces(instructionsEl.value || "");
       setPreviewText(prevInstructions, t || "(Preview)");
@@ -343,6 +504,7 @@
 
     function availabilitySummary(q){
       if (!q) return { label:"—", cls:"pill", note:"" };
+
       const now = new Date();
       const from = q.availableFrom ? new Date(q.availableFrom) : null;
       const until = q.availableUntil ? new Date(q.availableUntil) : null;
@@ -404,21 +566,28 @@
         return false;
       }
 
-      if (me.role !== "admin" && me.role !== "editor") {
-        alert("Admin or editor only");
+      if (me.role !== "admin" && me.role !== "editor" && me.role !== "tester") {
+        alert("Admin, editor or tester only");
         window.location.href = "learner-quizzes.html";
         return false;
       }
+
       who.textContent = `Logged in as ${me.username} (${me.role})`;
       return true;
     }
 
     function escapeHtml(str){
       return String(str ?? "")
-        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
     }
-    function escapeAttr(str){ return String(str ?? "").replaceAll('"', "&quot;"); }
+
+    function escapeAttr(str){
+      return String(str ?? "").replaceAll('"', "&quot;");
+    }
 
     function renderDropdown(){
       const g = (gradeFilter.value || "").trim();
@@ -465,6 +634,7 @@
       }
 
       if (res.status === 401) return logout();
+
       if (!res.ok){
         setMsg("Could not load assessments: " + await readErrorText(res), "error");
         return;
@@ -505,6 +675,7 @@
 
       gradeEl.value = String(currentQuiz.grade ?? "");
       topicEl.value = cleanSpaces(currentQuiz.topic || "");
+      difficultyEl.value = normalizeDifficulty(currentQuiz.difficulty);
       titleEl.value = cleanSpaces(currentQuiz.title || "");
       instructionsEl.value = String(currentQuiz.instructions || "");
       timeLimitEl.value = String(currentQuiz.timeLimitMinutes ?? 10);
@@ -620,9 +791,6 @@
         `;
       }
 
-      const opts = Array.isArray(q?.options) ? q.options : ["","","",""];
-      const correctIndex = Number.isInteger(Number(q?.correctIndex)) ? Number(q.correctIndex) : 0;
-
       return `
         <div class="qcard" data-index="${i}" data-type="mcq">
           <div class="qhead">
@@ -688,12 +856,12 @@
       const sel = card.querySelector(".correctIndex");
       if (!sel) return;
 
-      const inputs = [...card.querySelectorAll(".optInput")];
+      const rows = [...card.querySelectorAll(".optRow")];
       const current = Number(sel.value);
 
-      sel.innerHTML = inputs.map((_,i)=>`<option value="${i}">${letter(i)}</option>`).join("");
+      sel.innerHTML = rows.map((_,i)=>`<option value="${i}">${letter(i)}</option>`).join("");
 
-      const next = (Number.isInteger(current) && current >= 0 && current < inputs.length) ? current : 0;
+      const next = (Number.isInteger(current) && current >= 0 && current < rows.length) ? current : 0;
       sel.value = String(next);
     }
 
@@ -717,7 +885,10 @@
 
       row.querySelector(".removeOptBtn").addEventListener("click", ()=>{
         const total = wrap.querySelectorAll(".optRow").length;
-        if (total <= 2) { alert("MCQ must have at least 2 options."); return; }
+        if (total <= 2) {
+          alert("MCQ must have at least 2 options.");
+          return;
+        }
         row.remove();
         relabelOptions(card);
         syncCorrectDropdown(card);
@@ -874,8 +1045,9 @@
           continue;
         }
 
-        const optInputs = [...card.querySelectorAll(".optInput")];
-        const options = optInputs.map(x => cleanSpaces(x.value)).filter(Boolean);
+        const optionRows = [...card.querySelectorAll(".optRow")];
+        const options = optionRows.map(r => cleanSpaces(r.querySelector(".optInput")?.value || "")).filter(Boolean);
+
         if (options.length < 2) throw new Error("MCQ must have at least 2 options.");
 
         const correctIndex = Number(card.querySelector(".correctIndex")?.value || 0);
@@ -940,6 +1112,7 @@
       try{
         const grade = Number(gradeEl.value);
         const topic = cleanSpaces(topicEl.value);
+        const difficulty = normalizeDifficulty(difficultyEl.value);
         const title = cleanSpaces(titleEl.value);
         const instructions = String(instructionsEl.value || "");
         const timeLimitMinutes = Number(timeLimitEl.value);
@@ -969,8 +1142,21 @@
         try {
           res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-            body: JSON.stringify({ grade, topic, title, instructions, timeLimitMinutes, availableFrom, availableUntil, questions })
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token
+            },
+            body: JSON.stringify({
+              grade,
+              topic,
+              difficulty,
+              title,
+              instructions,
+              timeLimitMinutes,
+              availableFrom,
+              availableUntil,
+              questions
+            })
           });
         } catch {
           setMsg("Network error while saving. Please refresh page.", "error");
@@ -1006,8 +1192,14 @@
       try {
         res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-          body: JSON.stringify({ isFrozen: nextFrozen, frozenAt: nextFrozen ? new Date().toISOString() : null })
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token
+          },
+          body: JSON.stringify({
+            isFrozen: nextFrozen,
+            frozenAt: nextFrozen ? new Date().toISOString() : null
+          })
         });
       } catch {
         setMsg("Network error while updating availability. Please refresh page.", "error");
@@ -1058,14 +1250,15 @@
 
       gradeEl.value = "";
       topicEl.value = "";
+      difficultyEl.value = "moderate";
       titleEl.value = "";
       instructionsEl.value = "";
       renderInstructionsPreview();
       availableFromEl.value = "";
       availableUntilEl.value = "";
       timeLimitEl.value = "";
-
       questionsWrap.innerHTML = "";
+
       freezeBtn.disabled = true;
       deleteBtn.disabled = true;
       editArea.classList.add("disabledBox");
@@ -1094,8 +1287,15 @@
       loadAssessmentById(id);
     });
 
-    gradeFilter.addEventListener("change", () => { renderDropdown(); assessmentSelect.value = ""; });
-    searchBox.addEventListener("input", () => { renderDropdown(); assessmentSelect.value = ""; });
+    gradeFilter.addEventListener("change", () => {
+      renderDropdown();
+      assessmentSelect.value = "";
+    });
+
+    searchBox.addEventListener("input", () => {
+      renderDropdown();
+      assessmentSelect.value = "";
+    });
 
     (async () => {
       const ok = await requireAdminOrEditor();
