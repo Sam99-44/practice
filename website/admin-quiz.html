@@ -356,25 +356,32 @@
       <button class="smallbtn" id="addTextBtn" type="button">+ Add Typed Answer</button>
     </div>
 
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; align-items:center;">
-      <input id="uploadFile" type="file" accept=".txt" style="max-width:260px;" />
-      <button class="smallbtn" id="uploadBtn" type="button">Upload & Auto Fill</button>
-    </div>
+    <div class="infoBox" style="margin-top:12px;">
+      <b>Import from .txt</b>
 
-    <div class="muted tiny" style="margin-top:6px;">
-      Upload a <b>.txt</b> file in this format:
-      <br />
-      QUESTION: What is 2+2?
-      <br />
-      A: 3
-      <br />
-      B: 4
-      <br />
-      C: 5
-      <br />
-      D: 6
-      <br />
-      ANSWER: B
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center;">
+        <input id="uploadFile" type="file" accept=".txt" style="max-width:260px;" />
+        <button class="smallbtn" id="uploadBtn" type="button">Upload & Auto Fill Current Assessment</button>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; align-items:center;">
+        <input id="batchFiles" type="file" accept=".txt" multiple style="max-width:320px;" />
+        <button class="smallbtn" id="batchUploadBtn" type="button">Batch Upload Many Files</button>
+      </div>
+
+      <div class="muted tiny" style="margin-top:10px;">
+        Supported assessment fields in each file:
+        <br />
+        GRADE:, TOPIC:, TITLE:, TIME_LIMIT:, DIFFICULTY:, PAPER:, INSTRUCTIONS:
+        <br />
+        Optional publish fields:
+        <br />
+        PUBLISH_MODE:, PUBLISH_AT:, AVAILABLE_FROM:, AVAILABLE_UNTIL:, SEND_EMAIL:
+        <br />
+        Supported blocks:
+        <br />
+        HEADING:, NOTE:, QUESTION:, A:, B:, C:, D:, ANSWER:, POINTS: or MARKS:, HINT:, SOLUTION:
+      </div>
     </div>
 
     <hr>
@@ -417,6 +424,8 @@
     const addTextBtn = document.getElementById("addTextBtn");
     const uploadFileEl = document.getElementById("uploadFile");
     const uploadBtn = document.getElementById("uploadBtn");
+    const batchFilesEl = document.getElementById("batchFiles");
+    const batchUploadBtn = document.getElementById("batchUploadBtn");
     const questionsWrap = document.getElementById("questionsWrap");
 
     let currentRole = "";
@@ -753,14 +762,81 @@
           return;
         }
 
-        setMsg("Reading file and filling questions...", "muted");
+        setMsg("Reading file and filling assessment...", "muted");
 
         const text = await readUploadedTextFile(file);
-        parseAndFillFromText(text);
+        const parsed = parseAssessmentFile(text, file.name);
+        fillAssessmentForm(parsed);
 
-        setMsg("Questions loaded successfully. Please review before saving.", "ok");
+        setMsg("Assessment loaded successfully. Please review before saving.", "ok");
       } catch (err) {
         setMsg(err.message || "Could not read the file.", "error");
+      }
+    });
+
+    batchUploadBtn.addEventListener("click", async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setMsg("You are not logged in. Please log in before batch upload.", "error");
+        return;
+      }
+
+      const files = [...(batchFilesEl.files || [])];
+      if (!files.length) {
+        alert("Please choose one or more .txt files first.");
+        return;
+      }
+
+      const bad = files.find(file => !(file.type === "text/plain" || /\.txt$/i.test(file.name)));
+      if (bad) {
+        alert("Only .txt files are supported for batch upload.");
+        return;
+      }
+
+      saveBtn.disabled = true;
+      publishBtn.disabled = true;
+      batchUploadBtn.disabled = true;
+      uploadBtn.disabled = true;
+
+      try {
+        setMsg(`Batch uploading ${files.length} file(s)...`, "muted");
+
+        const results = [];
+        for (const file of files) {
+          try {
+            const text = await readUploadedTextFile(file);
+            const parsed = parseAssessmentFile(text, file.name);
+            const payload = buildPayloadFromParsedAssessment(parsed);
+
+            const res = await fetch(`${API}/api/quizzes`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+              },
+              body: JSON.stringify(payload)
+            });
+
+            const data = await res.json().catch(()=>({}));
+            if (!res.ok) throw new Error(data.message || "Could not save assessment");
+
+            results.push(`✓ ${file.name}`);
+          } catch (err) {
+            results.push(`✗ ${file.name}: ${err.message || "Upload failed"}`);
+          }
+        }
+
+        const failures = results.filter(r => r.startsWith("✗")).length;
+        if (failures) {
+          setMsg(`Batch upload finished with ${failures} failure(s). ${results.join(" | ")}`, "error");
+        } else {
+          setMsg(`Batch upload finished successfully. ${results.join(" | ")}`, "ok");
+        }
+      } finally {
+        saveBtn.disabled = false;
+        publishBtn.disabled = !canPublish;
+        batchUploadBtn.disabled = false;
+        uploadBtn.disabled = false;
       }
     });
 
@@ -993,11 +1069,35 @@
       qCount = 0;
     }
 
-    function splitQuestionBlocks(text){
+    function parseBooleanLike(value, fallback=false){
+      const v = String(value || "").trim().toLowerCase();
+      if (!v) return fallback;
+      if (["true","yes","y","1","on"].includes(v)) return true;
+      if (["false","no","n","0","off"].includes(v)) return false;
+      return fallback;
+    }
+
+    function normalizePublishMode(v){
+      const p = String(v || "").trim().toLowerCase();
+      if (p === "draft" || p === "now" || p === "schedule") return p;
+      return "draft";
+    }
+
+    function splitAssessmentLines(text){
+      return String(text || "").replace(/\r/g, "").split("\n");
+    }
+
+    function parseKeyValueLine(line){
+      const m = String(line || "").match(/^([A-Z_]+)\s*:\s*(.*)$/i);
+      if (!m) return null;
+      return { key: m[1].toUpperCase(), value: m[2] || "" };
+    }
+
+    function splitQuestionLikeBlocks(text){
       const raw = String(text || "").replace(/\r/g, "").trim();
       if (!raw) return [];
       return raw
-        .split(/(?=^QUESTION\s*:)/gim)
+        .split(/(?=^(?:HEADING|NOTE|QUESTION)\s*:)/gim)
         .map(b => b.trim())
         .filter(Boolean);
     }
@@ -1021,13 +1121,13 @@
           continue;
         }
 
-        if (/^HINT\s*:/i.test(line)) {
+        if (/^HINT\s*:/i.test(line) && !inSolution) {
           hint = line.replace(/^HINT\s*:/i, "").trim();
           continue;
         }
 
-        if (/^POINTS\s*:/i.test(line)) {
-          const p = Number(line.replace(/^POINTS\s*:/i, "").trim());
+        if (/^(POINTS|MARKS)\s*:/i.test(line) && !inSolution) {
+          const p = Number(line.replace(/^(POINTS|MARKS)\s*:/i, "").trim());
           if (Number.isInteger(p) && p >= 1) points = p;
           continue;
         }
@@ -1061,7 +1161,7 @@
       solution = solutionLines.join("\n").trim();
 
       if (!question) {
-        throw new Error("Each block must start with QUESTION:");
+        throw new Error("Each question block must start with QUESTION:");
       }
 
       if (options.length < 2) {
@@ -1078,12 +1178,152 @@
       }
 
       return {
+        type: "mcq",
         question,
         hint,
         solution,
         points,
         options: options.map(o => o.value),
         correctIndexes
+      };
+    }
+
+    function parseNoteBlock(block){
+      const line = String(block || "").trim();
+      if (/^HEADING\s*:/i.test(line)) {
+        return {
+          type: "note",
+          text: line.replace(/^HEADING\s*:/i, "").trim()
+        };
+      }
+      if (/^NOTE\s*:/i.test(line)) {
+        return {
+          type: "note",
+          text: line.replace(/^NOTE\s*:/i, "").trim()
+        };
+      }
+      throw new Error("Note block must start with HEADING: or NOTE:");
+    }
+
+    function parseAssessmentFile(text, fallbackName=""){
+      const raw = String(text || "").replace(/\r/g, "").trim();
+      if (!raw) throw new Error("The selected file is empty.");
+
+      const lines = splitAssessmentLines(raw);
+      const meta = {
+        grade: "",
+        topic: "",
+        title: "",
+        timeLimitMinutes: 10,
+        difficulty: "moderate",
+        paper: "paper1",
+        instructions: "",
+        publishMode: "draft",
+        publishAt: "",
+        availableFrom: "",
+        availableUntil: "",
+        sendPublishEmail: true
+      };
+
+      const bodyLines = [];
+      let inBody = false;
+
+      for (const originalLine of lines) {
+        const line = originalLine.trim();
+        if (!line) {
+          if (inBody) bodyLines.push(originalLine);
+          continue;
+        }
+
+        if (/^(HEADING|NOTE|QUESTION)\s*:/i.test(line)) {
+          inBody = true;
+          bodyLines.push(originalLine);
+          continue;
+        }
+
+        if (!inBody) {
+          const kv = parseKeyValueLine(line);
+          if (!kv) continue;
+
+          switch (kv.key) {
+            case "GRADE":
+              meta.grade = kv.value.trim();
+              break;
+            case "TOPIC":
+              meta.topic = kv.value.trim();
+              break;
+            case "TITLE":
+              meta.title = kv.value.trim();
+              break;
+            case "TIME_LIMIT":
+            case "TIME":
+            case "TIME_LIMIT_MINUTES":
+              meta.timeLimitMinutes = kv.value.trim() || 10;
+              break;
+            case "DIFFICULTY":
+              meta.difficulty = kv.value.trim();
+              break;
+            case "PAPER":
+              meta.paper = kv.value.trim();
+              break;
+            case "INSTRUCTIONS":
+              meta.instructions = kv.value.trim();
+              break;
+            case "PUBLISH_MODE":
+              meta.publishMode = kv.value.trim();
+              break;
+            case "PUBLISH_AT":
+              meta.publishAt = kv.value.trim();
+              break;
+            case "AVAILABLE_FROM":
+              meta.availableFrom = kv.value.trim();
+              break;
+            case "AVAILABLE_UNTIL":
+              meta.availableUntil = kv.value.trim();
+              break;
+            case "SEND_EMAIL":
+              meta.sendPublishEmail = parseBooleanLike(kv.value, true);
+              break;
+            default:
+              break;
+          }
+          continue;
+        }
+
+        bodyLines.push(originalLine);
+      }
+
+      if (!meta.title) {
+        const guessed = String(fallbackName || "").replace(/\.txt$/i, "").replace(/[_-]+/g, " ").trim();
+        meta.title = guessed || "Imported Assessment";
+      }
+
+      const blocks = splitQuestionLikeBlocks(bodyLines.join("\n"));
+      if (!blocks.length) {
+        throw new Error("No HEADING:, NOTE:, or QUESTION: blocks found.");
+      }
+
+      const items = blocks.map(block => {
+        if (/^(HEADING|NOTE)\s*:/i.test(block)) return parseNoteBlock(block);
+        return parseQuestionBlock(block);
+      });
+
+      return {
+        meta: {
+          grade: String(meta.grade || "").trim(),
+          topic: String(meta.topic || "").trim(),
+          title: String(meta.title || "").trim(),
+          timeLimitMinutes: Number(meta.timeLimitMinutes || 10),
+          difficulty: normalizeDifficulty(meta.difficulty),
+          paper: normalizePaper(meta.paper),
+          instructions: String(meta.instructions || "").trim(),
+          publishMode: normalizePublishMode(meta.publishMode),
+          publishAt: String(meta.publishAt || "").trim(),
+          availableFrom: String(meta.availableFrom || "").trim(),
+          availableUntil: String(meta.availableUntil || "").trim(),
+          sendPublishEmail: !!meta.sendPublishEmail
+        },
+        items
       };
     }
 
@@ -1104,133 +1344,115 @@
       renderCardPreview(card);
     }
 
-    function parseAndFillFromText(text){
-      const blocks = splitQuestionBlocks(text);
+    function fillNoteCard(card, data){
+      card.querySelector(".noteText").value = data.text || "";
+      renderCardPreview(card);
+    }
 
-      if (!blocks.length) {
-        throw new Error("No questions found. Make sure the file uses QUESTION: format.");
-      }
+    function fillAssessmentForm(parsed){
+      const meta = parsed.meta || {};
+
+      if (meta.grade) gradeEl.value = String(meta.grade);
+      topicEl.value = meta.topic || "";
+      titleEl.value = meta.title || "";
+      timeLimitEl.value = Number.isFinite(Number(meta.timeLimitMinutes)) ? String(meta.timeLimitMinutes) : "10";
+      difficultyEl.value = normalizeDifficulty(meta.difficulty);
+      paperEl.value = normalizePaper(meta.paper);
+      instructionsEl.value = meta.instructions || "";
+      publishModeEl.value = normalizePublishMode(meta.publishMode);
+      publishAtEl.value = meta.publishAt || "";
+      availableFromEl.value = meta.availableFrom || "";
+      availableUntilEl.value = meta.availableUntil || "";
+      sendPublishEmailEl.checked = !!meta.sendPublishEmail;
+
+      renderInstructionsPreview();
+      updatePublishUI();
 
       clearAllCards();
 
-      for (const block of blocks) {
-        const parsed = parseQuestionBlock(block);
-        addMcq();
-
-        const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='mcq']")];
-        const card = cards[cards.length - 1];
-        fillMcqCard(card, parsed);
+      for (const item of parsed.items || []) {
+        if (item.type === "note") {
+          addNote();
+          const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='note']")];
+          fillNoteCard(cards[cards.length - 1], item);
+        } else if (item.type === "mcq") {
+          addMcq();
+          const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='mcq']")];
+          fillMcqCard(cards[cards.length - 1], item);
+        }
       }
 
       renumberCards();
       setupDragAndDrop();
     }
 
-    async function readUploadedTextFile(file){
-      return await file.text();
-    }
+    function buildPayloadFromParsedAssessment(parsed){
+      const meta = parsed.meta || {};
+      const grade = Number(meta.grade);
+      const topic = toTitleCase(meta.topic || "");
+      const title = toTitleCase(meta.title || "");
+      const timeLimitMinutes = Number(meta.timeLimitMinutes || 10);
+      const instructions = cleanSpaces(meta.instructions || "");
+      const difficulty = normalizeDifficulty(meta.difficulty);
+      const paper = normalizePaper(meta.paper);
+      const availableFrom = meta.availableFrom || null;
+      const availableUntil = meta.availableUntil || null;
+      const publishMode = normalizePublishMode(meta.publishMode);
+      const publishAt = meta.publishAt || null;
 
-    addMcq();
-    setupDragAndDrop();
-
-    function collectQuestions(){
-      const cards = [...questionsWrap.querySelectorAll(".qcard")];
-      if (cards.length === 0) throw new Error("Add at least 1 question.");
-
-      const questions = [];
-
-      for (const card of cards) {
-        const type = card.getAttribute("data-type") || "mcq";
-
-        if (type === "note") {
-          const noteText = cleanSpaces(card.querySelector(".noteText")?.value);
-          if (!noteText) throw new Error("Please fill in the note/heading text.");
-          questions.push({ type: "note", text: noteText });
-          continue;
-        }
-
-        const text = cleanSpaces(card.querySelector(".qText")?.value);
-        if (!text) throw new Error("Please fill in all question texts.");
-
-        const hint = cleanSpaces(card.querySelector(".qHint")?.value || "");
-        const imageUrl =
-          cleanSpaces(card.querySelector(".qImage")?.value || "") ||
-          cleanSpaces(card.querySelector(".qImage2")?.value || "");
-
-        const pointsRaw = cleanSpaces(card.querySelector(".qPoints")?.value || "1");
-        const points = Number(pointsRaw);
-        if (!Number.isInteger(points) || points < 1) {
-          throw new Error("Marks must be a whole number (1 or more) for each question.");
-        }
-
-        const solution = cleanSpaces(card.querySelector(".qSolution")?.value || "");
-
-        if (type === "text") {
-          const correctText = cleanSpaces(card.querySelector(".correctText")?.value);
-          const textAnswerMode = card.querySelector(".textMode")?.value || "exact";
-          const toleranceRaw = cleanSpaces(card.querySelector(".tolerance")?.value);
-
-          if (!correctText) throw new Error("Please enter the correct answer for every typed question.");
-
-          let numberTolerance = null;
-          if (textAnswerMode === "number_tolerance") {
-            const tol = Number(toleranceRaw);
-            if (!Number.isFinite(tol) || tol < 0) {
-              throw new Error("Please enter a valid tolerance (0 or more) for Number mode.");
-            }
-            numberTolerance = tol;
-          }
-
-          questions.push({
-            type: "text",
-            text,
-            hint: hint || "",
-            imageUrl: imageUrl || "",
-            points,
-            correctText,
-            textAnswerMode,
-            numberTolerance,
-            solution: solution || ""
-          });
-
-        } else {
-          const optRows = [...card.querySelectorAll(".optRow")];
-
-          const included = optRows.map((r) => {
-            const txt = cleanSpaces(r.querySelector(".optInput")?.value || "");
-            if (!txt) return null;
-            return {
-              text: txt,
-              correct: !!r.querySelector(".optCorrect")?.checked
-            };
-          }).filter(Boolean);
-
-          const options = included.map(o => o.text);
-          const correctedIndexes = [];
-          included.forEach((o, idx) => { if (o.correct) correctedIndexes.push(idx); });
-
-          if (options.length < 2) throw new Error("MCQ must have at least 2 options.");
-          if (correctedIndexes.length < 1) throw new Error("Please tick at least ONE correct option for every MCQ.");
-
-          const payload = {
-            type: "mcq",
-            text,
-            hint: hint || "",
-            imageUrl: imageUrl || "",
-            points,
-            options,
-            correctIndexes: correctedIndexes,
-            isMultiSelect: correctedIndexes.length >= 2,
-            solution: solution || ""
-          };
-
-          if (correctedIndexes.length === 1) payload.correctIndex = correctedIndexes[0];
-
-          questions.push(payload);
-        }
+      if (!grade) throw new Error(`Missing or invalid GRADE in "${meta.title || "file"}".`);
+      if (!topic) throw new Error(`Missing TOPIC in "${meta.title || "file"}".`);
+      if (!title) throw new Error(`Missing TITLE in "${meta.title || "file"}".`);
+      if (!Number.isFinite(timeLimitMinutes) || timeLimitMinutes < 1 || timeLimitMinutes > 180) {
+        throw new Error(`Invalid TIME_LIMIT in "${meta.title || "file"}".`);
       }
 
-      return questions;
+      const questions = (parsed.items || []).map(item => {
+        if (item.type === "note") {
+          return { type: "note", text: cleanSpaces(item.text || "") };
+        }
+
+        const options = [...(item.options || [])];
+        const correctIndexes = [...(item.correctIndexes || [])];
+        const payload = {
+          type: "mcq",
+          text: cleanSpaces(item.question || ""),
+          hint: cleanSpaces(item.hint || ""),
+          imageUrl: "",
+          points: Number(item.points || 1),
+          options,
+          correctIndexes,
+          isMultiSelect: correctIndexes.length >= 2,
+          solution: String(item.solution || "").trim()
+        };
+        if (correctIndexes.length === 1) payload.correctIndex = correctIndexes[0];
+        return payload;
+      });
+
+      let publishNow = false;
+      let finalPublishAt = null;
+      if (publishMode === "now") publishNow = true;
+      else if (publishMode === "schedule") finalPublishAt = publishAt;
+
+      return {
+        grade,
+        title,
+        topic,
+        paper,
+        timeLimitMinutes,
+        instructions,
+        difficulty,
+        questions,
+        publishNow,
+        publishAt: finalPublishAt,
+        availableFrom,
+        availableUntil,
+        sendPublishEmail: !!meta.sendPublishEmail
+      };
+    }
+
+    async function readUploadedTextFile(file){
+      return await file.text();
     }
 
     async function buildPayload(modeOverride = null){
