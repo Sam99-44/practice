@@ -997,7 +997,7 @@
       const raw = String(text || "").replace(/\r/g, "").trim();
       if (!raw) return [];
       return raw
-        .split(/(?=^QUESTION\s*:)/gim)
+        .split(/(?=^(?:HEADING|NOTE|QUESTION)\s*:)/gim)
         .map(b => b.trim())
         .filter(Boolean);
     }
@@ -1061,7 +1061,7 @@
       solution = solutionLines.join("\n").trim();
 
       if (!question) {
-        throw new Error("Each block must start with QUESTION:");
+        throw new Error("Each block must start with HEADING:, NOTE:, or QUESTION:");
       }
 
       if (options.length < 2) {
@@ -1108,7 +1108,7 @@
       const blocks = splitQuestionBlocks(text);
 
       if (!blocks.length) {
-        throw new Error("No questions found. Make sure the file uses QUESTION: format.");
+        throw new Error("No valid blocks found. Use HEADING:, NOTE:, or QUESTION:.");
       }
 
       clearAllCards();
