@@ -356,6 +356,27 @@
       <button class="smallbtn" id="addTextBtn" type="button">+ Add Typed Answer</button>
     </div>
 
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; align-items:center;">
+      <input id="uploadFile" type="file" accept=".txt" style="max-width:260px;" />
+      <button class="smallbtn" id="uploadBtn" type="button">Upload & Auto Fill</button>
+    </div>
+
+    <div class="muted tiny" style="margin-top:6px;">
+      Upload a <b>.txt</b> file in this format:
+      <br />
+      QUESTION: What is 2+2?
+      <br />
+      A: 3
+      <br />
+      B: 4
+      <br />
+      C: 5
+      <br />
+      D: 6
+      <br />
+      ANSWER: B
+    </div>
+
     <hr>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -394,6 +415,8 @@
     const addNoteBtn = document.getElementById("addNoteBtn");
     const addMcqBtn = document.getElementById("addMcqBtn");
     const addTextBtn = document.getElementById("addTextBtn");
+    const uploadFileEl = document.getElementById("uploadFile");
+    const uploadBtn = document.getElementById("uploadBtn");
     const questionsWrap = document.getElementById("questionsWrap");
 
     let currentRole = "";
@@ -713,6 +736,34 @@
     addMcqBtn.addEventListener("click", addMcq);
     addTextBtn.addEventListener("click", addText);
 
+    uploadBtn.addEventListener("click", async () => {
+      try {
+        const file = uploadFileEl.files?.[0];
+        if (!file) {
+          alert("Please choose a .txt file first.");
+          return;
+        }
+
+        const isTxt =
+          file.type === "text/plain" ||
+          /\.txt$/i.test(file.name);
+
+        if (!isTxt) {
+          alert("Only .txt files are supported in this version.");
+          return;
+        }
+
+        setMsg("Reading file and filling questions...", "muted");
+
+        const text = await readUploadedTextFile(file);
+        parseAndFillFromText(text);
+
+        setMsg("Questions loaded successfully. Please review before saving.", "ok");
+      } catch (err) {
+        setMsg(err.message || "Could not read the file.", "error");
+      }
+    });
+
     questionsWrap.addEventListener("click", (e) => {
       if (e.target.classList.contains("removeBtn")) {
         e.target.closest(".qcard").remove();
@@ -934,6 +985,149 @@
           renumberCards();
         });
       });
+    }
+
+
+    function clearAllCards(){
+      questionsWrap.innerHTML = "";
+      qCount = 0;
+    }
+
+    function splitQuestionBlocks(text){
+      const raw = String(text || "").replace(/\r/g, "").trim();
+      if (!raw) return [];
+      return raw
+        .split(/(?=^QUESTION\s*:)/gim)
+        .map(b => b.trim())
+        .filter(Boolean);
+    }
+
+    function parseQuestionBlock(block){
+      const lines = block.split("\n").map(l => l.trim()).filter(Boolean);
+
+      let question = "";
+      let hint = "";
+      let solution = "";
+      let points = 1;
+      const options = [];
+      const correctLetters = [];
+
+      let inSolution = false;
+      let solutionLines = [];
+
+      for (const line of lines) {
+        if (/^QUESTION\s*:/i.test(line)) {
+          question = line.replace(/^QUESTION\s*:/i, "").trim();
+          continue;
+        }
+
+        if (/^HINT\s*:/i.test(line)) {
+          hint = line.replace(/^HINT\s*:/i, "").trim();
+          continue;
+        }
+
+        if (/^POINTS\s*:/i.test(line)) {
+          const p = Number(line.replace(/^POINTS\s*:/i, "").trim());
+          if (Number.isInteger(p) && p >= 1) points = p;
+          continue;
+        }
+
+        if (/^SOLUTION\s*:/i.test(line)) {
+          inSolution = true;
+          const rest = line.replace(/^SOLUTION\s*:/i, "").trim();
+          if (rest) solutionLines.push(rest);
+          continue;
+        }
+
+        if (/^[A-D]\s*:/i.test(line) && !inSolution) {
+          const label = line.charAt(0).toUpperCase();
+          const value = line.replace(/^[A-D]\s*:/i, "").trim();
+          options.push({ label, value });
+          continue;
+        }
+
+        if (/^ANSWER\s*:/i.test(line) && !inSolution) {
+          const ansRaw = line.replace(/^ANSWER\s*:/i, "").trim().toUpperCase();
+          const matches = ansRaw.match(/[A-D]/g);
+          if (matches) correctLetters.push(...matches);
+          continue;
+        }
+
+        if (inSolution) {
+          solutionLines.push(line);
+        }
+      }
+
+      solution = solutionLines.join("\n").trim();
+
+      if (!question) {
+        throw new Error("Each block must start with QUESTION:");
+      }
+
+      if (options.length < 2) {
+        throw new Error(`Question "${question}" must have at least 2 options.`);
+      }
+
+      const correctIndexes = [];
+      options.forEach((opt, idx) => {
+        if (correctLetters.includes(opt.label)) correctIndexes.push(idx);
+      });
+
+      if (correctIndexes.length < 1) {
+        throw new Error(`Question "${question}" must have at least one ANSWER.`);
+      }
+
+      return {
+        question,
+        hint,
+        solution,
+        points,
+        options: options.map(o => o.value),
+        correctIndexes
+      };
+    }
+
+    function fillMcqCard(card, data){
+      card.querySelector(".qText").value = data.question || "";
+      card.querySelector(".qHint").value = data.hint || "";
+      card.querySelector(".qPoints").value = data.points || 1;
+      card.querySelector(".qSolution").value = data.solution || "";
+
+      const wrap = card.querySelector(".optsWrap");
+      wrap.innerHTML = "";
+
+      data.options.forEach((opt, i) => {
+        addOption(card, opt, data.correctIndexes.includes(i));
+      });
+
+      relabelOptions(card);
+      renderCardPreview(card);
+    }
+
+    function parseAndFillFromText(text){
+      const blocks = splitQuestionBlocks(text);
+
+      if (!blocks.length) {
+        throw new Error("No questions found. Make sure the file uses QUESTION: format.");
+      }
+
+      clearAllCards();
+
+      for (const block of blocks) {
+        const parsed = parseQuestionBlock(block);
+        addMcq();
+
+        const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='mcq']")];
+        const card = cards[cards.length - 1];
+        fillMcqCard(card, parsed);
+      }
+
+      renumberCards();
+      setupDragAndDrop();
+    }
+
+    async function readUploadedTextFile(file){
+      return await file.text();
     }
 
     addMcq();
