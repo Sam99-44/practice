@@ -16,7 +16,7 @@
      ✅ Available From / Available Until
      ✅ Send email to students checkbox
      ✅ Save draft sends NO learner email
-     ✅ Only admin/tester can publish
+     ✅ Admin + editor + tester can publish
      ✅ Admin + editor + tester can access this page
      ✅ Add buttons moved to bottom
      ✅ Page stays open while working
@@ -361,6 +361,11 @@
       <button class="smallbtn" id="uploadBtn" type="button">Upload & Auto Fill</button>
     </div>
 
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center;">
+      <input id="batchFiles" type="file" accept=".txt" multiple style="max-width:260px;" />
+      <button class="smallbtn" id="batchUploadBtn" type="button">Batch Upload .txt Files</button>
+    </div>
+
     <div class="muted tiny" style="margin-top:6px;">
       Upload a <b>.txt</b> file in this format:
       <br />
@@ -531,14 +536,14 @@
       }
 
       currentRole = role;
-      canPublish = role === "admin" || role === "tester";
+      canPublish = ["admin", "tester", "editor"].includes(role);
 
       who.textContent = `Logged in as: ${me.username} (${me.role})`;
       saveBtn.disabled = false;
       publishBtn.disabled = !canPublish;
 
       if (!canPublish) {
-        publishBtn.title = "Only admin/tester can publish assessments.";
+        publishBtn.title = "Admin, tester, and editor can publish assessments.";
       }
 
       setMsg("Ready to add an assessment.", "ok");
@@ -1650,7 +1655,7 @@ addMcq();
       }
 
       if (!canPublish) {
-        return setMsg("Only admin/tester can publish assessments.", "error");
+        return setMsg("Only admin, tester, and editor can publish assessments.", "error");
       }
 
       try{
