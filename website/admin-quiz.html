@@ -417,6 +417,8 @@
     const addTextBtn = document.getElementById("addTextBtn");
     const uploadFileEl = document.getElementById("uploadFile");
     const uploadBtn = document.getElementById("uploadBtn");
+    const batchFilesEl = document.getElementById("batchFiles");
+    const batchUploadBtn = document.getElementById("batchUploadBtn");
     const questionsWrap = document.getElementById("questionsWrap");
 
     let currentRole = "";
@@ -753,14 +755,81 @@
           return;
         }
 
-        setMsg("Reading file and filling questions...", "muted");
+        setMsg("Reading file and filling assessment...", "muted");
 
         const text = await readUploadedTextFile(file);
-        parseAndFillFromText(text);
+        const parsed = parseAssessmentFile(text, file.name);
+        fillAssessmentForm(parsed);
 
-        setMsg("Questions loaded successfully. Please review before saving.", "ok");
+        setMsg("Assessment loaded successfully. Please review before saving.", "ok");
       } catch (err) {
         setMsg(err.message || "Could not read the file.", "error");
+      }
+    });
+
+    batchUploadBtn.addEventListener("click", async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setMsg("You are not logged in. Please log in before batch upload.", "error");
+        return;
+      }
+
+      const files = [...(batchFilesEl.files || [])];
+      if (!files.length) {
+        alert("Please choose one or more .txt files first.");
+        return;
+      }
+
+      const bad = files.find(file => !(file.type === "text/plain" || /\.txt$/i.test(file.name)));
+      if (bad) {
+        alert("Only .txt files are supported for batch upload.");
+        return;
+      }
+
+      saveBtn.disabled = true;
+      publishBtn.disabled = true;
+      batchUploadBtn.disabled = true;
+      uploadBtn.disabled = true;
+
+      try {
+        setMsg(`Batch uploading ${files.length} file(s)...`, "muted");
+
+        const results = [];
+        for (const file of files) {
+          try {
+            const text = await readUploadedTextFile(file);
+            const parsed = parseAssessmentFile(text, file.name);
+            const payload = buildPayloadFromParsedAssessment(parsed);
+
+            const res = await fetch(`${API}/api/quizzes`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+              },
+              body: JSON.stringify(payload)
+            });
+
+            const data = await res.json().catch(()=>({}));
+            if (!res.ok) throw new Error(data.message || "Could not save assessment");
+
+            results.push(`✓ ${file.name}`);
+          } catch (err) {
+            results.push(`✗ ${file.name}: ${err.message || "Upload failed"}`);
+          }
+        }
+
+        const failures = results.filter(r => r.startsWith("✗")).length;
+        if (failures) {
+          setMsg(`Batch upload finished with ${failures} failure(s). ${results.join(" | ")}`, "error");
+        } else {
+          setMsg(`Batch upload finished successfully. ${results.join(" | ")}`, "ok");
+        }
+      } finally {
+        saveBtn.disabled = false;
+        publishBtn.disabled = !canPublish;
+        batchUploadBtn.disabled = false;
+        uploadBtn.disabled = false;
       }
     });
 
@@ -993,56 +1062,143 @@
       qCount = 0;
     }
 
+    function parseBooleanLike(value, fallback=false){
+      const v = String(value || "").trim().toLowerCase();
+      if (!v) return fallback;
+      if (["true","yes","y","1","on"].includes(v)) return true;
+      if (["false","no","n","0","off"].includes(v)) return false;
+      return fallback;
+    }
+
+    function normalizePublishMode(v){
+      const p = String(v || "").toLowerCase().trim();
+      if (p === "draft" || p === "now" || p === "schedule") return p;
+      return "draft";
+    }
+
     function splitQuestionBlocks(text){
       const raw = String(text || "").replace(/\r/g, "").trim();
       if (!raw) return [];
       return raw
-        .split(/(?=^(?:HEADING|NOTE|QUESTION)\s*:)/gim)
+        .split(/(?=^(?:HEADING|NOTE|QUESTION\s*:|QUESTION\s+\d+|(?:\d+\.)?\d+\.\d+\s))/gim)
         .map(b => b.trim())
         .filter(Boolean);
     }
 
-    function parseQuestionBlock(block){
-      const lines = block.split("\n").map(l => l.trim()).filter(Boolean);
+    function parseAssessmentMetadata(raw, fallbackName=""){
+      const lines = String(raw || "").replace(/\r/g, "").split("\n");
+      const meta = {
+        grade: "",
+        topic: "",
+        title: "",
+        timeLimitMinutes: 10,
+        difficulty: "moderate",
+        paper: "paper1",
+        instructions: "",
+        publishMode: "draft",
+        publishAt: "",
+        availableFrom: "",
+        availableUntil: "",
+        sendPublishEmail: true
+      };
 
+      for (const rawLine of lines){
+        const line = rawLine.trim();
+        if (!line) continue;
+        const m = line.match(/^([A-Z_]+)\s*:\s*(.*)$/i);
+        if (!m) continue;
+        const key = m[1].toUpperCase();
+        const value = m[2] || "";
+        if (/^(HEADING|NOTE|QUESTION|A|B|C|D|ANSWER|SOLUTION|HINT)$/i.test(key)) continue;
+
+        switch (key) {
+          case "GRADE": meta.grade = value.trim(); break;
+          case "TOPIC": meta.topic = value.trim(); break;
+          case "TITLE": meta.title = value.trim(); break;
+          case "TIME_LIMIT":
+          case "TIME":
+          case "TIME_LIMIT_MINUTES": meta.timeLimitMinutes = Number(value.trim() || 10); break;
+          case "DIFFICULTY": meta.difficulty = value.trim(); break;
+          case "PAPER": meta.paper = value.trim(); break;
+          case "INSTRUCTIONS": meta.instructions = value.trim(); break;
+          case "PUBLISH_MODE": meta.publishMode = value.trim(); break;
+          case "PUBLISH_AT": meta.publishAt = value.trim(); break;
+          case "AVAILABLE_FROM": meta.availableFrom = value.trim(); break;
+          case "AVAILABLE_UNTIL": meta.availableUntil = value.trim(); break;
+          case "SEND_EMAIL": meta.sendPublishEmail = parseBooleanLike(value, true); break;
+        }
+      }
+
+      if (!meta.title) {
+        const guessed = String(fallbackName || "").replace(/\.txt$/i, "").replace(/[_-]+/g, " ").trim();
+        meta.title = guessed || "Imported Assessment";
+      }
+      return meta;
+    }
+
+    function parseQuestionBlock(block){
+      const raw = String(block || "").replace(/\r/g, "").trim();
+      const lines = raw.split("\n");
       let question = "";
       let hint = "";
       let solution = "";
       let points = 1;
       const options = [];
       const correctLetters = [];
-
       let inSolution = false;
-      let solutionLines = [];
+      const solutionLines = [];
 
-      for (const line of lines) {
+      for (let rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) {
+          if (inSolution) solutionLines.push(rawLine);
+          continue;
+        }
+
         if (/^QUESTION\s*:/i.test(line)) {
           question = line.replace(/^QUESTION\s*:/i, "").trim();
           continue;
         }
 
-        if (/^HINT\s*:/i.test(line)) {
+        if (/^QUESTION\s+\d+/i.test(line) && !question) {
+          question = line.trim();
+          continue;
+        }
+
+        if (/^(?:\d+\.)?\d+\.\d+\s+/i.test(line) && !question) {
+          question = line.trim();
+          continue;
+        }
+
+        if (/^HINT\s*:/i.test(line) && !inSolution) {
           hint = line.replace(/^HINT\s*:/i, "").trim();
           continue;
         }
 
-        if (/^POINTS\s*:/i.test(line)) {
-          const p = Number(line.replace(/^POINTS\s*:/i, "").trim());
+        if (/^(POINTS|MARKS)\s*:/i.test(line) && !inSolution) {
+          const p = Number(line.replace(/^(POINTS|MARKS)\s*:/i, "").trim());
           if (Number.isInteger(p) && p >= 1) points = p;
           continue;
         }
 
-        if (/^SOLUTION\s*:/i.test(line)) {
+        if (/^SOLUTION\s*:/i.test(line) || /^MEMO\s*:/i.test(line)) {
           inSolution = true;
-          const rest = line.replace(/^SOLUTION\s*:/i, "").trim();
+          const rest = line.replace(/^(SOLUTION|MEMO)\s*:/i, "").trim();
           if (rest) solutionLines.push(rest);
           continue;
         }
 
-        if (/^[A-D]\s*:/i.test(line) && !inSolution) {
-          const label = line.charAt(0).toUpperCase();
-          const value = line.replace(/^[A-D]\s*:/i, "").trim();
-          options.push({ label, value });
+        if (/^OPTIONS\s*:?\s*$/i.test(line) && !inSolution) {
+          continue;
+        }
+
+        const optMatch = line.match(/^([A-D])\s*[:.)-]\s*(.*)$/i);
+        if (optMatch && !inSolution) {
+          const label = optMatch[1].toUpperCase();
+          let value = optMatch[2].trim();
+          if (/\(\s*Correct\s*\)/i.test(value)) correctLetters.push(label);
+          value = value.replace(/\(\s*Correct\s*\)/ig, "").replace(/\(\s*Wrong\s*\)/ig, "").trim();
+          options.push({label, value});
           continue;
         }
 
@@ -1054,14 +1210,14 @@
         }
 
         if (inSolution) {
-          solutionLines.push(line);
+          solutionLines.push(rawLine);
         }
       }
 
       solution = solutionLines.join("\n").trim();
 
       if (!question) {
-        throw new Error("Each block must start with HEADING:, NOTE:, or QUESTION:");
+        throw new Error("Each block must start with HEADING:, NOTE:, QUESTION:, or a numbered question.");
       }
 
       if (options.length < 2) {
@@ -1074,10 +1230,11 @@
       });
 
       if (correctIndexes.length < 1) {
-        throw new Error(`Question "${question}" must have at least one ANSWER.`);
+        throw new Error(`Question "${question}" must have at least one ANSWER or one option marked (Correct).`);
       }
 
       return {
+        type: "mcq",
         question,
         hint,
         solution,
@@ -1085,6 +1242,54 @@
         options: options.map(o => o.value),
         correctIndexes
       };
+    }
+
+    function parseNoteBlock(block){
+      const line = String(block || "").trim();
+      if (/^HEADING\s*:/i.test(line)) {
+        return { type: "note", text: line.replace(/^HEADING\s*:/i, "").trim() };
+      }
+      if (/^NOTE\s*:/i.test(line)) {
+        return { type: "note", text: line.replace(/^NOTE\s*:/i, "").trim() };
+      }
+      return null;
+    }
+
+    function parseAssessmentFile(text, fallbackName=""){
+      const raw = String(text || "").replace(/\r/g, "").trim();
+      if (!raw) throw new Error("The selected file is empty.");
+
+      const meta = parseAssessmentMetadata(raw, fallbackName);
+      const blocks = splitQuestionBlocks(raw);
+      if (!blocks.length) throw new Error("No valid blocks found. Use HEADING:, NOTE:, QUESTION:, or numbered questions.");
+
+      const items = blocks.map(block => {
+        if (/^(HEADING|NOTE)\s*:/i.test(block.trim())) return parseNoteBlock(block);
+        return parseQuestionBlock(block);
+      });
+
+      return {
+        meta: {
+          grade: String(meta.grade || "").trim(),
+          topic: String(meta.topic || "").trim(),
+          title: String(meta.title || "").trim(),
+          timeLimitMinutes: Number(meta.timeLimitMinutes || 10),
+          difficulty: normalizeDifficulty(meta.difficulty),
+          paper: normalizePaper(meta.paper),
+          instructions: String(meta.instructions || "").trim(),
+          publishMode: normalizePublishMode(meta.publishMode),
+          publishAt: String(meta.publishAt || "").trim(),
+          availableFrom: String(meta.availableFrom || "").trim(),
+          availableUntil: String(meta.availableUntil || "").trim(),
+          sendPublishEmail: !!meta.sendPublishEmail
+        },
+        items
+      };
+    }
+
+    function fillNoteCard(card, data){
+      card.querySelector(".noteText").value = data.text || "";
+      renderCardPreview(card);
     }
 
     function fillMcqCard(card, data){
@@ -1104,33 +1309,109 @@
       renderCardPreview(card);
     }
 
-    function parseAndFillFromText(text){
-      const blocks = splitQuestionBlocks(text);
+    function fillAssessmentForm(parsed){
+      const meta = parsed.meta || {};
+      if (meta.grade) gradeEl.value = String(meta.grade);
+      if (meta.topic) topicEl.value = meta.topic || "";
+      if (meta.title) titleEl.value = meta.title || "";
+      timeLimitEl.value = Number.isFinite(Number(meta.timeLimitMinutes)) ? String(meta.timeLimitMinutes) : "10";
+      difficultyEl.value = normalizeDifficulty(meta.difficulty);
+      paperEl.value = normalizePaper(meta.paper);
+      instructionsEl.value = meta.instructions || "";
+      publishModeEl.value = normalizePublishMode(meta.publishMode);
+      publishAtEl.value = meta.publishAt || "";
+      availableFromEl.value = meta.availableFrom || "";
+      availableUntilEl.value = meta.availableUntil || "";
+      sendPublishEmailEl.checked = !!meta.sendPublishEmail;
 
-      if (!blocks.length) {
-        throw new Error("No valid blocks found. Use HEADING:, NOTE:, or QUESTION:.");
-      }
+      renderInstructionsPreview();
+      updatePublishUI();
 
       clearAllCards();
 
-      for (const block of blocks) {
-        const parsed = parseQuestionBlock(block);
-        addMcq();
-
-        const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='mcq']")];
-        const card = cards[cards.length - 1];
-        fillMcqCard(card, parsed);
+      for (const item of parsed.items || []) {
+        if (item.type === "note") {
+          addNote();
+          const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='note']")];
+          fillNoteCard(cards[cards.length - 1], item);
+        } else if (item.type === "mcq") {
+          addMcq();
+          const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='mcq']")];
+          fillMcqCard(cards[cards.length - 1], item);
+        }
       }
 
       renumberCards();
       setupDragAndDrop();
     }
 
+    function buildPayloadFromParsedAssessment(parsed){
+      const meta = parsed.meta || {};
+      const grade = Number(meta.grade);
+      const topic = toTitleCase(meta.topic || "");
+      const title = toTitleCase(meta.title || "");
+      const timeLimitMinutes = Number(meta.timeLimitMinutes || 10);
+      const instructions = cleanSpaces(meta.instructions || "");
+      const difficulty = normalizeDifficulty(meta.difficulty);
+      const paper = normalizePaper(meta.paper);
+      const availableFrom = meta.availableFrom || null;
+      const availableUntil = meta.availableUntil || null;
+      const publishMode = normalizePublishMode(meta.publishMode);
+      const publishAt = meta.publishAt || null;
+
+      if (!grade) throw new Error(`Missing or invalid GRADE in "${meta.title || "file"}".`);
+      if (!topic) throw new Error(`Missing TOPIC in "${meta.title || "file"}".`);
+      if (!title) throw new Error(`Missing TITLE in "${meta.title || "file"}".`);
+      if (!Number.isFinite(timeLimitMinutes) || timeLimitMinutes < 1 || timeLimitMinutes > 180) {
+        throw new Error(`Invalid TIME_LIMIT in "${meta.title || "file"}".`);
+      }
+
+      const questions = (parsed.items || []).map(item => {
+        if (item.type === "note") return { type: "note", text: cleanSpaces(item.text || "") };
+        const options = [...(item.options || [])];
+        const correctIndexes = [...(item.correctIndexes || [])];
+        const payload = {
+          type: "mcq",
+          text: cleanSpaces(item.question || ""),
+          hint: cleanSpaces(item.hint || ""),
+          imageUrl: "",
+          points: Number(item.points || 1),
+          options,
+          correctIndexes,
+          isMultiSelect: correctIndexes.length >= 2,
+          solution: String(item.solution || "").trim()
+        };
+        if (correctIndexes.length === 1) payload.correctIndex = correctIndexes[0];
+        return payload;
+      });
+
+      let publishNow = false;
+      let finalPublishAt = null;
+      if (publishMode === "now") publishNow = true;
+      else if (publishMode === "schedule") finalPublishAt = publishAt;
+
+      return {
+        grade,
+        title,
+        topic,
+        paper,
+        timeLimitMinutes,
+        instructions,
+        difficulty,
+        questions,
+        publishNow,
+        publishAt: finalPublishAt,
+        availableFrom,
+        availableUntil,
+        sendPublishEmail: !!meta.sendPublishEmail
+      };
+    }
+
     async function readUploadedTextFile(file){
       return await file.text();
     }
 
-    addMcq();
+addMcq();
     setupDragAndDrop();
 
     function collectQuestions(){
