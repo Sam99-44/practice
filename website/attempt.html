@@ -387,7 +387,8 @@
     }
 
     .qSectionStem{
-      display:flex;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
       gap:12px;
       align-items:flex-start;
       margin:8px 0 6px;
@@ -397,9 +398,17 @@
       font-size:14px;
     }
 
+    .qSectionLeft{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      min-width:0;
+    }
+
     .qSectionNo{
       min-width:52px;
       font-weight:700;
+      flex:0 0 auto;
     }
 
     .qSectionText{
@@ -407,6 +416,17 @@
       min-width:0;
       font-weight:400;
     }
+
+    .qSectionMarks{
+      font-family:"Times New Roman", Times, serif;
+      font-size:14px;
+      line-height:1.2;
+      white-space:nowrap;
+      color:#111827;
+    }
+
+    .qSectionMarks::before{content:"(";}
+    .qSectionMarks::after{content:")";}
 
     .qHead{
       display:grid;
@@ -442,13 +462,14 @@
     }
 
     .marksBox{
-      min-width:24px;
+      flex:0 0 auto;
+      min-width:18px;
       padding:0;
       height:auto;
       border:none;
       border-radius:0;
       background:transparent;
-      display:inline-flex;
+      display:flex;
       align-items:flex-start;
       justify-content:center;
       font-weight:400;
@@ -458,39 +479,27 @@
       font-size:14px;
     }
     .marksMeta{
-      display:inline-flex;
+      display:flex;
       align-items:flex-start;
-      justify-content:flex-end;
       gap:0;
-      min-width:36px;
-      flex:0 0 36px;
+      flex:0 0 auto;
       font-family:"Times New Roman", Times, serif;
       color:#111827;
       padding-top:0;
       font-size:14px;
       line-height:1.2;
       white-space:nowrap;
-      text-align:right;
     }
     .marksMeta::before{content:"(";}
     .marksMeta::after{content:")";}
-    .marksLbl{display:none;}
-
-    .qimg{
+    .marksLbl{display:none;}.qimg{
       display:block;
       width:100%;
-      max-width:100%;
+      max-width:520px;
       height:auto;
       border-radius:12px;
       border:1px solid #eee;
       margin:0 0 12px 0;
-      object-fit:contain;
-      background:#fff;
-    }
-
-    .qImageWrap{
-      width:100%;
-      margin:0 0 10px 0;
     }
 
     .noteBox{
@@ -635,15 +644,13 @@
       .sectionBody{padding:14px}
       .sectionHead{padding:12px 14px}
       .metaRight{align-items:flex-start;min-width:0}
-      .examPaper{padding:16px 10px}
+      .examPaper{padding:16px 14px}
       .qMainHeading{font-size:14px}
       .qSectionStem{font-size:14px}
       .qSectionNo{min-width:44px}
       .qTitle{font-size:14px}
       .qNo{min-width:58px}
       .marksBox{font-size:14px}
-      .marksMeta{min-width:34px;flex-basis:34px;font-size:14px}
-      .qimg{margin-bottom:12px}
       .opt{padding-left:70px;font-size:14px}
       .textAnswer{margin-left:70px;width:calc(100% - 70px)}
       .hint{margin-left:70px}
@@ -861,6 +868,7 @@
 
       if(res.status === 401){
         localStorage.removeItem("token");
+        localStorage.removeItem("username");
         localStorage.removeItem("me_cache");
         location.href = "login.html";
         return;
@@ -960,6 +968,61 @@
 
   function countScorableQuestions(){
     return (quizData?.questions || []).filter(q => String(q.type || "mcq").toLowerCase() !== "note").length;
+  }
+
+  function getQuestionPoints(q){
+    return Math.max(1, Math.round(Number(q?.points || 1)));
+  }
+
+  function getMainQuestionNumber(rawText, fallbackNo){
+    const parsed = parseExamTextParts(rawText);
+    if (parsed.kind === "main") {
+      const m = String(parsed.label || "").match(/^QUESTION\s+(\d+)$/i);
+      return m ? Number(m[1]) : fallbackNo;
+    }
+    const label = String(parsed.label || "");
+    const m = label.match(/^(\d+)/);
+    return m ? Number(m[1]) : fallbackNo;
+  }
+
+  function getSectionKey(rawText, fallbackNo){
+    const parsed = parseExamTextParts(rawText);
+    if (parsed.kind === "section") return parsed.label;
+    if (parsed.kind === "sub") {
+      const m = String(parsed.label || "").match(/^(\d+\.\d+)\./);
+      if (m) return m[1];
+    }
+    return `${fallbackNo}.1`;
+  }
+
+  function computeQuestionAndSectionTotals(questions){
+    const mainTotals = new Map();
+    const sectionTotals = new Map();
+    let currentMain = 1;
+
+    (questions || []).forEach((q, idx) => {
+      const type = String(q?.type || "mcq").toLowerCase();
+      const rawText = cleanSpaces(q?.text || "");
+
+      if (type === "note") {
+        const parsed = parseExamTextParts(rawText);
+        if (parsed.kind === "main") {
+          const m = String(parsed.label || "").match(/^QUESTION\s+(\d+)$/i);
+          if (m) currentMain = Number(m[1]);
+        }
+        return;
+      }
+
+      const pts = getQuestionPoints(q);
+      const mainNo = getMainQuestionNumber(rawText, currentMain || 1);
+      currentMain = mainNo;
+      const sectionKey = getSectionKey(rawText, currentMain);
+
+      mainTotals.set(mainNo, (mainTotals.get(mainNo) || 0) + pts);
+      sectionTotals.set(sectionKey, (sectionTotals.get(sectionKey) || 0) + pts);
+    });
+
+    return { mainTotals, sectionTotals };
   }
 
   async function checkAlreadyAttempted(){
@@ -1387,22 +1450,27 @@
     setAvailability(!unavailable);
 
     let displayNo = 0;
+    const totals = computeQuestionAndSectionTotals(quizData.questions || []);
 
     questionsDiv.innerHTML = (quizData.questions || []).map((q, i) => {
       const type = String(q.type || "mcq").toLowerCase();
       const hint = cleanSpaces(q.hint || "");
       const img = cleanSpaces(q.imageUrl || "");
-      const points = Math.max(1, Math.round(Number(q.points || 1)));
+      const points = getQuestionPoints(q);
       const rawText = cleanSpaces(q.text || "");
+      const mainNo = getMainQuestionNumber(rawText, 1);
+      const sectionKey = getSectionKey(rawText, mainNo);
+      const questionTotal = totals.mainTotals.get(mainNo) || points;
+      const sectionTotal = totals.sectionTotals.get(sectionKey) || points;
 
-      const imageHtml = img ? `<div class="qImageWrap"><img class="qimg" src="${escapeAttr(img)}" alt="Question image"></div>` : "";
+      const imageHtml = img ? `<img class="qimg" src="${escapeAttr(img)}" alt="Question image">` : "";
 
       if (type === "note") {
-        return renderNoteLike(rawText, imageHtml);
+        return renderNoteLike(rawText, imageHtml, sectionTotal);
       }
 
       displayNo += 1;
-      const headHtml = renderQuestionHead(rawText, points, displayNo);
+      const headHtml = renderQuestionHead(rawText, points, displayNo, questionTotal);
 
       if (type === "text") {
         return `
@@ -1524,7 +1592,7 @@
     return { kind:"plain", label:"", body:text };
   }
 
-  function renderQuestionHead(rawText, points, fallbackNo){
+  function renderQuestionHead(rawText, points, fallbackNo, questionTotal){
     const parsed = parseExamTextParts(rawText);
     const label = parsed.label || `${fallbackNo}.`;
     const body = parsed.body || (parsed.kind === "plain" ? cleanSpaces(rawText || "") : "");
@@ -1535,24 +1603,24 @@
           <span class="qNo">${escapeHtml(label)}</span>
           <span class="qText">${escapeHtml(body || cleanSpaces(rawText || ""))}</span>
         </div>
-        <div class="marksMeta">
+        <div class="marksMeta" title="Question total marks">
           <div class="marksLbl">Marks</div>
-          <div class="marksBox">${points}</div>
+          <div class="marksBox">${questionTotal ?? points}</div>
         </div>
       </div>
     `;
   }
 
-  function renderNoteLike(rawText, imageHtml){
+  function renderNoteLike(rawText, imageHtml, sectionTotal){
     const parsed = parseExamTextParts(rawText);
 
     if (parsed.kind === "main") {
       const bodyHtml = parsed.body ? `<div class="noteBox" style="margin-top:8px;">${escapeHtml(parsed.body)}</div>` : "";
       return `
         <div class="q">
-          ${imageHtml}
           <div class="qMainHeading">${escapeHtml(parsed.label)}</div>
           ${bodyHtml}
+          ${imageHtml}
         </div>
       `;
     }
@@ -1560,19 +1628,22 @@
     if (parsed.kind === "section") {
       return `
         <div class="q">
-          ${imageHtml}
           <div class="qSectionStem">
-            <div class="qSectionNo">${escapeHtml(parsed.label)}</div>
-            <div class="qSectionText">${escapeHtml(parsed.body)}</div>
+            <div class="qSectionLeft">
+              <div class="qSectionNo">${escapeHtml(parsed.label)}</div>
+              <div class="qSectionText">${escapeHtml(parsed.body)}</div>
+            </div>
+            <div class="qSectionMarks">${sectionTotal ?? ""}</div>
           </div>
+          ${imageHtml}
         </div>
       `;
     }
 
     return `
       <div class="q">
-        ${imageHtml}
         <div class="noteBox">${escapeHtml(cleanSpaces(rawText || ""))}</div>
+        ${imageHtml}
       </div>
     `;
   }
