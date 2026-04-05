@@ -415,6 +415,14 @@
       D: 6
       <br />
       ANSWER: B
+      <br /><br />
+      <b>Important numbering rule:</b>
+      <br />
+      Use numbering in <b>NOTE:</b> lines like <b>NOTE: 1.1 Consider the sequence...</b>
+      <br />
+      Do <b>not</b> type numbering inside <b>QUESTION:</b> lines.
+      <br />
+      Example: <b>QUESTION: Write down the next TWO terms...</b>
     </div>
 
     <hr>
@@ -501,6 +509,27 @@
 
     function cleanSpaces(s){
       return String(s || "").trim().replace(/\s+/g, " ");
+    }
+    function stripLeadingQuestionNumber(text){
+      const s = cleanSpaces(text || "");
+      if (!s) return "";
+      return s
+        .replace(/^QUESTION\s+\d+\s*[:.-]?\s*/i, "")
+        .replace(/^\d+\.\d+\.\d+\s+/, "")
+        .replace(/^\d+\.\d+\s+/, "")
+        .replace(/^\d+\.\s+/, "")
+        .trim();
+    }
+
+    function extractLeadingQuestionNumber(text){
+      const s = cleanSpaces(text || "");
+      if (!s) return "";
+      const m =
+        s.match(/^QUESTION\s+\d+/i) ||
+        s.match(/^\d+\.\d+\.\d+/) ||
+        s.match(/^\d+\.\d+/) ||
+        s.match(/^\d+\./);
+      return m ? cleanSpaces(m[0]) : "";
     }
 
     function toTitleCase(s){
@@ -838,6 +867,9 @@
     function addGroup(){
       qCount += 1;
       questionsWrap.insertAdjacentHTML("beforeend", groupCardHtml(qCount));
+      const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='group']")];
+      const last = cards[cards.length - 1];
+      if (last) delete last.dataset.manualNumber;
       wireLastCard();
       renumberCards();
       setupDragAndDrop();
@@ -845,6 +877,9 @@
     function addSection(){
       qCount += 1;
       questionsWrap.insertAdjacentHTML("beforeend", sectionCardHtml(qCount));
+      const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='section']")];
+      const last = cards[cards.length - 1];
+      if (last) delete last.dataset.manualNumber;
       wireLastCard();
       renumberCards();
       setupDragAndDrop();
@@ -999,7 +1034,7 @@
         return;
       }
 
-      const qText = cleanSpaces(card.querySelector(".qText")?.value || "");
+      const qText = stripLeadingQuestionNumber(card.querySelector(".qText")?.value || "");
       const hint  = cleanSpaces(card.querySelector(".qHint")?.value || "");
       const sol   = cleanSpaces(card.querySelector(".qSolution")?.value || "");
       const label = cleanSpaces(card.querySelector(".cardLabel")?.textContent || "");
@@ -1151,19 +1186,30 @@
 
       for (const card of cards){
         const type = (card.getAttribute("data-type") || "mcq").toLowerCase();
+
         if (type === "group") {
           hasManualMainMarker = true;
-          mainNum += 1;
+          const manualMain = Number(card.dataset.manualNumber || "");
+          mainNum = Number.isFinite(manualMain) && manualMain > 0 ? manualMain : mainNum + 1;
           sectionNum = 0;
           itemNum = 0;
           continue;
         }
+
         if (type === "section") {
-          sectionNum = sectionNum < 1 ? 1 : sectionNum + 1;
+          const manualSection = cleanSpaces(card.dataset.manualNumber || "");
+          if (/^\d+\.\d+$/.test(manualSection)) {
+            const [mNo, sNo] = manualSection.split(".").map(Number);
+            if (Number.isFinite(mNo) && mNo > 0) mainNum = mNo;
+            if (Number.isFinite(sNo) && sNo > 0) sectionNum = sNo;
+          } else {
+            sectionNum = sectionNum < 1 ? 1 : sectionNum + 1;
+          }
           itemNum = 0;
           sectionTotals.set(`${mainNum}.${sectionNum}`, 0);
           continue;
         }
+
         if (type === "mcq" || type === "text") {
           if (sectionNum < 1) sectionNum = 1;
           const key = `${mainNum}.${sectionNum}`;
@@ -1185,7 +1231,8 @@
         if (!labelEl) continue;
 
         if (type === "group") {
-          mainNum += 1;
+          const manualMain = Number(card.dataset.manualNumber || "");
+          mainNum = Number.isFinite(manualMain) && manualMain > 0 ? manualMain : mainNum + 1;
           sectionNum = 0;
           itemNum = 0;
           labelEl.textContent = `QUESTION ${mainNum}`;
@@ -1201,7 +1248,14 @@
         }
 
         if (type === "section") {
-          sectionNum = sectionNum < 1 ? 1 : sectionNum + 1;
+          const manualSection = cleanSpaces(card.dataset.manualNumber || "");
+          if (/^\d+\.\d+$/.test(manualSection)) {
+            const [mNo, sNo] = manualSection.split(".").map(Number);
+            if (Number.isFinite(mNo) && mNo > 0) mainNum = mNo;
+            sectionNum = Number.isFinite(sNo) && sNo > 0 ? sNo : (sectionNum < 1 ? 1 : sectionNum + 1);
+          } else {
+            sectionNum = sectionNum < 1 ? 1 : sectionNum + 1;
+          }
           itemNum = 0;
           const key = `${mainNum}.${sectionNum}`;
           const sectionTotal = sectionTotals.get(key) || 0;
@@ -1461,6 +1515,8 @@
 
       solution = solutionLines.join("\n").trim();
 
+      question = stripLeadingQuestionNumber(question);
+
       if (!question) {
         throw new Error("Each question block must start with QUESTION: or a numbered question.");
       }
@@ -1489,13 +1545,38 @@
       };
     }
 
+    function classifySpecialNote(text){
+      const t = cleanSpaces(text || "");
+      if (!t) return { type: "note", text: "" };
+
+      const mainMatch = t.match(/^QUESTION\s+(\d+)\s*[:.-]?\s*(.*)$/i);
+      if (mainMatch) {
+        return {
+          type: "group",
+          text: cleanSpaces(mainMatch[2] || ""),
+          mainNumber: Number(mainMatch[1])
+        };
+      }
+
+      const sectionMatch = t.match(/^(\d+\.\d+)\s+(.*)$/);
+      if (sectionMatch) {
+        return {
+          type: "section",
+          number: sectionMatch[1],
+          text: cleanSpaces(sectionMatch[2] || "")
+        };
+      }
+
+      return { type: "note", text: t };
+    }
+
     function parseNoteBlock(block){
       const line = String(block || "").trim();
       if (/^HEADING\s*:/i.test(line)) {
-        return { type: "note", text: line.replace(/^HEADING\s*:/i, "").trim() };
+        return classifySpecialNote(line.replace(/^HEADING\s*:/i, "").trim());
       }
       if (/^NOTE\s*:/i.test(line)) {
-        return { type: "note", text: line.replace(/^NOTE\s*:/i, "").trim() };
+        return classifySpecialNote(line.replace(/^NOTE\s*:/i, "").trim());
       }
       return null;
     }
@@ -1535,13 +1616,27 @@
       };
     }
 
+    function fillGroupCard(card, data){
+      if (data && Number.isFinite(Number(data.mainNumber))) {
+        card.dataset.manualNumber = String(Number(data.mainNumber));
+      }
+      renderCardPreview(card);
+    }
+
+    function fillSectionCard(card, data){
+      if (data?.number) card.dataset.manualNumber = String(data.number);
+      const box = card.querySelector(".sectionText");
+      if (box) box.value = data.text || "";
+      renderCardPreview(card);
+    }
+
     function fillNoteCard(card, data){
       card.querySelector(".noteText").value = data.text || "";
       renderCardPreview(card);
     }
 
     function fillMcqCard(card, data){
-      card.querySelector(".qText").value = data.question || "";
+      card.querySelector(".qText").value = stripLeadingQuestionNumber(data.question || "");
       card.querySelector(".qHint").value = data.hint || "";
       card.querySelector(".qPoints").value = data.points || 1;
       card.querySelector(".qSolution").value = data.solution || "";
@@ -1578,7 +1673,15 @@
       clearAllCards();
 
       for (const item of parsed.items || []) {
-        if (item.type === "note") {
+        if (item.type === "group") {
+          addGroup();
+          const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='group']")];
+          fillGroupCard(cards[cards.length - 1], item);
+        } else if (item.type === "section") {
+          addSection();
+          const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='section']")];
+          fillSectionCard(cards[cards.length - 1], item);
+        } else if (item.type === "note") {
           addNote();
           const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='note']")];
           fillNoteCard(cards[cards.length - 1], item);
@@ -1615,6 +1718,14 @@
       }
 
       const questions = (parsed.items || []).map(item => {
+        if (item.type === "group") {
+          const n = Number(item.mainNumber || 1);
+          return { type: "note", text: `QUESTION ${n}` };
+        }
+        if (item.type === "section") {
+          const num = cleanSpaces(item.number || "");
+          return { type: "note", text: `${num} ${cleanSpaces(item.text || "")}` };
+        }
         if (item.type === "note") return { type: "note", text: cleanSpaces(item.text || "") };
         const options = [...(item.options || [])];
         const correctIndexes = [...(item.correctIndexes || [])];
@@ -1692,7 +1803,8 @@
           continue;
         }
 
-        const rawText = cleanSpaces(card.querySelector(".qText")?.value);
+        const rawText = stripLeadingQuestionNumber(card.querySelector(".qText")?.value || "");
+        const typedPrefix = extractLeadingQuestionNumber(card.querySelector(".qText")?.value || "");
         const numberLabel = cleanSpaces(card.querySelector(".cardLabel")?.textContent || "");
         let text = rawText;
         if (numberLabel) text = `${numberLabel} ${text}`;
@@ -1912,7 +2024,7 @@
 
         if (type === "mcq" || type === "text") {
           const number = cleanSpaces(card.querySelector(".cardLabel")?.textContent || card.dataset.fullNumber || "");
-          const qText = cleanSpaces(card.querySelector(".qText")?.value || "");
+          const qText = stripLeadingQuestionNumber(card.querySelector(".qText")?.value || "");
           const marks = cleanSpaces(card.querySelector(".qPoints")?.value || "1");
           parts.push(`
             <div style="display:grid; grid-template-columns:88px 1fr 70px; column-gap:12px; align-items:start; margin:8px 0; font-family:'Times New Roman', Times, serif;">
