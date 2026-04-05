@@ -347,39 +347,40 @@
     }
 
     .paperMeta{
-      margin:0 0 18px 0;
+      margin:0 0 26px 0;
       font-family:"Times New Roman", Times, serif;
       color:#111827;
+      font-size:14px;
+      line-height:1.5;
     }
 
     .paperTitle{
       font-size:14px;
       font-weight:400;
-      margin:0 0 4px 0;
+      margin:0 0 2px 0;
       text-transform:none;
       letter-spacing:0;
-      line-height:1.45;
+      line-height:1.5;
     }
 
     .paperMetaRow{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:18px;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:16px;
+      align-items:start;
       font-size:14px;
-      line-height:1.45;
-      margin-bottom:4px;
+      line-height:1.5;
+      margin-bottom:0;
     }
 
     .paperMetaLeft{
       min-width:0;
-      flex:1 1 auto;
     }
 
     .paperMetaRight{
-      flex:0 0 auto;
       white-space:nowrap;
       text-align:right;
+      justify-self:end;
     }
 
     .metaRight{
@@ -419,28 +420,36 @@
       letter-spacing:0;
       text-transform:uppercase;
       color:#111827;
-      margin:12px 0 10px;
-      line-height:1.45;
+      margin:26px 0 18px;
+      line-height:1.5;
     }
 
     .qSectionStem{
-      display:flex;
-      gap:12px;
-      align-items:flex-start;
-      margin:8px 0 6px;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:18px;
+      align-items:start;
+      margin:18px 0 10px;
       font-family:"Times New Roman", Times, serif;
       color:#111827;
-      line-height:1.45;
+      line-height:1.5;
       font-size:14px;
     }
 
+    .qSectionLeft{
+      display:grid;
+      grid-template-columns:56px minmax(0,1fr);
+      gap:12px;
+      align-items:start;
+      min-width:0;
+    }
+
     .qSectionNo{
-      min-width:52px;
+      min-width:56px;
       font-weight:700;
     }
 
     .qSectionText{
-      flex:1 1 auto;
       min-width:0;
       font-weight:400;
     }
@@ -448,29 +457,29 @@
     .qHead{
       display:grid;
       grid-template-columns:minmax(0,1fr) auto;
-      gap:12px;
+      gap:18px;
       align-items:start;
       margin-bottom:6px;
     }
 
     .qTitle{
       font-weight:400;
-      line-height:1.45;
+      line-height:1.5;
       margin:0;
       min-width:0;
       word-break:break-word;
       font-size:14px;
-      display:flex;
+      display:grid;
+      grid-template-columns:56px minmax(0,1fr);
       gap:12px;
-      align-items:flex-start;
+      align-items:start;
       font-family:"Times New Roman", Times, serif;
       color:#111827;
     }
     .qNo{
-      flex:0 0 auto;
       font-weight:700;
       color:#111827;
-      min-width:64px;
+      min-width:56px;
     }
     .qText{
       flex:1 1 auto;
@@ -500,21 +509,23 @@
       color:#111827;
       padding-top:0;
       font-size:14px;
-      line-height:1.2;
+      line-height:1.3;
       white-space:nowrap;
       justify-self:end;
       margin:0;
+      text-align:right;
+      min-width:32px;
     }
     .marksMeta::before{content:"(";}
     .marksMeta::after{content:")";}
     .marksLbl{display:none;}.qimg{
       display:block;
       width:100%;
-      max-width:520px;
+      max-width:560px;
       height:auto;
-      border-radius:12px;
-      border:1px solid #eee;
-      margin:0 0 12px 0;
+      border-radius:0;
+      border:1px solid #d9dee7;
+      margin:0 0 14px 68px;
     }
 
     .noteBox{
@@ -534,7 +545,7 @@
       display:flex;
       gap:10px;
       align-items:flex-start;
-      padding:6px 0 6px 86px;
+      padding:5px 0 5px 68px;
       border:none;
       border-radius:0;
       margin-bottom:0;
@@ -544,7 +555,7 @@
       font-family:"Times New Roman", Times, serif;
       font-weight:400;
       font-size:14px;
-      line-height:1.4;
+      line-height:1.45;
     }
     .opt:hover{background:transparent}
     .opt input{margin-top:2px}
@@ -567,15 +578,15 @@
       font-weight:400;
       font-family:"Times New Roman", Times, serif;
       color:var(--text);
-      margin-left:86px;
-      width:calc(100% - 86px);
+      margin-left:68px;
+      width:calc(100% - 68px);
     }
     .textAnswer:focus{border-color:#cbd5e1;box-shadow:var(--focus);}
     .textAnswer:disabled{opacity:.7;background:#f8fafc}
 
     .hint{
-      margin-top:6px;
-      margin-left:86px;
+      margin-top:8px;
+      margin-left:68px;
       padding:6px 8px;
       border-radius:0;
       background:#fff;
@@ -660,15 +671,33 @@
       .sectionHead{padding:12px 14px}
       .metaRight{align-items:flex-start;min-width:0}
       .examPaper{padding:16px 14px}
-      .qMainHeading{font-size:14px}
-      .qSectionStem{font-size:14px}
-      .qSectionNo{min-width:44px}
-      .qTitle{font-size:14px}
-      .qNo{min-width:58px}
+      .qMainHeading{font-size:14px;margin:22px 0 14px}
+      .qSectionStem{
+        font-size:14px;
+        grid-template-columns:minmax(0,1fr) auto;
+        gap:12px;
+        margin:16px 0 10px;
+      }
+      .qSectionLeft{
+        grid-template-columns:46px minmax(0,1fr);
+        gap:10px;
+      }
+      .qSectionNo{min-width:46px}
+      .qTitle{
+        font-size:14px;
+        grid-template-columns:46px minmax(0,1fr);
+        gap:10px;
+      }
+      .qNo{min-width:46px}
       .marksBox{font-size:14px}
-      .opt{padding-left:70px;font-size:14px}
-      .textAnswer{margin-left:70px;width:calc(100% - 70px)}
-      .hint{margin-left:70px}
+      .marksMeta,.qSectionMarks{font-size:14px;min-width:26px}
+      .qimg{
+        max-width:100%;
+        margin-left:56px;
+      }
+      .opt{padding-left:56px;font-size:14px}
+      .textAnswer{margin-left:56px;width:calc(100% - 56px)}
+      .hint{margin-left:56px}
 
       .topbar-inner{
         padding:12px 14px;
