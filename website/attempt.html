@@ -353,11 +353,12 @@
     }
 
     .paperTitle{
-      font-size:18px;
-      font-weight:700;
-      margin:0 0 10px 0;
-      text-transform:uppercase;
+      font-size:14px;
+      font-weight:400;
+      margin:0 0 4px 0;
+      text-transform:none;
       letter-spacing:0;
+      line-height:1.45;
     }
 
     .paperMetaRow{
@@ -419,6 +420,7 @@
       text-transform:uppercase;
       color:#111827;
       margin:12px 0 10px;
+      line-height:1.45;
     }
 
     .qSectionStem{
@@ -1410,8 +1412,15 @@
     let displayNo = 0;
     const totals = computeQuestionAndSectionTotals(quizData.questions || []);
     const paperMetaHtml = buildPaperMeta(quizData);
+    const allQuestions = quizData.questions || [];
+    const hasMainHeading = allQuestions.some(q => {
+      const type = String(q?.type || "mcq").toLowerCase();
+      if (type !== "note") return false;
+      return parseExamTextParts(cleanSpaces(q?.text || "")).kind === "main";
+    });
+    const autoMainHeadingHtml = hasMainHeading ? "" : `<div class="q"><div class="qMainHeading">QUESTION 1</div></div>`;
 
-    questionsDiv.innerHTML = paperMetaHtml + (quizData.questions || []).map((q, i) => {
+    questionsDiv.innerHTML = paperMetaHtml + autoMainHeadingHtml + allQuestions.map((q, i) => {
       const type = String(q.type || "mcq").toLowerCase();
       const hint = cleanSpaces(q.hint || "");
       const img = cleanSpaces(q.imageUrl || "");
@@ -1622,7 +1631,7 @@
 
     return `
       <div class="paperMeta">
-        <div class="paperTitle">${escapeHtml(title)}</div>
+        <div class="paperTitle"><b>Title :</b> ${escapeHtml(title)}</div>
         <div class="paperMetaRow">
           <div class="paperMetaLeft"><b>Total Marks:</b> ${totalMarks}</div>
           <div class="paperMetaRight"><b>Time Limit:</b> ${escapeHtml(timeLabel)}</div>
@@ -1642,9 +1651,9 @@
           <span class="qNo">${escapeHtml(label)}</span>
           <span class="qText">${escapeHtml(body || cleanSpaces(rawText || ""))}</span>
         </div>
-        <div class="marksMeta" title="Question total marks">
+        <div class="marksMeta" title="Question marks">
           <div class="marksLbl">Marks</div>
-          <div class="marksBox">${String(questionTotal ?? points).trim()}</div>
+          <div class="marksBox">${String(points).trim()}</div>
         </div>
       </div>
     `;
