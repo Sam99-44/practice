@@ -346,6 +346,41 @@
       margin:0 auto;
     }
 
+    .paperMeta{
+      margin:0 0 18px 0;
+      font-family:"Times New Roman", Times, serif;
+      color:#111827;
+    }
+
+    .paperTitle{
+      font-size:18px;
+      font-weight:700;
+      margin:0 0 10px 0;
+      text-transform:uppercase;
+      letter-spacing:0;
+    }
+
+    .paperMetaRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:18px;
+      font-size:14px;
+      line-height:1.45;
+      margin-bottom:4px;
+    }
+
+    .paperMetaLeft{
+      min-width:0;
+      flex:1 1 auto;
+    }
+
+    .paperMetaRight{
+      flex:0 0 auto;
+      white-space:nowrap;
+      text-align:right;
+    }
+
     .metaRight{
       display:flex;
       flex-direction:column;
@@ -387,8 +422,7 @@
     }
 
     .qSectionStem{
-      display:grid;
-      grid-template-columns:minmax(0,1fr) auto;
+      display:flex;
       gap:12px;
       align-items:flex-start;
       margin:8px 0 6px;
@@ -398,17 +432,9 @@
       font-size:14px;
     }
 
-    .qSectionLeft{
-      display:flex;
-      gap:12px;
-      align-items:flex-start;
-      min-width:0;
-    }
-
     .qSectionNo{
       min-width:52px;
       font-weight:700;
-      flex:0 0 auto;
     }
 
     .qSectionText{
@@ -416,17 +442,6 @@
       min-width:0;
       font-weight:400;
     }
-
-    .qSectionMarks{
-      font-family:"Times New Roman", Times, serif;
-      font-size:14px;
-      line-height:1.2;
-      white-space:nowrap;
-      color:#111827;
-    }
-
-    .qSectionMarks::before{content:"(";}
-    .qSectionMarks::after{content:")";}
 
     .qHead{
       display:grid;
@@ -462,21 +477,17 @@
     }
 
     .marksBox{
-      flex:0 0 auto;
-      min-width:18px;
+      margin:0;
       padding:0;
-      height:auto;
       border:none;
-      border-radius:0;
       background:transparent;
-      display:flex;
-      align-items:flex-start;
-      justify-content:center;
+      display:block;
       font-weight:400;
       color:#111827;
       line-height:1.2;
       font-family:"Times New Roman", Times, serif;
       font-size:14px;
+      min-width:0;
     }
     .marksMeta{
       display:flex;
@@ -489,6 +500,8 @@
       font-size:14px;
       line-height:1.2;
       white-space:nowrap;
+      justify-self:end;
+      margin:0;
     }
     .marksMeta::before{content:"(";}
     .marksMeta::after{content:")";}
@@ -970,61 +983,6 @@
     return (quizData?.questions || []).filter(q => String(q.type || "mcq").toLowerCase() !== "note").length;
   }
 
-  function getQuestionPoints(q){
-    return Math.max(1, Math.round(Number(q?.points || 1)));
-  }
-
-  function getMainQuestionNumber(rawText, fallbackNo){
-    const parsed = parseExamTextParts(rawText);
-    if (parsed.kind === "main") {
-      const m = String(parsed.label || "").match(/^QUESTION\s+(\d+)$/i);
-      return m ? Number(m[1]) : fallbackNo;
-    }
-    const label = String(parsed.label || "");
-    const m = label.match(/^(\d+)/);
-    return m ? Number(m[1]) : fallbackNo;
-  }
-
-  function getSectionKey(rawText, fallbackNo){
-    const parsed = parseExamTextParts(rawText);
-    if (parsed.kind === "section") return parsed.label;
-    if (parsed.kind === "sub") {
-      const m = String(parsed.label || "").match(/^(\d+\.\d+)\./);
-      if (m) return m[1];
-    }
-    return `${fallbackNo}.1`;
-  }
-
-  function computeQuestionAndSectionTotals(questions){
-    const mainTotals = new Map();
-    const sectionTotals = new Map();
-    let currentMain = 1;
-
-    (questions || []).forEach((q, idx) => {
-      const type = String(q?.type || "mcq").toLowerCase();
-      const rawText = cleanSpaces(q?.text || "");
-
-      if (type === "note") {
-        const parsed = parseExamTextParts(rawText);
-        if (parsed.kind === "main") {
-          const m = String(parsed.label || "").match(/^QUESTION\s+(\d+)$/i);
-          if (m) currentMain = Number(m[1]);
-        }
-        return;
-      }
-
-      const pts = getQuestionPoints(q);
-      const mainNo = getMainQuestionNumber(rawText, currentMain || 1);
-      currentMain = mainNo;
-      const sectionKey = getSectionKey(rawText, currentMain);
-
-      mainTotals.set(mainNo, (mainTotals.get(mainNo) || 0) + pts);
-      sectionTotals.set(sectionKey, (sectionTotals.get(sectionKey) || 0) + pts);
-    });
-
-    return { mainTotals, sectionTotals };
-  }
-
   async function checkAlreadyAttempted(){
     try{
       const r = await fetch(`${API}/api/results/my`,{
@@ -1451,8 +1409,9 @@
 
     let displayNo = 0;
     const totals = computeQuestionAndSectionTotals(quizData.questions || []);
+    const paperMetaHtml = buildPaperMeta(quizData);
 
-    questionsDiv.innerHTML = (quizData.questions || []).map((q, i) => {
+    questionsDiv.innerHTML = paperMetaHtml + (quizData.questions || []).map((q, i) => {
       const type = String(q.type || "mcq").toLowerCase();
       const hint = cleanSpaces(q.hint || "");
       const img = cleanSpaces(q.imageUrl || "");
@@ -1592,6 +1551,86 @@
     return { kind:"plain", label:"", body:text };
   }
 
+  function getQuestionPoints(q){
+    return Math.max(1, Math.round(Number(q?.points || 1)));
+  }
+
+  function getMainQuestionNumber(rawText, fallbackNo){
+    const parsed = parseExamTextParts(rawText);
+    if (parsed.kind === "main") {
+      const m = String(parsed.label || "").match(/^QUESTION\s+(\d+)$/i);
+      return m ? Number(m[1]) : fallbackNo;
+    }
+    const label = String(parsed.label || "");
+    const m = label.match(/^(\d+)/);
+    return m ? Number(m[1]) : fallbackNo;
+  }
+
+  function getSectionKey(rawText, fallbackNo){
+    const parsed = parseExamTextParts(rawText);
+    if (parsed.kind === "section") return parsed.label;
+    if (parsed.kind === "sub") {
+      const m = String(parsed.label || "").match(/^(\d+\.\d+)\./);
+      if (m) return m[1];
+    }
+    return `${fallbackNo}.1`;
+  }
+
+  function computeQuestionAndSectionTotals(questions){
+    const mainTotals = new Map();
+    const sectionTotals = new Map();
+    let currentMain = 1;
+
+    (questions || []).forEach((q) => {
+      const type = String(q?.type || "mcq").toLowerCase();
+      const rawText = cleanSpaces(q?.text || "");
+
+      if (type === "note") {
+        const parsed = parseExamTextParts(rawText);
+        if (parsed.kind === "main") {
+          const m = String(parsed.label || "").match(/^QUESTION\s+(\d+)$/i);
+          if (m) currentMain = Number(m[1]);
+        }
+        return;
+      }
+
+      const pts = getQuestionPoints(q);
+      const mainNo = getMainQuestionNumber(rawText, currentMain || 1);
+      currentMain = mainNo;
+      const sectionKey = getSectionKey(rawText, currentMain);
+
+      mainTotals.set(mainNo, (mainTotals.get(mainNo) || 0) + pts);
+      sectionTotals.set(sectionKey, (sectionTotals.get(sectionKey) || 0) + pts);
+    });
+
+    return { mainTotals, sectionTotals };
+  }
+
+  function computeOverallTotalMarks(questions){
+    return (questions || []).reduce((sum, q) => {
+      const type = String(q?.type || "mcq").toLowerCase();
+      if (type === "note") return sum;
+      return sum + getQuestionPoints(q);
+    }, 0);
+  }
+
+  function buildPaperMeta(quiz){
+    const title = cleanSpaces(quiz?.title || "Assessment");
+    const totalMarks = computeOverallTotalMarks(quiz?.questions || []);
+    const mins = Number(quiz?.timeLimitMinutes || 0);
+    const timeLabel = Number.isFinite(mins) && mins > 0 ? `${mins} minutes` : "Not set";
+
+    return `
+      <div class="paperMeta">
+        <div class="paperTitle">${escapeHtml(title)}</div>
+        <div class="paperMetaRow">
+          <div class="paperMetaLeft"><b>Total Marks:</b> ${totalMarks}</div>
+          <div class="paperMetaRight"><b>Time Limit:</b> ${escapeHtml(timeLabel)}</div>
+        </div>
+      </div>
+    `;
+  }
+
   function renderQuestionHead(rawText, points, fallbackNo, questionTotal){
     const parsed = parseExamTextParts(rawText);
     const label = parsed.label || `${fallbackNo}.`;
@@ -1605,7 +1644,7 @@
         </div>
         <div class="marksMeta" title="Question total marks">
           <div class="marksLbl">Marks</div>
-          <div class="marksBox">${questionTotal ?? points}</div>
+          <div class="marksBox">${String(questionTotal ?? points).trim()}</div>
         </div>
       </div>
     `;
@@ -1633,7 +1672,7 @@
               <div class="qSectionNo">${escapeHtml(parsed.label)}</div>
               <div class="qSectionText">${escapeHtml(parsed.body)}</div>
             </div>
-            <div class="qSectionMarks">${sectionTotal ?? ""}</div>
+            <div class="qSectionMarks">${String(sectionTotal ?? "").trim()}</div>
           </div>
           ${imageHtml}
         </div>
