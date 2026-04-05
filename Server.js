@@ -2426,34 +2426,42 @@ app.get("/api/results/my", authRequired, async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const rows = await Result.find({ userId })
-      .sort({ createdAt: -1 })
-      .select(
-        "_id createdAt grade topic title paper percent score total status quizId attemptNo isAdminAttempt"
-      );
+    const results = await Result.find({ userId }).sort({ createdAt: -1 });
 
-    return res.json(rows);
-  } catch {
-    return res.status(500).json({ message: "Server error" });
-  }
-});
+    const resultsWithRank = await Promise.all(results.map(async (r) => {
+      const all = await Result.find({ quizId: r.quizId }).sort({
+        percent: -1,
+        timeTakenSeconds: 1,
+        createdAt: 1
+      });
 
-app.get("/api/results/:id", authRequired, async (req, res) => {
-  try {
-    const userId = req.user.userId;
+      let rank = 1;
+      let prevScore = null;
+      let actualRank = null;
 
-    const r = await Result.findById(req.params.id);
-    if (!r) return res.status(404).json({ message: "Not found" });
+      for (let i = 0; i < all.length; i++) {
+        if (all[i].percent !== prevScore) {
+          rank = i + 1;
+        }
 
-    const u = await User.findById(userId).select("role");
-    if (!u) return res.status(401).json({ message: "User not found" });
+        if (String(all[i]._id) === String(r._id)) {
+          actualRank = rank;
+          break;
+        }
 
-    if (!isPrivilegedRole(u.role) && String(r.userId) !== String(userId)) {
-      return res.status(403).json({ message: "Not allowed" });
-    }
+        prevScore = all[i].percent;
+      }
 
-    return res.json(r);
-  } catch {
+      return {
+        ...r.toObject(),
+        rank: actualRank,
+        totalStudents: all.length
+      };
+    }));
+
+    return res.json(resultsWithRank);
+  } catch (err) {
+    console.error("GET /api/results/my error:", err.message);
     return res.status(500).json({ message: "Server error" });
   }
 });
