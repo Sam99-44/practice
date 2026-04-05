@@ -810,7 +810,7 @@
     }
 
     try{
-      const res = await fetch(`${API}/api/results/${encodeURIComponent(resultId)}`, {
+      const res = await fetch(`${API}/api/results/my`, {
         headers: { Authorization: "Bearer " + token }
       });
 
@@ -825,7 +825,14 @@
         throw new Error(txt || `Request failed (HTTP ${res.status})`);
       }
 
-      const r = await res.json();
+      const rows = await res.json().catch(() => []);
+      const list = Array.isArray(rows) ? rows : [];
+      const r = list.find(x => String(x?._id || "") === String(resultId));
+
+      if (!r) {
+        throw new Error("Result not found.");
+      }
+
       titleEl.textContent = cleanSpaces(r.title || "Assessment Review");
 
       answers = Array.isArray(r.answers) ? r.answers : [];
