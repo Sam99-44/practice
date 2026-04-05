@@ -442,14 +442,13 @@
     }
 
     .marksBox{
-      flex:0 0 auto;
-      min-width:18px;
+      min-width:24px;
       padding:0;
       height:auto;
       border:none;
       border-radius:0;
       background:transparent;
-      display:flex;
+      display:inline-flex;
       align-items:flex-start;
       justify-content:center;
       font-weight:400;
@@ -459,26 +458,39 @@
       font-size:14px;
     }
     .marksMeta{
-      display:flex;
+      display:inline-flex;
       align-items:flex-start;
+      justify-content:flex-end;
       gap:0;
-      flex:0 0 auto;
+      min-width:36px;
+      flex:0 0 36px;
       font-family:"Times New Roman", Times, serif;
       color:#111827;
       padding-top:0;
       font-size:14px;
       line-height:1.2;
       white-space:nowrap;
+      text-align:right;
     }
     .marksMeta::before{content:"(";}
     .marksMeta::after{content:")";}
-    .marksLbl{display:none;}.qimg{
+    .marksLbl{display:none;}
+
+    .qimg{
       display:block;
+      width:100%;
       max-width:100%;
       height:auto;
       border-radius:12px;
       border:1px solid #eee;
-      margin:10px 0 12px 0;
+      margin:0 0 12px 0;
+      object-fit:contain;
+      background:#fff;
+    }
+
+    .qImageWrap{
+      width:100%;
+      margin:0 0 10px 0;
     }
 
     .noteBox{
@@ -623,13 +635,15 @@
       .sectionBody{padding:14px}
       .sectionHead{padding:12px 14px}
       .metaRight{align-items:flex-start;min-width:0}
-      .examPaper{padding:16px 14px}
+      .examPaper{padding:16px 10px}
       .qMainHeading{font-size:14px}
       .qSectionStem{font-size:14px}
       .qSectionNo{min-width:44px}
       .qTitle{font-size:14px}
       .qNo{min-width:58px}
       .marksBox{font-size:14px}
+      .marksMeta{min-width:34px;flex-basis:34px;font-size:14px}
+      .qimg{margin-bottom:12px}
       .opt{padding-left:70px;font-size:14px}
       .textAnswer{margin-left:70px;width:calc(100% - 70px)}
       .hint{margin-left:70px}
@@ -847,7 +861,6 @@
 
       if(res.status === 401){
         localStorage.removeItem("token");
-        localStorage.removeItem("username");
         localStorage.removeItem("me_cache");
         location.href = "login.html";
         return;
@@ -1382,7 +1395,7 @@
       const points = Math.max(1, Math.round(Number(q.points || 1)));
       const rawText = cleanSpaces(q.text || "");
 
-      const imageHtml = img ? `<img class="qimg" src="${escapeAttr(img)}" alt="Question image">` : "";
+      const imageHtml = img ? `<div class="qImageWrap"><img class="qimg" src="${escapeAttr(img)}" alt="Question image"></div>` : "";
 
       if (type === "note") {
         return renderNoteLike(rawText, imageHtml);
@@ -1394,8 +1407,8 @@
       if (type === "text") {
         return `
           <div class="q" data-scorable="1">
-            ${headHtml}
             ${imageHtml}
+            ${headHtml}
             <input class="textAnswer" id="txt${i}" placeholder="Type your answer" autocomplete="off" />
             ${hint ? `<div class="hint">Hint: <span class="hintText">${escapeHtml(hint)}</span></div>` : ``}
           </div>
@@ -1408,8 +1421,8 @@
 
       return `
         <div class="q" data-scorable="1" data-qindex="${i}">
-          ${headHtml}
           ${imageHtml}
+          ${headHtml}
           ${opts.map((o, j) => `
             <label class="opt">
               <input class="mcqInput" data-qindex="${i}" type="${inputType}" name="q${i}" value="${j}">
@@ -1537,9 +1550,9 @@
       const bodyHtml = parsed.body ? `<div class="noteBox" style="margin-top:8px;">${escapeHtml(parsed.body)}</div>` : "";
       return `
         <div class="q">
+          ${imageHtml}
           <div class="qMainHeading">${escapeHtml(parsed.label)}</div>
           ${bodyHtml}
-          ${imageHtml}
         </div>
       `;
     }
@@ -1547,19 +1560,19 @@
     if (parsed.kind === "section") {
       return `
         <div class="q">
+          ${imageHtml}
           <div class="qSectionStem">
             <div class="qSectionNo">${escapeHtml(parsed.label)}</div>
             <div class="qSectionText">${escapeHtml(parsed.body)}</div>
           </div>
-          ${imageHtml}
         </div>
       `;
     }
 
     return `
       <div class="q">
-        <div class="noteBox">${escapeHtml(cleanSpaces(rawText || ""))}</div>
         ${imageHtml}
+        <div class="noteBox">${escapeHtml(cleanSpaces(rawText || ""))}</div>
       </div>
     `;
   }
