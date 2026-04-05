@@ -1,4 +1,4 @@
-<!-- admin-quiz.html (FULL UPDATED - COPY & PASTE)
+<!-- admin-quiz.html (UPDATED - COPY & PASTE)
      ✅ MathJax enabled (SVG)
      ✅ Instructions box
      ✅ Note/Heading blocks (type:"note")
@@ -14,13 +14,21 @@
      ✅ Publish mode (draft / publish now / schedule)
      ✅ Publish date & time
      ✅ Available From / Available Until
-     ✅ Send email to students checkbox
+     ✅ Send email to students checkbox (UNTICKED by default)
      ✅ Save draft sends NO learner email
      ✅ Admin + editor + tester can publish
      ✅ Admin + editor + tester can access this page
      ✅ Add buttons moved to bottom
      ✅ Page stays open while working
      ✅ No forced logout except manual logout
+     ✅ Upload .txt file can start with metadata:
+        TITLE:
+        GRADE:
+        TOPIC:
+        TIME_LIMIT:
+        DIFFICULTY:
+        PAPER:
+        SEND_EMAIL:
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -266,7 +274,7 @@
 
       <div>
         <label>Assessment Title</label>
-        <input id="title" placeholder="e.g. Term 1 Revision Test" />
+        <input id="title" placeholder="e.g. Moderate : Quiz 1" />
       </div>
 
       <div>
@@ -318,10 +326,10 @@
     </div>
 
     <div class="checkline">
-      <input id="sendPublishEmail" type="checkbox" checked />
+      <input id="sendPublishEmail" type="checkbox" />
       <label for="sendPublishEmail" style="margin:0; width:auto; font-weight:700;">Send email to students when published</label>
     </div>
-    <div class="muted tiny" style="margin-top:6px;">Untick this if you want to publish without sending learner emails.</div>
+    <div class="muted tiny" style="margin-top:6px;">Untick means no learner email will be sent unless you choose it.</div>
 
     <div class="infoBox">
       <b>Assessment Instructions (optional)</b>
@@ -368,6 +376,22 @@
 
     <div class="muted tiny" style="margin-top:6px;">
       Upload a <b>.txt</b> file in this format:
+      <br />
+      TITLE: Moderate : Quiz 1
+      <br />
+      GRADE: 11
+      <br />
+      TOPIC: Sequences
+      <br />
+      TIME_LIMIT: 20
+      <br />
+      DIFFICULTY: moderate
+      <br />
+      PAPER: paper1
+      <br />
+      SEND_EMAIL: false
+      <br /><br />
+      NOTE: Consider the sequence...
       <br />
       QUESTION: What is 2+2?
       <br />
@@ -1061,7 +1085,6 @@
       });
     }
 
-
     function clearAllCards(){
       questionsWrap.innerHTML = "";
       qCount = 0;
@@ -1084,7 +1107,27 @@
     function splitQuestionBlocks(text){
       const raw = String(text || "").replace(/\r/g, "").trim();
       if (!raw) return [];
-      return raw
+
+      const firstBlockMatch = raw.match(/^(.*?)(?=^(?:HEADING|NOTE|QUESTION\s*:|QUESTION\s+\d+|(?:\d+\.)?\d+\.\d+\s))/ims);
+
+      let contentOnly = raw;
+
+      if (firstBlockMatch && firstBlockMatch[1]) {
+        const header = firstBlockMatch[1].trim();
+
+        const headerLines = header.split("\n").map(l => l.trim()).filter(Boolean);
+
+        const allHeaderLinesAreMeta = headerLines.length > 0 && headerLines.every(line => {
+          return /^[A-Z_]+\s*:/i.test(line) &&
+                 !/^(HEADING|NOTE|QUESTION|A|B|C|D|ANSWER|SOLUTION|HINT|POINTS|MARKS)\s*:/i.test(line);
+        });
+
+        if (allHeaderLinesAreMeta) {
+          contentOnly = raw.slice(firstBlockMatch[1].length).trim();
+        }
+      }
+
+      return contentOnly
         .split(/(?=^(?:HEADING|NOTE|QUESTION\s*:|QUESTION\s+\d+|(?:\d+\.)?\d+\.\d+\s))/gim)
         .map(b => b.trim())
         .filter(Boolean);
@@ -1104,7 +1147,7 @@
         publishAt: "",
         availableFrom: "",
         availableUntil: "",
-        sendPublishEmail: true
+        sendPublishEmail: false
       };
 
       for (const rawLine of lines){
@@ -1130,7 +1173,7 @@
           case "PUBLISH_AT": meta.publishAt = value.trim(); break;
           case "AVAILABLE_FROM": meta.availableFrom = value.trim(); break;
           case "AVAILABLE_UNTIL": meta.availableUntil = value.trim(); break;
-          case "SEND_EMAIL": meta.sendPublishEmail = parseBooleanLike(value, true); break;
+          case "SEND_EMAIL": meta.sendPublishEmail = parseBooleanLike(value, false); break;
         }
       }
 
@@ -1222,7 +1265,7 @@
       solution = solutionLines.join("\n").trim();
 
       if (!question) {
-        throw new Error("Each block must start with HEADING:, NOTE:, QUESTION:, or a numbered question.");
+        throw new Error("Each question block must start with QUESTION: or a numbered question.");
       }
 
       if (options.length < 2) {
@@ -1266,7 +1309,10 @@
 
       const meta = parseAssessmentMetadata(raw, fallbackName);
       const blocks = splitQuestionBlocks(raw);
-      if (!blocks.length) throw new Error("No valid blocks found. Use HEADING:, NOTE:, QUESTION:, or numbered questions.");
+
+      if (!blocks.length) {
+        throw new Error("No valid blocks found. Use TITLE/GRADE/etc. at the top, then NOTE:, HEADING:, QUESTION:, or numbered questions.");
+      }
 
       const items = blocks.map(block => {
         if (/^(HEADING|NOTE)\s*:/i.test(block.trim())) return parseNoteBlock(block);
@@ -1354,7 +1400,7 @@
       const meta = parsed.meta || {};
       const grade = Number(meta.grade);
       const topic = toTitleCase(meta.topic || "");
-      const title = toTitleCase(meta.title || "");
+      const title = cleanSpaces(meta.title || "");
       const timeLimitMinutes = Number(meta.timeLimitMinutes || 10);
       const instructions = cleanSpaces(meta.instructions || "");
       const difficulty = normalizeDifficulty(meta.difficulty);
@@ -1416,7 +1462,7 @@
       return await file.text();
     }
 
-addMcq();
+    addMcq();
     setupDragAndDrop();
 
     function collectQuestions(){
@@ -1522,7 +1568,7 @@ addMcq();
     async function buildPayload(modeOverride = null){
       const grade = Number(gradeEl.value);
       const topic = toTitleCase(topicEl.value);
-      const title = toTitleCase(titleEl.value);
+      const title = cleanSpaces(titleEl.value);
       const timeLimitMinutes = Number(timeLimitEl.value);
       const instructions = cleanSpaces(instructionsEl.value || "");
       const difficulty = normalizeDifficulty(difficultyEl.value);
@@ -1596,7 +1642,7 @@ addMcq();
       publishAtEl.value = "";
       availableFromEl.value = "";
       availableUntilEl.value = "";
-      sendPublishEmailEl.checked = true;
+      sendPublishEmailEl.checked = false;
 
       renderInstructionsPreview();
       updatePublishUI();
