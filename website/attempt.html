@@ -7,7 +7,7 @@
 
   <!-- MathJax -->
   <script>
-    window.MathJax = {F
+    window.MathJax = {
       tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
       svg: { fontCache: 'global' }
     };
@@ -601,6 +601,82 @@
       font-weight:400;
     }
 
+    .solutionBox{
+      margin:12px 0 0 68px;
+      padding:12px 14px;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      border-radius:0;
+      font-family:"Times New Roman", Times, serif;
+      color:#111827;
+    }
+
+    .solutionTitle{
+      font-weight:700;
+      font-size:13px;
+      margin-bottom:10px;
+    }
+
+    .solutionStep{
+      display:grid;
+      grid-template-columns:92px 1fr;
+      gap:10px;
+      align-items:start;
+      margin:10px 0 4px 0;
+      font-size:14px;
+      line-height:1.7;
+    }
+
+    .solutionStepNo{
+      font-weight:700;
+      white-space:nowrap;
+    }
+
+    .solutionStepBody{
+      font-weight:400;
+      min-width:0;
+      word-break:break-word;
+    }
+
+    .solutionLine{
+      margin:2px 0;
+    }
+
+    .solutionContinuation{
+      margin:2px 0 10px 102px;
+      font-size:14px;
+      line-height:1.7;
+    }
+
+    .finalAnswerRow{
+      margin-top:14px;
+      padding-top:8px;
+      border-top:1px solid #e5e7eb;
+    }
+
+    .finalAnswerText{
+      font-weight:700;
+      background:#f8fafc;
+      border:1px solid #e5e7eb;
+      padding:6px 8px;
+      word-break:break-word;
+    }
+
+    @media(max-width:640px){
+      .solutionBox{
+        margin-left:56px;
+      }
+
+      .solutionStep{
+        grid-template-columns:78px 1fr;
+        gap:8px;
+      }
+
+      .solutionContinuation{
+        margin-left:86px;
+      }
+    }
+
     .btnRow{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;}
     .btn{
       background:var(--red);
@@ -994,6 +1070,22 @@
     document.querySelectorAll(".mcqInput").forEach(inp => { inp.checked = false; });
     document.querySelectorAll(".textAnswer").forEach(inp => { inp.value = ""; });
   }
+  function hideAllSolutions(){
+    document.querySelectorAll(".solutionHolder").forEach(el => {
+      el.classList.add("hidden");
+    });
+  }
+
+  function showAllSolutions(){
+    document.querySelectorAll(".solutionHolder").forEach(el => {
+      if (el.innerHTML.trim()) {
+        el.classList.remove("hidden");
+        typesetMath(el);
+      }
+    });
+    typesetMath(questionsDiv);
+  }
+
 
   function isUnavailableBySchedule(quiz){
     const now = new Date();
@@ -1269,6 +1361,7 @@
 
     clearAllAnswers();
     enableAllInputs();
+    hideAllSolutions();
     resetTimerFresh();
 
     submitBtn.disabled = false;
@@ -1315,6 +1408,7 @@
 
       retryBtn.disabled = false;
       disableAllInputs();
+      showAllSolutions();
       return;
     }
 
@@ -1323,6 +1417,7 @@
       msgEl.textContent = "You already submitted this assessment. Use Retry (Practice Mode).";
       blocked = true;
       disableAllInputs();
+      showAllSolutions();
       return;
     }
 
@@ -1363,6 +1458,7 @@
       applyNormalUI();
       viewResultsBtn.disabled = false;
       viewResultsBtn.onclick = () => window.location.href = "results.html";
+      showAllSolutions();
       return;
     }
 
@@ -1386,6 +1482,7 @@
     viewResultsBtn.onclick = () => window.location.href = "results.html";
 
     disableAllInputs();
+    showAllSolutions();
   }
 
   async function loadQuiz() {
@@ -1453,6 +1550,7 @@
       const type = String(q.type || "mcq").toLowerCase();
       const hint = cleanSpaces(q.hint || "");
       const img = cleanSpaces(q.imageUrl || "");
+      const solution = String(q.solution || "").trim();
       const points = getQuestionPoints(q);
       const rawText = cleanSpaces(q.text || "");
       const mainNo = getMainQuestionNumber(rawText, 1);
@@ -1476,6 +1574,7 @@
             ${headHtml}
             <input class="textAnswer" id="txt${i}" placeholder="Type your answer" autocomplete="off" />
             ${hint ? `<div class="hint">Hint: <span class="hintText">${escapeHtml(hint)}</span></div>` : ``}
+            <div class="solutionHolder hidden">${formatSolutionHtml(solution)}</div>
           </div>
         `;
       }
@@ -1491,14 +1590,16 @@
           ${opts.map((o, j) => `
             <label class="opt">
               <input class="mcqInput" data-qindex="${i}" type="${inputType}" name="q${i}" value="${j}">
-              <span class="optText">${escapeHtml(cleanSpaces(o))}</span>
+              <span class="optText">${renderMixedMath(cleanSpaces(o))}</span>
             </label>
           `).join("")}
           ${hint ? `<div class="hint">Hint: <span class="hintText">${escapeHtml(hint)}</span></div>` : ``}
+          <div class="solutionHolder hidden">${formatSolutionHtml(solution)}</div>
         </div>
       `;
     }).join("");
 
+    hideAllSolutions();
     typesetMath(questionsDiv);
 
     if (unavailable){
@@ -1526,6 +1627,7 @@
       viewResultsBtn.onclick = () => window.location.href = "results.html";
 
       disableAllInputs();
+      showAllSolutions();
       resetTimerFresh();
 
       if (wantsPracticeFromLink) startPracticeMode();
@@ -1548,6 +1650,169 @@
       msgEl.className = "error";
       msgEl.textContent = "Practice Mode is available after you submit your first attempt.";
     }
+  }
+
+  function toLatex(text){
+    let t = String(text || "").trim();
+    if (!t) return "";
+
+    if (/\\\(|\\\[|\\frac|\\sqrt|\$/.test(t)) return t;
+
+    t = t
+      .replace(/<=/g, "\\leq ")
+      .replace(/>=/g, "\\geq ")
+      .replace(/!=/g, "\\neq ")
+      .replace(/≤/g, "\\leq ")
+      .replace(/≥/g, "\\geq ");
+
+    t = t.replace(/sqrt\(([^()]+)\)/gi, "\\sqrt{$1}");
+    t = t.replace(/([A-Za-z0-9)\]])\s*\^\s*\(([^()]+)\)/g, "$1^{$2}");
+    t = t.replace(/([A-Za-z0-9)\]])\s*\^\s*([+-]?\d+)/g, "$1^{$2}");
+    t = t.replace(/(\d+)\s*\/\s*(\d+)/g, "\\frac{$1}{$2}");
+
+    return `$${t}$`;
+  }
+
+  function renderMixedMath(text){
+    const raw = String(text || "").trim();
+    if (!raw) return "";
+
+    if (/\\\(|\\\[|\\frac|\\sqrt|\$/.test(raw)) {
+      return raw.includes("$") ? raw : `$${raw}$`;
+    }
+
+    const protectedParts = [];
+    let temp = raw.replace(/(Final Answer:|Step\s*\d+:)/gi, (m) => `@@LBL${protectedParts.push(m)-1}@@`);
+
+    temp = temp.replace(
+      /(sqrt\([^()]+\)|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+)|\d+\s*\/\s*\d+|[A-Za-z0-9()\s+\-*/]+(?:<=|>=|<|>|=)[A-Za-z0-9()\s+\-*/]+)/g,
+      (m) => `@@M${protectedParts.push(m)-1}@@`
+    );
+
+    temp = escapeHtml(temp);
+
+    temp = temp.replace(/@@LBL(\d+)@@/g, (_, i) => `<span>${escapeHtml(protectedParts[Number(i)])}</span>`);
+    temp = temp.replace(/@@M(\d+)@@/g, (_, i) => toLatex(protectedParts[Number(i)]));
+
+    return temp;
+  }
+
+  function formatSolutionHtml(solutionText){
+    const raw = String(solutionText || "").trim();
+    if (!raw) return "";
+
+    function normalizeSolutionText(input){
+      let s = String(input || "").replace(/\r/g, "\n");
+
+      s = s.replace(/\$/g, "");
+
+      s = s
+        .replace(/\\leq/g, "≤")
+        .replace(/\\geq/g, "≥")
+        .replace(/\\neq/g, "≠")
+        .replace(/\\sqrt/g, "sqrt");
+
+      s = s
+        .replace(/\s*Final\s*Answer\s*:/gi, "\n\nFinal Answer: ")
+        .replace(/\s*Step\s*(\d+)\s*:/gi, "\n\nStep $1: ");
+
+      s = s
+        .replace(/([a-zA-Z])\(/g, "$1 (")
+        .replace(/\)([a-zA-Z])/g, ") $1");
+
+      s = s
+        .replace(/<=/g, "≤")
+        .replace(/>=/g, "≥")
+        .replace(/([<>]=?|=)([^\s])/g, "$1 $2")
+        .replace(/([^\s])([<>]=?|=)/g, "$1 $2");
+
+      s = s
+        .replace(/([a-z0-9])or([a-z0-9])/gi, "$1 or $2")
+        .replace(/([a-z0-9])and([a-z0-9])/gi, "$1 and $2");
+
+      s = s.replace(/:\s*/g, ": ");
+
+      s = s
+        .replace(/[ \t]+\n/g, "\n")
+        .replace(/\n{3,}/g, "\n\n");
+
+      return s.trim();
+    }
+
+    const cleanedText = normalizeSolutionText(raw);
+    const rawLines = cleanedText.split("\n");
+    const blocks = [];
+    let current = null;
+
+    for (const rawLine of rawLines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+
+      const stepMatch = line.match(/^(Step\s*\d+\s*:)(.*)$/i);
+      const finalMatch = line.match(/^(Final Answer\s*:|Answer\s*:)(.*)$/i);
+
+      if (stepMatch) {
+        if (current) blocks.push(current);
+        current = {
+          type: "step",
+          label: stepMatch[1].trim(),
+          lines: stepMatch[2].trim() ? [stepMatch[2].trim()] : []
+        };
+        continue;
+      }
+
+      if (finalMatch) {
+        if (current) blocks.push(current);
+        current = {
+          type: "final",
+          label: finalMatch[1].trim(),
+          lines: finalMatch[2].trim() ? [finalMatch[2].trim()] : []
+        };
+        continue;
+      }
+
+      if (!current) current = { type: "plain", label: "", lines: [line] };
+      else current.lines.push(line);
+    }
+
+    if (current) blocks.push(current);
+
+    const html = blocks.map(block => {
+      if (block.type === "final") {
+        return `
+          <div class="solutionStep finalAnswerRow">
+            <div class="solutionStepNo">${escapeHtml(block.label)}</div>
+            <div class="solutionStepBody finalAnswerText">
+              ${block.lines.map(line => `<div class="solutionLine">${renderMixedMath(line)}</div>`).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (block.type === "step") {
+        return `
+          <div class="solutionStep">
+            <div class="solutionStepNo">${escapeHtml(block.label)}</div>
+            <div class="solutionStepBody">
+              ${block.lines.map(line => `<div class="solutionLine">${renderMixedMath(line)}</div>`).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="solutionContinuation">
+          ${block.lines.map(line => `<div class="solutionLine">${renderMixedMath(line)}</div>`).join("")}
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <div class="solutionBox">
+        <div class="solutionTitle">Solution / Workings</div>
+        ${html}
+      </div>
+    `;
   }
 
   function escapeHtml(str){
@@ -1678,7 +1943,7 @@
       <div class="qHead">
         <div class="qTitle">
           <span class="qNo">${escapeHtml(label)}</span>
-          <span class="qText">${escapeHtml(body || cleanSpaces(rawText || ""))}</span>
+          <span class="qText">${renderMixedMath(body || cleanSpaces(rawText || ""))}</span>
         </div>
         <div class="marksMeta" title="Question marks">
           <div class="marksLbl">Marks</div>
@@ -1692,7 +1957,7 @@
     const parsed = parseExamTextParts(rawText);
 
     if (parsed.kind === "main") {
-      const bodyHtml = parsed.body ? `<div class="noteBox" style="margin-top:8px;">${escapeHtml(parsed.body)}</div>` : "";
+      const bodyHtml = parsed.body ? `<div class="noteBox" style="margin-top:8px;">${renderMixedMath(parsed.body)}</div>` : "";
       return `
         <div class="q">
           <div class="qMainHeading">${escapeHtml(parsed.label)}</div>
@@ -1708,7 +1973,7 @@
           <div class="qSectionStem">
             <div class="qSectionLeft">
               <div class="qSectionNo">${escapeHtml(parsed.label)}</div>
-              <div class="qSectionText">${escapeHtml(parsed.body)}</div>
+              <div class="qSectionText">${renderMixedMath(parsed.body)}</div>
             </div>
             
           </div>
@@ -1719,7 +1984,7 @@
 
     return `
       <div class="q">
-        <div class="noteBox">${escapeHtml(cleanSpaces(rawText || ""))}</div>
+        <div class="noteBox">${renderMixedMath(cleanSpaces(rawText || ""))}</div>
         ${imageHtml}
       </div>
     `;
