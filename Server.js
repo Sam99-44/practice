@@ -2194,32 +2194,65 @@ function normalizeTextAnswer(s) {
   return normalizeAnswer(s);
 }
 
+function splitPossibleAnswers(value) {
+  return String(value || "")
+    .split("|")
+    .map(v => String(v || "").trim())
+    .filter(Boolean);
+}
+
+function splitLearnerAnswers(value) {
+  return String(value || "")
+    .trim()
+    .split(/\s*(?:or|and|;|\|)\s*/i)
+    .map(v => String(v || "").trim())
+    .filter(Boolean);
+}
+
 function compareTextAnswer(userAns, correctAns, mode, tolerance) {
-  const uaRaw = String(userAns || "");
-  const caRaw = String(correctAns || "");
-  if (!caRaw.trim()) return false;
+  const uaRaw = String(userAns || "").trim();
+  const caRaw = String(correctAns || "").trim();
+  if (!caRaw) return false;
 
-  const uNum = parseNumberOrFraction(uaRaw);
-  const cNum = parseNumberOrFraction(caRaw);
+  const allowedAnswers = splitPossibleAnswers(caRaw);
+  const learnerAnswers = splitLearnerAnswers(uaRaw);
+  const inputsToCheck = learnerAnswers.length ? learnerAnswers : [uaRaw];
 
-  if (mode === "number_tolerance") {
-    const tol = Number(tolerance);
-    if (uNum === null || cNum === null || !Number.isFinite(tol) || tol < 0) return false;
-    return Math.abs(uNum - cNum) <= tol;
+  for (const rawInput of inputsToCheck) {
+    for (const allowed of allowedAnswers) {
+      const uNum = parseNumberOrFraction(rawInput);
+      const cNum = parseNumberOrFraction(allowed);
+
+      if (mode === "number_tolerance") {
+        const tol = Number(tolerance);
+        if (
+          uNum !== null &&
+          cNum !== null &&
+          Number.isFinite(tol) &&
+          tol >= 0 &&
+          Math.abs(uNum - cNum) <= tol
+        ) {
+          return true;
+        }
+      } else if (uNum !== null && cNum !== null) {
+        const defaultTolerance = 0.01;
+        if (Math.abs(uNum - cNum) <= defaultTolerance) {
+          return true;
+        }
+      }
+
+      const ua = normalizeTextAnswer(rawInput);
+      const ca = normalizeTextAnswer(allowed);
+
+      if (mode === "contains") {
+        if (ua.includes(ca)) return true;
+      } else {
+        if (ua === ca) return true;
+      }
+    }
   }
 
-  // ✅ THIS IS THE IMPORTANT FIX
-  if (uNum !== null && cNum !== null) {
-    const defaultTolerance = 0.01; // allows 0.33 ≈ 1/3
-    return Math.abs(uNum - cNum) <= defaultTolerance;
-  }
-
-  const ua = normalizeTextAnswer(uaRaw);
-  const ca = normalizeTextAnswer(caRaw);
-
-  if (mode === "contains") return ua.includes(ca);
-
-  return ua === ca;
+  return false;
 }
 
 app.post("/api/results", authRequired, async (req, res) => {
