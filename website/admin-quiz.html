@@ -32,6 +32,7 @@
         DIFFICULTY:
         PAPER:
         SEND_EMAIL:
+     ✅ Upload parser now supports BOTH MCQ and typed-answer questions
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -402,9 +403,11 @@
       <br />
       SEND_EMAIL: false
       <br /><br />
-      NOTE: Consider the sequence...
+      <b>MCQ example:</b>
       <br />
-      QUESTION: What is 2+2?
+      NOTE: 1.1 Consider the sequence...
+      <br />
+      QUESTION: Write down the next TWO terms.
       <br />
       A: 3
       <br />
@@ -415,6 +418,30 @@
       D: 6
       <br />
       ANSWER: B
+      <br />
+      POINTS: 2
+      <br /><br />
+      <b>Typed answer example:</b>
+      <br />
+      NOTE: 1.2 Solve for \(x\).
+      <br />
+      QUESTION: Solve \(x^2-3x-10=0\)
+      <br />
+      ANSWER: 5,-2
+      <br />
+      CHECK_MODE: exact
+      <br />
+      POINTS: 3
+      <br />
+      SOLUTION:
+      <br />
+      Step 1: Factorise the quadratic...
+      <br /><br />
+      <b>Optional typed answer fields:</b>
+      <br />
+      CHECK_MODE: exact | contains | number_tolerance
+      <br />
+      TOLERANCE: 0.01
       <br /><br />
       <b>Important numbering rule:</b>
       <br />
@@ -1436,12 +1463,16 @@
     }
 
     function parseQuestionBlock(block){
-      const raw = String(block || "").replace(/\r/g, "").trim();
+      const raw = String(block || "").replace(/
+/g, "").trim();
       const lines = raw.split("\n");
       let question = "";
       let hint = "";
       let solution = "";
       let points = 1;
+      let answerRaw = "";
+      let textAnswerMode = "exact";
+      let numberTolerance = null;
       const options = [];
       const correctLetters = [];
       let inSolution = false;
@@ -1480,6 +1511,20 @@
           continue;
         }
 
+        if (/^CHECK_MODE\s*:/i.test(line) && !inSolution) {
+          const mode = line.replace(/^CHECK_MODE\s*:/i, "").trim().toLowerCase();
+          if (["exact", "contains", "number_tolerance"].includes(mode)) {
+            textAnswerMode = mode;
+          }
+          continue;
+        }
+
+        if (/^TOLERANCE\s*:/i.test(line) && !inSolution) {
+          const tol = Number(line.replace(/^TOLERANCE\s*:/i, "").trim());
+          if (Number.isFinite(tol) && tol >= 0) numberTolerance = tol;
+          continue;
+        }
+
         if (/^SOLUTION\s*:/i.test(line) || /^MEMO\s*:/i.test(line)) {
           inSolution = true;
           const rest = line.replace(/^(SOLUTION|MEMO)\s*:/i, "").trim();
@@ -1502,9 +1547,9 @@
         }
 
         if (/^ANSWER\s*:/i.test(line) && !inSolution) {
-          const ansRaw = line.replace(/^ANSWER\s*:/i, "").trim().toUpperCase();
-          const matches = ansRaw.match(/[A-D]/g);
-          if (matches) correctLetters.push(...matches);
+          answerRaw = line.replace(/^ANSWER\s*:/i, "").trim();
+          const matches = answerRaw.toUpperCase().match(/[A-D]/g);
+          if (matches && options.length) correctLetters.push(...matches);
           continue;
         }
 
@@ -1514,35 +1559,55 @@
       }
 
       solution = solutionLines.join("\n").trim();
-
       question = stripLeadingQuestionNumber(question);
 
       if (!question) {
         throw new Error("Each question block must start with QUESTION: or a numbered question.");
       }
 
-      if (options.length < 2) {
-        throw new Error(`Question "${question}" must have at least 2 options.`);
+      if (!answerRaw) {
+        throw new Error(`Question "${question}" must have an ANSWER line.`);
       }
 
-      const correctIndexes = [];
-      options.forEach((opt, idx) => {
-        if (correctLetters.includes(opt.label)) correctIndexes.push(idx);
-      });
+      if (options.length >= 2) {
+        const correctIndexes = [];
+        options.forEach((opt, idx) => {
+          if (correctLetters.includes(opt.label)) correctIndexes.push(idx);
+        });
 
-      if (correctIndexes.length < 1) {
-        throw new Error(`Question "${question}" must have at least one ANSWER or one option marked (Correct).`);
+        if (correctIndexes.length < 1) {
+          throw new Error(`Question "${question}" must have at least one ANSWER or one option marked (Correct).`);
+        }
+
+        return {
+          type: "mcq",
+          question,
+          hint,
+          solution,
+          points,
+          options: options.map(o => o.value),
+          correctIndexes
+        };
       }
 
-      return {
-        type: "mcq",
-        question,
-        hint,
-        solution,
-        points,
-        options: options.map(o => o.value),
-        correctIndexes
-      };
+      if (options.length === 0) {
+        if (textAnswerMode === "number_tolerance" && !(Number.isFinite(numberTolerance) && numberTolerance >= 0)) {
+          numberTolerance = 0;
+        }
+
+        return {
+          type: "text",
+          question,
+          hint,
+          solution,
+          points,
+          correctText: answerRaw,
+          textAnswerMode,
+          numberTolerance
+        };
+      }
+
+      throw new Error(`Question "${question}" has incomplete options. Use at least 2 options for MCQ, or remove all options for a typed question.`);
     }
 
     function classifySpecialNote(text){
@@ -1652,6 +1717,22 @@
       renderCardPreview(card);
     }
 
+    function fillTextCard(card, data){
+      card.querySelector(".qText").value = stripLeadingQuestionNumber(data.question || "");
+      card.querySelector(".qHint").value = data.hint || "";
+      card.querySelector(".qPoints").value = data.points || 1;
+      card.querySelector(".qSolution").value = data.solution || "";
+      card.querySelector(".correctText").value = data.correctText || "";
+      card.querySelector(".textMode").value = data.textAnswerMode || "exact";
+      card.querySelector(".tolerance").value = data.numberTolerance ?? "";
+
+      const modeSel = card.querySelector(".textMode");
+      const tolRow = card.querySelector(".tolRow");
+      const showTol = modeSel.value === "number_tolerance";
+      tolRow.classList.toggle("hide", !showTol);
+      renderCardPreview(card);
+    }
+
     function fillAssessmentForm(parsed){
       const meta = parsed.meta || {};
       if (meta.grade) gradeEl.value = String(meta.grade);
@@ -1689,6 +1770,10 @@
           addMcq();
           const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='mcq']")];
           fillMcqCard(cards[cards.length - 1], item);
+        } else if (item.type === "text") {
+          addText();
+          const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='text']")];
+          fillTextCard(cards[cards.length - 1], item);
         }
       }
 
@@ -1727,6 +1812,19 @@
           return { type: "note", text: `${num} ${cleanSpaces(item.text || "")}` };
         }
         if (item.type === "note") return { type: "note", text: cleanSpaces(item.text || "") };
+        if (item.type === "text") {
+          return {
+            type: "text",
+            text: cleanSpaces(item.question || ""),
+            hint: cleanSpaces(item.hint || ""),
+            imageUrl: "",
+            points: Number(item.points || 1),
+            correctText: cleanSpaces(item.correctText || ""),
+            textAnswerMode: item.textAnswerMode || "exact",
+            numberTolerance: item.numberTolerance ?? null,
+            solution: String(item.solution || "").trim()
+          };
+        }
         const options = [...(item.options || [])];
         const correctIndexes = [...(item.correctIndexes || [])];
         const payload = {
