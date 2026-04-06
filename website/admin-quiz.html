@@ -540,6 +540,77 @@
     function cleanSpaces(s){
       return String(s || "").trim().replace(/\s+/g, " ");
     }
+
+    function looksLikeMathContent(value){
+      const s = String(value || "");
+      return /\\\(|\\\[|\\frac|\\sqrt|\$/.test(s) ||
+             /[a-zA-Z]\^\d/.test(s) ||
+             /sqrt\s*\(/i.test(s) ||
+             /(?:<=|>=|!=|\bpi\b|≤|≥)/i.test(s) ||
+             /(?:\d+|\)|[a-zA-Z])\s*\^\s*\(/.test(s) ||
+             /(?:=|<|>|\\leq|\\geq)/.test(s) && /[a-zA-Z0-9]/.test(s);
+    }
+
+    function convertPlainMathSegment(segment){
+      let s = String(segment || "").trim();
+      if (!s || /\\\(|\\\[|\\frac|\\sqrt|\$/.test(s)) return s;
+
+      s = s
+        .replace(/<=/g, "\\leq ")
+        .replace(/>=/g, "\\geq ")
+        .replace(/!=/g, "\\neq ")
+        .replace(/≤/g, "\\leq ")
+        .replace(/≥/g, "\\geq ");
+
+      s = s.replace(/sqrt\s*\(([^()]+)\)/gi, "\\sqrt{$1}");
+      s = s.replace(/([A-Za-z0-9)\]])\s*\^\s*\(([^()]+)\)/g, "$1^{$2}");
+      s = s.replace(/([A-Za-z0-9)\]])\s*\^\s*([+-]?\d+)/g, "$1^{$2}");
+
+      s = s.replace(/\bpi\b/gi, "\\pi");
+
+      return `$${s}$`;
+    }
+
+    function autoConvertToLatex(value){
+      const raw = String(value || "");
+      if (!raw.trim()) return "";
+      if (/\\\(|\\\[|\\frac|\\sqrt|\$/.test(raw)) return raw;
+
+      let converted = raw.replace(/(^|[\s:;,])sqrt\s*\(([^()]+)\)/gi, (m, pre, inner) => {
+        return `${pre}$\\sqrt{${inner}}$`;
+      });
+
+      converted = converted.replace(/([A-Za-z0-9)\]])\s*\^\s*\(([^()]+)\)/g, '$1^{$2}');
+      converted = converted.replace(/([A-Za-z0-9)\]])\s*\^\s*([+-]?\d+)/g, '$1^{$2}');
+      converted = converted
+        .replace(/<=/g, '\\leq ')
+        .replace(/>=/g, '\\geq ')
+        .replace(/!=/g, '\\neq ')
+        .replace(/≤/g, '\\leq ')
+        .replace(/≥/g, '\\geq ');
+
+      if (looksLikeMathContent(converted)) {
+        if (/^\$.*\$$/.test(converted.trim())) return converted.trim();
+        return `$${converted.trim()}$`;
+      }
+
+      return converted;
+    }
+
+    function autoConvertMixedLatex(value){
+      const raw = String(value || "").trim();
+      if (!raw) return "";
+      if (/\\\(|\\\[|\\frac|\\sqrt|\$/.test(raw)) return raw;
+
+      const parts = raw.split(/(\([^)]*\)|correct to TWO decimal places|or|and)/i);
+      const out = parts.map(part => {
+        const p = String(part || "");
+        if (!p.trim()) return p;
+        return looksLikeMathContent(p) ? convertPlainMathSegment(p) : p;
+      }).join("");
+
+      return out;
+    }
     function stripLeadingQuestionNumber(text){
       const s = cleanSpaces(text || "");
       if (!s) return "";
@@ -1056,7 +1127,7 @@
       const type = card.getAttribute("data-type") || "mcq";
 
       if (type === "note") {
-        const t = cleanSpaces(card.querySelector(".noteText")?.value || "");
+        const t = autoConvertMixedLatex(cleanSpaces(card.querySelector(".noteText")?.value || ""));
         setPreviewText(card.querySelector(".prevNote"), t || "(Note preview)");
         return;
       }
@@ -1065,15 +1136,15 @@
 
       if (type === "section") {
         const label = cleanSpaces(card.querySelector(".cardLabel")?.textContent || "");
-        const t = cleanSpaces(card.querySelector(".sectionText")?.value || "");
+        const t = autoConvertMixedLatex(cleanSpaces(card.querySelector(".sectionText")?.value || ""));
         const full = label ? `${label} ${t}` : t;
         setPreviewText(card.querySelector(".prevSection"), full || "(Section preview)");
         return;
       }
 
-      const qText = stripLeadingQuestionNumber(card.querySelector(".qText")?.value || "");
-      const hint  = cleanSpaces(card.querySelector(".qHint")?.value || "");
-      const sol   = cleanSpaces(card.querySelector(".qSolution")?.value || "");
+      const qText = autoConvertMixedLatex(stripLeadingQuestionNumber(card.querySelector(".qText")?.value || ""));
+      const hint  = autoConvertMixedLatex(cleanSpaces(card.querySelector(".qHint")?.value || ""));
+      const sol   = autoConvertMixedLatex(cleanSpaces(card.querySelector(".qSolution")?.value || ""));
       const label = cleanSpaces(card.querySelector(".cardLabel")?.textContent || "");
       const marksMeta = cleanSpaces(card.querySelector(".marksMeta")?.textContent || "");
       let fullQuestionText = qText;
@@ -1561,8 +1632,12 @@
 
       solution = solutionLines.join("\n").trim();
       question = stripLeadingQuestionNumber(question);
+      question = autoConvertMixedLatex(question);
+      hint = autoConvertMixedLatex(hint);
+      solution = autoConvertMixedLatex(solution);
+      typedAnswer = autoConvertMixedLatex(typedAnswer);
 
-      const where = `Block ${blockIndex + 1}${question ? ` (${question.slice(0, 60)})` : ""}`;
+      const where = `Block ${blockIndex + 1}${question ? ` (${String(question).replace(/\$/g, "").slice(0, 60)})` : ""}`;
 
       if (!question) {
         throw Object.assign(new Error("Each question block must start with QUESTION: or a numbered question."), { where });
@@ -1610,7 +1685,7 @@
         hint,
         solution,
         points,
-        options: options.map(o => o.value),
+        options: options.map(o => autoConvertMixedLatex(o.value)),
         correctIndexes
       };
     }
@@ -1623,7 +1698,7 @@
       if (mainMatch) {
         return {
           type: "group",
-          text: cleanSpaces(mainMatch[2] || ""),
+          text: autoConvertMixedLatex(cleanSpaces(mainMatch[2] || "")),
           mainNumber: Number(mainMatch[1])
         };
       }
@@ -1633,11 +1708,11 @@
         return {
           type: "section",
           number: sectionMatch[1],
-          text: cleanSpaces(sectionMatch[2] || "")
+          text: autoConvertMixedLatex(cleanSpaces(sectionMatch[2] || ""))
         };
       }
 
-      return { type: "note", text: t };
+      return { type: "note", text: autoConvertMixedLatex(t) };
     }
 
     function parseNoteBlock(block){
@@ -1900,14 +1975,14 @@
           const sectionText = cleanSpaces(card.querySelector(".sectionText")?.value || "");
           const sectionNumber = cleanSpaces(card.querySelector(".cardLabel")?.textContent || "");
           if (!sectionText) throw new Error("Please fill in all section / stem texts.");
-          questions.push({ type: "note", text: `${sectionNumber} ${sectionText}` });
+          questions.push({ type: "note", text: `${sectionNumber} ${autoConvertMixedLatex(sectionText)}` });
           continue;
         }
 
         if (type === "note") {
           const noteText = cleanSpaces(card.querySelector(".noteText")?.value);
           if (!noteText) throw new Error("Please fill in the note/heading text.");
-          questions.push({ type: "note", text: noteText });
+          questions.push({ type: "note", text: autoConvertMixedLatex(noteText) });
           continue;
         }
 
@@ -1917,8 +1992,9 @@
         let text = rawText;
         if (numberLabel) text = `${numberLabel} ${text}`;
         if (!rawText) throw new Error("Please fill in all question texts.");
+        text = autoConvertMixedLatex(text);
 
-        const hint = cleanSpaces(card.querySelector(".qHint")?.value || "");
+        const hint = autoConvertMixedLatex(cleanSpaces(card.querySelector(".qHint")?.value || ""));
         const imageUrl =
           cleanSpaces(card.querySelector(".qImage")?.value || "") ||
           cleanSpaces(card.querySelector(".qImage2")?.value || "");
@@ -1929,10 +2005,10 @@
           throw new Error("Marks must be a whole number (1 or more) for each question.");
         }
 
-        const solution = cleanSpaces(card.querySelector(".qSolution")?.value || "");
+        const solution = autoConvertMixedLatex(cleanSpaces(card.querySelector(".qSolution")?.value || ""));
 
         if (type === "text") {
-          const correctText = cleanSpaces(card.querySelector(".correctText")?.value);
+          const correctText = autoConvertMixedLatex(cleanSpaces(card.querySelector(".correctText")?.value));
           const textAnswerMode = card.querySelector(".textMode")?.value || "exact";
           const toleranceRaw = cleanSpaces(card.querySelector(".tolerance")?.value);
 
@@ -1963,7 +2039,7 @@
           const optRows = [...card.querySelectorAll(".optRow")];
 
           const included = optRows.map((r) => {
-            const txt = cleanSpaces(r.querySelector(".optInput")?.value || "");
+            const txt = autoConvertMixedLatex(cleanSpaces(r.querySelector(".optInput")?.value || ""));
             if (!txt) return null;
             return {
               text: txt,
@@ -1971,7 +2047,7 @@
             };
           }).filter(Boolean);
 
-          const options = included.map(o => o.text);
+          const options = included.map(o => autoConvertMixedLatex(o.text));
           const correctedIndexes = [];
           included.forEach((o, idx) => { if (o.correct) correctedIndexes.push(idx); });
 
