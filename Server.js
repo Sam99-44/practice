@@ -2164,12 +2164,18 @@ function isUnavailableBySchedule(quiz) {
   return false;
 }
 
-function parseNumberOrFraction(input) {
-  const s = String(input || "")
+function normalizeAnswer(ans) {
+  return String(ans || "")
     .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "")
     .replace(/,/g, ".")
-    .replace(/−/g, "-");
+    .replace(/−/g, "-")
+    .replace(/^[a-z]+\s*=\s*/, "");
+}
 
+function parseNumberOrFraction(input) {
+  const s = normalizeAnswer(input);
   if (!s) return null;
 
   const m = s.match(/^([+-]?\d+(?:\.\d+)?)\s*\/\s*([+-]?\d+(?:\.\d+)?)$/);
@@ -2185,11 +2191,7 @@ function parseNumberOrFraction(input) {
 }
 
 function normalizeTextAnswer(s) {
-  return String(s || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "")
-    .replace(/−/g, "-");
+  return normalizeAnswer(s);
 }
 
 function compareTextAnswer(userAns, correctAns, mode, tolerance) {
@@ -2206,8 +2208,10 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
     return Math.abs(uNum - cNum) <= tol;
   }
 
+  // ✅ THIS IS THE IMPORTANT FIX
   if (uNum !== null && cNum !== null) {
-    return Math.abs(uNum - cNum) <= 1e-12;
+    const defaultTolerance = 0.01; // allows 0.33 ≈ 1/3
+    return Math.abs(uNum - cNum) <= defaultTolerance;
   }
 
   const ua = normalizeTextAnswer(uaRaw);
