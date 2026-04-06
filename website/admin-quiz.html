@@ -402,11 +402,9 @@
       <br />
       SEND_EMAIL: false
       <br /><br />
-      <b>MCQ example:</b>
+      NOTE: Consider the sequence...
       <br />
-      NOTE: 1.1 Consider the sequence...
-      <br />
-      QUESTION: Write down the next TWO terms.
+      QUESTION: What is 2+2?
       <br />
       A: 3
       <br />
@@ -417,30 +415,16 @@
       D: 6
       <br />
       ANSWER: B
-      <br />
-      POINTS: 2
       <br /><br />
-      <b>Typed answer example:</b>
+      Or for typed answers:
       <br />
-      NOTE: 1.2 Solve for <i>x</i>.
+      QUESTION: Calculate the value of \(x\)
       <br />
-      QUESTION: Solve \(x^2 - 3x - 10 = 0\)
+      TYPE: text
       <br />
-      ANSWER: 5,-2
-      <br />
-      CHECK_MODE: exact
+      ANSWER: -1
       <br />
       POINTS: 3
-      <br />
-      SOLUTION:
-      <br />
-      Step 1: Factorise the quadratic...
-      <br /><br />
-      <b>Optional typed answer fields:</b>
-      <br />
-      CHECK_MODE: exact | contains | number_tolerance
-      <br />
-      TOLERANCE: 0.01
       <br /><br />
       <b>Important numbering rule:</b>
       <br />
@@ -459,6 +443,7 @@
       <button class="btn btn2" id="previewPaperBtn" type="button">Preview Exam Paper</button>
     </div>
     <p class="msg muted" id="msg"></p>
+    <div id="parseErrorsBox" class="hide" style="margin-top:10px; border:1px solid #fecaca; background:#fff1f2; color:#7f1d1d; border-radius:12px; padding:12px;"></div>
   </div>
 
   <div id="paperPreviewModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.6); display:none; justify-content:center; align-items:center; z-index:9999; padding:20px; box-sizing:border-box;">
@@ -478,6 +463,7 @@
     const API = window.API || "https://practice-backend-msgn.onrender.com";
 
     const msg = document.getElementById("msg");
+    const parseErrorsBox = document.getElementById("parseErrorsBox");
     const who = document.getElementById("who");
     const saveBtn = document.getElementById("saveBtn");
     const publishBtn = document.getElementById("publishBtn");
@@ -521,6 +507,24 @@
     function setMsg(text, type="muted"){
       msg.className = "msg " + type;
       msg.textContent = text;
+    }
+    function clearParseErrors(){
+      parseErrorsBox.classList.add("hide");
+      parseErrorsBox.innerHTML = "";
+    }
+
+    function showParseErrors(errors, title="Please fix these file issues"){
+      if (!Array.isArray(errors) || !errors.length) {
+        clearParseErrors();
+        return;
+      }
+      parseErrorsBox.classList.remove("hide");
+      parseErrorsBox.innerHTML = `
+        <div style="font-weight:800; margin-bottom:8px;">${escapeHtml(title)}</div>
+        <ul style="margin:0; padding-left:18px;">
+          ${errors.map(err => `<li style="margin:6px 0;"><b>${escapeHtml(err.where || "File")}</b>: ${escapeHtml(err.message || "")}</li>`).join("")}
+        </ul>
+      `;
     }
 
     function logout(){
@@ -936,12 +940,16 @@
 
         setMsg("Reading file and filling assessment...", "muted");
 
+        clearParseErrors();
         const text = await readUploadedTextFile(file);
         const parsed = parseAssessmentFile(text, file.name);
         fillAssessmentForm(parsed);
 
         setMsg("Assessment loaded successfully. Please review before saving.", "ok");
       } catch (err) {
+        if (Array.isArray(err.parseErrors) && err.parseErrors.length) {
+          showParseErrors(err.parseErrors, "Please fix these .txt file issues");
+        }
         setMsg(err.message || "Could not read the file.", "error");
       }
     });
@@ -994,7 +1002,10 @@
 
             results.push(`✓ ${file.name}`);
           } catch (err) {
-            results.push(`✗ ${file.name}: ${err.message || "Upload failed"}`);
+            const detail = Array.isArray(err.parseErrors) && err.parseErrors.length
+              ? `${err.message || "Upload failed"} (${err.parseErrors[0].where}: ${err.parseErrors[0].message})`
+              : (err.message || "Upload failed");
+            results.push(`✗ ${file.name}: ${detail}`);
           }
         }
 
@@ -1461,25 +1472,23 @@
       return meta;
     }
 
-    function parseQuestionBlock(block){
+    function parseQuestionBlock(block, blockIndex=0){
       const raw = String(block || "").replace(/\r/g, "").trim();
       const lines = raw.split("\n");
       let question = "";
       let hint = "";
       let solution = "";
       let points = 1;
-      let checkMode = "exact";
-      let tolerance = null;
-      let answerRaw = "";
-
+      let explicitType = "";
+      let typedAnswer = "";
       const options = [];
       const correctLetters = [];
       let inSolution = false;
       const solutionLines = [];
 
-      for (let rawLine of lines) {
+      for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+        const rawLine = lines[lineIndex];
         const line = rawLine.trim();
-
         if (!line) {
           if (inSolution) solutionLines.push(rawLine);
           continue;
@@ -1500,6 +1509,11 @@
           continue;
         }
 
+        if (/^TYPE\s*:/i.test(line) && !inSolution) {
+          explicitType = line.replace(/^TYPE\s*:/i, "").trim().toLowerCase();
+          continue;
+        }
+
         if (/^HINT\s*:/i.test(line) && !inSolution) {
           hint = line.replace(/^HINT\s*:/i, "").trim();
           continue;
@@ -1508,18 +1522,6 @@
         if (/^(POINTS|MARKS)\s*:/i.test(line) && !inSolution) {
           const p = Number(line.replace(/^(POINTS|MARKS)\s*:/i, "").trim());
           if (Number.isInteger(p) && p >= 1) points = p;
-          continue;
-        }
-
-        if (/^CHECK_MODE\s*:/i.test(line) && !inSolution) {
-          const mode = line.replace(/^CHECK_MODE\s*:/i, "").trim().toLowerCase();
-          if (["exact", "contains", "number_tolerance"].includes(mode)) checkMode = mode;
-          continue;
-        }
-
-        if (/^TOLERANCE\s*:/i.test(line) && !inSolution) {
-          const tol = Number(line.replace(/^TOLERANCE\s*:/i, "").trim());
-          tolerance = Number.isFinite(tol) && tol >= 0 ? tol : null;
           continue;
         }
 
@@ -1540,17 +1542,15 @@
           let value = optMatch[2].trim();
           if (/\(\s*Correct\s*\)/i.test(value)) correctLetters.push(label);
           value = value.replace(/\(\s*Correct\s*\)/ig, "").replace(/\(\s*Wrong\s*\)/ig, "").trim();
-          options.push({ label, value });
+          options.push({label, value});
           continue;
         }
 
         if (/^ANSWER\s*:/i.test(line) && !inSolution) {
-          answerRaw = line.replace(/^ANSWER\s*:/i, "").trim();
-
-          if (options.length > 0) {
-            const matches = answerRaw.toUpperCase().match(/[A-D]/g);
-            if (matches) correctLetters.push(...matches);
-          }
+          const ansRaw = line.replace(/^ANSWER\s*:/i, "").trim();
+          typedAnswer = ansRaw;
+          const matches = ansRaw.toUpperCase().match(/[A-D]/g);
+          if (matches && options.length) correctLetters.push(...matches);
           continue;
         }
 
@@ -1562,56 +1562,59 @@
       solution = solutionLines.join("\n").trim();
       question = stripLeadingQuestionNumber(question);
 
+      const where = `Block ${blockIndex + 1}${question ? ` (${question.slice(0, 60)})` : ""}`;
+
       if (!question) {
-        throw new Error("Each question block must start with QUESTION: or a numbered question.");
+        throw Object.assign(new Error("Each question block must start with QUESTION: or a numbered question."), { where });
       }
 
-      if (!answerRaw) {
-        throw new Error(`Question "${question}" must have an ANSWER line.`);
+      const hasOptions = options.length > 0;
+      const autoType = explicitType || (hasOptions ? "mcq" : "text");
+
+      if (!["mcq", "text"].includes(autoType)) {
+        throw Object.assign(new Error(`Unsupported TYPE "${explicitType}". Use TYPE: mcq or TYPE: text.`), { where });
       }
 
-      if (options.length >= 2) {
-        const correctIndexes = [];
-        options.forEach((opt, idx) => {
-          if (correctLetters.includes(opt.label)) correctIndexes.push(idx);
-        });
-
-        if (correctIndexes.length < 1) {
-          throw new Error(`Question "${question}" must have at least one ANSWER or one option marked (Correct).`);
+      if (autoType === "text") {
+        if (!typedAnswer) {
+          throw Object.assign(new Error("Typed question is missing ANSWER: value."), { where });
         }
-
-        return {
-          type: "mcq",
-          question,
-          hint,
-          solution,
-          points,
-          options: options.map(o => o.value),
-          correctIndexes
-        };
-      }
-
-      if (options.length === 0) {
-        if (checkMode === "number_tolerance" && tolerance === null) {
-          tolerance = 0.01;
-        }
-
         return {
           type: "text",
           question,
           hint,
           solution,
           points,
-          correctText: answerRaw,
-          textAnswerMode: checkMode,
-          numberTolerance: tolerance
+          correctText: typedAnswer,
+          textAnswerMode: "exact",
+          numberTolerance: null
         };
       }
 
-      throw new Error(`Question "${question}" has incomplete options. Use at least 2 options for MCQ, or no options for typed questions.`);
+      if (options.length < 2) {
+        throw Object.assign(new Error(`MCQ must have at least 2 options.`), { where });
+      }
+
+      const correctIndexes = [];
+      options.forEach((opt, idx) => {
+        if (correctLetters.includes(opt.label)) correctIndexes.push(idx);
+      });
+
+      if (correctIndexes.length < 1) {
+        throw Object.assign(new Error(`MCQ must have at least one correct ANSWER or one option marked (Correct).`), { where });
+      }
+
+      return {
+        type: "mcq",
+        question,
+        hint,
+        solution,
+        points,
+        options: options.map(o => o.value),
+        correctIndexes
+      };
     }
 
-    
     function classifySpecialNote(text){
       const t = cleanSpaces(text || "");
       if (!t) return { type: "note", text: "" };
@@ -1659,10 +1662,29 @@
         throw new Error("No valid blocks found. Use TITLE/GRADE/etc. at the top, then NOTE:, HEADING:, QUESTION:, or numbered questions.");
       }
 
-      const items = blocks.map(block => {
-        if (/^(HEADING|NOTE)\s*:/i.test(block.trim())) return parseNoteBlock(block);
-        return parseQuestionBlock(block);
+      const items = [];
+      const errors = [];
+
+      blocks.forEach((block, idx) => {
+        try {
+          if (/^(HEADING|NOTE)\s*:/i.test(block.trim())) {
+            items.push(parseNoteBlock(block));
+          } else {
+            items.push(parseQuestionBlock(block, idx));
+          }
+        } catch (err) {
+          errors.push({
+            where: err.where || `Block ${idx + 1}`,
+            message: err.message || "Invalid block format."
+          });
+        }
       });
+
+      if (errors.length) {
+        const error = new Error("The file has format issues.");
+        error.parseErrors = errors;
+        throw error;
+      }
 
       return {
         meta: {
@@ -1718,27 +1740,21 @@
       relabelOptions(card);
       renderCardPreview(card);
     }
-function fillTextCard(card, data){
+
+    function fillTextCard(card, data){
       card.querySelector(".qText").value = stripLeadingQuestionNumber(data.question || "");
       card.querySelector(".qHint").value = data.hint || "";
       card.querySelector(".qPoints").value = data.points || 1;
       card.querySelector(".qSolution").value = data.solution || "";
       card.querySelector(".correctText").value = data.correctText || "";
-
       const modeSel = card.querySelector(".textMode");
       const tolInput = card.querySelector(".tolerance");
-      const mode = data.textAnswerMode || "exact";
-
-      if (modeSel) modeSel.value = mode;
+      if (modeSel) modeSel.value = data.textAnswerMode || "exact";
       if (tolInput) tolInput.value = data.numberTolerance ?? "";
-
-      const tolRow = card.querySelector(".tolRow");
-      if (tolRow) tolRow.classList.toggle("hide", mode !== "number_tolerance");
-
+      wireTextModeForLastCard();
       renderCardPreview(card);
     }
 
-    
     function fillAssessmentForm(parsed){
       const meta = parsed.meta || {};
       if (meta.grade) gradeEl.value = String(meta.grade);
@@ -1758,6 +1774,7 @@ function fillTextCard(card, data){
       updatePublishUI();
 
       clearAllCards();
+      clearParseErrors();
 
       for (const item of parsed.items || []) {
         if (item.type === "group") {
@@ -1772,14 +1789,14 @@ function fillTextCard(card, data){
           addNote();
           const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='note']")];
           fillNoteCard(cards[cards.length - 1], item);
-        } else if (item.type === "mcq") {
-          addMcq();
-          const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='mcq']")];
-          fillMcqCard(cards[cards.length - 1], item);
         } else if (item.type === "text") {
           addText();
           const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='text']")];
           fillTextCard(cards[cards.length - 1], item);
+        } else if (item.type === "mcq") {
+          addMcq();
+          const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='mcq']")];
+          fillMcqCard(cards[cards.length - 1], item);
         }
       }
 
@@ -1787,7 +1804,6 @@ function fillTextCard(card, data){
       setupDragAndDrop();
     }
 
-    
     function buildPayloadFromParsedAssessment(parsed){
       const meta = parsed.meta || {};
       const grade = Number(meta.grade);
@@ -1814,36 +1830,11 @@ function fillTextCard(card, data){
           const n = Number(item.mainNumber || 1);
           return { type: "note", text: `QUESTION ${n}` };
         }
-
         if (item.type === "section") {
           const num = cleanSpaces(item.number || "");
           return { type: "note", text: `${num} ${cleanSpaces(item.text || "")}` };
         }
-
-        if (item.type === "note") {
-          return { type: "note", text: cleanSpaces(item.text || "") };
-        }
-
-        if (item.type === "text") {
-          const mode = ["exact", "contains", "number_tolerance"].includes(item.textAnswerMode)
-            ? item.textAnswerMode
-            : "exact";
-
-          return {
-            type: "text",
-            text: cleanSpaces(item.question || ""),
-            hint: cleanSpaces(item.hint || ""),
-            imageUrl: "",
-            points: Number(item.points || 1),
-            correctText: cleanSpaces(item.correctText || ""),
-            textAnswerMode: mode,
-            numberTolerance: mode === "number_tolerance"
-              ? (Number.isFinite(Number(item.numberTolerance)) ? Number(item.numberTolerance) : 0.01)
-              : null,
-            solution: String(item.solution || "").trim()
-          };
-        }
-
+        if (item.type === "note") return { type: "note", text: cleanSpaces(item.text || "") };
         const options = [...(item.options || [])];
         const correctIndexes = [...(item.correctIndexes || [])];
         const payload = {
@@ -1857,7 +1848,6 @@ function fillTextCard(card, data){
           isMultiSelect: correctIndexes.length >= 2,
           solution: String(item.solution || "").trim()
         };
-
         if (correctIndexes.length === 1) payload.correctIndex = correctIndexes[0];
         return payload;
       });
@@ -1884,7 +1874,15 @@ function fillTextCard(card, data){
       };
     }
 
-    
+    async function readUploadedTextFile(file){
+      return await file.text();
+    }
+
+    addGroup();
+    addSection();
+    addMcq();
+    setupDragAndDrop();
+
     function collectQuestions(){
       const cards = [...questionsWrap.querySelectorAll(".qcard")];
       if (cards.length === 0) throw new Error("Add at least 1 question.");
