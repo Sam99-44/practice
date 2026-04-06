@@ -418,13 +418,25 @@
       <br /><br />
       Or for typed answers:
       <br />
-      QUESTION: Calculate the value of \(x\)
+      QUESTION: x^2 - 5x + 6 = 0
       <br />
       TYPE: text
       <br />
-      ANSWER: -1
+      ANSWER: 2|3
       <br />
-      POINTS: 3
+      POINTS: 2
+      <br />
+      SOLUTION:
+      <br />
+      Step 1: Factorise the quadratic
+      <br />
+      (x - 2)(x - 3) = 0
+      <br /><br />
+      Step 2: Solve each factor
+      <br />
+      x = 2 or x = 3
+      <br /><br />
+      Final Answer: x = 2 or x = 3
       <br /><br />
       <b>Important numbering rule:</b>
       <br />
@@ -544,57 +556,32 @@
     function looksLikeMathContent(value){
       const s = String(value || "");
       return /\\\(|\\\[|\\frac|\\sqrt|\$/.test(s) ||
-             /[a-zA-Z]\^\d/.test(s) ||
+             /(?:^|[\s(])[a-zA-Z](?:[\s^_<>=+\-*/()]|$)/.test(s) ||
+             /\d+\s*\/\s*\d+/.test(s) ||
              /sqrt\s*\(/i.test(s) ||
-             /(?:<=|>=|!=|\bpi\b|≤|≥)/i.test(s) ||
-             /(?:\d+|\)|[a-zA-Z])\s*\^\s*\(/.test(s) ||
-             /(?:=|<|>|\\leq|\\geq)/.test(s) && /[a-zA-Z0-9]/.test(s);
+             /(?:<=|>=|!=|\bpi\b|≤|≥|<|>)/i.test(s) ||
+             /(?:\d+|\)|[a-zA-Z])\s*\^\s*(?:\(|[+-]?\d+)/.test(s);
     }
 
-    function convertPlainMathSegment(segment){
-      let s = String(segment || "").trim();
-      if (!s || /\\\(|\\\[|\\frac|\\sqrt|\$/.test(s)) return s;
+    function latexifyMath(value){
+      let s = String(value || "").trim();
+      if (!s) return "";
+      if (/\\\(|\\\[|\\frac|\\sqrt|\$/.test(s)) return s;
 
       s = s
         .replace(/<=/g, "\\leq ")
         .replace(/>=/g, "\\geq ")
         .replace(/!=/g, "\\neq ")
         .replace(/≤/g, "\\leq ")
-        .replace(/≥/g, "\\geq ");
+        .replace(/≥/g, "\\geq ")
+        .replace(/\bpi\b/gi, "\\pi");
 
       s = s.replace(/sqrt\s*\(([^()]+)\)/gi, "\\sqrt{$1}");
       s = s.replace(/([A-Za-z0-9)\]])\s*\^\s*\(([^()]+)\)/g, "$1^{$2}");
       s = s.replace(/([A-Za-z0-9)\]])\s*\^\s*([+-]?\d+)/g, "$1^{$2}");
+      s = s.replace(/(\d+)\s*\/\s*(\d+)/g, "\\frac{$1}{$2}");
 
-      s = s.replace(/\bpi\b/gi, "\\pi");
-
-      return `$${s}$`;
-    }
-
-    function autoConvertToLatex(value){
-      const raw = String(value || "");
-      if (!raw.trim()) return "";
-      if (/\\\(|\\\[|\\frac|\\sqrt|\$/.test(raw)) return raw;
-
-      let converted = raw.replace(/(^|[\s:;,])sqrt\s*\(([^()]+)\)/gi, (m, pre, inner) => {
-        return `${pre}$\\sqrt{${inner}}$`;
-      });
-
-      converted = converted.replace(/([A-Za-z0-9)\]])\s*\^\s*\(([^()]+)\)/g, '$1^{$2}');
-      converted = converted.replace(/([A-Za-z0-9)\]])\s*\^\s*([+-]?\d+)/g, '$1^{$2}');
-      converted = converted
-        .replace(/<=/g, '\\leq ')
-        .replace(/>=/g, '\\geq ')
-        .replace(/!=/g, '\\neq ')
-        .replace(/≤/g, '\\leq ')
-        .replace(/≥/g, '\\geq ');
-
-      if (looksLikeMathContent(converted)) {
-        if (/^\$.*\$$/.test(converted.trim())) return converted.trim();
-        return `$${converted.trim()}$`;
-      }
-
-      return converted;
+      return s;
     }
 
     function autoConvertMixedLatex(value){
@@ -602,14 +589,10 @@
       if (!raw) return "";
       if (/\\\(|\\\[|\\frac|\\sqrt|\$/.test(raw)) return raw;
 
-      const parts = raw.split(/(\([^)]*\)|correct to TWO decimal places|or|and)/i);
-      const out = parts.map(part => {
-        const p = String(part || "");
-        if (!p.trim()) return p;
-        return looksLikeMathContent(p) ? convertPlainMathSegment(p) : p;
-      }).join("");
-
-      return out;
+      if (looksLikeMathContent(raw)) {
+        return `$${latexifyMath(raw)}$`;
+      }
+      return raw;
     }
     function stripLeadingQuestionNumber(text){
       const s = cleanSpaces(text || "");
@@ -1123,6 +1106,76 @@
 
     function letter(i){ return String.fromCharCode(65 + i); }
 
+
+    function splitSolutionBlocks(raw){
+      const text = String(raw || "").replace(/\r/g, "\n").replace(/\${1,}/g, "").trim();
+      if (!text) return [];
+      const normalized = text
+        .replace(/\s*Final\s*Answer\s*:/gi, "\n\nFinal Answer: ")
+        .replace(/\s*Step\s*(\d+)\s*:/gi, "\n\nStep $1: ")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+
+      const lines = normalized.split("\n").map(x => x.trim()).filter(Boolean);
+      const blocks = [];
+      let current = null;
+
+      for (const line of lines) {
+        const stepMatch = line.match(/^(Step\s*\d+\s*:)(.*)$/i);
+        const finalMatch = line.match(/^(Final Answer\s*:|Answer\s*:)(.*)$/i);
+
+        if (stepMatch) {
+          if (current) blocks.push(current);
+          current = { type: "step", label: stepMatch[1].trim(), lines: stepMatch[2].trim() ? [stepMatch[2].trim()] : [] };
+          continue;
+        }
+        if (finalMatch) {
+          if (current) blocks.push(current);
+          current = { type: "final", label: finalMatch[1].trim(), lines: finalMatch[2].trim() ? [finalMatch[2].trim()] : [] };
+          continue;
+        }
+        if (!current) current = { type: "plain", label: "", lines: [line] };
+        else current.lines.push(line);
+      }
+      if (current) blocks.push(current);
+      return blocks;
+    }
+
+    function normalizeDbeSolutionText(input){
+      let s = String(input || "").replace(/\r/g, "\n");
+
+      s = s.replace(/\$/g, "");
+
+      s = s
+        .replace(/\\leq/g, "≤")
+        .replace(/\\geq/g, "≥")
+        .replace(/\\neq/g, "≠")
+        .replace(/\\sqrt/g, "sqrt");
+
+      s = s
+        .replace(/\s*Final\s*Answer\s*:/gi, "\n\nFinal Answer: ")
+        .replace(/\s*Step\s*(\d+)\s*:/gi, "\n\nStep $1: ")
+        .replace(/([a-zA-Z])\(/g, "$1 (")
+        .replace(/\)([a-zA-Z])/g, ") $1")
+        .replace(/<=/g, "≤")
+        .replace(/>=/g, "≥")
+        .replace(/([<>]=?|=)([^\s])/g, "$1 $2")
+        .replace(/([^\s])([<>]=?|=)/g, "$1 $2")
+        .replace(/([a-z0-9])or([a-z0-9])/gi, "$1 or $2")
+        .replace(/([a-z0-9])and([a-z0-9])/gi, "$1 and $2")
+        .replace(/:\s*/g, ": ")
+        .replace(/[ \t]+\n/g, "\n")
+        .replace(/\n{3,}/g, "\n\n");
+
+      return s.trim();
+    }
+
+    function formatSolutionPreviewHtml(solution){
+      const normalized = normalizeDbeSolutionText(solution);
+      if (!normalized) return "(Solution/workings preview)";
+      return normalized;
+    }
+
     function renderCardPreview(card){
       const type = card.getAttribute("data-type") || "mcq";
 
@@ -1144,7 +1197,8 @@
 
       const qText = autoConvertMixedLatex(stripLeadingQuestionNumber(card.querySelector(".qText")?.value || ""));
       const hint  = autoConvertMixedLatex(cleanSpaces(card.querySelector(".qHint")?.value || ""));
-      const sol   = autoConvertMixedLatex(cleanSpaces(card.querySelector(".qSolution")?.value || ""));
+      const solRaw = cleanSpaces(card.querySelector(".qSolution")?.value || "");
+      const sol   = formatSolutionPreviewHtml(solRaw);
       const label = cleanSpaces(card.querySelector(".cardLabel")?.textContent || "");
       const marksMeta = cleanSpaces(card.querySelector(".marksMeta")?.textContent || "");
       let fullQuestionText = qText;
