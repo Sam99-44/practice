@@ -1129,6 +1129,43 @@
     return Number.isFinite(c) && c >= 0 ? new Set([c]) : new Set();
   }
 
+
+  function looksLikeMathContent(value){
+    const s = String(value || "");
+    return /\\\(|\\\[|\\frac|\\sqrt|\$/.test(s) ||
+           /[a-zA-Z]\^\d/.test(s) ||
+           /sqrt\s*\(/i.test(s) ||
+           /(?:<=|>=|!=|\bpi\b|≤|≥)/i.test(s) ||
+           /(?:\d+|\)|[a-zA-Z])\s*\^\s*\(/.test(s) ||
+           /(?:=|<|>|\\leq|\\geq)/.test(s) && /[a-zA-Z0-9]/.test(s);
+  }
+
+  function autoConvertMixedLatex(value){
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    if (/\\\(|\\\[|\\frac|\\sqrt|\$/.test(raw)) return raw;
+
+    let converted = raw.replace(/(^|[\s:;,])sqrt\s*\(([^()]+)\)/gi, (m, pre, inner) => {
+      return `${pre}$\\sqrt{${inner}}$`;
+    });
+
+    converted = converted.replace(/([A-Za-z0-9)\]])\s*\^\s*\(([^()]+)\)/g, '$1^{$2}');
+    converted = converted.replace(/([A-Za-z0-9)\]])\s*\^\s*([+-]?\d+)/g, '$1^{$2}');
+    converted = converted
+      .replace(/<=/g, '\\leq ')
+      .replace(/>=/g, '\\geq ')
+      .replace(/!=/g, '\\neq ')
+      .replace(/≤/g, '\\leq ')
+      .replace(/≥/g, '\\geq ');
+
+    if (looksLikeMathContent(converted)) {
+      if (/^\$.*\$$/.test(converted.trim())) return converted.trim();
+      return `$${converted.trim()}$`;
+    }
+
+    return converted;
+  }
+
   function render(){
     clearErr();
 
@@ -1147,7 +1184,7 @@
 
     if (type === "note") {
       counterEl.textContent = `Note / Heading`;
-      bodyEl.innerHTML = `<div class="noteBox">${escapeHtml(cleanSpaces(a.questionText || ""))}</div>`;
+      bodyEl.innerHTML = `<div class="noteBox">${escapeHtml(autoConvertMixedLatex(cleanSpaces(a.questionText || "")))}</div>`;
       typesetMath(bodyEl);
       updateNavButtons();
       return;
@@ -1156,7 +1193,7 @@
     const qNum = qNumberByIndex.get(idx) || 1;
     counterEl.textContent = `Question ${qNum} of ${totalQuestionsOnly}`;
 
-    qTextEl.textContent = cleanSpaces(a.questionText || "");
+    qTextEl.innerHTML = escapeHtml(autoConvertMixedLatex(cleanSpaces(a.questionText || "")));
 
     const pts = Number(a.points || 0);
     qRightEl.textContent = pts ? `(${pts}) marks` : "";
@@ -1164,21 +1201,21 @@
     const hint = cleanSpaces(a.hint || "");
     if (hint){
       hintEl.style.display = "block";
-      hintEl.textContent = "Hint: " + hint;
+      hintEl.innerHTML = "Hint: " + escapeHtml(autoConvertMixedLatex(hint));
     }
 
     if (type === "text") {
-      const userAns = cleanSpaces(a.textAnswer || "");
-      const correctAns = cleanSpaces(a.correctText || "");
+      const userAns = autoConvertMixedLatex(cleanSpaces(a.textAnswer || ""));
+      const correctAns = autoConvertMixedLatex(cleanSpaces(a.correctText || ""));
       const isCorrect = !!a.isCorrect;
 
       bodyEl.innerHTML = `
         <div class="answerGrid">
           <div class="answerCard ${isCorrect ? "good" : "bad"}">
-            Your Answer: ${escapeHtml(userAns || "No answer")}
+            <b>Your Answer:</b> ${escapeHtml(userAns || "No answer")}
           </div>
           <div class="answerCard good">
-            Correct Answer: ${escapeHtml(correctAns || "Not saved")}
+            <b>Correct Answer:</b> ${escapeHtml(correctAns || "Not saved")}
           </div>
         </div>
       `;
@@ -1199,12 +1236,12 @@
         if (isChosen && !isCorrect) cls = "wrong";
 
         return `<div class="opt ${cls}">
-          ${letter(i)}. ${escapeHtml(cleanSpaces(opt))}
+          ${letter(i)}. ${escapeHtml(autoConvertMixedLatex(cleanSpaces(opt)))}
         </div>`;
       }).join("");
 
       const correctLetters = formatLetters(correctSet);
-      resultInfoEl.textContent = correctLetters ? `Correct Answer: ${correctLetters}` : "Correct Answer: (not saved)";
+      resultInfoEl.innerHTML = correctLetters ? `Correct Answer: ${escapeHtml(autoConvertMixedLatex(correctLetters))}` : "Correct Answer: (not saved)";
     }
 
     renderSolutionBox(a);
