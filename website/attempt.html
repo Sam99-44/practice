@@ -643,9 +643,16 @@
     }
 
     .solutionMathBlock{
-      margin:2px 0 12px 122px;
+      margin:10px auto 14px auto;
       font-size:14px;
-      line-height:1.7;
+      line-height:1.8;
+      text-align:center;
+      max-width:100%;
+    }
+
+    .solutionMathBlock mjx-container{
+      margin:0 auto !important;
+      text-align:center !important;
     }
 
     .solutionMathBlock.tightTop{
@@ -1693,10 +1700,14 @@
 
     t = t.replace(/sqrt\s*\(([^()]+)\)/gi, "\\sqrt{$1}");
     t = t.replace(/sqrt\s*\{([^{}]+)\}/gi, "\\sqrt{$1}");
-    t = t.replace(/sqrt([A-Za-z0-9]+)/g, "\\sqrt{$1}");
+    t = t.replace(/sqrt\s*([0-9A-Za-z]+)/g, "\\sqrt{$1}");
     t = t.replace(/([A-Za-z0-9)\]])\s*\^\s*\(([^()]+)\)/g, "$1^{$2}");
     t = t.replace(/([A-Za-z0-9)\]])\s*\^\s*([+-]?\d+)/g, "$1^{$2}");
     t = t.replace(/(\d+)\s*\/\s*(\d+)/g, "\\frac{$1}{$2}");
+
+    t = t.replace(/([0-9A-Za-z}\]])or(?=[0-9A-Za-z\\])/g, "$1 or ");
+    t = t.replace(/([0-9A-Za-z}\]])and(?=[0-9A-Za-z\\])/g, "$1 and ");
+
     return t.trim();
   }
 
@@ -1764,10 +1775,17 @@
     function alignMathLine(line){
       let t = normalizePlainMath(line).replace(/^\$|\$$/g, "").trim();
       if (!t) return "";
+
+      t = t.replace(/\$/g, "");
+      t = t
+        .replace(/\bor\b/g, " \\text{ or } ")
+        .replace(/\band\b/g, " \\text{ and } ");
+
       if (/[=<>≤≥]/.test(t) && !/&(?:=|<|>|\\leq|\\geq|\\approx)/.test(t)) {
-        t = t.replace(/(\\leq|\\geq|\\approx|=|<|>)/, '&$1');
+        t = t.replace(/(\\leq|\\geq|\\approx|=|<|>)/, " &$1 ");
       }
-      return t;
+
+      return t.replace(/\s+/g, " ").trim();
     }
 
     function renderMathGroup(lines){
@@ -1803,10 +1821,12 @@
     }
 
     function renderFinal(label, body){
+      const content = String(body || "").trim();
+      const rendered = !content ? "" : (isLikelyMathLine(content) ? toLatex(content) : renderMixedMath(content));
       return `
         <div class="solutionStep finalAnswerRow">
           <div class="solutionStepNo">${escapeHtml(label)}</div>
-          <div class="solutionStepBody finalAnswerText">${body ? renderMixedMath(body) : ""}</div>
+          <div class="solutionStepBody finalAnswerText">${rendered}</div>
         </div>
       `;
     }
