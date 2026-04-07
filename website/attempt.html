@@ -643,23 +643,13 @@
     }
 
     .solutionMathBlock{
-      margin:8px 0 14px 0;
+      margin:2px 0 12px 122px;
       font-size:14px;
       line-height:1.7;
-      text-align:center;
     }
 
     .solutionMathBlock.tightTop{
-      margin-top:2px;
-    }
-
-    .solutionMathBlock mjx-container{
-      margin:0 auto !important;
-      text-align:center !important;
-    }
-
-    .solutionMathBlock svg{
-      margin:0 auto !important;
+      margin-top:4px;
     }
 
     .solutionLabelOnly{
@@ -1783,34 +1773,22 @@
     function renderMathGroup(lines){
       const prepared = lines.map(alignMathLine).filter(Boolean);
       if (!prepared.length) return "";
-      return `\[
-\begin{aligned}
-${prepared.join(' \\ ')}
-\end{aligned}
-\]`;
+      return `\\[\\begin{aligned}${prepared.join(' \\\\ ')}\\end{aligned}\\]`;
     }
 
-    function renderCenteredMathLines(lines){
-      const prepared = lines.map(alignMathLine).filter(Boolean);
-      if (!prepared.length) return "";
-      return `<div class="solutionMathBlock">${renderMathGroup(prepared)}</div>`;
+    function isStepLabel(line){
+      return /^(Step\s*\d+\s*:)\s*$/i.test(line);
+    }
+
+    function isGeneralLabel(line){
+      return /^(Check\s*:|So\s*:|Therefore\s*:|Hence\s*:|Square both sides\s*:)\s*$/i.test(line);
     }
 
     function renderStepWithInline(label, body){
-      const content = String(body || "").trim();
-      if (content && isLikelyMathLine(content)) {
-        return `
-          <div class="solutionStep">
-            <div class="solutionStepNo">${escapeHtml(label)}</div>
-            <div class="solutionStepBody"></div>
-          </div>
-          ${renderCenteredMathLines([content])}
-        `;
-      }
       return `
         <div class="solutionStep">
           <div class="solutionStepNo">${escapeHtml(label)}</div>
-          <div class="solutionStepBody">${content ? `<div class="solutionTextInline">${renderMixedMath(content)}</div>` : ""}</div>
+          <div class="solutionStepBody">${body ? `<div class="solutionTextInline">${renderMixedMath(body)}</div>` : ""}</div>
         </div>
       `;
     }
@@ -1901,7 +1879,7 @@ ${prepared.join(' \\ ')}
         }
 
         if (mathLines.length) {
-          htmlParts.push(renderCenteredMathLines(mathLines).replace('solutionMathBlock"', 'solutionMathBlock tightTop"'));
+          htmlParts.push(`<div class="solutionMathBlock tightTop">${renderMathGroup(mathLines)}</div>`);
           i = j;
           continue;
         }
@@ -1942,7 +1920,7 @@ ${prepared.join(' \\ ')}
           mathLines.push(nextLine);
           j += 1;
         }
-        htmlParts.push(renderCenteredMathLines(mathLines));
+        htmlParts.push(`<div class="solutionMathBlock">${renderMathGroup(mathLines)}</div>`);
         i = j;
         continue;
       }
