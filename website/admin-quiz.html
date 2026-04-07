@@ -566,7 +566,7 @@
     function latexifyMath(value){
       let s = String(value || "").trim();
       if (!s) return "";
-      if (/\\\(|\\\[|\\frac|\\sqrt|\$/.test(s)) return s;
+      if (/\\\(|\\\[|\\begin\{|\\frac|\\sqrt|\$/.test(s)) return s;
 
       s = s
         .replace(/<=/g, "\\leq ")
@@ -574,20 +574,43 @@
         .replace(/!=/g, "\\neq ")
         .replace(/≤/g, "\\leq ")
         .replace(/≥/g, "\\geq ")
-        .replace(/\bpi\b/gi, "\\pi");
+        .replace(/\bpi\b/gi, "\\pi")
+        .replace(/×/g, "\\times ")
+        .replace(/÷/g, "\\div ");
 
       s = s.replace(/sqrt\s*\(([^()]+)\)/gi, "\\sqrt{$1}");
+      s = s.replace(/sqrt\s*\{([^{}]+)\}/gi, "\\sqrt{$1}");
+      s = s.replace(/sqrt([A-Za-z0-9]+)/g, "\\sqrt{$1}");
       s = s.replace(/([A-Za-z0-9)\]])\s*\^\s*\(([^()]+)\)/g, "$1^{$2}");
       s = s.replace(/([A-Za-z0-9)\]])\s*\^\s*([+-]?\d+)/g, "$1^{$2}");
       s = s.replace(/(\d+)\s*\/\s*(\d+)/g, "\\frac{$1}{$2}");
+      s = s.replace(/\bapprox\b/gi, "\\approx ");
 
-      return s;
+      return s.trim();
     }
 
     function autoConvertMixedLatex(value){
       const raw = String(value || "").trim();
       if (!raw) return "";
-      if (/\\\(|\\\[|\\frac|\\sqrt|\$/.test(raw)) return raw;
+      if (/\\\(|\\\[|\\begin\{|\\frac|\\sqrt|\$/.test(raw)) return raw;
+
+      if (raw.includes("\n")) {
+        return raw
+          .split(/\n/)
+          .map(line => {
+            const t = String(line || "").trim();
+            if (!t) return "";
+            if (/^(Step\s*\d+\s*:|Final\s*Answer\s*:|Answer\s*:|Check\s*:|So\s*:|Therefore\s*:|Hence\s*:)/i.test(t)) {
+              const idx = t.indexOf(":");
+              const label = t.slice(0, idx + 1);
+              const rest = t.slice(idx + 1).trim();
+              return rest ? `${label} ${looksLikeMathContent(rest) ? `$${latexifyMath(rest)}$` : rest}` : label;
+            }
+            return looksLikeMathContent(t) ? `$${latexifyMath(t)}$` : t;
+          })
+          .join("\n")
+          .trim();
+      }
 
       if (looksLikeMathContent(raw)) {
         return `$${latexifyMath(raw)}$`;
@@ -2059,7 +2082,7 @@
           throw new Error("Marks must be a whole number (1 or more) for each question.");
         }
 
-        const solution = autoConvertMixedLatex(cleanSpaces(card.querySelector(".qSolution")?.value || ""));
+        const solution = autoConvertMixedLatex(String(card.querySelector(".qSolution")?.value || "").replace(/\r/g, "").trim());
 
         if (type === "text") {
           const correctText = autoConvertMixedLatex(cleanSpaces(card.querySelector(".correctText")?.value));
