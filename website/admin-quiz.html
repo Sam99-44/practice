@@ -594,6 +594,20 @@
       if (!raw) return "";
       if (/\\\(|\\\[|\\begin\{|\\frac|\\sqrt|\$/.test(raw)) return raw;
 
+      const convertInlineMathFragments = (text) => {
+        let s = String(text || "");
+        if (!s.trim()) return "";
+
+        const fragments = [];
+        s = s.replace(
+          /(\\sum_[^\s]+|sqrt\s*\([^()]+\)|sqrt\s*\{[^{}]+\}|sqrt\s*[A-Za-z0-9]+|\d+\s*\/\s*\d+|[A-Za-z][A-Za-z0-9_{}]*\s*=\s*[^,.\n]+|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+)|T_\{?\d+\}?|S_\\infty|\\frac\{[^{}]+\}\{[^{}]+\})/g,
+          (m) => `@@M${fragments.push(m)-1}@@`
+        );
+
+        s = s.replace(/@@M(\d+)@@/g, (_, i) => `$${latexifyMath(fragments[Number(i)])}$`);
+        return s;
+      };
+
       if (raw.includes("\n")) {
         return raw
           .split(/\n/)
@@ -604,18 +618,15 @@
               const idx = t.indexOf(":");
               const label = t.slice(0, idx + 1);
               const rest = t.slice(idx + 1).trim();
-              return rest ? `${label} ${looksLikeMathContent(rest) ? `$${latexifyMath(rest)}$` : rest}` : label;
+              return rest ? `${label} ${convertInlineMathFragments(rest)}` : label;
             }
-            return looksLikeMathContent(t) ? `$${latexifyMath(t)}$` : t;
+            return looksLikeMathContent(t) && /^[$\\]/.test(t) ? `$${latexifyMath(t)}$` : convertInlineMathFragments(t);
           })
           .join("\n")
           .trim();
       }
 
-      if (looksLikeMathContent(raw)) {
-        return `$${latexifyMath(raw)}$`;
-      }
-      return raw;
+      return convertInlineMathFragments(raw);
     }
     function stripLeadingQuestionNumber(text){
       const s = cleanSpaces(text || "");
