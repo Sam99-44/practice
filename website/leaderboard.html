@@ -9,13 +9,14 @@
 :root{
   --nav:#1b1648;
   --red:#e11d2e;
-  --bg:#f6f7fb;
+
+  --bg:#ffffff;
   --card:#ffffff;
   --border:#d9dee7;
-  --text:#222222;
-  --muted:#5f6b7a;
-  --head:#f8fafc;
+  --text:#0f172a;
+  --muted:#475569;
   --white:#ffffff;
+  --focus:0 0 0 4px rgba(226,232,240,.7);
 }
 
 *{
@@ -25,7 +26,7 @@
 html,body{
   margin:0;
   padding:0;
-  font-family:Arial, Helvetica, sans-serif;
+  font-family:"Times New Roman", Times, serif;
   background:var(--bg);
   color:var(--text);
 }
@@ -51,7 +52,7 @@ select{
 }
 
 .topbar-inner{
-  max-width:1280px;
+  max-width:1150px;
   margin:0 auto;
   padding:14px 18px;
   display:flex;
@@ -186,6 +187,10 @@ select{
   cursor:pointer;
 }
 
+.menuBtn:hover{
+  opacity:1;
+}
+
 .menuBtnText{
   font-size:14px;
   font-weight:700;
@@ -270,87 +275,99 @@ select{
 
 /* ===== PAGE ===== */
 .wrap{
-  max-width:1280px;
+  max-width:1150px;
   margin:0 auto;
   padding:18px;
 }
 
 .section{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:18px;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:0;
+  box-shadow:none;
   overflow:hidden;
   margin-top:14px;
 }
 
 .sectionHead{
-  padding:18px;
   background:#fff;
-  border-bottom:1px solid var(--border);
+  border-bottom:1px solid #ececec;
+  padding:16px 22px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-height:58px;
 }
 
 .sectionHead h2{
   margin:0;
   font-size:18px;
+  letter-spacing:-0.01em;
+  font-family:Arial, Helvetica, sans-serif;
   font-weight:700;
-  color:var(--nav);
-}
-
-.sectionHead p{
-  margin:6px 0 0;
-  font-size:13px;
-  color:var(--muted);
+  color:#111827;
 }
 
 .sectionBody{
-  padding:16px;
+  padding:22px;
+  background:#ffffff;
 }
 
 .filters{
   display:grid;
-  grid-template-columns:repeat(3, minmax(170px, 190px));
-  gap:10px;
+  grid-template-columns:repeat(3, minmax(160px, 190px));
+  gap:8px;
   margin-bottom:16px;
 }
 
 .selectLike{
   width:100%;
-  padding:10px 14px;
-  border:1px solid #cbd5e1;
-  border-radius:12px;
+  padding:6px 10px;
+  border:1px solid #d1d5db;
+  border-radius:4px;
   background:#fff;
-  font-size:13px;
-  font-weight:700;
-  color:var(--text);
+  font-size:12px;
+  font-weight:600;
+  color:#111827;
   outline:none;
+  font-family:Arial, Helvetica, sans-serif;
+  height:34px;
+}
+
+.selectLike:focus{
+  border-color:#cbd5e1;
+  box-shadow:var(--focus);
 }
 
 .grid{
   display:grid;
-  grid-template-columns:minmax(0, 1.9fr) minmax(280px, .95fr);
+  grid-template-columns:minmax(0,1.95fr) minmax(250px,.85fr);
   gap:18px;
   align-items:start;
 }
 
 .card{
-  border:1px solid var(--border);
-  border-radius:16px;
+  border:1px solid #e5e7eb;
+  border-radius:0;
   overflow:hidden;
   background:#fff;
   width:100%;
+  box-shadow:none;
 }
 
 .cardHead{
-  padding:13px 14px;
+  padding:13px 16px;
   background:#fff;
-  border-bottom:1px solid var(--border);
+  border-bottom:1px solid #ececec;
 }
 
 .cardHead h3{
   margin:0;
   font-size:15px;
   font-weight:700;
-  color:var(--nav);
+  color:#111827;
+  font-family:Arial, Helvetica, sans-serif;
 }
 
 .cardBody{
@@ -372,8 +389,8 @@ table{
 
 th,
 td{
-  padding:12px;
-  border-bottom:1px solid #edf2f7;
+  padding:11px 12px;
+  border-bottom:1px solid #ececec;
   text-align:left;
   white-space:nowrap;
 }
@@ -381,10 +398,16 @@ td{
 th{
   font-size:11px;
   text-transform:uppercase;
-  letter-spacing:.06em;
-  color:var(--muted);
+  letter-spacing:.05em;
+  color:#475569;
   font-weight:700;
   background:#fff;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+td{
+  font-family:"Times New Roman", Times, serif;
+  color:#111827;
 }
 
 tbody tr:last-child td{
@@ -392,9 +415,9 @@ tbody tr:last-child td{
 }
 
 .rank{
-  width:50px;
+  width:52px;
   font-weight:700;
-  color:var(--nav);
+  color:#111827;
 }
 
 .score{
@@ -416,38 +439,58 @@ tbody tr:last-child td{
   justify-content:space-between;
   align-items:center;
   gap:12px;
-  padding:12px 14px;
-  border:1px solid var(--border);
-  border-radius:12px;
+  padding:10px 12px;
+  border:1px solid #e5e7eb;
+  border-radius:0;
   background:#fff;
 }
 
+.summaryItem.currentPosition{
+  border-color:#bbf7d0;
+  background:#f0fdf4;
+}
+
 .summaryLabel{
-  font-size:13px;
-  color:var(--muted);
+  font-size:12px;
+  color:#475569;
   font-weight:700;
+  font-family:Arial, Helvetica, sans-serif;
+  text-transform:uppercase;
+  letter-spacing:.03em;
 }
 
 .summaryValue{
   font-size:14px;
   font-weight:700;
-  color:var(--text);
+  color:#111827;
+  font-family:"Times New Roman", Times, serif;
+}
+
+.summaryItem.currentPosition .summaryLabel{
+  color:#166534;
+}
+
+.summaryItem.currentPosition .summaryValue{
+  color:#166534;
+  font-weight:700;
 }
 
 .stateRow td{
   text-align:center;
-  color:var(--muted);
+  color:#475569;
+  padding:18px 12px;
 }
 
 .errorBox{
-  margin-top:12px;
+  margin-top:14px;
   padding:10px 12px;
-  border-radius:10px;
+  border-radius:0;
   background:#fff7ed;
   border:1px solid #fed7aa;
   color:#9a3412;
   display:none;
   font-size:13px;
+  font-family:Arial, Helvetica, sans-serif;
 }
 
 @media (max-width: 980px){
@@ -482,7 +525,11 @@ tbody tr:last-child td{
     padding:14px;
   }
 
-  .sectionHead,
+  .sectionHead{
+    padding:12px 14px;
+    min-height:52px;
+  }
+
   .sectionBody{
     padding:14px;
   }
@@ -501,7 +548,7 @@ tbody tr:last-child td{
   }
 
   .summaryItem{
-    padding:11px 12px;
+    padding:10px 11px;
   }
 
   .summaryLabel,
@@ -601,7 +648,6 @@ if(!localStorage.getItem("token")){
   <section class="section">
     <div class="sectionHead">
       <h2>Leaderboard</h2>
-      <p>See the top learners and your current performance.</p>
     </div>
 
     <div class="sectionBody">
@@ -658,7 +704,6 @@ if(!localStorage.getItem("token")){
                 <thead>
                   <tr>
                     <th>Rank</th>
-                    <th>Username</th>
                     <th>Learner Number</th>
                     <th>Province</th>
                     <th>Average</th>
@@ -668,7 +713,7 @@ if(!localStorage.getItem("token")){
                 </thead>
                 <tbody id="tableBody">
                   <tr class="stateRow">
-                    <td colspan="7">Loading...</td>
+                    <td colspan="6">Loading...</td>
                   </tr>
                 </tbody>
               </table>
@@ -682,7 +727,7 @@ if(!localStorage.getItem("token")){
           </div>
 
           <div class="summary">
-            <div class="summaryItem">
+            <div class="summaryItem currentPosition">
               <div class="summaryLabel">Current Rank</div>
               <div class="summaryValue" id="myRank">-</div>
             </div>
@@ -808,7 +853,7 @@ function renderLeaderboard(rows){
   if(!Array.isArray(rows) || rows.length === 0){
     tableBody.innerHTML = `
       <tr class="stateRow">
-        <td colspan="7">No data</td>
+        <td colspan="6">No data</td>
       </tr>
     `;
     setMySummary(null);
@@ -824,7 +869,6 @@ function renderLeaderboard(rows){
     return `
       <tr class="${mine ? "meRow" : ""}">
         <td class="rank">#${r.rank || (i + 1)}</td>
-        <td>${escapeHtml(r.username || "-")}</td>
         <td>${escapeHtml(r.learnerNumber || "-")}</td>
         <td>${escapeHtml(r.province || "-")}</td>
         <td class="score">${formatPercent(r.average)}</td>
@@ -904,7 +948,7 @@ async function loadLeaderboard(){
 
   tableBody.innerHTML = `
     <tr class="stateRow">
-      <td colspan="7">Loading...</td>
+      <td colspan="6">Loading...</td>
     </tr>
   `;
 
@@ -918,7 +962,7 @@ async function loadLeaderboard(){
     if(!res.ok){
       tableBody.innerHTML = `
         <tr class="stateRow">
-          <td colspan="7">Failed to load leaderboard</td>
+          <td colspan="6">Failed to load leaderboard</td>
         </tr>
       `;
       showError(data.message || "Failed to load leaderboard.");
@@ -930,7 +974,7 @@ async function loadLeaderboard(){
   }catch(err){
     tableBody.innerHTML = `
       <tr class="stateRow">
-        <td colspan="7">Failed to load leaderboard</td>
+        <td colspan="6">Failed to load leaderboard</td>
       </tr>
     `;
     showError("Could not connect to the server.");
