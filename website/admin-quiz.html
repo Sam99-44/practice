@@ -851,6 +851,11 @@
             </div>
             <button type="button" class="smallbtn removeBtn">Remove</button>
           </div>
+
+          <div class="previewRow">
+            <div class="prevTitle">Live Preview</div>
+            <div class="previewBox prevGroup paperBox"></div>
+          </div>
         </div>
       `;
     }
@@ -1219,7 +1224,11 @@
         return;
       }
 
-      if (type === "group") return;
+      if (type === "group") {
+        const label = cleanSpaces(card.querySelector(".cardLabel")?.textContent || "");
+        setPreviewText(card.querySelector(".prevGroup"), label || "(Question heading preview)");
+        return;
+      }
 
       if (type === "section") {
         const label = cleanSpaces(card.querySelector(".cardLabel")?.textContent || "");
@@ -2056,6 +2065,21 @@
         const type = card.getAttribute("data-type") || "mcq";
 
         if (type === "group") {
+          const mainLabel = cleanSpaces(card.querySelector(".cardLabel")?.textContent || "");
+          const manualMain = cleanSpaces(card.dataset.manualNumber || "");
+          let questionHeading = "";
+
+          if (/^QUESTION\s+\d+$/i.test(mainLabel)) {
+            questionHeading = mainLabel;
+          } else if (/^\d+$/.test(manualMain)) {
+            questionHeading = `QUESTION ${manualMain}`;
+          }
+
+          if (!questionHeading) {
+            throw new Error("A main question marker is missing its QUESTION number.");
+          }
+
+          questions.push({ type: "note", text: questionHeading });
           continue;
         }
 
