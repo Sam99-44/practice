@@ -54,7 +54,6 @@
     .ok{color:var(--ok)}
     .hidden{display:none!important}
 
-    /* Make MathJax blend with normal text */
     mjx-container[jax="SVG"]{
       font-size:1em !important;
     }
@@ -66,7 +65,6 @@
       font-size:1em !important;
     }
 
-    /* ===== CONSISTENT HEADER ===== */
     .topbar{
       background:var(--nav);
       color:#fff;
@@ -311,26 +309,14 @@
     .sectionHead{
       background:#fff;
       border-bottom:1px solid #ececec;
-      padding:18px 22px;
+      padding:14px 22px;
       display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
+      align-items:center;
+      justify-content:flex-end;
       gap:12px;
-      flex-wrap:wrap;
+      min-height:58px;
     }
 
-    .sectionHead h1{
-      margin:0;
-      font-size:18px;
-      letter-spacing:-0.01em;
-      font-family:Arial, Helvetica, sans-serif;
-      font-weight:700;
-    }
-    .sectionHead p{
-      margin:6px 0 0 0;
-      font-family:Arial, Helvetica, sans-serif;
-      font-weight:400;
-    }
     .sectionBody{
       padding:22px;
       background:#ffffff;
@@ -518,7 +504,8 @@
     }
     .marksMeta::before{content:"(";}
     .marksMeta::after{content:")";}
-    .marksLbl{display:none;}.qimg{
+    .marksLbl{display:none;}
+    .qimg{
       display:block;
       width:100%;
       max-width:560px;
@@ -703,29 +690,57 @@
       }
     }
 
-    .btnRow{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;}
+    .btnRow{
+      margin-top:14px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .btn,
+    .btn2{
+      min-width:92px;
+      height:34px;
+      padding:0 10px;
+      font-size:12px;
+      border-radius:6px;
+      font-weight:700;
+      letter-spacing:0;
+      cursor:pointer;
+      font-family:Arial, Helvetica, sans-serif;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      line-height:1;
+      box-shadow:none;
+    }
+
     .btn{
       background:var(--red);
       color:#fff;
-      padding:10px 14px;
-      border:none;
-      border-radius:12px;
-      cursor:pointer;
-      font-weight:700;
-      font-family:Arial, Helvetica, sans-serif;
+      border:1px solid var(--red);
     }
-    .btn:disabled{opacity:.6;cursor:not-allowed}
 
     .btn2{
       background:#fff;
-      border:1px solid #ddd;
-      padding:10px 14px;
-      border-radius:12px;
-      cursor:pointer;
-      font-weight:700;
-      font-family:Arial, Helvetica, sans-serif;
+      border:1px solid #d1d5db;
+      color:#111827;
     }
-    .btn2:disabled{opacity:.6;cursor:not-allowed}
+
+    .btn:hover{
+      opacity:.94;
+    }
+
+    .btn2:hover{
+      background:#f9fafb;
+    }
+
+    .btn:disabled,
+    .btn2:disabled{
+      opacity:.6;
+      cursor:not-allowed;
+    }
 
     .notice{
       border:1px solid #e5e7eb;
@@ -770,7 +785,10 @@
     @media(max-width:640px){
       .wrap{padding:14px}
       .sectionBody{padding:14px}
-      .sectionHead{padding:12px 14px}
+      .sectionHead{
+        padding:12px 14px;
+        min-height:52px;
+      }
       .metaRight{align-items:flex-start;min-width:0}
       .examPaper{padding:16px 14px}
       .qMainHeading{font-size:14px;margin:22px 0 14px}
@@ -816,6 +834,14 @@
 
       .menuBtnText{
         display:none;
+      }
+
+      .btn,
+      .btn2{
+        min-width:82px;
+        height:32px;
+        font-size:11px;
+        padding:0 8px;
       }
     }
   </style>
@@ -899,11 +925,6 @@
 <div class="wrap">
   <div class="section">
     <div class="sectionHead">
-      <div>
-        <h1 id="quizTitle">Loading…</h1>
-        <p class="muted" id="quizInfo"></p>
-      </div>
-
       <div class="metaRight">
         <div class="statusText" id="statusText" style="display:none;">—</div>
         <div class="timeText" id="timeText" style="display:none;">Time: 00:00</div>
@@ -1111,7 +1132,6 @@
     });
     typesetMath(questionsDiv);
   }
-
 
   function isUnavailableBySchedule(quiz){
     const now = new Date();
@@ -1383,7 +1403,7 @@
     applyPracticeUI();
 
     msgEl.className = "muted";
-    msgEl.textContent = "Practice Mode: Submit to see your percentage. This attempt will NOT be saved.";
+    msgEl.textContent = "Practice Mode: Submit to see your results. This attempt will NOT be saved.";
 
     clearAllAnswers();
     enableAllInputs();
@@ -1528,7 +1548,7 @@
         headers: { Authorization: "Bearer " + token }
       });
     }catch{
-      quizTitle.textContent = "Network error";
+      if (quizTitle) quizTitle.textContent = "Network error";
       msgEl.className = "error";
       msgEl.textContent = "Please refresh and try again.";
       submitBtn.disabled = true;
@@ -1543,20 +1563,22 @@
     }
 
     if (!res.ok) {
-      quizTitle.textContent = "Assessment not found";
+      if (quizTitle) quizTitle.textContent = "Assessment not found";
       submitBtn.disabled = true;
       return;
     }
 
     quizData = await res.json().catch(()=>null);
     if (!quizData){
-      quizTitle.textContent = "Could not load assessment";
+      if (quizTitle) quizTitle.textContent = "Could not load assessment";
       submitBtn.disabled = true;
       return;
     }
 
-    quizTitle.textContent = cleanSpaces(quizData.title || "Assessment");
-    quizInfo.innerHTML = cleanSpaces(quizData.topic || "") ? `<b>Topic:</b> ${escapeHtml(cleanSpaces(quizData.topic))}` : "";
+    if (quizTitle) quizTitle.textContent = cleanSpaces(quizData.title || "Assessment");
+    if (quizInfo) {
+      quizInfo.innerHTML = cleanSpaces(quizData.topic || "") ? `<b>Topic:</b> ${escapeHtml(cleanSpaces(quizData.topic))}` : "";
+    }
 
     const unavailable = isUnavailableBySchedule(quizData);
     setAvailability(!unavailable);
@@ -1644,7 +1666,7 @@
       msgEl.textContent = "Your first attempt is already saved. You can retry (Practice Mode).";
 
       submitBtn.disabled = true;
-      submitBtn.textContent = "Submit (Locked - Already Saved)";
+      submitBtn.textContent = "Submit (Already Saved)";
 
       retryBtn.disabled = false;
 
@@ -2127,7 +2149,6 @@
               <div class="qSectionNo">${escapeHtml(parsed.label)}</div>
               <div class="qSectionText">${renderMixedMath(parsed.body)}</div>
             </div>
-            
           </div>
           ${imageHtml}
         </div>
@@ -2152,7 +2173,7 @@
   loadTopbarAnnouncementCount();
 
   if (!quizId) {
-    quizTitle.textContent = "Assessment not found";
+    if (quizTitle) quizTitle.textContent = "Assessment not found";
     submitBtn.disabled = true;
   } else {
     loadQuiz();
