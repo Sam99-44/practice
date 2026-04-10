@@ -479,7 +479,7 @@ function authRequired(req, res, next) {
 async function adminOnly(req, res, next) {
   try {
     const u = await User.findById(req.user.userId).select("role");
-    if (!u) return res.status(401).json({ message: "User not found" });
+    if (!u) return res.status(401).json({ message: "User " });
 
     if (!isPrivilegedRole(u.role)) {
       return res.status(403).json({ message: "Admin/tester only" });
@@ -3372,7 +3372,103 @@ app.get("/api/announcements/:id/responses", authRequired, announcementManagerOnl
 app.use("/api/access", accessRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/manual-payments", manualPaymentsRoutes);
+/* ------------------ SUPPORT MODEL ------------------ */
+const SupportRequestSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    fullName: String,
+    username: String,
+    email: String,
+    subject: { type: String, default: "Maths" },
+    requestType: String,
+    requestFollowUp: String,
+    changeAccount: {
+      currentAccountType: String,
+      newAccountType: String,
+    },
+    contact: String,
+    message: { type: String, required: true },
+    status: { type: String, default: "open" },
+  },
+  { timestamps: true }
+);
 
+const SupportRequest =
+  mongoose.models.SupportRequest ||
+  mongoose.model("SupportRequest", SupportRequestSchema);
+
+/* ------------------ SUPPORT ROUTE ------------------ */
+app.post("/api/support", authRequired, async (req, res) => {
+  try {
+    const {
+      subject,
+      requestType,
+      requestFollowUp,
+      changeAccount,
+      message,
+      contact,
+    } = req.body || {};
+
+    if (!requestType) {
+      return res.status(400).json({ message: "Request type is required." });
+    }
+
+    if (requestType === "Other" && !requestFollowUp) {
+      return res.status(400).json({ message: "Please specify your request." });
+    }
+
+    if (requestType === "Change of account") {
+      if (
+        !changeAccount?.currentAccountType ||
+        !changeAccount?.newAccountType
+      ) {
+        return res.status(400).json({ message: "Select both account types." });
+      }
+
+      if (
+        changeAccount.currentAccountType ===
+        changeAccount.newAccountType
+      ) {
+        return res.status(400).json({
+          message: "Cannot change to the same account type.",
+        });
+      }
+    }
+
+    if (!message) {
+      return res.status(400).json({ message: "Message is required." });
+    }
+
+    const user = await User.findById(req.user.userId);
+
+    const saved = await SupportRequest.create({
+      userId: user._id,
+      fullName: user.fullName,
+      username: user.username,
+      email: user.email,
+      subject: subject || "Maths",
+      requestType,
+      requestFollowUp: requestType === "Other" ? requestFollowUp : "",
+      changeAccount:
+        requestType === "Change of account" ? changeAccount : null,
+      contact,
+      message,
+    });
+
+    return res.status(201).json({
+      message: "Support request submitted successfully.",
+      id: saved._id,
+    });
+  } catch (err) {
+    console.error("Support error:", err.message);
+    return res.status(500).json({ message: "Failed to submit request." });
+  }
+});
 /* ------------------ OPTIONAL: FRIENDLY 404 FOR API ------------------ */
 app.use("/api", (req, res) => {
   res.status(404).json({ message: "API route not found" });
