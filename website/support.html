@@ -26,8 +26,8 @@
 html,body{
   margin:0;
   padding:0;
-  font-family:Arial, Helvetica, sans-serif;
-  background:var(--bg);
+  font-family:"Times New Roman", Times, serif;
+  background:#ffffff;
   color:var(--text);
 }
 
@@ -37,7 +37,7 @@ a{
 }
 
 button,input,textarea,select,option{
-  font-family:Arial, Helvetica, sans-serif;
+  font-family:"Times New Roman", Times, serif;
 }
 
 .topbar{
@@ -246,40 +246,46 @@ button,input,textarea,select,option{
 }
 
 .wrap{
-  max-width:760px;
+  max-width:1150px;
   margin:0 auto;
   padding:18px;
 }
 
 .card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:18px;
-  box-shadow:var(--shadow);
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:0;
+  box-shadow:none;
   overflow:hidden;
+  max-width:860px;
+  margin:0 auto;
 }
 
 .cardHead{
-  padding:16px 18px;
-  border-bottom:1px solid var(--border);
+  padding:14px 22px;
+  border-bottom:1px solid #ececec;
   background:#fff;
 }
 
 .cardHead h1{
   margin:0;
-  font-size:20px;
+  font-size:14px;
   font-weight:700;
+  font-family:"Times New Roman", Times, serif;
+  text-transform:uppercase;
 }
 
 .cardHead .subText{
   margin-top:6px;
-  color:var(--muted);
+  color:#111827;
   font-size:14px;
   font-weight:400;
+  line-height:1.45;
 }
 
 .body{
-  padding:14px 18px 18px;
+  padding:22px;
+  background:#fff;
 }
 
 label{
@@ -288,7 +294,7 @@ label{
   font-weight:400;
   margin-top:14px;
   margin-bottom:6px;
-  color:#334155;
+  color:#111827;
 }
 
 input,
@@ -296,18 +302,18 @@ textarea,
 select{
   width:100%;
   padding:10px 12px;
-  border-radius:12px;
-  border:1px solid #ddd;
+  border-radius:0;
+  border:1px solid #d6d3d1;
   font-size:14px;
   font-weight:400;
   background:#fff;
   outline:none;
-  font-family:Arial, Helvetica, sans-serif;
+  font-family:"Times New Roman", Times, serif;
 }
 
 select option{
   font-size:14px;
-  font-family:Arial, Helvetica, sans-serif;
+  font-family:"Times New Roman", Times, serif;
 }
 
 textarea{
@@ -358,11 +364,13 @@ select:focus{
   background:var(--red);
   color:#fff;
   padding:10px 14px;
-  border:none;
-  border-radius:12px;
-  font-size:14px;
+  border:1px solid var(--red);
+  border-radius:6px;
+  font-size:12px;
   font-weight:700;
   cursor:pointer;
+  min-width:92px;
+  height:34px;
 }
 
 .btn:disabled{
@@ -372,12 +380,14 @@ select:focus{
 
 .btn2{
   background:#fff;
-  border:1px solid #ddd;
+  border:1px solid #d1d5db;
   padding:10px 14px;
-  border-radius:12px;
-  font-size:14px;
+  border-radius:6px;
+  font-size:12px;
   font-weight:700;
   cursor:pointer;
+  min-width:92px;
+  height:34px;
 }
 
 .btn2:hover{
@@ -389,6 +399,7 @@ select:focus{
   font-size:14px;
   color:var(--muted);
   font-weight:400;
+  line-height:1.45;
 }
 
 .msg.ok{color:var(--ok)}
@@ -417,11 +428,11 @@ select:focus{
   }
 
   .body{
-    padding:12px 14px 14px;
+    padding:14px;
   }
 
   .cardHead{
-    padding:14px;
+    padding:12px 14px;
   }
 
   .inlineChangeRow{
@@ -721,7 +732,6 @@ function resetForm(){
   currentAccountTypeEl.value = "";
   syncNewAccountOptions();
   messageEl.value = "";
-  setMsg("");
   updateRequestTypeUI();
 }
 
@@ -791,8 +801,8 @@ submitBtn.onclick = async ()=>{
     }
 
     submitBtn.disabled = false;
-    setMsg("Your support request has been submitted successfully.", "ok");
     resetForm();
+    setMsg("Submitted successfully.", "ok");
 
   }catch{
     submitBtn.disabled = false;
