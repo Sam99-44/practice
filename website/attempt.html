@@ -605,21 +605,23 @@
     }
 
     .solutionStep{
-      display:grid;
-      grid-template-columns:110px minmax(0,1fr);
-      gap:12px;
-      align-items:start;
+      display:flex;
+      align-items:baseline;
+      gap:10px;
       margin:10px 0 6px 0;
       font-size:14px;
       line-height:1.7;
     }
 
     .solutionStepNo{
+      min-width:90px;
       font-weight:700;
       white-space:nowrap;
+      flex:0 0 90px;
     }
 
     .solutionStepBody{
+      flex:1;
       font-weight:400;
       min-width:0;
       word-break:break-word;
@@ -1739,13 +1741,36 @@
     return hasLatexSyntax(t) ? t : `$${t}$`;
   }
 
+
+  
+function hasInlineLatexMathOnly(text){
+    const s = String(text || "").trim();
+    if (!s || !s.includes("$")) return false;
+    const withoutMath = s.replace(/\$[^$]*\$/g, " ").replace(/\s+/g, " ").trim();
+    return withoutMath.length === 0;
+  }
+
   function isLikelyMathLine(text){
     const s = String(text || "").trim();
     if (!s) return false;
-    if (hasLatexSyntax(s)) return true;
+
     if (/^(Step\s*\d+\s*:|Final\s*Answer\s*:|Answer\s*:|Check\s*:|So\s*:|Therefore\s*:|Hence\s*:|Square both sides\s*:)/i.test(s)) return false;
+    if (/:\s*$/.test(s)) return false;
+
+    if (s.includes("$")) {
+      return hasInlineLatexMathOnly(s);
+    }
+
+    if (/^\\\[.*\\\]$/s.test(s) || /^\\\(.+\\\)$/s.test(s) || /^\\begin\{(?:aligned|gathered|array)\}/.test(s)) return true;
+
+    const longWords = s.match(/[A-Za-z]{3,}/g) || [];
+    const hasTextPhrase = /\b(first|second|third|term|terms|common|difference|pattern|formula|substitute|simplify|compare|notice|write|into|value|values|sequence|answer|therefore|hence|because|identify|use|rule|check|given|next|number|numbers|square|squared)\b/i.test(s);
+
+    if (hasTextPhrase && longWords.length >= 2) return false;
+
     return /(sqrt\s*[({]|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+)|\d+\s*\/\s*\d+|[=<>≤≥]|\\approx|\bapprox\b)/i.test(s);
   }
+
 
   function renderMixedMath(text){
     const raw = String(text || "").trim();
@@ -1759,8 +1784,105 @@
     return temp;
   }
 
-  function formatSolutionHtml(solutionText){
-    const raw = String(solutionText || "").replace(/\r/g, "").trim();
+
+
+
+  function normalizeSolutionText(rawText){
+    const raw = String(rawText || "").replace(/\r/g, "").trim();
+    if (!raw) return "";
+
+    function isDisplayStart(line){
+      return /^\\\[/.test(line) || /\\begin\{(?:aligned|gathered|array)\}/.test(line);
+    }
+
+    function isDisplayEnd(line){
+      return /\\\]$/.test(line) || /\\end\{(?:aligned|gathered|array)\}/.test(line);
+    }
+
+    function fixBrokenSpacing(line){
+      return String(line || "")
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/(\d)([A-Za-z])/g, '$1 $2')
+        .replace(/([A-Za-z])(\d)/g, '$1 $2')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function splitEmbeddedSteps(line){
+      return String(line || "")
+        .replace(/([^\n])\s+(Step\s*\d+\s*:)/gi, '$1\n$2')
+        .replace(/([^\n])\s+(Final\s*Answer\s*:|Answer\s*:)/gi, '$1\n$2')
+        .replace(/([^\n])\s+(Check\s*:|So\s*:|Therefore\s*:|Hence\s*:|Square both sides\s*:)/gi, '$1\n$2')
+        .replace(/(\$)\s*(Step\s*\d+\s*:)/gi, '$1\n$2')
+        .replace(/(\$)\s*(Final\s*Answer\s*:|Answer\s*:)/gi, '$1\n$2')
+        .replace(/(\$)\s*(Check\s*:|So\s*:|Therefore\s*:|Hence\s*:|Square both sides\s*:)/gi, '$1\n$2');
+    }
+
+        function splitMixedLine(line){
+      const s = fixBrokenSpacing(line);
+      if (!s) return [];
+
+      const m = s.match(/^(Step\s*\d+\s*:|Check\s*:|So\s*:|Therefore\s*:|Hence\s*:|Square both sides\s*:)(.*)$/i);
+      if (!m) return [s];
+
+      const label = m[1].trim();
+      let rest = String(m[2] || "").trim();
+      if (!rest) return [label];
+
+      rest = rest
+        .replace(/([.?!])\s+((?:Tn|T_\{?n\}?|T\d+|x|y|n)\s*=)/g, '$1\n$2')
+        .replace(/([.?!])\s+(\(?[A-Za-z0-9]+\)?\s*[=<>≤≥])/g, '$1\n$2')
+        .replace(/([.?!])\s+(\d+\s*[-+*/=])/g, '$1\n$2');
+
+      const pieces = rest.split('\n').map(x => fixBrokenSpacing(x)).filter(Boolean);
+      if (!pieces.length) return [label];
+
+      const out = [];
+      out.push(label);
+      for (let i = 0; i < pieces.length; i++) out.push(pieces[i]);
+      return out;
+    }
+
+    const lines = splitEmbeddedSteps(raw).split("\n");
+    const out = [];
+    let inDisplay = false;
+    const displayBuffer = [];
+
+    for (const rawLine of lines) {
+      const line = String(rawLine || "").trim();
+      if (!line && !inDisplay) continue;
+
+      if (inDisplay) {
+        displayBuffer.push(rawLine);
+        if (isDisplayEnd(line)) {
+          out.push(displayBuffer.join("\n").trim());
+          displayBuffer.length = 0;
+          inDisplay = false;
+        }
+        continue;
+      }
+
+      if (isDisplayStart(line)) {
+        inDisplay = true;
+        displayBuffer.push(rawLine);
+        if (isDisplayEnd(line)) {
+          out.push(displayBuffer.join("\n").trim());
+          displayBuffer.length = 0;
+          inDisplay = false;
+        }
+        continue;
+      }
+
+      out.push(...splitMixedLine(line));
+    }
+
+    if (displayBuffer.length) out.push(displayBuffer.join("\n").trim());
+
+    return out.join("\n");
+  }
+
+function formatSolutionHtml(solutionText){
+    const raw = normalizeSolutionText(solutionText);
     if (!raw) return "";
 
     function splitLinesPreserveLatex(input){
@@ -1895,10 +2017,10 @@
 
       if (isStepLabel(line) || isGeneralLabel(line)) {
         const label = line.trim();
-        htmlParts.push(renderLabelOnly(label));
 
         const nextPart = parts[i + 1];
         if (nextPart && nextPart.type === "display") {
+          htmlParts.push(renderLabelOnly(label));
           htmlParts.push(`<div class="solutionMathBlock tightTop">${nextPart.content}</div>`);
           i += 2;
           continue;
@@ -1921,6 +2043,7 @@
         }
 
         if (mathLines.length) {
+          htmlParts.push(renderLabelOnly(label));
           htmlParts.push(`<div class="solutionMathBlock tightTop">${renderMathGroup(mathLines)}</div>`);
           i = j;
           continue;
@@ -1942,11 +2065,15 @@
         }
 
         if (textLines.length) {
-          htmlParts.push(`<div class="solutionTextBlock">${textLines.map(t => `<div class="solutionLine">${renderMixedMath(t)}</div>`).join("")}</div>`);
+          htmlParts.push(renderStepWithInline(label, textLines[0]));
+          if (textLines.length > 1) {
+            htmlParts.push(`<div class="solutionTextBlock">${textLines.slice(1).map(t => `<div class="solutionLine">${renderMixedMath(t)}</div>`).join("")}</div>`);
+          }
           i = k;
           continue;
         }
 
+        htmlParts.push(renderLabelOnly(label));
         i += 1;
         continue;
       }
@@ -1959,7 +2086,7 @@
           if (block.type !== "line") break;
           const nextLine = block.content.trim();
           if (!nextLine || !isLikelyMathLine(nextLine) || isStepLabel(nextLine) || isGeneralLabel(nextLine) || /^(Final Answer\s*:|Answer\s*:)/i.test(nextLine)) break;
-          mathLines.push(nextLine);
+          if (/(^|[\s$])(Step\s*\d+\s*:|Final Answer\s*:|Answer\s*:|Check\s*:|So\s*:|Therefore\s*:|Hence\s*:|Square both sides\s*:)/i.test(nextLine)) break; mathLines.push(nextLine);
           j += 1;
         }
         htmlParts.push(`<div class="solutionMathBlock">${renderMathGroup(mathLines)}</div>`);
