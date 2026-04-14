@@ -113,31 +113,10 @@
     .infoBox b{display:block; margin-bottom:6px;}
     .helpLine{margin-top:6px;}
 
-    .dragHandle{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      border:1px solid #e6e6e6;
-      background:#f8fafc;
-      color:#111827;
-      padding:6px 10px;
-      border-radius:10px;
-      font-weight:700;
-      cursor:grab;
-      user-select:none;
-    }
-    .dragHandle:active{cursor:grabbing;}
-    .qcard[draggable="true"]{cursor:default;}
-    .qcard.dragging{
-      opacity:.75;
-      transform:scale(0.995);
-      box-shadow:0 10px 22px rgba(0,0,0,.10);
-      border-color:#cfe9ff;
-    }
-    .qcard.dropTarget{
-      outline:3px solid rgba(207,233,255,.85);
-      outline-offset:3px;
-    }
+        .moveBtns{display:inline-flex; gap:6px; align-items:center;}
+    .fieldOrderBar{display:flex; justify-content:flex-end; margin:6px 0 2px;}
+    .primaryFields{display:flex; flex-direction:column; gap:0;}
+    .qcard[draggable="false"]{cursor:default;}
 
     .optRow{display:flex; gap:10px; align-items:center; margin-top:10px;}
     .optLabel{min-width:44px; font-weight:900;}
@@ -880,7 +859,7 @@ function escapeHtml(str){
         const label = cleanSpaces(card.querySelector(".cardLabel")?.textContent || card.dataset.fullNumber || "");
         const hint = cleanSpaces(card.querySelector(".qHint")?.value || "");
         const solution = String(card.querySelector(".qSolution")?.value || "").trim();
-        const img = cleanSpaces(card.querySelector(".qImage")?.value || "");
+        const img = readCardImage(card);
         const imageHtml = img ? `<img class="qimg" src="${escapeAttr(img)}" alt="Question image">` : "";
         const points = cleanSpaces(card.querySelector(".qPoints")?.value || "1");
         const headHtml = renderQuestionHeadPreview(`${label} ${qText}`.trim(), points, ++displayNo);
@@ -972,10 +951,10 @@ function escapeHtml(str){
 
     function noteCardHtml(id){
       return `
-        <div class="qcard" data-type="note" draggable="true">
+        <div class="qcard" data-type="note" draggable="false">
           <div class="qhead">
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-              <span class="dragHandle" title="Drag to reorder">↕ Drag</span>
+              <span class="moveBtns"><button type="button" class="smallbtn moveUpBtn">↑</button><button type="button" class="smallbtn moveDownBtn">↓</button></span>
               <div>
                 <b class="cardLabel">Block ${id}</b>
                 <span class="pill">NOTE / HEADING</span>
@@ -997,10 +976,10 @@ function escapeHtml(str){
 
     function mcqCardHtml(id){
       return `
-        <div class="qcard" data-type="mcq" draggable="true">
+        <div class="qcard" data-type="mcq" draggable="false">
           <div class="qhead">
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-              <span class="dragHandle" title="Drag to reorder">↕ Drag</span>
+              <span class="moveBtns"><button type="button" class="smallbtn moveUpBtn">↑</button><button type="button" class="smallbtn moveDownBtn">↓</button></span>
               <div class="headMeta">
                 <b class="cardLabel">Question ${id}</b>
                 <div class="muted tiny subqLabel"></div>
@@ -1008,14 +987,27 @@ function escapeHtml(str){
                 <span class="pill">MCQ</span>
               </div>
             </div>
-            <button type="button" class="smallbtn removeBtn">Remove</button>
+            <div class="toolRow">
+              <button type="button" class="smallbtn convertBtn" data-convert="text">Convert to Typed</button>
+              <button type="button" class="smallbtn removeBtn">Remove</button>
+            </div>
           </div>
 
-          <label>Image URL (optional)</label>
-          <input class="qImage" />
+          <div class="fieldOrderBar">
+            <button type="button" class="smallbtn swapFieldsBtn">Swap Image / Question</button>
+          </div>
 
-          <label>Question Text (supports math)</label>
-          <textarea class="qText" rows="3" placeholder="Example: Simplify $x^2 + 2x + 1$"></textarea>
+          <div class="primaryFields">
+            <div class="fieldImage">
+              <label>Image URL (optional)</label>
+              <input class="qImage" />
+            </div>
+
+            <div class="fieldQuestion">
+              <label>Question Text (supports math)</label>
+              <textarea class="qText" rows="3" placeholder="Example: Simplify $x^2 + 2x + 1$"></textarea>
+            </div>
+          </div>
 
           <label>Hint (supports math)</label>
           <input class="qHint" placeholder="Example: Use $(a+b)^2$ identity" />
@@ -1057,10 +1049,10 @@ function escapeHtml(str){
 
     function groupCardHtml(id){
       return `
-        <div class="qcard" data-type="group" draggable="true">
+        <div class="qcard" data-type="group" draggable="false">
           <div class="qhead">
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-              <span class="dragHandle" title="Drag to reorder">↕ Drag</span>
+              <span class="moveBtns"><button type="button" class="smallbtn moveUpBtn">↑</button><button type="button" class="smallbtn moveDownBtn">↓</button></span>
               <div class="headMeta">
                 <b class="cardLabel examMainLabel">QUESTION ${id}</b>
                 <div class="muted tiny">Starts a new main question heading such as QUESTION 2.</div>
@@ -1079,10 +1071,10 @@ function escapeHtml(str){
 
     function sectionCardHtml(id){
       return `
-        <div class="qcard" data-type="section" draggable="true">
+        <div class="qcard" data-type="section" draggable="false">
           <div class="qhead">
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-              <span class="dragHandle" title="Drag to reorder">↕ Drag</span>
+              <span class="moveBtns"><button type="button" class="smallbtn moveUpBtn">↑</button><button type="button" class="smallbtn moveDownBtn">↓</button></span>
               <div class="headMeta">
                 <b class="cardLabel sectionNumberLabel">1.1</b>
                 <div class="muted tiny">Section / stem line such as 2.1 or 2.2</div>
@@ -1104,10 +1096,10 @@ function escapeHtml(str){
 
     function textCardHtml(id){
       return `
-        <div class="qcard" data-type="text" draggable="true">
+        <div class="qcard" data-type="text" draggable="false">
           <div class="qhead">
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-              <span class="dragHandle" title="Drag to reorder">↕ Drag</span>
+              <span class="moveBtns"><button type="button" class="smallbtn moveUpBtn">↑</button><button type="button" class="smallbtn moveDownBtn">↓</button></span>
               <div class="headMeta">
                 <b class="cardLabel">Question ${id}</b>
                 <div class="muted tiny subqLabel"></div>
@@ -1115,11 +1107,27 @@ function escapeHtml(str){
                 <span class="pill">Typed Answer</span>
               </div>
             </div>
-            <button type="button" class="smallbtn removeBtn">Remove</button>
+            <div class="toolRow">
+              <button type="button" class="smallbtn convertBtn" data-convert="mcq">Convert to MCQ</button>
+              <button type="button" class="smallbtn removeBtn">Remove</button>
+            </div>
           </div>
 
-          <label>Question Text (supports math)</label>
-          <textarea class="qText" rows="3" placeholder="Example: Solve $\\frac{2x}{5}=4$"></textarea>
+          <div class="fieldOrderBar">
+            <button type="button" class="smallbtn swapFieldsBtn">Swap Image / Question</button>
+          </div>
+
+          <div class="primaryFields">
+            <div class="fieldQuestion">
+              <label>Question Text (supports math)</label>
+              <textarea class="qText" rows="3" placeholder="Example: Solve $\\frac{2x}{5}=4$"></textarea>
+            </div>
+
+            <div class="fieldImage">
+              <label>Image URL (optional)</label>
+              <input class="qImage2" />
+            </div>
+          </div>
 
           <label>Hint (supports math)</label>
           <input class="qHint" placeholder="Example: Multiply both sides by 5" />
@@ -1154,14 +1162,8 @@ function escapeHtml(str){
             </div>
           </div>
 
-          <div class="grid2">
-            <div>
-              <label>Image URL (optional)</label>
-              <input class="qImage2" />
-            </div>
-            <div class="muted tiny" style="padding-top:30px;">
-              Learners will type the answer in a text box.
-            </div>
+          <div class="muted tiny" style="margin-top:6px;">
+            Learners will type the answer in a text box.
           </div>
 
           <div class="previewRow">
@@ -1180,6 +1182,162 @@ function escapeHtml(str){
           </div>
         </div>
       `;
+    }
+
+
+    function moveCard(card, direction){
+      if (!card) return;
+      if (direction < 0) {
+        const prev = card.previousElementSibling;
+        if (prev) questionsWrap.insertBefore(card, prev);
+      } else {
+        const next = card.nextElementSibling;
+        if (next) questionsWrap.insertBefore(next, card);
+      }
+      renumberCards();
+      refreshFullLearnerPreview();
+    }
+
+    function swapPrimaryFields(card){
+      const wrap = card?.querySelector(".primaryFields");
+      if (!wrap || wrap.children.length < 2) return;
+      wrap.insertBefore(wrap.children[1], wrap.children[0]);
+      renderCardPreview(card);
+    }
+
+    function readCardImage(card){
+      return cleanSpaces(card?.querySelector(".qImage")?.value || card?.querySelector(".qImage2")?.value || "");
+    }
+
+    function wireCard(card){
+      if (!card || card.dataset.wired === "1") return;
+      card.dataset.wired = "1";
+
+      card.querySelector(".moveUpBtn")?.addEventListener("click", ()=>moveCard(card, -1));
+      card.querySelector(".moveDownBtn")?.addEventListener("click", ()=>moveCard(card, 1));
+      card.querySelector(".swapFieldsBtn")?.addEventListener("click", ()=>swapPrimaryFields(card));
+
+      const convertBtn = card.querySelector(".convertBtn");
+      if (convertBtn) {
+        convertBtn.addEventListener("click", ()=>{
+          const targetType = convertBtn.dataset.convert || "";
+          convertCardType(card, targetType);
+        });
+      }
+
+      if (card.getAttribute("data-type") === "note") {
+        card.querySelector(".noteText")?.addEventListener("input", ()=>renderCardPreview(card));
+        renderCardPreview(card);
+        return;
+      }
+
+      if (card.getAttribute("data-type") === "section") {
+        card.querySelector(".sectionText")?.addEventListener("input", ()=>renderCardPreview(card));
+        renderCardPreview(card);
+        return;
+      }
+
+      if (card.getAttribute("data-type") === "group") {
+        renderCardPreview(card);
+        return;
+      }
+
+      [".qText",".qHint",".correctText",".qSolution",".qImage",".qImage2"].forEach(sel=>{
+        const el = card.querySelector(sel);
+        if (el) el.addEventListener("input", ()=>renderCardPreview(card));
+      });
+
+      const pointsEl = card.querySelector(".qPoints");
+      if (pointsEl) {
+        pointsEl.addEventListener("input", ()=>{
+          renumberCards();
+          renderCardPreview(card);
+        });
+      }
+
+      if (card.getAttribute("data-type") === "mcq") {
+        card.querySelector(".addOptBtn")?.addEventListener("click", ()=>addOption(card,"",false));
+        ensureMinOptions(card, 4);
+      }
+
+      if (card.getAttribute("data-type") === "text") {
+        wireTextModeCard(card);
+      }
+
+      renderCardPreview(card);
+    }
+
+    function wireTextModeCard(card){
+      const modeSel = card?.querySelector(".textMode");
+      const tolRow = card?.querySelector(".tolRow");
+      const tolInput = card?.querySelector(".tolerance");
+      if (!modeSel || !tolRow) return;
+      const update = () => {
+        const showTol = modeSel.value === "number_tolerance";
+        tolRow.classList.toggle("hide", !showTol);
+        if (!showTol && tolInput) tolInput.value = "";
+        renderCardPreview(card);
+      };
+      if (modeSel.dataset.wired !== "1") {
+        modeSel.addEventListener("change", update);
+        modeSel.dataset.wired = "1";
+      }
+      update();
+    }
+
+    function convertCardType(card, targetType){
+      if (!card || !["mcq","text"].includes(targetType)) return;
+      const currentType = (card.getAttribute("data-type") || "").toLowerCase();
+      if (currentType === targetType) return;
+
+      const base = {
+        question: stripLeadingQuestionNumber(card.querySelector(".qText")?.value || ""),
+        hint: cleanSpaces(card.querySelector(".qHint")?.value || ""),
+        points: cleanSpaces(card.querySelector(".qPoints")?.value || "1"),
+        solution: String(card.querySelector(".qSolution")?.value || "").trim(),
+        imageUrl: readCardImage(card)
+      };
+
+      let wrapper = document.createElement("div");
+      wrapper.innerHTML = targetType === "mcq" ? mcqCardHtml(qCount + 1) : textCardHtml(qCount + 1);
+      const newCard = wrapper.firstElementChild;
+
+      card.replaceWith(newCard);
+
+      if (targetType === "mcq") {
+        fillMcqCard(newCard, {
+          ...base,
+          options: (() => {
+            if (currentType === "mcq") {
+              const opts = [...card.querySelectorAll(".optRow .optInput")].map(el => cleanSpaces(el.value || "")).filter(Boolean);
+              return opts.length ? opts : ["Option A", "Option B"];
+            }
+            const correctText = cleanSpaces(card.querySelector(".correctText")?.value || "");
+            return [correctText || "Correct answer", "Option 2"];
+          })(),
+          correctIndexes: currentType === "mcq"
+            ? [...card.querySelectorAll(".optRow")].flatMap((row, idx) => row.querySelector(".optCorrect")?.checked ? [idx] : [])
+            : [0]
+        });
+      } else {
+        fillTextCard(newCard, {
+          ...base,
+          correctText: currentType === "text"
+            ? cleanSpaces(card.querySelector(".correctText")?.value || "")
+            : (() => {
+                const rows = [...card.querySelectorAll(".optRow")];
+                const idx = rows.findIndex(row => row.querySelector(".optCorrect")?.checked);
+                const chosen = idx >= 0 ? rows[idx] : rows[0];
+                return cleanSpaces(chosen?.querySelector(".optInput")?.value || "");
+              })(),
+          textAnswerMode: "exact",
+          numberTolerance: ""
+        });
+      }
+
+      wireCard(newCard);
+      renumberCards();
+      refreshFullLearnerPreview();
     }
 
     function addNote(){
@@ -1334,9 +1492,13 @@ function escapeHtml(str){
     });
 
     questionsWrap.addEventListener("click", (e) => {
+      const card = e.target.closest(".qcard");
+      if (!card) return;
+
       if (e.target.classList.contains("removeBtn")) {
-        e.target.closest(".qcard").remove();
+        card.remove();
         renumberCards();
+        refreshFullLearnerPreview();
       }
     });
 
@@ -1344,20 +1506,7 @@ function escapeHtml(str){
       const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='text']")];
       const last = cards[cards.length - 1];
       if (!last) return;
-
-      const modeSel = last.querySelector(".textMode");
-      const tolRow = last.querySelector(".tolRow");
-      const tolInput = last.querySelector(".tolerance");
-
-      const update = () => {
-        const mode = modeSel.value;
-        const showTol = mode === "number_tolerance";
-        tolRow.classList.toggle("hide", !showTol);
-        if (!showTol) tolInput.value = "";
-      };
-
-      modeSel.addEventListener("change", update);
-      update();
+      wireTextModeCard(last);
     }
 
     function letter(i){ return String.fromCharCode(65 + i); }
@@ -1551,43 +1700,7 @@ function escapeHtml(str){
       const cards = [...questionsWrap.querySelectorAll(".qcard")];
       const last = cards[cards.length - 1];
       if (!last) return;
-
-      if (last.getAttribute("data-type") === "note") {
-        last.querySelector(".noteText")?.addEventListener("input", ()=>renderCardPreview(last));
-        renderCardPreview(last);
-        return;
-      }
-
-      if (last.getAttribute("data-type") === "section") {
-        last.querySelector(".sectionText")?.addEventListener("input", ()=>renderCardPreview(last));
-        renderCardPreview(last);
-        return;
-      }
-
-      if (last.getAttribute("data-type") === "group") {
-        renderCardPreview(last);
-        return;
-      }
-
-      [".qText",".qHint",".correctText",".qSolution"].forEach(sel=>{
-        const el = last.querySelector(sel);
-        if (el) el.addEventListener("input", ()=>renderCardPreview(last));
-      });
-
-      const pointsEl = last.querySelector(".qPoints");
-      if (pointsEl) {
-        pointsEl.addEventListener("input", ()=>{
-          renumberCards();
-          renderCardPreview(last);
-        });
-      }
-
-      if (last.getAttribute("data-type") === "mcq") {
-        last.querySelector(".addOptBtn")?.addEventListener("click", ()=>addOption(last,"",false));
-        ensureMinOptions(last, 4);
-      }
-
-      renderCardPreview(last);
+      wireCard(last);
     }
 
     function renumberCards(){
@@ -1707,57 +1820,7 @@ function escapeHtml(str){
     let draggedCard = null;
 
     function setupDragAndDrop(){
-      const cards = [...questionsWrap.querySelectorAll(".qcard")];
-
-      cards.forEach(card => {
-        if (card.dataset.dndWired === "1") return;
-        card.dataset.dndWired = "1";
-
-        card.addEventListener("dragstart", (e) => {
-          draggedCard = card;
-          card.classList.add("dragging");
-          e.dataTransfer.effectAllowed = "move";
-          e.dataTransfer.setData("text/plain", "drag");
-        });
-
-        card.addEventListener("dragend", () => {
-          card.classList.remove("dragging");
-          [...questionsWrap.querySelectorAll(".qcard")].forEach(c => c.classList.remove("dropTarget"));
-          draggedCard = null;
-          renumberCards();
-        });
-
-        card.addEventListener("dragover", (e) => {
-          e.preventDefault();
-          if (!draggedCard || draggedCard === card) return;
-
-          card.classList.add("dropTarget");
-
-          const rect = card.getBoundingClientRect();
-          const before = (e.clientY - rect.top) < rect.height / 2;
-
-          const dragging = draggedCard;
-          if (before) {
-            if (card.previousElementSibling !== dragging) {
-              questionsWrap.insertBefore(dragging, card);
-            }
-          } else {
-            if (card.nextElementSibling !== dragging) {
-              questionsWrap.insertBefore(dragging, card.nextElementSibling);
-            }
-          }
-        });
-
-        card.addEventListener("dragleave", () => {
-          card.classList.remove("dropTarget");
-        });
-
-        card.addEventListener("drop", (e) => {
-          e.preventDefault();
-          card.classList.remove("dropTarget");
-          renumberCards();
-        });
-      });
+      return;
     }
 
     function clearAllCards(){
@@ -2121,6 +2184,8 @@ function escapeHtml(str){
       card.querySelector(".qHint").value = data.hint || "";
       card.querySelector(".qPoints").value = data.points || 1;
       card.querySelector(".qSolution").value = data.solution || "";
+      const imgEl = card.querySelector(".qImage");
+      if (imgEl) imgEl.value = data.imageUrl || "";
 
       const wrap = card.querySelector(".optsWrap");
       wrap.innerHTML = "";
@@ -2138,12 +2203,14 @@ function escapeHtml(str){
       card.querySelector(".qHint").value = data.hint || "";
       card.querySelector(".qPoints").value = data.points || 1;
       card.querySelector(".qSolution").value = data.solution || "";
+      const imgEl = card.querySelector(".qImage2");
+      if (imgEl) imgEl.value = data.imageUrl || "";
       card.querySelector(".correctText").value = data.correctText || "";
       const modeSel = card.querySelector(".textMode");
       const tolInput = card.querySelector(".tolerance");
       if (modeSel) modeSel.value = data.textAnswerMode || "exact";
       if (tolInput) tolInput.value = data.numberTolerance ?? "";
-      wireTextModeForLastCard();
+      wireTextModeCard(card);
       renderCardPreview(card);
     }
 
