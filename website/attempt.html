@@ -1835,7 +1835,7 @@ function hasInlineLatexMathOnly(text){
     if (hasLatexSyntax(raw)) return raw;
 
     const parts = [];
-    let temp = raw.replace(/(sqrt\s*\([^()]+\)|sqrt\s*\{[^{}]+\}|sqrt[A-Za-z0-9]+|[A-Za-z0-9)\]\s]+(?:<=|>=|<|>|=|≈|≤|≥)[A-Za-z0-9(\[\]{}\\\s+\-*/^.,]+|\d+\s*\/\s*\d+|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+))/g, (m) => `@@M${parts.push(m)-1}@@`);
+    let temp = raw.replace(/(sqrt\s*\([^()]+\)|sqrt\s*\{[^{}]+\}|sqrt[A-Za-z0-9]+|\d+\s*[×x÷+\-]\s*\d+(?:\s*[=<>≤≥]\s*\d+)?|\d+\s*\/\s*\d+|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+)|[A-Za-z]\s*(?:=|<|>|≤|≥)\s*[A-Za-z0-9.+\-]+|[A-Za-z0-9]+\s*(?:=|<|>|≤|≥)\s*[+-]?\d+(?:\.\d+)?)/g, (m) => `@@M${parts.push(m)-1}@@`);
     temp = escapeHtml(temp);
     temp = temp.replace(/@@M(\d+)@@/g, (_, i) => toLatex(parts[Number(i)]));
     return temp;
