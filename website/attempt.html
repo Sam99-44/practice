@@ -54,8 +54,13 @@
     .ok{color:var(--ok)}
     .hidden{display:none!important}
 
-    mjx-container[jax="SVG"]{
-      font-size:1.08em !important;
+    mjx-container{
+      font-family:"Times New Roman", Times, serif !important;
+      font-size:1.02em !important;
+    }
+
+    mjx-container *{
+      font-family:"Times New Roman", Times, serif !important;
     }
 
     .qText mjx-container,
@@ -1835,7 +1840,7 @@ function hasInlineLatexMathOnly(text){
     if (hasLatexSyntax(raw)) return raw;
 
     const parts = [];
-    let temp = raw.replace(/(sqrt\s*\([^()]+\)|sqrt\s*\{[^{}]+\}|sqrt[A-Za-z0-9]+|\d+\s*[×x÷+\-]\s*\d+(?:\s*[=<>≤≥]\s*\d+)?|\d+\s*\/\s*\d+|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+)|[A-Za-z]\s*(?:=|<|>|≤|≥)\s*[A-Za-z0-9.+\-]+|[A-Za-z0-9]+\s*(?:=|<|>|≤|≥)\s*[+-]?\d+(?:\.\d+)?)/g, (m) => `@@M${parts.push(m)-1}@@`);
+    let temp = raw.replace(/(sqrt\s*\([^()]+\)|sqrt\s*\{[^{}]+\}|sqrt[A-Za-z0-9]+|[A-Za-z0-9)\]\s]+(?:<=|>=|<|>|=|≈|≤|≥)[A-Za-z0-9(\[\]{}\\\s+\-*/^.,]+|\d+\s*\/\s*\d+|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+))/g, (m) => `@@M${parts.push(m)-1}@@`);
     temp = escapeHtml(temp);
     temp = temp.replace(/@@M(\d+)@@/g, (_, i) => toLatex(parts[Number(i)]));
     return temp;
@@ -1978,9 +1983,29 @@ function formatSolutionHtml(solutionText){
       return `
         <div class="solutionStep">
           <div class="solutionStepNo">${escapeHtml(label)}</div>
-          <div class="solutionStepBody">${body ? `<div class="solutionTextInline">${renderMixedMath(body)}</div>` : ""}</div>
+          <div class="solutionStepBody">${body ? `<div class="solutionTextInline">${renderSolutionInline(body)}</div>` : ""}</div>
         </div>
       `;
+    }
+
+    function solutionBodyShouldStayPlain(text){
+      const s = String(text || "").trim();
+      if (!s) return true;
+      if (hasLatexSyntax(s)) return false;
+
+      const plain = s.replace(/\$[^$]*\$/g, " ").replace(/\s+/g, " ").trim();
+      const words = plain.match(/[A-Za-z]{3,}/g) || [];
+
+      if (/^(Therefore|Hence|So|Use|Calculate|Find|Determine|Substitute|Simplify|Factorise|Factorize|Check|Write|Area|Length|Width|Total|Damaged|Remaining|Perimeter|Cost|Answer)\b/i.test(plain)) return true;
+      if (/[A-Za-z]{3,}\s*=/.test(plain)) return true;
+      if (words.length >= 2) return true;
+      return false;
+    }
+
+    function renderSolutionInline(text){
+      const content = String(text || "").trim();
+      if (!content) return "";
+      return solutionBodyShouldStayPlain(content) ? escapeHtml(content) : renderMixedMath(content);
     }
 
     function renderLabelOnly(label){
@@ -1994,7 +2019,7 @@ function formatSolutionHtml(solutionText){
 
     function renderFinal(label, body){
       const content = String(body || "").trim();
-      const rendered = !content ? "" : renderMixedMath(content);
+      const rendered = !content ? "" : renderSolutionInline(content);
       return `
         <div class="solutionStep finalAnswerRow">
           <div class="solutionStepNo">${escapeHtml(label)}</div>
