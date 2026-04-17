@@ -1,5 +1,5 @@
 <!-- admin-quiz.html (UPDATED - COPY & PASTE)
-     ✅ MathJax enabled (SVG)
+     ✅ MathJax enabled (CHTML)
      ✅ Instructions box
      ✅ Note/Heading blocks (type:"note")
      ✅ Marks per question (points)
@@ -42,13 +42,39 @@
 
   <script>
     window.MathJax = {
-      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
-      svg: { fontCache: 'global' }
+      tex: {
+        inlineMath: [["$", "$"], ["\(", "\)"]],
+        displayMath: [["\[", "\]"]],
+        processEscapes: true
+      },
+      chtml: {
+        scale: 0.98,
+        matchFontHeight: false,
+        mtextInheritFont: true,
+        minScale: 0.92
+      },
+      options: {
+        renderActions: { addMenu: [] }
+      }
     };
   </script>
-  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 
   <style>
+    mjx-container[jax="CHTML"]{
+      font-size:1em !important;
+      line-height:1 !important;
+    }
+    mjx-container[jax="CHTML"] mjx-mtext,
+    mjx-container[jax="CHTML"] mjx-mo,
+    mjx-container[jax="CHTML"] mjx-mi,
+    mjx-container[jax="CHTML"] mjx-mn{
+      font-family: "Times New Roman", Times, serif !important;
+    }
+    mjx-container[jax="CHTML"] mjx-assistive-mml{
+      display:none !important;
+    }
+
     body{font-family:Arial; padding:20px; max-width:980px; margin:auto; background:#f6f7fb;}
     .card{background:#fff; border:1px solid #e6e6e6; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.06);}
     input, textarea, select{width:100%; padding:10px; margin:8px 0; border-radius:10px; border:1px solid #ddd; outline:none;}
@@ -215,7 +241,8 @@
 
     .attemptPaperPreview{background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:18px; overflow:auto;}
     .attemptPaperPreview .examPaper{background:#ffffff; border:none; border-radius:0; padding:12px 6px 20px; box-shadow:none; max-width:860px; margin:0 auto; font-family:"Times New Roman", Times, serif; color:#111827;}
-    .attemptPaperPreview mjx-container[jax="SVG"]{font-size:1em !important;}
+    .attemptPaperPreview mjx-container{font-family:"Times New Roman", Times, serif !important; font-size:1em !important;}
+    mjx-container[jax="CHTML"], mjx-container[jax="CHTML"] *{font-family:"Times New Roman", Times, serif !important;}
     .attemptPaperPreview .paperMeta{margin:0 0 26px 0; color:#111827; font-size:14px; line-height:1.5;}
     .attemptPaperPreview .paperMetaRow{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:16px; align-items:start; font-size:14px; line-height:1.5;}
     .attemptPaperPreview .paperMetaRight{white-space:nowrap; text-align:right; justify-self:end;}
@@ -635,7 +662,7 @@
 
         const fragments = [];
         s = s.replace(
-          /(\\sum_[^\s]+|sqrt\s*\([^()]+\)|sqrt\s*\{[^{}]+\}|sqrt\s*[A-Za-z0-9]+|\d+\s*\/\s*\d+|[A-Za-z][A-Za-z0-9_{}]*\s*=\s*[^,.\n]+|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+)|T_\{?\d+\}?|S_\\infty|\\frac\{[^{}]+\}\{[^{}]+\})/g,
+          /(\\sum_[^\s]+|sqrt\s*\([^()]+\)|sqrt\s*\{[^{}]+\}|sqrt\s*[A-Za-z0-9]+|\d+\s*\/\s*\d+|(?:[A-Za-z](?:_\{?[A-Za-z0-9+-]+\}?)?)\s*=\s*[^,.\n]+|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+)|T_\{?\d+\}?|S_\\infty|\\frac\{[^{}]+\}\{[^{}]+\})/g,
           (m) => `@@M${fragments.push(m)-1}@@`
         );
 
@@ -782,9 +809,25 @@ function escapeHtml(str){
       function renderMathGroup(lines){ const prepared = lines.map(alignMathLine).filter(Boolean); return prepared.length ? `\[\begin{aligned}${prepared.join(' \\ ')}\end{aligned}\]` : ""; }
       function isStepLabel(line){ return /^(Step\s*\d+\s*:)\s*$/i.test(line); }
       function isGeneralLabel(line){ return /^(Check\s*:|So\s*:|Therefore\s*:|Hence\s*:|Square both sides\s*:)\s*$/i.test(line); }
-      function renderStepWithInline(label, body){ return `<div class="solutionStep"><div class="solutionStepNo">${escapeHtml(label)}</div><div class="solutionStepBody">${body ? `<div class="solutionTextInline">${renderMixedMathPreview(body)}</div>` : ""}</div></div>`; }
+      function solutionBodyShouldStayPlain(text){
+        const s = String(text || "").trim();
+        if (!s) return true;
+        if (hasLatexSyntax(s)) return false;
+        const plain = s.replace(/\$[^$]*\$/g, " ").replace(/\s+/g, " ").trim();
+        const words = plain.match(/[A-Za-z]{3,}/g) || [];
+        if (/^(Therefore|Hence|So|Use|Calculate|Find|Determine|Substitute|Simplify|Factorise|Factorize|Check|Write|Area|Length|Width|Total|Damaged|Remaining|Perimeter|Cost|Answer)\b/i.test(plain)) return true;
+        if (/[A-Za-z]{3,}\s*=/.test(plain)) return true;
+        if (words.length >= 2) return true;
+        return false;
+      }
+      function renderSolutionInlinePreview(text){
+        const content = String(text || "").trim();
+        if (!content) return "";
+        return solutionBodyShouldStayPlain(content) ? escapeHtml(content) : renderMixedMathPreview(content);
+      }
+      function renderStepWithInline(label, body){ return `<div class="solutionStep"><div class="solutionStepNo">${escapeHtml(label)}</div><div class="solutionStepBody">${body ? `<div class="solutionTextInline">${renderSolutionInlinePreview(body)}</div>` : ""}</div></div>`; }
       function renderLabelOnly(label){ return `<div class="solutionStep solutionLabelOnly"><div class="solutionStepNo">${escapeHtml(label)}</div><div class="solutionStepBody"></div></div>`; }
-      function renderFinal(label, body){ const content = String(body || "").trim(); const rendered = !content ? "" : (isLikelyMathLine(content) ? toLatex(content) : renderMixedMathPreview(content)); return `<div class="solutionStep finalAnswerRow"><div class="solutionStepNo">${escapeHtml(label)}</div><div class="solutionStepBody finalAnswerText">${rendered}</div></div>`; }
+      function renderFinal(label, body){ const content = String(body || "").trim(); const rendered = !content ? "" : renderSolutionInlinePreview(content); return `<div class="solutionStep finalAnswerRow"><div class="solutionStepNo">${escapeHtml(label)}</div><div class="solutionStepBody finalAnswerText">${rendered}</div></div>`; }
       const parts = splitLinesPreserveLatex(raw); const htmlParts = []; let i = 0;
       while (i < parts.length) {
         const part = parts[i];
@@ -802,12 +845,12 @@ function escapeHtml(str){
           if (mathLines.length) { htmlParts.push(`<div class="solutionMathBlock tightTop">${renderMathGroup(mathLines)}</div>`); i = j; continue; }
           const textLines = []; let k = i + 1;
           while (k < parts.length) { const block = parts[k]; if (block.type !== "line") break; const nextLine = block.content.trim(); if (!nextLine) { k += 1; continue; } if (isStepLabel(nextLine) || isGeneralLabel(nextLine) || /^(Final Answer\s*:|Answer\s*:)/i.test(nextLine) || isLikelyMathLine(nextLine)) break; textLines.push(nextLine); k += 1; }
-          if (textLines.length) { htmlParts.push(`<div class="solutionTextBlock">${textLines.map(t => `<div class="solutionLine">${renderMixedMathPreview(t)}</div>`).join("")}</div>`); i = k; continue; }
+          if (textLines.length) { htmlParts.push(`<div class="solutionTextBlock">${textLines.map(t => `<div class="solutionLine">${renderSolutionInlinePreview(t)}</div>`).join("")}</div>`); i = k; continue; }
           i += 1; continue;
         }
         if (isLikelyMathLine(line)) { const mathLines = [line]; let j = i + 1; while (j < parts.length) { const block = parts[j]; if (block.type !== "line") break; const nextLine = block.content.trim(); if (!nextLine || !isLikelyMathLine(nextLine) || isStepLabel(nextLine) || isGeneralLabel(nextLine) || /^(Final Answer\s*:|Answer\s*:)/i.test(nextLine)) break; mathLines.push(nextLine); j += 1; } htmlParts.push(`<div class="solutionMathBlock">${renderMathGroup(mathLines)}</div>`); i = j; continue; }
         const textLines = [line]; let j = i + 1; while (j < parts.length) { const block = parts[j]; if (block.type !== "line") break; const nextLine = block.content.trim(); if (!nextLine || isLikelyMathLine(nextLine) || isStepLabel(nextLine) || isGeneralLabel(nextLine) || /^(Final Answer\s*:|Answer\s*:)/i.test(nextLine)) break; textLines.push(nextLine); j += 1; }
-        htmlParts.push(`<div class="solutionTextBlock">${textLines.map(t => `<div class="solutionLine">${renderMixedMathPreview(t)}</div>`).join("")}</div>`); i = j;
+        htmlParts.push(`<div class="solutionTextBlock">${textLines.map(t => `<div class="solutionLine">${renderSolutionInlinePreview(t)}</div>`).join("")}</div>`); i = j;
       }
       return `<div class="solutionBox"><div class="solutionTitle">Solution / Workings</div>${htmlParts.join("")}</div>`;
     }
