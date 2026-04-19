@@ -972,6 +972,8 @@
           class="accountIcon"
           src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
           alt="Account"
+          loading="eager"
+          decoding="async"
         >
       </div>
 
@@ -983,13 +985,13 @@
 
     <div class="topbarRight">
       <a href="announcements.html" class="iconBtn bellBtn" title="Announcements" aria-label="Announcements">
-        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements" loading="eager" decoding="async">
         <span class="navBadge" id="navAnnouncementBadge">0</span>
       </a>
 
       <button class="menuBtn" id="menuToggleBtn" title="Menu" aria-label="Menu" type="button">
         <span class="menuBtnText">Menu</span>
-        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt="Menu">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt="Menu" loading="eager" decoding="async">
       </button>
 
       <div class="menuDropdown" id="menuDropdown">
@@ -1060,7 +1062,7 @@
         <div class="muted" style="margin-top:4px;">Please try again later.</div>
       </div>
 
-      <div id="questions" class="examPaper"></div>
+      <div id="questions" class="examPaper"><div class="muted">Loading assessment...</div></div>
 
       <div class="btnRow">
         <button class="btn" id="submitBtn" type="button">Submit</button>
@@ -1122,6 +1124,7 @@
   const confirmSubmitBtn = document.getElementById("confirmSubmitBtn");
 
   let timerInterval = null;
+  let saveAnswersTimer = null;
   let quizEndAtMs = null;
   let quizData = null;
 
@@ -1148,6 +1151,11 @@
       savedAt: Date.now()
     };
     localStorage.setItem(ANSWERS_KEY, JSON.stringify(payload));
+  }
+
+  function scheduleSaveAnswers(){
+    clearTimeout(saveAnswersTimer);
+    saveAnswersTimer = setTimeout(saveAnswersToStorage, 180);
   }
 
   function restoreAnswersFromStorage(){
@@ -1187,16 +1195,17 @@
   }
 
   function clearSavedAnswers(){
+    clearTimeout(saveAnswersTimer);
     localStorage.removeItem(ANSWERS_KEY);
   }
 
   function attachAnswerAutosave(){
     document.querySelectorAll(".mcqInput").forEach(el => {
-      el.addEventListener("change", saveAnswersToStorage);
+      el.addEventListener("change", scheduleSaveAnswers);
     });
     document.querySelectorAll(".textAnswer").forEach(el => {
-      el.addEventListener("input", saveAnswersToStorage);
-      el.addEventListener("change", saveAnswersToStorage);
+      el.addEventListener("input", scheduleSaveAnswers);
+      el.addEventListener("change", scheduleSaveAnswers);
     });
   }
 
@@ -1374,7 +1383,7 @@
         typesetMath(el);
       }
     });
-    typesetMath(questionsDiv);
+    requestAnimationFrame(() => typesetMath(questionsDiv));
   }
 
   function isUnavailableBySchedule(quiz){
@@ -1788,21 +1797,26 @@
     msgEl.textContent = "";
     lockNotice.classList.add("hidden");
     unavailableNotice.classList.add("hidden");
+    questionsDiv.innerHTML = '<div class="muted">Loading assessment...</div>';
     blocked = false;
     submitted = false;
     practiceMode = false;
 
-    alreadyAttempted = await checkAlreadyAttempted();
-
     let res;
     try{
-      res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`, {
-        headers: { Authorization: "Bearer " + token }
-      });
+      const [attemptedValue, quizRes] = await Promise.all([
+        checkAlreadyAttempted(),
+        fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`, {
+          headers: { Authorization: "Bearer " + token }
+        })
+      ]);
+      alreadyAttempted = attemptedValue;
+      res = quizRes;
     }catch{
       if (quizTitle) quizTitle.textContent = "Network error";
       msgEl.className = "error";
       msgEl.textContent = "Please refresh and try again.";
+      questionsDiv.innerHTML = '<div class="error">Could not load assessment.</div>';
       submitBtn.disabled = true;
       return;
     }
@@ -1858,7 +1872,7 @@
       const questionTotal = totals.mainTotals.get(mainNo) || points;
       const sectionTotal = totals.sectionTotals.get(sectionKey) || points;
 
-      const imageHtml = img ? `<img class="qimg" src="${escapeAttr(img)}" alt="Question image">` : "";
+      const imageHtml = img ? `<img class="qimg" src="${escapeAttr(img)}" alt="Question image" loading="lazy" decoding="async">` : "";
 
       if (type === "note") {
         return renderNoteLike(rawText, imageHtml, sectionTotal);
@@ -2576,9 +2590,17 @@ function formatSolutionHtml(solutionText){
     `;
   }
 
+  document.addEventListener("visibilitychange", function(){
+    if (document.hidden && quizEndAtMs && !submitted && !blocked) {
+      localStorage.setItem(END_KEY, String(quizEndAtMs));
+      saveAnswersToStorage();
+    }
+  });
+
   window.addEventListener("beforeunload", function(){
     if (quizEndAtMs && !submitted && !blocked) {
       localStorage.setItem(END_KEY, String(quizEndAtMs));
+      saveAnswersToStorage();
     }
   });
 
