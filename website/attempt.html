@@ -82,57 +82,45 @@
 
     .statusArea{
       min-height:88px;
+      margin-top:12px;
       margin-bottom:12px;
     }
 
-    .statusPlaceholder{
+    .statusBox{
       border:1px dashed #ddd;
       background:#fafafa;
       padding:14px;
       border-radius:12px;
       min-height:78px;
-      display:flex;
-      align-items:center;
       font-family:Arial, Helvetica, sans-serif;
-      font-size:14px;
-      color:#475569;
+      font-weight:400;
       line-height:1.45;
+      opacity:1;
+      transition:opacity .12s ease;
     }
 
-    .questionsLoadingShell{
-      display:block;
+    .statusBox.loading{
+      color:#475569;
     }
 
-    .loadingLine{
-      height:12px;
-      border-radius:8px;
-      background:linear-gradient(90deg,#eef2f7 25%,#f8fafc 50%,#eef2f7 75%);
-      background-size:200% 100%;
-      animation:attemptShimmer 1.3s linear infinite;
-      margin-bottom:10px;
+    .statusBox.errorState{
+      border-color:#fecaca;
+      background:#fff1f2;
+      color:#991b1b;
     }
 
-    .loadingLine.lg{height:16px;width:42%}
-    .loadingLine.md{height:12px;width:30%}
-    .loadingLine.full{height:10px;width:100%}
-    .loadingBlock{
-      margin-top:18px;
-      border-top:1px solid #eef2f7;
-      padding-top:18px;
-    }
-    .loadingChoice{
-      height:16px;
-      width:55%;
-      border-radius:8px;
-      background:linear-gradient(90deg,#eef2f7 25%,#f8fafc 50%,#eef2f7 75%);
-      background-size:200% 100%;
-      animation:attemptShimmer 1.3s linear infinite;
-      margin:14px 0 0 68px;
+    .statusBox.okState{
+      border-color:#ddd;
+      background:#fafafa;
+      color:#111827;
     }
 
-    @keyframes attemptShimmer{
-      0%{background-position:200% 0}
-      100%{background-position:-200% 0}
+    .paperShell{
+      min-height:420px;
+    }
+
+    .paperShell.loading{
+      visibility:hidden;
     }
 
     mjx-container{
@@ -925,7 +913,6 @@
       padding:12px;
       border-radius:12px;
       margin-top:12px;
-      min-height:78px;
       font-family:Arial, Helvetica, sans-serif;
       font-weight:400;
       line-height:1.45;
@@ -945,7 +932,6 @@
       padding:14px;
       border-radius:12px;
       margin-top:12px;
-      min-height:78px;
       font-family:Arial, Helvetica, sans-serif;
       font-weight:400;
       line-height:1.45;
@@ -1111,35 +1097,11 @@
 
     <div class="sectionBody">
       <div id="statusArea" class="statusArea">
-        <div id="statusPlaceholder" class="statusPlaceholder">Loading assessment status...</div>
-
-        <div id="lockNotice" class="lockBox hidden">
-          <b class="error">Attempt already submitted.</b>
-          <div class="muted" style="margin-top:4px;">
-            You can retry in <b>Practice Mode</b>. Practice results are not saved.
-          </div>
-        </div>
-
-        <div id="unavailableNotice" class="notice red hidden">
-          <b>This assessment is not available right now.</b>
-          <div class="muted" style="margin-top:4px;">Please try again later.</div>
-        </div>
+        <div id="statusBox" class="statusBox loading">Loading assessment status...</div>
       </div>
 
-      <div id="questions" class="examPaper">
-        <div class="questionsLoadingShell">
-          <div class="loadingLine lg"></div>
-          <div class="loadingLine md"></div>
-          <div class="loadingLine full" style="margin-top:20px;"></div>
-
-          <div class="loadingBlock">
-            <div class="loadingLine lg" style="width:22%;"></div>
-            <div class="loadingLine md" style="width:74%;"></div>
-            <div class="loadingChoice"></div>
-            <div class="loadingChoice" style="width:48%;"></div>
-            <div class="loadingChoice" style="width:52%;"></div>
-          </div>
-        </div>
+      <div id="questionsWrap" class="paperShell loading">
+        <div id="questions" class="examPaper"><div class="muted">Loading assessment...</div></div>
       </div>
 
       <div class="btnRow">
@@ -1185,9 +1147,8 @@
   const retryBtn = document.getElementById("retryBtn");
   const viewResultsBtn = document.getElementById("viewResultsBtn");
   const msgEl = document.getElementById("msg");
-  const lockNotice = document.getElementById("lockNotice");
-  const unavailableNotice = document.getElementById("unavailableNotice");
-  const statusPlaceholder = document.getElementById("statusPlaceholder");
+  const statusBox = document.getElementById("statusBox");
+  const questionsWrap = document.getElementById("questionsWrap");
 
   const statusText = document.getElementById("statusText");
   const timeText = document.getElementById("timeText");
@@ -1222,31 +1183,23 @@
     }
   }
 
-  function setStatusPlaceholder(show, text = "Loading assessment status..."){
-    if (!statusPlaceholder) return;
-    statusPlaceholder.textContent = text;
-    statusPlaceholder.classList.toggle("hidden", !show);
-  }
-
-  function setQuestionsLoading(){
-    questionsDiv.innerHTML = `
-      <div class="questionsLoadingShell">
-        <div class="loadingLine lg"></div>
-        <div class="loadingLine md"></div>
-        <div class="loadingLine full" style="margin-top:20px;"></div>
-
-        <div class="loadingBlock">
-          <div class="loadingLine lg" style="width:22%;"></div>
-          <div class="loadingLine md" style="width:74%;"></div>
-          <div class="loadingChoice"></div>
-          <div class="loadingChoice" style="width:48%;"></div>
-          <div class="loadingChoice" style="width:52%;"></div>
-        </div>
-      </div>`;
-  }
-
   function typesetMathSoon(root=document){
     requestAnimationFrame(() => typesetMath(root));
+  }
+
+  function setStatusMessage(html, state = "loading"){
+    if (!statusBox) return;
+    statusBox.className = `statusBox ${state}`;
+    statusBox.innerHTML = html;
+  }
+
+  function showQuestionsShell(){
+    if (questionsWrap) questionsWrap.classList.add("loading");
+    questionsDiv.innerHTML = '<div class="muted">Loading assessment...</div>';
+  }
+
+  function showQuestionsContent(){
+    if (questionsWrap) questionsWrap.classList.remove("loading");
   }
 
   function saveAnswersToStorage(){
@@ -1775,7 +1728,7 @@
     retryBtn.disabled = false;
     saveAnswersToStorage();
 
-    lockNotice.classList.add("hidden");
+    setStatusMessage("Practice Mode is active. Submit to see your results. This attempt will not be saved.", "loading");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -1900,13 +1853,11 @@
   async function loadQuiz() {
     msgEl.className = "muted";
     msgEl.textContent = "";
-    lockNotice.classList.add("hidden");
-    unavailableNotice.classList.add("hidden");
     blocked = false;
     submitted = false;
     practiceMode = false;
-    setStatusPlaceholder(true, "Loading assessment status...");
-    setQuestionsLoading();
+    setStatusMessage("Loading assessment status...", "loading");
+    showQuestionsShell();
 
     let res;
     try{
@@ -1920,6 +1871,7 @@
       res = quizRes;
     }catch{
       if (quizTitle) quizTitle.textContent = "Network error";
+      setStatusMessage("Could not load assessment status. Please refresh and try again.", "errorState");
       msgEl.className = "error";
       msgEl.textContent = "Please refresh and try again.";
       submitBtn.disabled = true;
@@ -1935,6 +1887,7 @@
 
     if (!res.ok) {
       if (quizTitle) quizTitle.textContent = "Assessment not found";
+      setStatusMessage("Assessment not found.", "errorState");
       submitBtn.disabled = true;
       return;
     }
@@ -1942,6 +1895,7 @@
     quizData = await res.json().catch(()=>null);
     if (!quizData){
       if (quizTitle) quizTitle.textContent = "Could not load assessment";
+      setStatusMessage("Could not load assessment.", "errorState");
       submitBtn.disabled = true;
       return;
     }
@@ -2018,6 +1972,7 @@
       `;
     }).join("");
 
+    showQuestionsContent();
     hideAllSolutions();
     attachAnswerAutosave();
     const restoredAnswers = restoreAnswersFromStorage();
@@ -2028,8 +1983,7 @@
     typesetMathSoon(questionsDiv);
 
     if (unavailable){
-      setStatusPlaceholder(false);
-      unavailableNotice.classList.remove("hidden");
+      setStatusMessage(`<b>This assessment is not available right now.</b><div class="muted" style="margin-top:4px;">Please try again later.</div>`, "errorState");
       blocked = true;
       submitBtn.disabled = true;
       retryBtn.disabled = true;
@@ -2039,8 +1993,7 @@
     }
 
     if (alreadyAttempted){
-      setStatusPlaceholder(false);
-      lockNotice.classList.remove("hidden");
+      setStatusMessage(`<b class="error">Attempt already submitted.</b><div class="muted" style="margin-top:4px;">You can retry in <b>Practice Mode</b>. Practice results are not saved.</div>`, "okState");
       msgEl.className = "muted";
       msgEl.textContent = "Your first attempt is already saved. You can retry (Practice Mode).";
 
@@ -2064,7 +2017,7 @@
 
     practiceMode = false;
     applyNormalUI();
-    setStatusPlaceholder(false);
+    setStatusMessage("Assessment ready. Choose your answers and submit when finished.", "loading");
 
     submitBtn.disabled = false;
     submitBtn.textContent = "Submit";
