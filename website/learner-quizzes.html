@@ -19,7 +19,6 @@
   --hard:#ef4444;
   --track:#e9eef5;
   --bar:#1b1648;
-  --quiz-icon:url("https://res.cloudinary.com/dopoxadlr/image/upload/v1773875474/square_ho8otg.svg");
 }
 
 *{box-sizing:border-box}
@@ -41,7 +40,7 @@ button,input,select{
   font:inherit;
 }
 
-/* ===== EXACT TOPBAR ===== */
+/* ===== TOPBAR ===== */
 .topbar{
   background:var(--nav);
   color:#fff;
@@ -149,16 +148,11 @@ button,input,select{
   gap:6px;
 }
 
-.bellBtn:hover{
-  opacity:.92;
-}
-
 .navBadge{
   min-width:auto;
   height:auto;
   padding:0;
   margin-left:2px;
-  border-radius:0;
   background:transparent;
   color:#ffd6db;
   font-size:13px;
@@ -185,11 +179,6 @@ button,input,select{
   align-items:center;
   justify-content:center;
   cursor:pointer;
-}
-
-.menuBtn:hover{
-  background:transparent;
-  opacity:1;
 }
 
 .menuBtnText{
@@ -304,7 +293,6 @@ h1{
   margin-top:5px;
 }
 
-/* CONTROLS */
 .controls{
   padding:14px 18px;
   display:grid;
@@ -342,7 +330,6 @@ input,select{
   padding-left:38px;
 }
 
-/* FILTER BUTTONS */
 .filters{
   padding:0 18px;
   display:flex;
@@ -378,7 +365,7 @@ input,select{
 .fbtn[data-diff="all"]::after{background:#94a3b8}
 .fbtn.active::after{transform:scaleX(1)}
 
-/* TOPICS */
+/* ===== TOPICS ===== */
 .topic-wrap{
   padding:18px;
 }
@@ -388,6 +375,8 @@ input,select{
   border-radius:12px;
   padding:12px;
   margin-bottom:12px;
+  content-visibility:auto;
+  contain-intrinsic-size: 280px;
 }
 
 .topic-top{
@@ -399,7 +388,6 @@ input,select{
 }
 
 .topic-title{
-  font-family:Arial, Helvetica, sans-serif;
   font-size:14px;
   font-weight:400;
   color:#0f172a;
@@ -409,7 +397,6 @@ input,select{
   display:flex;
   gap:14px;
   flex-wrap:wrap;
-  font-family:Arial, Helvetica, sans-serif;
   font-size:13px;
   color:#475569;
 }
@@ -423,7 +410,6 @@ input,select{
   justify-content:space-between;
   align-items:center;
   margin-bottom:6px;
-  font-family:Arial, Helvetica, sans-serif;
   font-size:12px;
   color:#475569;
 }
@@ -443,7 +429,6 @@ input,select{
   width:0%;
 }
 
-/* QUIZ */
 .quiz-squares{
   display:flex;
   gap:6px;
@@ -467,11 +452,12 @@ input,select{
 
 .quiz-fill{
   position:absolute;
-  left:10px;
-  top:10px;
-  width:44px;
-  height:50px;
-  border-radius:6px;
+  left:11px;
+  top:11px;
+  width:42px;
+  height:48px;
+  border-radius:5px;
+  z-index:1;
 }
 
 .quiz-square.pass .quiz-fill{background:#dcfce7}
@@ -480,33 +466,33 @@ input,select{
 .quiz-square-base{
   position:absolute;
   inset:0;
-  background-image:var(--quiz-icon);
-  background-repeat:no-repeat;
-  background-position:center;
-  background-size:100% 100%;
+  border:4px solid #000;
+  border-radius:8px;
+  background:#fff;
+  z-index:2;
+  box-shadow:none;
 }
 
-.quiz-mark{
-  position:absolute;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  font-family:Arial, Helvetica, sans-serif;
-  font-weight:700;
-  font-size:14px;
-}
-
+.quiz-mark,
 .quiz-q{
   position:absolute;
   top:50%;
   left:50%;
   transform:translate(-50%,-50%);
-  font-size:18px;
+  z-index:3;
   font-weight:700;
+  pointer-events:none;
+}
+
+.quiz-mark{
+  font-size:14px;
+}
+
+.quiz-q{
+  font-size:18px;
 }
 
 .quiz-number{
-  font-family:Arial, Helvetica, sans-serif;
   font-size:12px;
   text-align:center;
   margin-top:2px;
@@ -522,6 +508,58 @@ input,select{
   font-size:13px;
   color:var(--muted);
   padding-top:8px;
+}
+
+.skeleton-card{
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:12px;
+}
+
+.skel-line{
+  height:12px;
+  border-radius:8px;
+  background:linear-gradient(90deg,#eef2f7 25%,#f8fafc 50%,#eef2f7 75%);
+  background-size:200% 100%;
+  animation:shimmer 1.3s linear infinite;
+}
+
+.skel-line.title{
+  width:35%;
+  height:14px;
+  margin-bottom:12px;
+}
+
+.skel-line.meta{
+  width:28%;
+  margin-bottom:12px;
+}
+
+.skel-line.progress{
+  width:100%;
+  height:8px;
+  margin-bottom:14px;
+}
+
+.skel-squares{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.skel-square{
+  width:64px;
+  height:70px;
+  border-radius:8px;
+  background:linear-gradient(90deg,#eef2f7 25%,#f8fafc 50%,#eef2f7 75%);
+  background-size:200% 100%;
+  animation:shimmer 1.3s linear infinite;
+}
+
+@keyframes shimmer{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
 }
 
 @media (max-width:900px){
@@ -562,7 +600,6 @@ if(!localStorage.getItem("token")){
 </head>
 
 <body>
-
 <header class="topbar">
   <div class="topbar-inner">
     <div class="accountLeft">
@@ -641,7 +678,6 @@ if(!localStorage.getItem("token")){
 
 <div class="wrap">
   <div class="card">
-
     <div class="cardHead">
       <h1>Practice</h1>
       <div class="muted" id="gradeText">Loading...</div>
@@ -682,9 +718,25 @@ if(!localStorage.getItem("token")){
     </div>
 
     <div id="quizList" class="topic-wrap">
-      <div class="empty">Loading quizzes...</div>
+      <div class="skeleton-card">
+        <div class="skel-line title"></div>
+        <div class="skel-line meta"></div>
+        <div class="skel-line progress"></div>
+        <div class="skel-squares">
+          <div class="skel-square"></div><div class="skel-square"></div><div class="skel-square"></div>
+          <div class="skel-square"></div><div class="skel-square"></div><div class="skel-square"></div>
+        </div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skel-line title"></div>
+        <div class="skel-line meta"></div>
+        <div class="skel-line progress"></div>
+        <div class="skel-squares">
+          <div class="skel-square"></div><div class="skel-square"></div><div class="skel-square"></div>
+          <div class="skel-square"></div><div class="skel-square"></div><div class="skel-square"></div>
+        </div>
+      </div>
     </div>
-
   </div>
 </div>
 
@@ -711,7 +763,6 @@ let renderToken = 0;
 let groupedByTopic = [];
 let filterTimer = null;
 
-/* ===== MENU ===== */
 if(logoutBtn){
   logoutBtn.onclick = () => {
     localStorage.removeItem("token");
@@ -736,7 +787,6 @@ if(menuToggleBtn && menuDropdown){
   });
 }
 
-/* ===== TOPBAR PROFILE ===== */
 async function loadTopbarProfile(){
   try{
     const res = await fetch(`${API}/api/profile/me`, {
@@ -760,7 +810,6 @@ async function loadTopbarProfile(){
   }
 }
 
-/* ===== TOPBAR ANNOUNCEMENT COUNT ===== */
 async function loadTopbarAnnouncementCount(){
   try{
     const res = await fetch(`${API}/api/announcements/profile-summary`, {
@@ -774,7 +823,6 @@ async function loadTopbarAnnouncementCount(){
   }
 }
 
-/* ===== QUIZ STATE ===== */
 function getState(id){
   const r = resultsMap[id];
   if(!r) return {type:"new"};
@@ -795,15 +843,10 @@ function isWithinPeriod(ts, period){
   if(period === "all") return true;
   if(!ts) return false;
 
-  const d = new Date(ts);
-  if(Number.isNaN(d.getTime())) return false;
-
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
-  if(period === "today"){
-    return ts >= todayStart;
-  }
+  if(period === "today") return ts >= todayStart;
 
   if(period === "week"){
     const today = new Date(todayStart);
@@ -853,7 +896,6 @@ function rebuildGroupedTopics(){
     }));
 }
 
-/* ===== FILTER ===== */
 function apply(){
   const q = searchEl.value.toLowerCase().trim();
   const selectedTopic = topicFilter.value;
@@ -869,22 +911,17 @@ function apply(){
         const matchesPaper = selectedPaper === "all" || x._paperLower === selectedPaper;
         const matchesDiff = selectedDiff === "all" || x._difficultyLower === selectedDiff;
         const matchesPeriod = isWithinPeriod(x._timeValue, selectedPeriod);
-
         return matchesSearch && matchesTopic && matchesPaper && matchesDiff && matchesPeriod;
       });
 
       if(!filteredQuizzes.length) return null;
-      return {
-        topic: group.topic,
-        quizzes: filteredQuizzes
-      };
+      return { topic: group.topic, quizzes: filteredQuizzes };
     })
     .filter(Boolean);
 
   requestAnimationFrame(() => render(filteredGroups));
 }
 
-/* ===== TOPIC STATS ===== */
 function getTopicStats(topicQuizzes){
   const attempted = topicQuizzes.filter(q => resultsMap[q._id]);
   const completed = attempted.length;
@@ -933,9 +970,9 @@ function buildTopicCard(topic, topicQuizzes){
         ${topicQuizzes.map((q, i) => {
           const s = getState(q._id);
           return `
-          <div class="quiz-square" data-quiz-id="${encodeURIComponent(q._id || "")}">
+          <div class="quiz-square ${s.state || ""}" data-quiz-id="${encodeURIComponent(q._id || "")}">
             <div class="quiz-icon-wrap">
-              <div class="quiz-fill ${s.state ? '' : ''}"></div>
+              <div class="quiz-fill"></div>
               <div class="quiz-square-base" aria-hidden="true"></div>
               ${
                 s.type === "new"
@@ -953,7 +990,7 @@ function buildTopicCard(topic, topicQuizzes){
 function appendTopicBatch(cards, tokenValue, startIndex){
   if(tokenValue !== renderToken) return;
 
-  const batchSize = 5;
+  const batchSize = startIndex === 0 ? 2 : 3;
   const nextCards = cards.slice(startIndex, startIndex + batchSize);
 
   if(!nextCards.length){
@@ -979,8 +1016,8 @@ function appendTopicBatch(cards, tokenValue, startIndex){
     }
 
     const scheduleNext = window.requestIdleCallback
-      ? (cb) => requestIdleCallback(cb, { timeout: 120 })
-      : (cb) => setTimeout(cb, 16);
+      ? (cb) => requestIdleCallback(cb, { timeout: 150 })
+      : (cb) => setTimeout(cb, 24);
 
     scheduleNext(() => appendTopicBatch(cards, tokenValue, nextIndex));
   }else if(note){
@@ -988,7 +1025,6 @@ function appendTopicBatch(cards, tokenValue, startIndex){
   }
 }
 
-/* ===== RENDER ===== */
 function render(groups){
   renderToken += 1;
   const tokenValue = renderToken;
@@ -1000,19 +1036,14 @@ function render(groups){
 
   const cards = groups.map(group => buildTopicCard(group.topic, group.quizzes));
 
-  quizListEl.innerHTML = `
-    <div class="empty">Loading practice topics...</div>
-    <div class="rendering-note">Loading more topics... 0/${cards.length}</div>
-  `;
+  quizListEl.innerHTML = `<div class="rendering-note">Loading topics... 0/${cards.length}</div>`;
 
   requestAnimationFrame(() => {
     if(tokenValue !== renderToken) return;
-    quizListEl.innerHTML = `<div class="rendering-note">Loading more topics... 0/${cards.length}</div>`;
     appendTopicBatch(cards, tokenValue, 0);
   });
 }
 
-/* ===== HELPERS ===== */
 function escapeHtml(str){
   return String(str ?? "")
     .replaceAll("&","&amp;")
@@ -1022,7 +1053,6 @@ function escapeHtml(str){
     .replaceAll("'","&#039;");
 }
 
-/* ===== EVENTS ===== */
 document.querySelectorAll(".fbtn").forEach(b => {
   b.onclick = () => {
     diff = b.dataset.diff;
@@ -1034,7 +1064,7 @@ document.querySelectorAll(".fbtn").forEach(b => {
 
 searchEl.oninput = () => {
   clearTimeout(filterTimer);
-  filterTimer = setTimeout(apply, 220);
+  filterTimer = setTimeout(apply, 180);
 };
 
 topicFilter.onchange = apply;
@@ -1049,7 +1079,6 @@ quizListEl.addEventListener("click", function(e){
   location.href = `attempt.html?quizId=${quizId}`;
 });
 
-/* ===== LOAD ===== */
 async function loadPage(){
   try{
     const headers = { Authorization: `Bearer ${token}` };
@@ -1085,11 +1114,8 @@ async function loadPage(){
 
     rebuildGroupedTopics();
 
-    const topics = [...new Set(
-      quizzes
-        .map(q => q._topic)
-        .filter(Boolean)
-    )].sort((a, b) => a.localeCompare(b));
+    const topics = [...new Set(quizzes.map(q => q._topic).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b));
 
     topicFilter.innerHTML =
       `<option value="all">All Topics</option>` +
@@ -1105,6 +1131,5 @@ loadTopbarProfile();
 loadTopbarAnnouncementCount();
 loadPage();
 </script>
-
 </body>
 </html>
