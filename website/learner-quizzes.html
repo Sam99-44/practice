@@ -19,6 +19,7 @@
   --hard:#ef4444;
   --track:#e9eef5;
   --bar:#1b1648;
+  --quiz-icon:url("https://res.cloudinary.com/dopoxadlr/image/upload/v1773875474/square_ho8otg.svg");
 }
 
 *{box-sizing:border-box}
@@ -479,8 +480,10 @@ input,select{
 .quiz-square-base{
   position:absolute;
   inset:0;
-  width:100%;
-  height:100%;
+  background-image:var(--quiz-icon);
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:100% 100%;
 }
 
 .quiz-mark{
@@ -513,6 +516,12 @@ input,select{
   font-size:14px;
   color:var(--muted);
   padding:8px 0;
+}
+
+.rendering-note{
+  font-size:13px;
+  color:var(--muted);
+  padding-top:8px;
 }
 
 @media (max-width:900px){
@@ -562,6 +571,8 @@ if(!localStorage.getItem("token")){
           class="accountIcon"
           src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
           alt="Account"
+          loading="eager"
+          decoding="async"
         >
       </div>
 
@@ -573,13 +584,13 @@ if(!localStorage.getItem("token")){
 
     <div class="topbarRight">
       <a href="announcements.html" class="iconBtn bellBtn" title="Announcements" aria-label="Announcements">
-        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements" loading="eager" decoding="async">
         <span class="navBadge" id="navAnnouncementBadge">0</span>
       </a>
 
       <button class="menuBtn" id="menuToggleBtn" title="Menu" aria-label="Menu" type="button">
         <span class="menuBtnText">Menu</span>
-        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt="Menu">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt="Menu" loading="eager" decoding="async">
       </button>
 
       <div class="menuDropdown" id="menuDropdown">
@@ -670,7 +681,9 @@ if(!localStorage.getItem("token")){
       <button class="fbtn" data-diff="hard">Hard</button>
     </div>
 
-    <div id="quizList" class="topic-wrap"></div>
+    <div id="quizList" class="topic-wrap">
+      <div class="empty">Loading quizzes...</div>
+    </div>
 
   </div>
 </div>
@@ -678,8 +691,6 @@ if(!localStorage.getItem("token")){
 <script>
 const API = "https://practice-backend-msgn.onrender.com";
 const token = localStorage.getItem("token");
-
-const ICON = "https://res.cloudinary.com/dopoxadlr/image/upload/v1773875474/square_ho8otg.svg";
 
 const topAccountName = document.getElementById("topAccountName");
 const topAccountType = document.getElementById("topAccountType");
@@ -691,10 +702,14 @@ const searchEl = document.getElementById("search");
 const topicFilter = document.getElementById("topicFilter");
 const paperFilter = document.getElementById("paperFilter");
 const periodFilter = document.getElementById("periodFilter");
+const quizListEl = document.getElementById("quizList");
 
 let quizzes = [];
 let resultsMap = {};
 let diff = "all";
+let renderToken = 0;
+let groupedByTopic = [];
+let filterTimer = null;
 
 /* ===== MENU ===== */
 if(logoutBtn){
@@ -737,7 +752,6 @@ async function loadTopbarProfile(){
     }
 
     const data = await res.json();
-
     topAccountName.textContent = data.fullName || data.username || "User";
     topAccountType.textContent = data.accountType || data.role || "Account";
   }catch(err){
@@ -777,56 +791,97 @@ function getState(id){
   };
 }
 
-function isWithinPeriod(dateValue, period){
+function isWithinPeriod(ts, period){
   if(period === "all") return true;
-  if(!dateValue) return false;
+  if(!ts) return false;
 
-  const d = new Date(dateValue);
+  const d = new Date(ts);
   if(Number.isNaN(d.getTime())) return false;
 
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
   if(period === "today"){
-    return d >= todayStart;
+    return ts >= todayStart;
   }
 
   if(period === "week"){
-    const day = todayStart.getDay();
+    const today = new Date(todayStart);
+    const day = today.getDay();
     const diffToMonday = (day === 0 ? 6 : day - 1);
-    const weekStart = new Date(todayStart);
-    weekStart.setDate(todayStart.getDate() - diffToMonday);
-    return d >= weekStart;
+    today.setDate(today.getDate() - diffToMonday);
+    return ts >= today.getTime();
   }
 
   if(period === "month"){
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    return d >= monthStart;
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    return ts >= monthStart;
   }
 
   return true;
 }
 
+function preprocessQuizzes(rawQuizzes){
+  return rawQuizzes.map(q => {
+    const createdTime = q.createdAt ? new Date(q.createdAt).getTime() : 0;
+    const updatedTime = q.updatedAt ? new Date(q.updatedAt).getTime() : 0;
+    return {
+      ...q,
+      _topic: q.topic || "General",
+      _titleLower: String(q.title || "").toLowerCase(),
+      _topicLower: String(q.topic || "").toLowerCase(),
+      _paperLower: String(q.paper || "").toLowerCase(),
+      _difficultyLower: String(q.difficulty || "").toLowerCase(),
+      _timeValue: createdTime || updatedTime || 0
+    };
+  });
+}
+
+function rebuildGroupedTopics(){
+  const groups = {};
+  for(const q of quizzes){
+    const topic = q._topic;
+    if(!groups[topic]) groups[topic] = [];
+    groups[topic].push(q);
+  }
+
+  groupedByTopic = Object.keys(groups)
+    .sort((a, b) => a.localeCompare(b))
+    .map(topic => ({
+      topic,
+      quizzes: groups[topic].sort((a, b) => a._timeValue - b._timeValue)
+    }));
+}
+
 /* ===== FILTER ===== */
 function apply(){
   const q = searchEl.value.toLowerCase().trim();
+  const selectedTopic = topicFilter.value;
+  const selectedPaper = paperFilter.value;
+  const selectedPeriod = periodFilter.value;
+  const selectedDiff = diff;
 
-  const filtered = quizzes.filter(x => {
-    const title = String(x.title || "").toLowerCase();
-    const topic = String(x.topic || "").toLowerCase();
-    const paper = String(x.paper || "").toLowerCase();
-    const difficulty = String(x.difficulty || "").toLowerCase();
+  const filteredGroups = groupedByTopic
+    .map(group => {
+      const filteredQuizzes = group.quizzes.filter(x => {
+        const matchesSearch = !q || x._titleLower.includes(q) || x._topicLower.includes(q);
+        const matchesTopic = selectedTopic === "all" || x._topic === selectedTopic;
+        const matchesPaper = selectedPaper === "all" || x._paperLower === selectedPaper;
+        const matchesDiff = selectedDiff === "all" || x._difficultyLower === selectedDiff;
+        const matchesPeriod = isWithinPeriod(x._timeValue, selectedPeriod);
 
-    const matchesSearch = !q || title.includes(q) || topic.includes(q);
-    const matchesTopic = topicFilter.value === "all" || x.topic === topicFilter.value;
-    const matchesPaper = paperFilter.value === "all" || paper === paperFilter.value;
-    const matchesDiff = diff === "all" || difficulty === diff;
-    const matchesPeriod = isWithinPeriod(x.createdAt || x.updatedAt, periodFilter.value);
+        return matchesSearch && matchesTopic && matchesPaper && matchesDiff && matchesPeriod;
+      });
 
-    return matchesSearch && matchesTopic && matchesPaper && matchesDiff && matchesPeriod;
-  });
+      if(!filteredQuizzes.length) return null;
+      return {
+        topic: group.topic,
+        quizzes: filteredQuizzes
+      };
+    })
+    .filter(Boolean);
 
-  render(filtered);
+  requestAnimationFrame(() => render(filteredGroups));
 }
 
 /* ===== TOPIC STATS ===== */
@@ -851,28 +906,10 @@ function getTopicStats(topicQuizzes){
   return {completed, total, progress, avg};
 }
 
-/* ===== RENDER ===== */
-function render(list){
-  if(!list.length){
-    document.getElementById("quizList").innerHTML = `<div class="empty">No assessments found.</div>`;
-    return;
-  }
+function buildTopicCard(topic, topicQuizzes){
+  const stats = getTopicStats(topicQuizzes);
 
-  const groups = {};
-  list.forEach(q => {
-    const topic = q.topic || "General";
-    if(!groups[topic]) groups[topic] = [];
-    groups[topic].push(q);
-  });
-
-  const html = Object.keys(groups).sort().map(topic => {
-    const topicQuizzes = groups[topic].sort((a, b) => {
-      return new Date(a.createdAt) - new Date(b.createdAt);
-    });
-
-    const stats = getTopicStats(topicQuizzes);
-
-    return `
+  return `
     <div class="topic-card">
       <div class="topic-top">
         <div class="topic-title">${escapeHtml(topic)}</div>
@@ -896,10 +933,10 @@ function render(list){
         ${topicQuizzes.map((q, i) => {
           const s = getState(q._id);
           return `
-          <div class="quiz-square ${s.state || ""}" onclick="location.href='attempt.html?quizId=${encodeURIComponent(q._id || "")}'">
+          <div class="quiz-square" data-quiz-id="${encodeURIComponent(q._id || "")}">
             <div class="quiz-icon-wrap">
-              <div class="quiz-fill"></div>
-              <img src="${ICON}" class="quiz-square-base" alt="Quiz">
+              <div class="quiz-fill ${s.state ? '' : ''}"></div>
+              <div class="quiz-square-base" aria-hidden="true"></div>
               ${
                 s.type === "new"
                   ? `<div class="quiz-q">?</div>`
@@ -911,9 +948,68 @@ function render(list){
         }).join("")}
       </div>
     </div>`;
-  }).join("");
+}
 
-  document.getElementById("quizList").innerHTML = html;
+function appendTopicBatch(cards, tokenValue, startIndex){
+  if(tokenValue !== renderToken) return;
+
+  const batchSize = 5;
+  const nextCards = cards.slice(startIndex, startIndex + batchSize);
+
+  if(!nextCards.length){
+    const note = quizListEl.querySelector(".rendering-note");
+    if(note) note.remove();
+    return;
+  }
+
+  const fragment = document.createRange().createContextualFragment(nextCards.join(""));
+  const note = quizListEl.querySelector(".rendering-note");
+
+  if(note){
+    quizListEl.insertBefore(fragment, note);
+  }else{
+    quizListEl.appendChild(fragment);
+  }
+
+  const nextIndex = startIndex + batchSize;
+
+  if(nextIndex < cards.length){
+    if(note){
+      note.textContent = `Loading more topics... ${nextIndex}/${cards.length}`;
+    }
+
+    const scheduleNext = window.requestIdleCallback
+      ? (cb) => requestIdleCallback(cb, { timeout: 120 })
+      : (cb) => setTimeout(cb, 16);
+
+    scheduleNext(() => appendTopicBatch(cards, tokenValue, nextIndex));
+  }else if(note){
+    note.remove();
+  }
+}
+
+/* ===== RENDER ===== */
+function render(groups){
+  renderToken += 1;
+  const tokenValue = renderToken;
+
+  if(!groups.length){
+    quizListEl.innerHTML = `<div class="empty">No assessments found.</div>`;
+    return;
+  }
+
+  const cards = groups.map(group => buildTopicCard(group.topic, group.quizzes));
+
+  quizListEl.innerHTML = `
+    <div class="empty">Loading practice topics...</div>
+    <div class="rendering-note">Loading more topics... 0/${cards.length}</div>
+  `;
+
+  requestAnimationFrame(() => {
+    if(tokenValue !== renderToken) return;
+    quizListEl.innerHTML = `<div class="rendering-note">Loading more topics... 0/${cards.length}</div>`;
+    appendTopicBatch(cards, tokenValue, 0);
+  });
 }
 
 /* ===== HELPERS ===== */
@@ -936,17 +1032,33 @@ document.querySelectorAll(".fbtn").forEach(b => {
   };
 });
 
-searchEl.oninput = apply;
+searchEl.oninput = () => {
+  clearTimeout(filterTimer);
+  filterTimer = setTimeout(apply, 220);
+};
+
 topicFilter.onchange = apply;
 paperFilter.onchange = apply;
 periodFilter.onchange = apply;
 
+quizListEl.addEventListener("click", function(e){
+  const square = e.target.closest(".quiz-square[data-quiz-id]");
+  if(!square) return;
+  const quizId = square.dataset.quizId;
+  if(!quizId) return;
+  location.href = `attempt.html?quizId=${quizId}`;
+});
+
 /* ===== LOAD ===== */
 async function loadPage(){
   try{
-    const meRes = await fetch(`${API}/api/auth/me`, {
-      headers:{Authorization:`Bearer ${token}`}
-    });
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const [meRes, quizzesRes, resultsRes] = await Promise.all([
+      fetch(`${API}/api/auth/me`, { headers }),
+      fetch(`${API}/api/quizzes`, { headers }),
+      fetch(`${API}/api/results/my`, { headers })
+    ]);
 
     if(meRes.status === 401){
       localStorage.removeItem("token");
@@ -956,18 +1068,12 @@ async function loadPage(){
       return;
     }
 
-    const me = await meRes.json();
+    const me = await meRes.json().catch(() => ({}));
     document.getElementById("gradeText").textContent = "Grade: " + (me.grade || "-");
 
-    const quizzesRes = await fetch(`${API}/api/quizzes`, {
-      headers:{Authorization:`Bearer ${token}`}
-    });
-    quizzes = await quizzesRes.json().catch(() => []);
-    if(!Array.isArray(quizzes)) quizzes = [];
+    const rawQuizzes = await quizzesRes.json().catch(() => []);
+    quizzes = Array.isArray(rawQuizzes) ? preprocessQuizzes(rawQuizzes) : [];
 
-    const resultsRes = await fetch(`${API}/api/results/my`, {
-      headers:{Authorization:`Bearer ${token}`}
-    });
     const results = await resultsRes.json().catch(() => []);
     const safeResults = Array.isArray(results) ? results : [];
 
@@ -977,9 +1083,11 @@ async function loadPage(){
       if(id) resultsMap[id] = r;
     });
 
+    rebuildGroupedTopics();
+
     const topics = [...new Set(
       quizzes
-        .map(q => q.topic || "General")
+        .map(q => q._topic)
         .filter(Boolean)
     )].sort((a, b) => a.localeCompare(b));
 
@@ -989,7 +1097,7 @@ async function loadPage(){
 
     apply();
   }catch(err){
-    document.getElementById("quizList").innerHTML = `<div class="empty">Could not load quizzes.</div>`;
+    quizListEl.innerHTML = `<div class="empty">Could not load quizzes.</div>`;
   }
 }
 
