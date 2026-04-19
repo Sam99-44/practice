@@ -80,6 +80,61 @@
     .ok{color:var(--ok)}
     .hidden{display:none!important}
 
+    .statusArea{
+      min-height:88px;
+      margin-bottom:12px;
+    }
+
+    .statusPlaceholder{
+      border:1px dashed #ddd;
+      background:#fafafa;
+      padding:14px;
+      border-radius:12px;
+      min-height:78px;
+      display:flex;
+      align-items:center;
+      font-family:Arial, Helvetica, sans-serif;
+      font-size:14px;
+      color:#475569;
+      line-height:1.45;
+    }
+
+    .questionsLoadingShell{
+      display:block;
+    }
+
+    .loadingLine{
+      height:12px;
+      border-radius:8px;
+      background:linear-gradient(90deg,#eef2f7 25%,#f8fafc 50%,#eef2f7 75%);
+      background-size:200% 100%;
+      animation:attemptShimmer 1.3s linear infinite;
+      margin-bottom:10px;
+    }
+
+    .loadingLine.lg{height:16px;width:42%}
+    .loadingLine.md{height:12px;width:30%}
+    .loadingLine.full{height:10px;width:100%}
+    .loadingBlock{
+      margin-top:18px;
+      border-top:1px solid #eef2f7;
+      padding-top:18px;
+    }
+    .loadingChoice{
+      height:16px;
+      width:55%;
+      border-radius:8px;
+      background:linear-gradient(90deg,#eef2f7 25%,#f8fafc 50%,#eef2f7 75%);
+      background-size:200% 100%;
+      animation:attemptShimmer 1.3s linear infinite;
+      margin:14px 0 0 68px;
+    }
+
+    @keyframes attemptShimmer{
+      0%{background-position:200% 0}
+      100%{background-position:-200% 0}
+    }
+
     mjx-container{
       font-family:"Times New Roman", Times, serif !important;
       font-size:1.02em !important;
@@ -390,6 +445,7 @@
       box-shadow:0 1px 2px rgba(15,23,42,.04);
       max-width:860px;
       margin:0 auto;
+      min-height:420px;
     }
 
     .paperMeta{
@@ -435,6 +491,7 @@
       align-items:flex-end;
       gap:4px;
       min-width:220px;
+      min-height:40px;
     }
     .statusText{
       font-weight:800;
@@ -450,6 +507,9 @@
       font-size:12px;
       color:#0f172a;
       font-family:Arial, Helvetica, sans-serif;
+      display:inline-block;
+      min-width:76px;
+      text-align:right;
     }
     .timeText.warn{color:#b45309}
 
@@ -865,6 +925,7 @@
       padding:12px;
       border-radius:12px;
       margin-top:12px;
+      min-height:78px;
       font-family:Arial, Helvetica, sans-serif;
       font-weight:400;
       line-height:1.45;
@@ -884,6 +945,7 @@
       padding:14px;
       border-radius:12px;
       margin-top:12px;
+      min-height:78px;
       font-family:Arial, Helvetica, sans-serif;
       font-weight:400;
       line-height:1.45;
@@ -972,8 +1034,6 @@
           class="accountIcon"
           src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
           alt="Account"
-          loading="eager"
-          decoding="async"
         >
       </div>
 
@@ -985,13 +1045,13 @@
 
     <div class="topbarRight">
       <a href="announcements.html" class="iconBtn bellBtn" title="Announcements" aria-label="Announcements">
-        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements" loading="eager" decoding="async">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements">
         <span class="navBadge" id="navAnnouncementBadge">0</span>
       </a>
 
       <button class="menuBtn" id="menuToggleBtn" title="Menu" aria-label="Menu" type="button">
         <span class="menuBtnText">Menu</span>
-        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt="Menu" loading="eager" decoding="async">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt="Menu">
       </button>
 
       <div class="menuDropdown" id="menuDropdown">
@@ -1050,19 +1110,37 @@
     </div>
 
     <div class="sectionBody">
-      <div id="lockNotice" class="lockBox hidden">
-        <b class="error">Attempt already submitted.</b>
-        <div class="muted" style="margin-top:4px;">
-          You can retry in <b>Practice Mode</b>. Practice results are not saved.
+      <div id="statusArea" class="statusArea">
+        <div id="statusPlaceholder" class="statusPlaceholder">Loading assessment status...</div>
+
+        <div id="lockNotice" class="lockBox hidden">
+          <b class="error">Attempt already submitted.</b>
+          <div class="muted" style="margin-top:4px;">
+            You can retry in <b>Practice Mode</b>. Practice results are not saved.
+          </div>
+        </div>
+
+        <div id="unavailableNotice" class="notice red hidden">
+          <b>This assessment is not available right now.</b>
+          <div class="muted" style="margin-top:4px;">Please try again later.</div>
         </div>
       </div>
 
-      <div id="unavailableNotice" class="notice red hidden">
-        <b>This assessment is not available right now.</b>
-        <div class="muted" style="margin-top:4px;">Please try again later.</div>
-      </div>
+      <div id="questions" class="examPaper">
+        <div class="questionsLoadingShell">
+          <div class="loadingLine lg"></div>
+          <div class="loadingLine md"></div>
+          <div class="loadingLine full" style="margin-top:20px;"></div>
 
-      <div id="questions" class="examPaper"><div class="muted">Loading assessment...</div></div>
+          <div class="loadingBlock">
+            <div class="loadingLine lg" style="width:22%;"></div>
+            <div class="loadingLine md" style="width:74%;"></div>
+            <div class="loadingChoice"></div>
+            <div class="loadingChoice" style="width:48%;"></div>
+            <div class="loadingChoice" style="width:52%;"></div>
+          </div>
+        </div>
+      </div>
 
       <div class="btnRow">
         <button class="btn" id="submitBtn" type="button">Submit</button>
@@ -1109,6 +1187,7 @@
   const msgEl = document.getElementById("msg");
   const lockNotice = document.getElementById("lockNotice");
   const unavailableNotice = document.getElementById("unavailableNotice");
+  const statusPlaceholder = document.getElementById("statusPlaceholder");
 
   const statusText = document.getElementById("statusText");
   const timeText = document.getElementById("timeText");
@@ -1124,7 +1203,6 @@
   const confirmSubmitBtn = document.getElementById("confirmSubmitBtn");
 
   let timerInterval = null;
-  let saveAnswersTimer = null;
   let quizEndAtMs = null;
   let quizData = null;
 
@@ -1133,6 +1211,7 @@
 
   let submitted = false;
   let blocked = false;
+  let autosaveTimer = null;
 
   const END_KEY = `quiz_end_${quizId}_${localStorage.getItem("username") || "user"}`;
   const ANSWERS_KEY = `quiz_answers_${quizId}_${localStorage.getItem("username") || "user"}`;
@@ -1143,6 +1222,33 @@
     }
   }
 
+  function setStatusPlaceholder(show, text = "Loading assessment status..."){
+    if (!statusPlaceholder) return;
+    statusPlaceholder.textContent = text;
+    statusPlaceholder.classList.toggle("hidden", !show);
+  }
+
+  function setQuestionsLoading(){
+    questionsDiv.innerHTML = `
+      <div class="questionsLoadingShell">
+        <div class="loadingLine lg"></div>
+        <div class="loadingLine md"></div>
+        <div class="loadingLine full" style="margin-top:20px;"></div>
+
+        <div class="loadingBlock">
+          <div class="loadingLine lg" style="width:22%;"></div>
+          <div class="loadingLine md" style="width:74%;"></div>
+          <div class="loadingChoice"></div>
+          <div class="loadingChoice" style="width:48%;"></div>
+          <div class="loadingChoice" style="width:52%;"></div>
+        </div>
+      </div>`;
+  }
+
+  function typesetMathSoon(root=document){
+    requestAnimationFrame(() => typesetMath(root));
+  }
+
   function saveAnswersToStorage(){
     if (!quizData || submitted) return;
     const payload = {
@@ -1151,11 +1257,6 @@
       savedAt: Date.now()
     };
     localStorage.setItem(ANSWERS_KEY, JSON.stringify(payload));
-  }
-
-  function scheduleSaveAnswers(){
-    clearTimeout(saveAnswersTimer);
-    saveAnswersTimer = setTimeout(saveAnswersToStorage, 180);
   }
 
   function restoreAnswersFromStorage(){
@@ -1195,17 +1296,21 @@
   }
 
   function clearSavedAnswers(){
-    clearTimeout(saveAnswersTimer);
     localStorage.removeItem(ANSWERS_KEY);
+  }
+
+  function debouncedSaveAnswers(){
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(saveAnswersToStorage, 180);
   }
 
   function attachAnswerAutosave(){
     document.querySelectorAll(".mcqInput").forEach(el => {
-      el.addEventListener("change", scheduleSaveAnswers);
+      el.addEventListener("change", saveAnswersToStorage);
     });
     document.querySelectorAll(".textAnswer").forEach(el => {
-      el.addEventListener("input", scheduleSaveAnswers);
-      el.addEventListener("change", scheduleSaveAnswers);
+      el.addEventListener("input", debouncedSaveAnswers);
+      el.addEventListener("change", saveAnswersToStorage);
     });
   }
 
@@ -1380,10 +1485,10 @@
     document.querySelectorAll(".solutionHolder").forEach(el => {
       if (el.innerHTML.trim()) {
         el.classList.remove("hidden");
-        typesetMath(el);
+        typesetMathSoon(el);
       }
     });
-    requestAnimationFrame(() => typesetMath(questionsDiv));
+    typesetMathSoon(questionsDiv);
   }
 
   function isUnavailableBySchedule(quiz){
@@ -1797,26 +1902,26 @@
     msgEl.textContent = "";
     lockNotice.classList.add("hidden");
     unavailableNotice.classList.add("hidden");
-    questionsDiv.innerHTML = '<div class="muted">Loading assessment...</div>';
     blocked = false;
     submitted = false;
     practiceMode = false;
+    setStatusPlaceholder(true, "Loading assessment status...");
+    setQuestionsLoading();
 
     let res;
     try{
-      const [attemptedValue, quizRes] = await Promise.all([
+      const [attempted, quizRes] = await Promise.all([
         checkAlreadyAttempted(),
         fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`, {
           headers: { Authorization: "Bearer " + token }
         })
       ]);
-      alreadyAttempted = attemptedValue;
+      alreadyAttempted = attempted;
       res = quizRes;
     }catch{
       if (quizTitle) quizTitle.textContent = "Network error";
       msgEl.className = "error";
       msgEl.textContent = "Please refresh and try again.";
-      questionsDiv.innerHTML = '<div class="error">Could not load assessment.</div>';
       submitBtn.disabled = true;
       return;
     }
@@ -1920,9 +2025,10 @@
       msgEl.className = "ok";
       msgEl.textContent = "Your previous answers were restored.";
     }
-    typesetMath(questionsDiv);
+    typesetMathSoon(questionsDiv);
 
     if (unavailable){
+      setStatusPlaceholder(false);
       unavailableNotice.classList.remove("hidden");
       blocked = true;
       submitBtn.disabled = true;
@@ -1933,6 +2039,7 @@
     }
 
     if (alreadyAttempted){
+      setStatusPlaceholder(false);
       lockNotice.classList.remove("hidden");
       msgEl.className = "muted";
       msgEl.textContent = "Your first attempt is already saved. You can retry (Practice Mode).";
@@ -1957,6 +2064,7 @@
 
     practiceMode = false;
     applyNormalUI();
+    setStatusPlaceholder(false);
 
     submitBtn.disabled = false;
     submitBtn.textContent = "Submit";
@@ -2590,18 +2698,19 @@ function formatSolutionHtml(solutionText){
     `;
   }
 
-  document.addEventListener("visibilitychange", function(){
-    if (document.hidden && quizEndAtMs && !submitted && !blocked) {
-      localStorage.setItem(END_KEY, String(quizEndAtMs));
-      saveAnswersToStorage();
-    }
-  });
-
-  window.addEventListener("beforeunload", function(){
+  function persistAttemptState(){
     if (quizEndAtMs && !submitted && !blocked) {
       localStorage.setItem(END_KEY, String(quizEndAtMs));
+    }
+    if (!submitted && !blocked) {
       saveAnswersToStorage();
     }
+  }
+
+  window.addEventListener("beforeunload", persistAttemptState);
+
+  document.addEventListener("visibilitychange", function(){
+    if (document.hidden) persistAttemptState();
   });
 
   loadTopbarProfile();
