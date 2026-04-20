@@ -79,6 +79,19 @@
     .error{color:var(--error)}
     .ok{color:var(--ok)}
     .hidden{display:none!important}
+body.submitted-state .solutionBox{display:none!important;}
+.resultsBottomBar{
+  margin-top:24px;
+  display:none;
+  justify-content:center;
+}
+.resultsBottomBar.show{
+  display:flex;
+}
+.resultsBottomBtn{
+  min-width:220px;
+}
+
 
     .statusArea{
       min-height:88px;
@@ -1146,6 +1159,8 @@
   const submitBtn = document.getElementById("submitBtn");
   const retryBtn = document.getElementById("retryBtn");
   const viewResultsBtn = document.getElementById("viewResultsBtn");
+  const resultsBottomBar = document.getElementById("resultsBottomBar");
+  const resultsBottomBtn = document.getElementById("resultsBottomBtn");
   const msgEl = document.getElementById("msg");
   const statusBox = document.getElementById("statusBox");
   const questionsWrap = document.getElementById("questionsWrap");
@@ -1196,6 +1211,18 @@
   function showQuestionsShell(){
     if (questionsWrap) questionsWrap.classList.add("loading");
     questionsDiv.innerHTML = '<div class="muted">Loading assessment...</div>';
+  }
+
+
+  function showBottomResultsButton(){
+    if(resultsBottomBar) resultsBottomBar.classList.add("show");
+    if(resultsBottomBtn){
+      resultsBottomBtn.onclick = () => window.location.href = "results.html";
+    }
+  }
+
+  function hideBottomResultsButton(){
+    if(resultsBottomBar) resultsBottomBar.classList.remove("show");
   }
 
   function showQuestionsContent(){
@@ -1751,6 +1778,8 @@
     }
 
     submitted = true;
+    document.body.classList.add("submitted-state");
+    showBottomResultsButton();
     submitBtn.disabled = true;
 
     if (timerInterval) clearInterval(timerInterval);
@@ -1769,8 +1798,11 @@
       }
 
       retryBtn.disabled = false;
+      viewResultsBtn.disabled = false;
+      viewResultsBtn.onclick = () => window.location.href = "results.html";
+      showBottomResultsButton();
       disableAllInputs();
-      showAllSolutions();
+      hideAllSolutions();
       clearSavedAnswers();
       return;
     }
@@ -1780,7 +1812,7 @@
       msgEl.textContent = "You already submitted this assessment. Use Retry (Practice Mode).";
       blocked = true;
       disableAllInputs();
-      showAllSolutions();
+      hideAllSolutions();
       return;
     }
 
@@ -1822,7 +1854,7 @@
       applyNormalUI();
       viewResultsBtn.disabled = false;
       viewResultsBtn.onclick = () => window.location.href = "results.html";
-      showAllSolutions();
+      showBottomResultsButton();
       return;
     }
 
@@ -1845,9 +1877,10 @@
     applyNormalUI();
     viewResultsBtn.disabled = false;
     viewResultsBtn.onclick = () => window.location.href = "results.html";
+      showBottomResultsButton();
 
     disableAllInputs();
-    showAllSolutions();
+    hideAllSolutions();
   }
 
   async function loadQuiz() {
@@ -1856,6 +1889,7 @@
     blocked = false;
     submitted = false;
     practiceMode = false;
+    hideBottomResultsButton();
     setStatusMessage("Loading assessment status...", "loading");
     showQuestionsShell();
 
@@ -2005,9 +2039,10 @@
       applyNormalUI();
       viewResultsBtn.disabled = false;
       viewResultsBtn.onclick = () => window.location.href = "results.html";
+      showBottomResultsButton();
 
       disableAllInputs();
-      showAllSolutions();
+      hideAllSolutions();
       clearSavedAnswers();
       resetTimerFresh();
 
