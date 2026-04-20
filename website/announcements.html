@@ -382,6 +382,52 @@ input,select{
   font-size:14px;
 }
 
+.card.skeletonCard{
+  pointer-events:none;
+}
+
+.skeletonLine{
+  height:12px;
+  border-radius:4px;
+  background:linear-gradient(90deg,#eef2f7 25%,#f8fafc 50%,#eef2f7 75%);
+  background-size:200% 100%;
+  animation:announcementsShimmer 1.3s linear infinite;
+  margin-bottom:10px;
+}
+
+.skeletonLine.title{
+  height:16px;
+  width:44%;
+}
+
+.skeletonLine.meta{
+  width:100%;
+}
+
+.skeletonLine.meta.short{
+  width:58%;
+}
+
+.skeletonActions{
+  display:flex;
+  gap:10px;
+  margin-top:14px;
+}
+
+.skeletonAction{
+  width:34px;
+  height:34px;
+  border-radius:8px;
+  background:linear-gradient(90deg,#eef2f7 25%,#f8fafc 50%,#eef2f7 75%);
+  background-size:200% 100%;
+  animation:announcementsShimmer 1.3s linear infinite;
+}
+
+@keyframes announcementsShimmer{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
+
 .actions{
   display:flex;
   gap:10px;
@@ -656,6 +702,9 @@ input,select{
 const API = window.API || "https://practice-backend-msgn.onrender.com";
 let dataStore = null;
 
+const ANNOUNCEMENTS_CACHE_KEY = "announcements_v6_cache";
+const ANNOUNCEMENTS_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
+
 const statusBox = document.getElementById("statusBox");
 
 const topAccountName = document.getElementById("topAccountName");
@@ -886,6 +935,54 @@ function renderQuiz(list){
   `).join("") : `<div class="empty">No quiz announcements.</div>`;
 }
 
+
+function saveAnnouncementsCache(data){
+  try{
+    localStorage.setItem(ANNOUNCEMENTS_CACHE_KEY, JSON.stringify({
+      savedAt: Date.now(),
+      data: data || {}
+    }));
+  }catch(err){}
+}
+
+function loadAnnouncementsCache(){
+  try{
+    const raw = localStorage.getItem(ANNOUNCEMENTS_CACHE_KEY);
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(!parsed || !parsed.savedAt || !parsed.data) return null;
+    if(Date.now() - Number(parsed.savedAt) > ANNOUNCEMENTS_CACHE_MAX_AGE_MS) return null;
+    return parsed.data;
+  }catch(err){
+    return null;
+  }
+}
+
+function skeletonCardHtml(){
+  return `
+    <div class="card skeletonCard">
+      <div class="skeletonLine title"></div>
+      <div class="skeletonLine meta"></div>
+      <div class="skeletonLine meta short"></div>
+      <div class="skeletonLine meta short"></div>
+      <div class="actions skeletonActions">
+        <div class="skeletonAction"></div>
+        <div class="skeletonAction"></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderSkeletons(){
+  const generalEl = document.getElementById("generalGrid");
+  const classEl = document.getElementById("classGrid");
+  const quizEl = document.getElementById("quizGrid");
+  const cards = skeletonCardHtml() + skeletonCardHtml();
+  generalEl.innerHTML = cards;
+  classEl.innerHTML = cards;
+  quizEl.innerHTML = cards;
+}
+
 function renderAll(){
   if(!dataStore) return;
   renderGeneral(dataStore.generalAnnouncements || []);
@@ -894,9 +991,17 @@ function renderAll(){
 }
 
 async function load(){
-  try {
+  const cached = loadAnnouncementsCache();
+  if(cached){
+    dataStore = cached;
+    renderAll();
+    hideStatus();
+  }else{
     showStatus("Loading announcements...", "info");
+    renderSkeletons();
+  }
 
+  try {
     const res = await fetch(`${API}/api/announcements`, {
       headers: tokenHeaders()
     });
@@ -909,10 +1014,15 @@ async function load(){
 
     dataStore = data;
     renderAll();
+    saveAnnouncementsCache(data);
     hideStatus();
   } catch (err) {
     console.error(err);
-    showStatus(err.message || "Could not load announcements.", "error");
+    if(!cached){
+      showStatus(err.message || "Could not load announcements.", "error");
+    } else {
+      showStatus(err.message || "Could not refresh announcements.", "error");
+    }
   }
 }
 
@@ -952,7 +1062,11 @@ function copyText(text){
     .catch(() => showStatus("Could not copy.", "error"));
 }
 
-document.getElementById("search").addEventListener("input",renderAll);
+let announcementsSearchTimer;
+document.getElementById("search").addEventListener("input", () => {
+  clearTimeout(announcementsSearchTimer);
+  announcementsSearchTimer = setTimeout(renderAll, 180);
+});
 
 loadTopbarProfile();
 loadTopbarAnnouncementCount();
