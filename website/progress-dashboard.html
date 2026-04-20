@@ -5,10 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Progress Dashboard | Practice Online</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
   <style>
     :root{
       --nav:#1b1648;
@@ -16,11 +12,11 @@
       --red:#e11d2e;
       --bg:#f6f7fb;
       --card:#ffffff;
-      --border:#e6e6e6;
+      --border:#d9dee7;
       --text:#0f172a;
       --muted:#475569;
-      --radius:16px;
-      --shadow:0 10px 24px rgba(0,0,0,.06);
+      --radius:18px;
+      --shadow:none;
       --focus:0 0 0 4px rgba(207,233,255,.65);
       --soft:#f8fafc;
       --soft2:#f1f5f9;
@@ -32,103 +28,241 @@
     *{box-sizing:border-box}
     html,body{margin:0;padding:0}
     body{
-      font-family:Inter,Arial,sans-serif;
+      font-family:Arial, Helvetica, sans-serif;
       background:var(--bg);
       color:var(--text);
     }
 
     a{text-decoration:none;color:inherit}
+    button,input,select{font:inherit}
 
-    header.topbar{
+    .topbar{
       background:var(--nav);
       color:#fff;
-      border-bottom:3px solid rgba(255,255,255,.08);
+      position:sticky;
+      top:0;
+      z-index:1000;
+      font-family:Arial, Helvetica, sans-serif;
     }
 
     .topbar-inner{
-      max-width:1100px;
+      max-width:1150px;
       margin:0 auto;
       padding:14px 18px;
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:12px;
-      flex-wrap:wrap;
     }
 
-    .brand{
+    .accountLeft{
       display:flex;
-      flex-direction:column;
-      line-height:1.1;
-      font-weight:800;
-      letter-spacing:.12px;
-    }
-
-    .brand small{
-      opacity:.85;
-      font-weight:600;
-      margin-top:4px;
-    }
-
-    nav.nav{
-      display:flex;
-      gap:10px;
       align-items:center;
-      flex-wrap:wrap;
+      gap:12px;
+      min-width:0;
+      cursor:default;
+      user-select:none;
     }
 
-    nav.nav a{
-      padding:8px 10px;
-      border-radius:10px;
-      color:#e7e9ff;
-      font-weight:600;
-      font-size:13px;
+    .accountIconWrap{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-shrink:0;
     }
 
-    nav.nav a.active{
-      border-bottom:3px solid var(--red);
+    .accountIcon{
+      width:40px;
+      height:40px;
+      display:block;
+      filter:brightness(0) invert(1) contrast(180%);
+    }
+
+    .accountMeta{min-width:0;line-height:1.1}
+
+    .accountName{
+      font-size:16px;
+      font-weight:700;
       color:#fff;
-      border-radius:10px 10px 8px 8px;
-      padding-bottom:5px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:220px;
     }
 
-    nav.nav a:hover{
-      background:rgba(255,255,255,.10)
+    .accountType{
+      font-size:13px;
+      color:#e0e7ff;
+      margin-top:3px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:220px;
+      text-transform:capitalize;
     }
 
-    .btnTop{
+    .topbarRight{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      position:relative;
+    }
+
+    .iconBtn{
+      min-width:50px;
+      height:50px;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      padding:0 4px;
+    }
+
+    .iconBtn img{
+      width:28px;
+      height:28px;
+      display:block;
+      flex-shrink:0;
+      filter:brightness(0) invert(1) contrast(180%);
+    }
+
+    .bellBtn{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      min-width:auto;
+      height:50px;
+      padding:0;
+    }
+
+    .navBadge{
+      min-width:auto;
+      height:auto;
+      padding:0;
+      margin-left:2px;
+      background:transparent;
+      color:#ffd6db;
+      font-size:13px;
+      font-weight:700;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      line-height:1;
+    }
+
+    .menuBtn{
+      min-width:auto;
+      height:50px;
+      padding:0;
+      gap:8px;
+      border:none;
       background:transparent;
       color:#fff;
-      border:1px solid rgba(255,255,255,.22);
-      padding:8px 12px;
-      border-radius:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
       cursor:pointer;
-      font-weight:700;
     }
 
-    .btnTop:hover{
-      background:rgba(255,255,255,.08)
+    .menuBtnText{
+      font-size:10px;
+      font-weight:700;
+      color:#fff;
+      line-height:1;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      top:-1px;
+    }
+
+    .menuBtn img{
+      width:28px;
+      height:28px;
+      filter:brightness(0) invert(1) contrast(180%);
+      display:block;
+    }
+
+    .menuDropdown{
+      position:absolute;
+      top:48px;
+      right:0;
+      width:210px;
+      background:#f7f7f8;
+      color:#111827;
+      border:1px solid #d9dee7;
+      border-radius:16px;
+      box-shadow:0 14px 30px rgba(15,23,42,.14);
+      padding:10px 0;
+      display:none;
+      font-family:Arial, Helvetica, sans-serif;
+    }
+
+    .menuDropdown.open{display:block}
+
+    .menuItem{
+      width:100%;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:10px 18px;
+      color:#111827;
+      font-size:10px;
+      font-weight:700;
+      background:transparent;
+      border:none;
+      text-align:left;
+      cursor:pointer;
+    }
+
+    .menuItem:hover{background:#eef2f7}
+
+    .menuItem img{
+      width:18px;
+      height:18px;
+      display:block;
+      flex-shrink:0;
+    }
+
+    .menuItem.profileTextOnly{padding-left:38px}
+
+    .menuDivider{
+      height:1px;
+      background:#dde4ec;
+      margin:8px 0 6px;
+    }
+
+    .logoutMenuBtn{
+      width:100%;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      text-align:left;
     }
 
     .wrap{
-      max-width:1100px;
+      max-width:1150px;
       margin:0 auto;
       padding:18px;
     }
 
     .section{
-      background:var(--card);
+      background:#fff;
       border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
+      border-radius:18px;
+      box-shadow:none;
       margin-top:14px;
       overflow:hidden;
     }
 
     .sectionHead{
-      padding:16px 16px 14px;
+      padding:18px;
       border-bottom:1px solid var(--border);
-      background:linear-gradient(180deg,#f8fbff,#eef4ff);
+      background:#fff;
       display:flex;
       align-items:flex-start;
       justify-content:space-between;
@@ -138,44 +272,42 @@
 
     .sectionHead h1{
       margin:0;
-      font-size:20px;
-      font-weight:800;
-      letter-spacing:-.02em;
+      font-size:22px;
+      color:var(--nav);
+      font-weight:700;
+      letter-spacing:0;
     }
 
     .muted{
       color:var(--muted);
-      font-weight:600;
-      font-size:13px;
-      margin-top:6px;
+      font-size:10px;
+      margin-top:5px;
       min-height:18px;
-      line-height:1.5;
+      line-height:1.45;
+      font-weight:400;
     }
 
     .filters{
-      padding:14px 16px;
+      padding:14px 18px;
       display:flex;
       gap:10px;
       flex-wrap:wrap;
       align-items:center;
       background:#fff;
+      border-bottom:1px solid #eee;
     }
 
     select{
-      padding:10px 12px;
-      border:1px solid #cbd5e1;
-      border-radius:12px;
+      font-size:10px;
+      padding:10px;
+      border-radius:10px;
+      border:1px solid #ddd;
       background:#fff;
-      font-size:13px;
-      font-weight:700;
       outline:none;
       min-width:170px;
       color:var(--text);
-    }
-
-    select:focus{
-      box-shadow:var(--focus);
-      border-color:#cfe9ff;
+      font-family:Arial, Helvetica, sans-serif;
+      font-weight:400;
     }
 
     .grid2{
@@ -227,8 +359,8 @@
       font-size:11px;
       text-transform:uppercase;
       color:var(--muted);
-      font-weight:800;
-      letter-spacing:.06em;
+      font-weight:400;
+      letter-spacing:.04em;
       white-space:nowrap;
     }
 
@@ -253,16 +385,16 @@
     }
 
     .topicLink{
-      color:var(--accent);
-      font-weight:800;
+      color:#0f172a;
+      font-weight:400;
     }
 
     .topicLink:hover{
-      text-decoration:underline;
+      text-decoration:none;
     }
 
     .rec{
-      font-weight:800;
+      font-weight:400;
       color:#0f172a;
     }
 
@@ -271,14 +403,18 @@
     .rec.high{color:var(--green);}
 
     .smallBtn{
-      padding:8px 12px;
-      border:1px solid #d6dbe3;
-      border-radius:10px;
-      background:#fff;
+      min-width:82px;
+      padding:6px 10px;
+      border:1px solid #e5e7eb;
+      border-radius:6px;
+      background:#f8fafc;
       cursor:pointer;
-      font-weight:700;
+      font-weight:400;
       font-size:12px;
       white-space:nowrap;
+      color:#0f172a;
+      line-height:1;
+      font-family:Arial, Helvetica, sans-serif;
     }
 
     .smallBtn:hover{
@@ -372,11 +508,11 @@
 
     @media(max-width:760px){
       .wrap{
-        padding:14px;
+        padding:12px;
       }
 
       .sectionHead{
-        padding:15px 14px 13px;
+        padding:14px 12px 12px;
       }
 
       .sectionHead h1{
@@ -384,7 +520,8 @@
       }
 
       .filters{
-        padding:12px 14px;
+        padding:12px;
+        gap:8px;
       }
 
       select{
@@ -401,21 +538,59 @@
       }
 
       .topbar-inner{
-        padding:12px 14px;
-      }
-
-      nav.nav{
+        padding:10px 12px;
         gap:8px;
       }
 
-      nav.nav a{
-        font-size:12px;
-        padding:7px 9px;
+      .accountIcon{
+        width:34px;
+        height:34px;
       }
 
-      .btnTop{
-        padding:8px 10px;
-        font-size:12px;
+      .accountName{
+        max-width:92px;
+        font-size:13px;
+      }
+
+      .accountType{
+        max-width:92px;
+        font-size:11px;
+      }
+
+      .topbarRight{
+        gap:8px;
+      }
+
+      .iconBtn,
+      .menuBtn,
+      .bellBtn{
+        height:42px;
+        min-width:auto;
+      }
+
+      .iconBtn img{
+        width:24px;
+        height:24px;
+      }
+
+      .navBadge{
+        font-size:11px;
+        margin-left:1px;
+      }
+
+      .menuDropdown{
+        width:190px;
+        right:0;
+      }
+
+      .menuBtnText{
+        display:none;
+      }
+
+      .smallBtn{
+        min-width:72px;
+        font-size:11px;
+        padding:6px 8px;
       }
     }
 
@@ -447,22 +622,77 @@
 
 <header class="topbar">
   <div class="topbar-inner">
-    <div class="brand">
-      <div>Practice Online</div>
-      <small>Progress Dashboard</small>
+    <div class="accountLeft">
+      <div class="accountIconWrap">
+        <img
+          class="accountIcon"
+          src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
+          alt="Account"
+          loading="eager"
+          decoding="async"
+        >
+      </div>
+
+      <div class="accountMeta">
+        <div class="accountName" id="topAccountName">Loading...</div>
+        <div class="accountType" id="topAccountType">Dashboard</div>
+      </div>
     </div>
-    <nav class="nav">
-      <a href="profile.html">Profile</a>
-      <a href="learner-quizzes.html">Practice</a>
-      <a href="results.html">Results</a>
-      <a class="active" href="progress-dashboard.html">Dashboard</a>
-      <a href="leaderboard.html">Leaderboard</a>
-      <a href="announcements.html">Announcements</a>
-      <a href="support.html">Support</a>
-      <a href="subscription.html">Subscription</a>
-      <a href="admin-quiz.html" data-admin style="display:none;">Admin</a>
-      <button class="btnTop" id="logoutBtn" type="button">Logout</button>
-    </nav>
+
+    <div class="topbarRight">
+      <a href="announcements.html" class="iconBtn bellBtn" title="Announcements" aria-label="Announcements">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="Announcements" loading="eager" decoding="async">
+        <span class="navBadge" id="navAnnouncementBadge">0</span>
+      </a>
+
+      <button class="menuBtn" id="menuToggleBtn" title="Menu" aria-label="Menu" type="button">
+        <span class="menuBtnText">Menu</span>
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt="Menu" loading="eager" decoding="async">
+      </button>
+
+      <div class="menuDropdown" id="menuDropdown">
+        <a class="menuItem profileTextOnly" href="profile.html">
+          <span>Profile</span>
+        </a>
+
+        <a class="menuItem" href="learner-quizzes.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777660/practice_ubgfso.svg" alt="">
+          <span>Practice</span>
+        </a>
+
+        <a class="menuItem" href="results.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="Results">
+          <span>Results</span>
+        </a>
+
+        <a class="menuItem" href="progress-dashboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="">
+          <span>Dashboard</span>
+        </a>
+
+        <a class="menuItem" href="leaderboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777661/leaderboard_yfjgjf.svg" alt="">
+          <span>Leaderboard</span>
+        </a>
+
+        <a class="menuItem" href="support.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/support_bs175s.svg" alt="">
+          <span>Support</span>
+        </a>
+
+        <a class="menuItem" href="announcements.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="">
+          <span>Announcements</span>
+        </a>
+
+        <div class="menuDivider"></div>
+
+        <button class="menuItem logoutMenuBtn" id="logoutBtn" type="button">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773768418/logout_uay6y8.svg" alt="">
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -485,21 +715,6 @@
       </select>
     </div>
 
-    <div class="grid2">
-      <div class="summaryCard">
-        <h3 class="summaryTitle">Top 5 Topics</h3>
-        <div id="topTableWrap" class="miniTableWrap">
-          <div class="empty" style="margin:12px;">No data yet.</div>
-        </div>
-      </div>
-
-      <div class="summaryCard">
-        <h3 class="summaryTitle">Topics Needing Attention</h3>
-        <div id="bottomTableWrap" class="miniTableWrap">
-          <div class="empty" style="margin:12px;">No data yet.</div>
-        </div>
-      </div>
-    </div>
   </section>
 
   <section class="section" id="tableWrap">
@@ -508,25 +723,80 @@
 
 </main>
 
-<script src="nav.js"></script>
 
 <script>
   const API = window.API || "https://practice-backend-msgn.onrender.com";
   const token = localStorage.getItem("token");
 
+  const topAccountName = document.getElementById("topAccountName");
+  const topAccountType = document.getElementById("topAccountType");
+  const menuToggleBtn = document.getElementById("menuToggleBtn");
+  const menuDropdown = document.getElementById("menuDropdown");
+
   const subTxt = document.getElementById("subTxt");
   const yearSelect = document.getElementById("yearSelect");
   const monthSelect = document.getElementById("monthSelect");
   const tableWrap = document.getElementById("tableWrap");
-  const topTableWrap = document.getElementById("topTableWrap");
-  const bottomTableWrap = document.getElementById("bottomTableWrap");
 
   document.getElementById("logoutBtn").onclick = ()=> {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
     localStorage.removeItem("me_cache");
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
     location.href="login.html";
   };
+
+  if(menuToggleBtn && menuDropdown){
+    menuToggleBtn.addEventListener("click", function(e){
+      e.stopPropagation();
+      menuDropdown.classList.toggle("open");
+    });
+
+    document.addEventListener("click", function(e){
+      if(!menuDropdown.contains(e.target) && !menuToggleBtn.contains(e.target)){
+        menuDropdown.classList.remove("open");
+      }
+    });
+  }
+
+  async function loadTopbarProfile(){
+    try{
+      const res = await fetch(`${API}/api/profile/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if(res.status === 401){
+        localStorage.removeItem("token");
+        localStorage.removeItem("username");
+        localStorage.removeItem("me_cache");
+        location.href = "login.html";
+        return;
+      }
+
+      const data = await res.json().catch(()=>null);
+      if(!data) return;
+
+      topAccountName.textContent = data.fullName || data.username || "User";
+      topAccountType.textContent = data.accountType || data.role || "Dashboard";
+    }catch{
+      topAccountName.textContent = "User";
+      topAccountType.textContent = "Dashboard";
+    }
+  }
+
+  async function loadTopbarAnnouncementCount(){
+    try{
+      const res = await fetch(`${API}/api/announcements/profile-summary`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = await res.json().catch(() => ({}));
+      document.getElementById("navAnnouncementBadge").textContent = Number(data.count || 0);
+    }catch{
+      document.getElementById("navAnnouncementBadge").textContent = "0";
+    }
+  }
 
   let allResults = [];
   let allQuizzes = [];
@@ -538,6 +808,8 @@
   yearSelect.addEventListener("change", renderAll);
   monthSelect.addEventListener("change", renderAll);
 
+  loadTopbarProfile();
+  loadTopbarAnnouncementCount();
   load();
 
   async function load(){
@@ -606,10 +878,7 @@
 
     }catch(e){
       subTxt.textContent = "Network error. Please refresh.";
-      tableWrap.innerHTML = `<div class="empty">Could not load dashboard.</div>`;
-      topTableWrap.innerHTML = `<div class="empty" style="margin:12px;">Could not load summary.</div>`;
-      bottomTableWrap.innerHTML = `<div class="empty" style="margin:12px;">Could not load summary.</div>`;
-    }
+      tableWrap.innerHTML = `<div class="empty">Could not load dashboard.</div>`;    }
   }
 
   function buildDateFilters(data){
@@ -727,42 +996,7 @@
     const attemptedTopics = rows.filter(r => r.attempts > 0);
     const sorted = [...attemptedTopics].sort((a,b)=>b.passRate - a.passRate);
 
-    const top5 = sorted.slice(0,5);
-    const bottom5 = [...attemptedTopics].sort((a,b)=>a.passRate - b.passRate).slice(0,5);
-
-    renderSummaryTable(topTableWrap, top5);
-    renderSummaryTable(bottomTableWrap, bottom5);
     renderTable(rows);
-  }
-
-  function renderSummaryTable(container, rows){
-    if(!rows.length){
-      container.innerHTML = `<div class="empty" style="margin:12px;">No topic results yet.</div>`;
-      return;
-    }
-
-    container.innerHTML = `
-      <table class="miniTable">
-        <thead>
-          <tr>
-            <th style="width:60px;">Rank</th>
-            <th>Topic</th>
-            <th>Average</th>
-            <th>Best</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map((r, i) => `
-            <tr>
-              <td class="rankCell">${i + 1}</td>
-              <td>${escapeHtml(r.topic)}</td>
-              <td class="scoreCell">${r.avg}%</td>
-              <td>${Math.round(r.best)}%</td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
-    `;
   }
 
   function renderTable(rows){
@@ -798,7 +1032,7 @@
                     <td>${r.avg}%</td>
                     <td>${Math.round(r.best)}%</td>
                     <td class="rec ${rec.cls}">${escapeHtml(rec.text)}</td>
-                    <td><button class="smallBtn" type="button" onclick="location.href='${topicUrl}'">View quizzes</button></td>
+                    <td><button class="smallBtn" type="button" onclick="location.href='${topicUrl}'">Open quiz</button></td>
                   </tr>
                 `;
               }).join("")}
@@ -841,7 +1075,7 @@
               </div>
 
               <div class="cardActions">
-                <button class="smallBtn" type="button" onclick="location.href='${topicUrl}'">View quizzes</button>
+                <button class="smallBtn" type="button" onclick="location.href='${topicUrl}'">Open quiz</button>
               </div>
             </div>
           `;
