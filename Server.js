@@ -31,8 +31,8 @@
 // ✅ Optional learner email on publish
 // ✅ Auto-publish scheduled quizzes
 // ✅ Final PUT route fixed so edit page updates MongoDB correctly
-// ✅ Announcement system added
-// ✅ Profile announcement summary added
+// ✅  system added
+// ✅ Profile  summary added
 // ✅ Class RSVP (accept/reject) added
 
 import express from "express";
@@ -710,7 +710,286 @@ function stripAnnouncementForUser(announcement, userId) {
   delete obj.responses;
   return obj;
 }
+/* =====================================================
+   QUIZ RATINGS SYSTEM
+   Paste into server.js
+===================================================== */
 
+/* ---------- Quiz Rating Model ---------- */
+const QuizRatingSchema = new mongoose.Schema(
+  {
+    quizId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Quiz",
+      required: true,
+      index: true
+    },
+
+    learnerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true
+    },
+
+    rating: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 5
+    },
+
+    comment: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 500
+    }
+  },
+  { timestamps: true }
+);
+
+/* one learner = one rating per quiz */
+QuizRatingSchema.index(
+  { quizId: 1, learnerId: 1 },
+  { unique: true }
+);
+
+const QuizRating =
+  mongoose.models.QuizRating ||
+  mongoose.model("QuizRating", QuizRatingSchema);
+
+
+/* ---------- Helpers ---------- */
+function cleanRatingNumber(value) {
+  const n = Number(value);
+
+  if (!Number.isInteger(n)) return null;
+  if (n < 1 || n > 5) return null;
+
+  return n;
+}
+
+function cleanRatingComment(value) {
+  return String(value || "")
+    .trim()
+    .slice(0, 500);
+}
+
+
+/* =====================================================
+   ROUTE 1: Save / Update Learner Rating
+===================================================== */
+app.post("/api/quizzes/:id/rate", authRequired, async (req, res) => {
+  try {
+    const quizId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(quizId)) {
+      return res.status(400).json({
+        message: "Invalid quiz id."
+      });
+    }
+
+    const rating = cleanRatingNumber(req.body.rating);
+    const comment = cleanRatingComment(req.body.comment);
+
+    if (!rating) {
+      return res.status(400).json({
+        message: "Rating must be from 1 to 5."
+      });
+    }
+
+    const quiz = await Quiz.findById(quizId).select("_id");
+
+    if (!quiz) {
+      return res.status(404).json({
+        message: "Quiz not found."
+      });
+    }
+
+    const saved = await QuizRating.findOneAndUpdate(
+      {
+        quizId: quizId,
+        learnerId: req.user.userId
+      },
+      {
+        $set: {
+          rating: rating,
+          comment: comment
+        }
+      },
+      {
+        new: true,
+        upsert: true,
+        setDefaultsOnInsert: true
+      }
+    );
+
+    return res.json({
+      message: "Rating saved successfully.",
+      rating: {
+        quizId: saved.quizId,
+        learnerId: saved.learnerId,
+        rating: saved.rating,
+        comment: saved.comment,
+        updatedAt: saved.updatedAt
+      }
+    });
+
+  } catch (error) {
+    console.error("POST /api/quizzes/:id/rate", error);
+
+    return res.status(500).json({
+      message: "Could not save rating."
+    });
+  }
+});
+
+
+/* =====================================================
+   ROUTE 2: Single Quiz Rating Summary
+===================================================== */
+app.get("/api/quizzes/:id/rating", authRequired, async (req, res) => {
+  try {
+    const quizId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(quizId)) {
+      return res.status(400).json({
+        message: "Invalid quiz id."
+      });
+    }
+
+    const quiz = await Quiz.findById(quizId).select("_id");
+
+    if (!quiz) {
+      return res.status(404).json({
+        message: "Quiz not found."
+      });
+    }
+
+    const stats = await QuizRating.aggregate([
+      {
+        $match: {
+          quizId: new mongoose.Types.ObjectId(quizId)
+        }
+      },
+      {
+        $group: {
+          _id: "$quizId",
+          averageRating: { $avg: "$rating" },
+          ratingsCount: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const myRating = await QuizRating.findOne({
+      quizId: quizId,
+      learnerId: req.user.userId
+    }).select("rating comment updatedAt");
+
+    return res.json({
+      quizId: quizId,
+
+      averageRating:
+        stats[0]?.averageRating
+          ? Number(stats[0].averageRating.toFixed(1))
+          : 0,
+
+      ratingsCount:
+        stats[0]?.ratingsCount || 0,
+
+      myRating: myRating
+        ? {
+            rating: myRating.rating,
+            comment: myRating.comment,
+            updatedAt: myRating.updatedAt
+          }
+        : null
+    });
+
+  } catch (error) {
+    console.error("GET /api/quizzes/:id/rating", error);
+
+    return res.status(500).json({
+      message: "Could not load rating."
+    });
+  }
+});
+
+
+/* =====================================================
+   ROUTE 3: Many Quiz Ratings Summary
+   Example:
+   /api/quizzes/ratings/summary?ids=id1,id2,id3
+===================================================== */
+app.get("/api/quizzes/ratings/summary", authRequired, async (req, res) => {
+  try {
+    const idsRaw = String(req.query.ids || "").trim();
+
+    if (!idsRaw) {
+      return res.json({});
+    }
+
+    const ids = idsRaw
+      .split(",")
+      .map(x => x.trim())
+      .filter(Boolean)
+      .filter(id => mongoose.Types.ObjectId.isValid(id));
+
+    if (!ids.length) {
+      return res.json({});
+    }
+
+    const objectIds = ids.map(id =>
+      new mongoose.Types.ObjectId(id)
+    );
+
+    const stats = await QuizRating.aggregate([
+      {
+        $match: {
+          quizId: { $in: objectIds }
+        }
+      },
+      {
+        $group: {
+          _id: "$quizId",
+          averageRating: { $avg: "$rating" },
+          ratingsCount: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const output = {};
+
+    for (const row of stats) {
+      output[String(row._id)] = {
+        averageRating: row.averageRating
+          ? Number(row.averageRating.toFixed(1))
+          : 0,
+
+        ratingsCount: row.ratingsCount || 0
+      };
+    }
+
+    for (const id of ids) {
+      if (!output[id]) {
+        output[id] = {
+          averageRating: 0,
+          ratingsCount: 0
+        };
+      }
+    }
+
+    return res.json(output);
+
+  } catch (error) {
+    console.error("GET /api/quizzes/ratings/summary", error);
+
+    return res.status(500).json({
+      message: "Could not load ratings."
+    });
+  }
+});
 /* ------------------ AUTH ROUTES ------------------ */
 
 app.get("/api/auth/me", authRequired, async (req, res) => {
