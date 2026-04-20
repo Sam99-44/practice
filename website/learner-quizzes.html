@@ -325,7 +325,7 @@ input,select{
   flex-direction:column;
   gap:3px;
   font-size:12px;
-  color:#475569;
+  color:#000000;
   font-family:Arial, Helvetica, sans-serif;
   align-items:flex-start;
 }
@@ -338,7 +338,7 @@ input,select{
   align-items:center;
   margin-bottom:6px;
   font-size:12px;
-  color:#475569;
+  color:#000000;
   font-family:Arial, Helvetica, sans-serif;
 }
 .progressTrack{
@@ -415,7 +415,7 @@ input,select{
   font-size:9px;
   text-align:center;
   margin-top:2px;
-  color:#475569;
+  color:#000000;
 }
 
 .first-topic-shell{
@@ -486,6 +486,83 @@ input,select{
   cursor:pointer;
 }
 .defer-toggle:hover{background:#f9fafb}
+
+
+.topic-card{
+  min-height:178px;
+}
+
+.topic-card.placeholder{
+  min-height:178px;
+}
+
+.placeholder-title{
+  width:220px;
+  max-width:55%;
+  height:14px;
+  border-radius:4px;
+  background:#eef2f7;
+  margin-bottom:8px;
+}
+.placeholder-meta{
+  width:120px;
+  height:12px;
+  border-radius:4px;
+  background:#f1f5f9;
+  margin-bottom:4px;
+}
+.placeholder-progress-labels{
+  display:flex;
+  justify-content:space-between;
+  margin:10px 0 6px;
+}
+.placeholder-progress-label{
+  width:70px;
+  height:12px;
+  border-radius:4px;
+  background:#eef2f7;
+}
+.placeholder-track{
+  width:100%;
+  height:8px;
+  border-radius:4px;
+  background:#eef2f7;
+}
+.placeholder-squares{
+  display:flex;
+  gap:6px;
+  margin-top:12px;
+  flex-wrap:wrap;
+}
+.placeholder-square{
+  width:36px;
+  height:40px;
+  border-radius:4px;
+  background:#f1f5f9;
+}
+
+.rendering-note{
+  font-size:11px;
+  color:#000000;
+  padding-top:8px;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.defer-toggle{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:32px;
+  padding:0 12px;
+  border:1px solid #d1d5db;
+  border-radius:4px;
+  background:#fff;
+  color:#111827;
+  font-size:10px;
+  font-weight:700;
+  cursor:pointer;
+  font-family:Arial, Helvetica, sans-serif;
+}
 
 @media (max-width:900px){
   .controls{grid-template-columns:1fr 1fr}
@@ -625,17 +702,31 @@ if(!localStorage.getItem("token")){
     </div>
 
     <div id="quizList" class="topic-wrap">
-      <div class="first-topic-shell">
-        <div class="first-topic-title"></div>
-        <div class="first-topic-meta"></div>
-        <div class="first-topic-progress"></div>
-        <div class="first-topic-squares">
-          <div class="first-topic-square"></div><div class="first-topic-square"></div><div class="first-topic-square"></div>
-          <div class="first-topic-square"></div>
+      <div class="topic-card placeholder">
+        <div class="placeholder-title"></div>
+        <div class="placeholder-meta"></div>
+        <div class="placeholder-meta" style="width:100px;"></div>
+        <div class="placeholder-progress-labels">
+          <div class="placeholder-progress-label"></div>
+          <div class="placeholder-progress-label" style="width:40px;"></div>
+        </div>
+        <div class="placeholder-track"></div>
+        <div class="placeholder-squares">
+          <div class="placeholder-square"></div><div class="placeholder-square"></div><div class="placeholder-square"></div><div class="placeholder-square"></div>
         </div>
       </div>
-      <div class="defer-list">
-        <div class="rendering-note">Loading topics...</div>
+      <div class="topic-card placeholder">
+        <div class="placeholder-title" style="width:180px;"></div>
+        <div class="placeholder-meta"></div>
+        <div class="placeholder-meta" style="width:100px;"></div>
+        <div class="placeholder-progress-labels">
+          <div class="placeholder-progress-label"></div>
+          <div class="placeholder-progress-label" style="width:40px;"></div>
+        </div>
+        <div class="placeholder-track"></div>
+        <div class="placeholder-squares">
+          <div class="placeholder-square"></div><div class="placeholder-square"></div><div class="placeholder-square"></div><div class="placeholder-square"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -895,7 +986,7 @@ function buildTopicCard(topic, topicQuizzes){
 function appendTopicBatch(cards, tokenValue, startIndex, targetEl){
   if(tokenValue !== renderToken || !targetEl) return;
 
-  const batchSize = 2;
+  const batchSize = 1;
   const nextCards = cards.slice(startIndex, startIndex + batchSize);
 
   if(!nextCards.length){
@@ -940,9 +1031,9 @@ function render(groups){
     return;
   }
 
-  const firstGroup = groups[0];
-  const remainingGroups = groups.slice(1);
-  const firstCardHtml = buildTopicCard(firstGroup.topic, firstGroup.quizzes);
+  const firstGroups = groups.slice(0, 2);
+  const remainingGroups = groups.slice(2);
+  const firstCardsHtml = firstGroups.map(group => buildTopicCard(group.topic, group.quizzes)).join("");
   const remainingCards = remainingGroups.map(group => buildTopicCard(group.topic, group.quizzes));
 
   let deferredHtml = '';
@@ -956,10 +1047,12 @@ function render(groups){
     `;
   }
 
-  quizListEl.innerHTML = firstCardHtml + deferredHtml;
+  quizListEl.innerHTML = firstCardsHtml + deferredHtml;
 
   if(remainingCards.length && !manualExpand){
-    const scheduleExpand = (cb) => setTimeout(cb, 900);
+    const scheduleExpand = window.requestIdleCallback
+      ? (cb) => requestIdleCallback(cb, { timeout: 800 })
+      : (cb) => setTimeout(cb, 700);
 
     scheduleExpand(() => {
       if(tokenValue !== renderToken) return;
