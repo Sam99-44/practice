@@ -483,6 +483,24 @@ tbody tr:last-child td{
   padding:18px 12px;
 }
 
+.leaderboardSkeletonRow td{
+  padding:11px 12px;
+  border-bottom:1px solid #ececec;
+}
+
+.leaderboardSkeletonCell{
+  height:12px;
+  border-radius:4px;
+  background:linear-gradient(90deg,#eef2f7 25%,#f8fafc 50%,#eef2f7 75%);
+  background-size:200% 100%;
+  animation:leaderboardShimmer 1.3s linear infinite;
+}
+
+@keyframes leaderboardShimmer{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
+
 .errorBox{
   margin-top:14px;
   padding:10px 12px;
@@ -785,6 +803,9 @@ const myProvince = document.getElementById("myProvince");
 
 let me = null;
 
+const LEADERBOARD_CACHE_KEY = "leaderboard_v6_cache";
+const LEADERBOARD_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
+
 document.getElementById("logoutBtn").onclick = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("username");
@@ -945,14 +966,71 @@ async function loadTopbarAnnouncementCount(){
   }
 }
 
+
+function saveLeaderboardCache(filtersKey, rows){
+  try{
+    localStorage.setItem(LEADERBOARD_CACHE_KEY, JSON.stringify({
+      savedAt: Date.now(),
+      filtersKey,
+      rows: Array.isArray(rows) ? rows : []
+    }));
+  }catch(err){}
+}
+
+function loadLeaderboardCache(filtersKey){
+  try{
+    const raw = localStorage.getItem(LEADERBOARD_CACHE_KEY);
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(!parsed || !parsed.savedAt) return null;
+    if(Date.now() - Number(parsed.savedAt) > LEADERBOARD_CACHE_MAX_AGE_MS) return null;
+    if(parsed.filtersKey !== filtersKey) return null;
+    return Array.isArray(parsed.rows) ? parsed.rows : null;
+  }catch(err){
+    return null;
+  }
+}
+
+function renderLeaderboardSkeleton(){
+  tableBody.innerHTML = `
+    <tr class="leaderboardSkeletonRow">
+      <td><div class="leaderboardSkeletonCell"></div></td>
+      <td><div class="leaderboardSkeletonCell"></div></td>
+      <td><div class="leaderboardSkeletonCell"></div></td>
+      <td><div class="leaderboardSkeletonCell"></div></td>
+      <td><div class="leaderboardSkeletonCell"></div></td>
+      <td><div class="leaderboardSkeletonCell"></div></td>
+    </tr>
+    <tr class="leaderboardSkeletonRow">
+      <td><div class="leaderboardSkeletonCell"></div></td>
+      <td><div class="leaderboardSkeletonCell"></div></td>
+      <td><div class="leaderboardSkeletonCell"></div></td>
+      <td><div class="leaderboardSkeletonCell"></div></td>
+      <td><div class="leaderboardSkeletonCell"></div></td>
+      <td><div class="leaderboardSkeletonCell"></div></td>
+    </tr>
+    <tr class="leaderboardSkeletonRow">
+      <td><div class="leaderboardSkeletonCell"></div></td>
+      <td><div class="leaderboardSkeletonCell"></div></td>
+      <td><div class="leaderboardSkeletonCell"></div></td>
+      <td><div class="leaderboardSkeletonCell"></div></td>
+      <td><div class="leaderboardSkeletonCell"></div></td>
+      <td><div class="leaderboardSkeletonCell"></div></td>
+    </tr>
+  `;
+}
+
 async function loadLeaderboard(){
   clearError();
 
-  tableBody.innerHTML = `
-    <tr class="stateRow">
-      <td colspan="6">Loading...</td>
-    </tr>
-  `;
+  const filtersKey = buildQuery();
+  const cachedRows = loadLeaderboardCache(filtersKey);
+
+  if(cachedRows){
+    renderLeaderboard(cachedRows);
+  }else{
+    renderLeaderboardSkeleton();
+  }
 
   try{
     const res = await fetch(`${API}/api/leaderboard?${buildQuery()}`, {
@@ -962,25 +1040,31 @@ async function loadLeaderboard(){
     const data = await res.json().catch(() => ({}));
 
     if(!res.ok){
+      if(!cachedRows){
+        tableBody.innerHTML = `
+          <tr class="stateRow">
+            <td colspan="6">Failed to load leaderboard</td>
+          </tr>
+        `;
+        setMySummary(null);
+      }
+      showError(data.message || "Failed to load leaderboard.");
+      return;
+    }
+
+    const rows = Array.isArray(data.rows) ? data.rows : [];
+    renderLeaderboard(rows);
+    saveLeaderboardCache(filtersKey, rows);
+  }catch(err){
+    if(!cachedRows){
       tableBody.innerHTML = `
         <tr class="stateRow">
           <td colspan="6">Failed to load leaderboard</td>
         </tr>
       `;
-      showError(data.message || "Failed to load leaderboard.");
       setMySummary(null);
-      return;
     }
-
-    renderLeaderboard(data.rows || []);
-  }catch(err){
-    tableBody.innerHTML = `
-      <tr class="stateRow">
-        <td colspan="6">Failed to load leaderboard</td>
-      </tr>
-    `;
     showError("Could not connect to the server.");
-    setMySummary(null);
   }
 }
 
