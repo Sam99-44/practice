@@ -446,6 +446,33 @@ th:nth-child(9){
   font-family:Arial, Helvetica, sans-serif;
 }
 
+.resultsSkeleton{
+  border:1px solid #eef2f7;
+  border-radius:12px;
+  overflow:hidden;
+}
+
+.resultsSkeletonRow{
+  display:grid;
+  grid-template-columns: 19% 11% 16% 9% 8% 10% 9% 9% 9%;
+  gap:8px;
+  padding:10px 8px;
+  border-bottom:1px solid #f1f5f9;
+}
+
+.resultsSkeletonCell{
+  height:12px;
+  border-radius:4px;
+  background:linear-gradient(90deg,#eef2f7 25%,#f8fafc 50%,#eef2f7 75%);
+  background-size:200% 100%;
+  animation:resultsShimmer 1.3s linear infinite;
+}
+
+@keyframes resultsShimmer{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
+
 @media (max-width:760px){
   .controls{
     flex-direction:column;
@@ -596,7 +623,41 @@ if(!localStorage.getItem("token")){
     </div>
 
     <div id="tableWrap">
-      <div class="empty">Loading results...</div>
+      <div class="resultsSkeleton">
+        <div class="resultsSkeletonRow">
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+        </div>
+        <div class="resultsSkeletonRow">
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+        </div>
+        <div class="resultsSkeletonRow">
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+          <div class="resultsSkeletonCell"></div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -616,6 +677,9 @@ const menuDropdown = document.getElementById("menuDropdown");
 const logoutBtn = document.getElementById("logoutBtn");
 
 let allResults = [];
+
+const RESULTS_CACHE_KEY = "results_v6_cache";
+const RESULTS_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
 
 /* ===== MENU ===== */
 if(logoutBtn){
@@ -682,7 +746,41 @@ async function loadTopbarAnnouncementCount(){
 }
 
 /* ===== RESULTS ===== */
+function saveResultsCache(results){
+  try{
+    localStorage.setItem(RESULTS_CACHE_KEY, JSON.stringify({
+      savedAt: Date.now(),
+      results: Array.isArray(results) ? results : []
+    }));
+  }catch(err){}
+}
+
+function loadResultsCache(){
+  try{
+    const raw = localStorage.getItem(RESULTS_CACHE_KEY);
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(!parsed || !parsed.savedAt) return null;
+    if(Date.now() - Number(parsed.savedAt) > RESULTS_CACHE_MAX_AGE_MS) return null;
+    return Array.isArray(parsed.results) ? parsed.results : null;
+  }catch(err){
+    return null;
+  }
+}
+
+function hydrateResults(data){
+  allResults = Array.isArray(data) ? data : [];
+  buildTopics();
+  apply();
+}
+
+
 async function loadResults(){
+  const cached = loadResultsCache();
+  if(cached){
+    hydrateResults(cached);
+  }
+
   try{
     const res = await fetch(`${API}/api/results/my`,{
       headers:{Authorization:`Bearer ${token}`}
@@ -697,12 +795,13 @@ async function loadResults(){
     }
 
     const data = await res.json().catch(()=>[]);
-    allResults = Array.isArray(data) ? data : [];
-
-    buildTopics();
-    apply();
+    const freshResults = Array.isArray(data) ? data : [];
+    hydrateResults(freshResults);
+    saveResultsCache(freshResults);
   }catch(err){
-    document.getElementById("tableWrap").innerHTML = `<div class="empty">Failed to load results.</div>`;
+    if(!cached){
+      document.getElementById("tableWrap").innerHTML = `<div class="empty">Failed to load results.</div>`;
+    }
   }
 }
 
@@ -834,7 +933,11 @@ function escapeHtml(str){
     .replaceAll("'","&#039;");
 }
 
-document.getElementById("search").oninput = apply;
+let resultsFilterTimer;
+document.getElementById("search").oninput = () => {
+  clearTimeout(resultsFilterTimer);
+  resultsFilterTimer = setTimeout(apply, 180);
+};
 document.getElementById("topicFilter").onchange = apply;
 document.getElementById("periodFilter").onchange = apply;
 
