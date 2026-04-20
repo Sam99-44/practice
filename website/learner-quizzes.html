@@ -418,6 +418,36 @@ input,select{
   color:#000000;
 }
 
+.quiz-rating-top{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  height:12px;
+  min-height:12px;
+  margin-bottom:4px;
+  text-align:center;
+  white-space:nowrap;
+}
+
+.quiz-rating-top img{
+  width:8px;
+  height:8px;
+  display:block;
+  flex-shrink:0;
+  opacity:.22;
+  filter:grayscale(1) brightness(.75);
+}
+
+.quiz-rating-top img.filled{
+  opacity:1;
+  filter:brightness(0) saturate(100%) invert(67%) sepia(96%) saturate(1800%) hue-rotate(3deg) brightness(101%) contrast(108%);
+}
+
+.quiz-rating-top.empty{
+  visibility:hidden;
+}
+
 .first-topic-shell{
   border:1px solid var(--border);
   border-radius:12px;
@@ -754,6 +784,7 @@ const quizListEl = document.getElementById("quizList");
 
 let quizzes = [];
 let resultsMap = {};
+let ratingsMap = {};
 let diff = "all";
 let renderToken = 0;
 let groupedByTopic = [];
@@ -838,6 +869,46 @@ function getState(id){
     state: percent >= 50 ? "pass" : "fail",
     percent
   };
+}
+
+function getQuizRating(id){
+  return ratingsMap[id] || { averageRating: 0, ratingsCount: 0 };
+}
+
+function renderTopRatingStars(ratingInfo){
+  const avg = Number(ratingInfo?.averageRating || 0);
+  const count = Number(ratingInfo?.ratingsCount || 0);
+
+  if(count <= 0) return "";
+
+  let filled = 0;
+  if(avg >= 4) filled = 3;
+  else if(avg >= 2.5) filled = 2;
+  else if(avg > 0) filled = 1;
+
+  return `
+    <img
+      src="https://res.cloudinary.com/dopoxadlr/image/upload/v1776690316/star_aayee5.svg"
+      alt="star"
+      class="${filled >= 1 ? "filled" : ""}"
+      loading="lazy"
+      decoding="async"
+    >
+    <img
+      src="https://res.cloudinary.com/dopoxadlr/image/upload/v1776690316/star_aayee5.svg"
+      alt="star"
+      class="${filled >= 2 ? "filled" : ""}"
+      loading="lazy"
+      decoding="async"
+    >
+    <img
+      src="https://res.cloudinary.com/dopoxadlr/image/upload/v1776690316/star_aayee5.svg"
+      alt="star"
+      class="${filled >= 3 ? "filled" : ""}"
+      loading="lazy"
+      decoding="async"
+    >
+  `;
 }
 
 function isWithinPeriod(ts, period){
@@ -1021,8 +1092,15 @@ function buildTopicCard(topic, topicQuizzes){
       <div class="quiz-squares">
         ${topicQuizzes.map((q, i) => {
           const s = getState(q._id);
+          const ratingInfo = getQuizRating(q._id);
+          const hasRatings = Number(ratingInfo.ratingsCount || 0) > 0;
+
           return `
           <div class="quiz-square ${s.state || ""}" data-quiz-id="${encodeURIComponent(q._id || "")}">
+            <div class="quiz-rating-top ${hasRatings ? "" : "empty"}">
+              ${hasRatings ? renderTopRatingStars(ratingInfo) : ""}
+            </div>
+
             <div class="quiz-icon-wrap">
               <div class="quiz-fill"></div>
               <div class="quiz-square-base" aria-hidden="true"></div>
@@ -1200,6 +1278,24 @@ async function loadPage(){
     const me = await meRes.json().catch(() => ({}));
     const rawQuizzes = await quizzesRes.json().catch(() => []);
     const results = await resultsRes.json().catch(() => []);
+
+    const quizIds = Array.isArray(rawQuizzes)
+      ? rawQuizzes.map(q => q._id).filter(Boolean)
+      : [];
+
+    if(quizIds.length){
+      try{
+        const ratingsRes = await fetch(
+          `${API}/api/quizzes/ratings/summary?ids=${encodeURIComponent(quizIds.join(","))}`,
+          { headers }
+        );
+        ratingsMap = await ratingsRes.json().catch(() => ({}));
+      }catch(err){
+        ratingsMap = {};
+      }
+    }else{
+      ratingsMap = {};
+    }
 
     hydrateFromPayload(me, rawQuizzes, results, true);
     saveQuizCache(me, rawQuizzes, results);
