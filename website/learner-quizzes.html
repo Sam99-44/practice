@@ -345,13 +345,13 @@ input,select{
   width:100%;
   height:8px;
   background:var(--track);
-  border-radius:999px;
+  border-radius:4px;
   overflow:hidden;
 }
 .progressBar{
   height:100%;
   background:var(--bar);
-  border-radius:999px;
+  border-radius:4px;
   width:0%;
 }
 
@@ -442,7 +442,7 @@ input,select{
 .first-topic-progress{
   width:100%;
   height:8px;
-  border-radius:999px;
+  border-radius:4px;
   background:#eef2f7;
   margin-top:16px;
 }
@@ -494,6 +494,10 @@ input,select{
 
 .topic-card.placeholder{
   min-height:178px;
+}
+
+.defer-list{
+  min-height:380px;
 }
 
 .placeholder-title{
@@ -757,6 +761,9 @@ let filterTimer = null;
 let lastRenderedGroups = [];
 let manualExpand = false;
 
+const QUIZ_CACHE_KEY = "learner_quizzes_v6_cache";
+const QUIZ_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
+
 if(logoutBtn){
   logoutBtn.onclick = () => {
     localStorage.removeItem("token");
@@ -873,6 +880,55 @@ function preprocessQuizzes(rawQuizzes){
     };
   });
 }
+
+function saveQuizCache(me, rawQuizzes, rawResults){
+  try{
+    localStorage.setItem(QUIZ_CACHE_KEY, JSON.stringify({
+      savedAt: Date.now(),
+      grade: me?.grade || "-",
+      quizzes: Array.isArray(rawQuizzes) ? rawQuizzes : [],
+      results: Array.isArray(rawResults) ? rawResults : []
+    }));
+  }catch(err){}
+}
+
+function loadQuizCache(){
+  try{
+    const raw = localStorage.getItem(QUIZ_CACHE_KEY);
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(!parsed || !parsed.savedAt) return null;
+    if(Date.now() - Number(parsed.savedAt) > QUIZ_CACHE_MAX_AGE_MS) return null;
+    return parsed;
+  }catch(err){
+    return null;
+  }
+}
+
+function hydrateFromPayload(me, rawQuizzes, rawResults, renderImmediately = true){
+  document.getElementById("gradeText").textContent = "Grade: " + (me?.grade || "-");
+
+  quizzes = Array.isArray(rawQuizzes) ? preprocessQuizzes(rawQuizzes) : [];
+
+  const safeResults = Array.isArray(rawResults) ? rawResults : [];
+  resultsMap = {};
+  safeResults.forEach(r => {
+    const id = r.quizId?._id || r.quizId;
+    if(id) resultsMap[id] = r;
+  });
+
+  rebuildGroupedTopics();
+
+  const topics = [...new Set(quizzes.map(q => q._topic).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b));
+
+  topicFilter.innerHTML =
+    `<option value="all">All Topics</option>` +
+    topics.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+
+  if(renderImmediately) apply();
+}
+
 
 function rebuildGroupedTopics(){
   const groups = {};
@@ -1031,8 +1087,10 @@ function render(groups){
     return;
   }
 
-  const firstGroups = groups.slice(0, 2);
-  const remainingGroups = groups.slice(2);
+  const hasCache = !!loadQuizCache();
+  const immediateCount = hasCache ? 2 : 1;
+  const firstGroups = groups.slice(0, immediateCount);
+  const remainingGroups = groups.slice(immediateCount);
   const firstCardsHtml = firstGroups.map(group => buildTopicCard(group.topic, group.quizzes)).join("");
   const remainingCards = remainingGroups.map(group => buildTopicCard(group.topic, group.quizzes));
 
@@ -1051,8 +1109,8 @@ function render(groups){
 
   if(remainingCards.length && !manualExpand){
     const scheduleExpand = window.requestIdleCallback
-      ? (cb) => requestIdleCallback(cb, { timeout: 800 })
-      : (cb) => setTimeout(cb, 700);
+      ? (cb) => requestIdleCallback(cb, { timeout: 900 })
+      : (cb) => setTimeout(cb, 800);
 
     scheduleExpand(() => {
       if(tokenValue !== renderToken) return;
@@ -1117,6 +1175,11 @@ quizListEl.addEventListener("click", function(e){
 });
 
 async function loadPage(){
+  const cached = loadQuizCache();
+  if(cached){
+    hydrateFromPayload({ grade: cached.grade }, cached.quizzes, cached.results, true);
+  }
+
   try{
     const headers = { Authorization: `Bearer ${token}` };
 
@@ -1135,32 +1198,15 @@ async function loadPage(){
     }
 
     const me = await meRes.json().catch(() => ({}));
-    document.getElementById("gradeText").textContent = "Grade: " + (me.grade || "-");
-
     const rawQuizzes = await quizzesRes.json().catch(() => []);
-    quizzes = Array.isArray(rawQuizzes) ? preprocessQuizzes(rawQuizzes) : [];
-
     const results = await resultsRes.json().catch(() => []);
-    const safeResults = Array.isArray(results) ? results : [];
 
-    resultsMap = {};
-    safeResults.forEach(r => {
-      const id = r.quizId?._id || r.quizId;
-      if(id) resultsMap[id] = r;
-    });
-
-    rebuildGroupedTopics();
-
-    const topics = [...new Set(quizzes.map(q => q._topic).filter(Boolean))]
-      .sort((a, b) => a.localeCompare(b));
-
-    topicFilter.innerHTML =
-      `<option value="all">All Topics</option>` +
-      topics.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
-
-    apply();
+    hydrateFromPayload(me, rawQuizzes, results, true);
+    saveQuizCache(me, rawQuizzes, results);
   }catch(err){
-    quizListEl.innerHTML = `<div class="empty">Could not load quizzes.</div>`;
+    if(!cached){
+      quizListEl.innerHTML = `<div class="empty">Could not load quizzes.</div>`;
+    }
   }
 }
 
