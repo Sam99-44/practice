@@ -215,7 +215,9 @@
 
     .attemptPaperPreview{background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:18px; overflow:auto;}
     .attemptPaperPreview .examPaper{background:#ffffff; border:none; border-radius:0; padding:12px 6px 20px; box-shadow:none; max-width:860px; margin:0 auto; font-family:"Times New Roman", Times, serif; color:#111827;}
-    .attemptPaperPreview mjx-container[jax="SVG"]{font-size:1em !important;}
+    .attemptPaperPreview mjx-container[jax="SVG"]{font-size:1em !important; line-height:1 !important;}
+    .attemptPaperPreview mjx-container[jax="SVG"] svg{vertical-align:middle;}
+    .attemptPaperPreview mjx-container[jax="SVG"] mjx-assistive-mml{display:none !important;}
     .attemptPaperPreview .paperMeta{margin:0 0 26px 0; color:#111827; font-size:14px; line-height:1.5;}
     .attemptPaperPreview .paperMetaRow{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:16px; align-items:start; font-size:14px; line-height:1.5;}
     .attemptPaperPreview .paperMetaRight{white-space:nowrap; text-align:right; justify-self:end;}
@@ -250,6 +252,17 @@
     .attemptPaperPreview .finalAnswerRow{margin-top:14px; padding-top:8px; border-top:1px solid #e5e7eb;}
     .attemptPaperPreview .finalAnswerText{font-weight:700; background:#f8fafc; border:1px solid #e5e7eb; padding:6px 8px; word-break:break-word;}
 
+
+    .attemptPaperPreview .qText{min-width:0; font-weight:400;}
+    .attemptPaperPreview .marksMeta{display:flex; align-items:flex-start; gap:0; flex:0 0 auto; font-family:"Times New Roman", Times, serif; color:#111827; padding-top:0; font-size:14px; line-height:1.3; white-space:nowrap; justify-self:end; margin:0; text-align:right; min-width:32px;}
+    .attemptPaperPreview .marksMeta::before{content:"(";}
+    .attemptPaperPreview .marksMeta::after{content:")";}
+    .attemptPaperPreview .marksLbl{display:none;}
+    .attemptPaperPreview .opt{display:flex; gap:10px; align-items:flex-start; padding:7px 0 7px 68px; border:none; border-radius:0; margin-bottom:0; cursor:default; background:transparent; transition:.12s; font-family:"Times New Roman", Times, serif; font-weight:400; font-size:14px; line-height:1.55;}
+    .attemptPaperPreview .optText{font-weight:400; line-height:1.75; display:block;}
+    .attemptPaperPreview .textAnswer{width:calc(100% - 68px); margin-left:68px; padding:8px 10px; border:1px solid #d6d3d1; font-size:14px; font-family:"Times New Roman", Times, serif; background:#fff; color:#0f172a;}
+    .attemptPaperPreview .hintText{font-weight:400;}
+    .attemptPaperPreview .solutionHolder.hidden{display:none!important;}
     @media (max-width:650px){
       .previewBox.paperBox{padding-left:56px;}
       .row{grid-template-columns:1fr;}
@@ -446,6 +459,15 @@
       <button class="smallbtn" id="batchUploadBtn" type="button">Batch Upload .txt Files</button>
     </div>
 
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center;">
+      <button class="smallbtn" id="downloadTxtBtn" type="button">Download TXT</button>
+      <input id="overrideFile" type="file" accept=".txt" style="max-width:260px;" />
+      <button class="smallbtn" id="overrideTxtBtn" type="button">Override From TXT</button>
+    </div>
+    <div class="muted tiny" style="margin-top:6px;">
+      Download exports the selected assessment to the modern TXT format. Override replaces the quiz content but keeps the same assessment record, created date, and list order.
+    </div>
+
     <div class="muted tiny" style="margin-top:6px;">
       Upload a <b>.txt</b> file in this format:
       <br />
@@ -523,7 +545,7 @@
     <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
       <div>
         <h3 style="margin:0;">Full Learner Preview</h3>
-        <div class="muted tiny">This preview uses the same exam-style layout for the whole quiz so you can check everything before publishing.</div>
+        <div class="muted tiny">This preview now mirrors the attempt layout as closely as possible so you can catch errors before saving.</div>
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="smallbtn" id="previewAttemptModeBtn" type="button">Attempt Preview</button>
@@ -539,7 +561,7 @@
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding:16px 18px; border-bottom:1px solid #e5e7eb; position:sticky; top:0; background:#fff; z-index:1;">
         <div>
           <h3 style="margin:0;">Exam Paper Preview</h3>
-          <div class="muted tiny">Preview the full paper structure before saving or publishing.</div>
+          <div class="muted tiny">Preview the full paper exactly in the attempt-style layout before saving or publishing.</div>
         </div>
         <button class="smallbtn" id="closePreviewBtn" type="button">Close</button>
       </div>
@@ -590,6 +612,9 @@
     const uploadBtn = document.getElementById("uploadBtn");
     const batchFilesEl = document.getElementById("batchFiles");
     const batchUploadBtn = document.getElementById("batchUploadBtn");
+    const downloadTxtBtn = document.getElementById("downloadTxtBtn");
+    const overrideFileEl = document.getElementById("overrideFile");
+    const overrideTxtBtn = document.getElementById("overrideTxtBtn");
     const questionsWrap = document.getElementById("questionsWrap");
     const gradeFilterEl = document.getElementById("gradeFilter");
     const searchBoxEl = document.getElementById("searchBox");
@@ -798,14 +823,17 @@ function escapeHtml(str){
       temp = temp.replace(/@@M(\d+)@@/g, (_, i) => toLatex(parts[Number(i)]));
       return temp;
     }
+    function renderMixedMath(text){
+      return renderMixedMathPreview(text);
+    }
     function normalizePlainMath(text){ return autoConvertMixedLatex(String(text || "").trim()); }
     function isLikelyMathLine(line){
       const t = String(line || "").trim();
       if (!t) return false;
       if (hasLatexSyntax(t)) return true;
-      return /(?:=|\\^|frac|sqrt|\d+\s*\/\s*\d+|[<>≤≥])/.test(t);
+      return /(?:=|\^|frac|sqrt|\d+\s*\/\s*\d+|[<>≤≥])/.test(t);
     }
-    function formatSolutionHtmlPreview(solutionText){
+    function formatSolutionHtml(solutionText){
       const raw = String(solutionText || "").replace(/\r/g, "").trim();
       if (!raw) return "";
       function splitLinesPreserveLatex(input){
@@ -835,9 +863,9 @@ function escapeHtml(str){
       function renderMathGroup(lines){ const prepared = lines.map(alignMathLine).filter(Boolean); return prepared.length ? `\[\begin{aligned}${prepared.join(' \\ ')}\end{aligned}\]` : ""; }
       function isStepLabel(line){ return /^(Step\s*\d+\s*:)\s*$/i.test(line); }
       function isGeneralLabel(line){ return /^(Check\s*:|So\s*:|Therefore\s*:|Hence\s*:|Square both sides\s*:)\s*$/i.test(line); }
-      function renderStepWithInline(label, body){ return `<div class="solutionStep"><div class="solutionStepNo">${escapeHtml(label)}</div><div class="solutionStepBody">${body ? `<div class="solutionTextInline">${renderMixedMathPreview(body)}</div>` : ""}</div></div>`; }
+      function renderStepWithInline(label, body){ return `<div class="solutionStep"><div class="solutionStepNo">${escapeHtml(label)}</div><div class="solutionStepBody">${body ? `<div class="solutionTextInline">${renderMixedMath(body)}</div>` : ""}</div></div>`; }
       function renderLabelOnly(label){ return `<div class="solutionStep solutionLabelOnly"><div class="solutionStepNo">${escapeHtml(label)}</div><div class="solutionStepBody"></div></div>`; }
-      function renderFinal(label, body){ const content = String(body || "").trim(); const rendered = !content ? "" : (isLikelyMathLine(content) ? toLatex(content) : renderMixedMathPreview(content)); return `<div class="solutionStep finalAnswerRow"><div class="solutionStepNo">${escapeHtml(label)}</div><div class="solutionStepBody finalAnswerText">${rendered}</div></div>`; }
+      function renderFinal(label, body){ const content = String(body || "").trim(); const rendered = !content ? "" : (isLikelyMathLine(content) ? toLatex(content) : renderMixedMath(content)); return `<div class="solutionStep finalAnswerRow"><div class="solutionStepNo">${escapeHtml(label)}</div><div class="solutionStepBody finalAnswerText">${rendered}</div></div>`; }
       const parts = splitLinesPreserveLatex(raw); const htmlParts = []; let i = 0;
       while (i < parts.length) {
         const part = parts[i];
@@ -855,79 +883,303 @@ function escapeHtml(str){
           if (mathLines.length) { htmlParts.push(`<div class="solutionMathBlock tightTop">${renderMathGroup(mathLines)}</div>`); i = j; continue; }
           const textLines = []; let k = i + 1;
           while (k < parts.length) { const block = parts[k]; if (block.type !== "line") break; const nextLine = block.content.trim(); if (!nextLine) { k += 1; continue; } if (isStepLabel(nextLine) || isGeneralLabel(nextLine) || /^(Final Answer\s*:|Answer\s*:)/i.test(nextLine) || isLikelyMathLine(nextLine)) break; textLines.push(nextLine); k += 1; }
-          if (textLines.length) { htmlParts.push(`<div class="solutionTextBlock">${textLines.map(t => `<div class="solutionLine">${renderMixedMathPreview(t)}</div>`).join("")}</div>`); i = k; continue; }
+          if (textLines.length) { htmlParts.push(`<div class="solutionTextBlock">${textLines.map(t => `<div class="solutionLine">${renderMixedMath(t)}</div>`).join("")}</div>`); i = k; continue; }
           i += 1; continue;
         }
         if (isLikelyMathLine(line)) { const mathLines = [line]; let j = i + 1; while (j < parts.length) { const block = parts[j]; if (block.type !== "line") break; const nextLine = block.content.trim(); if (!nextLine || !isLikelyMathLine(nextLine) || isStepLabel(nextLine) || isGeneralLabel(nextLine) || /^(Final Answer\s*:|Answer\s*:)/i.test(nextLine)) break; mathLines.push(nextLine); j += 1; } htmlParts.push(`<div class="solutionMathBlock">${renderMathGroup(mathLines)}</div>`); i = j; continue; }
         const textLines = [line]; let j = i + 1; while (j < parts.length) { const block = parts[j]; if (block.type !== "line") break; const nextLine = block.content.trim(); if (!nextLine || isLikelyMathLine(nextLine) || isStepLabel(nextLine) || isGeneralLabel(nextLine) || /^(Final Answer\s*:|Answer\s*:)/i.test(nextLine)) break; textLines.push(nextLine); j += 1; }
-        htmlParts.push(`<div class="solutionTextBlock">${textLines.map(t => `<div class="solutionLine">${renderMixedMathPreview(t)}</div>`).join("")}</div>`); i = j;
+        htmlParts.push(`<div class="solutionTextBlock">${textLines.map(t => `<div class="solutionLine">${renderMixedMath(t)}</div>`).join("")}</div>`); i = j;
       }
       return `<div class="solutionBox"><div class="solutionTitle">Solution / Workings</div>${htmlParts.join("")}</div>`;
     }
-    function parseExamTextPartsPreview(rawText){
-      const text = cleanSpaces(rawText || "");
-      if (!text) return { kind: "plain", label: "", body: "" };
-      let m = text.match(/^(QUESTION\s+\d+)(?:\s*[:.-]?\s*(.*))?$/i);
-      if (m) return { kind: "main", label: m[1].toUpperCase(), body: cleanSpaces(m[2] || "") };
-      m = text.match(/^(\d+\.\d+)(?:\s+(.+))?$/);
-      if (m) return { kind: "section", label: m[1], body: cleanSpaces(m[2] || "") };
-      m = text.match(/^(\d+\.\d+\.\d+)(?:\s+(.+))?$/);
-      if (m) return { kind: "question", label: m[1], body: cleanSpaces(m[2] || "") };
-      return { kind: "plain", label: "", body: text };
+    function formatSolutionHtmlPreview(solutionText){
+      return formatSolutionHtml(solutionText);
     }
-    function renderQuestionHeadPreview(rawText, points, fallbackNo){
-      const parsed = parseExamTextPartsPreview(rawText);
+    function parseExamTextParts(rawText){
+      const text = cleanSpaces(rawText || "");
+      if (!text) return { kind:"plain", label:"", body:"" };
+
+      const qMain = text.match(/^QUESTION\s+(\d+)\s*[:.-]?\s*(.*)$/i);
+      if (qMain) {
+        return { kind:"main", label:`QUESTION ${qMain[1]}`, body:cleanSpaces(qMain[2] || "") };
+      }
+
+      const triple = text.match(/^(\d+\.\d+\.\d+)\s+(.*)$/);
+      if (triple) {
+        return { kind:"sub", label:triple[1], body:cleanSpaces(triple[2] || "") };
+      }
+
+      const double = text.match(/^(\d+\.\d+)\s+(.*)$/);
+      if (double) {
+        return { kind:"section", label:double[1], body:cleanSpaces(double[2] || "") };
+      }
+
+      const single = text.match(/^(\d+)\.\s+(.*)$/);
+      if (single) {
+        return { kind:"single", label:`${single[1]}.`, body:cleanSpaces(single[2] || "") };
+      }
+
+      return { kind:"plain", label:"", body:text };
+    }
+    function getQuestionPoints(q){
+      return Math.max(1, Math.round(Number(q?.points || 1)));
+    }
+    function getMainQuestionNumber(rawText, fallbackNo){
+      const parsed = parseExamTextParts(rawText);
+      if (parsed.kind === "main") {
+        const m = String(parsed.label || "").match(/^QUESTION\s+(\d+)$/i);
+        return m ? Number(m[1]) : fallbackNo;
+      }
+      const label = String(parsed.label || "");
+      const m = label.match(/^(\d+)/);
+      return m ? Number(m[1]) : fallbackNo;
+    }
+    function getSectionKey(rawText, fallbackNo){
+      const parsed = parseExamTextParts(rawText);
+      if (parsed.kind === "section") return parsed.label;
+      if (parsed.kind === "sub") {
+        const m = String(parsed.label || "").match(/^(\d+\.\d+)\./);
+        if (m) return m[1];
+      }
+      return `${fallbackNo}.1`;
+    }
+    function computeQuestionAndSectionTotals(questions){
+      const mainTotals = new Map();
+      const sectionTotals = new Map();
+      let currentMain = 1;
+
+      (questions || []).forEach((q) => {
+        const type = String(q?.type || "mcq").toLowerCase();
+        const rawText = cleanSpaces(q?.text || "");
+
+        if (type === "note") {
+          const parsed = parseExamTextParts(rawText);
+          if (parsed.kind === "main") {
+            const m = String(parsed.label || "").match(/^QUESTION\s+(\d+)$/i);
+            if (m) currentMain = Number(m[1]);
+          }
+          return;
+        }
+
+        const pts = getQuestionPoints(q);
+        const mainNo = getMainQuestionNumber(rawText, currentMain || 1);
+        currentMain = mainNo;
+        const sectionKey = getSectionKey(rawText, currentMain);
+
+        mainTotals.set(mainNo, (mainTotals.get(mainNo) || 0) + pts);
+        sectionTotals.set(sectionKey, (sectionTotals.get(sectionKey) || 0) + pts);
+      });
+
+      return { mainTotals, sectionTotals };
+    }
+    function computeOverallTotalMarks(questions){
+      return (questions || []).reduce((sum, q) => {
+        const type = String(q?.type || "mcq").toLowerCase();
+        if (type === "note") return sum;
+        return sum + getQuestionPoints(q);
+      }, 0);
+    }
+    function buildPaperMeta(quiz){
+      const topic = cleanSpaces(
+        quiz?.topic ||
+        quiz?.topicType ||
+        quiz?.topic_type ||
+        ""
+      );
+
+      const title = cleanSpaces(quiz?.title || "Assessment");
+
+      const totalMarks = computeOverallTotalMarks(quiz?.questions || []);
+
+      const questionCount = (quiz?.questions || []).filter(q => {
+        return String(q?.type || "mcq").toLowerCase() !== "note";
+      }).length;
+
+      return `
+        <div class="paperMeta">
+          ${topic ? `<div class="paperTitle"><b>Topic:</b> ${escapeHtml(topic)}</div>` : ``}
+          <div class="paperTitle"><b>Title:</b> ${escapeHtml(title)}</div>
+
+          <div class="paperMetaRow">
+            <div class="paperMetaLeft"><b>Questions:</b> ${questionCount}</div>
+            <div class="paperMetaRight"><b>Total Marks:</b> ${totalMarks}</div>
+          </div>
+        </div>
+      `;
+    }
+    function renderQuestionHead(rawText, points, fallbackNo, questionTotal){
+      const parsed = parseExamTextParts(rawText);
       const label = parsed.label || `${fallbackNo}.`;
       const body = parsed.body || (parsed.kind === "plain" ? cleanSpaces(rawText || "") : "");
-      return `<div class="qHead"><div class="qTitle"><span class="qNo">${escapeHtml(label)}</span><span class="qTextPaper">${renderMixedMathPreview(body || cleanSpaces(rawText || ""))}</span></div><div class="marksMetaPaper"><div class="marksBox">${String(points).trim()}</div></div></div>`;
+
+      return `
+        <div class="qHead">
+          <div class="qTitle">
+            <span class="qNo">${escapeHtml(label)}</span>
+            <span class="qText">${renderMixedMath(body || cleanSpaces(rawText || ""))}</span>
+          </div>
+          <div class="marksMeta" title="Question marks">
+            <div class="marksLbl">Marks</div>
+            <div class="marksBox">${String(points).trim()}</div>
+          </div>
+        </div>
+      `;
     }
-    function renderNoteLikePreview(rawText, imageHtml){
-      const parsed = parseExamTextPartsPreview(rawText);
-      if (parsed.kind === "main") return `<div class="q"><div class="qMainHeading">${escapeHtml(parsed.label)}</div>${parsed.body ? `<div class="noteBox" style="margin-top:8px;">${renderMixedMathPreview(parsed.body)}</div>` : ""}${imageHtml}</div>`;
-      if (parsed.kind === "section") return `<div class="q"><div class="qSectionStem"><div class="qSectionLeft"><div class="qSectionNo">${escapeHtml(parsed.label)}</div><div class="qSectionText">${renderMixedMathPreview(parsed.body)}</div></div></div>${imageHtml}</div>`;
-      return `<div class="q"><div class="noteBox">${renderMixedMathPreview(cleanSpaces(rawText || ""))}</div>${imageHtml}</div>`;
+    function renderNoteLike(rawText, imageHtml, sectionTotal){
+      const parsed = parseExamTextParts(rawText);
+
+      if (parsed.kind === "main") {
+        const bodyHtml = parsed.body ? `<div class="noteBox" style="margin-top:8px;">${renderMixedMath(parsed.body)}</div>` : "";
+        return `
+          <div class="q">
+            <div class="qMainHeading">${escapeHtml(parsed.label)}</div>
+            ${bodyHtml}
+            ${imageHtml}
+          </div>
+        `;
+      }
+
+      if (parsed.kind === "section") {
+        return `
+          <div class="q">
+            <div class="qSectionStem">
+              <div class="qSectionLeft">
+                <div class="qSectionNo">${escapeHtml(parsed.label)}</div>
+                <div class="qSectionText">${renderMixedMath(parsed.body)}</div>
+              </div>
+            </div>
+            ${imageHtml}
+          </div>
+        `;
+      }
+
+      return `
+        <div class="q">
+          <div class="noteBox">${renderMixedMath(cleanSpaces(rawText || ""))}</div>
+          ${imageHtml}
+        </div>
+      `;
+    }
+    function buildPreviewQuestionsFromCards(){
+      const cards = [...questionsWrap.querySelectorAll('.qcard')];
+      const questions = [];
+      for (const card of cards) {
+        const type = String(card.getAttribute('data-type') || '').toLowerCase();
+        if (!type) continue;
+        if (type === 'group') {
+          const label = cleanSpaces(card.querySelector('.cardLabel')?.textContent || '');
+          if (label) questions.push({ type:'note', text:label });
+          continue;
+        }
+        if (type === 'section') {
+          const number = cleanSpaces(card.querySelector('.cardLabel')?.textContent || '');
+          const txt = cleanSpaces(card.querySelector('.sectionText')?.value || '');
+          questions.push({ type:'note', text:`${number} ${txt}`.trim() });
+          continue;
+        }
+        if (type === 'note') {
+          const txt = cleanSpaces(card.querySelector('.noteText')?.value || '');
+          if (txt) questions.push({ type:'note', text:txt });
+          continue;
+        }
+        const qText = stripLeadingQuestionNumber(card.querySelector('.qText')?.value || '');
+        const label = cleanSpaces(card.querySelector('.cardLabel')?.textContent || card.dataset.fullNumber || '');
+        const hint = cleanSpaces(card.querySelector('.qHint')?.value || '');
+        const solution = String(card.querySelector('.qSolution')?.value || '').trim();
+        const img = readCardImage(card);
+        const points = cleanSpaces(card.querySelector('.qPoints')?.value || '1');
+        const base = {
+          type,
+          text: `${label} ${qText}`.trim(),
+          hint,
+          solution,
+          imageUrl: img,
+          points
+        };
+        if (type === 'text') {
+          questions.push(base);
+        } else if (type === 'mcq') {
+          const options = [...card.querySelectorAll('.optRow')]
+            .map(row => cleanSpaces(row.querySelector('.optInput')?.value || ''))
+            .filter(Boolean);
+          questions.push({ ...base, options });
+        }
+      }
+      return questions;
     }
     function refreshFullLearnerPreview(target=fullLearnerPreview, mode=currentFullPreviewMode){
       if (!target) return;
-      currentFullPreviewMode = mode || "attempt";
-      previewAttemptModeBtn?.classList.toggle("btn", currentFullPreviewMode === "attempt");
-      previewReviewModeBtn?.classList.toggle("btn", currentFullPreviewMode === "review");
-      const title = cleanSpaces(titleEl.value || "Assessment Title");
-      const grade = cleanSpaces(gradeEl.options[gradeEl.selectedIndex]?.text || "");
-      const topic = cleanSpaces(topicEl.value || "");
-      const instructions = cleanSpaces(instructionsEl.value || "");
-      const cards = [...questionsWrap.querySelectorAll(".qcard")];
-      const parts = [];
-      parts.push(`<div class="examPaper"><div class="paperMeta"><div style="font-size:14px; font-weight:400; margin:0 0 2px 0; line-height:1.5;">${escapeHtml(title)}</div><div class="paperMetaRow"><div>${escapeHtml([grade, topic].filter(Boolean).join(" • "))}${instructions ? `<div style="margin-top:4px;">${renderMixedMathPreview(instructions)}</div>` : ""}</div><div class="paperMetaRight">Time limit: ${escapeHtml(timeLimitEl.value || "10")} minutes</div></div></div>`);
+      currentFullPreviewMode = mode || 'attempt';
+      previewAttemptModeBtn?.classList.toggle('btn', currentFullPreviewMode === 'attempt');
+      previewReviewModeBtn?.classList.toggle('btn', currentFullPreviewMode === 'review');
+
       let displayNo = 0;
-      const hasManualMain = cards.some(card => (card.getAttribute("data-type") || "") === "group");
-      if (!hasManualMain) parts.push(`<div class="q"><div class="qMainHeading">QUESTION 1</div></div>`);
-      for (const card of cards) {
-        const type = (card.getAttribute("data-type") || "").toLowerCase();
-        if (!type) continue;
-        if (type === "group") { const label = cleanSpaces(card.querySelector(".cardLabel")?.textContent || ""); if (label) parts.push(`<div class="q"><div class="qMainHeading">${escapeHtml(label)}</div></div>`); continue; }
-        if (type === "section") { const number = cleanSpaces(card.querySelector(".cardLabel")?.textContent || ""); const txt = cleanSpaces(card.querySelector(".sectionText")?.value || ""); parts.push(renderNoteLikePreview(`${number} ${txt}`.trim(), "")); continue; }
-        if (type === "note") { const txt = cleanSpaces(card.querySelector(".noteText")?.value || ""); if (txt) parts.push(renderNoteLikePreview(txt, "")); continue; }
-        const qText = stripLeadingQuestionNumber(card.querySelector(".qText")?.value || "");
-        const label = cleanSpaces(card.querySelector(".cardLabel")?.textContent || card.dataset.fullNumber || "");
-        const hint = cleanSpaces(card.querySelector(".qHint")?.value || "");
-        const solution = String(card.querySelector(".qSolution")?.value || "").trim();
-        const img = readCardImage(card);
-        const imageHtml = img ? `<img class="qimg" src="${escapeAttr(img)}" alt="Question image">` : "";
-        const points = cleanSpaces(card.querySelector(".qPoints")?.value || "1");
-        const headHtml = renderQuestionHeadPreview(`${label} ${qText}`.trim(), points, ++displayNo);
-        if (type === "text") {
-          parts.push(`<div class="q">${imageHtml}${headHtml}<input class="textAnswerPaper" placeholder="Type your answer" disabled>${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${currentFullPreviewMode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`);
-        } else if (type === "mcq") {
-          const opts = [...card.querySelectorAll(".optRow")].map((row, index) => ({ idx:index, txt:cleanSpaces(row.querySelector(".optInput")?.value || "") })).filter(o => o.txt);
-          parts.push(`<div class="q">${imageHtml}${headHtml}${opts.map((o, idx)=>`<div class="optPaper"><span class="optBullet">○</span><span class="optTextPaper">${renderMixedMathPreview(o.txt)}</span></div>`).join("")}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${currentFullPreviewMode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`);
+      const previewQuiz = {
+        title: cleanSpaces(titleEl.value || 'Assessment Title'),
+        topic: cleanSpaces(topicEl.value || ''),
+        questions: buildPreviewQuestionsFromCards()
+      };
+      const totals = computeQuestionAndSectionTotals(previewQuiz.questions);
+      const paperMetaHtml = buildPaperMeta(previewQuiz);
+      const allQuestions = previewQuiz.questions;
+      const hasMainHeading = allQuestions.some(q => {
+        const type = String(q?.type || 'mcq').toLowerCase();
+        if (type !== 'note') return false;
+        return parseExamTextParts(cleanSpaces(q?.text || '')).kind === 'main';
+      });
+      const autoMainHeadingHtml = hasMainHeading ? '' : `<div class="q"><div class="qMainHeading">QUESTION 1</div></div>`;
+
+      target.innerHTML = `<div class="examPaper">${paperMetaHtml}${autoMainHeadingHtml}${allQuestions.map((q, i) => {
+        const type = String(q.type || 'mcq').toLowerCase();
+        const hint = cleanSpaces(q.hint || '');
+        const img = cleanSpaces(q.imageUrl || '');
+        const solution = String(q.solution || '').trim();
+        const points = getQuestionPoints(q);
+        const rawText = cleanSpaces(q.text || '');
+        const mainNo = getMainQuestionNumber(rawText, 1);
+        const sectionKey = getSectionKey(rawText, mainNo);
+        const questionTotal = totals.mainTotals.get(mainNo) || points;
+        const sectionTotal = totals.sectionTotals.get(sectionKey) || points;
+
+        const imageHtml = img ? `<img class="qimg" src="${escapeAttr(img)}" alt="Question image" loading="lazy" decoding="async">` : '';
+
+        if (type === 'note') {
+          return renderNoteLike(rawText, imageHtml, sectionTotal);
         }
-      }
-      parts.push(`</div>`);
-      target.innerHTML = parts.join("");
+
+        displayNo += 1;
+        const headHtml = renderQuestionHead(rawText, points, displayNo, questionTotal);
+
+        if (type === 'text') {
+          return `
+            <div class="q" data-scorable="1">
+              ${imageHtml}
+              ${headHtml}
+              <input class="textAnswer" id="previewTxt${i}" placeholder="Type your answer" autocomplete="off" disabled />
+              ${hint ? `<div class="hint">Hint: <span class="hintText">${escapeHtml(hint)}</span></div>` : ``}
+              ${currentFullPreviewMode === 'review' ? formatSolutionHtml(solution) : `<div class="solutionHolder hidden">${formatSolutionHtml(solution)}</div>`}
+            </div>
+          `;
+        }
+
+        const opts = Array.isArray(q.options) ? q.options : [];
+        return `
+          <div class="q" data-scorable="1" data-qindex="${i}">
+            ${imageHtml}
+            ${headHtml}
+            ${opts.map((o, j) => `
+              <label class="opt">
+                <input class="mcqInput" data-qindex="${i}" type="radio" name="preview_q${i}" value="${j}" disabled>
+                <span class="optText">${renderMixedMath(cleanSpaces(o))}</span>
+              </label>
+            `).join('')}
+            ${hint ? `<div class="hint">Hint: <span class="hintText">${escapeHtml(hint)}</span></div>` : ``}
+            ${currentFullPreviewMode === 'review' ? formatSolutionHtml(solution) : `<div class="solutionHolder hidden">${formatSolutionHtml(solution)}</div>`}
+          </div>
+        `;
+      }).join('')}</div>`;
       typesetMath(target);
     }
-
     function renderInstructionsPreview(){
       const t = cleanSpaces(instructionsEl.value || "");
       setPreviewText(prevInstructions, t || "(Instructions preview)");
@@ -942,6 +1194,62 @@ function escapeHtml(str){
     }
     publishModeEl.addEventListener("change", updatePublishUI);
     updatePublishUI();
+
+
+    const deleteBroadcast = (() => {
+      try {
+        return ('BroadcastChannel' in window) ? new BroadcastChannel('practiceonline-assessments') : null;
+      } catch {
+        return null;
+      }
+    })();
+
+    function purgeDeletedAssessmentFromCaches(quizId){
+      if (!quizId) return;
+      allQuizzes = Array.isArray(allQuizzes) ? allQuizzes.filter(q => String(q?._id || '') !== String(quizId)) : [];
+      if (currentQuiz && String(currentQuiz._id || '') === String(quizId)) currentQuiz = null;
+      const keysToDrop = [
+        'selectedAssessmentId',
+        'lastAssessmentId',
+        'currentAssessmentId',
+        'quizId',
+        'selectedQuizId',
+        'activeQuizId'
+      ];
+      keysToDrop.forEach(key => {
+        try {
+          if (String(localStorage.getItem(key) || '') === String(quizId)) localStorage.removeItem(key);
+        } catch {}
+      });
+      try { localStorage.setItem('practiceonline:lastDeletedAssessmentId', String(quizId)); } catch {}
+      renderAssessmentDropdown();
+      updateAvailabilityUi();
+    }
+
+    function broadcastAssessmentDeleted(quizId){
+      if (!quizId) return;
+      try {
+        localStorage.setItem('practiceonline:assessmentDeleted', JSON.stringify({ id: String(quizId), at: Date.now() }));
+      } catch {}
+      try {
+        deleteBroadcast?.postMessage({ type: 'assessment-deleted', id: String(quizId) });
+      } catch {}
+    }
+
+    window.addEventListener('storage', (e) => {
+      if (e.key !== 'practiceonline:assessmentDeleted' || !e.newValue) return;
+      try {
+        const payload = JSON.parse(e.newValue);
+        if (payload?.id) purgeDeletedAssessmentFromCaches(payload.id);
+      } catch {}
+    });
+
+    try {
+      deleteBroadcast?.addEventListener('message', (event) => {
+        const payload = event?.data || {};
+        if (payload?.type === 'assessment-deleted' && payload?.id) purgeDeletedAssessmentFromCaches(payload.id);
+      });
+    } catch {}
 
     assessmentSelectEl?.addEventListener("change", ()=>{
       const id = assessmentSelectEl.value;
@@ -977,21 +1285,22 @@ function escapeHtml(str){
 
     deleteAssessmentBtn?.addEventListener("click", async ()=>{
       if (!currentQuiz?._id) return;
-      const ok = confirm("Delete this assessment permanently?");
+      const quizId = String(currentQuiz._id);
+      const ok = confirm("Delete this assessment permanently everywhere in the app? This cannot be undone.");
       if (!ok) return;
-      const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
+      const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
       }).catch(() => null);
       if (!res) return setMsg("Network error while deleting assessment.", "error");
       if (res.status === 401) return logout();
       if (!res.ok) return setMsg("Could not delete assessment.", "error");
-      currentQuiz = null;
+      purgeDeletedAssessmentFromCaches(quizId);
+      broadcastAssessmentDeleted(quizId);
       assessmentSelectEl.value = "";
-      updateAvailabilityUi();
-      await loadAssessmentList();
-      setMsg("Assessment deleted.", "ok");
       resetFormAfterSave();
+      await loadAssessmentList();
+      setMsg("Assessment deleted everywhere it is loaded from this quiz record.", "ok");
     });
 
     (async () => {
@@ -2039,6 +2348,7 @@ function escapeHtml(str){
       let points = 1;
       let explicitType = "";
       let typedAnswer = "";
+      let imageUrl = "";
       const options = [];
       const correctLetters = [];
       let inSolution = false;
@@ -2077,6 +2387,11 @@ function escapeHtml(str){
           continue;
         }
 
+        if (/^(IMAGE|IMAGE_URL)\s*:/i.test(line) && !inSolution) {
+          imageUrl = line.replace(/^(IMAGE|IMAGE_URL)\s*:/i, "").trim();
+          continue;
+        }
+
         if (/^(POINTS|MARKS)\s*:/i.test(line) && !inSolution) {
           const p = Number(line.replace(/^(POINTS|MARKS)\s*:/i, "").trim());
           if (Number.isInteger(p) && p >= 1) points = p;
@@ -2094,7 +2409,7 @@ function escapeHtml(str){
           continue;
         }
 
-        const optMatch = line.match(/^([A-D])\s*[:.)-]\s*(.*)$/i);
+        const optMatch = line.match(/^([A-Z])\s*[:.)-]\s*(.*)$/i);
         if (optMatch && !inSolution) {
           const label = optMatch[1].toUpperCase();
           let value = optMatch[2].trim();
@@ -2107,7 +2422,7 @@ function escapeHtml(str){
         if (/^ANSWER\s*:/i.test(line) && !inSolution) {
           const ansRaw = line.replace(/^ANSWER\s*:/i, "").trim();
           typedAnswer = ansRaw;
-          const matches = ansRaw.toUpperCase().match(/[A-D]/g);
+          const matches = ansRaw.toUpperCase().match(/[A-Z]/g);
           if (matches && options.length) correctLetters.push(...matches);
           continue;
         }
@@ -2147,6 +2462,7 @@ function escapeHtml(str){
           hint,
           solution,
           points,
+          imageUrl,
           correctText: typedAnswer,
           textAnswerMode: "exact",
           numberTolerance: null
@@ -2172,6 +2488,7 @@ function escapeHtml(str){
         hint,
         solution,
         points,
+        imageUrl,
         options: options.map(o => autoConvertMixedLatex(o.value)),
         correctIndexes
       };
@@ -2397,17 +2714,32 @@ function escapeHtml(str){
           return { type: "note", text: `QUESTION ${n}` };
         }
         if (item.type === "section") {
-          const num = cleanSpaces(item.number || "");
+          const num = cleanSpaces(item.number || item.sectionNumber || "");
           return { type: "note", text: `${num} ${cleanSpaces(item.text || "")}` };
         }
-        if (item.type === "note") return { type: "note", text: cleanSpaces(item.text || "") };
+        if (item.type === "note") {
+          return { type: "note", text: cleanSpaces(item.text || "") };
+        }
+        if (item.type === "text") {
+          return {
+            type: "text",
+            text: cleanSpaces(item.question || item.text || ""),
+            hint: cleanSpaces(item.hint || ""),
+            imageUrl: cleanSpaces(item.imageUrl || ""),
+            points: Number(item.points || 1),
+            correctText: cleanSpaces(item.correctText || ""),
+            textAnswerMode: item.textAnswerMode || "exact",
+            numberTolerance: item.numberTolerance ?? null,
+            solution: String(item.solution || "").trim()
+          };
+        }
         const options = [...(item.options || [])];
-        const correctIndexes = [...(item.correctIndexes || [])];
+        const correctIndexes = [...(item.correctIndexes || [])].map(Number).filter(Number.isInteger);
         const payload = {
           type: "mcq",
-          text: cleanSpaces(item.question || ""),
+          text: cleanSpaces(item.question || item.text || ""),
           hint: cleanSpaces(item.hint || ""),
-          imageUrl: "",
+          imageUrl: cleanSpaces(item.imageUrl || ""),
           points: Number(item.points || 1),
           options,
           correctIndexes,
@@ -2443,6 +2775,182 @@ function escapeHtml(str){
     async function readUploadedTextFile(file){
       return await file.text();
     }
+
+    function optionLabelFromIndex(index){
+      const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      return letters[index] || `OPTION${index + 1}`;
+    }
+
+    function serializeParsedAssessmentToTxt(parsed){
+      const meta = parsed?.meta || {};
+      const items = Array.isArray(parsed?.items) ? parsed.items : [];
+      const lines = [];
+      lines.push(`TITLE: ${cleanSpaces(meta.title || "Assessment")}`);
+      lines.push(`GRADE: ${cleanSpaces(meta.grade || "")}`);
+      lines.push(`TOPIC: ${cleanSpaces(meta.topic || "")}`);
+      lines.push(`TIME_LIMIT: ${cleanSpaces(meta.timeLimitMinutes || "10")}`);
+      lines.push(`DIFFICULTY: ${normalizeDifficulty(meta.difficulty)}`);
+      lines.push(`PAPER: ${normalizePaper(meta.paper)}`);
+      lines.push(`SEND_EMAIL: ${meta.sendPublishEmail ? "true" : "false"}`);
+      if (cleanSpaces(meta.instructions || "")) lines.push(`INSTRUCTIONS: ${String(meta.instructions).trim()}`);
+      lines.push("");
+
+      items.forEach((item, idx) => {
+        if (idx > 0) lines.push("");
+        if (item.type === "group") {
+          lines.push(`NOTE: QUESTION ${Number(item.mainNumber || 1)}`);
+          if (cleanSpaces(item.text || "")) {
+            lines.push("");
+            lines.push(`NOTE: ${String(item.text).trim()}`);
+          }
+          return;
+        }
+        if (item.type === "section") {
+          lines.push(`NOTE: ${cleanSpaces(item.number || item.sectionNumber || "")} ${cleanSpaces(item.text || "")}`.trim());
+          return;
+        }
+        if (item.type === "note") {
+          lines.push(`NOTE: ${String(item.text || "").trim()}`);
+          return;
+        }
+
+        lines.push(`QUESTION: ${String(item.question || item.text || "").trim()}`);
+        lines.push(`TYPE: ${item.type === "text" ? "text" : "mcq"}`);
+        if (cleanSpaces(item.hint || "")) lines.push(`HINT: ${String(item.hint).trim()}`);
+        if (cleanSpaces(item.imageUrl || "")) lines.push(`IMAGE_URL: ${String(item.imageUrl).trim()}`);
+        lines.push(`POINTS: ${Number(item.points || 1)}`);
+
+        if (item.type === "text") {
+          lines.push(`ANSWER: ${String(item.correctText || "").trim()}`);
+        } else {
+          const opts = Array.isArray(item.options) ? item.options : [];
+          opts.forEach((opt, optIdx) => {
+            lines.push(`${optionLabelFromIndex(optIdx)}. ${String(opt || "").trim()}`);
+          });
+          const correctIndexes = Array.isArray(item.correctIndexes) && item.correctIndexes.length
+            ? item.correctIndexes.map(Number).filter(Number.isInteger)
+            : (Number.isInteger(Number(item.correctIndex)) ? [Number(item.correctIndex)] : []);
+          const answerLetters = correctIndexes.map(optionLabelFromIndex).join(",");
+          if (answerLetters) lines.push(`ANSWER: ${answerLetters}`);
+        }
+
+        if (String(item.solution || "").trim()) {
+          lines.push("SOLUTION:");
+          lines.push(...String(item.solution || "").replace(/\r/g, "").split("\n"));
+        }
+      });
+
+      return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
+    }
+
+    function downloadTextFile(filename, content){
+      const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 800);
+    }
+
+    function buildTxtFilenameFromQuiz(quiz){
+      const raw = cleanSpaces(quiz?.title || "assessment").toLowerCase();
+      const safe = raw.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "assessment";
+      return `${safe}.txt`;
+    }
+
+    function buildOverridePayloadPreservingIdentity(baseQuiz, contentPayload){
+      const merged = { ...(baseQuiz || {}), ...(contentPayload || {}) };
+      merged._id = baseQuiz?._id;
+      if (baseQuiz && "createdAt" in baseQuiz) merged.createdAt = baseQuiz.createdAt;
+      if (baseQuiz && "createdBy" in baseQuiz) merged.createdBy = baseQuiz.createdBy;
+      if (baseQuiz && "createdById" in baseQuiz) merged.createdById = baseQuiz.createdById;
+      if (baseQuiz && "order" in baseQuiz) merged.order = baseQuiz.order;
+      if (baseQuiz && "sortOrder" in baseQuiz) merged.sortOrder = baseQuiz.sortOrder;
+      if (baseQuiz && "displayOrder" in baseQuiz) merged.displayOrder = baseQuiz.displayOrder;
+      if (baseQuiz && "position" in baseQuiz) merged.position = baseQuiz.position;
+      if (baseQuiz && "sequence" in baseQuiz) merged.sequence = baseQuiz.sequence;
+      if (baseQuiz && "index" in baseQuiz) merged.index = baseQuiz.index;
+      if (baseQuiz && "attempts" in baseQuiz) merged.attempts = baseQuiz.attempts;
+      if (baseQuiz && "attemptCount" in baseQuiz) merged.attemptCount = baseQuiz.attemptCount;
+      if (baseQuiz && "analytics" in baseQuiz) merged.analytics = baseQuiz.analytics;
+      if (baseQuiz && "stats" in baseQuiz) merged.stats = baseQuiz.stats;
+      if (baseQuiz && "results" in baseQuiz) merged.results = baseQuiz.results;
+      if (baseQuiz && "submissions" in baseQuiz) merged.submissions = baseQuiz.submissions;
+      if (baseQuiz && "isFrozen" in baseQuiz) merged.isFrozen = baseQuiz.isFrozen;
+      if (baseQuiz && "frozenAt" in baseQuiz) merged.frozenAt = baseQuiz.frozenAt;
+      return merged;
+    }
+
+    downloadTxtBtn?.addEventListener("click", async () => {
+      if (!currentQuiz?._id) {
+        setMsg("Please select an assessment first.", "error");
+        return;
+      }
+      try {
+        const parsed = quizToParsedAssessment(currentQuiz);
+        const txt = serializeParsedAssessmentToTxt(parsed);
+        downloadTextFile(buildTxtFilenameFromQuiz(currentQuiz), txt);
+        setMsg("TXT file downloaded in the modern format.", "ok");
+      } catch (err) {
+        setMsg(err.message || "Could not build the TXT download.", "error");
+      }
+    });
+
+    overrideTxtBtn?.addEventListener("click", async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return setMsg("Please log in again before overriding from TXT.", "error");
+      if (!currentQuiz?._id) return setMsg("Please select an assessment first.", "error");
+      const file = overrideFileEl?.files?.[0];
+      if (!file) return setMsg("Please choose a TXT file first.", "error");
+
+      try {
+        clearParseErrors();
+        const raw = await readUploadedTextFile(file);
+        const parsed = parseAssessmentFile(raw, file.name);
+        const contentPayload = buildPayloadFromParsedAssessment(parsed);
+        const payload = buildOverridePayloadPreservingIdentity(currentQuiz, contentPayload);
+
+        const ok = confirm("Override this assessment from TXT? This keeps the same assessment record, created date, and list order, but replaces the quiz content.");
+        if (!ok) return;
+
+        saveBtn.disabled = true;
+        publishBtn.disabled = true;
+        overrideTxtBtn.disabled = true;
+        setMsg("Overriding assessment from TXT while keeping the same record...", "muted");
+
+        const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json().catch(()=>({}));
+        if (!res.ok) {
+          throw new Error(data.message || "Could not override the assessment from TXT.");
+        }
+
+        currentQuiz = data;
+        fillAssessmentForm(quizToParsedAssessment(currentQuiz));
+        updateAvailabilityUi();
+        await loadAssessmentList();
+        assessmentSelectEl.value = currentQuiz._id;
+        if (overrideFileEl) overrideFileEl.value = "";
+        setMsg("Assessment overridden from TXT. The same record was kept.", "ok");
+      } catch (err) {
+        if (err?.parseErrors) showParseErrors(err.parseErrors, "Please fix these TXT issues before override");
+        setMsg(err.message || "Could not override from TXT.", "error");
+      } finally {
+        saveBtn.disabled = false;
+        publishBtn.disabled = !canPublish;
+        overrideTxtBtn.disabled = false;
+      }
+    });
 
     addGroup();
     addSection();
