@@ -1631,6 +1631,119 @@ body.submitted-state .solutionBox{display:none!important;}
   height:26px !important;
 }
 
+
+/* ===== FINAL INLINE MATH BASELINE FIX ===== */
+
+.attemptPaperPreview .qTextPaper,
+.attemptPaperPreview .qSectionText{
+  display:flex !important;
+  align-items:flex-start !important;
+  flex-wrap:wrap !important;
+  gap:10px !important;
+}
+
+/* INLINE SVG MATH */
+.attemptPaperPreview mjx-container[jax="SVG"]{
+  display:inline-flex !important;
+  align-items:center !important;
+  vertical-align:middle !important;
+  position:relative !important;
+  top:4px !important;
+}
+
+/* FRACTIONS */
+.attemptPaperPreview mjx-mfrac{
+  padding-top:6px !important;
+  padding-bottom:6px !important;
+}
+
+/* GIVEN alignment */
+.attemptPaperPreview .qSectionStem{
+  align-items:flex-start !important;
+}
+
+/* QUESTION ROWS */
+.attemptPaperPreview .qHead{
+  align-items:flex-start !important;
+}
+
+
+/* ===== BEST FINAL MATH SIZE + SENTENCE ALIGNMENT PATCH ===== */
+
+/* Keep normal sentences clean and aligned */
+.attemptPaperPreview .qHead,
+.attemptPaperPreview .qSectionStem{
+  display:grid !important;
+  grid-template-columns:78px minmax(0,1fr) auto !important;
+  column-gap:18px !important;
+  align-items:start !important;
+}
+
+.attemptPaperPreview .qNo,
+.attemptPaperPreview .qSectionNo{
+  width:78px !important;
+  min-width:78px !important;
+  font-size:18px !important;
+  line-height:1.7 !important;
+}
+
+.attemptPaperPreview .qTextPaper,
+.attemptPaperPreview .qSectionText{
+  font-size:18px !important;
+  line-height:1.7 !important;
+  display:block !important;
+}
+
+/* Make display-style question expressions much bigger */
+.attemptPaperPreview .qTextPaper > mjx-container[jax="SVG"]:only-child{
+  font-size:2.35em !important;
+  line-height:1.45 !important;
+  margin-top:0 !important;
+  margin-bottom:8px !important;
+  transform:none !important;
+  top:0 !important;
+}
+
+/* Make inline maths readable but not oversized */
+.attemptPaperPreview .qTextPaper mjx-container[jax="SVG"],
+.attemptPaperPreview .qSectionText mjx-container[jax="SVG"],
+.attemptPaperPreview .optTextPaper mjx-container[jax="SVG"]{
+  font-size:1.45em !important;
+  line-height:1.25 !important;
+  vertical-align:middle !important;
+  position:relative !important;
+  top:2px !important;
+  margin:0 4px !important;
+}
+
+/* Bigger MCQ answer maths */
+.attemptPaperPreview .optTextPaper{
+  font-size:18px !important;
+  line-height:1.9 !important;
+  display:block !important;
+}
+
+.attemptPaperPreview .optPaper{
+  display:grid !important;
+  grid-template-columns:30px minmax(0,1fr) !important;
+  column-gap:14px !important;
+  align-items:center !important;
+  padding:8px 0 8px 88px !important;
+}
+
+/* Make actual radio controls easier to see */
+.attemptPaperPreview .opt input,
+.opt input{
+  width:20px !important;
+  height:20px !important;
+}
+
+/* More room for tall fractions */
+.attemptPaperPreview .q{
+  padding-top:16px !important;
+  padding-bottom:24px !important;
+}
+
 </style>
 </head>
 
