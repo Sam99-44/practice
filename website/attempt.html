@@ -7,6 +7,30 @@
 
   <!-- MathJax -->
   <script>
+
+/* ===== QUIZ LOADER ===== */
+const quizLoaderOverlay = document.getElementById("quizLoaderOverlay");
+
+function showQuizLoader(){
+  if(quizLoaderOverlay){
+    quizLoaderOverlay.classList.remove("hidden");
+  }
+}
+
+function hideQuizLoader(){
+  if(!quizLoaderOverlay) return;
+
+  setTimeout(() => {
+    quizLoaderOverlay.classList.add("hidden");
+  }, 450);
+}
+
+showQuizLoader();
+
+window.addEventListener("load", () => {
+  hideQuizLoader();
+});
+
     window.MathJax = {
       tex: {
         inlineMath: [["$", "$"], ["\\(", "\\)"]],
@@ -620,15 +644,41 @@ body.submitted-state .solutionBox{display:none!important;}
     .marksMeta::before{content:"(";}
     .marksMeta::after{content:")";}
     .marksLbl{display:none;}
-    .qimg{
-      display:block;
-      width:100%;
-      max-width:560px;
-      height:auto;
-      border-radius:0;
-      border:1px solid #d9dee7;
-      margin:6px 0 16px 68px;
-    }
+    /* ===== PERFECT IMAGE ALIGNMENT ===== */
+.qimg{
+  display:block !important;
+  margin:18px auto !important;
+  max-width:100% !important;
+  width:auto !important;
+  height:auto !important;
+
+  border:1px solid #d9dee7 !important;
+  border-radius:4px !important;
+
+  object-fit:contain !important;
+  background:#fff !important;
+
+  visibility:visible !important;
+  opacity:1 !important;
+}
+
+/* IMAGE CONTAINER */
+.qImageWrap{
+  width:100% !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:center !important;
+  margin:12px 0 18px 0 !important;
+  overflow-x:auto !important;
+}
+
+/* MOBILE */
+@media(max-width:640px){
+  .qimg{
+    max-width:100% !important;
+    margin:14px auto !important;
+  }
+}
 
     .noteBox{
       border:none;
@@ -1597,10 +1647,388 @@ mjx-container[jax="SVG"] mjx-line{
   stroke-width:1.8 !important;
 }
 
+
+/* ===== PER QUESTION SUBMIT + FEEDBACK ===== */
+.qLocalActions{
+  margin:8px 0 0 68px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.qCheckBtn{
+  min-width:112px;
+  height:30px;
+  padding:0 10px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
+  background:#fff;
+  color:#111827;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.qCheckBtn:hover{
+  background:#f9fafb;
+}
+
+.qCheckBtn:disabled{
+  opacity:.65;
+  cursor:not-allowed;
+}
+
+.qFeedback{
+  font-size:13px;
+  line-height:1.4;
+  font-weight:700;
+  min-height:18px;
+}
+
+.qFeedback.correct{
+  color:#065f46;
+}
+
+.qFeedback.wrong{
+  color:#b91c1c;
+}
+
+.qFeedback.neutral{
+  color:#475569;
+}
+
+.q.is-local-correct .optText,
+.q.is-local-correct .qText{
+  color:#065f46;
+}
+
+.q.is-local-wrong .qText{
+  color:#111827;
+}
+
+@media(max-width:640px){
+  .qLocalActions{
+    margin-left:56px;
+  }
+}
+
+
+
+/* ===== EXACT REVIEW.HTML WORKINGS STYLE ON ATTEMPT PAGE ===== */
+
+.solutionHolder{
+  display:block;
+}
+
+.solutionHolder.hidden{
+  display:none !important;
+}
+
+.solutionHolder .solutionBox{
+  margin-top:12px !important;
+  margin-left:68px !important;
+  border-radius:6px !important;
+  border:1px solid #d9dee7 !important;
+  background:#ffffff !important;
+  padding:12px !important;
+  font-family:"Times New Roman", Times, serif !important;
+  color:#111827 !important;
+}
+
+.solutionHolder .solutionTop,
+.solutionHolder .solutionTitle{
+  font-weight:700 !important;
+  font-size:13px !important;
+  margin:0 0 8px 0 !important;
+  color:#111827 !important;
+  font-family:"Times New Roman", Times, serif !important;
+}
+
+.solutionHolder .solutionBody{
+  font-weight:400 !important;
+  font-size:14px !important;
+  line-height:1.8 !important;
+  white-space:pre-wrap !important;
+  word-break:break-word !important;
+  padding:8px 10px !important;
+  border:1px solid #f0f0f0 !important;
+  border-radius:4px !important;
+  background:#ffffff !important;
+  font-family:"Times New Roman", Times, serif !important;
+}
+
+.solutionHolder .solutionBody mjx-container{
+  margin:0 !important;
+  padding:0 !important;
+}
+
+.solutionHolder mjx-container[display="true"]{
+  margin:0.35rem 0 !important;
+}
+
+@media(max-width:640px){
+  .solutionHolder .solutionBox{
+    margin-left:56px !important;
+  }
+}
+
+
+/* ===== FINAL REVIEW.HTML ALIGNMENT PATCH FOR ATTEMPT WORKINGS ===== */
+
+/* Make the per-question area align like review.html */
+.qLocalActions{
+  margin:10px 0 0 68px !important;
+}
+
+.qCheckBtn{
+  min-width:124px !important;
+  height:36px !important;
+  border-radius:6px !important;
+  border:1px solid #ddd !important;
+  background:#fff !important;
+  color:#111827 !important;
+  font-family:"Times New Roman", Times, serif !important;
+  font-size:14px !important;
+  font-weight:700 !important;
+}
+
+.qFeedback{
+  font-family:"Times New Roman", Times, serif !important;
+  font-size:14px !important;
+  line-height:1.5 !important;
+  font-weight:700 !important;
+}
+
+/* Review.html option alignment after checking */
+.q .opt.correct{
+  background:#ecfdf5 !important;
+  border:1px solid #bbf7d0 !important;
+  border-radius:6px !important;
+  padding:10px 12px 10px 68px !important;
+  margin-bottom:8px !important;
+}
+
+.q .opt.wrong{
+  background:#fff1f2 !important;
+  border:1px solid #fecaca !important;
+  border-radius:6px !important;
+  padding:10px 12px 10px 68px !important;
+  margin-bottom:8px !important;
+}
+
+/* Keep unchecked options clean like review.html */
+.q .opt{
+  font-family:"Times New Roman", Times, serif !important;
+  font-size:14px !important;
+  line-height:1.45 !important;
+  align-items:flex-start !important;
+}
+
+/* Exact review.html solution alignment */
+.solutionHolder .solutionBox{
+  margin-top:12px !important;
+  margin-left:68px !important;
+  border-radius:6px !important;
+  border:1px solid #d9dee7 !important;
+  background:#ffffff !important;
+  padding:12px !important;
+  max-width:calc(100% - 68px) !important;
+  font-family:"Times New Roman", Times, serif !important;
+}
+
+.solutionHolder .solutionTop{
+  font-weight:700 !important;
+  font-size:13px !important;
+  margin:0 0 8px 0 !important;
+  color:#111827 !important;
+  font-family:"Times New Roman", Times, serif !important;
+}
+
+.solutionHolder .solutionBody{
+  font-weight:400 !important;
+  font-size:14px !important;
+  line-height:1.8 !important;
+  white-space:pre-wrap !important;
+  word-break:break-word !important;
+  padding:8px 10px !important;
+  border:1px solid #f0f0f0 !important;
+  border-radius:4px !important;
+  background:#ffffff !important;
+  font-family:"Times New Roman", Times, serif !important;
+}
+
+/* Do not let attempt math-size patches enlarge solution workings */
+.solutionHolder .solutionBody mjx-container,
+.solutionHolder .solutionBody mjx-container[jax="SVG"]{
+  font-size:1em !important;
+  line-height:1.2 !important;
+  margin:0 !important;
+  padding:0 !important;
+  top:0 !important;
+  vertical-align:middle !important;
+  color:#000 !important;
+  opacity:1 !important;
+}
+
+.solutionHolder .solutionBody mjx-container[display="true"]{
+  margin:0.35rem 0 !important;
+  text-align:left !important;
+}
+
+.solutionHolder .solutionBody mjx-container[jax="SVG"] svg{
+  max-width:100% !important;
+  overflow:visible !important;
+  vertical-align:middle !important;
+}
+
+/* Mobile: same as review.html */
+@media(max-width:640px){
+  .qLocalActions{
+    margin-left:56px !important;
+  }
+
+  .solutionHolder .solutionBox{
+    margin-left:56px !important;
+    max-width:calc(100% - 56px) !important;
+  }
+
+  .q .opt.correct,
+  .q .opt.wrong{
+    padding-left:56px !important;
+  }
+}
+
+
+/* ===== KEEP PER-QUESTION WORKINGS VISIBLE AFTER LOCAL SUBMIT ===== */
+body.submitted-state .solutionHolder .solutionBox{
+  display:block !important;
+}
+
+.qLocalActions .qCheckBtn{
+  font-family:"Times New Roman", Times, serif !important;
+}
+
+
+/* ===== ALREADY SUBMITTED BUTTON FIX ===== */
+
+
+/* ===== OPTIONAL SHOW ANSWER BUTTON ===== */
+.qShowAnswerBtn{
+  min-width:104px;
+  height:36px;
+  padding:0 10px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
+  background:#fff;
+  color:#111827;
+  font-family:"Times New Roman", Times, serif;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+
+.qShowAnswerBtn:hover{
+  background:#f9fafb;
+}
+
+.qShowAnswerBtn.visible{
+  display:inline-flex;
+}
+
+
+/* ===== FINAL CENTERED IMAGES - NO GREY BORDER ===== */
+.qImageWrap{
+  width:100% !important;
+  max-width:100% !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:center !important;
+  margin:14px auto 20px auto !important;
+  padding:0 !important;
+  overflow-x:auto !important;
+  text-align:center !important;
+}
+
+.qimg{
+  display:block !important;
+  width:auto !important;
+  max-width:min(100%, 720px) !important;
+  height:auto !important;
+  max-height:none !important;
+  margin:0 auto !important;
+
+  border:none !important;
+  outline:none !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+
+  object-fit:contain !important;
+  background:transparent !important;
+
+  visibility:visible !important;
+  opacity:1 !important;
+}
+
+/* Override older image rules that pushed images left/right */
+.examPaper .qimg,
+.q .qimg,
+.noteBox .qimg{
+  margin-left:auto !important;
+  margin-right:auto !important;
+  border:none !important;
+  outline:none !important;
+  box-shadow:none !important;
+}
+
+@media(max-width:640px){
+  .qImageWrap{
+    margin:12px auto 18px auto !important;
+    padding:0 !important;
+  }
+
+  .qimg{
+    max-width:100% !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+    border:none !important;
+  }
+}
+
+
+
+/* ===== SAFE INLINE QUIZ LOADING MESSAGE ONLY ===== */
+.quizLoaderOverlay{display:none !important;}
+
+/* ===== INLINE BUBBLE LOADER - DOES NOT BLOCK PAGE ===== */
+.inlineLoaderDots span{
+  width:12px;
+  height:12px;
+  border-radius:50%;
+  background:#1b1648;
+  display:inline-block;
+  animation:inlineBubbleBounce 1s infinite ease-in-out;
+}
+
+.inlineLoaderDots span:nth-child(2){animation-delay:.15s;}
+.inlineLoaderDots span:nth-child(3){animation-delay:.3s;}
+
+@keyframes inlineBubbleBounce{
+  0%,80%,100%{transform:scale(.55);opacity:.35;}
+  40%{transform:scale(1);opacity:1;}
+}
+
 </style>
 </head>
 
 <body>
+</div>
+
 <header class="topbar">
   <div class="topbar-inner">
     <div class="accountLeft">
@@ -1695,7 +2123,7 @@ mjx-container[jax="SVG"] mjx-line{
 
       <div class="btnRow">
         <button class="btn" id="submitBtn" type="button">Submit</button>
-        <button class="btn2" id="retryBtn" type="button" disabled>Retry</button>
+        <button class="btn2" id="retryBtn" type="button" style="display:none;" disabled>Retry</button>
         <button class="btn2" id="viewResultsBtn" type="button" disabled>View Results</button>
       </div>
 
@@ -1811,7 +2239,17 @@ mjx-container[jax="SVG"] mjx-line{
   const msgEl = document.getElementById("msg");
   const statusBox = document.getElementById("statusBox");
   const questionsWrap = document.getElementById("questionsWrap");
-  const postSubmitOverlay = document.getElementById("postSubmitOverlay");
+
+  /* ===== SAFE NO-BLOCK LOADER FUNCTIONS ===== */
+  function showQuizLoader(){
+    if (questionsWrap) questionsWrap.classList.add("loading");
+  }
+
+  function hideQuizLoader(){
+    if (questionsWrap) questionsWrap.classList.remove("loading");
+  }
+
+const postSubmitOverlay = document.getElementById("postSubmitOverlay");
   const postSubmitPanel = document.getElementById("postSubmitPanel");
   const postSubmitScore = document.getElementById("postSubmitScore");
   const postSubmitPercent = document.getElementById("postSubmitPercent");
@@ -1847,6 +2285,7 @@ mjx-container[jax="SVG"] mjx-line{
   let blocked = false;
   let autosaveTimer = null;
   let selectedInlineRating = 0;
+  let localSubmittedQuestions = new Set();
 
   const END_KEY = `quiz_end_${quizId}_${localStorage.getItem("username") || "user"}`;
   const ANSWERS_KEY = `quiz_answers_${quizId}_${localStorage.getItem("username") || "user"}`;
@@ -1870,9 +2309,23 @@ mjx-container[jax="SVG"] mjx-line{
     statusBox.innerHTML = html;
   }
 
+
+function inlineQuizLoadingHtml(){
+  return `
+    <div style="min-height:260px;display:flex;align-items:center;justify-content:center;text-align:center;">
+      <div>
+        <div class="inlineLoaderDots" style="display:flex;justify-content:center;gap:8px;margin-bottom:12px;">
+          <span></span><span></span><span></span>
+        </div>
+        <div style="font-weight:700;font-family:'Times New Roman',Times,serif;">Loading Assessment...</div>
+      </div>
+    </div>
+  `;
+}
+
   function showQuestionsShell(){
     if (questionsWrap) questionsWrap.classList.add("loading");
-    questionsDiv.innerHTML = '<div class="muted">Loading assessment...</div>';
+    questionsDiv.innerHTML = inlineQuizLoadingHtml();
   }
 
 
@@ -1889,6 +2342,7 @@ mjx-container[jax="SVG"] mjx-line{
 
   function showQuestionsContent(){
     if (questionsWrap) questionsWrap.classList.remove("loading");
+    hideQuizLoader();
   }
 
   function saveAnswersToStorage(){
@@ -2577,13 +3031,27 @@ mjx-container[jax="SVG"] mjx-line{
     clearAllAnswers();
     enableAllInputs();
     hideAllSolutions();
+    resetLocalQuestionChecks();
+
+    document.body.classList.remove("submitted-state");
+    document.querySelectorAll(".mcqInput, .textAnswer").forEach(el => {
+      el.disabled = false;
+    });
+    document.querySelectorAll(".opt").forEach(opt => {
+      opt.classList.remove("disabled", "correct", "wrong");
+      opt.style.opacity = "";
+      opt.style.cursor = "";
+    });
+
     resetTimerFresh();
 
     submitBtn.disabled = false;
+    submitBtn.style.display = "";
     submitBtn.textContent = "Submit";
     submitBtn.onclick = () => submitQuiz("manual");
 
     retryBtn.disabled = false;
+    retryBtn.style.display = "";
     saveAnswersToStorage();
 
     hidePostSubmitPanel();
@@ -2592,6 +3060,393 @@ mjx-container[jax="SVG"] mjx-line{
   }
 
   retryBtn.onclick = startPracticeMode;
+
+
+
+  function reviewAutoConvertMixedLatex(value){
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    if (/\\\(|\\\[|\\frac|\\sqrt|\$/.test(raw)) return raw;
+
+    let converted = raw.replace(/(^|[\s:;,])sqrt\s*\(([^()]+)\)/gi, (m, pre, inner) => {
+      return `${pre}$\\sqrt{${inner}}$`;
+    });
+
+    converted = converted.replace(/([A-Za-z0-9)\]])\s*\^\s*\(([^()]+)\)/g, '$1^{$2}');
+    converted = converted.replace(/([A-Za-z0-9)\]])\s*\^\s*([+-]?\d+)/g, '$1^{$2}');
+    converted = converted
+      .replace(/<=/g, '\\leq ')
+      .replace(/>=/g, '\\geq ')
+      .replace(/!=/g, '\\neq ')
+      .replace(/≤/g, '\\leq ')
+      .replace(/≥/g, '\\geq ');
+
+    if (looksLikeMathContent(converted)) {
+      if (/^\$.*\$$/.test(converted.trim())) return converted.trim();
+      return `$${converted.trim()}$`;
+    }
+
+    return converted;
+  }
+
+  function renderReviewStyleSolutionBox(solutionText){
+    const solRaw = String(solutionText || "");
+    if (!solRaw.trim()) return "";
+
+    const sol = escapeHtml(reviewAutoConvertMixedLatex(solRaw));
+
+    return `
+      <div class="solutionBox" role="note" aria-label="Solution">
+        <div class="solutionTop">Solution:</div>
+        <div class="solutionBody">${sol}</div>
+      </div>
+    `;
+  }
+
+  function getSingleQuestionResult(q, i){
+    const type = String(q?.type || "mcq").toLowerCase();
+    const pts = Math.max(1, Math.round(Number(q?.points || 1)));
+
+    if (type === "text") {
+      const inp = document.getElementById(`txt${i}`);
+      const userText = inp ? cleanSpaces(inp.value) : "";
+      const correctText = cleanSpaces(q.correctText || "");
+      const mode = q.textAnswerMode || "exact";
+      const tol = q.numberTolerance ?? 0;
+      const answered = Boolean(userText);
+      const correct = answered && compareTextAnswer(userText, correctText, mode, tol);
+      return { answered, correct, points: pts };
+    }
+
+    const multi = isMultiQuestion(q);
+    if (multi){
+      const checked = [...document.querySelectorAll(`.mcqInput[data-qindex="${i}"]:checked`)];
+      const chosenIndexes = checked.map(el => Number(el.value)).filter(n => Number.isInteger(n) && n >= 0);
+      const correctIndexes = normalizeIndexArray(q.correctIndexes || []);
+      const answered = chosenIndexes.length > 0;
+      const correct = answered && isMultiMcqCorrect(chosenIndexes, correctIndexes);
+      return { answered, correct, points: pts };
+    }
+
+    const chosen = document.querySelector(`.mcqInput[data-qindex="${i}"]:checked`);
+    const chosenIndex = chosen ? Number(chosen.value) : -1;
+    const correctIndex = Number.isFinite(Number(q.correctIndex)) ? Number(q.correctIndex) : -1;
+    const answered = chosenIndex >= 0;
+    const correct = answered && chosenIndex === correctIndex && correctIndex >= 0;
+    return { answered, correct, points: pts };
+  }
+
+  function markQuestionOptions(q, i){
+    const type = String(q?.type || "mcq").toLowerCase();
+    if (type !== "mcq") return;
+
+    const multi = isMultiQuestion(q);
+    const correctIndexes = multi
+      ? normalizeIndexArray(q.correctIndexes || [])
+      : [Number(q.correctIndex)].filter(n => Number.isInteger(n) && n >= 0);
+
+    document.querySelectorAll(`.mcqInput[data-qindex="${i}"]`).forEach(input => {
+      const opt = input.closest(".opt");
+      if (!opt) return;
+      const idx = Number(input.value);
+      opt.classList.remove("correct", "wrong");
+
+      if (correctIndexes.includes(idx)) {
+        opt.classList.add("correct");
+      } else if (input.checked) {
+        opt.classList.add("wrong");
+      }
+    });
+  }
+
+
+
+  function prepareFirstAttemptButtons(){
+    const hasCompletedAttempt = localStorage.getItem(`hasCompletedAttempt_${quizId}`) === "1";
+
+    document.body.classList.remove("submitted-state");
+
+    document.querySelectorAll(".mcqInput, .textAnswer").forEach(el => {
+      el.disabled = false;
+    });
+
+    document.querySelectorAll(".opt").forEach(opt => {
+      opt.classList.remove("disabled");
+      opt.style.opacity = "";
+      opt.style.cursor = "";
+    });
+
+    document.querySelectorAll(".qFeedback").forEach(el => {
+      el.textContent = "";
+      el.className = "qFeedback";
+    });
+
+    document.querySelectorAll(".qCheckBtn").forEach(btn => {
+      btn.disabled = false;
+      btn.textContent = "Submit the Answer";
+    });
+
+    document.querySelectorAll(".qShowAnswerBtn").forEach(btn => {
+      btn.classList.remove("visible");
+      btn.disabled = false;
+      btn.textContent = "Show Answer";
+    });
+
+    if (!hasCompletedAttempt) {
+      submitBtn.style.display = "";
+      submitBtn.disabled = false;
+      retryBtn.style.display = "none";
+      retryBtn.style.display = "none";
+    retryBtn.style.display = "none";
+    retryBtn.disabled = true;
+    } else {
+      submitBtn.style.display = "none";
+      submitBtn.disabled = true;
+      retryBtn.style.display = "";
+      retryBtn.disabled = false;
+    }
+  }
+
+
+  function resetLocalQuestionChecks(){
+    localSubmittedQuestions = new Set();
+
+    document.querySelectorAll(".q").forEach(box => {
+      box.classList.remove("is-local-correct", "is-local-wrong");
+    });
+
+    document.querySelectorAll(".qFeedback").forEach(el => {
+      el.textContent = "";
+      el.className = "qFeedback";
+    });
+
+    document.querySelectorAll(".qCheckBtn").forEach(btn => {
+      btn.disabled = false;
+      btn.textContent = "Submit the Answer";
+    });
+
+    document.querySelectorAll(".qShowAnswerBtn").forEach(btn => {
+      btn.classList.remove("visible");
+      btn.disabled = false;
+      btn.textContent = "Show Answer";
+    });
+
+    document.querySelectorAll(".opt").forEach(opt => {
+      opt.classList.remove("correct", "wrong", "disabled");
+    });
+
+    document.querySelectorAll(".solutionHolder").forEach(holder => {
+      holder.classList.add("hidden");
+    });
+  }
+
+  function countLocalSubmittedScorableQuestions(){
+    const qs = Array.isArray(quizData?.questions) ? quizData.questions : [];
+    let count = 0;
+
+    qs.forEach((q, i) => {
+      const type = String(q?.type || "mcq").toLowerCase();
+      if (type === "note") return;
+      if (localSubmittedQuestions.has(i)) count += 1;
+    });
+
+    return count;
+  }
+
+  function maybeFinishAfterAllLocalSubmits(){
+    if (!quizData || submitted || blocked) return;
+
+    const total = countScorableQuestions();
+    const done = countLocalSubmittedScorableQuestions();
+
+    /* Do NOT open ratings automatically before first full submission */
+    if (total <= 0 || done < total) return;
+
+    msgEl.className = "muted";
+    msgEl.textContent = "All questions were checked individually. Press the bottom Submit button to finish the assessment and open ratings.";
+
+    viewResultsBtn.disabled = false;
+    viewResultsBtn.onclick = () => window.location.href = "results.html";
+  }
+
+
+  function submitSingleQuestion(i){
+    if (!quizData || submitted || blocked) return;
+
+    const q = quizData.questions?.[i];
+    if (!q) return;
+
+    const box = document.querySelector(`.q[data-qindex="${i}"]`);
+    if (!box) return;
+
+    const feedback = box.querySelector(".qFeedback");
+    const btn = box.querySelector(".qCheckBtn");
+    const solution = box.querySelector(".solutionHolder");
+    const result = getSingleQuestionResult(q, i);
+
+    if (!result.answered) {
+      if (feedback) {
+        feedback.textContent = "Please answer this question first.";
+        feedback.className = "qFeedback neutral";
+      }
+      return;
+    }
+
+    box.classList.remove("is-local-correct", "is-local-wrong");
+
+    if (result.correct) {
+      box.classList.add("is-local-correct");
+      if (feedback) {
+        feedback.textContent = "Correct";
+        feedback.className = "qFeedback correct";
+      }
+    } else {
+      box.classList.add("is-local-wrong");
+      if (feedback) {
+        feedback.textContent = "Incorrect";
+        feedback.className = "qFeedback wrong";
+      }
+    }
+
+    markQuestionOptions(q, i);
+
+    /* Do not open workings automatically. Learner can choose to show answer. */
+    showAnswerButtonForQuestion(i);
+
+    box.querySelectorAll("input, textarea").forEach(el => {
+      if (el.id === "ratingCommentInline") return;
+      el.disabled = true;
+    });
+    box.querySelectorAll(".opt").forEach(el => el.classList.add("disabled"));
+
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Submitted";
+    }
+
+    saveAnswersToStorage();
+  }
+
+
+  function applyReviewStyleWorkingsToAllQuestions(){
+    if (!quizData || !Array.isArray(quizData.questions)) return;
+
+    quizData.questions.forEach((q, i) => {
+      const box = document.querySelector(`.q[data-qindex="${i}"]`);
+      if (!box) return;
+
+      const holder = box.querySelector(".solutionHolder");
+      if (!holder) return;
+
+      const rawSolution = String(q?.solution || "");
+      holder.innerHTML = renderReviewStyleSolutionBox(rawSolution);
+    });
+  }
+
+
+  function revealQuestionAnswer(i){
+    const box = document.querySelector(`.q[data-qindex="${i}"]`);
+    if (!box) return;
+
+    const solution = box.querySelector(".solutionHolder");
+    const btn = box.querySelector(".qShowAnswerBtn");
+
+    if (solution && solution.innerHTML.trim()) {
+      solution.classList.remove("hidden");
+      typesetMathSoon(solution);
+    }
+
+    if (btn) {
+      btn.textContent = "Answer Shown";
+      btn.disabled = true;
+    }
+  }
+
+  function attachShowAnswerButtons(){
+    document.querySelectorAll(".qShowAnswerBtn").forEach(btn => {
+      if (btn.dataset.bound === "1") return;
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", () => {
+        const i = Number(btn.dataset.qindex);
+        if (Number.isInteger(i)) revealQuestionAnswer(i);
+      });
+    });
+  }
+
+  function showAnswerButtonForQuestion(i){
+    const box = document.querySelector(`.q[data-qindex="${i}"]`);
+    if (!box) return;
+    const btn = box.querySelector(".qShowAnswerBtn");
+    if (btn) btn.classList.add("visible");
+  }
+
+
+  function attachSingleQuestionSubmit(){
+    document.querySelectorAll(".qCheckBtn").forEach(btn => {
+      if (btn.dataset.bound === "1") return;
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", () => {
+        const i = Number(btn.dataset.qindex);
+        if (Number.isInteger(i)) submitSingleQuestion(i);
+      });
+    });
+  }
+
+
+
+  function submitAllQuestionsFromBottom(){
+    if (!quizData || !Array.isArray(quizData.questions)) return;
+
+    quizData.questions.forEach((q, i) => {
+      const type = String(q?.type || "mcq").toLowerCase();
+      if (type === "note") return;
+
+      const box = document.querySelector(`.q[data-qindex="${i}"]`);
+      if (!box) return;
+
+      const feedback = box.querySelector(".qFeedback");
+      const btn = box.querySelector(".qCheckBtn");
+      const solution = box.querySelector(".solutionHolder");
+      const result = getSingleQuestionResult(q, i);
+
+      box.classList.remove("is-local-correct", "is-local-wrong");
+
+      if (!result.answered) {
+        if (feedback) {
+          feedback.textContent = "";
+          feedback.className = "qFeedback";
+        }
+        return;
+      }
+
+      if (result.correct) {
+        box.classList.add("is-local-correct");
+        if (feedback) {
+          feedback.textContent = "Correct ✓";
+          feedback.className = "qFeedback correct";
+        }
+      } else {
+        box.classList.add("is-local-wrong");
+        if (feedback) {
+          feedback.textContent = "Incorrect ✗ — review the workings below.";
+          feedback.className = "qFeedback wrong";
+        }
+      }
+
+      markQuestionOptions(q, i);
+
+      /* Do not open workings automatically. Learner can choose to show answer. */
+      showAnswerButtonForQuestion(i);
+
+      localSubmittedQuestions.add(i);
+
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Submitted";
+      }
+    });
+  }
+
 
   async function submitQuiz(mode, options = {}){
     if (!quizData || submitted || blocked) return;
@@ -2608,6 +3463,9 @@ mjx-container[jax="SVG"] mjx-line{
       }
       return;
     }
+
+    /* Bottom Submit: check all questions at once and show workings */
+    submitAllQuestionsFromBottom();
 
     submitted = true;
     document.body.classList.add("submitted-state");
@@ -2633,12 +3491,19 @@ mjx-container[jax="SVG"] mjx-line{
         { score: r.scorePoints, total: r.totalPoints, percent: r.percent },
         null
       );
+      /* Retry becomes available AFTER first completed attempt */
+      /* After bottom Submit, unlock Practice Mode */
       retryBtn.disabled = false;
+      retryBtn.style.display = "";
+
+      submitBtn.disabled = true;
+      submitBtn.style.display = "none";
+
       viewResultsBtn.disabled = false;
       viewResultsBtn.onclick = () => window.location.href = "results.html";
       showBottomResultsButton();
       disableAllInputs();
-      hideAllSolutions();
+      /* Keep workings visible after bottom submit */
       clearSavedAnswers();
       return;
     }
@@ -2646,9 +3511,19 @@ mjx-container[jax="SVG"] mjx-line{
     if (alreadyAttempted) {
       msgEl.className = "error";
       msgEl.textContent = "You already submitted this assessment. Use Retry (Practice Mode).";
+
+      /* SHOW RETRY BUTTON */
+      retryBtn.style.display = "inline-flex";
+      retryBtn.disabled = false;
+
+      submitBtn.style.display = "none";
+      submitBtn.disabled = true;
+
+      retryBtn.onclick = () => {
+        startPracticeMode();
+      };
       blocked = true;
       disableAllInputs();
-      hideAllSolutions();
       return;
     }
 
@@ -2750,6 +3625,7 @@ mjx-container[jax="SVG"] mjx-line{
     }catch{
       if (quizTitle) quizTitle.textContent = "Network error";
       setStatusMessage("Could not load assessment status. Please refresh and try again.", "errorState");
+      hideQuizLoader();
       msgEl.className = "error";
       msgEl.textContent = "Please refresh and try again.";
       submitBtn.disabled = true;
@@ -2766,6 +3642,7 @@ mjx-container[jax="SVG"] mjx-line{
     if (!res.ok) {
       if (quizTitle) quizTitle.textContent = "Assessment not found";
       setStatusMessage("Assessment not found.", "errorState");
+      hideQuizLoader();
       submitBtn.disabled = true;
       return;
     }
@@ -2774,6 +3651,7 @@ mjx-container[jax="SVG"] mjx-line{
     if (!quizData){
       if (quizTitle) quizTitle.textContent = "Could not load assessment";
       setStatusMessage("Could not load assessment.", "errorState");
+      hideQuizLoader();
       submitBtn.disabled = true;
       return;
     }
@@ -2820,11 +3698,16 @@ mjx-container[jax="SVG"] mjx-line{
 
       if (type === "text") {
         return `
-          <div class="q" data-scorable="1">
+          <div class="q" data-scorable="1" data-qindex="${i}">
             ${imageHtml}
             ${headHtml}
             <input class="textAnswer" id="txt${i}" placeholder="Type your answer" autocomplete="off" />
             ${hint ? `<div class="hint">Hint: <span class="hintText">${renderMixedMath(hint)}</span></div>` : ``}
+            <div class="qLocalActions">
+              <button class="qCheckBtn" type="button" data-qindex="${i}">Submit the Answer</button>
+              <button class="qShowAnswerBtn" type="button" data-qindex="${i}">Show Answer</button>
+              <span class="qFeedback"></span>
+            </div>
             <div class="solutionHolder hidden">${formatSolutionHtml(solution)}</div>
           </div>
         `;
@@ -2845,6 +3728,11 @@ mjx-container[jax="SVG"] mjx-line{
             </label>
           `).join("")}
           ${hint ? `<div class="hint">Hint: <span class="hintText">${renderMixedMath(hint)}</span></div>` : ``}
+          <div class="qLocalActions">
+            <button class="qCheckBtn" type="button" data-qindex="${i}">Submit the Answer</button>
+            <button class="qShowAnswerBtn" type="button" data-qindex="${i}">Show Answer</button>
+            <span class="qFeedback"></span>
+          </div>
           <div class="solutionHolder hidden">${formatSolutionHtml(solution)}</div>
         </div>
       `;
@@ -2852,7 +3740,12 @@ mjx-container[jax="SVG"] mjx-line{
 
     showQuestionsContent();
     hideAllSolutions();
+    applyReviewStyleWorkingsToAllQuestions();
+    resetLocalQuestionChecks();
+    prepareFirstAttemptButtons();
     attachAnswerAutosave();
+    attachSingleQuestionSubmit();
+    attachShowAnswerButtons();
     const restoredAnswers = restoreAnswersFromStorage();
     if (restoredAnswers && !alreadyAttempted && !wantsPracticeFromLink) {
       msgEl.className = "ok";
@@ -2870,27 +3763,14 @@ mjx-container[jax="SVG"] mjx-line{
       return;
     }
 
-    if (alreadyAttempted){
-      setStatusMessage(`<b class="error">Attempt already submitted.</b><div class="muted" style="margin-top:4px;">You can retry in <b>Practice Mode</b>. Practice results are not saved.</div>`, "okState");
-      msgEl.className = "muted";
-      msgEl.textContent = "Your first attempt is already saved. You can retry (Practice Mode).";
-
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Submit (Already Saved)";
-
-      retryBtn.disabled = false;
-
-      applyNormalUI();
-      viewResultsBtn.disabled = false;
-      viewResultsBtn.onclick = () => window.location.href = "results.html";
-      showBottomResultsButton();
-
-      disableAllInputs();
-      hideAllSolutions();
-      clearSavedAnswers();
-      resetTimerFresh();
-
-      if (wantsPracticeFromLink) startPracticeMode();
+    /*
+      IMPORTANT:
+      Do NOT lock the page on load just because an old result exists.
+      Learners must still be able to answer questions first.
+      Practice Mode only starts after the bottom Retry button is clicked.
+    */
+    if (alreadyAttempted && wantsPracticeFromLink){
+      startPracticeMode();
       return;
     }
 
@@ -2898,8 +3778,14 @@ mjx-container[jax="SVG"] mjx-line{
     applyNormalUI();
     setStatusMessage("Assessment ready. Choose your answers and submit when finished.", "loading");
 
+    document.body.classList.remove("submitted-state");
+    enableAllInputs();
+
+    submitBtn.style.display = "";
     submitBtn.disabled = false;
     submitBtn.textContent = "Submit";
+
+    retryBtn.style.display = "none";
     retryBtn.disabled = true;
 
     viewResultsBtn.disabled = true;
@@ -3690,5 +4576,31 @@ function formatSolutionHtml(solutionText){
     loadQuiz();
   }
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    const msg = document.getElementById("msg");
+    const submitBtn = document.getElementById("submitBtn");
+    const retryBtn = document.getElementById("retryBtn");
+    const viewResultsBtn = document.getElementById("viewResultsBtn");
+
+    if (msg && /already submitted/i.test(msg.textContent || "")) {
+      if (submitBtn) {
+        submitBtn.style.display = "none";
+        submitBtn.disabled = true;
+      }
+      if (retryBtn) {
+        retryBtn.style.display = "";
+        retryBtn.disabled = false;
+      }
+      if (viewResultsBtn) {
+        viewResultsBtn.disabled = false;
+      }
+    }
+  }, 600);
+});
+</script>
+
 </body>
 </html>
