@@ -939,6 +939,10 @@
       <br />
       D: 6
       <br />
+      E: 7 (optional)
+      <br />
+      F: 8 (optional)
+      <br />
       ANSWER: B
       <br /><br />
       Or for typed answers:
@@ -2377,7 +2381,7 @@ function escapeHtml(str){
         if (!m) continue;
         const key = m[1].toUpperCase();
         const value = m[2] || "";
-        if (/^(HEADING|NOTE|QUESTION|A|B|C|D|ANSWER|SOLUTION|HINT)$/i.test(key)) continue;
+        if (/^(HEADING|NOTE|QUESTION|[A-Z]|ANSWER|SOLUTION|HINT|POINTS|MARKS|TYPE|OPTIONS|MEMO|IMAGE)$/i.test(key)) continue;
 
         switch (key) {
           case "GRADE": meta.grade = value.trim(); break;
@@ -2468,7 +2472,7 @@ function escapeHtml(str){
           continue;
         }
 
-        const optMatch = line.match(/^([A-D])\s*[:.)-]\s*(.*)$/i);
+        const optMatch = line.match(/^([A-Z])\s*[:.)-]\s*(.*)$/i);
         if (optMatch && !inSolution) {
           const label = optMatch[1].toUpperCase();
           let value = optMatch[2].trim();
@@ -2481,8 +2485,10 @@ function escapeHtml(str){
         if (/^ANSWER\s*:/i.test(line) && !inSolution) {
           const ansRaw = line.replace(/^ANSWER\s*:/i, "").trim();
           typedAnswer = ansRaw;
-          const matches = ansRaw.toUpperCase().match(/[A-D]/g);
-          if (matches && options.length) correctLetters.push(...matches);
+          const availableLabels = options.map(o => o.label);
+          const answerParts = ansRaw.toUpperCase().split(/[,;\s|]+/).map(x => x.trim()).filter(Boolean);
+          const matches = answerParts.filter(x => availableLabels.includes(x));
+          if (matches.length && options.length) correctLetters.push(...matches);
           continue;
         }
 
