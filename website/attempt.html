@@ -2554,51 +2554,6 @@ function inlineQuizLoadingHtml(){
     return Boolean(q?.isMultiSelect) || idxs.length > 1;
   }
 
-
-  /* ===== DYNAMIC MCQ OPTIONS FIX =====
-     Supports any available number of choices, e.g. 2, 3, 4, 5, or 6.
-     It also removes blank options safely and keeps correctIndex/correctIndexes aligned.
-  */
-  function normalizeQuizOptionsDynamic(quiz){
-    if (!quiz || !Array.isArray(quiz.questions)) return quiz;
-
-    quiz.questions = quiz.questions.map(q => {
-      if (!q || String(q.type || "mcq").toLowerCase() !== "mcq") return q;
-
-      const oldOptions = Array.isArray(q.options) ? q.options : [];
-      const oldCorrectIndexes = normalizeIndexArray(q.correctIndexes || []);
-      const oldCorrectIndex = Number(q.correctIndex);
-
-      const correctSet = new Set(oldCorrectIndexes);
-      if (Number.isInteger(oldCorrectIndex) && oldCorrectIndex >= 0) {
-        correctSet.add(oldCorrectIndex);
-      }
-
-      const newOptions = [];
-      const indexMap = new Map();
-
-      oldOptions.forEach((opt, oldIndex) => {
-        const text = cleanSpaces(opt || "");
-        if (!text) return;
-        indexMap.set(oldIndex, newOptions.length);
-        newOptions.push(text);
-      });
-
-      const newCorrectIndexes = [...correctSet]
-        .map(oldIndex => indexMap.get(oldIndex))
-        .filter(n => Number.isInteger(n) && n >= 0);
-
-      q.options = newOptions;
-      q.correctIndexes = [...new Set(newCorrectIndexes)].sort((a,b)=>a-b);
-      q.isMultiSelect = Boolean(q.isMultiSelect) || q.correctIndexes.length > 1;
-      q.correctIndex = q.correctIndexes.length ? q.correctIndexes[0] : -1;
-
-      return q;
-    });
-
-    return quiz;
-  }
-
   function setAvailability(isAvailable){
     statusText.style.display = "block";
     if (isAvailable){
@@ -3693,7 +3648,6 @@ function inlineQuizLoadingHtml(){
     }
 
     quizData = await res.json().catch(()=>null);
-    quizData = normalizeQuizOptionsDynamic(quizData);
     if (!quizData){
       if (quizTitle) quizTitle.textContent = "Could not load assessment";
       setStatusMessage("Could not load assessment.", "errorState");
