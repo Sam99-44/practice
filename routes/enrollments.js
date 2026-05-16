@@ -3,7 +3,6 @@ import mongoose from "mongoose";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import User from "../models/User.js";
-
 const router = express.Router();
 
 cloudinary.config({
