@@ -56,6 +56,7 @@ import Payment from "./models/Payment.js";
 import accessRoutes from "./routes/access.js";
 import paymentRoutes from "./routes/payments.js";
 import manualPaymentsRoutes from "./routes/manualPayments.js";
+import enrollmentRoutes from "./routes/enrollments.js";
 import { addDays } from "./utils/access.js";
 
 dotenv.config();
@@ -3651,6 +3652,7 @@ app.get("/api/announcements/:id/responses", authRequired, announcementManagerOnl
 app.use("/api/access", accessRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/manual-payments", manualPaymentsRoutes);
+app.use("/api/enrollments", enrollmentRoutes);
 /* ------------------ SUPPORT MODEL ------------------ */
 const SupportRequestSchema = new mongoose.Schema(
   {
