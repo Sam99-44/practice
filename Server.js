@@ -54,6 +54,7 @@ import Result from "./models/Result.js";
 import Payment from "./models/Payment.js";
 
 import accessRoutes from "./routes/access.js";
+import opportunitiesRoutes from "./routes/opportunities.js";
 import paymentRoutes from "./routes/payments.js";
 import manualPaymentsRoutes from "./routes/manualPayments.js";
 import enrollmentRoutes from "./routes/enrollments.js";
@@ -3653,6 +3654,7 @@ app.use("/api/access", accessRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/manual-payments", manualPaymentsRoutes);
 app.use("/api/enrollments", enrollmentRoutes);
+app.use("/api/opportunities", opportunitiesRoutes);
 /* ------------------ SUPPORT MODEL ------------------ */
 const SupportRequestSchema = new mongoose.Schema(
   {
