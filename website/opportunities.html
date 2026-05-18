@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Opportunities | Practice Online Academy</title>
+
+<style>
+:root{
+  --nav:#1b1648;
+  --nav-dark:#141038;
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --border:#d9dee7;
+  --text:#0f172a;
+  --muted:#64748b;
+  --soft:#eef2f7;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+a{
+  text-decoration:none;
+  color:inherit;
+}
+
+/* TOP BAR */
+.topbar{
+  background:var(--nav);
+  color:#fff;
+  padding:22px 28px;
+  box-shadow:0 4px 18px rgba(15,23,42,.14);
+}
+
+.topbar-inner{
+  max-width:1200px;
+  margin:auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.logo{
+  font-size:24px;
+  font-weight:700;
+}
+
+.top-links{
+  display:flex;
+  gap:18px;
+  align-items:center;
+}
+
+.top-links a{
+  color:#fff;
+  font-weight:700;
+  font-size:15px;
+}
+
+/* PAGE */
+.wrap{
+  max-width:1180px;
+  margin:auto;
+  padding:28px 18px 46px;
+}
+
+.pageTitle{
+  color:var(--nav);
+  font-size:36px;
+  font-weight:800;
+  margin-bottom:8px;
+}
+
+.pageSub{
+  color:var(--muted);
+  margin-bottom:28px;
+  line-height:1.7;
+}
+
+.pageHero{
+  background:#dfeefd;
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:28px;
+  margin-bottom:24px;
+}
+
+/* CATEGORY LIST */
+.categoryBox{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:6px;
+  overflow:hidden;
+  margin-bottom:24px;
+  box-shadow:0 3px 12px rgba(15,23,42,.04);
+}
+
+.categoryItem{
+  border-bottom:1px solid #e8edf5;
+}
+
+.categoryItem:last-child{
+  border-bottom:none;
+}
+
+.categoryBtn{
+  width:100%;
+  border:none;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:22px 24px;
+  cursor:pointer;
+  font-size:16px;
+  font-weight:700;
+  color:var(--nav);
+}
+
+.categoryBtn:hover{
+  background:#f8fbff;
+}
+
+.arrow{
+  transition:.2s;
+}
+
+.categoryItem.active .arrow{
+  transform:rotate(90deg);
+}
+
+.jobsWrap{
+  display:none;
+  padding:0 20px 20px;
+  background:#fafcff;
+}
+
+.categoryItem.active .jobsWrap{
+  display:block;
+}
+
+/* JOB CARD */
+.jobCard{
+  background:#fff;
+  border:1px solid #e2e8f0;
+  border-radius:4px;
+  padding:24px;
+  margin-top:18px;
+  box-shadow:0 2px 10px rgba(15,23,42,.04);
+}
+
+.jobTop{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  align-items:flex-start;
+  border-bottom:1px solid #edf2f7;
+  padding-bottom:12px;
+}
+
+.jobCard h3{
+  margin:0;
+  color:var(--nav);
+  font-size:21px;
+}
+
+
+.jobMeta{
+  margin-top:8px;
+  color:var(--muted);
+  font-size:14px;
+}
+
+.jobDesc{
+  margin-top:14px;
+  line-height:1.7;
+  color:#334155;
+}
+
+.applyBtn{
+  margin-top:18px;
+  background:var(--nav);
+  color:#fff;
+  border:none;
+  border-radius:2px;
+  padding:13px 22px;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  transition:.2s;
+  box-shadow:0 4px 12px rgba(27,22,72,.12);
+}
+
+.applyBtn:hover{
+  background:var(--nav-dark);
+}
+
+/* APPLICATION FORM */
+.applicationSection{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:28px;
+  margin-top:28px;
+  box-shadow:0 3px 12px rgba(15,23,42,.04);
+}
+
+.applicationSection h2{
+  margin:0 0 6px;
+  color:var(--nav);
+  font-size:28px;
+}
+
+.applicationSection p{
+  color:var(--muted);
+  line-height:1.6;
+  margin:0 0 20px;
+}
+
+.formGroup{
+  border:1px solid #e2e8f0;
+  border-radius:4px;
+  padding:22px;
+  margin-bottom:18px;
+  background:#fbfdff;
+}
+
+.formGroup h3{
+  margin:0 0 14px;
+  color:var(--nav);
+  font-size:20px;
+}
+
+.formGrid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px;
+}
+
+.formGrid.full{
+  grid-template-columns:1fr;
+}
+
+label{
+  display:block;
+  margin-bottom:6px;
+  font-size:14px;
+  font-weight:700;
+}
+
+input,
+select,
+textarea{
+  width:100%;
+  padding:13px;
+  border-radius:12px;
+  border:1px solid #d5deea;
+  font-size:14px;
+  font-family:Arial, Helvetica, sans-serif;
+  background:#fff;
+}
+
+textarea{
+  min-height:115px;
+  resize:vertical;
+}
+
+.submitBtn{
+  width:100%;
+  margin-top:6px;
+  background:var(--nav);
+  color:#fff;
+  border:none;
+  border-radius:4px;
+  padding:15px;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.submitBtn:hover{
+  background:var(--nav-dark);
+}
+
+.note{
+  margin-top:14px;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.7;
+}
+
+.msg{
+  margin-top:14px;
+  font-weight:700;
+  color:#065f46;
+}
+
+
+.req{
+  color:#dc2626;
+  font-weight:800;
+}
+
+/* MOBILE */
+@media(max-width:800px){
+  .topbar-inner{
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .pageTitle{
+    font-size:32px;
+  }
+
+  .jobTop{
+    flex-direction:column;
+  }
+
+  .formGrid{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="logo">Practice Online Academy</div>
+    <div class="top-links">
+      <a href="index.html">Home</a>
+      <a href="profile.html">Profile</a>
+      <a href="enrollment.html">Enroll</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  
+
+  <section class="categoryBox">
+
+    <div class="categoryItem active">
+      <button class="categoryBtn" type="button">
+        <span>Education (2)</span>
+        <span class="arrow">▶</span>
+      </button>
+
+      <div class="jobsWrap">
+
+        <div class="jobCard">
+          <div class="jobTop">
+            <div>
+              <h3>Mathematics Tutor</h3>
+              <div class="jobMeta">Grades 8-12 · Online · Part-time</div>
+            </div>
+</div>
+
+          <div class="jobDesc">
+            Teach online Mathematics classes, assist learners with revision, and support topic analysis sessions.
+          </div>
+
+          <button class="applyBtn" type="button" onclick="selectRole('Mathematics Tutor')">
+            Apply for this role
+          </button>
+        </div>
+
+        <div class="jobCard">
+          <div class="jobTop">
+            <div>
+              <h3>Quiz Content Creator</h3>
+              <div class="jobMeta">Mathematics · Remote · Freelance</div>
+            </div>
+</div>
+
+          <div class="jobDesc">
+            Create Mathematics quizzes, solutions, revision material and structured multiple-choice assessments.
+          </div>
+
+          <button class="applyBtn" type="button" onclick="selectRole('Quiz Content Creator')">
+            Apply for this role
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="categoryItem">
+      <button class="categoryBtn" type="button">
+        <span>IT (1)</span>
+        <span class="arrow">▶</span>
+      </button>
+
+      <div class="jobsWrap">
+        <div class="jobCard">
+          <div class="jobTop">
+            <div>
+              <h3>Frontend Web Assistant</h3>
+              <div class="jobMeta">HTML · CSS · JavaScript · Remote</div>
+            </div>
+</div>
+
+          <div class="jobDesc">
+            Help improve Practice Online Academy pages and support small front-end updates.
+          </div>
+
+          <button class="applyBtn" type="button" onclick="selectRole('Frontend Web Assistant')">
+            Apply for this role
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="categoryItem">
+      <button class="categoryBtn" type="button">
+        <span>Marketing and Logistics (1)</span>
+        <span class="arrow">▶</span>
+      </button>
+
+      <div class="jobsWrap">
+        <div class="jobCard">
+          <div class="jobTop">
+            <div>
+              <h3>Social Media Assistant</h3>
+              <div class="jobMeta">TikTok · Facebook · Instagram</div>
+            </div>
+</div>
+
+          <div class="jobDesc">
+            Assist with educational posts, learner content and social media campaigns.
+          </div>
+
+          <button class="applyBtn" type="button" onclick="selectRole('Social Media Assistant')">
+            Apply for this role
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <section class="applicationSection" id="applicationSection">
+    <h2>Apply for an Opportunity</h2>
+    <p>
+      Complete the application form below. Make sure your information is accurate and professional.
+    </p>
+
+    <form id="applicationForm">
+
+      <div class="formGroup">
+        <h3>Opportunity Information</h3>
+
+        <div class="formGrid">
+          <div>
+            <label for="role">Opportunity Applied For <span class="req">*</span></label>
+            <input type="text" id="role" name="role" readonly required>
+          </div>
+
+          <div>
+            <label for="availability">Availability <span class="req">*</span></label>
+            <select id="availability" name="availability" required>
+              <option value="">Select availability</option>
+              <option>Immediately Available</option>
+              <option>Part-Time</option>
+              <option>Weekends Only</option>
+              <option>Evenings Only</option>
+              <option>One Month Notice</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="formGroup">
+        <h3>Personal Information</h3>
+
+        <div class="formGrid">
+          <div>
+            <label for="fullName">Full Name and Surname <span class="req">*</span></label>
+            <input type="text" id="fullName" name="fullName" required>
+          </div>
+
+          <div>
+            <label for="idNumber">ID Number / Passport Number</label>
+            <input type="text" id="idNumber" name="idNumber">
+          </div>
+
+          <div>
+            <label for="email">Email Address <span class="req">*</span></label>
+            <input type="email" id="email" name="email" required>
+          </div>
+
+          <div>
+            <label for="phone">Phone Number <span class="req">*</span></label>
+            <input type="tel" id="phone" name="phone" required>
+          </div>
+        </div>
+      </div>
+
+      <div class="formGroup">
+        <h3>Address Information</h3>
+
+        <div class="formGrid">
+          <div>
+            <label for="province">Province</label>
+            <input type="text" id="province" name="province">
+          </div>
+
+          <div>
+            <label for="city">Town / City</label>
+            <input type="text" id="city" name="city">
+          </div>
+
+          <div>
+            <label for="address">Residential Address</label>
+            <input type="text" id="address" name="address">
+          </div>
+
+          <div>
+            <label for="postalCode">Postal Code</label>
+            <input type="text" id="postalCode" name="postalCode">
+          </div>
+        </div>
+      </div>
+
+      <div class="formGroup">
+        <h3>Education and Qualifications</h3>
+
+        <div class="formGrid">
+          <div>
+            <label for="qualification">Highest Qualification <span class="req">*</span></label>
+            <select id="qualification" name="qualification" required>
+              <option value="">Select qualification</option>
+              <option>Matric</option>
+              <option>Certificate</option>
+              <option>Diploma</option>
+              <option>Degree</option>
+              <option>Honours Degree</option>
+              <option>Masters Degree</option>
+              <option>Doctorate</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="fieldOfStudy">Field of Study</label>
+            <input type="text" id="fieldOfStudy" name="fieldOfStudy">
+          </div>
+
+          <div>
+            <label for="institution">Institution</label>
+            <input type="text" id="institution" name="institution">
+          </div>
+
+          <div>
+            <label for="completionYear">Year Completed</label>
+            <input type="text" id="completionYear" name="completionYear">
+          </div>
+        </div>
+      </div>
+
+      <div class="formGroup">
+        <h3>Employment History</h3>
+
+        <div class="formGrid">
+          <div>
+            <label for="currentOccupation">Current Occupation</label>
+            <input type="text" id="currentOccupation" name="currentOccupation">
+          </div>
+
+          <div>
+            <label for="experienceYears">Years of Experience <span class="req">*</span></label>
+            <select id="experienceYears" name="experienceYears" required>
+              <option value="">Select experience</option>
+              <option>0 - 1 Year</option>
+              <option>2 - 3 Years</option>
+              <option>4 - 5 Years</option>
+              <option>6+ Years</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="formGrid full">
+          <div>
+            <label for="employmentHistory">Previous Employment / Relevant Experience <span class="req">*</span></label>
+            <textarea id="employmentHistory" name="employmentHistory" required></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="formGroup">
+        <h3>Skills and Motivation</h3>
+
+        <div class="formGrid full">
+          <div>
+            <label for="technicalSkills">Technical Skills / Subjects <span class="req">*</span></label>
+            <textarea id="technicalSkills" name="technicalSkills" required></textarea>
+          </div>
+
+          <div>
+            <label for="professionalSummary">Professional Summary / Motivation <span class="req">*</span></label>
+            <textarea id="professionalSummary" name="professionalSummary" required></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="formGroup">
+        <h3>Documents and Links</h3>
+
+        <div class="formGrid">
+          <div>
+            <label for="cv">Upload CV / Supporting Documents</label>
+            <input type="file" id="cv" name="cv" accept=".pdf,.doc,.docx,image/*">
+          </div>
+
+          <div>
+            <label for="portfolio">Portfolio / LinkedIn / Website</label>
+            <input type="url" id="portfolio" name="portfolio">
+          </div>
+        </div>
+      </div>
+
+      <button class="submitBtn" type="submit">
+        Submit Professional Application
+      </button>
+
+      <div class="note">
+        Your application will be reviewed by Practice Online Academy. Only shortlisted applicants will be contacted for the next stage.
+      </div>
+
+      <div id="msg" class="msg"></div>
+
+    </form>
+  </section>
+
+</main>
+
+<script>
+document.querySelectorAll(".categoryBtn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    btn.parentElement.classList.toggle("active");
+  });
+});
+
+function selectRole(role){
+  document.getElementById("role").value = role;
+  document.getElementById("applicationSection").scrollIntoView({ behavior:"smooth" });
+  setTimeout(()=>document.getElementById("fullName").focus(), 450);
+}
+
+document.getElementById("applicationForm").addEventListener("submit",(e)=>{
+  e.preventDefault();
+  document.getElementById("msg").textContent = "Application submitted successfully.";
+  e.target.reset();
+});
+</script>
+
+</body>
+</html>
