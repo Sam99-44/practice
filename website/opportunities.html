@@ -18,7 +18,9 @@
   --success:#065f46;
 }
 
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
 
 body{
   margin:0;
@@ -27,7 +29,10 @@ body{
   color:var(--text);
 }
 
-a{text-decoration:none;color:inherit}
+a{
+  text-decoration:none;
+  color:inherit;
+}
 
 .topbar{
   background:var(--nav);
@@ -62,12 +67,15 @@ a{text-decoration:none;color:inherit}
   padding:24px 18px 42px;
 }
 
+/* ================= CATEGORY ================= */
+
 .categoryBox{
   background:#fff;
   border:1px solid var(--border);
-  border-radius:10px;
+  border-radius:16px;
   overflow:hidden;
   margin-bottom:24px;
+  box-shadow:0 2px 8px rgba(15,23,42,0.04);
 }
 
 .loadingBox{
@@ -112,12 +120,15 @@ a{text-decoration:none;color:inherit}
   transition:.15s;
 }
 
+/* ================= JOB CARD ================= */
+
 .jobCard{
   background:#fff;
-  border:1px solid #e2e8f0;
-  border-radius:10px;
-  padding:24px;
+  border:1px solid #dbe3ee;
+  border-radius:16px;
+  padding:26px;
   margin-top:18px;
+  box-shadow:0 2px 8px rgba(15,23,42,0.04);
 }
 
 .jobCard h3{
@@ -130,6 +141,7 @@ a{text-decoration:none;color:inherit}
   margin-top:8px;
   color:var(--muted);
   font-size:14px;
+  line-height:1.7;
 }
 
 .jobDesc{
@@ -138,12 +150,14 @@ a{text-decoration:none;color:inherit}
   color:#334155;
 }
 
+/* ================= BUTTONS ================= */
+
 .applyBtn{
   margin-top:18px;
   background:var(--nav);
   color:#fff;
   border:none;
-  border-radius:4px;
+  border-radius:12px;
   padding:16px 28px;
   font-size:15px;
   font-weight:700;
@@ -152,16 +166,35 @@ a{text-decoration:none;color:inherit}
   align-items:center;
   justify-content:center;
   min-width:170px;
+  transition:.2s ease;
 }
 
 .applyBtn:hover{
   background:var(--nav-dark);
 }
 
+.submitBtn{
+  width:100%;
+  background:var(--nav);
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  padding:15px;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.submitBtn:hover{
+  background:var(--nav-dark);
+}
+
+/* ================= APPLICATION ================= */
+
 .applicationSection{
   background:#fff;
   border:1px solid var(--border);
-  border-radius:10px;
+  border-radius:16px;
   padding:30px;
   margin-top:28px;
   display:none;
@@ -182,12 +215,15 @@ a{text-decoration:none;color:inherit}
   line-height:1.6;
 }
 
+/* ================= FORM ================= */
+
 .formGroup{
   border:1px solid #e2e8f0;
-  border-radius:10px;
+  border-radius:16px;
   padding:24px;
   margin-bottom:20px;
   background:#fff;
+  box-shadow:0 2px 8px rgba(15,23,42,0.03);
 }
 
 .formGroup h3{
@@ -227,7 +263,7 @@ textarea{
   width:100%;
   padding:14px 16px;
   border:1px solid #d7dde7;
-  border-radius:8px;
+  border-radius:12px;
   background:#fff;
   font-size:14px;
   font-family:Arial, Helvetica, sans-serif;
@@ -241,21 +277,14 @@ textarea:focus{
   border-color:#cbd5e1;
 }
 
-input[readonly]{
-  background:#f8fafc;
-  color:#475569;
-}
-
 textarea{
   min-height:120px;
   resize:vertical;
 }
 
-.fieldHint{
-  margin-top:6px;
-  color:var(--muted);
-  font-size:12px;
-  line-height:1.5;
+input[readonly]{
+  background:#f8fafc;
+  color:#475569;
 }
 
 .fieldError{
@@ -263,30 +292,7 @@ textarea{
   color:var(--danger);
   font-size:12px;
   font-weight:700;
-  line-height:1.5;
   display:none;
-}
-
-input.invalid,
-select.invalid,
-textarea.invalid{
-  border-color:var(--danger);
-}
-
-.submitBtn{
-  width:100%;
-  background:var(--nav);
-  color:#fff;
-  border:none;
-  border-radius:8px;
-  padding:15px;
-  font-size:15px;
-  font-weight:700;
-  cursor:pointer;
-}
-
-.submitBtn:hover{
-  background:var(--nav-dark);
 }
 
 .msg{
@@ -299,7 +305,10 @@ textarea.invalid{
   color:#dc2626;
 }
 
+/* ================= MOBILE ================= */
+
 @media(max-width:800px){
+
   .topbar{
     padding:18px;
   }
@@ -315,7 +324,8 @@ textarea.invalid{
   }
 
   .formGrid,
-  .formGrid.three{
+  .formGrid.three,
+  .formGrid.personalTop{
     grid-template-columns:1fr;
   }
 
@@ -341,38 +351,66 @@ textarea.invalid{
 <body>
 
 <header class="topbar">
+
   <div class="topbar-inner">
-    <div class="logo">Practice Online Academy</div>
+
+    <div class="logo">
+      Practice Online Academy
+    </div>
+
     <div class="top-links">
       <a href="index.html">Home</a>
     </div>
+
   </div>
+
 </header>
 
 <main class="wrap">
 
   <section class="categoryBox" id="categoryBox">
-    <div class="loadingBox">Loading opportunities...</div>
+
+    <div class="loadingBox">
+      Loading opportunities...
+    </div>
+
   </section>
 
   <section class="applicationSection" id="applicationSection">
 
     <h2>Apply for an Opportunity</h2>
-    <p>Complete the application form below. Please make sure your details are correct before submitting.</p>
+
+    <p>
+      Complete the application form below. Please make sure your details are correct before submitting.
+    </p>
 
     <form id="applicationForm">
 
       <div class="formGroup">
+
         <h3>Opportunity Information</h3>
 
         <div class="formGrid">
+
           <div>
-            <label>Opportunity Applied For <span class="req">*</span></label>
-            <input type="text" id="role" name="opportunityTitle" readonly required>
+            <label>
+              Opportunity Applied For <span class="req">*</span>
+            </label>
+
+            <input
+              type="text"
+              id="role"
+              name="opportunityTitle"
+              readonly
+              required
+            >
           </div>
 
           <div>
-            <label>Availability <span class="req">*</span></label>
+            <label>
+              Availability <span class="req">*</span>
+            </label>
+
             <select name="availability" required>
               <option value="">Select availability</option>
               <option>Immediately Available</option>
@@ -382,249 +420,35 @@ textarea.invalid{
               <option>One Month Notice</option>
             </select>
           </div>
+
         </div>
+
       </div>
 
-      <div class="formGroup">
-        <h3>Personal Information</h3>
+      <button class="submitBtn" type="submit">
+        Submit Professional Application
+      </button>
 
-        <div class="formGrid personalTop">
-          <div>
-            <label>Title <span class="req">*</span></label>
-            <select name="title" required>
-              <option value="">Select </option>
-              <option>Mr</option>
-              <option>Mrs</option>
-              <option>Miss</option>
-              <option>Ms</option>
-              <option>Dr</option>
-              <option>Prof</option>
-            </select>
-          </div>
-
-          <div>
-            <label>Full Name and Surname <span class="req">*</span></label>
-            <input type="text" name="fullName" id="fullName" required>
-          </div>
-        </div>
-
-        <div class="formGrid">
-          <div>
-            <label>South African ID Number <span class="req">*</span></label>
-            <input
-              type="text"
-              name="idNumber"
-              id="idNumber"
-              maxlength="13"
-              inputmode="numeric"
-              required
-
-            >
-            
-            <div class="fieldError" id="idError">Please enter a valid South African ID number.</div>
-          </div>
-
-          <div>
-            <label>Date of Birth <span class="req">*</span></label>
-            <input type="date" name="dateOfBirth" id="dateOfBirth" readonly required>
-         
-          </div>
-        </div>
-
-        <div class="formGrid">
-          <div>
-            <label>Email Address <span class="req">*</span></label>
-            <input type="email" name="email" required>
-          </div>
-
-          <div>
-            <label>Phone Number <span class="req">*</span></label>
-            <input type="tel" name="phone" required>
-          </div>
-        </div>
-
-        <div class="formGrid full">
-          <div>
-            <label>Highest Qualification</label>
-            <input type="text" name="qualification">
-          </div>
-        </div>
-      </div>
-
-      <div class="formGroup">
-        <h3>Education Information</h3>
-
-        <div class="formGrid">
-          <div>
-            <label>University / Institution <span class="req">*</span></label>
-            <input type="text" name="university" required>
-          </div>
-
-          <div>
-            <label>Field of Study</label>
-            <input type="text" name="fieldOfStudy">
-          </div>
-        </div>
-      </div>
-
-      <div class="formGroup">
-        <h3>Address Information</h3>
-
-        <div class="formGrid">
-          <div>
-            <label>Province</label>
-            <input type="text" name="province">
-          </div>
-
-          <div>
-            <label>Town / City</label>
-            <input type="text" name="city">
-          </div>
-
-          <div>
-            <label>Residential Address <span class="req">*</span></label>
-            <input type="text" name="address" required>
-          </div>
-
-          <div>
-            <label>Postal Code</label>
-            <input type="text" name="postalCode">
-          </div>
-        </div>
-      </div>
-
-      <div class="formGroup">
-        <h3>Background Declaration</h3>
-
-        <div class="formGrid">
-          <div>
-            <label>Do you have any criminal offence? <span class="req">*</span></label>
-            <select name="criminalOffence" id="criminalOffence" required>
-              <option value="">Select</option>
-              <option>No</option>
-              <option>Yes</option>
-            </select>
-          </div>
-
-          <div>
-            <label>If yes, provide brief details</label>
-            <input type="text" name="criminalOffenceDetails" id="criminalOffenceDetails">
-          </div>
-        </div>
-      </div>
-
-      <div class="formGroup">
-        <h3>Employment History</h3>
-
-        <div class="formGrid">
-          <div>
-            <label>Current Occupation</label>
-            <input type="text" name="currentOccupation">
-          </div>
-
-          <div>
-            <label>Years of Experience <span class="req">*</span></label>
-            <select name="experienceYears" required>
-              <option value="">Select experience</option>
-              <option>0 - 1 Year</option>
-              <option>2 - 3 Years</option>
-              <option>4 - 5 Years</option>
-              <option>6+ Years</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="formGrid full">
-          <div>
-            <label>Previous Employment / Relevant Experience <span class="req">*</span></label>
-            <textarea name="employmentHistory" required></textarea>
-          </div>
-        </div>
-      </div>
-
-      <div class="formGroup">
-        <h3>Skills and Motivation</h3>
-
-        <div class="formGrid full">
-          <div>
-            <label>Technical Skills / Subjects <span class="req">*</span></label>
-            <textarea name="technicalSkills" required></textarea>
-          </div>
-
-          <div>
-            <label>Professional Summary / Motivation <span class="req">*</span></label>
-            <textarea name="professionalSummary" required></textarea>
-          </div>
-        </div>
-      </div>
-
-      <div class="formGroup">
-        <h3>Opportunity Source</h3>
-
-        <div class="formGrid">
-          <div>
-            <label>How did you hear about this opportunity? <span class="req">*</span></label>
-            <select name="heardAboutOpportunity" required>
-              <option value="">Select option</option>
-              <option>Facebook</option>
-              <option>Instagram</option>
-              <option>TikTok</option>
-              <option>LinkedIn</option>
-              <option>WhatsApp</option>
-              <option>Friend or Family</option>
-              <option>School or Community</option>
-              <option>Practice Online Academy Website</option>
-              <option>Other</option>
-            </select>
-          </div>
-
-          <div>
-            <label>If other, please specify</label>
-            <input type="text" name="heardAboutOther">
-          </div>
-        </div>
-      </div>
-
-      <div class="formGroup">
-        <h3>Documents</h3>
-
-        <div class="formGrid">
-          <div>
-            <label>Upload CV <span class="req">*</span></label>
-            <input type="file" name="cv" accept=".pdf,.doc,.docx,image/*" required>
-          </div>
-
-          <div>
-            <label>Upload ID Copy <span class="req">*</span></label>
-            <input type="file" name="idDocument" accept=".pdf,.doc,.docx,image/*" required>
-          </div>
-
-          <div>
-            <label>Upload Qualification <span class="req">*</span></label>
-            <input type="file" name="qualificationDocument" accept=".pdf,.doc,.docx,image/*" required>
-          </div>
-
-          <div>
-            <label>Portfolio / LinkedIn / Website</label>
-            <input type="url" name="portfolio">
-          </div>
-        </div>
-      </div>
-
-      <button class="submitBtn" type="submit">Submit Professional Application</button>
       <div id="msg" class="msg"></div>
 
     </form>
+
   </section>
 
 </main>
 
 <script>
+
 const API = "https://practice-backend-msgn.onrender.com";
+
 const categoryBox = document.getElementById("categoryBox");
+
 const CACHE_KEY = "po_open_opportunities_cache_v1";
 
+/* ================= ESCAPE HTML ================= */
+
 function escapeHtml(value){
+
   return String(value || "")
     .replaceAll("&","&amp;")
     .replaceAll("<","&lt;")
@@ -633,80 +457,153 @@ function escapeHtml(value){
     .replaceAll("'","&#039;");
 }
 
+/* ================= RENDER ================= */
+
 function renderOpportunities(jobs){
+
   if(!Array.isArray(jobs) || !jobs.length){
-    categoryBox.innerHTML = '<div class="loadingBox">No open opportunities available.</div>';
+
+    categoryBox.innerHTML = `
+      <div class="loadingBox">
+        No open opportunities available.
+      </div>
+    `;
+
     return;
   }
 
   const grouped = {};
 
   jobs.forEach(job=>{
+
     const cat = job.category || "Other";
-    if(!grouped[cat]) grouped[cat] = [];
+
+    if(!grouped[cat]){
+      grouped[cat] = [];
+    }
+
     grouped[cat].push(job);
+
   });
 
   categoryBox.innerHTML = Object.entries(grouped).map(([category,items])=>`
+
     <div class="categoryItem active">
+
       <button class="categoryBtn" type="button">
-        <span>${escapeHtml(category)} (${items.length})</span>
+
+        <span>
+          ${escapeHtml(category)} (${items.length})
+        </span>
+
         <span class="arrow">▶</span>
+
       </button>
 
       <div class="jobsWrap">
+
         ${items.map(job=>`
+
           <div class="jobCard">
-            <h3>${escapeHtml(job.title)}</h3>
+
+            <h3>
+              ${escapeHtml(job.title)}
+            </h3>
 
             <div class="jobMeta">
+
               ${escapeHtml(job.category)}
+
               &nbsp;&nbsp;
+
               ${escapeHtml(job.location || "Online")}
+
               &nbsp;&nbsp;
+
               ${escapeHtml(job.type || "")}
+
+              ${
+                job.closingDate
+                ? `&nbsp;&nbsp; Closing: ${new Date(job.closingDate).toLocaleDateString("en-ZA")}`
+                : ""
+              }
+
             </div>
 
-            <div class="jobDesc">${escapeHtml(job.description)}</div>
+            <div class="jobDesc">
+              ${escapeHtml(job.description)}
+            </div>
 
             ${job.requirements ? `
+
               <div class="jobDesc">
-                <strong>Requirements:</strong> ${escapeHtml(job.requirements)}
+
+                <strong>
+                  Requirements:
+                </strong>
+
+                ${escapeHtml(job.requirements)}
+
               </div>
+
             ` : ""}
 
-            <button class="applyBtn" type="button" onclick="selectRole('${escapeHtml(job.title)}')">
+            <button
+              class="applyBtn"
+              type="button"
+              onclick="selectRole('${escapeHtml(job.title)}')"
+            >
               Apply for this role
             </button>
+
           </div>
+
         `).join("")}
+
       </div>
+
     </div>
+
   `).join("");
 
   document.querySelectorAll(".categoryBtn").forEach(btn=>{
+
     btn.addEventListener("click",()=>{
+
       btn.parentElement.classList.toggle("active");
+
     });
+
   });
+
 }
 
+/* ================= LOAD ================= */
+
 async function loadOpportunities(){
+
   const cached = localStorage.getItem(CACHE_KEY);
 
   if(cached){
+
     try{
+
       renderOpportunities(JSON.parse(cached));
+
     }catch{
+
       localStorage.removeItem(CACHE_KEY);
+
     }
   }
 
   try{
-    const controller = new AbortController();
-    const timer = setTimeout(()=>controller.abort(), 8000);
 
-    const res = await fetch(`${API}/api/opportunities`, {
+    const controller = new AbortController();
+
+    const timer = setTimeout(()=>controller.abort(),8000);
+
+    const res = await fetch(`${API}/api/opportunities`,{
       cache:"no-store",
       signal:controller.signal
     });
@@ -715,164 +612,44 @@ async function loadOpportunities(){
 
     const jobs = await res.json();
 
-    if(!res.ok) throw new Error("Could not load opportunities");
+    if(!res.ok){
+      throw new Error("Could not load opportunities");
+    }
 
     localStorage.setItem(CACHE_KEY, JSON.stringify(jobs));
+
     renderOpportunities(jobs);
 
   }catch(error){
+
     if(!cached){
-      categoryBox.innerHTML = '<div class="loadingBox">Could not load opportunities. Please refresh.</div>';
+
+      categoryBox.innerHTML = `
+        <div class="loadingBox">
+          Could not load opportunities. Please refresh.
+        </div>
+      `;
     }
   }
 }
+
+/* ================= APPLY ================= */
 
 function selectRole(role){
-  document.getElementById("role").value = role;
-  document.getElementById("applicationSection").classList.add("show");
 
-  document.getElementById("applicationSection").scrollIntoView({
+  document.getElementById("role").value = role;
+
+  document.getElementById("applicationSection")
+  .classList.add("show");
+
+  document.getElementById("applicationSection")
+  .scrollIntoView({
     behavior:"smooth"
   });
-
-  setTimeout(()=>{
-    document.getElementById("fullName").focus();
-  },300);
 }
-
-function isValidSouthAfricanId(idNumber){
-  if(!/^\d{13}$/.test(idNumber)) return false;
-
-  const yy = Number(idNumber.slice(0,2));
-  const mm = Number(idNumber.slice(2,4));
-  const dd = Number(idNumber.slice(4,6));
-
-  const currentYearTwo = Number(String(new Date().getFullYear()).slice(-2));
-  const century = yy <= currentYearTwo ? 2000 : 1900;
-  const fullYear = century + yy;
-
-  const dob = new Date(fullYear, mm - 1, dd);
-
-  if(
-    dob.getFullYear() !== fullYear ||
-    dob.getMonth() !== mm - 1 ||
-    dob.getDate() !== dd
-  ){
-    return false;
-  }
-
-  let sum = 0;
-  let alternate = false;
-
-  for(let i = idNumber.length - 1; i >= 0; i--){
-    let n = Number(idNumber.charAt(i));
-
-    if(alternate){
-      n *= 2;
-      if(n > 9) n -= 9;
-    }
-
-    sum += n;
-    alternate = !alternate;
-  }
-
-  return sum % 10 === 0;
-}
-
-function getDateOfBirthFromId(idNumber){
-  const yy = Number(idNumber.slice(0,2));
-  const mm = idNumber.slice(2,4);
-  const dd = idNumber.slice(4,6);
-  const currentYearTwo = Number(String(new Date().getFullYear()).slice(-2));
-  const century = yy <= currentYearTwo ? 2000 : 1900;
-  const fullYear = century + yy;
-
-  return `${fullYear}-${mm}-${dd}`;
-}
-
-function validateIdAndFillDob(){
-  const idInput = document.getElementById("idNumber");
-  const dobInput = document.getElementById("dateOfBirth");
-  const idError = document.getElementById("idError");
-
-  idInput.value = idInput.value.replace(/\D/g,"").slice(0,13);
-
-  if(idInput.value.length === 0){
-    idInput.classList.remove("invalid");
-    idError.style.display = "none";
-    dobInput.value = "";
-    return false;
-  }
-
-  if(isValidSouthAfricanId(idInput.value)){
-    idInput.classList.remove("invalid");
-    idError.style.display = "none";
-    dobInput.value = getDateOfBirthFromId(idInput.value);
-    return true;
-  }
-
-  idInput.classList.add("invalid");
-  idError.style.display = "block";
-  dobInput.value = "";
-  return false;
-}
-
-document.getElementById("idNumber").addEventListener("input", validateIdAndFillDob);
-document.getElementById("idNumber").addEventListener("blur", validateIdAndFillDob);
-
-document.getElementById("applicationForm").addEventListener("submit", async function(e){
-  e.preventDefault();
-
-  const msg = document.getElementById("msg");
-
-  if(!validateIdAndFillDob()){
-    msg.style.color = "#b91c1c";
-    msg.textContent = "Please enter a valid South African ID number before submitting.";
-    document.getElementById("idNumber").focus();
-    return;
-  }
-
-  const criminalOffence = document.getElementById("criminalOffence").value;
-  const criminalDetails = document.getElementById("criminalOffenceDetails").value.trim();
-
-  if(criminalOffence === "Yes" && !criminalDetails){
-    msg.style.color = "#b91c1c";
-    msg.textContent = "Please provide brief details about the criminal offence.";
-    document.getElementById("criminalOffenceDetails").focus();
-    return;
-  }
-
-  msg.style.color = "#065f46";
-  msg.textContent = "Submitting application...";
-
-  try{
-    const formData = new FormData(this);
-
-    const res = await fetch(`${API}/api/opportunities/apply`,{
-      method:"POST",
-      body:formData
-    });
-
-    const data = await res.json().catch(()=>({}));
-
-    if(!res.ok){
-      msg.style.color = "#b91c1c";
-      msg.textContent = data.message || "Failed to submit application.";
-      return;
-    }
-
-    msg.style.color = "#065f46";
-    msg.textContent = "Application submitted successfully.";
-    this.reset();
-    document.getElementById("applicationSection").classList.remove("show");
-
-  }catch(error){
-    msg.style.color = "#b91c1c";
-    msg.textContent = "Network error. Please try again.";
-  }
-});
 
 loadOpportunities();
+
 </script>
 
 </body>
