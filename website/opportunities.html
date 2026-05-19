@@ -14,6 +14,8 @@
   --border:#d9dee7;
   --text:#0f172a;
   --muted:#64748b;
+  --danger:#b91c1c;
+  --success:#065f46;
 }
 
 *{box-sizing:border-box}
@@ -63,7 +65,7 @@ a{text-decoration:none;color:inherit}
 .categoryBox{
   background:#fff;
   border:1px solid var(--border);
-  border-radius:8px;
+  border-radius:10px;
   overflow:hidden;
   margin-bottom:24px;
 }
@@ -113,7 +115,7 @@ a{text-decoration:none;color:inherit}
 .jobCard{
   background:#fff;
   border:1px solid #e2e8f0;
-  border-radius:8px;
+  border-radius:10px;
   padding:24px;
   margin-top:18px;
 }
@@ -141,7 +143,7 @@ a{text-decoration:none;color:inherit}
   background:var(--nav);
   color:#fff;
   border:none;
-  border-radius:3px;
+  border-radius:4px;
   padding:16px 28px;
   font-size:15px;
   font-weight:700;
@@ -159,8 +161,8 @@ a{text-decoration:none;color:inherit}
 .applicationSection{
   background:#fff;
   border:1px solid var(--border);
-  border-radius:8px;
-  padding:28px;
+  border-radius:10px;
+  padding:30px;
   margin-top:28px;
   display:none;
 }
@@ -182,14 +184,14 @@ a{text-decoration:none;color:inherit}
 
 .formGroup{
   border:1px solid #e2e8f0;
-  border-radius:8px;
-  padding:22px;
-  margin-bottom:18px;
+  border-radius:10px;
+  padding:24px;
+  margin-bottom:20px;
   background:#fff;
 }
 
 .formGroup h3{
-  margin:0 0 14px;
+  margin:0 0 16px;
   color:var(--nav);
   font-size:20px;
 }
@@ -201,7 +203,11 @@ a{text-decoration:none;color:inherit}
 }
 
 .formGrid.three{
-  grid-template-columns:.5fr 1.25fr 1.25fr;
+  grid-template-columns:.55fr 1.2fr 1.2fr;
+}
+
+.formGrid.personalTop{
+  grid-template-columns:.55fr 1.45fr;
 }
 
 .formGrid.full{
@@ -235,9 +241,36 @@ textarea:focus{
   border-color:#cbd5e1;
 }
 
+input[readonly]{
+  background:#f8fafc;
+  color:#475569;
+}
+
 textarea{
   min-height:120px;
   resize:vertical;
+}
+
+.fieldHint{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.5;
+}
+
+.fieldError{
+  margin-top:6px;
+  color:var(--danger);
+  font-size:12px;
+  font-weight:700;
+  line-height:1.5;
+  display:none;
+}
+
+input.invalid,
+select.invalid,
+textarea.invalid{
+  border-color:var(--danger);
 }
 
 .submitBtn{
@@ -259,7 +292,7 @@ textarea{
 .msg{
   margin-top:14px;
   font-weight:700;
-  color:#065f46;
+  color:var(--success);
 }
 
 .req{
@@ -325,7 +358,7 @@ textarea{
   <section class="applicationSection" id="applicationSection">
 
     <h2>Apply for an Opportunity</h2>
-    <p>Complete the application form below.</p>
+    <p>Complete the application form below. Please make sure your details are correct before submitting.</p>
 
     <form id="applicationForm">
 
@@ -355,11 +388,11 @@ textarea{
       <div class="formGroup">
         <h3>Personal Information</h3>
 
-        <div class="formGrid three">
+        <div class="formGrid personalTop">
           <div>
             <label>Title <span class="req">*</span></label>
             <select name="title" required>
-              <option value="">Select</option>
+              <option value="">Select </option>
               <option>Mr</option>
               <option>Mrs</option>
               <option>Miss</option>
@@ -373,10 +406,28 @@ textarea{
             <label>Full Name and Surname <span class="req">*</span></label>
             <input type="text" name="fullName" id="fullName" required>
           </div>
+        </div>
+
+        <div class="formGrid">
+          <div>
+            <label>South African ID Number <span class="req">*</span></label>
+            <input
+              type="text"
+              name="idNumber"
+              id="idNumber"
+              maxlength="13"
+              inputmode="numeric"
+              required
+
+            >
+            
+            <div class="fieldError" id="idError">Please enter a valid South African ID number.</div>
+          </div>
 
           <div>
             <label>Date of Birth <span class="req">*</span></label>
-            <input type="date" name="dateOfBirth" required>
+            <input type="date" name="dateOfBirth" id="dateOfBirth" readonly required>
+         
           </div>
         </div>
 
@@ -390,15 +441,28 @@ textarea{
             <label>Phone Number <span class="req">*</span></label>
             <input type="tel" name="phone" required>
           </div>
+        </div>
 
+        <div class="formGrid full">
           <div>
             <label>Highest Qualification</label>
             <input type="text" name="qualification">
           </div>
+        </div>
+      </div>
+
+      <div class="formGroup">
+        <h3>Education Information</h3>
+
+        <div class="formGrid">
+          <div>
+            <label>University / Institution <span class="req">*</span></label>
+            <input type="text" name="university" required>
+          </div>
 
           <div>
-            <label>ID Number / Passport Number</label>
-            <input type="text" name="idNumber">
+            <label>Field of Study</label>
+            <input type="text" name="fieldOfStudy">
           </div>
         </div>
       </div>
@@ -425,6 +489,26 @@ textarea{
           <div>
             <label>Postal Code</label>
             <input type="text" name="postalCode">
+          </div>
+        </div>
+      </div>
+
+      <div class="formGroup">
+        <h3>Background Declaration</h3>
+
+        <div class="formGrid">
+          <div>
+            <label>Do you have any criminal offence? <span class="req">*</span></label>
+            <select name="criminalOffence" id="criminalOffence" required>
+              <option value="">Select</option>
+              <option>No</option>
+              <option>Yes</option>
+            </select>
+          </div>
+
+          <div>
+            <label>If yes, provide brief details</label>
+            <input type="text" name="criminalOffenceDetails" id="criminalOffenceDetails">
           </div>
         </div>
       </div>
@@ -511,13 +595,13 @@ textarea{
           </div>
 
           <div>
-            <label>Upload ID / Passport Copy</label>
-            <input type="file" name="idDocument" accept=".pdf,.doc,.docx,image/*">
+            <label>Upload ID Copy <span class="req">*</span></label>
+            <input type="file" name="idDocument" accept=".pdf,.doc,.docx,image/*" required>
           </div>
 
           <div>
-            <label>Upload Qualification</label>
-            <input type="file" name="qualificationDocument" accept=".pdf,.doc,.docx,image/*">
+            <label>Upload Qualification <span class="req">*</span></label>
+            <input type="file" name="qualificationDocument" accept=".pdf,.doc,.docx,image/*" required>
           </div>
 
           <div>
@@ -656,10 +740,108 @@ function selectRole(role){
   },300);
 }
 
+function isValidSouthAfricanId(idNumber){
+  if(!/^\d{13}$/.test(idNumber)) return false;
+
+  const yy = Number(idNumber.slice(0,2));
+  const mm = Number(idNumber.slice(2,4));
+  const dd = Number(idNumber.slice(4,6));
+
+  const currentYearTwo = Number(String(new Date().getFullYear()).slice(-2));
+  const century = yy <= currentYearTwo ? 2000 : 1900;
+  const fullYear = century + yy;
+
+  const dob = new Date(fullYear, mm - 1, dd);
+
+  if(
+    dob.getFullYear() !== fullYear ||
+    dob.getMonth() !== mm - 1 ||
+    dob.getDate() !== dd
+  ){
+    return false;
+  }
+
+  let sum = 0;
+  let alternate = false;
+
+  for(let i = idNumber.length - 1; i >= 0; i--){
+    let n = Number(idNumber.charAt(i));
+
+    if(alternate){
+      n *= 2;
+      if(n > 9) n -= 9;
+    }
+
+    sum += n;
+    alternate = !alternate;
+  }
+
+  return sum % 10 === 0;
+}
+
+function getDateOfBirthFromId(idNumber){
+  const yy = Number(idNumber.slice(0,2));
+  const mm = idNumber.slice(2,4);
+  const dd = idNumber.slice(4,6);
+  const currentYearTwo = Number(String(new Date().getFullYear()).slice(-2));
+  const century = yy <= currentYearTwo ? 2000 : 1900;
+  const fullYear = century + yy;
+
+  return `${fullYear}-${mm}-${dd}`;
+}
+
+function validateIdAndFillDob(){
+  const idInput = document.getElementById("idNumber");
+  const dobInput = document.getElementById("dateOfBirth");
+  const idError = document.getElementById("idError");
+
+  idInput.value = idInput.value.replace(/\D/g,"").slice(0,13);
+
+  if(idInput.value.length === 0){
+    idInput.classList.remove("invalid");
+    idError.style.display = "none";
+    dobInput.value = "";
+    return false;
+  }
+
+  if(isValidSouthAfricanId(idInput.value)){
+    idInput.classList.remove("invalid");
+    idError.style.display = "none";
+    dobInput.value = getDateOfBirthFromId(idInput.value);
+    return true;
+  }
+
+  idInput.classList.add("invalid");
+  idError.style.display = "block";
+  dobInput.value = "";
+  return false;
+}
+
+document.getElementById("idNumber").addEventListener("input", validateIdAndFillDob);
+document.getElementById("idNumber").addEventListener("blur", validateIdAndFillDob);
+
 document.getElementById("applicationForm").addEventListener("submit", async function(e){
   e.preventDefault();
 
   const msg = document.getElementById("msg");
+
+  if(!validateIdAndFillDob()){
+    msg.style.color = "#b91c1c";
+    msg.textContent = "Please enter a valid South African ID number before submitting.";
+    document.getElementById("idNumber").focus();
+    return;
+  }
+
+  const criminalOffence = document.getElementById("criminalOffence").value;
+  const criminalDetails = document.getElementById("criminalOffenceDetails").value.trim();
+
+  if(criminalOffence === "Yes" && !criminalDetails){
+    msg.style.color = "#b91c1c";
+    msg.textContent = "Please provide brief details about the criminal offence.";
+    document.getElementById("criminalOffenceDetails").focus();
+    return;
+  }
+
   msg.style.color = "#065f46";
   msg.textContent = "Submitting application...";
 
