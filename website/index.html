@@ -86,7 +86,7 @@ a{
 
 .navbar{
   background:var(--blue);
-  height:76px;
+  min-height:76px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -96,6 +96,8 @@ a{
   display:flex;
   align-items:center;
   gap:34px;
+  flex-wrap:wrap;
+  justify-content:center;
 }
 
 .navInner a{
@@ -106,80 +108,92 @@ a{
   transition:.2s ease;
 }
 
-.navInner a:hover{
+.navInner a:hover,
+.navInner a.active{
   color:var(--gold);
 }
 
 .navInner a.active{
-  color:var(--gold);
   border-bottom:3px solid var(--gold);
 }
 
-/* ================= ABOUT HERO ================= */
+/* ================= HERO ================= */
 
 .aboutHero{
-  min-height:420px;
+  min-height:500px;
 
-  background:
-  linear-gradient(rgba(6,25,43,.58), rgba(6,25,43,.58)),
-  url("https://res.cloudinary.com/dopoxadlr/image/upload/v1772745468/geralt-keyboard-2980844_1280_x0xkra.jpg");
-
-  background-size:cover;
-  background-position:center;
-
-  display:flex;
-  justify-content:center;
-
-  padding:0 20px;
-}
-
-.aboutPanel{
-  width:min(1450px, 100%);
-  background:var(--blue);
-  min-height:320px;
-}
-
-.aboutText{
-  color:#fff;
-  padding:44px 60px;
-}
-
-.breadcrumb{
-  font-size:14px;
-  font-weight:700;
-  margin-bottom:30px;
-}
-
-.aboutText h1{
-  font-size:40px;
-  font-weight:700;
-  margin-bottom:24px;
-}
-
-.aboutText p{
-  max-width:1100px;
-  font-size:16px;
-  line-height:1.8;
-  font-weight:600;
-}
-
-.readMore{
-  display:inline-block;
-  margin-top:24px;
-  color:var(--gold);
-  font-size:15px;
-  font-weight:700;
-}
-
-/* ================= VALUES SECTION ================= */
-
-.valuesSection{
   background:
   linear-gradient(rgba(6,25,43,.64), rgba(6,25,43,.64)),
   url("https://res.cloudinary.com/dopoxadlr/image/upload/v1772745468/geralt-keyboard-2980844_1280_x0xkra.jpg");
 
   background-size:cover;
   background-position:center;
+  background-repeat:no-repeat;
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  padding:40px 20px;
+}
+
+.aboutPanel{
+  width:min(1450px,100%);
+  background:rgba(27,22,72,.95);
+  border-left:6px solid var(--gold);
+}
+
+.aboutText{
+  color:#fff;
+  padding:58px 64px;
+}
+
+.breadcrumb{
+  font-size:14px;
+  font-weight:700;
+  margin-bottom:26px;
+  color:#f8fafc;
+}
+
+.aboutText h1{
+  font-size:46px;
+  font-weight:800;
+  margin-bottom:24px;
+}
+
+.aboutText p{
+  max-width:1120px;
+  font-size:17px;
+  line-height:1.85;
+  font-weight:500;
+}
+
+.readMore{
+  display:inline-block;
+  margin-top:30px;
+  background:var(--gold);
+  color:var(--blue);
+  padding:14px 26px;
+  font-size:15px;
+  font-weight:800;
+  border-radius:6px;
+}
+
+.readMore:hover{
+  background:#ffd91a;
+}
+
+/* ================= FEATURES ================= */
+
+.valuesSection{
+
+  background:
+  linear-gradient(rgba(6,25,43,.64), rgba(6,25,43,.64)),
+  url("https://res.cloudinary.com/dopoxadlr/image/upload/v1772745468/geralt-keyboard-2980844_1280_x0xkra.jpg");
+
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
 
   padding:90px 40px;
 }
@@ -187,34 +201,21 @@ a{
 .valuesHeading{
   max-width:1450px;
   margin:0 auto 50px;
-
-  display:flex;
-  align-items:center;
-  gap:28px;
-
   color:#fff;
 }
 
 .valuesHeading h2{
   font-size:40px;
   font-weight:800;
-  white-space:nowrap;
-  letter-spacing:-1px;
-  text-shadow:0 4px 18px rgba(0,0,0,.35);
+  margin-bottom:12px;
 }
 
 .valuesHeading p{
   font-size:17px;
-  line-height:1.6;
-  font-weight:700;
-  max-width:620px;
+  line-height:1.7;
+  font-weight:600;
+  max-width:780px;
   color:#ffffff;
-  text-shadow:0 3px 10px rgba(0,0,0,.55);
-  background:rgba(0,0,0,.18);
-  padding:10px 18px;
-  border-left:4px solid var(--gold);
-  border-radius:8px;
-  backdrop-filter:blur(3px);
 }
 
 .valuesInner{
@@ -224,53 +225,44 @@ a{
   display:grid;
   grid-template-columns:repeat(3,1fr);
 
-  gap:30px;
+  gap:28px;
 }
 
 .valueBox{
-  background:rgba(255,255,255,.97);
-  min-height:260px;
-
-  padding:48px 38px;
-
-  box-shadow:0 18px 40px rgba(0,0,0,.22);
-
+  background:rgba(255,255,255,.98);
+  min-height:245px;
+  padding:40px 34px;
   border-top:5px solid var(--gold);
-
+  border-radius:4px;
+  box-shadow:0 16px 35px rgba(0,0,0,.22);
   transition:.25s ease;
-
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
 }
 
 .valueBox:hover{
-  transform:translateY(-6px);
+  transform:translateY(-5px);
 }
 
 .valueBox h2{
-  color:var(--gold);
-  font-size:26px;
-  line-height:1.2;
+  color:var(--blue);
+  font-size:24px;
+  line-height:1.25;
   font-weight:800;
-  margin-bottom:18px;
+  margin-bottom:16px;
 }
 
 .valueBox p{
-  color:#1e293b;
-  font-size:16px;
+  color:#334155;
+  font-size:15.5px;
   line-height:1.8;
-  font-weight:600;
-}
-
-/* ================= WHITE BLOCK ================= */
-
-.footerWhiteBlock{
-  height:90px;
-  background:#f8fafc;
+  font-weight:500;
 }
 
 /* ================= FOOTER ================= */
+
+.footerWhiteBlock{
+  height:80px;
+  background:#f8fafc;
+}
 
 .mainFooter{
   background:var(--blue);
@@ -280,12 +272,9 @@ a{
 .footerContent{
   max-width:1450px;
   margin:auto;
-
   display:grid;
   grid-template-columns:1fr 1fr 1fr;
-
   gap:100px;
-
   padding:0 80px 60px;
 }
 
@@ -293,17 +282,24 @@ a{
   color:#fff;
   font-size:20px;
   margin-bottom:24px;
-  font-weight:700;
+  font-weight:800;
 }
 
 .footerColumn a{
   display:block;
   color:#fff;
   font-size:15px;
-  margin-bottom:20px;
+  margin-bottom:18px;
   font-weight:500;
   cursor:default;
-  pointer-events:none;
+}
+
+.footerColumn a.clickable{
+  cursor:pointer;
+}
+
+.footerColumn a.clickable:hover{
+  color:var(--gold);
 }
 
 .whatsappBox{
@@ -324,15 +320,14 @@ a{
   font-weight:600;
 }
 
-/* ================= FOOTER BOTTOM ================= */
-
 .footerBottomWhite{
   background:#f8fafc;
-  height:80px;
-
+  min-height:80px;
   display:flex;
   align-items:center;
   justify-content:center;
+  text-align:center;
+  padding:20px;
 }
 
 .footerBottomWhite p{
@@ -347,34 +342,26 @@ a{
   position:fixed;
   inset:0;
   background:rgba(0,0,0,.65);
-
   display:none;
   align-items:center;
   justify-content:center;
-
   z-index:9999;
-
   padding:20px;
 }
 
 .modalBox{
   width:min(820px,100%);
   max-height:88vh;
-
   background:#fff;
-  border-radius:16px;
-
+  border-radius:14px;
   overflow:hidden;
-
   box-shadow:0 25px 60px rgba(0,0,0,.35);
 }
 
 .modalHeader{
   background:var(--blue);
   color:#fff;
-
   padding:20px 26px;
-
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -434,45 +421,31 @@ a{
   }
 
   .navbar{
-    height:auto;
     padding:16px 12px;
   }
 
   .navInner{
     gap:16px;
-    flex-wrap:wrap;
-    justify-content:center;
-  }
-
-  .navInner a{
-    font-size:14px;
   }
 
   .aboutHero{
-    padding:0 12px;
+    padding:20px 12px;
   }
 
   .aboutText{
-    padding:28px 22px;
+    padding:32px 24px;
   }
 
   .aboutText h1{
-    font-size:32px;
+    font-size:34px;
   }
 
   .aboutText p{
     font-size:15px;
-    line-height:1.7;
   }
 
   .valuesSection{
     padding:60px 18px;
-  }
-
-  .valuesHeading{
-    flex-direction:column;
-    gap:16px;
-    margin-bottom:32px;
   }
 
   .valuesHeading h2{
@@ -481,24 +454,17 @@ a{
 
   .valuesInner{
     grid-template-columns:1fr;
-    gap:22px;
   }
 
   .valueBox{
     min-height:auto;
-    padding:34px 24px;
+    padding:32px 24px;
   }
 
   .footerContent{
     grid-template-columns:1fr;
     padding:0 24px 50px;
     gap:38px;
-  }
-
-  .footerBottomWhite{
-    height:auto;
-    padding:22px 16px;
-    text-align:center;
   }
 }
 
@@ -574,10 +540,10 @@ a{
 
   <div class="valuesHeading">
 
-    <h2>Our Values</h2>
+    <h2>What We Offer</h2>
 
     <p>
-      Learn With Understanding
+      Practice Online Academy combines structured lessons, digital assessments and performance tracking to help learners understand better and improve with confidence.
     </p>
 
   </div>
@@ -585,63 +551,45 @@ a{
   <div class="valuesInner">
 
     <div class="valueBox">
-
       <h2>Timed Assessments</h2>
-
       <p>
-        Learners complete timed tests, homework activities and exam-style assessments to help them practise under real assessment conditions.
+        Learners complete timed tests, homework activities and exam-style assessments to practise under real assessment conditions.
       </p>
-
     </div>
 
     <div class="valueBox">
-
       <h2>Graded System</h2>
-
       <p>
         Our system grades learner assessments so that learners, parents and tutors can clearly see progress after tests, homework and exams.
       </p>
-
     </div>
 
     <div class="valueBox">
-
       <h2>Performance Tracking</h2>
-
       <p>
         We track learner performance over time to identify improvement, learning gaps and areas where the learner needs more support.
       </p>
-
     </div>
 
     <div class="valueBox">
-
       <h2>Topic Analysis</h2>
-
       <p>
-        We analyse learner performance by topic so that learners can understand which topics they are strong in and which topics need more revision.
+        We analyse learner performance by topic so that learners know which topics are strong and which topics need more revision.
       </p>
-
     </div>
 
     <div class="valueBox">
-
       <h2>Recommendations</h2>
-
       <p>
-        Learners receive recommendations based on their results, helping them focus on the right topics and improve their understanding step by step.
+        Learners receive recommendations based on their results, helping them focus on the right topics and improve step by step.
       </p>
-
     </div>
 
     <div class="valueBox">
-
       <h2>Learning Support</h2>
-
       <p>
-        We support learners with structured online classes, revision support and guidance that helps build confidence and better academic decisions.
+        We support learners with structured online classes, revision guidance and tutoring that helps build confidence.
       </p>
-
     </div>
 
   </div>
@@ -659,9 +607,7 @@ a{
       <h3>PO Academy</h3>
 
       <a>Learn With Understanding</a>
-
       <a>About Us</a>
-
       <a>Contact Us</a>
 
       <div class="whatsappBox">
@@ -682,9 +628,7 @@ a{
       <h3>Site Features</h3>
 
       <a>Online Classes</a>
-
       <a>Revision Support</a>
-
       <a>Performance Tracking</a>
 
     </div>
@@ -693,10 +637,8 @@ a{
 
       <h3>Help</h3>
 
-      <a href="#" onclick="openPrivacy()">Privacy Policy</a>
-
-      <a href="#" onclick="openTerms()">Terms & Conditions</a>
-
+      <a class="clickable" href="#" onclick="openPrivacy()">Privacy Policy</a>
+      <a class="clickable" href="#" onclick="openTerms()">Terms & Conditions</a>
       <a>Support</a>
 
     </div>
@@ -770,32 +712,32 @@ a{
 <script>
 
 function openTerms(){
-  document.getElementById('termsModal').style.display='flex';
+  document.getElementById("termsModal").style.display="flex";
 }
 
 function closeTerms(){
-  document.getElementById('termsModal').style.display='none';
+  document.getElementById("termsModal").style.display="none";
 }
 
 function openPrivacy(){
-  document.getElementById('privacyModal').style.display='flex';
+  document.getElementById("privacyModal").style.display="flex";
 }
 
 function closePrivacy(){
-  document.getElementById('privacyModal').style.display='none';
+  document.getElementById("privacyModal").style.display="none";
 }
 
 window.onclick=function(e){
 
-  const terms=document.getElementById('termsModal');
-  const privacy=document.getElementById('privacyModal');
+  const terms=document.getElementById("termsModal");
+  const privacy=document.getElementById("privacyModal");
 
   if(e.target===terms){
-    terms.style.display='none';
+    terms.style.display="none";
   }
 
   if(e.target===privacy){
-    privacy.style.display='none';
+    privacy.style.display="none";
   }
 }
 
