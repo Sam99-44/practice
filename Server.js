@@ -63,6 +63,24 @@ import { addDays } from "./utils/access.js";
 dotenv.config();
 
 const app = express();
+
+/* ---------- SECURITY ---------- */
+app.use(helmet());
+app.use(mongoSanitize());
+
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Too many requests. Please try again later."
+  }
+});
+
+app.use(globalLimiter);
+
+/* ---------- BODY PARSER ---------- */
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -343,7 +361,7 @@ const uploadProfilePhoto = multer({
 /* ------------------ RATE LIMIT ------------------ */
 const registerLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 5,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -1306,7 +1324,7 @@ app.post("/api/resend-verification-email", async (req, res) => {
   }
 });
 // LOGIN
-app.post("/api/login", async (req, res) => {
+app.post("/api/login", loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
