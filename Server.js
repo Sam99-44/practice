@@ -62,7 +62,6 @@ import { addDays } from "./utils/access.js";
 
 import helmet from "helmet";
 import mongoSanitize from "express-mongo-sanitize";
-import rateLimit from "express-rate-limit";
 
 dotenv.config();
 
