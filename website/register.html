@@ -636,6 +636,16 @@
       return setMsg("Please complete username, email and password.", "error");
     }
 
+    const strongPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+
+    if (!strongPasswordRegex.test(String(payload.password))) {
+      return setMsg(
+        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
+        "error"
+      );
+    }
+
     if (payload.password !== confirmEl.value) {
       return setMsg("Passwords do not match.", "error");
     }
