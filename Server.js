@@ -362,6 +362,7 @@ const uploadProfilePhoto = multer({
 });
 
 /* ------------------ RATE LIMIT ------------------ */
+/* ------------------ RATE LIMIT ------------------ */
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
@@ -369,6 +370,16 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
   message: {
     message: "Too many login attempts. Please try again later.",
+  },
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Too many registration attempts. Please try again later.",
   },
 });
 
