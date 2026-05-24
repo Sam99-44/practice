@@ -1123,11 +1123,15 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       }
     }
 
-    if (String(password).length < 6) {
-      return res.status(400).json({
-        message: "Password must be at least 6 characters.",
-      });
-    }
+const strongPasswordRegex =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+
+if (!strongPasswordRegex.test(String(password))) {
+  return res.status(400).json({
+    message:
+      "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
+  });
+}
 
     const cleanUsername = cleanSpaces(username);
     const cleanEmail = String(email || "").toLowerCase().trim();
