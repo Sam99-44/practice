@@ -41,12 +41,17 @@ function uploadToCloudinary(fileBuffer, folder, originalName) {
 
 router.get("/", async (req, res) => {
   try {
-    const opportunities = await Opportunity.find({ status: "Open" }).sort({
+
+    const opportunities = await Opportunity.find({
+      status: "Open"
+    }).sort({
       createdAt: -1
     });
 
     res.json(opportunities);
+
   } catch (err) {
+
     res.status(500).json({
       message: "Failed to load opportunities.",
       error: err.message
@@ -60,13 +65,16 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
+
     const opportunity = await Opportunity.create(req.body);
 
     res.status(201).json({
       message: "Opportunity created successfully.",
       opportunity
     });
+
   } catch (err) {
+
     res.status(400).json({
       message: "Failed to create opportunity.",
       error: err.message
@@ -80,6 +88,7 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   try {
+
     const opportunity = await Opportunity.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -96,7 +105,9 @@ router.put("/:id", async (req, res) => {
       message: "Opportunity updated successfully.",
       opportunity
     });
+
   } catch (err) {
+
     res.status(400).json({
       message: "Failed to update opportunity.",
       error: err.message
@@ -110,6 +121,7 @@ router.put("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
+
     const opportunity = await Opportunity.findByIdAndDelete(req.params.id);
 
     if (!opportunity) {
@@ -121,7 +133,9 @@ router.delete("/:id", async (req, res) => {
     res.json({
       message: "Opportunity deleted successfully."
     });
+
   } catch (err) {
+
     res.status(500).json({
       message: "Failed to delete opportunity.",
       error: err.message
@@ -135,73 +149,47 @@ router.delete("/:id", async (req, res) => {
 
 router.post(
   "/apply",
+
   upload.fields([
-    { name: "cv", maxCount: 1 },
-    { name: "idDocument", maxCount: 1 },
-    { name: "qualificationDocument", maxCount: 1 }
+    { name: "documents", maxCount: 10 }
   ]),
+
   async (req, res) => {
+
     try {
-      let cvUrl = "";
-      let cvPublicId = "";
 
-      let idDocumentUrl = "";
-      let idDocumentPublicId = "";
+      const uploadedDocuments = [];
 
-      let qualificationDocumentUrl = "";
-      let qualificationDocumentPublicId = "";
+      if (req.files?.documents?.length) {
 
-      if (req.files?.cv?.[0]) {
-        const uploaded = await uploadToCloudinary(
-          req.files.cv[0].buffer,
-          "practice-online/opportunity-cvs",
-          req.files.cv[0].originalname
-        );
+        for (const file of req.files.documents) {
 
-        cvUrl = uploaded.secure_url;
-        cvPublicId = uploaded.public_id;
-      }
+          const uploaded = await uploadToCloudinary(
+            file.buffer,
+            "practice-online/opportunity-documents",
+            file.originalname
+          );
 
-      if (req.files?.idDocument?.[0]) {
-        const uploaded = await uploadToCloudinary(
-          req.files.idDocument[0].buffer,
-          "practice-online/opportunity-id-documents",
-          req.files.idDocument[0].originalname
-        );
-
-        idDocumentUrl = uploaded.secure_url;
-        idDocumentPublicId = uploaded.public_id;
-      }
-
-      if (req.files?.qualificationDocument?.[0]) {
-        const uploaded = await uploadToCloudinary(
-          req.files.qualificationDocument[0].buffer,
-          "practice-online/opportunity-qualifications",
-          req.files.qualificationDocument[0].originalname
-        );
-
-        qualificationDocumentUrl = uploaded.secure_url;
-        qualificationDocumentPublicId = uploaded.public_id;
+          uploadedDocuments.push({
+            url: uploaded.secure_url,
+            publicId: uploaded.public_id,
+            originalName: file.originalname
+          });
+        }
       }
 
       const application = await OpportunityApplication.create({
         ...req.body,
-
-        cvUrl,
-        cvPublicId,
-
-        idDocumentUrl,
-        idDocumentPublicId,
-
-        qualificationDocumentUrl,
-        qualificationDocumentPublicId
+        uploadedDocuments
       });
 
       res.status(201).json({
         message: "Application submitted successfully.",
         application
       });
+
     } catch (err) {
+
       console.error("APPLICATION SUBMIT ERROR:", err);
 
       res.status(500).json({
@@ -218,12 +206,15 @@ router.post(
 
 router.get("/applications/all", async (req, res) => {
   try {
+
     const applications = await OpportunityApplication.find().sort({
       createdAt: -1
     });
 
     res.json(applications);
+
   } catch (err) {
+
     res.status(500).json({
       message: "Failed to load applications.",
       error: err.message
