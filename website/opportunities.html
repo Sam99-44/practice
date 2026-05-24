@@ -572,21 +572,10 @@ textarea.invalid{
 
       <div class="formGroup">
         <h3>Documents</h3>
-
         <div class="formGrid">
           <div>
-            <label>Upload CV <span class="req">*</span></label>
-            <input type="file" name="cv" accept=".pdf,.doc,.docx,image/*" required>
-          </div>
-
-          <div>
-            <label>Upload ID Copy <span class="req">*</span></label>
-            <input type="file" name="idDocument" accept=".pdf,.doc,.docx,image/*" required>
-          </div>
-
-          <div>
-            <label>Upload Qualification <span class="req">*</span></label>
-            <input type="file" name="qualificationDocument" accept=".pdf,.doc,.docx,image/*" required>
+            <label>Upload Documents (CV, Qualification and ID Copy) <span class="req">*</span></label>
+            <input type="file" name="documents" accept=".pdf,.doc,.docx,image/*" multiple required>
           </div>
 
           <div>
@@ -852,9 +841,33 @@ document.getElementById("applicationForm").addEventListener("submit", async func
     }
 
     msg.style.color = "#065f46";
-    msg.textContent = "Application submitted successfully.";
+
+    msg.innerHTML = `
+      <div style="
+        background:#ecfdf5;
+        border:1px solid #10b981;
+        color:#065f46;
+        padding:18px;
+        border-radius:14px;
+        margin-top:14px;
+        font-weight:700;
+        line-height:1.7;
+      ">
+        Your application has been submitted successfully.<br>
+        Our team will review your application and contact you if you are shortlisted.
+      </div>
+    `;
+
     this.reset();
-    document.getElementById("applicationSection").classList.remove("show");
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+    setTimeout(()=>{
+      document.getElementById("applicationSection").classList.remove("show");
+    }, 4000);
 
   }catch(error){
     msg.style.color = "#b91c1c";
