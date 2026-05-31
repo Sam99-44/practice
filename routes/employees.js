@@ -21,7 +21,7 @@ export const EMPLOYEE_ROLES = [
   "operations",
   "finance",
   "support",
-  "Tutor"
+  "tutor"
 ];
 
 export const DEPARTMENT_PERMISSIONS = {
@@ -32,6 +32,7 @@ export const DEPARTMENT_PERMISSIONS = {
   operations: ["operations"],
   finance: ["finance"],
   support: ["support"],
+  tutor: ["tutor"],
 };
 
 function cleanSpaces(value = "") {
