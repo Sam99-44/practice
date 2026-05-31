@@ -16,7 +16,7 @@
 // ✅ Email verification routes
 // ✅ Login blocks unverified users
 // ✅ Register route protection with express-rate-limit
-// ✅ Free trial system
+// ✅ Free trial system 
 // ✅ Access-status routes
 // ✅ Manual payment routes
 // ✅ Admin leaderboard filters
@@ -59,6 +59,8 @@ import paymentRoutes from "./routes/payments.js";
 import manualPaymentsRoutes from "./routes/manualPayments.js";
 import enrollmentRoutes from "./routes/enrollments.js";
 import { addDays } from "./utils/access.js";
+import employeesRoutes from "./routes/employees.js";
+import tutorRoutes from "./routes/tutors.js";
 
 import helmet from "helmet";
 import mongoSanitize from "express-mongo-sanitize";
@@ -3687,10 +3689,12 @@ app.get("/api/announcements/:id/responses", authRequired, announcementManagerOnl
 
 /* ------------------ ACCESS + PAYMENT ROUTES ------------------ */
 app.use("/api/access", accessRoutes);
-app.use("/api/payments", paymentRoutes);
+app.use("/api/employees", employeesRoutes);
+app.use("/api/tutors", tutorRoutes);
 app.use("/api/manual-payments", manualPaymentsRoutes);
 app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/opportunities", opportunitiesRoutes);
+
 /* ------------------ SUPPORT MODEL ------------------ */
 const SupportRequestSchema = new mongoose.Schema(
   {
