@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Employee Login | Practice Online</title>
+
+<style>
+:root{
+    --nav:#1b1648;
+    --primary:#0b4a70;
+    --bg:#f4f6fb;
+    --border:#d8dde8;
+    --text:#0f172a;
+    --danger:#dc2626;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+    background:var(--bg);
+    min-height:100vh;
+}
+
+.topbar{
+    background:var(--nav);
+    color:white;
+    padding:18px 40px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:14px;
+}
+
+.brand img{
+    width:50px;
+    height:50px;
+    filter:brightness(0) invert(1);
+}
+
+.brand h2{
+    font-size:30px;
+}
+
+.brand p{
+    font-size:14px;
+    opacity:0.9;
+}
+
+.container{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:60px 20px;
+}
+
+.login-card{
+    width:100%;
+    max-width:520px;
+    background:white;
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:30px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+
+.login-card h1{
+    color:#00102e;
+    margin-bottom:10px;
+}
+
+.login-card p{
+    color:#475569;
+    margin-bottom:25px;
+}
+
+label{
+    display:block;
+    margin-bottom:8px;
+    font-weight:700;
+}
+
+input{
+    width:100%;
+    padding:14px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    margin-bottom:20px;
+    font-size:15px;
+}
+
+input:focus{
+    outline:none;
+    border-color:var(--primary);
+}
+
+.btn{
+    width:100%;
+    border:none;
+    background:var(--primary);
+    color:white;
+    padding:15px;
+    border-radius:12px;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.btn:hover{
+    background:#083c5b;
+}
+
+.error{
+    display:none;
+    margin-bottom:20px;
+    background:#fef2f2;
+    color:var(--danger);
+    padding:12px;
+    border-radius:10px;
+    border-left:4px solid var(--danger);
+}
+
+.footer-links{
+    display:flex;
+    justify-content:space-between;
+    margin-top:20px;
+}
+
+.footer-links a{
+    text-decoration:none;
+    color:var(--primary);
+    font-weight:600;
+}
+
+.roles{
+    margin-top:25px;
+    background:#f8fafc;
+    padding:15px;
+    border-radius:12px;
+}
+
+.roles h4{
+    margin-bottom:10px;
+}
+
+.role-badge{
+    display:inline-block;
+    background:#e0ecff;
+    color:#1d4ed8;
+    padding:6px 10px;
+    border-radius:20px;
+    margin:4px;
+    font-size:13px;
+    font-weight:700;
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <div class="brand">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg">
+        <div>
+            <h2>Practice Online</h2>
+            <p>Employee Portal Login</p>
+        </div>
+    </div>
+
+</header>
+
+<div class="container">
+
+    <div class="login-card">
+
+        <h1>Employee Login</h1>
+        <p>Access the Practice Online employee portal.</p>
+
+        <div class="error" id="errorBox"></div>
+
+        <form id="loginForm">
+
+            <label>Email</label>
+            <input
+                type="email"
+                id="email"
+                placeholder="Enter your email"
+                required
+            >
+
+            <label>Password</label>
+            <input
+                type="password"
+                id="password"
+                placeholder="Enter your password"
+                required
+            >
+
+            <button type="submit" class="btn">
+                Login
+            </button>
+
+        </form>
+
+        <div class="footer-links">
+            <a href="../forgot-password.html">
+                Forgot Password?
+            </a>
+
+            <a href="../index.html">
+                Back Home
+            </a>
+        </div>
+
+        <div class="roles">
+
+            <h4>Authorized Roles</h4>
+
+            <span class="role-badge">Admin</span>
+            <span class="role-badge">Tester</span>
+            <span class="role-badge">Academic</span>
+            <span class="role-badge">Editor</span>
+            <span class="role-badge">Operations</span>
+            <span class="role-badge">Finance</span>
+            <span class="role-badge">Support</span>
+            <span class="role-badge">Tutor</span>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const API = "https://api.practiceonline.co.za";
+
+const form = document.getElementById("loginForm");
+const errorBox = document.getElementById("errorBox");
+
+function showError(message){
+    errorBox.style.display = "block";
+    errorBox.textContent = message;
+}
+
+form.addEventListener("submit", async (e)=>{
+
+    e.preventDefault();
+
+    errorBox.style.display = "none";
+
+    try{
+
+        const response = await fetch(
+            API + "/api/employees/login",
+            {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({
+                    email:document.getElementById("email").value,
+                    password:document.getElementById("password").value
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if(!response.ok){
+            throw new Error(
+                data.message || "Login failed."
+            );
+        }
+
+        localStorage.setItem(
+            "token",
+            data.token
+        );
+
+        localStorage.setItem(
+            "employee",
+            JSON.stringify(data.user)
+        );
+
+        window.location.href =
+            "employee-dashboard.html";
+
+    }
+
+    catch(error){
+
+        showError(error.message);
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>
