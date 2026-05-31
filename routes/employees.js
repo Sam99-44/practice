@@ -6,7 +6,7 @@ import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-import User from "../models/User.js";
+import Employee from "../models/Employee.js";
 import EmployeeLog from "../models/EmployeeLog.js";
 
 const router = express.Router();
@@ -21,7 +21,7 @@ export const EMPLOYEE_ROLES = [
   "operations",
   "finance",
   "support",
-  "tutor"
+  "tutor",
 ];
 
 export const DEPARTMENT_PERMISSIONS = {
@@ -56,6 +56,15 @@ function isEmployeeRole(role = "") {
   return EMPLOYEE_ROLES.includes(String(role || "").toLowerCase());
 }
 
+function roleToDepartment(role = "") {
+  const r = normalizeRole(role);
+
+  if (r === "admin" || r === "tester") return "admin";
+  if (r === "editor") return "academic";
+
+  return r;
+}
+
 function canAccessDepartment(role = "", department = "") {
   const r = String(role || "").toLowerCase();
   const d = String(department || "").toLowerCase();
@@ -86,19 +95,23 @@ function employeeAuthRequired(req, res, next) {
 
 async function employeeOnly(req, res, next) {
   try {
-    const user = await User.findById(req.user.userId).select(
-      "fullName username email role accountType"
+    const employee = await Employee.findById(req.user.userId).select(
+      "fullName username email role department isActive emailVerified"
     );
 
-    if (!user) {
-      return res.status(401).json({ message: "User not found." });
+    if (!employee) {
+      return res.status(401).json({ message: "Employee not found." });
     }
 
-    if (!isEmployeeRole(user.role)) {
+    if (!employee.isActive) {
+      return res.status(403).json({ message: "Employee account is disabled." });
+    }
+
+    if (!isEmployeeRole(employee.role)) {
       return res.status(403).json({ message: "Employees only." });
     }
 
-    req.employee = user;
+    req.employee = employee;
     next();
   } catch (error) {
     console.error("employeeOnly error:", error.message);
@@ -108,19 +121,25 @@ async function employeeOnly(req, res, next) {
 
 async function adminEmployeeOnly(req, res, next) {
   try {
-    const user = await User.findById(req.user.userId).select("role");
+    const employee = await Employee.findById(req.user.userId).select(
+      "role isActive"
+    );
 
-    if (!user) {
-      return res.status(401).json({ message: "User not found." });
+    if (!employee) {
+      return res.status(401).json({ message: "Employee not found." });
     }
 
-    const role = String(user.role || "").toLowerCase();
+    if (!employee.isActive) {
+      return res.status(403).json({ message: "Employee account is disabled." });
+    }
+
+    const role = String(employee.role || "").toLowerCase();
 
     if (!["admin", "tester"].includes(role)) {
       return res.status(403).json({ message: "Admin/tester only." });
     }
 
-    req.employee = user;
+    req.employee = employee;
     next();
   } catch (error) {
     console.error("adminEmployeeOnly error:", error.message);
@@ -131,23 +150,29 @@ async function adminEmployeeOnly(req, res, next) {
 function departmentRequired(department) {
   return async function (req, res, next) {
     try {
-      const user = await User.findById(req.user.userId).select("role");
+      const employee = await Employee.findById(req.user.userId).select(
+        "role isActive"
+      );
 
-      if (!user) {
-        return res.status(401).json({ message: "User not found." });
+      if (!employee) {
+        return res.status(401).json({ message: "Employee not found." });
       }
 
-      if (!isEmployeeRole(user.role)) {
+      if (!employee.isActive) {
+        return res.status(403).json({ message: "Employee account is disabled." });
+      }
+
+      if (!isEmployeeRole(employee.role)) {
         return res.status(403).json({ message: "Employees only." });
       }
 
-      if (!canAccessDepartment(user.role, department)) {
+      if (!canAccessDepartment(employee.role, department)) {
         return res.status(403).json({
           message: `You do not have access to the ${department} department.`,
         });
       }
 
-      req.employee = user;
+      req.employee = employee;
       next();
     } catch (error) {
       console.error("departmentRequired error:", error.message);
@@ -175,10 +200,7 @@ async function writeEmployeeLog(req, action, details = {}) {
 }
 
 /* ------------------ ROUTE 1: EMPLOYEE LOGIN ------------------ */
-/*
-  Optional route. You can keep using /api/login if you want.
-  This route blocks learners and only allows employee roles.
-*/
+
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -197,40 +219,49 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email: cleanUserEmail });
+    const employee = await Employee.findOne({ email: cleanUserEmail });
 
-    if (!user) {
+    if (!employee) {
       return res.status(401).json({ message: "Invalid email or password." });
     }
 
-    const ok = await bcrypt.compare(password, user.passwordHash);
+    const ok = await bcrypt.compare(password, employee.passwordHash);
 
     if (!ok) {
       return res.status(401).json({ message: "Invalid email or password." });
     }
 
-    if (!isEmployeeRole(user.role)) {
+    if (!employee.isActive) {
+      return res.status(403).json({
+        message: "This employee account is disabled.",
+      });
+    }
+
+    if (!isEmployeeRole(employee.role)) {
       return res.status(403).json({
         message: "This login is for employees only.",
       });
     }
 
-    if (user.emailVerified === false) {
+    if (employee.emailVerified === false) {
       return res.status(403).json({
         message: "Please verify your email address before logging in.",
       });
     }
 
+    employee.lastLoginAt = new Date();
+    await employee.save();
+
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
+      { userId: employee._id, role: employee.role, accountType: "employee" },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
     await EmployeeLog.create({
-      employee: user._id,
+      employee: employee._id,
       action: "employee_login",
-      details: { role: user.role },
+      details: { role: employee.role },
       ipAddress: req.ip || "",
       userAgent: req.headers["user-agent"] || "",
     });
@@ -239,12 +270,15 @@ router.post("/login", async (req, res) => {
       message: "Employee login successful.",
       token,
       user: {
-        _id: user._id,
-        fullName: user.fullName || "",
-        username: user.username || "",
-        email: user.email || "",
-        role: user.role || "",
-        departments: DEPARTMENT_PERMISSIONS[user.role] || [],
+        _id: employee._id,
+        fullName: employee.fullName || "",
+        username: employee.username || "",
+        email: employee.email || "",
+        role: employee.role || "",
+        department: employee.department || "",
+        employeeNumber: employee.employeeNumber || "",
+        jobTitle: employee.jobTitle || "",
+        departments: DEPARTMENT_PERMISSIONS[employee.role] || [],
       },
     });
   } catch (error) {
@@ -257,17 +291,20 @@ router.post("/login", async (req, res) => {
 
 router.get("/me", employeeAuthRequired, employeeOnly, async (req, res) => {
   try {
-    const user = req.employee;
+    const employee = req.employee;
 
     await writeEmployeeLog(req, "employee_opened_portal");
 
     return res.json({
-      _id: user._id,
-      fullName: user.fullName || "",
-      username: user.username || "",
-      email: user.email || "",
-      role: user.role || "",
-      departments: DEPARTMENT_PERMISSIONS[user.role] || [],
+      _id: employee._id,
+      fullName: employee.fullName || "",
+      username: employee.username || "",
+      email: employee.email || "",
+      role: employee.role || "",
+      department: employee.department || "",
+      employeeNumber: employee.employeeNumber || "",
+      jobTitle: employee.jobTitle || "",
+      departments: DEPARTMENT_PERMISSIONS[employee.role] || [],
     });
   } catch (error) {
     console.error("GET /api/employees/me error:", error.message);
@@ -302,27 +339,32 @@ router.get(
 
 router.get("/", employeeAuthRequired, adminEmployeeOnly, async (req, res) => {
   try {
-    const employees = await User.find({
+    const employees = await Employee.find({
       role: { $in: EMPLOYEE_ROLES },
     })
       .select(
-        "fullName username email role accountType emailVerified createdAt updatedAt"
+        "fullName username email role department employeeNumber jobTitle phone isActive emailVerified lastLoginAt createdAt updatedAt"
       )
       .sort({ createdAt: -1 })
       .lean();
 
     return res.json(
-      employees.map((u) => ({
-        _id: u._id,
-        fullName: u.fullName || "",
-        username: u.username || "",
-        email: u.email || "",
-        role: u.role || "",
-        accountType: u.accountType || "",
-        emailVerified: !!u.emailVerified,
-        departments: DEPARTMENT_PERMISSIONS[u.role] || [],
-        createdAt: u.createdAt,
-        updatedAt: u.updatedAt,
+      employees.map((employee) => ({
+        _id: employee._id,
+        fullName: employee.fullName || "",
+        username: employee.username || "",
+        email: employee.email || "",
+        role: employee.role || "",
+        department: employee.department || "",
+        employeeNumber: employee.employeeNumber || "",
+        jobTitle: employee.jobTitle || "",
+        phone: employee.phone || "",
+        isActive: employee.isActive !== false,
+        emailVerified: !!employee.emailVerified,
+        lastLoginAt: employee.lastLoginAt || null,
+        departments: DEPARTMENT_PERMISSIONS[employee.role] || [],
+        createdAt: employee.createdAt,
+        updatedAt: employee.updatedAt,
       }))
     );
   } catch (error) {
@@ -341,13 +383,19 @@ router.post("/", employeeAuthRequired, adminEmployeeOnly, async (req, res) => {
       email,
       password,
       role,
+      department,
+      employeeNumber,
+      jobTitle,
+      phone,
       emailVerified = true,
+      isActive = true,
     } = req.body;
 
-const cleanFullName = cleanSpaces(fullName);
-const cleanUsername = cleanSpaces(username);
-const cleanUserEmail = cleanEmail(email);
-const cleanRole = normalizeRole(role);
+    const cleanFullName = cleanSpaces(fullName);
+    const cleanUsername = cleanSpaces(username);
+    const cleanUserEmail = cleanEmail(email);
+    const cleanRole = normalizeRole(role);
+    const cleanDepartment = cleanSpaces(department || roleToDepartment(cleanRole)).toLowerCase();
 
     if (!cleanFullName || !cleanUsername || !cleanUserEmail || !password || !cleanRole) {
       return res.status(400).json({
@@ -361,14 +409,24 @@ const cleanRole = normalizeRole(role);
       });
     }
 
-    const existingEmail = await User.findOne({ email: cleanUserEmail }).select("_id");
+    const existingEmail = await Employee.findOne({ email: cleanUserEmail }).select("_id");
     if (existingEmail) {
       return res.status(409).json({ message: "Email already exists." });
     }
 
-    const existingUsername = await User.findOne({ username: cleanUsername }).select("_id");
+    const existingUsername = await Employee.findOne({ username: cleanUsername }).select("_id");
     if (existingUsername) {
       return res.status(409).json({ message: "Username already exists." });
+    }
+
+    if (employeeNumber) {
+      const existingEmployeeNumber = await Employee.findOne({
+        employeeNumber: cleanSpaces(employeeNumber),
+      }).select("_id");
+
+      if (existingEmployeeNumber) {
+        return res.status(409).json({ message: "Employee number already exists." });
+      }
     }
 
     const strongPasswordRegex =
@@ -383,20 +441,24 @@ const cleanRole = normalizeRole(role);
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const employee = await User.create({
+    const employee = await Employee.create({
       fullName: cleanFullName,
       username: cleanUsername,
       email: cleanUserEmail,
       passwordHash,
       role: cleanRole,
-      accountType: "employee",
-      grade: null,
+      department: cleanDepartment,
+      employeeNumber: cleanSpaces(employeeNumber || ""),
+      jobTitle: cleanSpaces(jobTitle || ""),
+      phone: cleanSpaces(phone || ""),
       emailVerified: !!emailVerified,
+      isActive: !!isActive,
     });
 
     await writeEmployeeLog(req, "employee_created", {
       createdEmployeeId: employee._id,
       createdEmployeeRole: cleanRole,
+      createdEmployeeDepartment: cleanDepartment,
     });
 
     return res.status(201).json({
@@ -407,7 +469,12 @@ const cleanRole = normalizeRole(role);
         username: employee.username,
         email: employee.email,
         role: employee.role,
-        accountType: employee.accountType,
+        department: employee.department,
+        employeeNumber: employee.employeeNumber || "",
+        jobTitle: employee.jobTitle || "",
+        phone: employee.phone || "",
+        isActive: employee.isActive,
+        emailVerified: employee.emailVerified,
         departments: DEPARTMENT_PERMISSIONS[employee.role] || [],
       },
     });
@@ -422,9 +489,22 @@ const cleanRole = normalizeRole(role);
 router.patch("/:id", employeeAuthRequired, adminEmployeeOnly, async (req, res) => {
   try {
     const { id } = req.params;
-    const { fullName, username, email, role, password, emailVerified } = req.body;
 
-    const employee = await User.findById(id);
+    const {
+      fullName,
+      username,
+      email,
+      role,
+      department,
+      password,
+      emailVerified,
+      isActive,
+      employeeNumber,
+      jobTitle,
+      phone,
+    } = req.body;
+
+    const employee = await Employee.findById(id);
 
     if (!employee) {
       return res.status(404).json({ message: "Employee not found." });
@@ -432,7 +512,7 @@ router.patch("/:id", employeeAuthRequired, adminEmployeeOnly, async (req, res) =
 
     if (!isEmployeeRole(employee.role)) {
       return res.status(400).json({
-        message: "This user is not an employee.",
+        message: "This record is not a valid employee.",
       });
     }
 
@@ -447,7 +527,7 @@ router.patch("/:id", employeeAuthRequired, adminEmployeeOnly, async (req, res) =
         return res.status(400).json({ message: "Username cannot be empty." });
       }
 
-      const exists = await User.findOne({
+      const exists = await Employee.findOne({
         _id: { $ne: employee._id },
         username: newUsername,
       }).select("_id");
@@ -468,7 +548,7 @@ router.patch("/:id", employeeAuthRequired, adminEmployeeOnly, async (req, res) =
         });
       }
 
-      const exists = await User.findOne({
+      const exists = await Employee.findOne({
         _id: { $ne: employee._id },
         email: newEmail,
       }).select("_id");
@@ -488,10 +568,47 @@ router.patch("/:id", employeeAuthRequired, adminEmployeeOnly, async (req, res) =
       }
 
       employee.role = newRole;
+
+      if (!department) {
+        employee.department = roleToDepartment(newRole);
+      }
+    }
+
+    if (typeof department === "string") {
+      employee.department = cleanSpaces(department).toLowerCase();
     }
 
     if (typeof emailVerified === "boolean") {
       employee.emailVerified = emailVerified;
+    }
+
+    if (typeof isActive === "boolean") {
+      employee.isActive = isActive;
+    }
+
+    if (typeof employeeNumber === "string") {
+      const cleanEmployeeNumber = cleanSpaces(employeeNumber);
+
+      if (cleanEmployeeNumber) {
+        const exists = await Employee.findOne({
+          _id: { $ne: employee._id },
+          employeeNumber: cleanEmployeeNumber,
+        }).select("_id");
+
+        if (exists) {
+          return res.status(409).json({ message: "Employee number already exists." });
+        }
+      }
+
+      employee.employeeNumber = cleanEmployeeNumber;
+    }
+
+    if (typeof jobTitle === "string") {
+      employee.jobTitle = cleanSpaces(jobTitle);
+    }
+
+    if (typeof phone === "string") {
+      employee.phone = cleanSpaces(phone);
     }
 
     if (typeof password === "string" && password.trim()) {
@@ -513,6 +630,7 @@ router.patch("/:id", employeeAuthRequired, adminEmployeeOnly, async (req, res) =
     await writeEmployeeLog(req, "employee_updated", {
       updatedEmployeeId: employee._id,
       updatedEmployeeRole: employee.role,
+      updatedEmployeeDepartment: employee.department,
     });
 
     return res.json({
@@ -523,7 +641,11 @@ router.patch("/:id", employeeAuthRequired, adminEmployeeOnly, async (req, res) =
         username: employee.username || "",
         email: employee.email || "",
         role: employee.role || "",
-        accountType: employee.accountType || "",
+        department: employee.department || "",
+        employeeNumber: employee.employeeNumber || "",
+        jobTitle: employee.jobTitle || "",
+        phone: employee.phone || "",
+        isActive: employee.isActive !== false,
         emailVerified: !!employee.emailVerified,
         departments: DEPARTMENT_PERMISSIONS[employee.role] || [],
       },
@@ -546,7 +668,7 @@ router.delete("/:id", employeeAuthRequired, adminEmployeeOnly, async (req, res) 
       });
     }
 
-    const employee = await User.findById(id);
+    const employee = await Employee.findById(id);
 
     if (!employee) {
       return res.status(404).json({ message: "Employee not found." });
@@ -554,16 +676,17 @@ router.delete("/:id", employeeAuthRequired, adminEmployeeOnly, async (req, res) 
 
     if (!isEmployeeRole(employee.role)) {
       return res.status(400).json({
-        message: "This user is not an employee.",
+        message: "This record is not a valid employee.",
       });
     }
 
-    await User.deleteOne({ _id: id });
+    await Employee.deleteOne({ _id: id });
 
     await writeEmployeeLog(req, "employee_deleted", {
       deletedEmployeeId: id,
       deletedEmployeeEmail: employee.email,
       deletedEmployeeRole: employee.role,
+      deletedEmployeeDepartment: employee.department,
     });
 
     return res.json({ message: "Employee deleted successfully." });
@@ -580,7 +703,7 @@ router.get("/logs/recent", employeeAuthRequired, adminEmployeeOnly, async (req, 
     const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
 
     const logs = await EmployeeLog.find({})
-      .populate("employee", "fullName username email role")
+      .populate("employee", "fullName username email role department")
       .sort({ createdAt: -1 })
       .limit(limit)
       .lean();
