@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tutor Documents | Practice Online</title><style>
+:root{
+  --bg:#f6f7fb; --card:#fff; --border:#d9dee7; --text:#0f172a; --muted:#475569;
+  --accent:#0b4a70; --nav:#1b1648; --red:#e11d2e; --green:#16a34a; --orange:#f59e0b;
+  --blue:#2563eb; --shadow:0 10px 30px rgba(15,23,42,0.08);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+a{text-decoration:none;color:inherit} button,input,select,textarea{font-family:Arial,Helvetica,sans-serif}
+.topbar{background:var(--nav);color:#fff;position:sticky;top:0;z-index:1000;border-top:3px solid rgba(255,255,255,.85)}
+.topbar-inner{max-width:1500px;margin:0 auto;padding:17px 40px;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:83px}
+.brand{display:flex;align-items:center;gap:14px;font-weight:900}
+.brand img{width:48px;height:48px;filter:brightness(0) invert(1) contrast(180%)}
+.brand small{display:block;margin-top:5px;font-weight:400;font-size:15px}
+.topbarRight{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.topLink{color:#fff;font-size:16px;font-weight:800;padding:8px 0 12px;border-bottom:4px solid transparent;background:transparent;border-left:0;border-right:0;border-top:0;cursor:pointer}
+.topLink.active{border-bottom-color:var(--red)}
+.layout{display:grid;grid-template-columns:285px 1fr;min-height:calc(100vh - 83px)}
+.sidebar{background:#fff;border-right:1px solid var(--border);padding:22px;box-shadow:var(--shadow)}
+.sideTitle{font-size:13px;font-weight:900;color:var(--muted);text-transform:uppercase;margin:4px 0 10px}
+.sideLink{display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:14px;color:#0f172a;font-weight:800;margin-bottom:6px}
+.sideLink:hover,.sideLink.active{background:#eaf2ff;color:#0b4a70}
+.main{padding:28px;overflow:hidden}
+.hero{background:#fff;border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);padding:24px;margin-bottom:22px}
+.heroTop{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap}
+h1{margin:0;font-size:34px;font-weight:900;color:#00102e;line-height:1.1}
+.subtitle{margin:8px 0 0;color:#334155;font-size:16px;line-height:1.5}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border-radius:999px;background:#eaf2ff;color:#0b4a70;font-weight:900;font-size:14px}
+.grid{display:grid;gap:18px}.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:20px}
+.metricLabel{color:var(--muted);font-size:13px;font-weight:800;margin-bottom:8px}.metricValue{font-size:32px;font-weight:900;color:#00102e}.metricNote{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.4}
+.sectionTitle{font-size:22px;font-weight:900;margin:26px 0 12px;color:#00102e}
+label{display:block;margin-bottom:7px;font-weight:800;color:#00102e;font-size:14px}
+input,select,textarea{width:100%;padding:12px 13px;border-radius:13px;border:1px solid #d1d5db;background:#fff;font-size:14px;outline:none}
+textarea{min-height:110px;resize:vertical}.field{margin-bottom:14px}
+.formRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.formRow3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;border:0;border-radius:13px;background:var(--accent);color:#fff;font-weight:900;font-size:14px;padding:11px 14px;cursor:pointer}
+.btn:hover{background:#083c5b}.btn.secondary{background:#e2e8f0;color:#0f172a}.btn.danger{background:#dc2626}.btn.success{background:#16a34a}.btn.warning{background:#f59e0b;color:#111827}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.tableWrap{overflow-x:auto;border:1px solid var(--border);border-radius:16px;background:#fff}
+table{width:100%;border-collapse:collapse;min-width:780px}th,td{padding:13px;text-align:left;border-bottom:1px solid var(--border);font-size:14px;vertical-align:top}th{background:#f8fafc;font-size:12px;color:#475569;text-transform:uppercase;letter-spacing:.04em}tr:hover td{background:#f8fafc}
+.badge{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:900;background:#e2e8f0;color:#334155}.badge.green{background:#dcfce7;color:#166534}.badge.red{background:#fee2e2;color:#991b1b}.badge.orange{background:#fef3c7;color:#92400e}.badge.blue{background:#dbeafe;color:#1e40af}
+.notice{background:#fff;border:1px solid var(--border);border-left:5px solid var(--accent);border-radius:16px;padding:15px;color:#334155;line-height:1.5;box-shadow:var(--shadow)}
+.msg,.errorBox,.successBox{font-weight:800;margin-bottom:14px}.errorBox{display:none;background:#fef2f2;color:#991b1b;border-left:5px solid #dc2626;padding:13px;border-radius:14px}.successBox{display:none;background:#f0fdf4;color:#166534;border-left:5px solid #16a34a;padding:13px;border-radius:14px}
+@media(max-width:1050px){.layout{grid-template-columns:1fr}.grid-4,.grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}.sidebar{position:static}}
+@media(max-width:680px){.topbar-inner{padding:14px 18px}.layout{display:block}.main{padding:18px}.grid-4,.grid-3,.grid-2,.formRow,.formRow3{grid-template-columns:1fr}h1{font-size:28px}}
+</style></head>
+<body>
+<header class="topbar"><div class="topbar-inner"><div class="brand">
+<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="">
+<div>Practice Online<small>Tutor Documents</small></div></div>
+<div class="topbarRight"><a class="topLink active" href="employee-portal.html">Portal</a><button class="topLink" onclick="logout()">Logout</button></div></div></header>
+<div class="layout"><aside class="sidebar"><div class="sideTitle">Departments</div><a class="sideLink " href="employee-dashboard.html">📊 Dashboard</a>
+<a class="sideLink " href="employee-management.html">👥 Employees</a>
+<a class="sideLink " href="academic-admin.html">📚 Academic</a>
+<a class="sideLink " href="operations-admin.html">📢 Operations</a>
+<a class="sideLink " href="finance-admin.html">💳 Finance</a>
+<a class="sideLink " href="support-admin.html">🛟 Support</a>
+<a class="sideLink active" href="tutor-dashboard.html">👨‍🏫 Tutors</a>
+<a class="sideLink " href="employee-logs.html">🧾 Logs</a></aside>
+<main class="main"><section class="hero"><div class="heroTop"><div><h1>Tutor Documents</h1><p class="subtitle">Upload Word documents, homework, notes, worksheets, memos and assignments.</p></div><div class="pill" id="userPill">Checking login...</div></div></section>
+<div id="errorBox" class="errorBox"></div><div id="successBox" class="successBox"></div>
+<section class="grid grid-2"><div class="card"><h2>Upload Tutor Document</h2><form id="uploadForm">
+<div class="field"><label>Title</label><input id="title" required></div><div class="field"><label>Subject</label><input id="subject" required></div>
+<div class="formRow"><div class="field"><label>Grade</label><select id="grade"><option value="8">Grade 8</option><option value="9">Grade 9</option><option value="10">Grade 10</option><option value="11">Grade 11</option><option value="12">Grade 12</option></select></div><div class="field"><label>Type</label><select id="documentType"><option value="homework">Homework</option><option value="notes">Notes</option><option value="worksheet">Worksheet</option><option value="memo">Memo</option><option value="assignment">Assignment</option><option value="other">Other</option></select></div></div>
+<div class="field"><label>Description</label><textarea id="description"></textarea></div><div class="field"><label>File</label><input id="document" type="file" accept=".doc,.docx,.pdf,.ppt,.pptx,.xls,.xlsx" required></div>
+<button class="btn success" type="submit">Upload</button></form></div>
+<div class="card"><h2>Filters</h2><div class="field"><label>Grade</label><select id="filterGrade"><option value="">All</option><option value="8">Grade 8</option><option value="9">Grade 9</option><option value="10">Grade 10</option><option value="11">Grade 11</option><option value="12">Grade 12</option></select></div><div class="field"><label>Subject</label><input id="filterSubject"></div><button class="btn secondary" onclick="loadDocuments()">Apply</button><button class="btn secondary" onclick="loadMyUploads()">My Uploads</button></div></section>
+<h2 class="sectionTitle">Documents</h2><div class="card"><div class="tableWrap"><table><thead><tr><th>Title</th><th>Grade</th><th>Subject</th><th>Type</th><th>File</th><th>Action</th></tr></thead><tbody id="docRows"><tr><td colspan="6">Loading...</td></tr></tbody></table></div></div>
+</main></div>
+<script>
+const API = "https://api.practiceonline.co.za";
+function token(){ return localStorage.getItem("token") || ""; }
+function authHeaders(json=true){ return json ? {"Content-Type":"application/json", Authorization:"Bearer "+token()} : {Authorization:"Bearer "+token()}; }
+async function safeJson(res){ try{return await res.json()}catch{return{}} }
+async function api(path, options={}){
+  const res = await fetch(API + path, {...options, headers:{...authHeaders(), ...(options.headers||{})}});
+  const data = await safeJson(res);
+  if(!res.ok) throw new Error(data.message || "Request failed.");
+  return data;
+}
+function logout(){ localStorage.clear(); location.href="employee-login.html"; }
+function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+function showError(m){const b=document.getElementById("errorBox"); if(!b)return alert(m); b.textContent=m||"Error"; b.style.display="block"; setTimeout(()=>b.style.display="none",6000)}
+function showSuccess(m){const b=document.getElementById("successBox"); if(!b)return; b.textContent=m||"Done"; b.style.display="block"; setTimeout(()=>b.style.display="none",4500)}
+async function requireEmployee(roles=[]){
+  if(!token()){location.href="employee-login.html"; return null}
+  try{
+    let u; try{u=await api("/api/employees/me")}catch{u=await api("/api/auth/me")}
+    const role=String(u.role||"").toLowerCase();
+    const employeeRoles=["admin","tester","academic","editor","operations","finance","support","tutor"];
+    if(!employeeRoles.includes(role)){logout(); return null}
+    if(roles.length && !roles.includes(role)){showError("You do not have permission to open this page."); setTimeout(()=>location.href="employee-portal.html",1200); return null}
+    const p=document.getElementById("userPill"); if(p)p.textContent=`${u.fullName||u.username||"Employee"} • ${role}`;
+    return u;
+  }catch{logout(); return null}
+}
+function downloadCsv(filename, rows){
+  if(!rows.length)return showError("No data to export.");
+  const h=Object.keys(rows[0]);
+  const csv=[h.join(","),...rows.map(r=>h.map(k=>`"${String(r[k]??"").replaceAll('"','""')}"`).join(","))].join("\n");
+  const blob=new Blob([csv],{type:"text/csv"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);
+}
+
+document.addEventListener("DOMContentLoaded", async()=>{ await requireEmployee(["admin","tester","academic","editor","tutor"]); if(typeof pageInit==="function") pageInit(); });
+
+async function pageInit(){uploadForm.addEventListener("submit",uploadDocument); await loadDocuments();}
+async function uploadDocument(e){e.preventDefault(); const fd=new FormData(); fd.append("title",title.value); fd.append("subject",subject.value); fd.append("grade",grade.value); fd.append("documentType",documentType.value); fd.append("description",description.value); fd.append("document",document.files[0]);
+try{const res=await fetch(API+"/api/tutors/documents",{method:"POST",headers:{Authorization:"Bearer "+token()},body:fd}); const data=await safeJson(res); if(!res.ok)throw new Error(data.message||"Upload failed."); showSuccess("Uploaded."); e.target.reset(); loadDocuments()}catch(err){showError(err.message)}}
+async function loadDocuments(){try{const p=new URLSearchParams(); if(filterGrade.value)p.set("grade",filterGrade.value); if(filterSubject.value)p.set("subject",filterSubject.value); const d=await api("/api/tutors/documents?"+p.toString()); renderDocs(d)}catch(e){showError(e.message)}}
+async function loadMyUploads(){try{renderDocs(await api("/api/tutors/documents/my"))}catch(e){showError(e.message)}}
+function renderDocs(d){docRows.innerHTML=d.length?d.map(x=>`<tr><td><b>${escapeHtml(x.title)}</b><div class="metricNote">${escapeHtml(x.description||"")}</div></td><td>Grade ${escapeHtml(x.grade)}</td><td>${escapeHtml(x.subject)}</td><td><span class="badge blue">${escapeHtml(x.documentType)}</span></td><td><a class="btn secondary" href="${API}${escapeHtml(x.fileUrl)}" target="_blank">Open</a></td><td><button class="btn danger" onclick="deleteDoc('${x._id}')">Delete</button></td></tr>`).join(""):'<tr><td colspan="6">No documents.</td></tr>'}
+async function deleteDoc(id){if(!confirm("Delete document?"))return; try{await api("/api/tutors/documents/"+id,{method:"DELETE"}); showSuccess("Deleted."); loadDocuments()}catch(e){showError(e.message)}}
+</script></body></html>
