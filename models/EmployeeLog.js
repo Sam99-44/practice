@@ -6,7 +6,7 @@ const EmployeeLogSchema = new mongoose.Schema(
   {
     employee: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Employee",
       required: true,
       index: true,
     },
@@ -24,7 +24,10 @@ const EmployeeLogSchema = new mongoose.Schema(
         "academic",
         "operations",
         "finance",
-        "support"
+        "support",
+        "tutor",
+        "admin",
+        null
       ],
       default: null,
       index: true,
@@ -32,21 +35,14 @@ const EmployeeLogSchema = new mongoose.Schema(
 
     severity: {
       type: String,
-      enum: [
-        "info",
-        "warning",
-        "critical"
-      ],
+      enum: ["info", "warning", "critical"],
       default: "info",
       index: true,
     },
 
     status: {
       type: String,
-      enum: [
-        "success",
-        "failed"
-      ],
+      enum: ["success", "failed"],
       default: "success",
       index: true,
     },
@@ -68,39 +64,15 @@ const EmployeeLogSchema = new mongoose.Schema(
       trim: true,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-EmployeeLogSchema.index({
-  createdAt: -1,
-});
-
-EmployeeLogSchema.index({
-  employee: 1,
-  createdAt: -1,
-});
-
-EmployeeLogSchema.index({
-  action: 1,
-  createdAt: -1,
-});
-
-EmployeeLogSchema.index({
-  department: 1,
-  createdAt: -1,
-});
-
-EmployeeLogSchema.index({
-  severity: 1,
-  createdAt: -1,
-});
-
-EmployeeLogSchema.index({
-  status: 1,
-  createdAt: -1,
-});
+EmployeeLogSchema.index({ createdAt: -1 });
+EmployeeLogSchema.index({ employee: 1, createdAt: -1 });
+EmployeeLogSchema.index({ action: 1, createdAt: -1 });
+EmployeeLogSchema.index({ department: 1, createdAt: -1 });
+EmployeeLogSchema.index({ severity: 1, createdAt: -1 });
+EmployeeLogSchema.index({ status: 1, createdAt: -1 });
 
 const EmployeeLog =
   mongoose.models.EmployeeLog ||
