@@ -344,10 +344,10 @@ router.post("/", employeeAuthRequired, adminEmployeeOnly, async (req, res) => {
       emailVerified = true,
     } = req.body;
 
-    const cleanFullName = cleanSpaces(fullName);
-    const cleanUsername = cleanSpaces(username);
-    const cleanUserEmail = cleanEmail(email);
-    const cleanRole = normalizeRole(role);
+const cleanFullName = cleanSpaces(fullName);
+const cleanUsername = cleanSpaces(username);
+const cleanUserEmail = cleanEmail(email);
+const cleanRole = normalizeRole(role);
 
     if (!cleanFullName || !cleanUsername || !cleanUserEmail || !password || !cleanRole) {
       return res.status(400).json({
