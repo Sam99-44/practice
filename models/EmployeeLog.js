@@ -18,6 +18,39 @@ const EmployeeLogSchema = new mongoose.Schema(
       index: true,
     },
 
+    department: {
+      type: String,
+      enum: [
+        "academic",
+        "operations",
+        "finance",
+        "support"
+      ],
+      default: null,
+      index: true,
+    },
+
+    severity: {
+      type: String,
+      enum: [
+        "info",
+        "warning",
+        "critical"
+      ],
+      default: "info",
+      index: true,
+    },
+
+    status: {
+      type: String,
+      enum: [
+        "success",
+        "failed"
+      ],
+      default: "success",
+      index: true,
+    },
+
     details: {
       type: mongoose.Schema.Types.Mixed,
       default: {},
@@ -35,13 +68,42 @@ const EmployeeLogSchema = new mongoose.Schema(
       trim: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-EmployeeLogSchema.index({ createdAt: -1 });
-EmployeeLogSchema.index({ employee: 1, createdAt: -1 });
+EmployeeLogSchema.index({
+  createdAt: -1,
+});
+
+EmployeeLogSchema.index({
+  employee: 1,
+  createdAt: -1,
+});
+
+EmployeeLogSchema.index({
+  action: 1,
+  createdAt: -1,
+});
+
+EmployeeLogSchema.index({
+  department: 1,
+  createdAt: -1,
+});
+
+EmployeeLogSchema.index({
+  severity: 1,
+  createdAt: -1,
+});
+
+EmployeeLogSchema.index({
+  status: 1,
+  createdAt: -1,
+});
 
 const EmployeeLog =
-  mongoose.models.EmployeeLog || mongoose.model("EmployeeLog", EmployeeLogSchema);
+  mongoose.models.EmployeeLog ||
+  mongoose.model("EmployeeLog", EmployeeLogSchema);
 
 export default EmployeeLog;
