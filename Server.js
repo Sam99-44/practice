@@ -32,7 +32,7 @@
 // ✅ Auto-publish scheduled quizzes
 // ✅ Final PUT route fixed so edit page updates MongoDB correctly
 // ✅  system added
-// ✅ Profile  summary added
+// ✅ Profile  summary added.
 // ✅ Class RSVP (accept/reject) added.
 
 import express from "express";
