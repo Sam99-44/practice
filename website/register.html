@@ -670,19 +670,33 @@
 
       const data = await res.json().catch(() => ({}));
 
-      if (!res.ok) {
-        btn.disabled = false;
-        return setMsg(data.message || "Registration failed.", "error");
-      }
+if (!res.ok) {
+  btn.disabled = false;
+  return setMsg(data.message || "Registration failed.", "error");
+}
 
-      setMsg("Account created successfully!", "ok");
-      setTimeout(() => location.href = "login.html", 1200);
-    } catch {
-      btn.disabled = false;
-      setMsg("Network error. Please try again.", "error");
-    }
-  };
+setMsg(
+  "Registration successful! We have sent a verification email to your email address. Please verify your email before logging in.",
+  "ok"
+);
+
+btn.disabled = false;
+
+document.querySelectorAll("input, select").forEach(el => {
+  el.disabled = true;
+});
+
+setTimeout(() => {
+  location.href = "verify-email-notice.html";
+}, 2500);
+
+} catch {
+  btn.disabled = false;
+  setMsg("Network error. Please try again.", "error");
+}
+};
 </script>
 
 </body>
 </html>
+
