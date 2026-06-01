@@ -200,7 +200,83 @@ async function writeEmployeeLog(req, action, details = {}) {
 }
 
 /* ------------------ ROUTE 1: EMPLOYEE LOGIN ------------------ */
+/* ---------------- FIRST ADMIN REGISTRATION ---------------- */
 
+router.post("/register-first-admin", async (req, res) => {
+  try {
+    const {
+      fullName,
+      username,
+      email,
+      password,
+      employeeNumber
+    } = req.body;
+
+    const cleanUserEmail = cleanEmail(email);
+
+    if (
+      !fullName ||
+      !username ||
+      !cleanUserEmail ||
+      !password
+    ) {
+      return res.status(400).json({
+        message: "All required fields must be provided."
+      });
+    }
+
+    const employeeCount = await Employee.countDocuments();
+
+    if (employeeCount > 0) {
+      return res.status(403).json({
+        message:
+          "First administrator already exists."
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(
+      password,
+      12
+    );
+
+    const employee = await Employee.create({
+      fullName: String(fullName).trim(),
+      username: String(username).trim(),
+      email: cleanUserEmail,
+      passwordHash,
+
+      role: "admin",
+      department: "admin",
+
+      employeeNumber:
+        employeeNumber || "EMP001",
+
+      jobTitle: "System Administrator",
+
+      emailVerified: true,
+      isActive: true
+    });
+
+    res.status(201).json({
+      success: true,
+      message:
+        "Administrator account created successfully.",
+      employeeId: employee._id
+    });
+
+  } catch (error) {
+
+    console.error(
+      "REGISTER FIRST ADMIN ERROR:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        "Could not create administrator account."
+    });
+  }
+});
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
