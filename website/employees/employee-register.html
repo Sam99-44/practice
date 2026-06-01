@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Create First Admin | Practice Online</title>
+
+<style>
+:root{
+  --nav:#1b1648;
+  --primary:#0b4a70;
+  --bg:#eef1f7;
+  --card:#ffffff;
+  --border:#d9dee7;
+  --danger:#dc2626;
+  --success:#16a34a;
+}
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
+}
+
+.topbar{
+  background:var(--nav);
+  color:#fff;
+  padding:18px 28px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.brand h1{
+  font-size:28px;
+}
+
+.brand p{
+  opacity:.9;
+}
+
+.container{
+  min-height:calc(100vh - 90px);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+}
+
+.card{
+  width:100%;
+  max-width:560px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:24px;
+  padding:30px;
+}
+
+.card h2{
+  font-size:42px;
+  color:#001d4a;
+  margin-bottom:10px;
+}
+
+.card p{
+  color:#475569;
+  margin-bottom:24px;
+}
+
+.field{
+  margin-bottom:18px;
+}
+
+label{
+  display:block;
+  font-weight:700;
+  margin-bottom:8px;
+}
+
+input{
+  width:100%;
+  padding:14px;
+  border-radius:14px;
+  border:1px solid #cbd5e1;
+  font-size:15px;
+}
+
+button{
+  width:100%;
+  border:none;
+  background:var(--primary);
+  color:#fff;
+  font-weight:700;
+  padding:16px;
+  border-radius:14px;
+  cursor:pointer;
+  font-size:16px;
+}
+
+button:hover{
+  opacity:.95;
+}
+
+.error{
+  display:none;
+  background:#fee2e2;
+  color:#991b1b;
+  padding:14px;
+  border-radius:12px;
+  margin-bottom:18px;
+}
+
+.success{
+  display:none;
+  background:#dcfce7;
+  color:#166534;
+  padding:14px;
+  border-radius:12px;
+  margin-bottom:18px;
+}
+
+.links{
+  display:flex;
+  justify-content:space-between;
+  margin-top:18px;
+}
+
+.links a{
+  text-decoration:none;
+  color:var(--primary);
+  font-weight:700;
+}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div>
+      <h1>Practice Online</h1>
+      <p>Create First Employee Administrator</p>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="card">
+
+    <h2>Create Admin</h2>
+
+    <p>
+      Create the first employee administrator account.
+    </p>
+
+    <div id="errorBox" class="error"></div>
+    <div id="successBox" class="success"></div>
+
+    <form id="registerForm">
+
+      <div class="field">
+        <label>Full Name</label>
+        <input id="fullName" required>
+      </div>
+
+      <div class="field">
+        <label>Username</label>
+        <input id="username" required>
+      </div>
+
+      <div class="field">
+        <label>Email</label>
+        <input id="email" type="email" required>
+      </div>
+
+      <div class="field">
+        <label>Employee Number</label>
+        <input id="employeeNumber" value="EMP001">
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <input id="password" type="password" required>
+      </div>
+
+      <div class="field">
+        <label>Confirm Password</label>
+        <input id="confirmPassword" type="password" required>
+      </div>
+
+      <button type="submit">
+        Create First Admin
+      </button>
+
+    </form>
+
+    <div class="links">
+      <a href="employee-login.html">
+        Employee Login
+      </a>
+
+      <a href="../index.html">
+        Home
+      </a>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const API = "https://api.practiceonline.co.za";
+
+const form = document.getElementById("registerForm");
+const errorBox = document.getElementById("errorBox");
+const successBox = document.getElementById("successBox");
+
+function showError(msg){
+  errorBox.style.display = "block";
+  successBox.style.display = "none";
+  errorBox.textContent = msg;
+}
+
+function showSuccess(msg){
+  successBox.style.display = "block";
+  errorBox.style.display = "none";
+  successBox.textContent = msg;
+}
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  if(password.value !== confirmPassword.value){
+    return showError("Passwords do not match.");
+  }
+
+  try{
+
+    const response = await fetch(
+      API + "/api/employees/register-first-admin",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          fullName: fullName.value,
+          username: username.value,
+          email: email.value,
+          password: password.value,
+          employeeNumber: employeeNumber.value
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if(!response.ok){
+      return showError(
+        data.message || "Registration failed."
+      );
+    }
+
+    showSuccess(
+      "Admin account created successfully. Redirecting..."
+    );
+
+    setTimeout(() => {
+      location.href = "employee-login.html";
+    }, 2000);
+
+  } catch(error){
+    showError(
+      error.message || "Could not create account."
+    );
+  }
+});
+</script>
+
+</body>
+</html>
