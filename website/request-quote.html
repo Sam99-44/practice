@@ -1,0 +1,270 @@
+```html
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Request a Quote | Practice Online</title>
+
+<style>
+:root{
+  --nav:#1b1648;
+  --red:#e11d2e;
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --border:#d9dee7;
+  --text:#222222;
+  --muted:#5f6b7a;
+  --ok:#065f46;
+  --error:#b91c1c;
+  --accent:#0b3c5d;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+.topbar{
+  background:var(--nav);
+  color:#fff;
+  padding:14px 18px;
+}
+
+.topbar h2{
+  margin:0;
+  font-size:20px;
+}
+
+.wrap{
+  max-width:900px;
+  margin:0 auto;
+  padding:22px;
+}
+
+.hero{
+  background:#dfeefd;
+  border:1px solid var(--border);
+  padding:24px;
+  margin-bottom:18px;
+}
+
+.hero h1{
+  margin:0 0 8px;
+  color:var(--nav);
+}
+
+.card{
+  background:#fff;
+  border:1px solid var(--border);
+  padding:22px;
+}
+
+label{
+  display:block;
+  margin-top:16px;
+  margin-bottom:6px;
+  font-weight:700;
+}
+
+input,
+select,
+textarea{
+  width:100%;
+  padding:12px;
+  border:1px solid #d4dbe5;
+  border-radius:0;
+}
+
+textarea{
+  min-height:120px;
+  resize:vertical;
+}
+
+.row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+@media(max-width:700px){
+  .row{
+    grid-template-columns:1fr;
+  }
+}
+
+.btn{
+  margin-top:22px;
+  width:100%;
+  padding:14px;
+  border:none;
+  background:var(--accent);
+  color:#fff;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.msg{
+  margin-top:14px;
+  font-weight:700;
+}
+
+.ok{color:var(--ok);}
+.error{color:var(--error);}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <h2>Practice Online</h2>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <h1>Request a Quote</h1>
+
+    <p>
+      Complete the form below and we will send you a quotation
+      for our online Mathematics classes.
+    </p>
+  </section>
+
+  <section class="card">
+
+    <form id="quoteForm">
+
+      <div class="row">
+
+        <div>
+          <label>Full Name</label>
+          <input type="text" name="fullName" required>
+        </div>
+
+        <div>
+          <label>Email Address</label>
+          <input type="email" name="email" required>
+        </div>
+
+      </div>
+
+      <div class="row">
+
+        <div>
+          <label>Cellphone Number</label>
+          <input type="text" name="cellphone" required>
+        </div>
+
+        <div>
+          <label>Grade</label>
+          <select name="grade" required>
+            <option value="">Select Grade</option>
+            <option>Grade 8</option>
+            <option>Grade 9</option>
+            <option>Grade 10</option>
+            <option>Grade 11</option>
+            <option>Grade 12</option>
+          </select>
+        </div>
+
+      </div>
+
+      <label>Subject</label>
+      <select name="subject" required>
+        <option value="">Select Subject</option>
+        <option>Mathematics</option>
+        <option>Mathematical Literacy</option>
+      </select>
+
+      <label>Interested Package</label>
+      <select name="package" required>
+        <option value="">Select Package</option>
+        <option>Monthly Classes</option>
+        <option>Per Lesson</option>
+        <option>Exam Preparation</option>
+        <option>One-on-One Tutoring</option>
+      </select>
+
+      <label>Message</label>
+      <textarea
+        name="message"
+        placeholder="Tell us about your learning goals, challenges or questions..."
+      ></textarea>
+
+      <button type="submit" class="btn">
+        Request Quote
+      </button>
+
+      <div id="msg" class="msg"></div>
+
+    </form>
+
+  </section>
+
+</main>
+
+<script>
+const API = "https://api.practiceonline.co.za";
+
+const form = document.getElementById("quoteForm");
+const msg = document.getElementById("msg");
+
+form.addEventListener("submit", async (e) => {
+
+  e.preventDefault();
+
+  const payload = Object.fromEntries(
+    new FormData(form).entries()
+  );
+
+  try{
+
+    msg.className = "msg";
+    msg.textContent = "Submitting request...";
+
+    const res = await fetch(
+      API + "/api/request-quote",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify(payload)
+      }
+    );
+
+    const data = await res.json();
+
+    if(!res.ok){
+      msg.className = "msg error";
+      msg.textContent =
+        data.message || "Request failed.";
+      return;
+    }
+
+    msg.className = "msg ok";
+    msg.textContent =
+      "Quote request submitted successfully. We will contact you shortly.";
+
+    form.reset();
+
+  }catch{
+
+    msg.className = "msg error";
+    msg.textContent =
+      "Network error. Please try again.";
+
+  }
+
+});
+</script>
+
+</body>
+</html>
+```
