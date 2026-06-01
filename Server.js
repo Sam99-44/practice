@@ -61,6 +61,7 @@ import enrollmentRoutes from "./routes/enrollments.js";
 import { addDays } from "./utils/access.js";
 import employeesRoutes from "./routes/employees.js";
 import tutorRoutes from "./routes/tutors.js";
+import supportRoutes from "./routes/support.js";
 
 import helmet from "helmet";
 import mongoSanitize from "express-mongo-sanitize";
@@ -3694,6 +3695,7 @@ app.use("/api/tutors", tutorRoutes);
 app.use("/api/manual-payments", manualPaymentsRoutes);
 app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/opportunities", opportunitiesRoutes);
+app.use("/api/support", supportRoutes);
 
 /* ------------------ SUPPORT MODEL ------------------ */
 const SupportRequestSchema = new mongoose.Schema(
