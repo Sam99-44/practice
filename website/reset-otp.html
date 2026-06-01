@@ -1,160 +1,321 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Reset Password | Practice Online</title>
-  <style>
-    body{margin:0;font-family:Arial,sans-serif;background:#f6f7fb;color:#0f172a}
-    .card{max-width:520px;margin:40px auto;background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:20px}
-    h2{margin:0 0 6px}
-    p{margin:6px 0 14px;color:#334155}
-    label{display:block;margin-top:12px;font-weight:600}
-    input,button{width:100%;padding:10px;margin-top:6px;border-radius:10px;border:1px solid #ddd}
-    button{background:#0b3c5d;color:#fff;border:none;font-weight:700;cursor:pointer}
-    button:disabled{opacity:.6;cursor:not-allowed}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-    @media(max-width:520px){.row{grid-template-columns:1fr}}
-    .msg{margin-top:12px;white-space:pre-wrap}
-    .error{color:#b91c1c}
-    .ok{color:#065f46}
-    .muted{color:#64748b;font-size:12px;margin-top:8px}
-    a{color:#0b3c5d}
-    hr{margin:18px 0;border:none;border-top:1px solid #eee}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reset Password | Practice Online</title>
+
+<style>
+:root{
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --border:#e6e6e6;
+  --text:#0f172a;
+  --muted:#475569;
+  --accent:#0b3c5d;
+  --nav:#1b1648;
+  --red:#e11d2e;
+  --error:#b91c1c;
+  --ok:#065f46;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+.topbar{
+  background:var(--nav);
+  padding:16px 28px;
+}
+
+.navBar{
+  max-width:1200px;
+  margin:auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.brand{
+  color:#fff;
+  font-weight:700;
+}
+
+.brand span{
+  display:block;
+  font-weight:400;
+  font-size:14px;
+}
+
+.tabs a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:700;
+  margin-left:18px;
+  padding-bottom:8px;
+}
+
+.tabs a.active{
+  border-bottom:3px solid var(--red);
+}
+
+.wrap{
+  min-height:calc(100vh - 72px);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:24px;
+}
+
+.card{
+  width:100%;
+  max-width:420px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:0;
+  padding:20px;
+  box-shadow:0 6px 18px rgba(0,0,0,0.06);
+}
+
+h2{
+  margin:0 0 6px;
+  font-size:24px;
+}
+
+p{
+  margin:6px 0 14px;
+  color:var(--muted);
+}
+
+label{
+  display:block;
+  margin-top:12px;
+  font-weight:700;
+  font-size:14px;
+}
+
+input{
+  width:100%;
+  padding:13px;
+  margin-top:6px;
+  border:1px solid #cbd5e1;
+  border-radius:0;
+  background:#fff;
+  font-size:14px;
+}
+
+input:focus{
+  outline:none;
+  border-color:#1b1648;
+  box-shadow:none;
+}
+
+button{
+  width:100%;
+  margin-top:16px;
+  padding:13px;
+  border:none;
+  border-radius:0;
+  background:var(--accent);
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
+}
+
+button:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
+.row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+@media(max-width:520px){
+  .row{grid-template-columns:1fr}
+}
+
+.msg{
+  margin-top:12px;
+  font-size:14px;
+}
+
+.error{color:var(--error)}
+.ok{color:var(--ok)}
+
+.links{
+  margin-top:16px;
+  display:flex;
+  justify-content:space-between;
+}
+
+.links a{
+  color:var(--accent);
+  text-decoration:none;
+  font-weight:700;
+}
+
+.muted{
+  font-size:13px;
+  color:var(--muted);
+  margin-top:8px;
+}
+
+hr{
+  margin:18px 0;
+  border:none;
+  border-top:1px solid #eee;
+}
+</style>
 </head>
+
 <body>
 
-<div class="card">
-  <h2>Reset Password</h2>
-  <p>Enter your email to receive a code.</p>
-
-  <label>Email</label>
-  <input id="email" type="email" autocomplete="email" />
-
-  <button id="sendBtn" type="button">Send Code</button>
-
-  <hr />
-
-  <h3 style="margin:0 0 6px;">Change Password</h3>
-  <div class="muted">Paste the 6-digit code from your email.</div>
-
-  <label>6-digit Code</label>
-  <input id="code" inputmode="numeric" />
-
-  <div class="row">
-    <div>
-      <label>New Password</label>
-      <input id="newPassword" type="password" autocomplete="new-password" />
+<header class="topbar">
+  <div class="navBar">
+    <div class="brand">
+      Practice Online
+      <span>Reset password</span>
     </div>
-    <div>
-      <label>Confirm Password</label>
-      <input id="confirmPassword" type="password" autocomplete="new-password" />
+
+    <div class="tabs">
+      <a href="login.html">Login</a>
+      <a href="register.html">Register</a>
     </div>
   </div>
+</header>
 
-  <button id="resetBtn" type="button" style="margin-top:12px">Reset Password</button>
+<main class="wrap">
+  <div class="card">
+    <h2>Reset Password</h2>
+    <p>Enter your email to receive a code.</p>
 
-  <p id="msg" class="msg"></p>
+    <label>Email</label>
+    <input id="email" type="email" autocomplete="email">
 
-  <div class="muted"><a href="login.html">Back to login</a></div>
-</div>
+    <button id="sendBtn" type="button">Send Code</button>
+
+    <hr>
+
+    <h2 style="font-size:20px;">Change Password</h2>
+    <div class="muted">Paste the 6-digit code from your email.</div>
+
+    <label>6-digit Code</label>
+    <input id="code" inputmode="numeric">
+
+    <div class="row">
+      <div>
+        <label>New Password</label>
+        <input id="newPassword" type="password" autocomplete="new-password">
+      </div>
+
+      <div>
+        <label>Confirm Password</label>
+        <input id="confirmPassword" type="password" autocomplete="new-password">
+      </div>
+    </div>
+
+    <button id="resetBtn" type="button">Reset Password</button>
+
+    <p id="msg" class="msg"></p>
+
+    <div class="links">
+      <a href="login.html">Back to login</a>
+    </div>
+  </div>
+</main>
 
 <script>
-  const API = "https://api.practiceonline.co.za";
+const API = "https://api.practiceonline.co.za";
 
-  const sendBtn = document.getElementById("sendBtn");
-  const resetBtn = document.getElementById("resetBtn");
-  const msg = document.getElementById("msg");
+const sendBtn = document.getElementById("sendBtn");
+const resetBtn = document.getElementById("resetBtn");
+const msg = document.getElementById("msg");
 
-  function setMsg(text, type = "") {
-    msg.className = "msg " + type;
-    msg.textContent = text;
+function setMsg(text, type = "") {
+  msg.className = "msg " + type;
+  msg.textContent = text;
+}
+
+function isValidEmail(email) {
+  const e = String(email || "").trim().toLowerCase();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+}
+
+async function safeJson(res){
+  try { return await res.json(); } catch { return {}; }
+}
+
+sendBtn.onclick = async () => {
+  const email = document.getElementById("email").value.trim().toLowerCase();
+
+  if (!email) return setMsg("Enter your email.", "error");
+  if (!isValidEmail(email)) return setMsg("Enter a valid email address.", "error");
+
+  sendBtn.disabled = true;
+  setMsg("Sending code...");
+
+  try {
+    const res = await fetch(API + "/api/forgot-password-otp", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ email })
+    });
+
+    const data = await safeJson(res);
+    setMsg(data.message || "If the email exists, a reset code has been sent.", res.ok ? "ok" : "error");
+  } catch {
+    setMsg("Network error. Try again.", "error");
+  } finally {
+    sendBtn.disabled = false;
+  }
+};
+
+resetBtn.onclick = async () => {
+  const email = document.getElementById("email").value.trim().toLowerCase();
+  const code = document.getElementById("code").value.trim();
+  const newPassword = document.getElementById("newPassword").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
+
+  if (!email || !code || !newPassword || !confirmPassword) {
+    return setMsg("Fill in email, code, and both password fields.", "error");
   }
 
-  function isValidEmail(email) {
-    const e = String(email || "").trim().toLowerCase();
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  if (newPassword !== confirmPassword) {
+    return setMsg("Passwords do not match.", "error");
   }
 
-  async function safeJson(res){
-    try { return await res.json(); } catch { return {}; }
+  resetBtn.disabled = true;
+  setMsg("Resetting password...");
+
+  try {
+    const res = await fetch(API + "/api/reset-password-otp", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ email, code, newPassword })
+    });
+
+    const data = await safeJson(res);
+
+    if (res.ok) {
+      setMsg(data.message || "Password reset successful. Redirecting...", "ok");
+      setTimeout(() => location.href = "login.html", 1200);
+    } else {
+      setMsg(data.message || "Reset failed.", "error");
+    }
+  } catch {
+    setMsg("Network error. Try again.", "error");
+  } finally {
+    resetBtn.disabled = false;
   }
-
-  sendBtn.onclick = async () => {
-    const email = document.getElementById("email").value.trim().toLowerCase();
-
-    if (!email) return setMsg("Enter your email.", "error");
-    if (!isValidEmail(email)) return setMsg("Enter a valid email address.", "error");
-
-    sendBtn.disabled = true;
-    setMsg("Sending code...");
-
-    try {
-      const res = await fetch(API + "/api/forgot-password-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
-      });
-
-      const data = await safeJson(res);
-      setMsg(
-        data.message || "If the email exists, a reset code has been sent.",
-        res.ok ? "ok" : "error"
-      );
-    } catch {
-      setMsg("Network error. Try again.", "error");
-    } finally {
-      sendBtn.disabled = false;
-    }
-  };
-
-  resetBtn.onclick = async () => {
-    const email = document.getElementById("email").value.trim().toLowerCase();
-    const code = document.getElementById("code").value.trim();
-    const newPassword = document.getElementById("newPassword").value;
-    const confirmPassword = document.getElementById("confirmPassword").value;
-
-    if (!email || !code || !newPassword || !confirmPassword) {
-      return setMsg("Fill in email, code, and both password fields.", "error");
-    }
-
-    if (!isValidEmail(email)) {
-      return setMsg("Enter a valid email address.", "error");
-    }
-
-    if (newPassword.length < 6) {
-      return setMsg("Password must be at least 6 characters.", "error");
-    }
-
-    if (newPassword !== confirmPassword) {
-      return setMsg("Passwords do not match.", "error");
-    }
-
-    resetBtn.disabled = true;
-    setMsg("Resetting password...");
-
-    try {
-      const res = await fetch(API + "/api/reset-password-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code, newPassword })
-      });
-
-      const data = await safeJson(res);
-
-      if (res.ok) {
-        setMsg(data.message || "Password reset successful. Redirecting...", "ok");
-        setTimeout(() => location.href = "login.html", 1200);
-      } else {
-        setMsg(data.message || "Reset failed.", "error");
-      }
-    } catch {
-      setMsg("Network error. Try again.", "error");
-    } finally {
-      resetBtn.disabled = false;
-    }
-  };
+};
 </script>
 
 </body>
