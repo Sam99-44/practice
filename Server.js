@@ -62,6 +62,8 @@ import { addDays } from "./utils/access.js";
 import employeesRoutes from "./routes/employees.js";
 import tutorRoutes from "./routes/tutors.js";
 import supportRoutes from "./routes/support.js";
+import requestQuoteRoutes from "./routes/requestQuote.js";
+
 
 import helmet from "helmet";
 import mongoSanitize from "express-mongo-sanitize";
@@ -467,6 +469,7 @@ app.use(
       if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
       if (origin.endsWith(".netlify.app")) return cb(null, true);
       if (origin.endsWith(".onrender.com")) return cb(null, true);
+
       return cb(new Error(`CORS blocked: ${origin}`), false);
     },
     credentials: true,
@@ -3696,6 +3699,7 @@ app.use("/api/manual-payments", manualPaymentsRoutes);
 app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/opportunities", opportunitiesRoutes);
 app.use("/api/support", supportRoutes);
+app.use("/api/request-quote", requestQuoteRoutes);
 
 /* ------------------ SUPPORT MODEL ------------------ */
 const SupportRequestSchema = new mongoose.Schema(
