@@ -325,8 +325,32 @@
       <label for="password">Password</label>
       <input id="password" type="password" autocomplete="current-password" />
 
-      <button id="loginBtn" type="button">Login</button>
-      <button id="resendBtn" class="ghostBtn" type="button">Resend Verification Email</button>
+<button id="loginBtn" type="button">Login</button>
+
+<button
+  id="googleLoginBtn"
+  type="button"
+  style="
+    background:#fff;
+    color:#333;
+    border:1px solid #d9dee7;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin-top:10px;
+  "
+>
+  <img
+    src="https://www.svgrepo.com/show/475656/google-color.svg"
+    width="20"
+    height="20"
+    alt="Google"
+  >
+  Continue with Google
+</button>
+
+<button id="resendBtn" class="ghostBtn" type="button">Resend Verification Email</button>
 
       <p id="msg" class="msg"></p>
 
@@ -345,7 +369,33 @@
   const msg = document.getElementById("msg");
   const emailEl = document.getElementById("email");
   const passwordEl = document.getElementById("password");
+  const params = new URLSearchParams(window.location.search);
+  const googleToken = params.get("googleToken");
 
+if (googleToken) {
+  localStorage.setItem("token", googleToken);
+
+  fetch(`${API}/api/auth/me`, {
+    headers: {
+      Authorization: `Bearer ${googleToken}`
+    }
+  })
+  .then(r => r.json())
+  .then(user => {
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("role", user.role || "");
+    window.location.href = getDefaultRedirect(user);
+  })
+  .catch(() => {
+    localStorage.removeItem("token");
+  });
+}
+document
+  .getElementById("googleLoginBtn")
+  .addEventListener("click", () => {
+    window.location.href =
+      "https://api.practiceonline.co.za/api/auth/google";
+  });
   function setMsg(text, type = "") {
     msg.className = "msg " + type;
     msg.textContent = text;
