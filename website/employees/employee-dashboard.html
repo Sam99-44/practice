@@ -1,164 +1,706 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Employee Dashboard | Practice Online</title><style>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Employee Dashboard | Practice Online</title>
+
+<style>
 :root{
-  --bg:#f6f7fb; --card:#fff; --border:#d9dee7; --text:#0f172a; --muted:#475569;
-  --accent:#0b4a70; --nav:#1b1648; --red:#e11d2e; --green:#16a34a; --orange:#f59e0b;
-  --blue:#2563eb; --shadow:0 10px 30px rgba(15,23,42,0.08);
+  --nav:#1b1648;
+  --red:#e11d2e;
+  --bg:#ffffff;
+  --card:#ffffff;
+  --border:#d9dee7;
+  --text:#0f172a;
+  --muted:#475569;
+  --ok:#065f46;
+  --error:#b91c1c;
+  --soft:#f8fafc;
+  --orange:#92400e;
+  --blue:#1d4ed8;
 }
+
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
-a{text-decoration:none;color:inherit} button,input,select,textarea{font-family:Arial,Helvetica,sans-serif}
-.topbar{background:var(--nav);color:#fff;position:sticky;top:0;z-index:1000;border-top:3px solid rgba(255,255,255,.85)}
-.topbar-inner{max-width:1500px;margin:0 auto;padding:17px 40px;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:83px}
-.brand{display:flex;align-items:center;gap:14px;font-weight:900}
-.brand img{width:48px;height:48px;filter:brightness(0) invert(1) contrast(180%)}
-.brand small{display:block;margin-top:5px;font-weight:400;font-size:15px}
-.topbarRight{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-.topLink{color:#fff;font-size:16px;font-weight:800;padding:8px 0 12px;border-bottom:4px solid transparent;background:transparent;border-left:0;border-right:0;border-top:0;cursor:pointer}
-.topLink.active{border-bottom-color:var(--red)}
-.layout{display:grid;grid-template-columns:285px 1fr;min-height:calc(100vh - 83px)}
-.sidebar{background:#fff;border-right:1px solid var(--border);padding:22px;box-shadow:var(--shadow)}
-.sideTitle{font-size:13px;font-weight:900;color:var(--muted);text-transform:uppercase;margin:4px 0 10px}
-.sideLink{display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:14px;color:#0f172a;font-weight:800;margin-bottom:6px}
-.sideLink:hover,.sideLink.active{background:#eaf2ff;color:#0b4a70}
-.main{padding:28px;overflow:hidden}
-.hero{background:#fff;border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);padding:24px;margin-bottom:22px}
-.heroTop{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap}
-h1{margin:0;font-size:34px;font-weight:900;color:#00102e;line-height:1.1}
-.subtitle{margin:8px 0 0;color:#334155;font-size:16px;line-height:1.5}
-.pill{display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border-radius:999px;background:#eaf2ff;color:#0b4a70;font-weight:900;font-size:14px}
-.grid{display:grid;gap:18px}.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-.card{background:var(--card);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:20px}
-.metricLabel{color:var(--muted);font-size:13px;font-weight:800;margin-bottom:8px}.metricValue{font-size:32px;font-weight:900;color:#00102e}.metricNote{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.4}
-.profileValue{font-size:18px;font-weight:900;color:#00102e;word-break:break-word}
-.sectionTitle{font-size:22px;font-weight:900;margin:26px 0 12px;color:#00102e}
-label{display:block;margin-bottom:7px;font-weight:800;color:#00102e;font-size:14px}
-input,select,textarea{width:100%;padding:12px 13px;border-radius:13px;border:1px solid #d1d5db;background:#fff;font-size:14px;outline:none}
-textarea{min-height:110px;resize:vertical}.field{margin-bottom:14px}
-.formRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.formRow3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-.btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;border:0;border-radius:13px;background:var(--accent);color:#fff;font-weight:900;font-size:14px;padding:11px 14px;cursor:pointer}
-.btn:hover{background:#083c5b}.btn.secondary{background:#e2e8f0;color:#0f172a}.btn.danger{background:#dc2626}.btn.success{background:#16a34a}.btn.warning{background:#f59e0b;color:#111827}
-.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.tableWrap{overflow-x:auto;border:1px solid var(--border);border-radius:16px;background:#fff}
-table{width:100%;border-collapse:collapse;min-width:780px}th,td{padding:13px;text-align:left;border-bottom:1px solid var(--border);font-size:14px;vertical-align:top}th{background:#f8fafc;font-size:12px;color:#475569;text-transform:uppercase;letter-spacing:.04em}tr:hover td{background:#f8fafc}
-.badge{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:900;background:#e2e8f0;color:#334155}.badge.green{background:#dcfce7;color:#166534}.badge.red{background:#fee2e2;color:#991b1b}.badge.orange{background:#fef3c7;color:#92400e}.badge.blue{background:#dbeafe;color:#1e40af}
-.notice{background:#fff;border:1px solid var(--border);border-left:5px solid var(--accent);border-radius:16px;padding:15px;color:#334155;line-height:1.5;box-shadow:var(--shadow)}
-.msg,.errorBox,.successBox{font-weight:800;margin-bottom:14px}.errorBox{display:none;background:#fef2f2;color:#991b1b;border-left:5px solid #dc2626;padding:13px;border-radius:14px}.successBox{display:none;background:#f0fdf4;color:#166534;border-left:5px solid #16a34a;padding:13px;border-radius:14px}
-@media(max-width:1050px){.layout{grid-template-columns:1fr}.grid-4,.grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}.sidebar{position:static}}
-@media(max-width:680px){.topbar-inner{padding:14px 18px}.layout{display:block}.main{padding:18px}.grid-4,.grid-3,.grid-2,.formRow,.formRow3{grid-template-columns:1fr}h1{font-size:28px}}
-</style></head>
+
+html,body{
+  margin:0;
+  padding:0;
+  font-family:"Times New Roman",Times,serif;
+  background:#fff;
+  color:var(--text);
+}
+
+a{text-decoration:none;color:inherit}
+
+button,input,select,option{
+  font-family:"Times New Roman",Times,serif;
+}
+
+.topbar{
+  background:var(--nav);
+  color:#fff;
+  position:sticky;
+  top:0;
+  z-index:1000;
+}
+
+.topbar-inner{
+  max-width:1150px;
+  margin:0 auto;
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.accountLeft{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+
+.accountIcon{
+  width:40px;
+  height:40px;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.accountName{
+  font-size:14px;
+  font-weight:700;
+  color:#fff;
+}
+
+.accountType{
+  font-size:13px;
+  color:#e0e7ff;
+  margin-top:3px;
+}
+
+.topbarRight{
+  display:flex;
+  align-items:center;
+  gap:18px;
+}
+
+.iconBtn{
+  min-width:50px;
+  height:50px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.iconBtn img{
+  width:30px;
+  height:30px;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.menuLink{
+  color:#fff;
+  font-size:13px;
+  font-weight:700;
+  background:transparent;
+  border:0;
+  cursor:pointer;
+}
+
+.wrap{
+  max-width:1150px;
+  margin:0 auto;
+  padding:18px;
+}
+
+.card{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:0;
+  box-shadow:none;
+  overflow:hidden;
+  margin:0 auto 16px;
+}
+
+.cardHead{
+  padding:14px 22px;
+  border-bottom:1px solid #ececec;
+  background:#fff;
+}
+
+.cardHead h1,
+.cardHead h2,
+.cardHead h3{
+  margin:0;
+  font-size:14px;
+  font-weight:700;
+  text-transform:uppercase;
+}
+
+.subText{
+  margin-top:6px;
+  color:#111827;
+  font-size:14px;
+  line-height:1.45;
+}
+
+.body{
+  padding:22px;
+}
+
+.summaryGrid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+}
+
+.summaryBox{
+  border:1px solid #e5e7eb;
+  background:#fff;
+  padding:14px;
+}
+
+.metricLabel{
+  font-size:13px;
+  color:#475569;
+  margin-bottom:6px;
+}
+
+.metricValue{
+  font-size:24px;
+  font-weight:700;
+}
+
+.metricNote{
+  font-size:13px;
+  color:#475569;
+  margin-top:4px;
+}
+
+.profileGrid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+}
+
+.profileGrid.two{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  margin-top:12px;
+}
+
+.profileBox{
+  border:1px solid #e5e7eb;
+  padding:12px;
+  background:#fff;
+}
+
+.profileValue{
+  font-size:17px;
+  font-weight:700;
+  word-break:break-word;
+}
+
+.toolbar{
+  display:grid;
+  grid-template-columns:190px 190px 1fr auto;
+  gap:12px;
+  align-items:end;
+  margin-bottom:14px;
+}
+
+label{
+  display:block;
+  font-size:14px;
+  font-weight:400;
+  margin-bottom:6px;
+  color:#111827;
+}
+
+input,select{
+  width:100%;
+  padding:10px 12px;
+  border-radius:0;
+  border:1px solid #d6d3d1;
+  background:#fff;
+  font-size:14px;
+  outline:none;
+}
+
+input:focus,
+select:focus{
+  border-color:#cbd5e1;
+  box-shadow:0 0 0 4px rgba(226,232,240,.7);
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.quickActions{
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:10px;
+}
+
+.btn{
+  background:var(--red);
+  color:#fff;
+  border:1px solid var(--red);
+  border-radius:6px;
+  height:34px;
+  padding:10px 14px;
+  min-width:92px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.btn:hover{opacity:.92}
+
+.btn.secondary{
+  background:#fff;
+  color:#111827;
+  border:1px solid #d1d5db;
+}
+
+.btn.secondary:hover{
+  background:var(--soft);
+}
+
+.btn.success{
+  background:#065f46;
+  border-color:#065f46;
+}
+
+.btn.small{
+  min-width:auto;
+  height:30px;
+  padding:7px 10px;
+}
+
+.tableWrap{
+  width:100%;
+  overflow-x:auto;
+  border:1px solid #e5e7eb;
+  background:#fff;
+}
+
+.tableWrap::-webkit-scrollbar{height:10px}
+.tableWrap::-webkit-scrollbar-thumb{background:#9ca3af;border-radius:20px}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:980px;
+}
+
+th,td{
+  padding:10px 12px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:left;
+  font-size:14px;
+  vertical-align:middle;
+  white-space:nowrap;
+}
+
+th{
+  background:#f8fafc;
+  color:#111827;
+  font-size:13px;
+  font-weight:700;
+}
+
+tr:hover td{background:#f8fafc}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  padding:4px 8px;
+  border-radius:4px;
+  font-size:12px;
+  font-weight:700;
+  background:#f1f5f9;
+  color:#334155;
+  border:1px solid #e2e8f0;
+}
+
+.badge.green{
+  background:#f0fdf4;
+  color:#065f46;
+  border-color:#bbf7d0;
+}
+
+.badge.red{
+  background:#fef2f2;
+  color:#b91c1c;
+  border-color:#fecaca;
+}
+
+.badge.orange{
+  background:#fff7ed;
+  color:#92400e;
+  border-color:#fed7aa;
+}
+
+.badge.blue{
+  background:#eff6ff;
+  color:#1d4ed8;
+  border-color:#bfdbfe;
+}
+
+.msgBox{
+  display:none;
+  margin-bottom:14px;
+  padding:12px;
+  border:1px solid #e5e7eb;
+  font-size:14px;
+}
+
+.msgBox.ok{
+  display:block;
+  color:#065f46;
+  background:#f0fdf4;
+}
+
+.msgBox.error{
+  display:block;
+  color:#b91c1c;
+  background:#fef2f2;
+}
+
+@media(max-width:1050px){
+  .quickActions{grid-template-columns:repeat(3,1fr)}
+}
+
+@media(max-width:900px){
+  .summaryGrid,.profileGrid{grid-template-columns:repeat(2,1fr)}
+  .profileGrid.two{grid-template-columns:1fr}
+  .toolbar{grid-template-columns:1fr 1fr}
+}
+
+@media(max-width:640px){
+  .wrap{padding:14px}
+  .body{padding:14px}
+  .cardHead{padding:12px 14px}
+  .summaryGrid,.profileGrid,.toolbar,.quickActions{grid-template-columns:1fr}
+  .accountName,.accountType{
+    max-width:130px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+}
+</style>
+</head>
+
 <body>
-<header class="topbar"><div class="topbar-inner"><div class="brand">
-<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="">
-<div>Practice Online<small>Employee Dashboard</small></div></div>
-<div class="topbarRight"><a class="topLink active" href="employee-dashboard.html">Portal</a><button class="topLink" onclick="logout()">Logout</button></div></div></header>
 
-<div class="layout"><aside class="sidebar"><div class="sideTitle">Departments</div><a class="sideLink active" href="employee-dashboard.html">📊 Dashboard</a>
-<a class="sideLink " href="employee-management.html">Employees</a>
-<a class="sideLink " href="academic-admin.html">Academic</a>
-<a class="sideLink " href="operations-admin.html">Operations</a>
-<a class="sideLink " href="finance-admin.html">Finance</a>
-<a class="sideLink " href="support-admin.html">Support</a>
-<a class="sideLink " href="tutor-dashboard.html">Tutors</a>
-<a class="sideLink " href="employee-logs.html">Logs</a></aside>
-
-<main class="main"><section class="hero"><div class="heroTop"><div><h1>Employee Dashboard</h1><p class="subtitle">Central workspace for every Practice Online department.</p></div><div class="pill" id="userPill">Checking login...</div></div></section>
-<div id="errorBox" class="errorBox"></div><div id="successBox" class="successBox"></div>
-
-<section class="card" style="margin-bottom:22px;">
-  <h2 style="margin-top:0;">My Employee Profile</h2>
-
-  <div class="grid grid-4">
-    <div>
-      <div class="metricLabel">Name</div>
-      <div class="profileValue" id="empName">-</div>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="accountLeft">
+      <img class="accountIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="">
+      <div>
+        <div class="accountName">Practice Online</div>
+        <div class="accountType" id="userPill">Employee Dashboard</div>
+      </div>
     </div>
 
-    <div>
-      <div class="metricLabel">Role</div>
-      <div class="profileValue" id="empRole">-</div>
+    <div class="topbarRight">
+      <a href="employee-portal.html" class="iconBtn" title="Portal">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="">
+      </a>
+      <button class="menuLink" onclick="logout()">Logout</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div id="msg" class="msgBox"></div>
+
+  <div class="card">
+    <div class="cardHead">
+      <h1>Employee Dashboard</h1>
+      <div class="subText">Central workspace for Practice Online departments, employee profile, department overview and recent activity.</div>
     </div>
 
-    <div>
-      <div class="metricLabel">Department</div>
-      <div class="profileValue" id="empDepartment">-</div>
-    </div>
+    <div class="body">
+      <div class="profileGrid">
+        <div class="profileBox">
+          <div class="metricLabel">Name</div>
+          <div class="profileValue" id="empName">-</div>
+        </div>
 
-    <div>
-      <div class="metricLabel">Employee Number</div>
-      <div class="profileValue" id="empNumber">-</div>
+        <div class="profileBox">
+          <div class="metricLabel">Role</div>
+          <div class="profileValue" id="empRole">-</div>
+        </div>
+
+        <div class="profileBox">
+          <div class="metricLabel">Department</div>
+          <div class="profileValue" id="empDepartment">-</div>
+        </div>
+
+        <div class="profileBox">
+          <div class="metricLabel">Employee Number</div>
+          <div class="profileValue" id="empNumber">-</div>
+        </div>
+      </div>
+
+      <div class="profileGrid two">
+        <div class="profileBox">
+          <div class="metricLabel">Job Title</div>
+          <div class="profileValue" id="empJobTitle">-</div>
+        </div>
+
+        <div class="profileBox">
+          <div class="metricLabel">Email</div>
+          <div class="profileValue" id="empEmail">-</div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="grid grid-2" style="margin-top:18px;">
-    <div>
-      <div class="metricLabel">Job Title</div>
-      <div class="profileValue" id="empJobTitle">-</div>
+  <div class="card">
+    <div class="cardHead">
+      <h2>Live Overview</h2>
+      <div class="subText">These values are loaded from available backend routes where possible. If a route is unavailable, the page uses safe fallback values.</div>
     </div>
 
-    <div>
-      <div class="metricLabel">Email</div>
-      <div class="profileValue" id="empEmail">-</div>
+    <div class="body">
+      <div class="summaryGrid">
+        <div class="summaryBox">
+          <div class="metricLabel">Employees</div>
+          <div class="metricValue" id="employeesCount">0</div>
+          <div class="metricNote">Total employee records</div>
+        </div>
+
+        <div class="summaryBox">
+          <div class="metricLabel">Open Support Tickets</div>
+          <div class="metricValue" id="supportCount">0</div>
+          <div class="metricNote">New + in progress tickets</div>
+        </div>
+
+        <div class="summaryBox">
+          <div class="metricLabel">Pending Payments</div>
+          <div class="metricValue" id="paymentsCount">0</div>
+          <div class="metricNote">Manual payments awaiting review</div>
+        </div>
+
+        <div class="summaryBox">
+          <div class="metricLabel">Active Announcements</div>
+          <div class="metricValue" id="announcementsCount">0</div>
+          <div class="metricNote">Published or active posts</div>
+        </div>
+      </div>
     </div>
   </div>
-</section>
 
-<section class="grid grid-4">
-<div class="card"><div class="metricLabel">Departments</div><div class="metricValue">6</div><div class="metricNote">Academic, Operations, Finance, Support, Tutors, Admin</div></div>
-<div class="card"><div class="metricLabel">Employee Tools</div><div class="metricValue">8</div><div class="metricNote">Management, logs, tasks, documents and reports</div></div>
-<div class="card"><div class="metricLabel">Access</div><div class="metricValue">Role</div><div class="metricNote">Cards open based on role permissions</div></div>
-<div class="card"><div class="metricLabel">Audit</div><div class="metricValue">On</div><div class="metricNote">Tracks who edited work</div></div>
-</section>
+  <div class="card">
+    <div class="cardHead">
+      <h2>Quick Actions</h2>
+      <div class="subText">Open the most important employee tools from one place.</div>
+    </div>
 
-<h2 class="sectionTitle">Department Shortcuts</h2>
-<section class="grid grid-3">
-<div class="card"><h3>📚 Academic</h3><p>Assessments, question bank, publishing, moderation.</p><br><a class="btn" href="academic-admin.html">Open</a></div>
-<div class="card"><h3>📢 Operations</h3><p>Announcements, RSVP, reports, leaderboards, exports.</p><br><a class="btn" href="operations-admin.html">Open</a></div>
-<div class="card"><h3>💳 Finance</h3><p>Payments, subscriptions, approvals, revenue reports.</p><br><a class="btn" href="finance-admin.html">Open</a></div>
-<div class="card"><h3>🛟 Support</h3><p>User accounts, tickets, password and verification help.</p><br><a class="btn" href="support-admin.html">Open</a></div>
-<div class="card"><h3>👨‍🏫 Tutors</h3><p>Homework, documents, notes, assignments and classes.</p><br><a class="btn" href="tutor-dashboard.html">Open</a></div>
-<div class="card"><h3>👥 Employees</h3><p>Create employees, assign roles and view logs.</p><br><a class="btn" href="employee-management.html">Open</a></div>
-</section>
-</main></div>
+    <div class="body">
+      <div class="quickActions">
+        <a class="btn" href="employee-management.html">Create Employee</a>
+        <a class="btn" href="operations-admin.html">Create Announcement</a>
+        <a class="btn" href="finance-admin.html">Open Finance</a>
+        <a class="btn" href="support-admin.html">Open Support</a>
+        <a class="btn" href="academic-admin.html">Open Academic</a>
+        <a class="btn secondary" href="employee-logs.html">View Logs</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cardHead">
+      <h2>Department Overview</h2>
+      <div class="subText">A clear summary of departments, estimated open work, and status.</div>
+    </div>
+
+    <div class="body">
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Department</th>
+              <th>Staff</th>
+              <th>Open Tasks</th>
+              <th>Main Work</th>
+              <th>Status</th>
+              <th>Open</th>
+            </tr>
+          </thead>
+          <tbody id="departmentRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cardHead">
+      <h2>Recent Activity</h2>
+      <div class="subText">Recent work across departments. You can filter and export this table to Excel.</div>
+    </div>
+
+    <div class="body">
+      <div class="toolbar">
+        <div>
+          <label>Department filter</label>
+          <select id="departmentFilter">
+            <option value="all">All departments</option>
+            <option value="Academic">Academic</option>
+            <option value="Operations">Operations</option>
+            <option value="Finance">Finance</option>
+            <option value="Support">Support</option>
+            <option value="Tutors">Tutors</option>
+            <option value="Employees">Employees</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Status filter</label>
+          <select id="statusFilter">
+            <option value="all">All statuses</option>
+            <option value="Completed">Completed</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Pending">Pending</option>
+            <option value="Reviewed">Reviewed</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Search</label>
+          <input id="searchBox" type="search" placeholder="Search employee, action, department...">
+        </div>
+
+        <div class="actions">
+          <button class="btn" id="refreshBtn">Refresh</button>
+          <button class="btn success" id="exportBtn">Export Excel</button>
+        </div>
+      </div>
+
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Date</th>
+              <th>Employee</th>
+              <th>Department</th>
+              <th>Action</th>
+              <th>Status</th>
+              <th>Open</th>
+            </tr>
+          </thead>
+          <tbody id="activityRows">
+            <tr><td colspan="7">Loading activity...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
 
 <script>
 const API = "https://api.practiceonline.co.za";
-function token(){ return localStorage.getItem("token") || ""; }
-function authHeaders(json=true){ return json ? {"Content-Type":"application/json", Authorization:"Bearer "+token()} : {Authorization:"Bearer "+token()}; }
-async function safeJson(res){ try{return await res.json()}catch{return{}} }
-async function api(path, options={}){
-  const res = await fetch(API + path, {...options, headers:{...authHeaders(), ...(options.headers||{})}});
-  const data = await safeJson(res);
-  if(!res.ok) throw new Error(data.message || "Request failed.");
-  return data;
+let activities = [];
+let employees = [];
+let supportTickets = [];
+let manualPayments = [];
+let announcements = [];
+
+const $ = id => document.getElementById(id);
+
+function token(){
+  return localStorage.getItem("token") || "";
 }
-function logout(){ localStorage.clear(); location.href="employee-login.html"; }
-function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
-function showError(m){const b=document.getElementById("errorBox"); if(!b)return alert(m); b.textContent=m||"Error"; b.style.display="block"; setTimeout(()=>b.style.display="none",6000)}
-function showSuccess(m){const b=document.getElementById("successBox"); if(!b)return; b.textContent=m||"Done"; b.style.display="block"; setTimeout(()=>b.style.display="none",4500)}
+
+function logout(){
+  localStorage.clear();
+  location.href = "employee-login.html";
+}
+
+function esc(v){
+  return String(v ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function show(text,type="ok"){
+  const m = $("msg");
+  m.textContent = text;
+  m.className = "msgBox " + type;
+  setTimeout(()=>{m.className = "msgBox"},4500);
+}
 
 function setText(id,value){
-  const el = document.getElementById(id);
+  const el = $(id);
   if(el) el.textContent = value || "-";
 }
 
-async function requireEmployee(roles=[]){
-  if(!token()){location.href="employee-login.html"; return null}
+function normaliseArray(data,keys){
+  if(Array.isArray(data)) return data;
+  for(const key of keys){
+    if(Array.isArray(data?.[key])) return data[key];
+  }
+  return [];
+}
+
+async function safeJson(res){
   try{
-    const u = await api("/api/employees/me");
-    const role=String(u.role||"").toLowerCase();
-    const employeeRoles=["admin","tester","academic","editor","operations","finance","support","tutor"];
+    return await res.json();
+  }catch{
+    return {};
+  }
+}
 
-    if(!employeeRoles.includes(role)){logout(); return null}
+async function fetchJson(path){
+  const res = await fetch(API + path, {
+    headers:{ Authorization:"Bearer " + token() }
+  });
+  const data = await safeJson(res);
+  if(!res.ok) throw new Error(data.message || path + " failed");
+  return data;
+}
 
-    if(roles.length && !roles.includes(role)){
-      showError("You do not have permission to open this page.");
-      setTimeout(()=>location.href="employee-dashboard.html",1200);
+async function requireEmployee(){
+  if(!token()){
+    location.href = "employee-login.html";
+    return null;
+  }
+
+  try{
+    let u;
+    try{
+      u = await fetchJson("/api/employees/me");
+    }catch{
+      u = await fetchJson("/api/auth/me");
+    }
+
+    const role = String(u.role || "").toLowerCase();
+    const allowed = ["admin","tester","academic","editor","operations","finance","support","tutor"];
+
+    if(!allowed.includes(role)){
+      logout();
       return null;
     }
 
-    const p=document.getElementById("userPill");
-    if(p)p.textContent=`${u.fullName||u.username||"Employee"} • ${role}`;
+    $("userPill").textContent = `${u.fullName || u.username || "Employee"} • ${role}`;
 
     setText("empName", u.fullName || u.username);
     setText("empRole", u.role);
@@ -174,15 +716,251 @@ async function requireEmployee(roles=[]){
   }
 }
 
-function downloadCsv(filename, rows){
-  if(!rows.length)return showError("No data to export.");
-  const h=Object.keys(rows[0]);
-  const csv=[h.join(","),...rows.map(r=>h.map(k=>`"${String(r[k]??"").replaceAll('"','""')}"`).join(","))].join("\n");
-  const blob=new Blob([csv],{type:"text/csv"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);
+function statusBadge(status){
+  const s = String(status || "").toLowerCase();
+
+  if(s.includes("complete") || s.includes("reviewed") || s.includes("active") || s.includes("published")){
+    return `<span class="badge green">${esc(status)}</span>`;
+  }
+
+  if(s.includes("pending")){
+    return `<span class="badge orange">${esc(status)}</span>`;
+  }
+
+  if(s.includes("progress") || s.includes("open")){
+    return `<span class="badge blue">${esc(status)}</span>`;
+  }
+
+  return `<span class="badge">${esc(status || "-")}</span>`;
 }
 
-document.addEventListener("DOMContentLoaded", async()=>{
-  await requireEmployee(["admin","tester","academic","editor","operations","finance","support","tutor"]);
-  if(typeof pageInit==="function") pageInit();
-});
-</script></body></html>
+function formatDate(v){
+  if(!v) return new Date().toLocaleDateString("en-ZA");
+  const d = new Date(v);
+  if(isNaN(d.getTime())) return esc(v);
+  return d.toLocaleDateString("en-ZA");
+}
+
+function addActivity(date,employee,department,action,status,link){
+  activities.push({
+    date:date || new Date().toISOString(),
+    employee:employee || "System",
+    department:department || "-",
+    action:action || "-",
+    status:status || "Pending",
+    link:link || "#"
+  });
+}
+
+async function loadDashboardData(){
+  try{
+    const [empRes, supportRes, payRes, annRes] = await Promise.allSettled([
+      fetchJson("/api/employees"),
+      fetchJson("/api/support"),
+      fetchJson("/api/manual-payments"),
+      fetchJson("/api/announcements")
+    ]);
+
+    employees = empRes.status === "fulfilled" ? normaliseArray(empRes.value,["items","data","employees"]) : [];
+    supportTickets = supportRes.status === "fulfilled" ? normaliseArray(supportRes.value,["items","data","tickets","support"]) : [];
+    manualPayments = payRes.status === "fulfilled" ? normaliseArray(payRes.value,["items","data","payments"]) : [];
+    announcements = annRes.status === "fulfilled" ? normaliseArray(annRes.value,["items","data","announcements"]) : [];
+
+    buildActivities();
+    updateOverview();
+    renderDepartments();
+    renderActivities();
+
+    show("Dashboard refreshed.");
+  }catch(e){
+    buildFallbackData();
+    updateOverview();
+    renderDepartments();
+    renderActivities();
+    show("Some backend routes could not load, so fallback dashboard data was used.","error");
+  }
+}
+
+function buildActivities(){
+  activities = [];
+
+  supportTickets.slice(0,8).forEach(t=>{
+    addActivity(
+      t.createdAt || t.date,
+      t.fullName || t.username || t.user?.fullName || "Support user",
+      "Support",
+      t.requestType ? `Support request: ${t.requestType}` : "Support ticket updated",
+      t.status || "Pending",
+      "support-admin.html"
+    );
+  });
+
+  manualPayments.slice(0,8).forEach(p=>{
+    addActivity(
+      p.createdAt || p.paymentDate,
+      p.fullName || p.user?.fullName || "Finance user",
+      "Finance",
+      p.amount ? `Manual payment submitted: R${p.amount}` : "Manual payment submitted",
+      p.status || "Pending",
+      "finance-admin.html"
+    );
+  });
+
+  announcements.slice(0,6).forEach(a=>{
+    addActivity(
+      a.createdAt || a.date,
+      a.createdBy?.fullName || a.createdBy || "Operations",
+      "Operations",
+      a.title ? `Announcement: ${a.title}` : "Announcement published",
+      a.status || "Published",
+      "operations-admin.html"
+    );
+  });
+
+  employees.slice(0,6).forEach(e=>{
+    addActivity(
+      e.createdAt || e.date,
+      e.fullName || e.username || "Employee",
+      "Employees",
+      e.role ? `Employee account: ${e.role}` : "Employee account updated",
+      "Reviewed",
+      "employee-management.html"
+    );
+  });
+
+  if(!activities.length){
+    buildFallbackData(false);
+  }
+
+  activities.sort((a,b)=>new Date(b.date) - new Date(a.date));
+}
+
+function buildFallbackData(reset=True){
+  if(reset) activities = [];
+
+  addActivity(new Date().toISOString(),"Academic Team","Academic","Assessment moderation and publishing","In Progress","academic-admin.html");
+  addActivity(new Date().toISOString(),"Finance Team","Finance","Manual payment review","Pending","finance-admin.html");
+  addActivity(new Date().toISOString(),"Support Team","Support","Learner access issue follow-up","In Progress","support-admin.html");
+  addActivity(new Date().toISOString(),"Operations Team","Operations","Announcement and report update","Completed","operations-admin.html");
+  addActivity(new Date().toISOString(),"Tutor Team","Tutors","Learning document uploaded","Reviewed","tutor-dashboard.html");
+}
+
+function updateOverview(){
+  const openSupport = supportTickets.filter(t=>{
+    const s = String(t.status || "").toLowerCase();
+    return !["resolved","closed"].includes(s);
+  }).length;
+
+  const pendingPayments = manualPayments.filter(p=>{
+    const s = String(p.status || "").toLowerCase();
+    return !["approved","paid","rejected"].includes(s);
+  }).length;
+
+  $("employeesCount").textContent = employees.length || "0";
+  $("supportCount").textContent = openSupport || "0";
+  $("paymentsCount").textContent = pendingPayments || "0";
+  $("announcementsCount").textContent = announcements.length || "0";
+}
+
+function renderDepartments(){
+  const departments = [
+    {name:"Academic", staff:countStaff("academic") + countStaff("editor"), tasks:countActivities("Academic"), work:"Assessments, moderation, publishing", status:"Active", link:"academic-admin.html"},
+    {name:"Operations", staff:countStaff("operations"), tasks:countActivities("Operations"), work:"Announcements, reports, leaderboards", status:"Active", link:"operations-admin.html"},
+    {name:"Finance", staff:countStaff("finance"), tasks:manualPayments.length, work:"Payments, subscriptions, approvals", status:"Active", link:"finance-admin.html"},
+    {name:"Support", staff:countStaff("support"), tasks:supportTickets.length, work:"Tickets, accounts, access issues", status:"Active", link:"support-admin.html"},
+    {name:"Tutors", staff:countStaff("tutor"), tasks:countActivities("Tutors"), work:"Homework, documents, classes", status:"Active", link:"tutor-dashboard.html"},
+    {name:"Employees", staff:employees.length, tasks:countActivities("Employees"), work:"Staff accounts, roles, logs", status:"Active", link:"employee-management.html"}
+  ];
+
+  $("departmentRows").innerHTML = departments.map(d=>`
+    <tr>
+      <td>${esc(d.name)}</td>
+      <td>${d.staff || 0}</td>
+      <td>${d.tasks || 0}</td>
+      <td>${esc(d.work)}</td>
+      <td>${statusBadge(d.status)}</td>
+      <td><a class="btn small secondary" href="${esc(d.link)}">Open</a></td>
+    </tr>
+  `).join("");
+}
+
+function countStaff(role){
+  return employees.filter(e => String(e.role || "").toLowerCase() === role).length;
+}
+
+function countActivities(department){
+  return activities.filter(a => a.department === department).length;
+}
+
+function filteredActivities(){
+  const department = $("departmentFilter").value;
+  const status = $("statusFilter").value;
+  const q = $("searchBox").value.toLowerCase().trim();
+
+  return activities.filter(a=>{
+    if(department !== "all" && a.department !== department) return false;
+    if(status !== "all" && a.status !== status) return false;
+    if(q && !Object.values(a).join(" ").toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function renderActivities(){
+  const rows = filteredActivities();
+
+  $("activityRows").innerHTML = rows.length ? rows.map((a,i)=>`
+    <tr>
+      <td>${i + 1}</td>
+      <td>${formatDate(a.date)}</td>
+      <td>${esc(a.employee)}</td>
+      <td>${esc(a.department)}</td>
+      <td>${esc(a.action)}</td>
+      <td>${statusBadge(a.status)}</td>
+      <td><a class="btn small secondary" href="${esc(a.link)}">Open</a></td>
+    </tr>
+  `).join("") : `<tr><td colspan="7">No activity records found.</td></tr>`;
+}
+
+function exportExcel(){
+  const rows = filteredActivities();
+
+  if(!rows.length){
+    return show("No activity records to export.","error");
+  }
+
+  const headers = ["No","Date","Employee","Department","Action","Status"];
+  const body = rows.map((a,i)=>[i+1,formatDate(a.date),a.employee,a.department,a.action,a.status]);
+
+  const table = `
+    <table border="1">
+      <tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>
+      ${body.map(row=>`<tr>${row.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}
+    </table>
+  `;
+
+  const blob = new Blob(
+    [`<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`],
+    {type:"application/vnd.ms-excel"}
+  );
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "employee-dashboard-activity.xls";
+  a.click();
+  URL.revokeObjectURL(url);
+
+  show("Excel file exported.");
+}
+
+$("refreshBtn").onclick = loadDashboardData;
+$("exportBtn").onclick = exportExcel;
+$("departmentFilter").onchange = renderActivities;
+$("statusFilter").onchange = renderActivities;
+$("searchBox").oninput = renderActivities;
+
+requireEmployee().then(()=>loadDashboardData());
+</script>
+
+</body>
+</html>
