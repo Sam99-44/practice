@@ -1102,8 +1102,8 @@ app.get(
     );
 
     res.redirect(
-      `https://practiceonline.co.za/login-success.html?token=${encodeURIComponent(token)}`
-    );
+  `https://practiceonline.co.za/login.html?googleToken=${encodeURIComponent(token)}`
+);
   }
 );
 
