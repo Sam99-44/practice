@@ -39,6 +39,8 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+import passport from "passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
@@ -69,8 +71,55 @@ import helmet from "helmet";
 import mongoSanitize from "express-mongo-sanitize";
 
 dotenv.config();
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 
 const app = express();
+app.use(passport.initialize());
+
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: GOOGLE_CLIENT_ID,
+      clientSecret: GOOGLE_CLIENT_SECRET,
+      callbackURL: "https://api.practiceonline.co.za/api/auth/google/callback",
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        const email = profile.emails?.[0]?.value?.toLowerCase();
+
+        if (!email) {
+          return done(new Error("Google account has no email"), null);
+        }
+
+        let user = await User.findOne({ email });
+
+        if (!user) {
+          const learnerNumber = await generateUniqueLearnerNumber("student");
+
+          user = await User.create({
+            fullName: profile.displayName || email.split("@")[0],
+            username: email.split("@")[0],
+            email,
+            emailVerified: true,
+            role: "learner",
+            accountType: "student",
+            learnerNumber,
+            studentNumber: null,
+            profilePhoto: profile.photos?.[0]?.value || "",
+            trialActive: true,
+            trialStartDate: new Date(),
+            trialEndDate: addDays(new Date(), 7),
+          });
+        }
+
+        return done(null, user);
+      } catch (err) {
+        return done(err, null);
+      }
+    }
+  )
+);
 
 /* ---------- SECURITY ---------- */
 app.use(helmet());
@@ -1031,6 +1080,32 @@ app.get("/api/quizzes/ratings/summary", authRequired, async (req, res) => {
   }
 });
 /* ------------------ AUTH ROUTES ------------------ */
+app.get(
+  "/api/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    session: false,
+  })
+);
+
+app.get(
+  "/api/auth/google/callback",
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: "https://practiceonline.co.za/login.html",
+  }),
+  async (req, res) => {
+    const token = jwt.sign(
+      { userId: req.user._id, role: req.user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.redirect(
+      `https://practiceonline.co.za/login-success.html?token=${encodeURIComponent(token)}`
+    );
+  }
+);
 
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
