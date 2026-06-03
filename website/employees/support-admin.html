@@ -1,106 +1,1058 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Support Department | Practice Online</title><style>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Support Department | Practice Online</title>
+
+<style>
 :root{
-  --bg:#f6f7fb; --card:#fff; --border:#d9dee7; --text:#0f172a; --muted:#475569;
-  --accent:#0b4a70; --nav:#1b1648; --red:#e11d2e; --green:#16a34a; --orange:#f59e0b;
-  --blue:#2563eb; --shadow:0 10px 30px rgba(15,23,42,0.08);
+  --nav:#1b1648;
+  --red:#e11d2e;
+  --bg:#ffffff;
+  --card:#ffffff;
+  --border:#d9dee7;
+  --text:#0f172a;
+  --muted:#475569;
+  --ok:#065f46;
+  --error:#b91c1c;
+  --soft:#f8fafc;
+  --orange:#92400e;
+  --blue:#1d4ed8;
 }
+
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
-a{text-decoration:none;color:inherit} button,input,select,textarea{font-family:Arial,Helvetica,sans-serif}
-.topbar{background:var(--nav);color:#fff;position:sticky;top:0;z-index:1000;border-top:3px solid rgba(255,255,255,.85)}
-.topbar-inner{max-width:1500px;margin:0 auto;padding:17px 40px;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:83px}
-.brand{display:flex;align-items:center;gap:14px;font-weight:900}
-.brand img{width:48px;height:48px;filter:brightness(0) invert(1) contrast(180%)}
-.brand small{display:block;margin-top:5px;font-weight:400;font-size:15px}
-.topbarRight{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-.topLink{color:#fff;font-size:16px;font-weight:800;padding:8px 0 12px;border-bottom:4px solid transparent;background:transparent;border-left:0;border-right:0;border-top:0;cursor:pointer}
-.topLink.active{border-bottom-color:var(--red)}
-.layout{display:grid;grid-template-columns:285px 1fr;min-height:calc(100vh - 83px)}
-.sidebar{background:#fff;border-right:1px solid var(--border);padding:22px;box-shadow:var(--shadow)}
-.sideTitle{font-size:13px;font-weight:900;color:var(--muted);text-transform:uppercase;margin:4px 0 10px}
-.sideLink{display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:14px;color:#0f172a;font-weight:800;margin-bottom:6px}
-.sideLink:hover,.sideLink.active{background:#eaf2ff;color:#0b4a70}
-.main{padding:28px;overflow:hidden}
-.hero{background:#fff;border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);padding:24px;margin-bottom:22px}
-.heroTop{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap}
-h1{margin:0;font-size:34px;font-weight:900;color:#00102e;line-height:1.1}
-.subtitle{margin:8px 0 0;color:#334155;font-size:16px;line-height:1.5}
-.pill{display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border-radius:999px;background:#eaf2ff;color:#0b4a70;font-weight:900;font-size:14px}
-.grid{display:grid;gap:18px}.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-.card{background:var(--card);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:20px}
-.metricLabel{color:var(--muted);font-size:13px;font-weight:800;margin-bottom:8px}.metricValue{font-size:32px;font-weight:900;color:#00102e}.metricNote{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.4}
-.sectionTitle{font-size:22px;font-weight:900;margin:26px 0 12px;color:#00102e}
-label{display:block;margin-bottom:7px;font-weight:800;color:#00102e;font-size:14px}
-input,select,textarea{width:100%;padding:12px 13px;border-radius:13px;border:1px solid #d1d5db;background:#fff;font-size:14px;outline:none}
-textarea{min-height:110px;resize:vertical}.field{margin-bottom:14px}
-.formRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.formRow3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-.btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;border:0;border-radius:13px;background:var(--accent);color:#fff;font-weight:900;font-size:14px;padding:11px 14px;cursor:pointer}
-.btn:hover{background:#083c5b}.btn.secondary{background:#e2e8f0;color:#0f172a}.btn.danger{background:#dc2626}.btn.success{background:#16a34a}.btn.warning{background:#f59e0b;color:#111827}
-.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.tableWrap{overflow-x:auto;border:1px solid var(--border);border-radius:16px;background:#fff}
-table{width:100%;border-collapse:collapse;min-width:780px}th,td{padding:13px;text-align:left;border-bottom:1px solid var(--border);font-size:14px;vertical-align:top}th{background:#f8fafc;font-size:12px;color:#475569;text-transform:uppercase;letter-spacing:.04em}tr:hover td{background:#f8fafc}
-.badge{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:900;background:#e2e8f0;color:#334155}.badge.green{background:#dcfce7;color:#166534}.badge.red{background:#fee2e2;color:#991b1b}.badge.orange{background:#fef3c7;color:#92400e}.badge.blue{background:#dbeafe;color:#1e40af}
-.notice{background:#fff;border:1px solid var(--border);border-left:5px solid var(--accent);border-radius:16px;padding:15px;color:#334155;line-height:1.5;box-shadow:var(--shadow)}
-.msg,.errorBox,.successBox{font-weight:800;margin-bottom:14px}.errorBox{display:none;background:#fef2f2;color:#991b1b;border-left:5px solid #dc2626;padding:13px;border-radius:14px}.successBox{display:none;background:#f0fdf4;color:#166534;border-left:5px solid #16a34a;padding:13px;border-radius:14px}
-@media(max-width:1050px){.layout{grid-template-columns:1fr}.grid-4,.grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}.sidebar{position:static}}
-@media(max-width:680px){.topbar-inner{padding:14px 18px}.layout{display:block}.main{padding:18px}.grid-4,.grid-3,.grid-2,.formRow,.formRow3{grid-template-columns:1fr}h1{font-size:28px}}
-</style></head>
+
+html,body{
+  margin:0;
+  padding:0;
+  font-family:"Times New Roman",Times,serif;
+  background:#fff;
+  color:var(--text);
+}
+
+a{text-decoration:none;color:inherit}
+
+button,input,select,option,textarea{
+  font-family:"Times New Roman",Times,serif;
+}
+
+.topbar{
+  background:var(--nav);
+  color:#fff;
+  position:sticky;
+  top:0;
+  z-index:1000;
+}
+
+.topbar-inner{
+  max-width:1150px;
+  margin:0 auto;
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.accountLeft{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+
+.accountIcon{
+  width:40px;
+  height:40px;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.accountName{
+  font-size:14px;
+  font-weight:700;
+  color:#fff;
+}
+
+.accountType{
+  font-size:13px;
+  color:#e0e7ff;
+  margin-top:3px;
+}
+
+.topbarRight{
+  display:flex;
+  align-items:center;
+  gap:18px;
+}
+
+.iconBtn{
+  min-width:50px;
+  height:50px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.iconBtn img{
+  width:30px;
+  height:30px;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.menuLink{
+  color:#fff;
+  font-size:13px;
+  font-weight:700;
+  background:transparent;
+  border:0;
+  cursor:pointer;
+}
+
+.wrap{
+  max-width:1150px;
+  margin:0 auto;
+  padding:18px;
+}
+
+.card{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:0;
+  box-shadow:none;
+  overflow:hidden;
+  margin:0 auto 16px;
+}
+
+.cardHead{
+  padding:14px 22px;
+  border-bottom:1px solid #ececec;
+  background:#fff;
+}
+
+.cardHead h1,
+.cardHead h2,
+.cardHead h3{
+  margin:0;
+  font-size:14px;
+  font-weight:700;
+  text-transform:uppercase;
+}
+
+.subText{
+  margin-top:6px;
+  color:#111827;
+  font-size:14px;
+  line-height:1.45;
+}
+
+.body{
+  padding:22px;
+}
+
+.summaryGrid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+}
+
+.summaryBox{
+  border:1px solid #e5e7eb;
+  background:#fff;
+  padding:14px;
+}
+
+.metricLabel{
+  font-size:13px;
+  color:#475569;
+  margin-bottom:6px;
+}
+
+.metricValue{
+  font-size:24px;
+  font-weight:700;
+}
+
+.metricNote{
+  font-size:13px;
+  color:#475569;
+  margin-top:4px;
+}
+
+.toolbar{
+  display:grid;
+  grid-template-columns:180px 190px 1fr auto;
+  gap:12px;
+  align-items:end;
+  margin-bottom:14px;
+}
+
+label{
+  display:block;
+  font-size:14px;
+  font-weight:400;
+  margin-bottom:6px;
+  color:#111827;
+}
+
+input,select,textarea{
+  width:100%;
+  padding:10px 12px;
+  border-radius:0;
+  border:1px solid #d6d3d1;
+  background:#fff;
+  font-size:14px;
+  outline:none;
+}
+
+textarea{
+  min-height:86px;
+  resize:vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+  border-color:#cbd5e1;
+  box-shadow:0 0 0 4px rgba(226,232,240,.7);
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.btn{
+  background:var(--red);
+  color:#fff;
+  border:1px solid var(--red);
+  border-radius:6px;
+  height:34px;
+  padding:10px 14px;
+  min-width:92px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.btn:hover{opacity:.92}
+
+.btn:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
+.btn.secondary{
+  background:#fff;
+  color:#111827;
+  border:1px solid #d1d5db;
+}
+
+.btn.secondary:hover{
+  background:var(--soft);
+}
+
+.btn.success{
+  background:#065f46;
+  border-color:#065f46;
+}
+
+.btn.warning{
+  background:#92400e;
+  border-color:#92400e;
+}
+
+.btn.small{
+  min-width:auto;
+  height:30px;
+  padding:7px 10px;
+}
+
+.tableWrap{
+  width:100%;
+  overflow-x:auto;
+  border:1px solid #e5e7eb;
+  background:#fff;
+}
+
+.tableWrap::-webkit-scrollbar{height:10px}
+.tableWrap::-webkit-scrollbar-thumb{background:#9ca3af;border-radius:20px}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:1780px;
+}
+
+th,td{
+  padding:10px 12px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:left;
+  font-size:14px;
+  vertical-align:middle;
+  white-space:nowrap;
+}
+
+th{
+  background:#f8fafc;
+  color:#111827;
+  font-size:13px;
+  font-weight:700;
+}
+
+tr:hover td{
+  background:#f8fafc;
+}
+
+td select{
+  min-width:120px;
+  padding:7px 9px;
+  font-size:13px;
+}
+
+.statusSelect{min-width:155px}
+.prioritySelect{min-width:110px}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  padding:4px 8px;
+  border-radius:4px;
+  font-size:12px;
+  font-weight:700;
+  background:#f1f5f9;
+  color:#334155;
+  border:1px solid #e2e8f0;
+}
+
+.badge.green{
+  background:#f0fdf4;
+  color:#065f46;
+  border-color:#bbf7d0;
+}
+
+.badge.red{
+  background:#fef2f2;
+  color:#b91c1c;
+  border-color:#fecaca;
+}
+
+.badge.orange{
+  background:#fff7ed;
+  color:#92400e;
+  border-color:#fed7aa;
+}
+
+.badge.blue{
+  background:#eff6ff;
+  color:#1d4ed8;
+  border-color:#bfdbfe;
+}
+
+.msgBox{
+  display:none;
+  margin-bottom:14px;
+  padding:12px;
+  border:1px solid #e5e7eb;
+  font-size:14px;
+}
+
+.msgBox.ok{
+  display:block;
+  color:#065f46;
+  background:#f0fdf4;
+}
+
+.msgBox.error{
+  display:block;
+  color:#b91c1c;
+  background:#fef2f2;
+}
+
+.formBox{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+}
+
+.wide{grid-column:span 2}
+.full{grid-column:1/-1}
+.hidden{display:none!important}
+
+@media(max-width:900px){
+  .summaryGrid{grid-template-columns:repeat(2,1fr)}
+  .toolbar{grid-template-columns:1fr 1fr}
+  .formBox{grid-template-columns:1fr 1fr}
+}
+
+@media(max-width:640px){
+  .wrap{padding:14px}
+  .body{padding:14px}
+  .cardHead{padding:12px 14px}
+  .summaryGrid,.toolbar,.formBox{grid-template-columns:1fr}
+  .wide{grid-column:auto}
+  .accountName,.accountType{
+    max-width:130px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+}
+</style>
+</head>
+
 <body>
-<header class="topbar"><div class="topbar-inner"><div class="brand">
-<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="">
-<div>Practice Online<small>Support Department</small></div></div>
-<div class="topbarRight"><a class="topLink active" href="employee-portal.html">Portal</a><button class="topLink" onclick="logout()">Logout</button></div></div></header>
-<div class="layout"><aside class="sidebar"><div class="sideTitle">Departments</div><a class="sideLink " href="employee-dashboard.html">📊 Dashboard</a>
-<a class="sideLink " href="employee-management.html">👥 Employees</a>
-<a class="sideLink " href="academic-admin.html">📚 Academic</a>
-<a class="sideLink " href="operations-admin.html">📢 Operations</a>
-<a class="sideLink " href="finance-admin.html">💳 Finance</a>
-<a class="sideLink active" href="support-admin.html">🛟 Support</a>
-<a class="sideLink " href="tutor-dashboard.html">👨‍🏫 Tutors</a>
-<a class="sideLink " href="employee-logs.html">🧾 Logs</a></aside>
-<main class="main"><section class="hero"><div class="heroTop"><div><h1>Support Department</h1><p class="subtitle">Learner accounts, tickets, verification and access help.</p></div><div class="pill" id="userPill">Checking login...</div></div></section>
-<div id="errorBox" class="errorBox"></div><div id="successBox" class="successBox"></div>
-<section class="grid grid-4"><div class="card"><div class="metricLabel">Tickets</div><div class="metricValue" id="ticketCount">0</div></div><div class="card"><div class="metricLabel">Open</div><div class="metricValue">0</div></div><div class="card"><div class="metricLabel">Resolved</div><div class="metricValue">0</div></div><div class="card"><div class="metricLabel">Accounts</div><div class="metricValue">Help</div></div></section>
-<h2 class="sectionTitle">Support Tools</h2><section class="grid grid-3"><div class="card"><h3>User Lookup</h3><p>Find learners by email, username or learner number.</p><input id="searchUser" placeholder="Search user..."><br><br><button class="btn" onclick="findUser()">Search</button></div><div class="card"><h3>Verification Help</h3><p>Assist learners who cannot verify email.</p><button class="btn secondary">Open Tools</button></div><div class="card"><h3>Access Issues</h3><p>Help with login, classes and subscriptions.</p><button class="btn secondary">Open Tickets</button></div></section>
-<h2 class="sectionTitle">Search Results</h2><div class="card"><div class="tableWrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Grade</th><th>Status</th></tr></thead><tbody id="userRows"><tr><td colspan="5">Search for a user.</td></tr></tbody></table></div></div>
-</main></div>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="accountLeft">
+      <img class="accountIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="">
+      <div>
+        <div class="accountName">Practice Online</div>
+        <div class="accountType" id="userPill">Support Department</div>
+      </div>
+    </div>
+
+    <div class="topbarRight">
+      <a href="employee-portal.html" class="iconBtn" title="Portal">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="">
+      </a>
+      <button class="menuLink" onclick="logout()">Logout</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div id="msg" class="msgBox"></div>
+
+  <div class="card">
+    <div class="cardHead">
+      <h1>Support Department</h1>
+      <div class="subText">
+        Combined support management table for learner tickets, account requests, verification help, access issues and follow-ups.
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="summaryGrid">
+        <div class="summaryBox">
+          <div class="metricLabel">Total Tickets</div>
+          <div class="metricValue" id="totalCount">0</div>
+          <div class="metricNote">All support records</div>
+        </div>
+
+        <div class="summaryBox">
+          <div class="metricLabel">New Tickets</div>
+          <div class="metricValue" id="newCount">0</div>
+        </div>
+
+        <div class="summaryBox">
+          <div class="metricLabel">In Progress</div>
+          <div class="metricValue" id="progressCount">0</div>
+        </div>
+
+        <div class="summaryBox">
+          <div class="metricLabel">Resolved</div>
+          <div class="metricValue" id="resolvedCount">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cardHead">
+      <h2>Support Management Logs</h2>
+      <div class="subText">
+        Update contacted, resolved, priority and support status directly inside the table.
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="toolbar">
+        <div>
+          <label>Status filter</label>
+          <select id="statusFilter">
+            <option value="all">All records</option>
+            <option value="new">New</option>
+            <option value="in progress">In Progress</option>
+            <option value="waiting for learner">Waiting for Learner</option>
+            <option value="escalated">Escalated</option>
+            <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Priority filter</label>
+          <select id="priorityFilter">
+            <option value="all">All priorities</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Search</label>
+          <input id="searchBox" type="search" placeholder="Search name, email, contact, request, message...">
+        </div>
+
+        <div class="actions">
+          <button class="btn" id="loadBtn">Load Tickets</button>
+          <button class="btn secondary" id="addBtn">Add Manual Ticket</button>
+          <button class="btn success" id="exportBtn">Export Excel</button>
+        </div>
+      </div>
+
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Ticket No.</th>
+              <th>Date</th>
+              <th>Learner</th>
+              <th>Email</th>
+              <th>Contact</th>
+              <th>Request Type</th>
+              <th>Subject</th>
+              <th>Message</th>
+              <th>Assigned To</th>
+              <th>Contacted</th>
+              <th>Resolved</th>
+              <th>Priority</th>
+              <th>Support Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody id="supportRows">
+            <tr><td colspan="15">Click Load Tickets or add a manual ticket.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card hidden" id="addFormCard">
+    <div class="cardHead">
+      <h3>Add Manual Support Ticket</h3>
+      <div class="subText">Add a support ticket manually when it is not yet coming from the backend.</div>
+    </div>
+
+    <div class="body">
+      <div class="formBox">
+        <div>
+          <label>Ticket No.</label>
+          <input id="fTicketNo" placeholder="Auto if empty">
+        </div>
+
+        <div>
+          <label>Date</label>
+          <input id="fDate" type="date">
+        </div>
+
+        <div>
+          <label>Learner</label>
+          <input id="fLearner">
+        </div>
+
+        <div>
+          <label>Email</label>
+          <input id="fEmail" type="email">
+        </div>
+
+        <div>
+          <label>Contact</label>
+          <input id="fContact">
+        </div>
+
+        <div>
+          <label>Request Type</label>
+          <select id="fRequestType">
+            <option>Math help</option>
+            <option>Change of account</option>
+            <option>Verification Help</option>
+            <option>Access Issue</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Subject</label>
+          <input id="fSubject" value="Maths">
+        </div>
+
+        <div>
+          <label>Assigned To</label>
+          <input id="fAssignedTo" placeholder="Support team">
+        </div>
+
+        <div>
+          <label>Contacted</label>
+          <select id="fContacted">
+            <option>No</option>
+            <option>Yes</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Resolved</label>
+          <select id="fResolved">
+            <option>No</option>
+            <option>Yes</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Priority</label>
+          <select id="fPriority">
+            <option>Low</option>
+            <option selected>Medium</option>
+            <option>High</option>
+            <option>Urgent</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Support Status</label>
+          <select id="fStatus">
+            <option>New</option>
+            <option>In Progress</option>
+            <option>Waiting for Learner</option>
+            <option>Escalated</option>
+            <option>Resolved</option>
+            <option>Closed</option>
+          </select>
+        </div>
+
+        <div class="full">
+          <label>Message</label>
+          <textarea id="fMessage"></textarea>
+        </div>
+
+        <div class="full actions">
+          <button class="btn success" id="saveManualBtn">Save Ticket</button>
+          <button class="btn secondary" id="cancelAddBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
 <script>
 const API = "https://api.practiceonline.co.za";
-function token(){ return localStorage.getItem("token") || ""; }
-function authHeaders(json=true){ return json ? {"Content-Type":"application/json", Authorization:"Bearer "+token()} : {Authorization:"Bearer "+token()}; }
-async function safeJson(res){ try{return await res.json()}catch{return{}} }
-async function api(path, options={}){
-  const res = await fetch(API + path, {...options, headers:{...authHeaders(), ...(options.headers||{})}});
+let tickets = [];
+const $ = id => document.getElementById(id);
+
+function token(){
+  return localStorage.getItem("token") || "";
+}
+
+function logout(){
+  localStorage.clear();
+  location.href = "employee-login.html";
+}
+
+function esc(v){
+  return String(v ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function clean(v){
+  return String(v || "").trim();
+}
+
+function show(text,type="ok"){
+  const m = $("msg");
+  m.textContent = text;
+  m.className = "msgBox " + type;
+  setTimeout(()=>{m.className = "msgBox"},4500);
+}
+
+function ticketId(prefix,o,i){
+  return o._id || o.id || o.ticketNo || o.email || `${prefix}-${i}`;
+}
+
+function getPatches(){
+  try{
+    return JSON.parse(localStorage.getItem("support_status_patches") || "{}");
+  }catch{
+    return {};
+  }
+}
+
+function savePatches(patches){
+  localStorage.setItem("support_status_patches", JSON.stringify(patches));
+}
+
+function getManual(){
+  try{
+    return JSON.parse(localStorage.getItem("support_manual_tickets") || "[]");
+  }catch{
+    return [];
+  }
+}
+
+function saveManual(rows){
+  localStorage.setItem("support_manual_tickets", JSON.stringify(rows));
+}
+
+function saveManualIfNeeded(id,patch){
+  const rows = getManual().map(r => r.id === id ? {...r,...patch} : r);
+  saveManual(rows);
+}
+
+function applyPatch(ticket){
+  return {...ticket, ...(getPatches()[ticket.id] || {})};
+}
+
+function patchTicket(id,patch){
+  const patches = getPatches();
+  patches[id] = {...(patches[id] || {}), ...patch};
+  savePatches(patches);
+
+  tickets = tickets.map(t => t.id === id ? {...t,...patch} : t);
+  saveManualIfNeeded(id,patch);
+  renderRows();
+}
+
+function normaliseSupportTicket(t,i){
+  const status = t.status || t.supportStatus || "New";
+  const resolved = String(status).toLowerCase() === "resolved" || String(status).toLowerCase() === "closed";
+
+  return applyPatch({
+    id:String(ticketId("support",t,i)),
+    ticketNo:t.ticketNo || t.ticketNumber || t._id || t.id || `SUP-${String(i + 1).padStart(4,"0")}`,
+    date:t.createdAt || t.date || "",
+    learner:t.fullName || t.username || t.user?.fullName || t.user?.username || t.name || "",
+    email:t.email || t.user?.email || "",
+    contact:t.contact || t.phone || t.cellphone || t.contactNumber || "",
+    requestType:t.requestType || t.type || "",
+    subject:t.subject || "Maths",
+    message:t.message || t.requestFollowUp || "",
+    assignedTo:t.assignedTo || "Support team",
+    contacted:Boolean(t.contacted || t.clientContacted),
+    resolved:Boolean(t.resolved || resolved),
+    priority:t.priority || "Medium",
+    status:status
+  });
+}
+
+async function safeJson(res){
+  try{
+    return await res.json();
+  }catch{
+    return {};
+  }
+}
+
+async function fetchJson(path){
+  const res = await fetch(API + path, {
+    headers:{ Authorization:"Bearer " + token() }
+  });
   const data = await safeJson(res);
-  if(!res.ok) throw new Error(data.message || "Request failed.");
+  if(!res.ok) throw new Error(data.message || path + " failed");
   return data;
 }
-function logout(){ localStorage.clear(); location.href="employee-login.html"; }
-function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
-function showError(m){const b=document.getElementById("errorBox"); if(!b)return alert(m); b.textContent=m||"Error"; b.style.display="block"; setTimeout(()=>b.style.display="none",6000)}
-function showSuccess(m){const b=document.getElementById("successBox"); if(!b)return; b.textContent=m||"Done"; b.style.display="block"; setTimeout(()=>b.style.display="none",4500)}
-async function requireEmployee(roles=[]){
-  if(!token()){location.href="employee-login.html"; return null}
+
+async function requireEmployee(){
+  if(!token()){
+    location.href = "employee-login.html";
+    return null;
+  }
+
   try{
-    let u; try{u=await api("/api/employees/me")}catch{u=await api("/api/auth/me")}
-    const role=String(u.role||"").toLowerCase();
-    const employeeRoles=["admin","tester","academic","editor","operations","finance","support","tutor"];
-    if(!employeeRoles.includes(role)){logout(); return null}
-    if(roles.length && !roles.includes(role)){showError("You do not have permission to open this page."); setTimeout(()=>location.href="employee-portal.html",1200); return null}
-    const p=document.getElementById("userPill"); if(p)p.textContent=`${u.fullName||u.username||"Employee"} • ${role}`;
+    let u;
+    try{
+      u = await fetchJson("/api/employees/me");
+    }catch{
+      u = await fetchJson("/api/auth/me");
+    }
+
+    const role = String(u.role || "").toLowerCase();
+    const allowed = ["admin","tester","support"];
+
+    if(!allowed.includes(role)){
+      show("You do not have permission to open this page.","error");
+      setTimeout(()=>location.href="employee-portal.html",1200);
+      return null;
+    }
+
+    $("userPill").textContent = `${u.fullName || u.username || "Employee"} • ${role}`;
     return u;
-  }catch{logout(); return null}
-}
-function downloadCsv(filename, rows){
-  if(!rows.length)return showError("No data to export.");
-  const h=Object.keys(rows[0]);
-  const csv=[h.join(","),...rows.map(r=>h.map(k=>`"${String(r[k]??"").replaceAll('"','""')}"`).join(","))].join("\n");
-  const blob=new Blob([csv],{type:"text/csv"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);
+  }catch{
+    logout();
+    return null;
+  }
 }
 
-document.addEventListener("DOMContentLoaded", async()=>{ await requireEmployee(["admin","tester","support"]); if(typeof pageInit==="function") pageInit(); });
+async function loadAllSupportTickets(){
+  const btn = $("loadBtn");
+  btn.disabled = true;
+  btn.textContent = "Loading...";
 
-async function pageInit(){}
-async function findUser(){showError("Add backend route GET /api/support/users?q=... to enable user search.");}
-</script></body></html>
+  try{
+    let rows = [];
+
+    try{
+      rows = await fetchJson("/api/support");
+    }catch(e){
+      console.warn(e);
+      rows = [];
+    }
+
+    if(!Array.isArray(rows)){
+      rows = rows.items || rows.data || rows.tickets || rows.support || [];
+    }
+
+    tickets = [
+      ...rows.map(normaliseSupportTicket),
+      ...getManual().map(applyPatch)
+    ];
+
+    renderRows();
+    show("Support tickets loaded.");
+  }catch(e){
+    show("Could not load support tickets: " + e.message,"error");
+  }finally{
+    btn.disabled = false;
+    btn.textContent = "Load Tickets";
+  }
+}
+
+function badge(text,color=""){
+  return `<span class="badge ${color}">${esc(text)}</span>`;
+}
+
+function statusColor(status){
+  status = String(status || "").toLowerCase();
+  if(status === "resolved" || status === "closed") return "green";
+  if(status === "escalated" || status === "urgent") return "red";
+  if(status === "in progress") return "blue";
+  if(status === "waiting for learner") return "orange";
+  return "";
+}
+
+function priorityColor(priority){
+  priority = String(priority || "").toLowerCase();
+  if(priority === "urgent") return "red";
+  if(priority === "high") return "orange";
+  if(priority === "medium") return "blue";
+  return "";
+}
+
+function filtered(){
+  const statusFilter = $("statusFilter").value;
+  const priorityFilter = $("priorityFilter").value;
+  const q = $("searchBox").value.toLowerCase().trim();
+
+  return tickets.filter(t=>{
+    const status = String(t.status || "").toLowerCase();
+    const priority = String(t.priority || "").toLowerCase();
+
+    if(statusFilter !== "all" && status !== statusFilter) return false;
+    if(priorityFilter !== "all" && priority !== priorityFilter) return false;
+
+    if(q && !Object.values(t).join(" ").toLowerCase().includes(q)) return false;
+
+    return true;
+  });
+}
+
+function formatDate(v){
+  if(!v) return "-";
+  const d = new Date(v);
+  if(isNaN(d.getTime())) return esc(v);
+  return d.toLocaleDateString("en-ZA");
+}
+
+function shortMessage(v){
+  const s = clean(v);
+  if(!s) return "-";
+  return s.length > 55 ? esc(s.slice(0,55)) + "..." : esc(s);
+}
+
+function updateSummary(){
+  $("totalCount").textContent = tickets.length;
+  $("newCount").textContent = tickets.filter(t => String(t.status).toLowerCase() === "new").length;
+  $("progressCount").textContent = tickets.filter(t => String(t.status).toLowerCase() === "in progress").length;
+  $("resolvedCount").textContent = tickets.filter(t => t.resolved || ["resolved","closed"].includes(String(t.status).toLowerCase())).length;
+}
+
+function renderRows(){
+  const rows = filtered();
+  updateSummary();
+
+  $("supportRows").innerHTML = rows.length ? rows.map((t,i)=>`
+    <tr>
+      <td>${i + 1}</td>
+      <td>${esc(t.ticketNo || "-")}</td>
+      <td>${formatDate(t.date)}</td>
+      <td>${esc(t.learner || "-")}</td>
+      <td>${esc(t.email || "-")}</td>
+      <td>${esc(t.contact || "-")}</td>
+      <td>${esc(t.requestType || "-")}</td>
+      <td>${esc(t.subject || "-")}</td>
+      <td title="${esc(t.message || "")}">${shortMessage(t.message)}</td>
+      <td>${esc(t.assignedTo || "-")}</td>
+
+      <td>
+        <select onchange="patchTicket('${esc(t.id)}',{contacted:this.value==='Yes',status:this.value==='Yes'?'In Progress':tickets.find(x=>x.id==='${esc(t.id)}').status})">
+          <option ${t.contacted ? "selected" : ""}>Yes</option>
+          <option ${!t.contacted ? "selected" : ""}>No</option>
+        </select>
+      </td>
+
+      <td>
+        <select onchange="patchTicket('${esc(t.id)}',{resolved:this.value==='Yes',status:this.value==='Yes'?'Resolved':tickets.find(x=>x.id==='${esc(t.id)}').status})">
+          <option ${t.resolved ? "selected" : ""}>Yes</option>
+          <option ${!t.resolved ? "selected" : ""}>No</option>
+        </select>
+      </td>
+
+      <td>
+        <select class="prioritySelect" onchange="patchTicket('${esc(t.id)}',{priority:this.value})">
+          <option ${t.priority==="Low" ? "selected" : ""}>Low</option>
+          <option ${t.priority==="Medium" ? "selected" : ""}>Medium</option>
+          <option ${t.priority==="High" ? "selected" : ""}>High</option>
+          <option ${t.priority==="Urgent" ? "selected" : ""}>Urgent</option>
+        </select>
+        ${badge(t.priority || "Medium", priorityColor(t.priority))}
+      </td>
+
+      <td>
+        <select class="statusSelect" onchange="patchTicket('${esc(t.id)}',{status:this.value,resolved:(this.value==='Resolved'||this.value==='Closed')?true:tickets.find(x=>x.id==='${esc(t.id)}').resolved})">
+          <option ${t.status==="New" ? "selected" : ""}>New</option>
+          <option ${t.status==="In Progress" ? "selected" : ""}>In Progress</option>
+          <option ${t.status==="Waiting for Learner" ? "selected" : ""}>Waiting for Learner</option>
+          <option ${t.status==="Escalated" ? "selected" : ""}>Escalated</option>
+          <option ${t.status==="Resolved" ? "selected" : ""}>Resolved</option>
+          <option ${t.status==="Closed" ? "selected" : ""}>Closed</option>
+        </select>
+        ${badge(t.status || "New", statusColor(t.status))}
+      </td>
+
+      <td class="actions">
+        <button class="btn small secondary" onclick="patchTicket('${esc(t.id)}',{contacted:true,status:'In Progress'})">Contacted</button>
+        <button class="btn small warning" onclick="patchTicket('${esc(t.id)}',{priority:'Urgent',status:'Escalated'})">Escalate</button>
+        <button class="btn small success" onclick="patchTicket('${esc(t.id)}',{resolved:true,status:'Resolved'})">Resolve</button>
+      </td>
+    </tr>
+  `).join("") : `<tr><td colspan="15">No support tickets found.</td></tr>`;
+}
+
+function toggleAdd(){
+  $("addFormCard").classList.toggle("hidden");
+}
+
+function addManual(){
+  const today = new Date().toISOString().slice(0,10);
+
+  const row = {
+    id:"manual-support-" + Date.now(),
+    ticketNo:clean($("fTicketNo").value) || "SUP-" + Date.now(),
+    date:$("fDate").value || today,
+    learner:clean($("fLearner").value),
+    email:clean($("fEmail").value),
+    contact:clean($("fContact").value),
+    requestType:clean($("fRequestType").value),
+    subject:clean($("fSubject").value) || "Maths",
+    message:clean($("fMessage").value),
+    assignedTo:clean($("fAssignedTo").value) || "Support team",
+    contacted:$("fContacted").value === "Yes",
+    resolved:$("fResolved").value === "Yes",
+    priority:$("fPriority").value,
+    status:$("fStatus").value
+  };
+
+  const rows = getManual();
+  rows.push(row);
+  saveManual(rows);
+  tickets.push(row);
+
+  renderRows();
+  toggleAdd();
+  show("Manual support ticket added.");
+}
+
+function exportExcel(){
+  const rows = filtered();
+
+  if(!rows.length){
+    return show("No tickets to export.","error");
+  }
+
+  const headers = [
+    "No","Ticket No","Date","Learner","Email","Contact","Request Type","Subject",
+    "Message","Assigned To","Contacted","Resolved","Priority","Support Status"
+  ];
+
+  const body = rows.map((t,i)=>[
+    i + 1,
+    t.ticketNo,
+    formatDate(t.date),
+    t.learner,
+    t.email,
+    t.contact,
+    t.requestType,
+    t.subject,
+    t.message,
+    t.assignedTo,
+    t.contacted ? "Yes" : "No",
+    t.resolved ? "Yes" : "No",
+    t.priority,
+    t.status
+  ]);
+
+  const table = `
+    <table border="1">
+      <tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>
+      ${body.map(row=>`<tr>${row.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}
+    </table>
+  `;
+
+  const blob = new Blob(
+    [`<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`],
+    {type:"application/vnd.ms-excel"}
+  );
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "support-management-table.xls";
+  a.click();
+  URL.revokeObjectURL(url);
+
+  show("Excel file exported.");
+}
+
+$("loadBtn").onclick = loadAllSupportTickets;
+$("addBtn").onclick = toggleAdd;
+$("cancelAddBtn").onclick = toggleAdd;
+$("saveManualBtn").onclick = addManual;
+$("exportBtn").onclick = exportExcel;
+
+$("statusFilter").onchange = renderRows;
+$("priorityFilter").onchange = renderRows;
+$("searchBox").oninput = renderRows;
+
+tickets = getManual().map(applyPatch);
+renderRows();
+requireEmployee();
+</script>
+
+</body>
+</html>
