@@ -1,104 +1,995 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Employee Logs | Practice Online</title><style>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Employee Logs | Practice Online</title>
+
+<style>
 :root{
-  --bg:#f6f7fb; --card:#fff; --border:#d9dee7; --text:#0f172a; --muted:#475569;
-  --accent:#0b4a70; --nav:#1b1648; --red:#e11d2e; --green:#16a34a; --orange:#f59e0b;
-  --blue:#2563eb; --shadow:0 10px 30px rgba(15,23,42,0.08);
+  --nav:#1b1648;
+  --red:#e11d2e;
+  --bg:#ffffff;
+  --card:#ffffff;
+  --border:#d9dee7;
+  --text:#0f172a;
+  --muted:#475569;
+  --ok:#065f46;
+  --error:#b91c1c;
+  --soft:#f8fafc;
+  --orange:#92400e;
+  --blue:#1d4ed8;
 }
+
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
-a{text-decoration:none;color:inherit} button,input,select,textarea{font-family:Arial,Helvetica,sans-serif}
-.topbar{background:var(--nav);color:#fff;position:sticky;top:0;z-index:1000;border-top:3px solid rgba(255,255,255,.85)}
-.topbar-inner{max-width:1500px;margin:0 auto;padding:17px 40px;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:83px}
-.brand{display:flex;align-items:center;gap:14px;font-weight:900}
-.brand img{width:48px;height:48px;filter:brightness(0) invert(1) contrast(180%)}
-.brand small{display:block;margin-top:5px;font-weight:400;font-size:15px}
-.topbarRight{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-.topLink{color:#fff;font-size:16px;font-weight:800;padding:8px 0 12px;border-bottom:4px solid transparent;background:transparent;border-left:0;border-right:0;border-top:0;cursor:pointer}
-.topLink.active{border-bottom-color:var(--red)}
-.layout{display:grid;grid-template-columns:285px 1fr;min-height:calc(100vh - 83px)}
-.sidebar{background:#fff;border-right:1px solid var(--border);padding:22px;box-shadow:var(--shadow)}
-.sideTitle{font-size:13px;font-weight:900;color:var(--muted);text-transform:uppercase;margin:4px 0 10px}
-.sideLink{display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:14px;color:#0f172a;font-weight:800;margin-bottom:6px}
-.sideLink:hover,.sideLink.active{background:#eaf2ff;color:#0b4a70}
-.main{padding:28px;overflow:hidden}
-.hero{background:#fff;border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);padding:24px;margin-bottom:22px}
-.heroTop{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap}
-h1{margin:0;font-size:34px;font-weight:900;color:#00102e;line-height:1.1}
-.subtitle{margin:8px 0 0;color:#334155;font-size:16px;line-height:1.5}
-.pill{display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border-radius:999px;background:#eaf2ff;color:#0b4a70;font-weight:900;font-size:14px}
-.grid{display:grid;gap:18px}.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-.card{background:var(--card);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:20px}
-.metricLabel{color:var(--muted);font-size:13px;font-weight:800;margin-bottom:8px}.metricValue{font-size:32px;font-weight:900;color:#00102e}.metricNote{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.4}
-.sectionTitle{font-size:22px;font-weight:900;margin:26px 0 12px;color:#00102e}
-label{display:block;margin-bottom:7px;font-weight:800;color:#00102e;font-size:14px}
-input,select,textarea{width:100%;padding:12px 13px;border-radius:13px;border:1px solid #d1d5db;background:#fff;font-size:14px;outline:none}
-textarea{min-height:110px;resize:vertical}.field{margin-bottom:14px}
-.formRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.formRow3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-.btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;border:0;border-radius:13px;background:var(--accent);color:#fff;font-weight:900;font-size:14px;padding:11px 14px;cursor:pointer}
-.btn:hover{background:#083c5b}.btn.secondary{background:#e2e8f0;color:#0f172a}.btn.danger{background:#dc2626}.btn.success{background:#16a34a}.btn.warning{background:#f59e0b;color:#111827}
-.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.tableWrap{overflow-x:auto;border:1px solid var(--border);border-radius:16px;background:#fff}
-table{width:100%;border-collapse:collapse;min-width:780px}th,td{padding:13px;text-align:left;border-bottom:1px solid var(--border);font-size:14px;vertical-align:top}th{background:#f8fafc;font-size:12px;color:#475569;text-transform:uppercase;letter-spacing:.04em}tr:hover td{background:#f8fafc}
-.badge{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:900;background:#e2e8f0;color:#334155}.badge.green{background:#dcfce7;color:#166534}.badge.red{background:#fee2e2;color:#991b1b}.badge.orange{background:#fef3c7;color:#92400e}.badge.blue{background:#dbeafe;color:#1e40af}
-.notice{background:#fff;border:1px solid var(--border);border-left:5px solid var(--accent);border-radius:16px;padding:15px;color:#334155;line-height:1.5;box-shadow:var(--shadow)}
-.msg,.errorBox,.successBox{font-weight:800;margin-bottom:14px}.errorBox{display:none;background:#fef2f2;color:#991b1b;border-left:5px solid #dc2626;padding:13px;border-radius:14px}.successBox{display:none;background:#f0fdf4;color:#166534;border-left:5px solid #16a34a;padding:13px;border-radius:14px}
-@media(max-width:1050px){.layout{grid-template-columns:1fr}.grid-4,.grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}.sidebar{position:static}}
-@media(max-width:680px){.topbar-inner{padding:14px 18px}.layout{display:block}.main{padding:18px}.grid-4,.grid-3,.grid-2,.formRow,.formRow3{grid-template-columns:1fr}h1{font-size:28px}}
-</style></head>
+
+html,body{
+  margin:0;
+  padding:0;
+  font-family:"Times New Roman",Times,serif;
+  background:#fff;
+  color:var(--text);
+}
+
+a{text-decoration:none;color:inherit}
+
+button,input,select,option{
+  font-family:"Times New Roman",Times,serif;
+}
+
+.topbar{
+  background:var(--nav);
+  color:#fff;
+  position:sticky;
+  top:0;
+  z-index:1000;
+}
+
+.topbar-inner{
+  max-width:1150px;
+  margin:0 auto;
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.accountLeft{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+
+.accountIcon{
+  width:40px;
+  height:40px;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.accountName{
+  font-size:14px;
+  font-weight:700;
+  color:#fff;
+}
+
+.accountType{
+  font-size:13px;
+  color:#e0e7ff;
+  margin-top:3px;
+}
+
+.topbarRight{
+  display:flex;
+  align-items:center;
+  gap:18px;
+}
+
+.iconBtn{
+  min-width:50px;
+  height:50px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.iconBtn img{
+  width:30px;
+  height:30px;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.menuLink{
+  color:#fff;
+  font-size:13px;
+  font-weight:700;
+  background:transparent;
+  border:0;
+  cursor:pointer;
+}
+
+.wrap{
+  max-width:1150px;
+  margin:0 auto;
+  padding:18px;
+}
+
+.card{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:0;
+  box-shadow:none;
+  overflow:hidden;
+  margin:0 auto 16px;
+}
+
+.cardHead{
+  padding:14px 22px;
+  border-bottom:1px solid #ececec;
+  background:#fff;
+}
+
+.cardHead h1,
+.cardHead h2,
+.cardHead h3{
+  margin:0;
+  font-size:14px;
+  font-weight:700;
+  text-transform:uppercase;
+}
+
+.subText{
+  margin-top:6px;
+  color:#111827;
+  font-size:14px;
+  line-height:1.45;
+}
+
+.body{
+  padding:22px;
+}
+
+.summaryGrid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+}
+
+.summaryBox{
+  border:1px solid #e5e7eb;
+  background:#fff;
+  padding:14px;
+}
+
+.metricLabel{
+  font-size:13px;
+  color:#475569;
+  margin-bottom:6px;
+}
+
+.metricValue{
+  font-size:24px;
+  font-weight:700;
+}
+
+.metricNote{
+  font-size:13px;
+  color:#475569;
+  margin-top:4px;
+}
+
+.toolbar{
+  display:grid;
+  grid-template-columns:160px 160px 150px 150px 1fr auto;
+  gap:12px;
+  align-items:end;
+  margin-bottom:14px;
+}
+
+label{
+  display:block;
+  font-size:14px;
+  font-weight:400;
+  margin-bottom:6px;
+  color:#111827;
+}
+
+input,select{
+  width:100%;
+  padding:10px 12px;
+  border-radius:0;
+  border:1px solid #d6d3d1;
+  background:#fff;
+  font-size:14px;
+  outline:none;
+}
+
+input:focus,
+select:focus{
+  border-color:#cbd5e1;
+  box-shadow:0 0 0 4px rgba(226,232,240,.7);
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.btn{
+  background:var(--red);
+  color:#fff;
+  border:1px solid var(--red);
+  border-radius:6px;
+  height:34px;
+  padding:10px 14px;
+  min-width:92px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.btn:hover{opacity:.92}
+
+.btn.secondary{
+  background:#fff;
+  color:#111827;
+  border:1px solid #d1d5db;
+}
+
+.btn.secondary:hover{background:var(--soft)}
+
+.btn.success{
+  background:#065f46;
+  border-color:#065f46;
+}
+
+.btn.warning{
+  background:#92400e;
+  border-color:#92400e;
+}
+
+.btn.small{
+  min-width:auto;
+  height:30px;
+  padding:7px 10px;
+}
+
+.tableWrap{
+  width:100%;
+  overflow-x:auto;
+  border:1px solid #e5e7eb;
+  background:#fff;
+}
+
+.tableWrap::-webkit-scrollbar{height:10px}
+.tableWrap::-webkit-scrollbar-thumb{background:#9ca3af;border-radius:20px}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:1120px;
+}
+
+th,td{
+  padding:10px 12px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:left;
+  font-size:14px;
+  vertical-align:middle;
+  white-space:nowrap;
+}
+
+th{
+  background:#f8fafc;
+  color:#111827;
+  font-size:13px;
+  font-weight:700;
+}
+
+tr:hover td{background:#f8fafc}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  padding:4px 8px;
+  border-radius:4px;
+  font-size:12px;
+  font-weight:700;
+  background:#f1f5f9;
+  color:#334155;
+  border:1px solid #e2e8f0;
+}
+
+.badge.green{
+  background:#f0fdf4;
+  color:#065f46;
+  border-color:#bbf7d0;
+}
+
+.badge.red{
+  background:#fef2f2;
+  color:#b91c1c;
+  border-color:#fecaca;
+}
+
+.badge.orange{
+  background:#fff7ed;
+  color:#92400e;
+  border-color:#fed7aa;
+}
+
+.badge.blue{
+  background:#eff6ff;
+  color:#1d4ed8;
+  border-color:#bfdbfe;
+}
+
+.msgBox{
+  display:none;
+  margin-bottom:14px;
+  padding:12px;
+  border:1px solid #e5e7eb;
+  font-size:14px;
+}
+
+.msgBox.ok{
+  display:block;
+  color:#065f46;
+  background:#f0fdf4;
+}
+
+.msgBox.error{
+  display:block;
+  color:#b91c1c;
+  background:#fef2f2;
+}
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.45);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  z-index:2000;
+}
+
+.modal.open{
+  display:flex;
+}
+
+.modalBox{
+  width:min(720px,100%);
+  background:#fff;
+  border:1px solid #d9dee7;
+  box-shadow:0 20px 40px rgba(0,0,0,.18);
+}
+
+.modalHead{
+  padding:14px 18px;
+  border-bottom:1px solid #e5e7eb;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.modalHead h3{
+  margin:0;
+  font-size:14px;
+  text-transform:uppercase;
+}
+
+.modalBody{
+  padding:18px;
+}
+
+.detailGrid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.detailBox{
+  border:1px solid #e5e7eb;
+  padding:10px;
+}
+
+.detailLabel{
+  font-size:13px;
+  color:#475569;
+  margin-bottom:5px;
+}
+
+.detailValue{
+  font-size:14px;
+  font-weight:700;
+  word-break:break-word;
+}
+
+.fullDetail{
+  grid-column:1/-1;
+}
+
+@media(max-width:1050px){
+  .toolbar{grid-template-columns:repeat(3,1fr)}
+}
+
+@media(max-width:900px){
+  .summaryGrid{grid-template-columns:repeat(2,1fr)}
+}
+
+@media(max-width:640px){
+  .wrap{padding:14px}
+  .body{padding:14px}
+  .cardHead{padding:12px 14px}
+  .summaryGrid,.toolbar,.detailGrid{grid-template-columns:1fr}
+  .accountName,.accountType{
+    max-width:130px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+}
+</style>
+</head>
+
 <body>
-<header class="topbar"><div class="topbar-inner"><div class="brand">
-<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="">
-<div>Practice Online<small>Employee Logs</small></div></div>
-<div class="topbarRight"><a class="topLink active" href="employee-portal.html">Portal</a><button class="topLink" onclick="logout()">Logout</button></div></div></header>
-<div class="layout"><aside class="sidebar"><div class="sideTitle">Departments</div><a class="sideLink " href="employee-dashboard.html">📊 Dashboard</a>
-<a class="sideLink " href="employee-management.html">👥 Employees</a>
-<a class="sideLink " href="academic-admin.html">📚 Academic</a>
-<a class="sideLink " href="operations-admin.html">📢 Operations</a>
-<a class="sideLink " href="finance-admin.html">💳 Finance</a>
-<a class="sideLink " href="support-admin.html">🛟 Support</a>
-<a class="sideLink " href="tutor-dashboard.html">👨‍🏫 Tutors</a>
-<a class="sideLink active" href="employee-logs.html">🧾 Logs</a></aside>
-<main class="main"><section class="hero"><div class="heroTop"><div><h1>Employee Logs</h1><p class="subtitle">Audit trail showing who edited, created, deleted or approved work.</p></div><div class="pill" id="userPill">Checking login...</div></div></section>
-<div id="errorBox" class="errorBox"></div><div id="successBox" class="successBox"></div>
-<section class="grid grid-3"><div class="card"><div class="metricLabel">Logs</div><div class="metricValue" id="logCount">0</div></div><div class="card"><div class="metricLabel">Critical</div><div class="metricValue" id="criticalCount">0</div></div><div class="card"><div class="metricLabel">Export</div><button class="btn secondary" onclick="exportLogs()">Export CSV</button></div></section>
-<h2 class="sectionTitle">Activity Logs</h2><div class="card"><button class="btn secondary" onclick="loadLogs()">Refresh</button><br><br><div class="tableWrap"><table><thead><tr><th>Employee</th><th>Role</th><th>Action</th><th>Department</th><th>Status</th><th>Date</th></tr></thead><tbody id="logRows"><tr><td colspan="6">Loading...</td></tr></tbody></table></div></div>
-</main></div>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="accountLeft">
+      <img class="accountIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="">
+      <div>
+        <div class="accountName">Practice Online</div>
+        <div class="accountType" id="userPill">Employee Logs</div>
+      </div>
+    </div>
+
+    <div class="topbarRight">
+      <a href="employee-portal.html" class="iconBtn" title="Portal">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="">
+      </a>
+      <button class="menuLink" onclick="logout()">Logout</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div id="msg" class="msgBox"></div>
+
+  <div class="card">
+    <div class="cardHead">
+      <h1>Employee Logs</h1>
+      <div class="subText">Audit trail showing who edited, created, deleted, approved or reviewed work across departments.</div>
+    </div>
+
+    <div class="body">
+      <div class="summaryGrid">
+        <div class="summaryBox">
+          <div class="metricLabel">Total Logs</div>
+          <div class="metricValue" id="totalCount">0</div>
+          <div class="metricNote">All activity records</div>
+        </div>
+
+        <div class="summaryBox">
+          <div class="metricLabel">Critical Logs</div>
+          <div class="metricValue" id="criticalCount">0</div>
+          <div class="metricNote">High-risk actions</div>
+        </div>
+
+        <div class="summaryBox">
+          <div class="metricLabel">Today's Activity</div>
+          <div class="metricValue" id="todayCount">0</div>
+          <div class="metricNote">Actions performed today</div>
+        </div>
+
+        <div class="summaryBox">
+          <div class="metricLabel">Active Employees</div>
+          <div class="metricValue" id="activeCount">0</div>
+          <div class="metricNote">Employees active today</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cardHead">
+      <h2>Audit Summary</h2>
+      <div class="subText">Department summary based on currently loaded logs.</div>
+    </div>
+
+    <div class="body">
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Department</th>
+              <th>Logs Today</th>
+              <th>Critical</th>
+              <th>Last Activity</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="summaryRows">
+            <tr><td colspan="5">Loading summary...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cardHead">
+      <h2>Activity Logs</h2>
+      <div class="subText">Filter, review, and export employee audit logs.</div>
+    </div>
+
+    <div class="body">
+      <div class="toolbar">
+        <div>
+          <label>Department</label>
+          <select id="departmentFilter">
+            <option value="all">All</option>
+            <option>Academic</option>
+            <option>Operations</option>
+            <option>Finance</option>
+            <option>Support</option>
+            <option>Tutors</option>
+            <option>Employees</option>
+            <option>Admin</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Employee</label>
+          <select id="employeeFilter">
+            <option value="all">All employees</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Severity</label>
+          <select id="severityFilter">
+            <option value="all">All</option>
+            <option value="critical">Critical</option>
+            <option value="warning">Warning</option>
+            <option value="normal">Normal</option>
+            <option value="success">Success</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Date</label>
+          <input id="dateFilter" type="date">
+        </div>
+
+        <div>
+          <label>Search</label>
+          <input id="searchBox" type="search" placeholder="Search action, employee, role, department...">
+        </div>
+
+        <div class="actions">
+          <button class="btn" id="refreshBtn">Refresh</button>
+          <button class="btn warning" id="criticalBtn">Critical Only</button>
+          <button class="btn success" id="excelBtn">Export Excel</button>
+          <button class="btn secondary" id="csvBtn">Export CSV</button>
+        </div>
+      </div>
+
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Date</th>
+              <th>Employee</th>
+              <th>Role</th>
+              <th>Department</th>
+              <th>Action</th>
+              <th>Severity</th>
+              <th>Status</th>
+              <th>View</th>
+            </tr>
+          </thead>
+
+          <tbody id="logRows">
+            <tr><td colspan="9">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal" id="logModal">
+  <div class="modalBox">
+    <div class="modalHead">
+      <h3>Log Details</h3>
+      <button class="btn small secondary" id="closeModalBtn">Close</button>
+    </div>
+
+    <div class="modalBody">
+      <div class="detailGrid" id="modalDetails"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 const API = "https://api.practiceonline.co.za";
-function token(){ return localStorage.getItem("token") || ""; }
-function authHeaders(json=true){ return json ? {"Content-Type":"application/json", Authorization:"Bearer "+token()} : {Authorization:"Bearer "+token()}; }
-async function safeJson(res){ try{return await res.json()}catch{return{}} }
-async function api(path, options={}){
-  const res = await fetch(API + path, {...options, headers:{...authHeaders(), ...(options.headers||{})}});
+let logs = [];
+let criticalOnly = false;
+
+const $ = id => document.getElementById(id);
+
+function token(){
+  return localStorage.getItem("token") || "";
+}
+
+function logout(){
+  localStorage.clear();
+  location.href = "employee-login.html";
+}
+
+function esc(v){
+  return String(v ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function show(text,type="ok"){
+  const m = $("msg");
+  m.textContent = text;
+  m.className = "msgBox " + type;
+  setTimeout(()=>{m.className = "msgBox"},4500);
+}
+
+async function safeJson(res){
+  try{
+    return await res.json();
+  }catch{
+    return {};
+  }
+}
+
+async function fetchJson(path){
+  const res = await fetch(API + path, {
+    headers:{ Authorization:"Bearer " + token() }
+  });
+
   const data = await safeJson(res);
-  if(!res.ok) throw new Error(data.message || "Request failed.");
+
+  if(!res.ok){
+    throw new Error(data.message || path + " failed");
+  }
+
   return data;
 }
-function logout(){ localStorage.clear(); location.href="employee-login.html"; }
-function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
-function showError(m){const b=document.getElementById("errorBox"); if(!b)return alert(m); b.textContent=m||"Error"; b.style.display="block"; setTimeout(()=>b.style.display="none",6000)}
-function showSuccess(m){const b=document.getElementById("successBox"); if(!b)return; b.textContent=m||"Done"; b.style.display="block"; setTimeout(()=>b.style.display="none",4500)}
-async function requireEmployee(roles=[]){
-  if(!token()){location.href="employee-login.html"; return null}
+
+function normaliseArray(data){
+  if(Array.isArray(data)) return data;
+  return data.items || data.data || data.logs || data.results || [];
+}
+
+async function requireEmployee(){
+  if(!token()){
+    location.href = "employee-login.html";
+    return null;
+  }
+
   try{
-    let u; try{u=await api("/api/employees/me")}catch{u=await api("/api/auth/me")}
-    const role=String(u.role||"").toLowerCase();
-    const employeeRoles=["admin","tester","academic","editor","operations","finance","support","tutor"];
-    if(!employeeRoles.includes(role)){logout(); return null}
-    if(roles.length && !roles.includes(role)){showError("You do not have permission to open this page."); setTimeout(()=>location.href="employee-portal.html",1200); return null}
-    const p=document.getElementById("userPill"); if(p)p.textContent=`${u.fullName||u.username||"Employee"} • ${role}`;
+    let u;
+    try{
+      u = await fetchJson("/api/employees/me");
+    }catch{
+      u = await fetchJson("/api/auth/me");
+    }
+
+    const role = String(u.role || "").toLowerCase();
+    const allowed = ["admin","tester"];
+
+    if(!allowed.includes(role)){
+      show("You do not have permission to open this page.","error");
+      setTimeout(()=>location.href="employee-dashboard.html",1200);
+      return null;
+    }
+
+    $("userPill").textContent = `${u.fullName || u.username || "Employee"} • ${role}`;
     return u;
-  }catch{logout(); return null}
-}
-function downloadCsv(filename, rows){
-  if(!rows.length)return showError("No data to export.");
-  const h=Object.keys(rows[0]);
-  const csv=[h.join(","),...rows.map(r=>h.map(k=>`"${String(r[k]??"").replaceAll('"','""')}"`).join(","))].join("\n");
-  const blob=new Blob([csv],{type:"text/csv"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);
+  }catch{
+    logout();
+    return null;
+  }
 }
 
-document.addEventListener("DOMContentLoaded", async()=>{ await requireEmployee(["admin","tester"]); if(typeof pageInit==="function") pageInit(); });
+function normaliseLog(l,i){
+  return {
+    id:l._id || l.id || `log-${i}`,
+    date:l.createdAt || l.date || l.timestamp || "",
+    employee:l.employee?.fullName || l.employee?.username || l.fullName || l.username || l.employeeName || "Unknown",
+    role:l.employee?.role || l.role || "-",
+    department:l.department || l.employee?.department || "-",
+    action:l.action || l.event || l.activity || "-",
+    severity:(l.severity || l.level || "normal").toLowerCase(),
+    status:l.status || "success",
+    details:l.details || l.description || l.message || "",
+    raw:l
+  };
+}
 
-let logsCache=[]; async function pageInit(){loadLogs()} async function loadLogs(){try{logsCache=await api("/api/employees/logs/recent?limit=100"); logCount.textContent=logsCache.length; criticalCount.textContent=logsCache.filter(x=>x.severity==="critical").length; logRows.innerHTML=logsCache.length?logsCache.map(l=>`<tr><td>${escapeHtml(l.employee?.fullName||l.employee?.username||"-")}</td><td>${escapeHtml(l.employee?.role||"-")}</td><td><span class="badge blue">${escapeHtml(l.action)}</span></td><td>${escapeHtml(l.department||"-")}</td><td>${escapeHtml(l.status||"success")}</td><td>${l.createdAt?new Date(l.createdAt).toLocaleString():"-"}</td></tr>`).join(""):'<tr><td colspan="6">No logs.</td></tr>'}catch(e){showError(e.message)}} function exportLogs(){downloadCsv("employee-logs.csv",logsCache.map(l=>({employee:l.employee?.fullName||"",role:l.employee?.role||"",action:l.action,department:l.department,status:l.status,severity:l.severity,date:l.createdAt})))}
-</script></body></html>
+async function loadLogs(){
+  const btn = $("refreshBtn");
+  btn.disabled = true;
+  btn.textContent = "Loading...";
+
+  try{
+    let data = await fetchJson("/api/employees/logs/recent?limit=200");
+    logs = normaliseArray(data).map(normaliseLog);
+    criticalOnly = false;
+    $("severityFilter").value = "all";
+
+    fillEmployeeFilter();
+    updateCounts();
+    renderSummary();
+    renderLogs();
+    show("Logs loaded.");
+  }catch(e){
+    logs = fallbackLogs();
+    fillEmployeeFilter();
+    updateCounts();
+    renderSummary();
+    renderLogs();
+    show("Could not load backend logs, so sample fallback logs were displayed.","error");
+  }finally{
+    btn.disabled = false;
+    btn.textContent = "Refresh";
+  }
+}
+
+function fallbackLogs(){
+  const now = new Date().toISOString();
+
+  return [
+    normaliseLog({createdAt:now, employeeName:"Academic Team", role:"academic", department:"Academic", action:"Assessment updated", severity:"normal", status:"success", details:"Assessment was edited and saved."},0),
+    normaliseLog({createdAt:now, employeeName:"Finance Team", role:"finance", department:"Finance", action:"Payment approved", severity:"success", status:"success", details:"Manual payment was approved."},1),
+    normaliseLog({createdAt:now, employeeName:"Support Team", role:"support", department:"Support", action:"Learner access issue reviewed", severity:"warning", status:"pending", details:"Learner account requires follow-up."},2),
+    normaliseLog({createdAt:now, employeeName:"Admin", role:"admin", department:"Admin", action:"Employee role changed", severity:"critical", status:"success", details:"Employee role permissions were changed."},3)
+  ];
+}
+
+function fillEmployeeFilter(){
+  const names = [...new Set(logs.map(l => l.employee).filter(Boolean))].sort();
+  $("employeeFilter").innerHTML = `<option value="all">All employees</option>` + names.map(n=>`<option>${esc(n)}</option>`).join("");
+}
+
+function sameDay(a,b){
+  const da = new Date(a);
+  const db = new Date(b);
+  if(isNaN(da.getTime()) || isNaN(db.getTime())) return false;
+  return da.toDateString() === db.toDateString();
+}
+
+function formatDate(v){
+  if(!v) return "-";
+  const d = new Date(v);
+  if(isNaN(d.getTime())) return esc(v);
+  return d.toLocaleString("en-ZA");
+}
+
+function severityBadge(severity){
+  const s = String(severity || "normal").toLowerCase();
+
+  if(s === "critical") return `<span class="badge red">Critical</span>`;
+  if(s === "warning") return `<span class="badge orange">Warning</span>`;
+  if(s === "success") return `<span class="badge green">Success</span>`;
+
+  return `<span class="badge blue">Normal</span>`;
+}
+
+function statusBadge(status){
+  const s = String(status || "").toLowerCase();
+
+  if(s.includes("success") || s.includes("complete")) return `<span class="badge green">${esc(status)}</span>`;
+  if(s.includes("fail") || s.includes("error")) return `<span class="badge red">${esc(status)}</span>`;
+  if(s.includes("pending")) return `<span class="badge orange">${esc(status)}</span>`;
+
+  return `<span class="badge">${esc(status || "-")}</span>`;
+}
+
+function updateCounts(){
+  const today = new Date();
+  const todayLogs = logs.filter(l => sameDay(l.date,today));
+  const activeEmployees = new Set(todayLogs.map(l => l.employee).filter(Boolean));
+
+  $("totalCount").textContent = logs.length;
+  $("criticalCount").textContent = logs.filter(l => l.severity === "critical").length;
+  $("todayCount").textContent = todayLogs.length;
+  $("activeCount").textContent = activeEmployees.size;
+}
+
+function filteredLogs(){
+  const department = $("departmentFilter").value;
+  const employee = $("employeeFilter").value;
+  const severity = $("severityFilter").value;
+  const date = $("dateFilter").value;
+  const q = $("searchBox").value.toLowerCase().trim();
+
+  return logs.filter(l=>{
+    if(criticalOnly && l.severity !== "critical") return false;
+    if(department !== "all" && l.department !== department) return false;
+    if(employee !== "all" && l.employee !== employee) return false;
+    if(severity !== "all" && l.severity !== severity) return false;
+    if(date && !sameDay(l.date, date)) return false;
+    if(q && !Object.values(l).join(" ").toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function renderSummary(){
+  const departments = ["Academic","Operations","Finance","Support","Tutors","Employees","Admin"];
+
+  $("summaryRows").innerHTML = departments.map(dep=>{
+    const depLogs = logs.filter(l => l.department === dep);
+    const today = depLogs.filter(l => sameDay(l.date,new Date()));
+    const critical = depLogs.filter(l => l.severity === "critical");
+    const last = depLogs.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+
+    return `
+      <tr>
+        <td>${esc(dep)}</td>
+        <td>${today.length}</td>
+        <td>${critical.length}</td>
+        <td>${last ? formatDate(last.date) : "-"}</td>
+        <td>${last ? statusBadge("Active") : statusBadge("No activity")}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function renderLogs(){
+  const rows = filteredLogs();
+
+  $("logRows").innerHTML = rows.length ? rows.map((l,i)=>`
+    <tr>
+      <td>${i + 1}</td>
+      <td>${formatDate(l.date)}</td>
+      <td>${esc(l.employee)}</td>
+      <td>${esc(l.role)}</td>
+      <td>${esc(l.department)}</td>
+      <td>${esc(l.action)}</td>
+      <td>${severityBadge(l.severity)}</td>
+      <td>${statusBadge(l.status)}</td>
+      <td><button class="btn small secondary" onclick="openLogDetails('${esc(l.id)}')">View</button></td>
+    </tr>
+  `).join("") : `<tr><td colspan="9">No logs found.</td></tr>`;
+}
+
+function detailBox(label,value,full=false){
+  return `
+    <div class="detailBox ${full ? "fullDetail" : ""}">
+      <div class="detailLabel">${esc(label)}</div>
+      <div class="detailValue">${esc(value || "-")}</div>
+    </div>
+  `;
+}
+
+function openLogDetails(id){
+  const log = logs.find(l => l.id === id);
+  if(!log) return;
+
+  $("modalDetails").innerHTML = [
+    detailBox("Employee",log.employee),
+    detailBox("Role",log.role),
+    detailBox("Department",log.department),
+    detailBox("Action",log.action),
+    detailBox("Severity",log.severity),
+    detailBox("Status",log.status),
+    detailBox("Date",formatDate(log.date)),
+    detailBox("Log ID",log.id),
+    detailBox("Details",log.details || JSON.stringify(log.raw,null,2),true)
+  ].join("");
+
+  $("logModal").classList.add("open");
+}
+
+function closeModal(){
+  $("logModal").classList.remove("open");
+}
+
+function exportRows(format){
+  const rows = filteredLogs();
+
+  if(!rows.length){
+    return show("No logs to export.","error");
+  }
+
+  const headers = ["No","Date","Employee","Role","Department","Action","Severity","Status","Details"];
+  const body = rows.map((l,i)=>[
+    i + 1,
+    formatDate(l.date),
+    l.employee,
+    l.role,
+    l.department,
+    l.action,
+    l.severity,
+    l.status,
+    l.details
+  ]);
+
+  if(format === "csv"){
+    const csv = [
+      headers.join(","),
+      ...body.map(row => row.map(c => `"${String(c ?? "").replaceAll('"','""')}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csv], {type:"text/csv"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "employee-logs.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    return show("CSV file exported.");
+  }
+
+  const table = `
+    <table border="1">
+      <tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>
+      ${body.map(row=>`<tr>${row.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}
+    </table>
+  `;
+
+  const blob = new Blob(
+    [`<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`],
+    {type:"application/vnd.ms-excel"}
+  );
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "employee-logs.xls";
+  a.click();
+  URL.revokeObjectURL(url);
+
+  show("Excel file exported.");
+}
+
+$("refreshBtn").onclick = loadLogs;
+
+$("criticalBtn").onclick = ()=>{
+  criticalOnly = !criticalOnly;
+  $("criticalBtn").textContent = criticalOnly ? "Show All" : "Critical Only";
+  renderLogs();
+};
+
+$("excelBtn").onclick = ()=>exportRows("excel");
+$("csvBtn").onclick = ()=>exportRows("csv");
+$("closeModalBtn").onclick = closeModal;
+
+$("departmentFilter").onchange = renderLogs;
+$("employeeFilter").onchange = renderLogs;
+$("severityFilter").onchange = renderLogs;
+$("dateFilter").onchange = renderLogs;
+$("searchBox").oninput = renderLogs;
+
+$("logModal").addEventListener("click", e=>{
+  if(e.target.id === "logModal") closeModal();
+});
+
+requireEmployee().then(()=>loadLogs());
+</script>
+
+</body>
+</html>
