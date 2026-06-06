@@ -8,7 +8,30 @@
   <!-- MathJax -->
   <script>
 
-window.MathJax = {
+/* ===== QUIZ LOADER ===== */
+const quizLoaderOverlay = document.getElementById("quizLoaderOverlay");
+
+function showQuizLoader(){
+  if(quizLoaderOverlay){
+    quizLoaderOverlay.classList.remove("hidden");
+  }
+}
+
+function hideQuizLoader(){
+  if(!quizLoaderOverlay) return;
+
+  setTimeout(() => {
+    quizLoaderOverlay.classList.add("hidden");
+  }, 450);
+}
+
+showQuizLoader();
+
+window.addEventListener("load", () => {
+  hideQuizLoader();
+});
+
+    window.MathJax = {
       tex: {
         inlineMath: [["$", "$"], ["\\(", "\\)"]],
         displayMath: [["\\[", "\\]"]],
@@ -1979,42 +2002,15 @@ body.submitted-state .solutionHolder .solutionBox{
 
 
 
-
-/* ===== CLEAN PAGE LOADER - NO COLOURED BACKGROUND ===== */
-.quizLoaderOverlay{
-  position:fixed;
-  inset:0;
-  background:transparent;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:99999;
-}
-
-.quizLoaderOverlay.hidden{
-  display:none !important;
-}
-
-.quizSpinner{
-  width:42px;
-  height:42px;
-  border:4px solid #e5e7eb;
-  border-top-color:#111827;
-  border-radius:50%;
-  animation:quizSpin .8s linear infinite;
-}
-
-@keyframes quizSpin{
-  to{transform:rotate(360deg);}
-}
-
+/* ===== SAFE INLINE QUIZ LOADING MESSAGE ONLY ===== */
+.quizLoaderOverlay{display:none !important;}
 
 /* ===== INLINE BUBBLE LOADER - DOES NOT BLOCK PAGE ===== */
 .inlineLoaderDots span{
   width:12px;
   height:12px;
   border-radius:50%;
-  background:#475569;
+  background:#1b1648;
   display:inline-block;
   animation:inlineBubbleBounce 1s infinite ease-in-out;
 }
@@ -2031,8 +2027,6 @@ body.submitted-state .solutionHolder .solutionBox{
 </head>
 
 <body>
-<div id="quizLoaderOverlay" class="quizLoaderOverlay" aria-hidden="false">
-  <div class="quizSpinner" role="status" aria-label="Loading"></div>
 </div>
 
 <header class="topbar">
@@ -2246,36 +2240,14 @@ body.submitted-state .solutionHolder .solutionBox{
   const statusBox = document.getElementById("statusBox");
   const questionsWrap = document.getElementById("questionsWrap");
 
-  /* ===== CLEAN PAGE LOADER FUNCTIONS ===== */
-  const quizLoaderOverlay = document.getElementById("quizLoaderOverlay");
-
+  /* ===== SAFE NO-BLOCK LOADER FUNCTIONS ===== */
   function showQuizLoader(){
-    if (quizLoaderOverlay) {
-      quizLoaderOverlay.classList.remove("hidden");
-      quizLoaderOverlay.setAttribute("aria-hidden", "false");
-    }
     if (questionsWrap) questionsWrap.classList.add("loading");
   }
 
   function hideQuizLoader(){
     if (questionsWrap) questionsWrap.classList.remove("loading");
-    if (!quizLoaderOverlay) return;
-
-    setTimeout(() => {
-      quizLoaderOverlay.classList.add("hidden");
-      quizLoaderOverlay.setAttribute("aria-hidden", "true");
-    }, 350);
   }
-
-  showQuizLoader();
-
-  window.addEventListener("load", () => {
-    hideQuizLoader();
-  });
-
-  window.addEventListener("pageshow", () => {
-    hideQuizLoader();
-  });
 
 const postSubmitOverlay = document.getElementById("postSubmitOverlay");
   const postSubmitPanel = document.getElementById("postSubmitPanel");
@@ -4628,23 +4600,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }, 600);
 });
-
-/* ===== SHOW LOADER WHEN MOVING TO ANOTHER PAGE ===== */
-document.addEventListener("click", function(e){
-  const link = e.target.closest("a[href]");
-  if (!link) return;
-
-  const href = link.getAttribute("href") || "";
-  if (
-    href.startsWith("#") ||
-    href.startsWith("javascript:") ||
-    link.target === "_blank" ||
-    link.hasAttribute("download")
-  ) return;
-
-  showQuizLoader();
-});
-
 </script>
 
 </body>
