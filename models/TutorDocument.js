@@ -84,10 +84,26 @@ const TutorDocumentSchema = new mongoose.Schema(
       default: 0,
     },
 
+    downloads: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    lastDownloadedAt: {
+      type: Date,
+      default: null,
+    },
+
     isPublished: {
       type: Boolean,
       default: true,
       index: true,
+    },
+
+    publishedAt: {
+      type: Date,
+      default: Date.now,
     },
   },
   { timestamps: true }
@@ -100,7 +116,17 @@ TutorDocumentSchema.index({
 });
 
 TutorDocumentSchema.index({
+  uploadedBy: 1,
   createdAt: -1,
+});
+
+TutorDocumentSchema.index({
+  isPublished: 1,
+  createdAt: -1,
+});
+
+TutorDocumentSchema.index({
+  downloads: -1,
 });
 
 const TutorDocument =
