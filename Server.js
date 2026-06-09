@@ -3775,6 +3775,7 @@ app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/opportunities", opportunitiesRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/request-quote", requestQuoteRoutes);
+app.use("/api/payments", paymentRoutes);
 
 /* ------------------ SUPPORT MODEL ------------------ */
 const SupportRequestSchema = new mongoose.Schema(
