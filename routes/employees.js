@@ -1,6 +1,3 @@
-// Employee Portal Backend Routes
-// Handles employee access, employee management, department permissions, and logs.
-
 import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
