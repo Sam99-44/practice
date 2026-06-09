@@ -146,9 +146,7 @@ button,input,select,option,textarea{
   line-height:1.45;
 }
 
-.body{
-  padding:22px;
-}
+.body{padding:22px}
 
 .summaryGrid{
   display:grid;
@@ -190,7 +188,7 @@ button,input,select,option,textarea{
 
 .toolbar{
   display:grid;
-  grid-template-columns:140px 160px 150px 150px 1fr auto;
+  grid-template-columns:140px 160px 150px 1fr auto;
   gap:12px;
   align-items:end;
   margin-bottom:14px;
@@ -287,11 +285,6 @@ textarea:focus{
   border-color:#065f46;
 }
 
-.btn.warning{
-  background:#92400e;
-  border-color:#92400e;
-}
-
 .btn.danger{
   background:#b91c1c;
   border-color:#b91c1c;
@@ -316,7 +309,7 @@ textarea:focus{
 table{
   width:100%;
   border-collapse:collapse;
-  min-width:1250px;
+  min-width:1180px;
 }
 
 th,td{
@@ -353,12 +346,6 @@ tr:hover td{background:#f8fafc}
   background:#f0fdf4;
   color:#065f46;
   border-color:#bbf7d0;
-}
-
-.badge.red{
-  background:#fef2f2;
-  color:#b91c1c;
-  border-color:#fecaca;
 }
 
 .badge.orange{
@@ -444,9 +431,7 @@ tr:hover td{background:#f8fafc}
   text-transform:uppercase;
 }
 
-.modalBody{
-  padding:18px;
-}
+.modalBody{padding:18px}
 
 .detailGrid{
   display:grid;
@@ -526,7 +511,7 @@ tr:hover td{background:#f8fafc}
   <div class="card">
     <div class="cardHead">
       <h1>Tutor Documents</h1>
-      <div class="subText">Upload, manage, publish, archive, delete and export tutor documents.</div>
+      <div class="subText">Upload, manage, delete and export tutor documents.</div>
     </div>
 
     <div class="body">
@@ -546,13 +531,13 @@ tr:hover td{background:#f8fafc}
         <div class="summaryBox">
           <div class="metricLabel">Notes</div>
           <div class="metricValue" id="notesDocs">0</div>
-          <div class="metricNote">Notes and guides</div>
+          <div class="metricNote">Notes files</div>
         </div>
 
         <div class="summaryBox">
           <div class="metricLabel">Published</div>
           <div class="metricValue" id="publishedDocs">0</div>
-          <div class="metricNote">Active learner-facing docs</div>
+          <div class="metricNote">Learner-facing docs</div>
         </div>
       </div>
     </div>
@@ -561,7 +546,7 @@ tr:hover td{background:#f8fafc}
   <div class="card">
     <div class="cardHead">
       <h2>Upload Tutor Document</h2>
-      <div class="subText">Use this section to upload homework, notes, worksheets, memos, assignments, tests and study guides.</div>
+      <div class="subText">Use this section to upload homework, notes, worksheets, memos and assignments.</div>
     </div>
 
     <div class="body">
@@ -598,27 +583,7 @@ tr:hover td{background:#f8fafc}
               <option value="worksheet">Worksheet</option>
               <option value="memo">Memo</option>
               <option value="assignment">Assignment</option>
-              <option value="test">Test</option>
-              <option value="exam">Exam</option>
-              <option value="study guide">Study Guide</option>
               <option value="other">Other</option>
-            </select>
-          </div>
-
-          <div>
-            <label>Status</label>
-            <select id="status">
-              <option value="Published">Published</option>
-              <option value="Draft">Draft</option>
-              <option value="Archived">Archived</option>
-            </select>
-          </div>
-
-          <div>
-            <label>Visibility</label>
-            <select id="visibility">
-              <option value="Learners">Learners</option>
-              <option value="Tutor Only">Tutor Only</option>
             </select>
           </div>
 
@@ -654,7 +619,7 @@ tr:hover td{background:#f8fafc}
   <div class="card">
     <div class="cardHead">
       <h2>Documents Table</h2>
-      <div class="subText">Filter, preview, publish, archive, delete and export documents.</div>
+      <div class="subText">Filter, preview, view, download, delete and export documents.</div>
     </div>
 
     <div class="body">
@@ -688,20 +653,7 @@ tr:hover td{background:#f8fafc}
             <option value="worksheet">Worksheet</option>
             <option value="memo">Memo</option>
             <option value="assignment">Assignment</option>
-            <option value="test">Test</option>
-            <option value="exam">Exam</option>
-            <option value="study guide">Study Guide</option>
             <option value="other">Other</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Status</label>
-          <select id="filterStatus">
-            <option value="">All</option>
-            <option value="Draft">Draft</option>
-            <option value="Published">Published</option>
-            <option value="Archived">Archived</option>
           </select>
         </div>
 
@@ -718,8 +670,6 @@ tr:hover td{background:#f8fafc}
       </div>
 
       <div class="actions" style="margin-bottom:12px;">
-        <button class="btn secondary" id="publishSelectedBtn">Publish Selected</button>
-        <button class="btn warning" id="archiveSelectedBtn">Archive Selected</button>
         <button class="btn danger" id="deleteSelectedBtn">Delete Selected</button>
       </div>
 
@@ -734,8 +684,7 @@ tr:hover td{background:#f8fafc}
               <th>Grade</th>
               <th>Title</th>
               <th>Type</th>
-              <th>Status</th>
-              <th>Visibility</th>
+              <th>Published</th>
               <th>Uploaded By</th>
               <th>Last Modified</th>
               <th>Downloads</th>
@@ -744,7 +693,7 @@ tr:hover td{background:#f8fafc}
           </thead>
 
           <tbody id="docRows">
-            <tr><td colspan="13">Loading documents...</td></tr>
+            <tr><td colspan="12">Loading documents...</td></tr>
           </tbody>
         </table>
       </div>
@@ -765,8 +714,6 @@ tr:hover td{background:#f8fafc}
               <th>Type</th>
               <th>Count</th>
               <th>Published</th>
-              <th>Draft</th>
-              <th>Archived</th>
             </tr>
           </thead>
 
@@ -799,7 +746,9 @@ let useMyUploads = false;
 const $ = id => document.getElementById(id);
 
 function token(){
-  return localStorage.getItem("token") || "";
+  return localStorage.getItem("employeeToken") ||
+         localStorage.getItem("token") ||
+         "";
 }
 
 function logout(){
@@ -824,11 +773,8 @@ function show(text,type="ok"){
 }
 
 async function safeJson(res){
-  try{
-    return await res.json();
-  }catch{
-    return {};
-  }
+  try{return await res.json()}
+  catch{return {}}
 }
 
 async function fetchJson(path,options={}){
@@ -861,13 +807,7 @@ async function requireEmployee(){
   }
 
   try{
-    let u;
-
-    try{
-      u = await fetchJson("/api/employees/me");
-    }catch{
-      u = await fetchJson("/api/auth/me");
-    }
+    const u = await fetchJson("/api/tutors/me");
 
     const role = String(u.role || "").toLowerCase();
     const allowed = ["admin","tester","academic","editor","tutor"];
@@ -888,8 +828,11 @@ async function requireEmployee(){
 
 function formatDate(v){
   if(!v) return "-";
+
   const d = new Date(v);
+
   if(isNaN(d.getTime())) return esc(v);
+
   return d.toLocaleDateString("en-ZA");
 }
 
@@ -901,19 +844,13 @@ function normaliseDoc(x,i){
     grade:x.grade || "",
     title:x.title || x.name || x.fileName || x.filename || `Document ${i + 1}`,
     documentType:x.documentType || x.type || x.category || "notes",
-    status:x.status || "Published",
-    visibility:x.visibility || "Learners",
     description:x.description || "",
     fileUrl:x.fileUrl || x.url || x.documentUrl || "",
     uploadedBy:x.uploadedBy?.fullName || x.uploadedBy?.username || x.tutor?.fullName || x.tutorName || "Tutor",
     updatedAt:x.updatedAt || x.modifiedAt || x.createdAt || "",
-    downloads:Number(x.downloads || x.downloadCount || 0)
+    downloads:Number(x.downloads || x.downloadCount || 0),
+    isPublished:x.isPublished !== false
   };
-}
-
-function patchLocal(id,patch){
-  documents = documents.map(d => d.id === id ? {...d,...patch,updatedAt:new Date().toISOString()} : d);
-  renderAll();
 }
 
 async function loadDocuments(){
@@ -926,51 +863,35 @@ async function loadDocuments(){
 
     if($("filterGrade").value) params.set("grade",$("filterGrade").value);
     if($("filterSubject").value) params.set("subject",$("filterSubject").value);
+    if($("filterType").value) params.set("documentType",$("filterType").value);
 
-    const endpoint = useMyUploads ? "/api/tutors/documents/my" : "/api/tutors/documents?" + params.toString();
+    const endpoint = useMyUploads
+      ? "/api/tutors/documents/my"
+      : "/api/tutors/documents?" + params.toString();
+
     const data = await fetchJson(endpoint);
 
     documents = normaliseArray(data).map(normaliseDoc);
 
-    if(!documents.length){
-      buildFallbackDocs();
-    }
-
     renderAll();
     show(useMyUploads ? "My uploads loaded." : "Documents loaded.");
   }catch(e){
-    buildFallbackDocs();
+    documents = [];
     renderAll();
-    show("Could not load backend documents, so fallback documents were shown.","error");
+    show("Could not load documents: " + e.message,"error");
   }finally{
     btn.disabled = false;
     btn.textContent = "Refresh";
   }
 }
 
-function buildFallbackDocs(){
-  const now = new Date().toISOString();
-
-  documents = [
-    normaliseDoc({createdAt:now, subject:"Mathematics", grade:"10", title:"Algebra Homework", documentType:"homework", status:"Published", visibility:"Learners", description:"Homework practice for algebra.", tutorName:"Tutor Team", fileUrl:"tutor-documents.html", downloads:12},0),
-    normaliseDoc({createdAt:now, subject:"Mathematics", grade:"11", title:"Functions Notes", documentType:"notes", status:"Published", visibility:"Learners", description:"Class notes for functions.", tutorName:"Tutor Team", fileUrl:"tutor-documents.html", downloads:7},1),
-    normaliseDoc({createdAt:now, subject:"Mathematics", grade:"12", title:"Calculus Worksheet", documentType:"worksheet", status:"Draft", visibility:"Tutor Only", description:"Draft worksheet before publishing.", tutorName:"Tutor Team", fileUrl:"tutor-documents.html", downloads:0},2)
-  ];
-}
-
-function statusColor(status){
-  status = String(status || "").toLowerCase();
-  if(status === "published") return "green";
-  if(status === "draft") return "blue";
-  if(status === "archived") return "orange";
-  return "";
-}
-
 function typeColor(type){
   type = String(type || "").toLowerCase();
+
   if(type === "homework" || type === "assignment") return "blue";
-  if(type === "memo" || type === "test" || type === "exam") return "orange";
-  if(type === "notes" || type === "study guide") return "green";
+  if(type === "memo") return "orange";
+  if(type === "notes") return "green";
+
   return "";
 }
 
@@ -982,15 +903,14 @@ function filteredDocs(){
   const grade = $("filterGrade").value;
   const subject = $("filterSubject").value;
   const type = $("filterType").value;
-  const status = $("filterStatus").value;
   const q = $("searchBox").value.toLowerCase().trim();
 
   return documents.filter(d=>{
     if(grade && String(d.grade) !== grade) return false;
     if(subject && d.subject !== subject) return false;
     if(type && String(d.documentType).toLowerCase() !== type) return false;
-    if(status && d.status !== status) return false;
     if(q && !Object.values(d).join(" ").toLowerCase().includes(q)) return false;
+
     return true;
   });
 }
@@ -1003,9 +923,14 @@ function renderAll(){
 
 function renderCounts(){
   $("totalDocs").textContent = documents.length;
-  $("homeworkDocs").textContent = documents.filter(d => String(d.documentType).toLowerCase() === "homework").length;
-  $("notesDocs").textContent = documents.filter(d => ["notes","study guide"].includes(String(d.documentType).toLowerCase())).length;
-  $("publishedDocs").textContent = documents.filter(d => d.status === "Published").length;
+  $("homeworkDocs").textContent =
+    documents.filter(d => String(d.documentType).toLowerCase() === "homework").length;
+
+  $("notesDocs").textContent =
+    documents.filter(d => String(d.documentType).toLowerCase() === "notes").length;
+
+  $("publishedDocs").textContent =
+    documents.filter(d => d.isPublished).length;
 }
 
 function renderDocs(){
@@ -1023,8 +948,7 @@ function renderDocs(){
         <div class="metricNote">${esc(x.description || "")}</div>
       </td>
       <td>${badge(x.documentType,typeColor(x.documentType))}</td>
-      <td>${badge(x.status,statusColor(x.status))}</td>
-      <td>${esc(x.visibility)}</td>
+      <td>${x.isPublished ? badge("Yes","green") : badge("No","orange")}</td>
       <td>${esc(x.uploadedBy)}</td>
       <td>${formatDate(x.updatedAt)}</td>
       <td>${x.downloads}</td>
@@ -1032,22 +956,24 @@ function renderDocs(){
         <button class="btn small secondary" onclick="previewDoc('${esc(x.id)}')">Preview</button>
         <a class="btn small secondary" href="${fileHref(x)}" target="_blank">View</a>
         <a class="btn small secondary" href="${fileHref(x)}" download>Download</a>
-        <button class="btn small" onclick="patchLocal('${esc(x.id)}',{status:'Published',visibility:'Learners'})">Publish</button>
-        <button class="btn small warning" onclick="patchLocal('${esc(x.id)}',{status:'Archived'})">Archive</button>
         <button class="btn small danger" onclick="deleteDoc('${esc(x.id)}')">Delete</button>
       </td>
     </tr>
-  `).join("") : `<tr><td colspan="13">No documents found.</td></tr>`;
+  `).join("") : `<tr><td colspan="12">No documents found.</td></tr>`;
 }
 
 function fileHref(x){
   if(!x.fileUrl) return "#";
-  if(String(x.fileUrl).startsWith("http")) return esc(x.fileUrl);
+
+  if(String(x.fileUrl).startsWith("http")){
+    return esc(x.fileUrl);
+  }
+
   return API + esc(x.fileUrl);
 }
 
 function renderStats(){
-  const types = ["homework","notes","worksheet","memo","assignment","test","exam","study guide","other"];
+  const types = ["homework","notes","worksheet","memo","assignment","other"];
 
   $("statsRows").innerHTML = types.map(type=>{
     const rows = documents.filter(d => String(d.documentType).toLowerCase() === type);
@@ -1056,9 +982,7 @@ function renderStats(){
       <tr>
         <td>${esc(type)}</td>
         <td>${rows.length}</td>
-        <td>${rows.filter(d => d.status === "Published").length}</td>
-        <td>${rows.filter(d => d.status === "Draft").length}</td>
-        <td>${rows.filter(d => d.status === "Archived").length}</td>
+        <td>${rows.filter(d => d.isPublished).length}</td>
       </tr>
     `;
   }).join("");
@@ -1066,19 +990,6 @@ function renderStats(){
 
 function selectedIds(){
   return [...document.querySelectorAll(".rowCheck:checked")].map(x => x.value);
-}
-
-function applyToSelected(patch){
-  const ids = selectedIds();
-
-  if(!ids.length){
-    return show("Please select at least one document.","error");
-  }
-
-  documents = documents.map(d => ids.includes(d.id) ? {...d,...patch,updatedAt:new Date().toISOString()} : d);
-  $("selectAll").checked = false;
-  renderAll();
-  show("Selected documents updated.");
 }
 
 async function uploadDocument(e){
@@ -1102,8 +1013,6 @@ async function uploadDocument(e){
   fd.append("subject",$("subject").value);
   fd.append("grade",$("grade").value);
   fd.append("documentType",$("documentType").value);
-  fd.append("status",$("status").value);
-  fd.append("visibility",$("visibility").value);
   fd.append("description",$("description").value.trim());
   fd.append("document",file);
 
@@ -1128,6 +1037,7 @@ async function uploadDocument(e){
 
     show("Document uploaded successfully.");
     e.target.reset();
+
     setTimeout(()=>{
       $("progressWrap").style.display = "none";
       $("progressBar").style.width = "0%";
@@ -1146,16 +1056,39 @@ async function uploadDocument(e){
 async function deleteDoc(id){
   if(!confirm("Delete document?")) return;
 
-  const real = !id.startsWith("doc-");
-
   try{
-    if(real){
-      await fetchJson("/api/tutors/documents/" + encodeURIComponent(id), {method:"DELETE"});
-    }
+    await fetchJson("/api/tutors/documents/" + encodeURIComponent(id), {
+      method:"DELETE"
+    });
 
     documents = documents.filter(d => d.id !== id);
     renderAll();
     show("Document deleted.");
+  }catch(e){
+    show(e.message,"error");
+  }
+}
+
+async function deleteSelected(){
+  const ids = selectedIds();
+
+  if(!ids.length){
+    return show("Please select at least one document.","error");
+  }
+
+  if(!confirm("Delete selected documents?")) return;
+
+  try{
+    for(const id of ids){
+      await fetchJson("/api/tutors/documents/" + encodeURIComponent(id), {
+        method:"DELETE"
+      });
+    }
+
+    documents = documents.filter(d => !ids.includes(d.id));
+    $("selectAll").checked = false;
+    renderAll();
+    show("Selected documents deleted.");
   }catch(e){
     show(e.message,"error");
   }
@@ -1180,8 +1113,7 @@ function previewDoc(id){
     detailBox("Subject",doc.subject),
     detailBox("Grade","Grade " + doc.grade),
     detailBox("Type",doc.documentType),
-    detailBox("Status",doc.status),
-    detailBox("Visibility",doc.visibility),
+    detailBox("Published",doc.isPublished ? "Yes" : "No"),
     detailBox("Uploaded By",doc.uploadedBy),
     detailBox("Downloads",doc.downloads),
     detailBox("Created",formatDate(doc.createdAt)),
@@ -1205,8 +1137,8 @@ function exportExcel(){
   }
 
   const headers = [
-    "No","Date","Subject","Grade","Title","Type","Status",
-    "Visibility","Uploaded By","Last Modified","Downloads","Description","File URL"
+    "No","Date","Subject","Grade","Title","Type",
+    "Published","Uploaded By","Last Modified","Downloads","Description","File URL"
   ];
 
   const body = rows.map((d,i)=>[
@@ -1216,8 +1148,7 @@ function exportExcel(){
     "Grade " + d.grade,
     d.title,
     d.documentType,
-    d.status,
-    d.visibility,
+    d.isPublished ? "Yes" : "No",
     d.uploadedBy,
     formatDate(d.updatedAt),
     d.downloads,
@@ -1239,9 +1170,11 @@ function exportExcel(){
 
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
+
   a.href = url;
   a.download = "tutor-documents.xls";
   a.click();
+
   URL.revokeObjectURL(url);
 
   show("Excel file exported.");
@@ -1260,33 +1193,15 @@ $("myUploadsBtn").onclick = ()=>{
 };
 
 $("exportBtn").onclick = exportExcel;
-
-$("publishSelectedBtn").onclick = ()=>applyToSelected({status:"Published",visibility:"Learners"});
-$("archiveSelectedBtn").onclick = ()=>applyToSelected({status:"Archived"});
-
-$("deleteSelectedBtn").onclick = ()=>{
-  const ids = selectedIds();
-
-  if(!ids.length){
-    return show("Please select at least one document.","error");
-  }
-
-  if(!confirm("Delete selected documents?")) return;
-
-  documents = documents.filter(d => !ids.includes(d.id));
-  $("selectAll").checked = false;
-  renderAll();
-  show("Selected documents removed locally.");
-};
+$("deleteSelectedBtn").onclick = deleteSelected;
 
 $("selectAll").onchange = ()=>{
   document.querySelectorAll(".rowCheck").forEach(c => c.checked = $("selectAll").checked);
 };
 
-$("filterGrade").onchange = renderAll;
-$("filterSubject").onchange = renderAll;
-$("filterType").onchange = renderAll;
-$("filterStatus").onchange = renderAll;
+$("filterGrade").onchange = loadDocuments;
+$("filterSubject").onchange = loadDocuments;
+$("filterType").onchange = loadDocuments;
 $("searchBox").oninput = renderAll;
 
 $("closeModalBtn").onclick = closeModal;
@@ -1295,7 +1210,11 @@ $("docModal").addEventListener("click", e=>{
   if(e.target.id === "docModal") closeModal();
 });
 
-requireEmployee().then(()=>loadDocuments());
+requireEmployee().then(user=>{
+  if(user){
+    loadDocuments();
+  }
+});
 </script>
 
 </body>
