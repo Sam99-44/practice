@@ -39,16 +39,55 @@ const QuoteRequestSchema = new mongoose.Schema(
       trim: true,
     },
 
+    amount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
     message: {
       type: String,
       default: "",
       trim: true,
     },
 
+    notes: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    contacted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    paid: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    financeStatus: {
+      type: String,
+      enum: [
+        "Pending",
+        "Awaiting Proof",
+        "Under Review",
+        "Approved",
+        "Rejected",
+        "Refunded",
+      ],
+      default: "Pending",
+      index: true,
+    },
+
     status: {
       type: String,
-      enum: ["new", "contacted", "closed"],
-      default: "new",
+      enum: ["New", "Contacted", "Closed"],
+      default: "New",
+      index: true,
     },
   },
   {
@@ -56,5 +95,14 @@ const QuoteRequestSchema = new mongoose.Schema(
   }
 );
 
-export default mongoose.models.QuoteRequest ||
+QuoteRequestSchema.index({ createdAt: -1 });
+QuoteRequestSchema.index({ email: 1 });
+QuoteRequestSchema.index({ status: 1 });
+QuoteRequestSchema.index({ financeStatus: 1 });
+QuoteRequestSchema.index({ contacted: 1, paid: 1 });
+
+const QuoteRequest =
+  mongoose.models.QuoteRequest ||
   mongoose.model("QuoteRequest", QuoteRequestSchema);
+
+export default QuoteRequest;
