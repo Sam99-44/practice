@@ -27,9 +27,8 @@ const EmployeeLogSchema = new mongoose.Schema(
         "support",
         "tutor",
         "admin",
-        null
       ],
-      default: null,
+      default: undefined,
       index: true,
     },
 
