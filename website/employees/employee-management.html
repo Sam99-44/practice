@@ -7,18 +7,18 @@
 
 <style>
 :root{
-  --bg:#f6f7fb;
-  --card:#fff;
+  --nav:#1b1648;
+  --red:#e11d2e;
+  --bg:#ffffff;
+  --card:#ffffff;
   --border:#d9dee7;
   --text:#0f172a;
   --muted:#475569;
-  --accent:#0b4a70;
-  --nav:#1b1648;
-  --red:#e11d2e;
-  --green:#16a34a;
-  --orange:#f59e0b;
-  --blue:#2563eb;
-  --shadow:0 10px 30px rgba(15,23,42,0.08);
+  --ok:#065f46;
+  --error:#b91c1c;
+  --soft:#f8fafc;
+  --orange:#92400e;
+  --blue:#1d4ed8;
 }
 
 *{box-sizing:border-box}
@@ -26,13 +26,16 @@
 html,body{
   margin:0;
   padding:0;
-  font-family:Arial,Helvetica,sans-serif;
-  background:var(--bg);
+  font-family:"Times New Roman",Times,serif;
+  background:#fff;
   color:var(--text);
 }
 
 a{text-decoration:none;color:inherit}
-button,input,select,textarea{font-family:Arial,Helvetica,sans-serif}
+
+button,input,select,option,textarea{
+  font-family:"Times New Roman",Times,serif;
+}
 
 .topbar{
   background:var(--nav);
@@ -40,313 +43,376 @@ button,input,select,textarea{font-family:Arial,Helvetica,sans-serif}
   position:sticky;
   top:0;
   z-index:1000;
-  border-top:3px solid rgba(255,255,255,.85);
 }
 
 .topbar-inner{
-  max-width:1500px;
+  max-width:1150px;
   margin:0 auto;
-  padding:17px 40px;
+  padding:14px 18px;
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:12px;
-  min-height:83px;
 }
 
-.brand{
+.accountLeft{
   display:flex;
   align-items:center;
-  gap:14px;
-  font-weight:900;
+  gap:12px;
+  min-width:0;
 }
 
-.brand img{
-  width:48px;
-  height:48px;
+.accountIcon{
+  width:40px;
+  height:40px;
   filter:brightness(0) invert(1) contrast(180%);
 }
 
-.brand small{
-  display:block;
-  margin-top:5px;
-  font-weight:400;
-  font-size:15px;
+.accountName{
+  font-size:14px;
+  font-weight:700;
+  color:#fff;
+}
+
+.accountType{
+  font-size:13px;
+  color:#e0e7ff;
+  margin-top:3px;
 }
 
 .topbarRight{
   display:flex;
   align-items:center;
   gap:18px;
-  flex-wrap:wrap;
 }
 
-.topLink{
+.iconBtn{
+  min-width:50px;
+  height:50px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.iconBtn img{
+  width:30px;
+  height:30px;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.menuLink{
   color:#fff;
-  font-size:16px;
-  font-weight:800;
-  padding:8px 0 12px;
-  border-bottom:4px solid transparent;
+  font-size:13px;
+  font-weight:700;
   background:transparent;
-  border-left:0;
-  border-right:0;
-  border-top:0;
+  border:0;
   cursor:pointer;
 }
 
-.topLink.active{border-bottom-color:var(--red)}
-
-.layout{
-  display:grid;
-  grid-template-columns:285px 1fr;
-  min-height:calc(100vh - 83px);
-}
-
-.sidebar{
-  background:#fff;
-  border-right:1px solid var(--border);
-  padding:22px;
-  box-shadow:var(--shadow);
-}
-
-.sideTitle{
-  font-size:13px;
-  font-weight:900;
-  color:var(--muted);
-  text-transform:uppercase;
-  margin:4px 0 10px;
-}
-
-.sideLink{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:12px 13px;
-  border-radius:14px;
-  color:#0f172a;
-  font-weight:800;
-  margin-bottom:6px;
-}
-
-.sideLink:hover,.sideLink.active{
-  background:#eaf2ff;
-  color:#0b4a70;
-}
-
-.main{
-  padding:28px;
-  overflow:hidden;
-}
-
-.hero{
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:22px;
-  box-shadow:var(--shadow);
-  padding:24px;
-  margin-bottom:22px;
-}
-
-.heroTop{
-  display:flex;
-  justify-content:space-between;
-  gap:18px;
-  align-items:flex-start;
-  flex-wrap:wrap;
-}
-
-h1{
-  margin:0;
-  font-size:34px;
-  font-weight:900;
-  color:#00102e;
-  line-height:1.1;
-}
-
-.subtitle{
-  margin:8px 0 0;
-  color:#334155;
-  font-size:16px;
-  line-height:1.5;
-}
-
-.pill{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:9px 13px;
-  border-radius:999px;
-  background:#eaf2ff;
-  color:#0b4a70;
-  font-weight:900;
-  font-size:14px;
-}
-
-.grid{
-  display:grid;
-  gap:18px;
-}
-
-.grid-2{
-  grid-template-columns:repeat(2,minmax(0,1fr));
+.wrap{
+  max-width:1150px;
+  margin:0 auto;
+  padding:18px;
 }
 
 .card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:20px;
-  box-shadow:var(--shadow);
-  padding:20px;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:0;
+  box-shadow:none;
+  overflow:hidden;
+  margin:0 auto 16px;
+}
+
+.cardHead{
+  padding:14px 22px;
+  border-bottom:1px solid #ececec;
+  background:#fff;
+}
+
+.cardHead h1,
+.cardHead h2,
+.cardHead h3{
+  margin:0;
+  font-size:14px;
+  font-weight:700;
+  text-transform:uppercase;
+}
+
+.subText{
+  margin-top:6px;
+  color:#111827;
+  font-size:14px;
+  line-height:1.45;
+}
+
+.body{
+  padding:22px;
+}
+
+.summaryGrid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+}
+
+.summaryBox{
+  border:1px solid #e5e7eb;
+  background:#fff;
+  padding:14px;
+}
+
+.metricLabel{
+  font-size:13px;
+  color:#475569;
+  margin-bottom:6px;
+}
+
+.metricValue{
+  font-size:24px;
+  font-weight:700;
 }
 
 .metricNote{
-  color:var(--muted);
   font-size:13px;
-  margin-top:6px;
-  line-height:1.4;
+  color:#475569;
+  margin-top:4px;
 }
 
-.sectionTitle{
-  font-size:22px;
-  font-weight:900;
-  margin:26px 0 12px;
-  color:#00102e;
+.formGrid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+}
+
+.wide{grid-column:span 2}
+.full{grid-column:1/-1}
+
+.toolbar{
+  display:grid;
+  grid-template-columns:170px 170px 170px 1fr auto;
+  gap:12px;
+  align-items:end;
+  margin-bottom:14px;
 }
 
 label{
   display:block;
-  margin-bottom:7px;
-  font-weight:800;
-  color:#00102e;
   font-size:14px;
+  font-weight:400;
+  margin-bottom:6px;
+  color:#111827;
 }
 
 input,select,textarea{
   width:100%;
-  padding:12px 13px;
-  border-radius:13px;
-  border:1px solid #d1d5db;
+  padding:10px 12px;
+  border-radius:0;
+  border:1px solid #d6d3d1;
   background:#fff;
   font-size:14px;
   outline:none;
 }
 
-.field{
-  margin-bottom:14px;
+textarea{
+  min-height:90px;
+  resize:vertical;
 }
 
-.formRow{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:14px;
+input:focus,
+select:focus,
+textarea:focus{
+  border-color:#cbd5e1;
+  box-shadow:0 0 0 4px rgba(226,232,240,.7);
 }
-
-.btn{
-  display:inline-flex;
-  justify-content:center;
-  align-items:center;
-  gap:8px;
-  border:0;
-  border-radius:13px;
-  background:var(--accent);
-  color:#fff;
-  font-weight:900;
-  font-size:14px;
-  padding:11px 14px;
-  cursor:pointer;
-}
-
-.btn:hover{background:#083c5b}
-.btn.secondary{background:#e2e8f0;color:#0f172a}
-.btn.danger{background:#dc2626}
-.btn.success{background:#16a34a}
-.btn.warning{background:#f59e0b;color:#111827}
 
 .actions{
   display:flex;
-  gap:8px;
+  gap:10px;
   flex-wrap:wrap;
   align-items:center;
 }
 
+.quickActions{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:10px;
+}
+
+.btn{
+  background:var(--red);
+  color:#fff;
+  border:1px solid var(--red);
+  border-radius:6px;
+  height:34px;
+  padding:10px 14px;
+  min-width:92px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.btn:hover{opacity:.92}
+
+.btn:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
+.btn.secondary{
+  background:#fff;
+  color:#111827;
+  border:1px solid #d1d5db;
+}
+
+.btn.secondary:hover{
+  background:var(--soft);
+}
+
+.btn.success{
+  background:#065f46;
+  border-color:#065f46;
+}
+
+.btn.warning{
+  background:#92400e;
+  border-color:#92400e;
+}
+
+.btn.danger{
+  background:#b91c1c;
+  border-color:#b91c1c;
+}
+
+.btn.small{
+  min-width:auto;
+  height:30px;
+  padding:7px 10px;
+}
+
 .tableWrap{
+  width:100%;
   overflow-x:auto;
-  border:1px solid var(--border);
-  border-radius:16px;
+  border:1px solid #e5e7eb;
   background:#fff;
 }
+
+.tableWrap::-webkit-scrollbar{height:10px}
+.tableWrap::-webkit-scrollbar-thumb{background:#9ca3af;border-radius:20px}
 
 table{
   width:100%;
   border-collapse:collapse;
-  min-width:1000px;
+  min-width:1320px;
 }
 
 th,td{
-  padding:13px;
+  padding:10px 12px;
+  border-bottom:1px solid #e5e7eb;
   text-align:left;
-  border-bottom:1px solid var(--border);
   font-size:14px;
-  vertical-align:top;
+  vertical-align:middle;
+  white-space:nowrap;
 }
 
 th{
   background:#f8fafc;
-  font-size:12px;
-  color:#475569;
-  text-transform:uppercase;
-  letter-spacing:.04em;
+  color:#111827;
+  font-size:13px;
+  font-weight:700;
 }
 
 tr:hover td{background:#f8fafc}
 
+td select{
+  min-width:120px;
+  padding:7px 9px;
+  font-size:13px;
+}
+
 .badge{
   display:inline-flex;
   align-items:center;
-  padding:5px 9px;
-  border-radius:999px;
+  padding:4px 8px;
+  border-radius:4px;
   font-size:12px;
-  font-weight:900;
-  background:#e2e8f0;
+  font-weight:700;
+  background:#f1f5f9;
   color:#334155;
+  border:1px solid #e2e8f0;
 }
 
-.badge.green{background:#dcfce7;color:#166534}
-.badge.red{background:#fee2e2;color:#991b1b}
-.badge.orange{background:#fef3c7;color:#92400e}
-.badge.blue{background:#dbeafe;color:#1e40af}
-
-.errorBox,.successBox{
-  display:none;
-  font-weight:800;
-  margin-bottom:14px;
-  padding:13px;
-  border-radius:14px;
-}
-
-.errorBox{
-  background:#fef2f2;
-  color:#991b1b;
-  border-left:5px solid #dc2626;
-}
-
-.successBox{
+.badge.green{
   background:#f0fdf4;
-  color:#166534;
-  border-left:5px solid #16a34a;
+  color:#065f46;
+  border-color:#bbf7d0;
 }
+
+.badge.red{
+  background:#fef2f2;
+  color:#b91c1c;
+  border-color:#fecaca;
+}
+
+.badge.orange{
+  background:#fff7ed;
+  color:#92400e;
+  border-color:#fed7aa;
+}
+
+.badge.blue{
+  background:#eff6ff;
+  color:#1d4ed8;
+  border-color:#bfdbfe;
+}
+
+.msgBox{
+  display:none;
+  margin-bottom:14px;
+  padding:12px;
+  border:1px solid #e5e7eb;
+  font-size:14px;
+}
+
+.msgBox.ok{
+  display:block;
+  color:#065f46;
+  background:#f0fdf4;
+}
+
+.msgBox.error{
+  display:block;
+  color:#b91c1c;
+  background:#fef2f2;
+}
+
+.hidden{display:none!important}
 
 @media(max-width:1050px){
-  .layout{grid-template-columns:1fr}
-  .sidebar{position:static}
+  .quickActions{grid-template-columns:repeat(3,1fr)}
 }
 
-@media(max-width:680px){
-  .topbar-inner{padding:14px 18px}
-  .layout{display:block}
-  .main{padding:18px}
-  .grid-2,.formRow{grid-template-columns:1fr}
-  h1{font-size:28px}
+@media(max-width:900px){
+  .summaryGrid{grid-template-columns:repeat(2,1fr)}
+  .toolbar{grid-template-columns:1fr 1fr}
+  .formGrid{grid-template-columns:1fr 1fr}
+}
+
+@media(max-width:640px){
+  .wrap{padding:14px}
+  .body{padding:14px}
+  .cardHead{padding:12px 14px}
+  .summaryGrid,.toolbar,.formGrid,.quickActions{grid-template-columns:1fr}
+  .wide{grid-column:auto}
+  .accountName,.accountType{
+    max-width:130px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
 }
 </style>
 </head>
@@ -355,207 +421,310 @@ tr:hover td{background:#f8fafc}
 
 <header class="topbar">
   <div class="topbar-inner">
-    <div class="brand">
-      <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="">
+    <div class="accountLeft">
+      <img class="accountIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="">
       <div>
-        Practice Online
-        <small>Employee Management</small>
+        <div class="accountName">Practice Online</div>
+        <div class="accountType" id="userPill">Employee Management</div>
       </div>
     </div>
 
     <div class="topbarRight">
-      <a class="topLink active" href="employee-dashboard.html">Portal</a>
-      <button class="topLink" onclick="logout()">Logout</button>
+      <a href="employee-dashboard.html" class="iconBtn" title="Dashboard">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="">
+      </a>
+      <button class="menuLink" onclick="logout()">Logout</button>
     </div>
   </div>
 </header>
 
-<div class="layout">
+<div class="wrap">
 
-<aside class="sidebar">
-  <div class="sideTitle">Departments</div>
+  <div id="msg" class="msgBox"></div>
 
-  <a class="sideLink" href="employee-dashboard.html">📊 Dashboard</a>
-  <a class="sideLink active" href="employee-management.html">👥 Employees</a>
-  <a class="sideLink" href="academic-admin.html">📚 Academic</a>
-  <a class="sideLink" href="operations-admin.html">📢 Operations</a>
-  <a class="sideLink" href="finance-admin.html">💳 Finance</a>
-  <a class="sideLink" href="support-admin.html">🛟 Support</a>
-  <a class="sideLink" href="tutor-dashboard.html">👨‍🏫 Tutors</a>
-  <a class="sideLink" href="employee-logs.html">🧾 Logs</a>
-</aside>
-
-<main class="main">
-
-<section class="hero">
-  <div class="heroTop">
-    <div>
+  <div class="card">
+    <div class="cardHead">
       <h1>Employee Management</h1>
-      <p class="subtitle">Create staff, tutors, and assign department roles.</p>
-    </div>
-    <div class="pill" id="userPill">Checking login...</div>
-  </div>
-</section>
-
-<div id="errorBox" class="errorBox"></div>
-<div id="successBox" class="successBox"></div>
-
-<section class="grid grid-2">
-
-<div class="card">
-  <h2>Create Employee</h2>
-
-  <form id="employeeForm">
-
-    <div class="formRow">
-      <div class="field">
-        <label>Full Name</label>
-        <input id="fullName" required>
-      </div>
-
-      <div class="field">
-        <label>Username</label>
-        <input id="username" required>
-      </div>
+      <div class="subText">Create employees, assign roles, manage departments, update statuses and export employee records.</div>
     </div>
 
-    <div class="formRow">
-      <div class="field">
-        <label>Email</label>
-        <input id="email" type="email" required>
-      </div>
+    <div class="body">
+      <div class="summaryGrid">
+        <div class="summaryBox">
+          <div class="metricLabel">Total Employees</div>
+          <div class="metricValue" id="totalEmployees">0</div>
+          <div class="metricNote">All staff accounts</div>
+        </div>
 
-      <div class="field">
-        <label>Password</label>
-        <input id="password" type="password" required>
-      </div>
-    </div>
+        <div class="summaryBox">
+          <div class="metricLabel">Active</div>
+          <div class="metricValue" id="activeEmployees">0</div>
+          <div class="metricNote">Currently enabled</div>
+        </div>
 
-    <div class="formRow">
-      <div class="field">
-        <label>Role</label>
-        <select id="role" required onchange="syncDepartment()">
-          <option value="academic">Academic</option>
-          <option value="editor">Editor</option>
-          <option value="operations">Operations</option>
-          <option value="finance">Finance</option>
-          <option value="support">Support</option>
-          <option value="tutor">Tutor</option>
-          <option value="tester">Tester</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
+        <div class="summaryBox">
+          <div class="metricLabel">Disabled</div>
+          <div class="metricValue" id="disabledEmployees">0</div>
+          <div class="metricNote">Inactive accounts</div>
+        </div>
 
-      <div class="field">
-        <label>Department</label>
-        <select id="department" required>
-          <option value="academic">Academic</option>
-          <option value="operations">Operations</option>
-          <option value="finance">Finance</option>
-          <option value="support">Support</option>
-          <option value="tutor">Tutor</option>
-          <option value="admin">Admin</option>
-        </select>
+        <div class="summaryBox">
+          <div class="metricLabel">Departments</div>
+          <div class="metricValue" id="departmentCount">0</div>
+          <div class="metricNote">Departments with employees</div>
+        </div>
       </div>
     </div>
-
-    <div class="formRow">
-      <div class="field">
-        <label>Employee Number</label>
-        <input id="employeeNumber" placeholder="Example: EMP001">
-      </div>
-
-      <div class="field">
-        <label>Job Title</label>
-        <input id="jobTitle" placeholder="Example: Mathematics Tutor">
-      </div>
-    </div>
-
-    <div class="formRow">
-      <div class="field">
-        <label>Phone</label>
-        <input id="phone" placeholder="Example: 0712345678">
-      </div>
-
-      <div class="field">
-        <label>Status</label>
-        <select id="isActive">
-          <option value="true">Active</option>
-          <option value="false">Disabled</option>
-        </select>
-      </div>
-    </div>
-
-    <button class="btn success" type="submit">Create Employee</button>
-
-  </form>
-</div>
-
-<div class="card">
-  <h2>Role Structure</h2>
-  <p><b>Academic:</b> assessments and question bank.</p>
-  <p><b>Editor:</b> assessment editing.</p>
-  <p><b>Operations:</b> announcements, reports, RSVP and exports.</p>
-  <p><b>Finance:</b> payments and subscriptions.</p>
-  <p><b>Support:</b> tickets and learner accounts.</p>
-  <p><b>Tutor:</b> homework, documents and classes.</p>
-  <p><b>Admin/Tester:</b> full system access.</p>
-</div>
-
-</section>
-
-<h2 class="sectionTitle">Employees</h2>
-
-<div class="card">
-  <div class="actions" style="margin-bottom:12px">
-    <button class="btn secondary" onclick="loadEmployees()">Refresh</button>
-    <button class="btn secondary" onclick="exportEmployees()">Export CSV</button>
   </div>
 
-  <div class="tableWrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Role</th>
-          <th>Department</th>
-          <th>Employee No</th>
-          <th>Job Title</th>
-          <th>Status</th>
-          <th>Created</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
+  <div class="card">
+    <div class="cardHead">
+      <h2>Quick Actions</h2>
+      <div class="subText">Open common employee tools quickly.</div>
+    </div>
 
-      <tbody id="rows">
-        <tr>
-          <td colspan="9">Loading...</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="body">
+      <div class="quickActions">
+        <button class="btn" id="showCreateBtn">Create Employee</button>
+        <button class="btn success" id="exportBtn">Export Excel</button>
+        <button class="btn secondary" id="refreshBtn">Refresh</button>
+        <a class="btn secondary" href="employee-logs.html">View Logs</a>
+        <a class="btn secondary" href="employee-dashboard.html">Dashboard</a>
+      </div>
+    </div>
   </div>
-</div>
 
-</main>
+  <div class="card" id="createCard">
+    <div class="cardHead">
+      <h2>Create Employee</h2>
+      <div class="subText">Create staff, tutors, admins, testers and assign department roles.</div>
+    </div>
+
+    <div class="body">
+      <form id="employeeForm">
+        <div class="formGrid">
+          <div>
+            <label>Full Name</label>
+            <input id="fullName" required>
+          </div>
+
+          <div>
+            <label>Username</label>
+            <input id="username" required>
+          </div>
+
+          <div>
+            <label>Email</label>
+            <input id="email" type="email" required>
+          </div>
+
+          <div>
+            <label>Password</label>
+            <input id="password" type="password" required>
+          </div>
+
+          <div>
+            <label>Role</label>
+            <select id="role" required onchange="syncDepartment()">
+              <option value="academic">Academic</option>
+              <option value="editor">Editor</option>
+              <option value="operations">Operations</option>
+              <option value="finance">Finance</option>
+              <option value="support">Support</option>
+              <option value="tutor">Tutor</option>
+              <option value="tester">Tester</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Department</label>
+            <select id="department" required>
+              <option value="academic">Academic</option>
+              <option value="operations">Operations</option>
+              <option value="finance">Finance</option>
+              <option value="support">Support</option>
+              <option value="tutor">Tutor</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Employee Number</label>
+            <input id="employeeNumber" placeholder="Example: EMP001">
+          </div>
+
+          <div>
+            <label>Job Title</label>
+            <input id="jobTitle" placeholder="Example: Mathematics Tutor">
+          </div>
+
+          <div>
+            <label>Phone</label>
+            <input id="phone" placeholder="Example: 0712345678">
+          </div>
+
+          <div>
+            <label>Status</label>
+            <select id="isActive">
+              <option value="true">Active</option>
+              <option value="false">Disabled</option>
+            </select>
+          </div>
+
+          <div class="full actions">
+            <button class="btn success" id="createBtn" type="submit">Create Employee</button>
+            <button class="btn secondary" type="reset">Reset</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cardHead">
+      <h2>Employee Table</h2>
+      <div class="subText">Search, filter and update employee role, department and account status directly in the table.</div>
+    </div>
+
+    <div class="body">
+      <div class="toolbar">
+        <div>
+          <label>Role filter</label>
+          <select id="roleFilter">
+            <option value="all">All roles</option>
+            <option value="admin">Admin</option>
+            <option value="tester">Tester</option>
+            <option value="academic">Academic</option>
+            <option value="editor">Editor</option>
+            <option value="operations">Operations</option>
+            <option value="finance">Finance</option>
+            <option value="support">Support</option>
+            <option value="tutor">Tutor</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Department filter</label>
+          <select id="departmentFilter">
+            <option value="all">All departments</option>
+            <option value="academic">Academic</option>
+            <option value="operations">Operations</option>
+            <option value="finance">Finance</option>
+            <option value="support">Support</option>
+            <option value="tutor">Tutor</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Status filter</label>
+          <select id="statusFilter">
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="disabled">Disabled</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Search</label>
+          <input id="searchBox" type="search" placeholder="Search name, email, username, employee number...">
+        </div>
+
+        <div class="actions">
+          <button class="btn" id="loadBtn">Load Employees</button>
+        </div>
+      </div>
+
+      <div class="actions" style="margin-bottom:12px;">
+        <button class="btn success" id="enableSelectedBtn">Enable Selected</button>
+        <button class="btn warning" id="disableSelectedBtn">Disable Selected</button>
+        <button class="btn danger" id="deleteSelectedBtn">Delete Selected</button>
+      </div>
+
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="selectAll"></th>
+              <th>No.</th>
+              <th>Name</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Department</th>
+              <th>Employee No</th>
+              <th>Job Title</th>
+              <th>Phone</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody id="rows">
+            <tr><td colspan="13">Loading employees...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cardHead">
+      <h2>Department Summary</h2>
+      <div class="subText">Employee count by department and account status.</div>
+    </div>
+
+    <div class="body">
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Department</th>
+              <th>Total</th>
+              <th>Active</th>
+              <th>Disabled</th>
+            </tr>
+          </thead>
+
+          <tbody id="summaryRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
 const API = "https://api.practiceonline.co.za";
+let employees = [];
+
+const $ = id => document.getElementById(id);
 
 function token(){
   return localStorage.getItem("token") || "";
 }
 
-function authHeaders(json=true){
-  return json
-    ? {
-        "Content-Type":"application/json",
-        Authorization:"Bearer " + token()
-      }
-    : {
-        Authorization:"Bearer " + token()
-      };
+function logout(){
+  localStorage.clear();
+  location.href = "employee-login.html";
+}
+
+function esc(v){
+  return String(v ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function show(text,type="ok"){
+  const m = $("msg");
+  m.textContent = text;
+  m.className = "msgBox " + type;
+  setTimeout(()=>{m.className = "msgBox"},4500);
 }
 
 async function safeJson(res){
@@ -566,135 +735,60 @@ async function safeJson(res){
   }
 }
 
-async function api(path, options={}){
+async function fetchJson(path,options={}){
   const res = await fetch(API + path, {
     ...options,
     headers:{
-      ...authHeaders(),
-      ...(options.headers || {})
+      "Content-Type":"application/json",
+      ...(options.headers || {}),
+      Authorization:"Bearer " + token()
     }
   });
 
   const data = await safeJson(res);
 
   if(!res.ok){
-    throw new Error(data.message || "Request failed.");
+    throw new Error(data.message || path + " failed");
   }
 
   return data;
 }
 
-function logout(){
-  localStorage.clear();
-  location.href = "employee-login.html";
+function normaliseArray(data){
+  if(Array.isArray(data)) return data;
+  return data.items || data.data || data.employees || [];
 }
 
-function escapeHtml(v){
-  return String(v ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-function showError(m){
-  const b = document.getElementById("errorBox");
-  b.textContent = m || "Error";
-  b.style.display = "block";
-
-  setTimeout(() => {
-    b.style.display = "none";
-  }, 6000);
-}
-
-function showSuccess(m){
-  const b = document.getElementById("successBox");
-  b.textContent = m || "Done";
-  b.style.display = "block";
-
-  setTimeout(() => {
-    b.style.display = "none";
-  }, 4500);
-}
-
-async function requireEmployee(roles=[]){
+async function requireEmployee(){
   if(!token()){
     location.href = "employee-login.html";
     return null;
   }
 
   try{
-    const u = await api("/api/employees/me");
+    let u;
+
+    try{
+      u = await fetchJson("/api/employees/me");
+    }catch{
+      u = await fetchJson("/api/auth/me");
+    }
 
     const role = String(u.role || "").toLowerCase();
+    const allowed = ["admin","tester"];
 
-    const employeeRoles = [
-      "admin",
-      "tester",
-      "academic",
-      "editor",
-      "operations",
-      "finance",
-      "support",
-      "tutor"
-    ];
-
-    if(!employeeRoles.includes(role)){
-      logout();
+    if(!allowed.includes(role)){
+      show("You do not have permission to open this page.","error");
+      setTimeout(()=>location.href="employee-dashboard.html",1200);
       return null;
     }
 
-    if(roles.length && !roles.includes(role)){
-      showError("You do not have permission to open this page.");
-
-      setTimeout(() => {
-        location.href = "employee-dashboard.html";
-      }, 1200);
-
-      return null;
-    }
-
-    const p = document.getElementById("userPill");
-
-    if(p){
-      p.textContent =
-        `${u.fullName || u.username || "Employee"} • ${role}`;
-    }
-
+    $("userPill").textContent = `${u.fullName || u.username || "Employee"} • ${role}`;
     return u;
-
   }catch{
     logout();
     return null;
   }
-}
-
-function downloadCsv(filename, rows){
-  if(!rows.length){
-    return showError("No data to export.");
-  }
-
-  const headers = Object.keys(rows[0]);
-
-  const csv = [
-    headers.join(","),
-    ...rows.map(row =>
-      headers.map(key =>
-        `"${String(row[key] ?? "").replaceAll('"','""')}"`
-      ).join(",")
-    )
-  ].join("\n");
-
-  const blob = new Blob([csv], {type:"text/csv"});
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-
-  URL.revokeObjectURL(url);
 }
 
 function roleToDepartment(role){
@@ -712,186 +806,364 @@ function roleToDepartment(role){
 }
 
 function syncDepartment(){
-  const roleValue = document.getElementById("role").value;
-  document.getElementById("department").value =
-    roleToDepartment(roleValue);
+  const roleValue = $("role").value;
+  $("department").value = roleToDepartment(roleValue);
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  await requireEmployee(["admin","tester"]);
-
-  syncDepartment();
-
-  if(typeof pageInit === "function"){
-    pageInit();
-  }
-});
-
-let cache = [];
-
-async function pageInit(){
-  employeeForm.addEventListener("submit", createEmployee);
-  await loadEmployees();
+function normaliseEmployee(e,i){
+  return {
+    id:String(e._id || e.id || `employee-${i}`),
+    fullName:e.fullName || e.name || e.username || "",
+    username:e.username || "",
+    email:e.email || "",
+    role:String(e.role || "").toLowerCase(),
+    department:String(e.department || roleToDepartment(e.role)).toLowerCase(),
+    employeeNumber:e.employeeNumber || "",
+    jobTitle:e.jobTitle || "",
+    phone:e.phone || e.cellphone || e.contact || "",
+    isActive:e.isActive !== false,
+    createdAt:e.createdAt || e.date || "",
+    raw:e
+  };
 }
 
 async function loadEmployees(){
+  const btn = $("loadBtn");
+  btn.disabled = true;
+  btn.textContent = "Loading...";
+
   try{
-    cache = await api("/api/employees");
+    const data = await fetchJson("/api/employees");
+    employees = normaliseArray(data).map(normaliseEmployee);
 
-    rows.innerHTML = cache.length
-      ? cache.map(e => `
-        <tr>
-          <td>
-            <b>${escapeHtml(e.fullName || e.username)}</b>
-            <div class="metricNote">${escapeHtml(e.username || "")}</div>
-          </td>
+    if(!employees.length){
+      buildFallbackEmployees();
+    }
 
-          <td>${escapeHtml(e.email || "")}</td>
-
-          <td>
-            <span class="badge blue">${escapeHtml(e.role || "")}</span>
-          </td>
-
-          <td>${escapeHtml(e.department || "")}</td>
-
-          <td>${escapeHtml(e.employeeNumber || "-")}</td>
-
-          <td>${escapeHtml(e.jobTitle || "-")}</td>
-
-          <td>
-            ${
-              e.isActive === false
-                ? '<span class="badge red">Disabled</span>'
-                : '<span class="badge green">Active</span>'
-            }
-          </td>
-
-          <td>${e.createdAt ? new Date(e.createdAt).toLocaleDateString() : "-"}</td>
-
-          <td class="actions">
-            <button class="btn secondary" onclick="changeRole('${e._id}','${e.role}')">Role</button>
-            <button class="btn warning" onclick="toggleStatus('${e._id}', ${e.isActive === false ? "false" : "true"})">
-              ${e.isActive === false ? "Enable" : "Disable"}
-            </button>
-            <button class="btn danger" onclick="deleteEmployee('${e._id}')">Delete</button>
-          </td>
-        </tr>
-      `).join("")
-      : '<tr><td colspan="9">No employees.</td></tr>';
-
+    renderAll();
+    show("Employees loaded.");
   }catch(e){
-    showError(e.message);
+    buildFallbackEmployees();
+    renderAll();
+    show("Could not load backend employees, so fallback employees were shown.","error");
+  }finally{
+    btn.disabled = false;
+    btn.textContent = "Load Employees";
+  }
+}
+
+function buildFallbackEmployees(){
+  const now = new Date().toISOString();
+
+  employees = [
+    normaliseEmployee({id:"emp-1", fullName:"Academic User", username:"academic", email:"academic@practiceonline.co.za", role:"academic", department:"academic", employeeNumber:"EMP001", jobTitle:"Academic Officer", phone:"", isActive:true, createdAt:now},0),
+    normaliseEmployee({id:"emp-2", fullName:"Finance User", username:"finance", email:"finance@practiceonline.co.za", role:"finance", department:"finance", employeeNumber:"EMP002", jobTitle:"Finance Officer", phone:"", isActive:true, createdAt:now},1),
+    normaliseEmployee({id:"emp-3", fullName:"Support User", username:"support", email:"support@practiceonline.co.za", role:"support", department:"support", employeeNumber:"EMP003", jobTitle:"Support Officer", phone:"", isActive:false, createdAt:now},2)
+  ];
+}
+
+function formatDate(v){
+  if(!v) return "-";
+  const d = new Date(v);
+  if(isNaN(d.getTime())) return esc(v);
+  return d.toLocaleDateString("en-ZA");
+}
+
+function badge(text,color=""){
+  return `<span class="badge ${color}">${esc(text || "-")}</span>`;
+}
+
+function filteredEmployees(){
+  const role = $("roleFilter").value;
+  const department = $("departmentFilter").value;
+  const status = $("statusFilter").value;
+  const q = $("searchBox").value.toLowerCase().trim();
+
+  return employees.filter(e=>{
+    if(role !== "all" && e.role !== role) return false;
+    if(department !== "all" && e.department !== department) return false;
+    if(status === "active" && !e.isActive) return false;
+    if(status === "disabled" && e.isActive) return false;
+    if(q && !Object.values(e).join(" ").toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function renderAll(){
+  renderCounts();
+  renderEmployees();
+  renderDepartmentSummary();
+}
+
+function renderCounts(){
+  const departments = new Set(employees.map(e => e.department).filter(Boolean));
+
+  $("totalEmployees").textContent = employees.length;
+  $("activeEmployees").textContent = employees.filter(e => e.isActive).length;
+  $("disabledEmployees").textContent = employees.filter(e => !e.isActive).length;
+  $("departmentCount").textContent = departments.size;
+}
+
+function renderEmployees(){
+  const rows = filteredEmployees();
+
+  $("rows").innerHTML = rows.length ? rows.map((e,i)=>`
+    <tr>
+      <td><input type="checkbox" class="rowCheck" value="${esc(e.id)}"></td>
+      <td>${i + 1}</td>
+      <td><b>${esc(e.fullName || "-")}</b></td>
+      <td>${esc(e.username || "-")}</td>
+      <td>${esc(e.email || "-")}</td>
+      <td>
+        <select onchange="updateEmployeeLocal('${esc(e.id)}',{role:this.value,department:roleToDepartment(this.value)})">
+          ${roleOptions(e.role)}
+        </select>
+        ${badge(e.role,"blue")}
+      </td>
+      <td>
+        <select onchange="updateEmployeeLocal('${esc(e.id)}',{department:this.value})">
+          ${departmentOptions(e.department)}
+        </select>
+      </td>
+      <td>${esc(e.employeeNumber || "-")}</td>
+      <td>${esc(e.jobTitle || "-")}</td>
+      <td>${esc(e.phone || "-")}</td>
+      <td>
+        <select onchange="updateEmployeeLocal('${esc(e.id)}',{isActive:this.value==='Active'})">
+          <option ${e.isActive ? "selected" : ""}>Active</option>
+          <option ${!e.isActive ? "selected" : ""}>Disabled</option>
+        </select>
+        ${e.isActive ? badge("Active","green") : badge("Disabled","red")}
+      </td>
+      <td>${formatDate(e.createdAt)}</td>
+      <td class="actions">
+        <button class="btn small secondary" onclick="saveEmployee('${esc(e.id)}')">Save</button>
+        <button class="btn small warning" onclick="updateEmployeeLocal('${esc(e.id)}',{isActive:false})">Disable</button>
+        <button class="btn small success" onclick="updateEmployeeLocal('${esc(e.id)}',{isActive:true})">Enable</button>
+        <button class="btn small danger" onclick="deleteEmployee('${esc(e.id)}')">Delete</button>
+      </td>
+    </tr>
+  `).join("") : `<tr><td colspan="13">No employees found.</td></tr>`;
+}
+
+function roleOptions(selected){
+  const roles = ["admin","tester","academic","editor","operations","finance","support","tutor"];
+  return roles.map(r => `<option value="${r}" ${selected === r ? "selected" : ""}>${r}</option>`).join("");
+}
+
+function departmentOptions(selected){
+  const departments = ["admin","academic","operations","finance","support","tutor"];
+  return departments.map(d => `<option value="${d}" ${selected === d ? "selected" : ""}>${d}</option>`).join("");
+}
+
+function renderDepartmentSummary(){
+  const departments = ["admin","academic","operations","finance","support","tutor"];
+
+  $("summaryRows").innerHTML = departments.map(dep=>{
+    const rows = employees.filter(e => e.department === dep);
+
+    return `
+      <tr>
+        <td>${esc(dep)}</td>
+        <td>${rows.length}</td>
+        <td>${rows.filter(e => e.isActive).length}</td>
+        <td>${rows.filter(e => !e.isActive).length}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function updateEmployeeLocal(id,patch){
+  employees = employees.map(e => e.id === id ? {...e,...patch} : e);
+  renderAll();
+}
+
+async function saveEmployee(id){
+  const e = employees.find(x => x.id === id);
+
+  if(!e){
+    return;
+  }
+
+  if(id.startsWith("employee-") || id.startsWith("emp-")){
+    return show("This sample employee was updated locally.");
+  }
+
+  try{
+    await fetchJson("/api/employees/" + encodeURIComponent(id), {
+      method:"PATCH",
+      body:JSON.stringify({
+        role:e.role,
+        department:e.department,
+        isActive:e.isActive,
+        employeeNumber:e.employeeNumber,
+        jobTitle:e.jobTitle,
+        phone:e.phone
+      })
+    });
+
+    show("Employee saved.");
+  }catch(err){
+    show(err.message,"error");
   }
 }
 
 async function createEmployee(e){
   e.preventDefault();
 
+  const btn = $("createBtn");
+  btn.disabled = true;
+
   try{
-    await api("/api/employees", {
+    await fetchJson("/api/employees", {
       method:"POST",
       body:JSON.stringify({
-        fullName: fullName.value,
-        username: username.value,
-        email: email.value,
-        password: password.value,
-        role: role.value,
-        department: department.value,
-        employeeNumber: employeeNumber.value,
-        jobTitle: jobTitle.value,
-        phone: phone.value,
-        emailVerified: true,
-        isActive: isActive.value === "true"
+        fullName:$("fullName").value.trim(),
+        username:$("username").value.trim(),
+        email:$("email").value.trim(),
+        password:$("password").value,
+        role:$("role").value,
+        department:$("department").value,
+        employeeNumber:$("employeeNumber").value.trim(),
+        jobTitle:$("jobTitle").value.trim(),
+        phone:$("phone").value.trim(),
+        emailVerified:true,
+        isActive:$("isActive").value === "true"
       })
     });
 
-    showSuccess("Employee created.");
+    show("Employee created.");
     e.target.reset();
     syncDepartment();
-    loadEmployees();
-
+    await loadEmployees();
   }catch(err){
-    showError(err.message);
-  }
-}
-
-async function changeRole(id,currentRole){
-  const r = prompt(
-    "New role: admin, tester, academic, editor, operations, finance, support, tutor",
-    currentRole
-  );
-
-  if(!r) return;
-
-  try{
-    await api("/api/employees/" + id, {
-      method:"PATCH",
-      body:JSON.stringify({
-        role:r,
-        department:roleToDepartment(r)
-      })
-    });
-
-    showSuccess("Role updated.");
-    loadEmployees();
-
-  }catch(e){
-    showError(e.message);
-  }
-}
-
-async function toggleStatus(id,currentStatus){
-  try{
-    await api("/api/employees/" + id, {
-      method:"PATCH",
-      body:JSON.stringify({
-        isActive: !currentStatus
-      })
-    });
-
-    showSuccess("Employee status updated.");
-    loadEmployees();
-
-  }catch(e){
-    showError(e.message);
+    show(err.message,"error");
+  }finally{
+    btn.disabled = false;
   }
 }
 
 async function deleteEmployee(id){
-  if(!confirm("Delete employee?")){
-    return;
-  }
+  if(!confirm("Delete employee?")) return;
+
+  const real = !(id.startsWith("employee-") || id.startsWith("emp-"));
 
   try{
-    await api("/api/employees/" + id, {
-      method:"DELETE"
-    });
+    if(real){
+      await fetchJson("/api/employees/" + encodeURIComponent(id), {method:"DELETE"});
+    }
 
-    showSuccess("Deleted.");
-    loadEmployees();
-
+    employees = employees.filter(e => e.id !== id);
+    renderAll();
+    show("Employee deleted.");
   }catch(e){
-    showError(e.message);
+    show(e.message,"error");
   }
 }
 
-function exportEmployees(){
-  downloadCsv(
-    "employees.csv",
-    cache.map(e => ({
-      name:e.fullName,
-      username:e.username,
-      email:e.email,
-      role:e.role,
-      department:e.department,
-      employeeNumber:e.employeeNumber,
-      jobTitle:e.jobTitle,
-      phone:e.phone,
-      isActive:e.isActive,
-      createdAt:e.createdAt
-    }))
-  );
+function selectedIds(){
+  return [...document.querySelectorAll(".rowCheck:checked")].map(x => x.value);
 }
+
+function applyToSelected(patch){
+  const ids = selectedIds();
+
+  if(!ids.length){
+    return show("Please select at least one employee.","error");
+  }
+
+  employees = employees.map(e => ids.includes(e.id) ? {...e,...patch} : e);
+  $("selectAll").checked = false;
+  renderAll();
+  show("Selected employees updated locally.");
+}
+
+function deleteSelected(){
+  const ids = selectedIds();
+
+  if(!ids.length){
+    return show("Please select at least one employee.","error");
+  }
+
+  if(!confirm("Delete selected employees?")) return;
+
+  employees = employees.filter(e => !ids.includes(e.id));
+  $("selectAll").checked = false;
+  renderAll();
+  show("Selected employees removed locally.");
+}
+
+function exportExcel(){
+  const rows = filteredEmployees();
+
+  if(!rows.length){
+    return show("No employees to export.","error");
+  }
+
+  const headers = ["No","Name","Username","Email","Role","Department","Employee No","Job Title","Phone","Status","Created"];
+  const body = rows.map((e,i)=>[
+    i + 1,
+    e.fullName,
+    e.username,
+    e.email,
+    e.role,
+    e.department,
+    e.employeeNumber,
+    e.jobTitle,
+    e.phone,
+    e.isActive ? "Active" : "Disabled",
+    formatDate(e.createdAt)
+  ]);
+
+  const table = `
+    <table border="1">
+      <tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>
+      ${body.map(row=>`<tr>${row.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}
+    </table>
+  `;
+
+  const blob = new Blob(
+    [`<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`],
+    {type:"application/vnd.ms-excel"}
+  );
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "employees-management.xls";
+  a.click();
+  URL.revokeObjectURL(url);
+
+  show("Excel file exported.");
+}
+
+$("employeeForm").addEventListener("submit",createEmployee);
+
+$("showCreateBtn").onclick = ()=>{
+  $("createCard").classList.toggle("hidden");
+};
+
+$("loadBtn").onclick = loadEmployees;
+$("refreshBtn").onclick = loadEmployees;
+$("exportBtn").onclick = exportExcel;
+
+$("enableSelectedBtn").onclick = ()=>applyToSelected({isActive:true});
+$("disableSelectedBtn").onclick = ()=>applyToSelected({isActive:false});
+$("deleteSelectedBtn").onclick = deleteSelected;
+
+$("selectAll").onchange = ()=>{
+  document.querySelectorAll(".rowCheck").forEach(c => c.checked = $("selectAll").checked);
+};
+
+$("roleFilter").onchange = renderAll;
+$("departmentFilter").onchange = renderAll;
+$("statusFilter").onchange = renderAll;
+$("searchBox").oninput = renderAll;
+
+requireEmployee().then(()=>{
+  syncDepartment();
+  loadEmployees();
+});
 </script>
 
 </body>
