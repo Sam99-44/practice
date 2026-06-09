@@ -146,9 +146,7 @@ button,input,select,option{
   line-height:1.45;
 }
 
-.body{
-  padding:22px;
-}
+.body{padding:22px}
 
 .summaryGrid{
   display:grid;
@@ -361,9 +359,7 @@ tr:hover td{background:#f8fafc}
   z-index:2000;
 }
 
-.modal.open{
-  display:flex;
-}
+.modal.open{display:flex}
 
 .modalBox{
   width:min(720px,100%);
@@ -387,9 +383,7 @@ tr:hover td{background:#f8fafc}
   text-transform:uppercase;
 }
 
-.modalBody{
-  padding:18px;
-}
+.modalBody{padding:18px}
 
 .detailGrid{
   display:grid;
@@ -414,9 +408,7 @@ tr:hover td{background:#f8fafc}
   word-break:break-word;
 }
 
-.fullDetail{
-  grid-column:1/-1;
-}
+.fullDetail{grid-column:1/-1}
 
 @media(max-width:1050px){
   .toolbar{grid-template-columns:repeat(3,1fr)}
@@ -463,7 +455,6 @@ tr:hover td{background:#f8fafc}
 </header>
 
 <div class="wrap">
-
   <div id="msg" class="msgBox"></div>
 
   <div class="card">
@@ -539,13 +530,12 @@ tr:hover td{background:#f8fafc}
           <label>Department</label>
           <select id="departmentFilter">
             <option value="all">All</option>
-            <option>Academic</option>
-            <option>Operations</option>
-            <option>Finance</option>
-            <option>Support</option>
-            <option>Tutors</option>
-            <option>Employees</option>
-            <option>Admin</option>
+            <option value="academic">Academic</option>
+            <option value="operations">Operations</option>
+            <option value="finance">Finance</option>
+            <option value="support">Support</option>
+            <option value="tutor">Tutor</option>
+            <option value="admin">Admin</option>
           </select>
         </div>
 
@@ -562,8 +552,7 @@ tr:hover td{background:#f8fafc}
             <option value="all">All</option>
             <option value="critical">Critical</option>
             <option value="warning">Warning</option>
-            <option value="normal">Normal</option>
-            <option value="success">Success</option>
+            <option value="info">Info</option>
           </select>
         </div>
 
@@ -608,7 +597,6 @@ tr:hover td{background:#f8fafc}
       </div>
     </div>
   </div>
-
 </div>
 
 <div class="modal" id="logModal">
@@ -632,7 +620,9 @@ let criticalOnly = false;
 const $ = id => document.getElementById(id);
 
 function token(){
-  return localStorage.getItem("token") || "";
+  return localStorage.getItem("employeeToken") ||
+         localStorage.getItem("token") ||
+         "";
 }
 
 function logout(){
@@ -657,16 +647,15 @@ function show(text,type="ok"){
 }
 
 async function safeJson(res){
-  try{
-    return await res.json();
-  }catch{
-    return {};
-  }
+  try{return await res.json()}
+  catch{return {}}
 }
 
 async function fetchJson(path){
   const res = await fetch(API + path, {
-    headers:{ Authorization:"Bearer " + token() }
+    headers:{
+      Authorization:"Bearer " + token()
+    }
   });
 
   const data = await safeJson(res);
@@ -690,12 +679,7 @@ async function requireEmployee(){
   }
 
   try{
-    let u;
-    try{
-      u = await fetchJson("/api/employees/me");
-    }catch{
-      u = await fetchJson("/api/auth/me");
-    }
+    const u = await fetchJson("/api/employees/me");
 
     const role = String(u.role || "").toLowerCase();
     const allowed = ["admin","tester"];
@@ -714,17 +698,47 @@ async function requireEmployee(){
   }
 }
 
+function normaliseDepartment(value){
+  const v = String(value || "").toLowerCase().trim();
+
+  if(v === "academic") return "academic";
+  if(v === "operations") return "operations";
+  if(v === "finance") return "finance";
+  if(v === "support") return "support";
+  if(v === "tutors" || v === "tutor") return "tutor";
+  if(v === "employees" || v === "admin") return "admin";
+
+  return v || "-";
+}
+
+function departmentLabel(value){
+  const v = normaliseDepartment(value);
+
+  if(v === "academic") return "Academic";
+  if(v === "operations") return "Operations";
+  if(v === "finance") return "Finance";
+  if(v === "support") return "Support";
+  if(v === "tutor") return "Tutor";
+  if(v === "admin") return "Admin";
+
+  return "-";
+}
+
 function normaliseLog(l,i){
+  const employeeObj = l.employee || {};
+
   return {
     id:l._id || l.id || `log-${i}`,
     date:l.createdAt || l.date || l.timestamp || "",
-    employee:l.employee?.fullName || l.employee?.username || l.fullName || l.username || l.employeeName || "Unknown",
-    role:l.employee?.role || l.role || "-",
-    department:l.department || l.employee?.department || "-",
+    employee:employeeObj.fullName || employeeObj.username || l.fullName || l.username || l.employeeName || "Unknown",
+    role:employeeObj.role || l.role || "-",
+    department:normaliseDepartment(l.department || employeeObj.department),
     action:l.action || l.event || l.activity || "-",
-    severity:(l.severity || l.level || "normal").toLowerCase(),
+    severity:(l.severity || "info").toLowerCase(),
     status:l.status || "success",
     details:l.details || l.description || l.message || "",
+    ipAddress:l.ipAddress || "",
+    userAgent:l.userAgent || "",
     raw:l
   };
 }
@@ -735,75 +749,89 @@ async function loadLogs(){
   btn.textContent = "Loading...";
 
   try{
-    let data = await fetchJson("/api/employees/logs/recent?limit=200");
+    let data;
+
+    try{
+      data = await fetchJson("/api/employees/logs/recent?limit=200");
+    }catch{
+      data = await fetchJson("/api/employees/logs");
+    }
+
     logs = normaliseArray(data).map(normaliseLog);
     criticalOnly = false;
     $("severityFilter").value = "all";
+    $("criticalBtn").textContent = "Critical Only";
 
     fillEmployeeFilter();
     updateCounts();
     renderSummary();
     renderLogs();
+
     show("Logs loaded.");
   }catch(e){
-    logs = fallbackLogs();
+    logs = [];
     fillEmployeeFilter();
     updateCounts();
     renderSummary();
     renderLogs();
-    show("Could not load backend logs, so sample fallback logs were displayed.","error");
+    show("Could not load employee logs: " + e.message,"error");
   }finally{
     btn.disabled = false;
     btn.textContent = "Refresh";
   }
 }
 
-function fallbackLogs(){
-  const now = new Date().toISOString();
-
-  return [
-    normaliseLog({createdAt:now, employeeName:"Academic Team", role:"academic", department:"Academic", action:"Assessment updated", severity:"normal", status:"success", details:"Assessment was edited and saved."},0),
-    normaliseLog({createdAt:now, employeeName:"Finance Team", role:"finance", department:"Finance", action:"Payment approved", severity:"success", status:"success", details:"Manual payment was approved."},1),
-    normaliseLog({createdAt:now, employeeName:"Support Team", role:"support", department:"Support", action:"Learner access issue reviewed", severity:"warning", status:"pending", details:"Learner account requires follow-up."},2),
-    normaliseLog({createdAt:now, employeeName:"Admin", role:"admin", department:"Admin", action:"Employee role changed", severity:"critical", status:"success", details:"Employee role permissions were changed."},3)
-  ];
-}
-
 function fillEmployeeFilter(){
   const names = [...new Set(logs.map(l => l.employee).filter(Boolean))].sort();
-  $("employeeFilter").innerHTML = `<option value="all">All employees</option>` + names.map(n=>`<option>${esc(n)}</option>`).join("");
+
+  $("employeeFilter").innerHTML =
+    `<option value="all">All employees</option>` +
+    names.map(n=>`<option>${esc(n)}</option>`).join("");
 }
 
 function sameDay(a,b){
   const da = new Date(a);
   const db = new Date(b);
+
   if(isNaN(da.getTime()) || isNaN(db.getTime())) return false;
+
   return da.toDateString() === db.toDateString();
 }
 
 function formatDate(v){
   if(!v) return "-";
+
   const d = new Date(v);
+
   if(isNaN(d.getTime())) return esc(v);
+
   return d.toLocaleString("en-ZA");
 }
 
 function severityBadge(severity){
-  const s = String(severity || "normal").toLowerCase();
+  const s = String(severity || "info").toLowerCase();
 
-  if(s === "critical") return `<span class="badge red">Critical</span>`;
-  if(s === "warning") return `<span class="badge orange">Warning</span>`;
-  if(s === "success") return `<span class="badge green">Success</span>`;
+  if(s === "critical"){
+    return `<span class="badge red">Critical</span>`;
+  }
 
-  return `<span class="badge blue">Normal</span>`;
+  if(s === "warning"){
+    return `<span class="badge orange">Warning</span>`;
+  }
+
+  return `<span class="badge blue">Info</span>`;
 }
 
 function statusBadge(status){
   const s = String(status || "").toLowerCase();
 
-  if(s.includes("success") || s.includes("complete")) return `<span class="badge green">${esc(status)}</span>`;
-  if(s.includes("fail") || s.includes("error")) return `<span class="badge red">${esc(status)}</span>`;
-  if(s.includes("pending")) return `<span class="badge orange">${esc(status)}</span>`;
+  if(s.includes("success") || s.includes("complete")){
+    return `<span class="badge green">${esc(status)}</span>`;
+  }
+
+  if(s.includes("fail") || s.includes("error")){
+    return `<span class="badge red">${esc(status)}</span>`;
+  }
 
   return `<span class="badge">${esc(status || "-")}</span>`;
 }
@@ -831,14 +859,22 @@ function filteredLogs(){
     if(department !== "all" && l.department !== department) return false;
     if(employee !== "all" && l.employee !== employee) return false;
     if(severity !== "all" && l.severity !== severity) return false;
-    if(date && !sameDay(l.date, date)) return false;
+    if(date && !sameDay(l.date,date)) return false;
     if(q && !Object.values(l).join(" ").toLowerCase().includes(q)) return false;
+
     return true;
   });
 }
 
 function renderSummary(){
-  const departments = ["Academic","Operations","Finance","Support","Tutors","Employees","Admin"];
+  const departments = [
+    "academic",
+    "operations",
+    "finance",
+    "support",
+    "tutor",
+    "admin"
+  ];
 
   $("summaryRows").innerHTML = departments.map(dep=>{
     const depLogs = logs.filter(l => l.department === dep);
@@ -848,11 +884,11 @@ function renderSummary(){
 
     return `
       <tr>
-        <td>${esc(dep)}</td>
+        <td>${esc(departmentLabel(dep))}</td>
         <td>${today.length}</td>
         <td>${critical.length}</td>
         <td>${last ? formatDate(last.date) : "-"}</td>
-        <td>${last ? statusBadge("Active") : statusBadge("No activity")}</td>
+        <td>${last ? statusBadge("success") : statusBadge("No activity")}</td>
       </tr>
     `;
   }).join("");
@@ -867,7 +903,7 @@ function renderLogs(){
       <td>${formatDate(l.date)}</td>
       <td>${esc(l.employee)}</td>
       <td>${esc(l.role)}</td>
-      <td>${esc(l.department)}</td>
+      <td>${esc(departmentLabel(l.department))}</td>
       <td>${esc(l.action)}</td>
       <td>${severityBadge(l.severity)}</td>
       <td>${statusBadge(l.status)}</td>
@@ -887,18 +923,27 @@ function detailBox(label,value,full=false){
 
 function openLogDetails(id){
   const log = logs.find(l => l.id === id);
+
   if(!log) return;
 
   $("modalDetails").innerHTML = [
     detailBox("Employee",log.employee),
     detailBox("Role",log.role),
-    detailBox("Department",log.department),
+    detailBox("Department",departmentLabel(log.department)),
     detailBox("Action",log.action),
     detailBox("Severity",log.severity),
     detailBox("Status",log.status),
     detailBox("Date",formatDate(log.date)),
     detailBox("Log ID",log.id),
-    detailBox("Details",log.details || JSON.stringify(log.raw,null,2),true)
+    detailBox("IP Address",log.ipAddress),
+    detailBox("User Agent",log.userAgent,true),
+    detailBox(
+      "Details",
+      typeof log.details === "object"
+        ? JSON.stringify(log.details,null,2)
+        : log.details || JSON.stringify(log.raw,null,2),
+      true
+    )
   ].join("");
 
   $("logModal").classList.add("open");
@@ -915,17 +960,32 @@ function exportRows(format){
     return show("No logs to export.","error");
   }
 
-  const headers = ["No","Date","Employee","Role","Department","Action","Severity","Status","Details"];
+  const headers = [
+    "No",
+    "Date",
+    "Employee",
+    "Role",
+    "Department",
+    "Action",
+    "Severity",
+    "Status",
+    "IP Address",
+    "User Agent",
+    "Details"
+  ];
+
   const body = rows.map((l,i)=>[
     i + 1,
     formatDate(l.date),
     l.employee,
     l.role,
-    l.department,
+    departmentLabel(l.department),
     l.action,
     l.severity,
     l.status,
-    l.details
+    l.ipAddress,
+    l.userAgent,
+    typeof l.details === "object" ? JSON.stringify(l.details) : l.details
   ]);
 
   if(format === "csv"){
@@ -937,10 +997,13 @@ function exportRows(format){
     const blob = new Blob([csv], {type:"text/csv"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
+
     a.href = url;
     a.download = "employee-logs.csv";
     a.click();
+
     URL.revokeObjectURL(url);
+
     return show("CSV file exported.");
   }
 
@@ -958,9 +1021,11 @@ function exportRows(format){
 
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
+
   a.href = url;
   a.download = "employee-logs.xls";
   a.click();
+
   URL.revokeObjectURL(url);
 
   show("Excel file exported.");
@@ -988,7 +1053,11 @@ $("logModal").addEventListener("click", e=>{
   if(e.target.id === "logModal") closeModal();
 });
 
-requireEmployee().then(()=>loadLogs());
+requireEmployee().then(user=>{
+  if(user){
+    loadLogs();
+  }
+});
 </script>
 
 </body>
