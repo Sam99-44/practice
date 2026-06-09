@@ -1,6 +1,3 @@
-from pathlib import Path
-
-manual_payments_js = r'''// routes/manualPayments.js
 import express from "express";
 import path from "path";
 import fs from "fs";
@@ -583,5 +580,3 @@ router.use((err, req, res, next) => {
 export default router;
 '''
 
-Path("/mnt/data/manualPayments-updated.js").write_text(manual_payments_js, encoding="utf-8")
-print("/mnt/data/manualPayments-updated.js")
