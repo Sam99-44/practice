@@ -525,6 +525,7 @@ td select{
               <th>Subject</th>
               <th>Message</th>
               <th>Assigned To</th>
+              <th>Notes</th>
               <th>Contacted</th>
               <th>Resolved</th>
               <th>Priority</th>
@@ -534,7 +535,7 @@ td select{
           </thead>
 
           <tbody id="supportRows">
-            <tr><td colspan="15">Click Load Tickets or add a manual ticket.</td></tr>
+            <tr><td colspan="16">Click Load Tickets or add a manual ticket.</td></tr>
           </tbody>
         </table>
       </div>
@@ -651,10 +652,13 @@ td select{
 <script>
 const API = "https://api.practiceonline.co.za";
 let tickets = [];
+
 const $ = id => document.getElementById(id);
 
 function token(){
-  return localStorage.getItem("token") || "";
+  return localStorage.getItem("employeeToken") ||
+         localStorage.getItem("token") ||
+         "";
 }
 
 function logout(){
@@ -686,55 +690,35 @@ function ticketId(prefix,o,i){
   return o._id || o.id || o.ticketNo || o.email || `${prefix}-${i}`;
 }
 
-function getPatches(){
-  try{
-    return JSON.parse(localStorage.getItem("support_status_patches") || "{}");
-  }catch{
-    return {};
-  }
+function normalizeStatus(value){
+  const v = String(value || "").trim().toLowerCase();
+
+  if (v === "open" || v === "new") return "New";
+  if (v === "in_progress" || v === "in progress") return "In Progress";
+  if (v === "waiting" || v === "waiting for learner") return "Waiting for Learner";
+  if (v === "escalated") return "Escalated";
+  if (v === "resolved") return "Resolved";
+  if (v === "closed") return "Closed";
+
+  return "New";
 }
 
-function savePatches(patches){
-  localStorage.setItem("support_status_patches", JSON.stringify(patches));
-}
+function normalizePriority(value){
+  const v = String(value || "").trim().toLowerCase();
 
-function getManual(){
-  try{
-    return JSON.parse(localStorage.getItem("support_manual_tickets") || "[]");
-  }catch{
-    return [];
-  }
-}
+  if (v === "low") return "Low";
+  if (v === "high") return "High";
+  if (v === "urgent") return "Urgent";
 
-function saveManual(rows){
-  localStorage.setItem("support_manual_tickets", JSON.stringify(rows));
-}
-
-function saveManualIfNeeded(id,patch){
-  const rows = getManual().map(r => r.id === id ? {...r,...patch} : r);
-  saveManual(rows);
-}
-
-function applyPatch(ticket){
-  return {...ticket, ...(getPatches()[ticket.id] || {})};
-}
-
-function patchTicket(id,patch){
-  const patches = getPatches();
-  patches[id] = {...(patches[id] || {}), ...patch};
-  savePatches(patches);
-
-  tickets = tickets.map(t => t.id === id ? {...t,...patch} : t);
-  saveManualIfNeeded(id,patch);
-  renderRows();
+  return "Medium";
 }
 
 function normaliseSupportTicket(t,i){
-  const status = t.status || t.supportStatus || "New";
-  const resolved = String(status).toLowerCase() === "resolved" || String(status).toLowerCase() === "closed";
+  const status = normalizeStatus(t.status || "New");
 
-  return applyPatch({
+  return {
     id:String(ticketId("support",t,i)),
+    backendId:t._id || t.id || "",
     ticketNo:t.ticketNo || t.ticketNumber || t._id || t.id || `SUP-${String(i + 1).padStart(4,"0")}`,
     date:t.createdAt || t.date || "",
     learner:t.fullName || t.username || t.user?.fullName || t.user?.username || t.name || "",
@@ -744,27 +728,35 @@ function normaliseSupportTicket(t,i){
     subject:t.subject || "Maths",
     message:t.message || t.requestFollowUp || "",
     assignedTo:t.assignedTo || "Support team",
-    contacted:Boolean(t.contacted || t.clientContacted),
-    resolved:Boolean(t.resolved || resolved),
-    priority:t.priority || "Medium",
-    status:status
-  });
+    notes:t.notes || "",
+    contacted:!!t.contacted,
+    resolved:!!t.resolved || ["Resolved","Closed"].includes(status),
+    priority:normalizePriority(t.priority),
+    status
+  };
 }
 
 async function safeJson(res){
-  try{
-    return await res.json();
-  }catch{
-    return {};
-  }
+  try{return await res.json()}
+  catch{return {}}
 }
 
-async function fetchJson(path){
+async function fetchJson(path, options={}){
   const res = await fetch(API + path, {
-    headers:{ Authorization:"Bearer " + token() }
+    ...options,
+    headers:{
+      "Content-Type":"application/json",
+      Authorization:"Bearer " + token(),
+      ...(options.headers || {})
+    }
   });
+
   const data = await safeJson(res);
-  if(!res.ok) throw new Error(data.message || path + " failed");
+
+  if(!res.ok){
+    throw new Error(data.message || path + " failed");
+  }
+
   return data;
 }
 
@@ -775,12 +767,7 @@ async function requireEmployee(){
   }
 
   try{
-    let u;
-    try{
-      u = await fetchJson("/api/employees/me");
-    }catch{
-      u = await fetchJson("/api/auth/me");
-    }
+    const u = await fetchJson("/api/employees/me");
 
     const role = String(u.role || "").toLowerCase();
     const allowed = ["admin","tester","support"];
@@ -805,23 +792,13 @@ async function loadAllSupportTickets(){
   btn.textContent = "Loading...";
 
   try{
-    let rows = [];
-
-    try{
-      rows = await fetchJson("/api/support");
-    }catch(e){
-      console.warn(e);
-      rows = [];
-    }
+    let rows = await fetchJson("/api/support");
 
     if(!Array.isArray(rows)){
       rows = rows.items || rows.data || rows.tickets || rows.support || [];
     }
 
-    tickets = [
-      ...rows.map(normaliseSupportTicket),
-      ...getManual().map(applyPatch)
-    ];
+    tickets = rows.map(normaliseSupportTicket);
 
     renderRows();
     show("Support tickets loaded.");
@@ -833,24 +810,102 @@ async function loadAllSupportTickets(){
   }
 }
 
+async function patchTicket(id, patch){
+  const index = tickets.findIndex(t => t.id === id);
+  if(index === -1) return;
+
+  const oldTicket = {...tickets[index]};
+  const updated = {...tickets[index], ...patch};
+
+  if(updated.status === "Resolved" || updated.status === "Closed"){
+    updated.resolved = true;
+  }
+
+  tickets[index] = updated;
+  renderRows();
+
+  try{
+    if(!updated.backendId){
+      show("This ticket has no backend ID.","error");
+      return;
+    }
+
+    await fetchJson(`/api/support/${updated.backendId}`, {
+      method:"PATCH",
+      body:JSON.stringify({
+        status:updated.status,
+        priority:updated.priority,
+        contacted:updated.contacted,
+        resolved:updated.resolved,
+        assignedTo:updated.assignedTo,
+        notes:updated.notes,
+        message:updated.message
+      })
+    });
+
+    show("Ticket updated.");
+    await loadAllSupportTickets();
+  }catch(e){
+    tickets[index] = oldTicket;
+    renderRows();
+    show("Could not update ticket: " + e.message,"error");
+  }
+}
+
+async function addManual(){
+  const today = new Date().toISOString().slice(0,10);
+
+  const body = {
+    username:clean($("fLearner").value),
+    email:clean($("fEmail").value),
+    contact:clean($("fContact").value),
+    requestType:clean($("fRequestType").value) || "Other",
+    subject:clean($("fSubject").value) || "Maths",
+    message:clean($("fMessage").value),
+    assignedTo:clean($("fAssignedTo").value) || "Support team",
+    contacted:$("fContacted").value === "Yes",
+    resolved:$("fResolved").value === "Yes",
+    priority:$("fPriority").value,
+    status:$("fStatus").value,
+    notes:""
+  };
+
+  try{
+    await fetchJson("/api/support", {
+      method:"POST",
+      body:JSON.stringify(body)
+    });
+
+    toggleAdd();
+    show("Support ticket saved.");
+    await loadAllSupportTickets();
+  }catch(e){
+    show("Could not save ticket: " + e.message,"error");
+  }
+}
+
 function badge(text,color=""){
   return `<span class="badge ${color}">${esc(text)}</span>`;
 }
 
 function statusColor(status){
   status = String(status || "").toLowerCase();
+
   if(status === "resolved" || status === "closed") return "green";
-  if(status === "escalated" || status === "urgent") return "red";
+  if(status === "escalated") return "red";
   if(status === "in progress") return "blue";
   if(status === "waiting for learner") return "orange";
+
   return "";
 }
 
 function priorityColor(priority){
   priority = String(priority || "").toLowerCase();
+
   if(priority === "urgent") return "red";
   if(priority === "high") return "orange";
   if(priority === "medium") return "blue";
+
   return "";
 }
 
@@ -874,26 +929,37 @@ function filtered(){
 
 function formatDate(v){
   if(!v) return "-";
+
   const d = new Date(v);
+
   if(isNaN(d.getTime())) return esc(v);
+
   return d.toLocaleDateString("en-ZA");
 }
 
 function shortMessage(v){
   const s = clean(v);
+
   if(!s) return "-";
+
   return s.length > 55 ? esc(s.slice(0,55)) + "..." : esc(s);
 }
 
 function updateSummary(){
   $("totalCount").textContent = tickets.length;
-  $("newCount").textContent = tickets.filter(t => String(t.status).toLowerCase() === "new").length;
-  $("progressCount").textContent = tickets.filter(t => String(t.status).toLowerCase() === "in progress").length;
-  $("resolvedCount").textContent = tickets.filter(t => t.resolved || ["resolved","closed"].includes(String(t.status).toLowerCase())).length;
+  $("newCount").textContent =
+    tickets.filter(t => String(t.status).toLowerCase() === "new").length;
+
+  $("progressCount").textContent =
+    tickets.filter(t => String(t.status).toLowerCase() === "in progress").length;
+
+  $("resolvedCount").textContent =
+    tickets.filter(t => t.resolved || ["resolved","closed"].includes(String(t.status).toLowerCase())).length;
 }
 
 function renderRows(){
   const rows = filtered();
+
   updateSummary();
 
   $("supportRows").innerHTML = rows.length ? rows.map((t,i)=>`
@@ -907,7 +973,21 @@ function renderRows(){
       <td>${esc(t.requestType || "-")}</td>
       <td>${esc(t.subject || "-")}</td>
       <td title="${esc(t.message || "")}">${shortMessage(t.message)}</td>
-      <td>${esc(t.assignedTo || "-")}</td>
+
+      <td>
+        <input
+          value="${esc(t.assignedTo || "")}"
+          onchange="patchTicket('${esc(t.id)}',{assignedTo:this.value})"
+        >
+      </td>
+
+      <td>
+        <input
+          value="${esc(t.notes || "")}"
+          placeholder="Support notes"
+          onchange="patchTicket('${esc(t.id)}',{notes:this.value})"
+        >
+      </td>
 
       <td>
         <select onchange="patchTicket('${esc(t.id)}',{contacted:this.value==='Yes',status:this.value==='Yes'?'In Progress':tickets.find(x=>x.id==='${esc(t.id)}').status})">
@@ -934,7 +1014,7 @@ function renderRows(){
       </td>
 
       <td>
-        <select class="statusSelect" onchange="patchTicket('${esc(t.id)}',{status:this.value,resolved:(this.value==='Resolved'||this.value==='Closed')?true:tickets.find(x=>x.id==='${esc(t.id)}').resolved})">
+        <select class="statusSelect" onchange="patchTicket('${esc(t.id)}',{status:this.value,resolved:(this.value==='Resolved'||this.value==='Closed')})">
           <option ${t.status==="New" ? "selected" : ""}>New</option>
           <option ${t.status==="In Progress" ? "selected" : ""}>In Progress</option>
           <option ${t.status==="Waiting for Learner" ? "selected" : ""}>Waiting for Learner</option>
@@ -951,41 +1031,11 @@ function renderRows(){
         <button class="btn small success" onclick="patchTicket('${esc(t.id)}',{resolved:true,status:'Resolved'})">Resolve</button>
       </td>
     </tr>
-  `).join("") : `<tr><td colspan="15">No support tickets found.</td></tr>`;
+  `).join("") : `<tr><td colspan="16">No support tickets found.</td></tr>`;
 }
 
 function toggleAdd(){
   $("addFormCard").classList.toggle("hidden");
-}
-
-function addManual(){
-  const today = new Date().toISOString().slice(0,10);
-
-  const row = {
-    id:"manual-support-" + Date.now(),
-    ticketNo:clean($("fTicketNo").value) || "SUP-" + Date.now(),
-    date:$("fDate").value || today,
-    learner:clean($("fLearner").value),
-    email:clean($("fEmail").value),
-    contact:clean($("fContact").value),
-    requestType:clean($("fRequestType").value),
-    subject:clean($("fSubject").value) || "Maths",
-    message:clean($("fMessage").value),
-    assignedTo:clean($("fAssignedTo").value) || "Support team",
-    contacted:$("fContacted").value === "Yes",
-    resolved:$("fResolved").value === "Yes",
-    priority:$("fPriority").value,
-    status:$("fStatus").value
-  };
-
-  const rows = getManual();
-  rows.push(row);
-  saveManual(rows);
-  tickets.push(row);
-
-  renderRows();
-  toggleAdd();
-  show("Manual support ticket added.");
 }
 
 function exportExcel(){
@@ -996,8 +1046,9 @@ function exportExcel(){
   }
 
   const headers = [
-    "No","Ticket No","Date","Learner","Email","Contact","Request Type","Subject",
-    "Message","Assigned To","Contacted","Resolved","Priority","Support Status"
+    "No","Ticket No","Date","Learner","Email","Contact","Request Type",
+    "Subject","Message","Assigned To","Notes","Contacted","Resolved",
+    "Priority","Support Status"
   ];
 
   const body = rows.map((t,i)=>[
@@ -1011,6 +1062,7 @@ function exportExcel(){
     t.subject,
     t.message,
     t.assignedTo,
+    t.notes,
     t.contacted ? "Yes" : "No",
     t.resolved ? "Yes" : "No",
     t.priority,
@@ -1031,9 +1083,11 @@ function exportExcel(){
 
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
+
   a.href = url;
   a.download = "support-management-table.xls";
   a.click();
+
   URL.revokeObjectURL(url);
 
   show("Excel file exported.");
@@ -1049,9 +1103,11 @@ $("statusFilter").onchange = renderRows;
 $("priorityFilter").onchange = renderRows;
 $("searchBox").oninput = renderRows;
 
-tickets = getManual().map(applyPatch);
-renderRows();
-requireEmployee();
+requireEmployee().then(user=>{
+  if(user){
+    loadAllSupportTickets();
+  }
+});
 </script>
 
 </body>
