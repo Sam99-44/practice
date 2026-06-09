@@ -6,6 +6,44 @@
 <title>Finance Department | Practice Online</title>
 
 <style>
+  .modal{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.45);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  z-index:2000;
+}
+
+.modal.open{
+  display:flex;
+}
+
+.modalBox{
+  width:min(900px,100%);
+  background:#fff;
+  border:1px solid #d9dee7;
+}
+
+.modalHead{
+  padding:14px 18px;
+  border-bottom:1px solid #e5e7eb;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.modalHead h3{
+  margin:0;
+  font-size:14px;
+  text-transform:uppercase;
+}
+
+.modalBody{
+  padding:12px;
+}
 :root{
   --nav:#1b1648;
   --red:#e11d2e;
@@ -608,10 +646,24 @@ td select{
     </div>
   </div>
 </div>
+<div id="proofModal" class="modal">
+  <div class="modalBox">
+    <div class="modalHead">
+      <h3>Proof of Payment</h3>
+      <button class="btn small secondary" onclick="closeProofModal()">Close</button>
+    </div>
 
+    <div class="modalBody">
+      <iframe id="proofFrame" style="width:100%;height:80vh;border:0;"></iframe>
+    </div>
+  </div>
+</div>
+
+  
 <script>
 const API = "https://api.practiceonline.co.za";
 let records = [];
+let pendingChanges = {};
 
 const $ = id => document.getElementById(id);
 
@@ -635,63 +687,30 @@ function esc(v){
     .replaceAll("'","&#039;");
 }
 
-function clean(v){
-  return String(v || "").trim();
-}
-
 function show(text,type="ok"){
   const m = $("msg");
   m.textContent = text;
   m.className = "msgBox " + type;
-  setTimeout(() => { m.className = "msgBox"; }, 4500);
+  setTimeout(()=>{m.className="msgBox"},4500);
 }
 
 function money(v){
   const n = Number(v || 0);
+  return n ? "R" + n.toLocaleString("en-ZA",{minimumFractionDigits:2,maximumFractionDigits:2}) : "";
+}
 
-  return n
-    ? "R" + n.toLocaleString("en-ZA",{
-        minimumFractionDigits:2,
-        maximumFractionDigits:2
-      })
-    : "";
+function normaliseStatus(v){
+  const s = String(v || "").toLowerCase();
+
+  if(s === "approved" || s === "paid") return "Approved";
+  if(s === "rejected" || s === "refunded") return "Rejected";
+  if(s === "under review" || s === "contacted") return "Under Review";
+
+  return "Pending";
 }
 
 function idOf(prefix,o,i){
   return o._id || o.id || o.paymentReference || o.learnerNumber || o.email || `${prefix}-${i}`;
-}
-
-function getManual(){
-  try{
-    return JSON.parse(localStorage.getItem("finance_manual_rows") || "[]");
-  }catch{
-    return [];
-  }
-}
-
-function saveManual(rows){
-  localStorage.setItem("finance_manual_rows",JSON.stringify(rows));
-}
-
-function normaliseStatus(v){
-  const s = String(v || "").trim();
-
-  if(!s) return "Pending";
-
-  const lower = s.toLowerCase();
-
-  if(lower === "pending") return "Pending";
-  if(lower === "awaiting proof") return "Pending";
-  if(lower === "under review") return "Under Review";
-  if(lower === "approved") return "Approved";
-  if(lower === "rejected") return "Rejected";
-  if(lower === "refunded") return "Rejected";
-  if(lower === "paid") return "Approved";
-  if(lower === "new") return "Pending";
-  if(lower === "contacted") return "Under Review";
-  if(lower === "closed") return "Approved";
-
-  return s;
 }
 
 function typeLabel(type){
@@ -701,95 +720,86 @@ function typeLabel(type){
   return "Manual";
 }
 
+function getManual(){
+  try{return JSON.parse(localStorage.getItem("finance_manual_rows") || "[]")}
+  catch{return []}
+}
+
+function saveManual(rows){
+  localStorage.setItem("finance_manual_rows",JSON.stringify(rows));
+}
+
 function normaliseQuote(q,i){
   return {
     id:String(idOf("quote",q,i)),
-    backendId:q._id || q.id || "",
+    backendId:q._id || "",
     source:"quote",
     type:"quote",
-
-    fullName:q.fullName || q.name || "",
+    fullName:q.fullName || "",
     email:q.email || "",
-    phone:q.cellphone || q.phone || q.contact || "",
+    phone:q.cellphone || q.phone || "",
     grade:q.grade || "",
     subject:q.subject || "Mathematics",
-    packagePlan:q.package || q.packagePlan || q.interestedPackage || "",
-
+    packagePlan:q.package || "",
     amount:q.amount || "",
-    paymentDate:q.paymentDate || q.createdAt || "",
-    reference:q.paymentReference || q.reference || "",
+    paymentDate:q.createdAt || "",
+    reference:q._id || "",
     proof:"",
-
     contacted:!!q.contacted,
     paid:!!q.paid,
-    status:normaliseStatus(q.financeStatus || q.status || "Pending"),
-    notes:q.notes || "",
-
-    raw:q
+    status:normaliseStatus(q.financeStatus || q.status),
+    notes:q.notes || ""
   };
 }
 
 function normaliseManualPayment(p,i){
-  const s = p.financeStatus || p.status || "Pending";
-
   return {
-    id:String(idOf("pay",p,i)),
-    backendId:p._id || p.id || "",
+    id:String(idOf("manual-payment",p,i)),
+    backendId:p._id || "",
     source:"manual-payment",
     type:"manual-payment",
-
-    fullName:p.userId?.fullName || p.user?.fullName || p.fullName || p.name || "",
-    email:p.userId?.email || p.user?.email || p.email || "",
-    phone:p.phone || p.cellphone || p.contact || "",
-    grade:p.userId?.grade || p.user?.grade || p.grade || "",
+    fullName:p.fullName || p.userId?.fullName || "",
+    email:p.email || p.userId?.email || "",
+    phone:p.phone || "",
+    grade:p.grade || p.userId?.grade || "",
     subject:p.subject || "Mathematics",
-    packagePlan:p.planType || p.plan || p.packagePlan || "",
-
+    packagePlan:p.planType || "",
     amount:p.amount || "",
     paymentDate:p.paymentDate || p.createdAt || "",
-    reference:p.paymentReference || p.reference || "",
-    proof:p.proofUrl || p.proof || p.fileUrl || "",
-
+    reference:p.paymentReference || "",
+    proof:p.proofUrl || "",
     contacted:!!p.contacted,
-    paid:!!p.paid || String(p.status || "").toLowerCase() === "approved",
-    status:normaliseStatus(s),
-    notes:p.financeNotes || "",
-
-    raw:p
+    paid:!!p.paid || p.status === "approved",
+    status:normaliseStatus(p.financeStatus || p.status),
+    notes:p.financeNotes || ""
   };
 }
 
 function normaliseEnrollment(e,i){
   return {
     id:String(idOf("enrollment",e,i)),
-    backendId:e._id || e.id || "",
+    backendId:e._id || "",
     source:"enrollment",
     type:"enrollment",
-
     fullName:e.learner?.fullName || e.learner?.username || "",
     email:e.learner?.email || "",
     phone:e.learner?.phone || e.learner?.cellphone || "",
     grade:e.learner?.grade || "",
     subject:e.subject || "Mathematics",
-
     packagePlan:e.paymentPlan || "Online Mathematics Classes",
     amount:e.amount || "",
     paymentDate:e.createdAt || "",
     reference:e.learnerNumber || "",
-
     proof:e.proofOfPaymentUrl || "",
-
     contacted:!!e.contacted,
     paid:!!e.paid || e.status === "approved",
-    status:normaliseStatus(e.financeStatus || e.status || "Pending"),
-    notes:e.financeNotes || e.additionalNotes || "",
-
-    raw:e
+    status:normaliseStatus(e.financeStatus || e.status),
+    notes:e.financeNotes || e.additionalNotes || ""
   };
 }
 
-async function fetchJson(path, options={}){
-  const res = await fetch(API + path, {
+async function fetchJson(path,options={}){
+  const res = await fetch(API + path,{
     ...options,
     headers:{
       "Content-Type":"application/json",
@@ -798,7 +808,7 @@ async function fetchJson(path, options={}){
     }
   });
 
-  const data = await res.json().catch(() => ({}));
+  const data = await res.json().catch(()=>({}));
 
   if(!res.ok){
     throw new Error(data.message || path + " failed");
@@ -807,38 +817,77 @@ async function fetchJson(path, options={}){
   return data;
 }
 
-async function saveBackend(r, patch){
-  if(!r.backendId) return;
+async function loadAllFinanceData(showMessage=true){
+  $("loadBtn").disabled = true;
+  $("loadBtn").textContent = "Loading...";
 
+  try{
+    let quotes = [];
+    let payments = [];
+    let enrollments = [];
+
+    try{ quotes = await fetchJson("/api/request-quote"); }catch(e){}
+    try{ payments = await fetchJson("/api/manual-payments"); }catch(e){}
+    try{ enrollments = await fetchJson("/api/enrollments"); }catch(e){}
+
+    if(!Array.isArray(quotes)) quotes = quotes.data || quotes.items || quotes.quotes || [];
+    if(!Array.isArray(payments)) payments = payments.data || payments.items || payments.payments || [];
+    if(!Array.isArray(enrollments)) enrollments = enrollments.data || enrollments.items || enrollments.enrollments || [];
+
+    records = [
+      ...quotes.map(normaliseQuote),
+      ...payments.map(normaliseManualPayment),
+      ...enrollments.map(normaliseEnrollment),
+      ...getManual()
+    ];
+
+    pendingChanges = {};
+    renderRows();
+
+    if(showMessage) show("Finance data loaded.");
+  }catch(e){
+    show("Could not load finance data: " + e.message,"error");
+  }finally{
+    $("loadBtn").disabled = false;
+    $("loadBtn").textContent = "Load Data";
+  }
+}
+
+function trackChange(id,key,value){
+  if(!pendingChanges[id]){
+    pendingChanges[id] = {};
+  }
+
+  pendingChanges[id][key] = value;
+
+  const index = records.findIndex(r => r.id === id);
+  if(index !== -1){
+    records[index][key] = value;
+
+    if(key === "status" && value === "Approved"){
+      records[index].paid = true;
+    }
+
+    if(key === "status" && value === "Rejected"){
+      records[index].paid = false;
+    }
+  }
+}
+
+async function saveBackend(r,patch){
   let endpoint = "";
 
-  if(r.source === "quote"){
-    endpoint = `/api/request-quote/${r.backendId}`;
-  }
-
-  if(r.source === "manual-payment"){
-    endpoint = `/api/manual-payments/${r.backendId}`;
-  }
-
-  if(r.source === "enrollment"){
-    endpoint = `/api/enrollments/${r.backendId}`;
-  }
+  if(r.source === "quote") endpoint = `/api/request-quote/${r.backendId}`;
+  if(r.source === "manual-payment") endpoint = `/api/manual-payments/${r.backendId}`;
+  if(r.source === "enrollment") endpoint = `/api/enrollments/${r.backendId}`;
 
   if(!endpoint) return;
 
   const body = {};
 
-  if("contacted" in patch){
-    body.contacted = patch.contacted;
-  }
-
-  if("paid" in patch){
-    body.paid = patch.paid;
-  }
-
-  if("amount" in patch && r.source === "quote"){
-    body.amount = Number(patch.amount) || 0;
-  }
+  if("contacted" in patch) body.contacted = patch.contacted;
+  if("paid" in patch) body.paid = patch.paid;
+  if("amount" in patch) body.amount = Number(patch.amount) || 0;
 
   if("status" in patch){
     body.financeStatus = patch.status;
@@ -859,133 +908,82 @@ async function saveBackend(r, patch){
   }
 
   if("notes" in patch){
-    if(r.source === "quote"){
-      body.notes = patch.notes;
-    }
-
-    if(r.source === "manual-payment" || r.source === "enrollment"){
-      body.financeNotes = patch.notes;
-    }
+    if(r.source === "quote") body.notes = patch.notes;
+    if(r.source === "manual-payment" || r.source === "enrollment") body.financeNotes = patch.notes;
   }
 
-  await fetchJson(endpoint, {
+  await fetchJson(endpoint,{
     method:"PATCH",
     body:JSON.stringify(body)
   });
 }
 
-async function patchRecord(id, patch){
-  const index = records.findIndex(r => r.id === id);
+async function saveRow(id){
+  const record = records.find(r => r.id === id);
 
-  if(index === -1) return;
-
-  const oldRecord = {...records[index]};
-  const updated = {...records[index], ...patch};
-
-  if(patch.status === "Approved"){
-    updated.paid = true;
-    updated.status = "Approved";
+  if(!record){
+    return show("Record not found.","error");
   }
 
-  if(patch.status === "Rejected"){
-    updated.paid = false;
-    updated.status = "Rejected";
-  }
+  const patch = pendingChanges[id];
 
-  if(patch.paid === true){
-    updated.status = "Approved";
+  if(!patch){
+    return show("No changes detected.","error");
   }
-
-  records[index] = updated;
-  renderRows();
 
   try{
-    if(updated.source === "manual"){
-      const manualRows = getManual().map(r => r.id === id ? updated : r);
+    if(record.source === "manual"){
+      const manualRows = getManual().map(r => r.id === id ? {...r,...patch} : r);
       saveManual(manualRows);
-      show("Manual row updated.");
+      delete pendingChanges[id];
+      show("Manual row saved.");
       return;
     }
 
-    await saveBackend(oldRecord,{
-      contacted:updated.contacted,
-      paid:updated.paid,
-      status:updated.status,
-      notes:updated.notes,
-      amount:updated.amount
-    });
+    await saveBackend(record,patch);
+    delete pendingChanges[id];
 
-    show("Finance record saved.");
+    show("Record saved successfully.");
     await loadAllFinanceData(false);
   }catch(e){
-    records[index] = oldRecord;
-    renderRows();
     show("Could not save record: " + e.message,"error");
   }
 }
 
-async function loadAllFinanceData(showMessage=true){
-  const btn = $("loadBtn");
-  btn.disabled = true;
-  btn.textContent = "Loading...";
+function quickUpdate(id,patch){
+  Object.keys(patch).forEach(key=>{
+    trackChange(id,key,patch[key]);
+  });
 
-  try{
-    let quotes = [];
-    let payments = [];
-    let enrollments = [];
+  saveRow(id);
+}
 
-    try{
-      quotes = await fetchJson("/api/request-quote");
-    }catch(e){
-      console.warn("Quotes failed:", e.message);
-    }
-
-    try{
-      payments = await fetchJson("/api/manual-payments");
-    }catch(e){
-      console.warn("Manual payments failed:", e.message);
-    }
-
-    try{
-      enrollments = await fetchJson("/api/enrollments");
-    }catch(e){
-      console.warn("Enrollments failed:", e.message);
-    }
-
-    if(!Array.isArray(quotes)){
-      quotes = quotes.items || quotes.data || quotes.quotes || [];
-    }
-
-    if(!Array.isArray(payments)){
-      payments = payments.items || payments.data || payments.payments || [];
-    }
-
-    if(!Array.isArray(enrollments)){
-      enrollments = enrollments.items || enrollments.data || enrollments.enrollments || [];
-    }
-
-    records = [
-      ...quotes.map(normaliseQuote),
-      ...payments.map(normaliseManualPayment),
-      ...enrollments.map(normaliseEnrollment),
-      ...getManual()
-    ];
-
-    renderRows();
-
-    if(showMessage){
-      show("Finance data loaded.");
-    }
-  }catch(e){
-    show("Could not load finance data: " + e.message,"error");
-  }finally{
-    btn.disabled = false;
-    btn.textContent = "Load Data";
+function viewProof(url){
+  if(!url){
+    return show("No proof of payment uploaded.","error");
   }
+
+  $("proofFrame").src = url;
+  $("proofModal").classList.add("open");
+}
+
+function closeProofModal(){
+  $("proofModal").classList.remove("open");
+  $("proofFrame").src = "";
 }
 
 function badge(text,c=""){
   return `<span class="badge ${c}">${esc(text)}</span>`;
+}
+
+function statusColor(s){
+  s = String(s || "").toLowerCase();
+
+  if(s.includes("approved")) return "green";
+  if(s.includes("reject")) return "red";
+  if(s.includes("review") || s.includes("pending")) return "orange";
+
+  return "blue";
 }
 
 function filtered(){
@@ -996,33 +994,21 @@ function filtered(){
   return records.filter(r=>{
     if(tf !== "all" && r.type !== tf) return false;
 
-    if(sf !== "all"){
-      const st = String(r.status || "").toLowerCase();
+    const st = String(r.status || "").toLowerCase();
 
-      if(sf === "not contacted" && r.contacted) return false;
-      if(sf === "client contacted" && !r.contacted) return false;
-      if(sf === "not paid" && r.paid) return false;
-      if(sf === "paid" && !r.paid) return false;
-      if(sf === "pending" && st !== "pending") return false;
-      if(sf === "under review" && st !== "under review") return false;
-      if(sf === "approved" && st !== "approved") return false;
-      if(sf === "rejected" && st !== "rejected") return false;
-    }
+    if(sf === "not contacted" && r.contacted) return false;
+    if(sf === "client contacted" && !r.contacted) return false;
+    if(sf === "not paid" && r.paid) return false;
+    if(sf === "paid" && !r.paid) return false;
+    if(sf === "pending" && st !== "pending") return false;
+    if(sf === "under review" && st !== "under review") return false;
+    if(sf === "approved" && st !== "approved") return false;
+    if(sf === "rejected" && st !== "rejected") return false;
 
     if(q && !Object.values(r).join(" ").toLowerCase().includes(q)) return false;
 
     return true;
   });
-}
-
-function statusColor(s){
-  s = String(s || "").toLowerCase();
-
-  if(s.includes("approved") || s.includes("paid")) return "green";
-  if(s.includes("reject")) return "red";
-  if(s.includes("review") || s.includes("pending")) return "orange";
-
-  return "blue";
 }
 
 function renderRows(){
@@ -1032,67 +1018,70 @@ function renderRows(){
   $("contactedCount").textContent = records.filter(r => r.contacted).length;
   $("paidCount").textContent = records.filter(r => r.paid || r.status === "Approved").length;
   $("revenueCount").textContent =
-    money(records.filter(r => r.paid).reduce((s,r) => s + Number(r.amount || 0),0)) || "R0";
+    money(records.filter(r => r.paid).reduce((s,r)=>s + Number(r.amount || 0),0)) || "R0";
 
-  $("financeRows").innerHTML = rows.length
-    ? rows.map((r,i)=>`
-      <tr>
-        <td>${i + 1}</td>
-        <td>${badge(typeLabel(r.type), r.type === "quote" ? "blue" : r.type === "enrollment" ? "green" : "orange")}</td>
-        <td>${esc(r.fullName || "-")}</td>
-        <td>${esc(r.email || "-")}</td>
-        <td>${esc(r.phone || "-")}</td>
-        <td>${esc(r.grade || "-")}</td>
-        <td>${esc(r.subject || "-")}</td>
-        <td>${esc(r.packagePlan || "-")}</td>
+  $("financeRows").innerHTML = rows.length ? rows.map((r,i)=>`
+    <tr>
+      <td>${i + 1}</td>
+      <td>${badge(typeLabel(r.type), r.type==="quote" ? "blue" : r.type==="enrollment" ? "green" : "orange")}</td>
+      <td>${esc(r.fullName || "-")}</td>
+      <td>${esc(r.email || "-")}</td>
+      <td>${esc(r.phone || "-")}</td>
+      <td>${esc(r.grade || "-")}</td>
+      <td>${esc(r.subject || "-")}</td>
+      <td>${esc(r.packagePlan || "-")}</td>
 
-        <td>
-          <input class="amountInput" type="number" step="0.01" value="${esc(r.amount || "")}" onchange="patchRecord('${esc(r.id)}',{amount:this.value})">
-        </td>
+      <td>
+        <input class="amountInput" type="number" step="0.01" value="${esc(r.amount || "")}" onchange="trackChange('${esc(r.id)}','amount',this.value)">
+      </td>
 
-        <td>${r.paymentDate ? esc(new Date(r.paymentDate).toLocaleDateString("en-ZA")) : "-"}</td>
-        <td>${esc(r.reference || "-")}</td>
+      <td>${r.paymentDate ? esc(new Date(r.paymentDate).toLocaleDateString("en-ZA")) : "-"}</td>
+      <td>${esc(r.reference || "-")}</td>
 
-        <td>
-          ${r.proof ? `<a class="badge blue" href="${esc(r.proof)}" target="_blank">Open Proof</a>` : "-"}
-        </td>
+      <td>
+        ${
+          r.proof
+            ? `<button class="btn small secondary" onclick="viewProof('${esc(r.proof)}')">View Proof</button>`
+            : `<span class="badge red">No Proof</span>`
+        }
+      </td>
 
-        <td>
-          <select onchange="patchRecord('${esc(r.id)}',{contacted:this.value==='Yes'})">
-            <option ${r.contacted ? "selected" : ""}>Yes</option>
-            <option ${!r.contacted ? "selected" : ""}>No</option>
-          </select>
-        </td>
+      <td>
+        <select onchange="trackChange('${esc(r.id)}','contacted',this.value==='Yes')">
+          <option ${r.contacted ? "selected" : ""}>Yes</option>
+          <option ${!r.contacted ? "selected" : ""}>No</option>
+        </select>
+      </td>
 
-        <td>
-          <select onchange="patchRecord('${esc(r.id)}',{paid:this.value==='Yes',status:this.value==='Yes'?'Approved':'Pending'})">
-            <option ${r.paid ? "selected" : ""}>Yes</option>
-            <option ${!r.paid ? "selected" : ""}>No</option>
-          </select>
-        </td>
+      <td>
+        <select onchange="trackChange('${esc(r.id)}','paid',this.value==='Yes')">
+          <option ${r.paid ? "selected" : ""}>Yes</option>
+          <option ${!r.paid ? "selected" : ""}>No</option>
+        </select>
+      </td>
 
-        <td>
-          <select class="statusSelect" onchange="patchRecord('${esc(r.id)}',{status:this.value})">
-            <option ${r.status==="Pending" ? "selected" : ""}>Pending</option>
-            <option ${r.status==="Under Review" ? "selected" : ""}>Under Review</option>
-            <option ${r.status==="Approved" ? "selected" : ""}>Approved</option>
-            <option ${r.status==="Rejected" ? "selected" : ""}>Rejected</option>
-          </select>
-          ${badge(r.status || "Pending", statusColor(r.status))}
-        </td>
+      <td>
+        <select class="statusSelect" onchange="trackChange('${esc(r.id)}','status',this.value)">
+          <option ${r.status==="Pending" ? "selected" : ""}>Pending</option>
+          <option ${r.status==="Under Review" ? "selected" : ""}>Under Review</option>
+          <option ${r.status==="Approved" ? "selected" : ""}>Approved</option>
+          <option ${r.status==="Rejected" ? "selected" : ""}>Rejected</option>
+        </select>
+        ${badge(r.status || "Pending",statusColor(r.status))}
+      </td>
 
-        <td>
-          <input class="notesInput" value="${esc(r.notes || "")}" placeholder="Finance notes" onchange="patchRecord('${esc(r.id)}',{notes:this.value})">
-        </td>
+      <td>
+        <input class="notesInput" value="${esc(r.notes || "")}" placeholder="Finance notes" onchange="trackChange('${esc(r.id)}','notes',this.value)">
+      </td>
 
-        <td class="actions">
-          <button class="btn small secondary" onclick="patchRecord('${esc(r.id)}',{contacted:true,status:'Under Review'})">Contacted</button>
-          <button class="btn small success" onclick="patchRecord('${esc(r.id)}',{paid:true,status:'Approved'})">Approve</button>
-          <button class="btn small danger" onclick="patchRecord('${esc(r.id)}',{paid:false,status:'Rejected'})">Reject</button>
-        </td>
-      </tr>
-    `).join("")
-    : `<tr><td colspan="17">No finance records found.</td></tr>`;
+      <td class="actions">
+        <button class="btn small secondary" onclick="quickUpdate('${esc(r.id)}',{contacted:true,status:'Under Review'})">Contacted</button>
+        <button class="btn small success" onclick="quickUpdate('${esc(r.id)}',{paid:true,status:'Approved'})">Approve</button>
+        <button class="btn small danger" onclick="quickUpdate('${esc(r.id)}',{paid:false,status:'Rejected'})">Reject</button>
+        <button class="btn small success" onclick="saveRow('${esc(r.id)}')">Save</button>
+      </td>
+    </tr>
+  `).join("") : `<tr><td colspan="17">No finance records found.</td></tr>`;
 }
 
 function toggleAdd(){
@@ -1102,7 +1091,6 @@ function toggleAdd(){
 function addManual(){
   const row = {
     id:"manual-" + Date.now(),
-    backendId:"",
     source:"manual",
     type:$("fType").value || "manual",
     fullName:$("fFullName").value,
@@ -1128,7 +1116,6 @@ function addManual(){
   records.push(row);
   renderRows();
   toggleAdd();
-
   show("Manual row added.");
 }
 
@@ -1140,22 +1127,9 @@ function exportExcel(){
   }
 
   const headers = [
-    "No",
-    "Type",
-    "Full Name",
-    "Email",
-    "Phone",
-    "Grade",
-    "Subject",
-    "Package / Plan",
-    "Amount",
-    "Payment Date",
-    "Reference",
-    "Proof",
-    "Client Contacted",
-    "Paid",
-    "Finance Status",
-    "Notes"
+    "No","Type","Full Name","Email","Phone","Grade","Subject",
+    "Package / Plan","Amount","Payment Date","Reference","Proof",
+    "Client Contacted","Paid","Finance Status","Notes"
   ];
 
   const body = rows.map((r,i)=>[
@@ -1179,8 +1153,8 @@ function exportExcel(){
 
   const table =
     `<table border="1">
-      <tr>${headers.map(h => `<th>${esc(h)}</th>`).join("")}</tr>
-      ${body.map(row => `<tr>${row.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}
+      <tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>
+      ${body.map(row=>`<tr>${row.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}
     </table>`;
 
   const blob = new Blob(
@@ -1212,5 +1186,3 @@ $("searchBox").oninput = renderRows;
 records = getManual();
 renderRows();
 </script>
-</body>
-</html>
