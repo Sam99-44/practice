@@ -1,6 +1,3 @@
-from pathlib import Path
-
-employees_js = r'''// routes/employees.js
 // Employee Portal Backend Routes
 // Handles employee access, employee management, department permissions, and logs.
 
@@ -1039,5 +1036,3 @@ export {
 export default router;
 '''
 
-Path("/mnt/data/employees.js").write_text(employees_js, encoding="utf-8")
-print("/mnt/data/employees.js")
