@@ -578,5 +578,4 @@ router.use((err, req, res, next) => {
 });
 
 export default router;
-'''
 
