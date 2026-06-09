@@ -624,7 +624,9 @@ let quizzes = [];
 const $ = id => document.getElementById(id);
 
 function token(){
-  return localStorage.getItem("token") || "";
+  return localStorage.getItem("employeeToken") ||
+         localStorage.getItem("token") ||
+         "";
 }
 
 function logout(){
@@ -649,17 +651,15 @@ function show(text,type="ok"){
 }
 
 async function safeJson(res){
-  try{
-    return await res.json();
-  }catch{
-    return {};
-  }
+  try{return await res.json()}
+  catch{return {}}
 }
 
 async function fetchJson(path,options={}){
   const res = await fetch(API + path, {
     ...options,
     headers:{
+      "Content-Type":"application/json",
       ...(options.headers || {}),
       Authorization:"Bearer " + token()
     }
@@ -686,13 +686,7 @@ async function requireEmployee(){
   }
 
   try{
-    let u;
-
-    try{
-      u = await fetchJson("/api/employees/me");
-    }catch{
-      u = await fetchJson("/api/auth/me");
-    }
+    const u = await fetchJson("/api/employees/me");
 
     const role = String(u.role || "").toLowerCase();
     const allowed = ["admin","tester","academic","editor"];
@@ -721,10 +715,11 @@ function normaliseQuiz(q,i){
     topic:q.topic || q.subject || "Mathematics",
     questions:Array.isArray(questions) ? questions.length : Number(q.questionCount || q.questionsCount || 0),
     attempts:Number(q.attempts || q.attemptCount || q.totalAttempts || 0),
-    isPublished:Boolean(q.isPublished || q.published),
-    isFrozen:Boolean(q.isFrozen || q.frozen),
+    isPublished:!!q.isPublished,
+    isFrozen:!!q.isFrozen,
     updatedAt:q.updatedAt || q.createdAt || q.date || "",
-    createdBy:q.createdBy?.fullName || q.createdBy?.username || q.author || "Academic Team"
+    createdBy:q.createdBy?.fullName || q.createdBy?.username || q.author || "Academic Team",
+    raw:q
   };
 }
 
@@ -737,37 +732,25 @@ async function loadAssessments(){
     const data = await fetchJson("/api/quizzes?all=1");
     quizzes = normaliseArray(data).map(normaliseQuiz);
 
-    if(!quizzes.length){
-      buildFallbackQuizzes();
-    }
-
     updateTopics();
     renderAll();
     show("Assessments loaded.");
   }catch(e){
-    buildFallbackQuizzes();
+    quizzes = [];
     updateTopics();
     renderAll();
-    show("Could not load backend assessments, so fallback assessments were shown.","error");
+    show("Could not load assessments: " + e.message,"error");
   }finally{
     btn.disabled = false;
     btn.textContent = "Refresh";
   }
 }
 
-function buildFallbackQuizzes(){
-  const now = new Date().toISOString();
-
-  quizzes = [
-    normaliseQuiz({id:"fallback-1", title:"Algebra and Equations Test", grade:"10", topic:"Algebra", questionsCount:12, attempts:34, isPublished:true, isFrozen:false, updatedAt:now},0),
-    normaliseQuiz({id:"fallback-2", title:"Functions Assessment", grade:"11", topic:"Functions", questionsCount:10, attempts:18, isPublished:false, isFrozen:false, updatedAt:now},1),
-    normaliseQuiz({id:"fallback-3", title:"Calculus Revision Quiz", grade:"12", topic:"Calculus", questionsCount:15, attempts:42, isPublished:true, isFrozen:true, updatedAt:now},2)
-  ];
-}
-
 function updateTopics(){
   const topics = [...new Set(quizzes.map(q => q.topic).filter(Boolean))].sort();
-  $("topicFilter").innerHTML = `<option value="all">All topics</option>` + topics.map(t=>`<option>${esc(t)}</option>`).join("");
+  $("topicFilter").innerHTML =
+    `<option value="all">All topics</option>` +
+    topics.map(t=>`<option>${esc(t)}</option>`).join("");
 }
 
 function formatDate(v){
@@ -856,7 +839,9 @@ function renderQuizzes(){
 }
 
 function renderActivity(){
-  const recent = quizzes.slice().sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt)).slice(0,12);
+  const recent = quizzes.slice()
+    .sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt))
+    .slice(0,12);
 
   $("activityRows").innerHTML = recent.length ? recent.map(q=>`
     <tr>
@@ -888,7 +873,10 @@ function renderQuestionBank(){
     grouped[key].questions += Number(q.questions || 0);
   });
 
-  const rows = Object.values(grouped).sort((a,b)=>String(a.grade).localeCompare(String(b.grade)) || String(a.topic).localeCompare(String(b.topic)));
+  const rows = Object.values(grouped).sort((a,b)=>
+    String(a.grade).localeCompare(String(b.grade)) ||
+    String(a.topic).localeCompare(String(b.topic))
+  );
 
   $("questionRows").innerHTML = rows.length ? rows.map(r=>`
     <tr>
@@ -904,50 +892,117 @@ function selectedIds(){
   return [...document.querySelectorAll(".rowCheck:checked")].map(x => x.value);
 }
 
-function patchQuiz(id,patch){
-  quizzes = quizzes.map(q => q.id === id ? {...q,...patch,updatedAt:new Date().toISOString()} : q);
-  renderAll();
-  show("Assessment updated locally.");
+async function patchQuiz(id,patch){
+  const quiz = quizzes.find(q => q.id === id);
+
+  if(!quiz) return;
+
+  try{
+    await fetchJson("/api/quizzes/" + encodeURIComponent(id), {
+      method:"PUT",
+      body:JSON.stringify({
+        ...quiz.raw,
+        isPublished:"isPublished" in patch ? patch.isPublished : quiz.isPublished,
+        isFrozen:"isFrozen" in patch ? patch.isFrozen : quiz.isFrozen,
+        frozenAt:patch.isFrozen ? new Date().toISOString() : quiz.raw?.frozenAt || null,
+        publishedAt:patch.isPublished ? new Date().toISOString() : quiz.raw?.publishedAt || null
+      })
+    });
+
+    show("Assessment updated.");
+    await loadAssessments();
+  }catch(e){
+    show("Could not update assessment: " + e.message,"error");
+  }
 }
 
-function applyToSelected(patch){
+async function applyToSelected(patch){
   const ids = selectedIds();
 
   if(!ids.length){
     return show("Please select at least one assessment.","error");
   }
 
-  quizzes = quizzes.map(q => ids.includes(q.id) ? {...q,...patch,updatedAt:new Date().toISOString()} : q);
-  $("selectAll").checked = false;
-  renderAll();
-  show("Selected assessments updated locally.");
+  try{
+    for(const id of ids){
+      await patchQuiz(id,patch);
+    }
+
+    $("selectAll").checked = false;
+    show("Selected assessments updated.");
+  }catch(e){
+    show(e.message,"error");
+  }
 }
 
-function duplicateQuiz(id){
+async function duplicateQuiz(id){
   const q = quizzes.find(x => x.id === id);
 
   if(!q) return;
 
-  const copy = {
-    ...q,
-    id:"copy-" + Date.now(),
-    title:q.title + " Copy",
-    isPublished:false,
-    isFrozen:false,
-    updatedAt:new Date().toISOString()
-  };
+  try{
+    const raw = q.raw || {};
 
-  quizzes.unshift(copy);
-  updateTopics();
-  renderAll();
-  show("Assessment duplicated locally.");
+    await fetchJson("/api/quizzes", {
+      method:"POST",
+      body:JSON.stringify({
+        grade:raw.grade,
+        title:(raw.title || q.title) + " Copy",
+        topic:raw.topic || q.topic,
+        paper:raw.paper || "paper1",
+        difficulty:raw.difficulty || "moderate",
+        timeLimitMinutes:raw.timeLimitMinutes || 10,
+        instructions:raw.instructions || "",
+        questions:raw.questions || [],
+        publishNow:false,
+        sendPublishEmail:false
+      })
+    });
+
+    show("Assessment duplicated.");
+    await loadAssessments();
+  }catch(e){
+    show("Could not duplicate assessment: " + e.message,"error");
+  }
 }
 
-function deleteQuiz(id){
+async function deleteQuiz(id){
   if(!confirm("Delete assessment?")) return;
-  quizzes = quizzes.filter(q => q.id !== id);
-  renderAll();
-  show("Assessment deleted locally.");
+
+  try{
+    await fetchJson("/api/quizzes/" + encodeURIComponent(id), {
+      method:"DELETE"
+    });
+
+    show("Assessment deleted.");
+    await loadAssessments();
+  }catch(e){
+    show("Could not delete assessment: " + e.message,"error");
+  }
+}
+
+async function deleteSelected(){
+  const ids = selectedIds();
+
+  if(!ids.length){
+    return show("Please select at least one assessment.","error");
+  }
+
+  if(!confirm("Delete selected assessments?")) return;
+
+  try{
+    for(const id of ids){
+      await fetchJson("/api/quizzes/" + encodeURIComponent(id), {
+        method:"DELETE"
+      });
+    }
+
+    $("selectAll").checked = false;
+    show("Selected assessments deleted.");
+    await loadAssessments();
+  }catch(e){
+    show("Could not delete selected assessments: " + e.message,"error");
+  }
 }
 
 function exportExcel(){
@@ -984,9 +1039,11 @@ function exportExcel(){
 
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
+
   a.href = url;
   a.download = "academic-assessments.xls";
   a.click();
+
   URL.revokeObjectURL(url);
 
   show("Excel file exported.");
@@ -998,20 +1055,7 @@ $("exportBtn").onclick = exportExcel;
 $("publishSelectedBtn").onclick = ()=>applyToSelected({isPublished:true});
 $("freezeSelectedBtn").onclick = ()=>applyToSelected({isFrozen:true});
 $("unpublishSelectedBtn").onclick = ()=>applyToSelected({isPublished:false});
-$("deleteSelectedBtn").onclick = ()=>{
-  const ids = selectedIds();
-
-  if(!ids.length){
-    return show("Please select at least one assessment.","error");
-  }
-
-  if(!confirm("Delete selected assessments?")) return;
-
-  quizzes = quizzes.filter(q => !ids.includes(q.id));
-  $("selectAll").checked = false;
-  renderAll();
-  show("Selected assessments deleted locally.");
-};
+$("deleteSelectedBtn").onclick = deleteSelected;
 
 $("selectAll").onchange = ()=>{
   document.querySelectorAll(".rowCheck").forEach(c => c.checked = $("selectAll").checked);
@@ -1025,8 +1069,11 @@ $("searchBox").oninput = renderAll;
 $("importBtn").onclick = ()=>show("Import Questions can be linked to your import page when ready.");
 $("questionBankBtn").onclick = ()=>document.getElementById("questionRows").scrollIntoView({behavior:"smooth",block:"center"});
 
-requireEmployee().then(()=>loadAssessments());
+requireEmployee().then(user=>{
+  if(user){
+    loadAssessments();
+  }
+});
 </script>
-
 </body>
 </html>
