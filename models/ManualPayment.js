@@ -21,6 +21,7 @@ const ManualPaymentSchema = new mongoose.Schema(
       required: true,
       trim: true,
       lowercase: true,
+      index: true,
     },
 
     phone: {
@@ -33,6 +34,7 @@ const ManualPaymentSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: ["quiz", "lessons"],
+      index: true,
     },
 
     amount: {
@@ -50,6 +52,7 @@ const ManualPaymentSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      index: true,
     },
 
     proofUrl: {
@@ -74,6 +77,38 @@ const ManualPaymentSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+    },
+
+    contacted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    paid: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    financeStatus: {
+      type: String,
+      enum: [
+        "Pending",
+        "Awaiting Proof",
+        "Under Review",
+        "Approved",
+        "Rejected",
+        "Refunded",
+      ],
+      default: "Pending",
+      index: true,
+    },
+
+    financeNotes: {
+      type: String,
+      trim: true,
+      default: "",
     },
 
     status: {
@@ -110,11 +145,29 @@ const ManualPaymentSchema = new mongoose.Schema(
   }
 );
 
+ManualPaymentSchema.pre("validate", function (next) {
+  if (this.financeStatus === "Approved") {
+    this.status = "approved";
+    this.paid = true;
+  }
+
+  if (this.financeStatus === "Rejected") {
+    this.status = "rejected";
+    this.paid = false;
+  }
+
+  next();
+});
+
 ManualPaymentSchema.index({ createdAt: -1 });
 ManualPaymentSchema.index({ email: 1 });
 ManualPaymentSchema.index({ paymentReference: 1 });
 ManualPaymentSchema.index({ userId: 1, status: 1 });
+ManualPaymentSchema.index({ financeStatus: 1 });
+ManualPaymentSchema.index({ contacted: 1, paid: 1 });
 
-const ManualPayment = mongoose.model("ManualPayment", ManualPaymentSchema);
+const ManualPayment =
+  mongoose.models.ManualPayment ||
+  mongoose.model("ManualPayment", ManualPaymentSchema);
 
 export default ManualPayment;
