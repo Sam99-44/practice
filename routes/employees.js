@@ -1,4 +1,6 @@
-// routes/employees.js
+from pathlib import Path
+
+employees_js = r'''// routes/employees.js
 // Employee Portal Backend Routes
 // Handles employee access, employee management, department permissions, and logs.
 
@@ -35,6 +37,15 @@ export const DEPARTMENT_PERMISSIONS = {
   tutor: ["tutor"],
 };
 
+export const EMPLOYEE_DEPARTMENTS = [
+  "academic",
+  "operations",
+  "finance",
+  "support",
+  "tutor",
+  "admin",
+];
+
 function cleanSpaces(value = "") {
   return String(value || "").trim().replace(/\s+/g, " ");
 }
@@ -50,6 +61,11 @@ function isValidEmail(email) {
 function normalizeRole(role = "") {
   const r = String(role || "").trim().toLowerCase();
   return EMPLOYEE_ROLES.includes(r) ? r : "";
+}
+
+function normalizeDepartment(department = "") {
+  const d = String(department || "").trim().toLowerCase();
+  return EMPLOYEE_DEPARTMENTS.includes(d) ? d : "";
 }
 
 function isEmployeeRole(role = "") {
@@ -74,6 +90,26 @@ function canAccessDepartment(role = "", department = "") {
   return allowed.includes("all") || allowed.includes(d);
 }
 
+function employeePayload(employee) {
+  return {
+    _id: employee._id,
+    fullName: employee.fullName || "",
+    username: employee.username || "",
+    email: employee.email || "",
+    role: employee.role || "",
+    department: employee.department || "",
+    employeeNumber: employee.employeeNumber || "",
+    jobTitle: employee.jobTitle || "",
+    phone: employee.phone || "",
+    isActive: employee.isActive !== false,
+    emailVerified: !!employee.emailVerified,
+    lastLoginAt: employee.lastLoginAt || null,
+    departments: DEPARTMENT_PERMISSIONS[employee.role] || [],
+    createdAt: employee.createdAt,
+    updatedAt: employee.updatedAt,
+  };
+}
+
 /* ------------------ AUTH MIDDLEWARE ------------------ */
 
 function employeeAuthRequired(req, res, next) {
@@ -96,7 +132,7 @@ function employeeAuthRequired(req, res, next) {
 async function employeeOnly(req, res, next) {
   try {
     const employee = await Employee.findById(req.user.userId).select(
-      "fullName username email role department isActive emailVerified"
+      "fullName username email role department employeeNumber jobTitle phone isActive emailVerified lastLoginAt createdAt updatedAt"
     );
 
     if (!employee) {
@@ -199,29 +235,23 @@ async function writeEmployeeLog(req, action, details = {}) {
   }
 }
 
-/* ------------------ ROUTE 1: EMPLOYEE LOGIN ------------------ */
-/* ---------------- FIRST ADMIN REGISTRATION ---------------- */
+/* ------------------ FIRST ADMIN REGISTRATION ------------------ */
 
 router.post("/register-first-admin", async (req, res) => {
   try {
-    const {
-      fullName,
-      username,
-      email,
-      password,
-      employeeNumber
-    } = req.body;
+    const { fullName, username, email, password, employeeNumber } = req.body;
 
     const cleanUserEmail = cleanEmail(email);
 
-    if (
-      !fullName ||
-      !username ||
-      !cleanUserEmail ||
-      !password
-    ) {
+    if (!fullName || !username || !cleanUserEmail || !password) {
       return res.status(400).json({
-        message: "All required fields must be provided."
+        message: "All required fields must be provided.",
+      });
+    }
+
+    if (!isValidEmail(cleanUserEmail)) {
+      return res.status(400).json({
+        message: "Please enter a valid email address.",
       });
     }
 
@@ -229,54 +259,41 @@ router.post("/register-first-admin", async (req, res) => {
 
     if (employeeCount > 0) {
       return res.status(403).json({
-        message:
-          "First administrator already exists."
+        message: "First administrator already exists.",
       });
     }
 
-    const passwordHash = await bcrypt.hash(
-      password,
-      12
-    );
+    const passwordHash = await bcrypt.hash(password, 12);
 
     const employee = await Employee.create({
-      fullName: String(fullName).trim(),
-      username: String(username).trim(),
+      fullName: cleanSpaces(fullName),
+      username: cleanSpaces(username),
       email: cleanUserEmail,
       passwordHash,
-
       role: "admin",
       department: "admin",
-
-      employeeNumber:
-        employeeNumber || "EMP001",
-
+      employeeNumber: employeeNumber || "EMP001",
       jobTitle: "System Administrator",
-
       emailVerified: true,
-      isActive: true
+      isActive: true,
     });
 
     res.status(201).json({
       success: true,
-      message:
-        "Administrator account created successfully.",
-      employeeId: employee._id
+      message: "Administrator account created successfully.",
+      employeeId: employee._id,
     });
-
   } catch (error) {
-
-    console.error(
-      "REGISTER FIRST ADMIN ERROR:",
-      error
-    );
+    console.error("REGISTER FIRST ADMIN ERROR:", error);
 
     res.status(500).json({
-      message:
-        "Could not create administrator account."
+      message: "Could not create administrator account.",
     });
   }
 });
+
+/* ------------------ EMPLOYEE LOGIN ------------------ */
+
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -329,7 +346,11 @@ router.post("/login", async (req, res) => {
     await employee.save();
 
     const token = jwt.sign(
-      { userId: employee._id, role: employee.role, accountType: "employee" },
+      {
+        userId: employee._id,
+        role: employee.role,
+        accountType: "employee",
+      },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -345,17 +366,7 @@ router.post("/login", async (req, res) => {
     return res.json({
       message: "Employee login successful.",
       token,
-      user: {
-        _id: employee._id,
-        fullName: employee.fullName || "",
-        username: employee.username || "",
-        email: employee.email || "",
-        role: employee.role || "",
-        department: employee.department || "",
-        employeeNumber: employee.employeeNumber || "",
-        jobTitle: employee.jobTitle || "",
-        departments: DEPARTMENT_PERMISSIONS[employee.role] || [],
-      },
+      user: employeePayload(employee),
     });
   } catch (error) {
     console.error("POST /api/employees/login error:", error.message);
@@ -363,32 +374,20 @@ router.post("/login", async (req, res) => {
   }
 });
 
-/* ------------------ ROUTE 2: CURRENT EMPLOYEE ------------------ */
+/* ------------------ CURRENT EMPLOYEE ------------------ */
 
 router.get("/me", employeeAuthRequired, employeeOnly, async (req, res) => {
   try {
-    const employee = req.employee;
-
     await writeEmployeeLog(req, "employee_opened_portal");
 
-    return res.json({
-      _id: employee._id,
-      fullName: employee.fullName || "",
-      username: employee.username || "",
-      email: employee.email || "",
-      role: employee.role || "",
-      department: employee.department || "",
-      employeeNumber: employee.employeeNumber || "",
-      jobTitle: employee.jobTitle || "",
-      departments: DEPARTMENT_PERMISSIONS[employee.role] || [],
-    });
+    return res.json(employeePayload(req.employee));
   } catch (error) {
     console.error("GET /api/employees/me error:", error.message);
     return res.status(500).json({ message: "Server error." });
   }
 });
 
-/* ------------------ ROUTE 3: CHECK DEPARTMENT ACCESS ------------------ */
+/* ------------------ CHECK DEPARTMENT ACCESS ------------------ */
 
 router.get(
   "/access/:department",
@@ -411,45 +410,253 @@ router.get(
   }
 );
 
-/* ------------------ ROUTE 4: LIST EMPLOYEES ------------------ */
+/* ------------------ EMPLOYEE DASHBOARD STATS ------------------ */
+
+router.get(
+  "/stats/dashboard",
+  employeeAuthRequired,
+  adminEmployeeOnly,
+  async (req, res) => {
+    try {
+      const total = await Employee.countDocuments({
+        role: { $in: EMPLOYEE_ROLES },
+      });
+
+      const active = await Employee.countDocuments({
+        role: { $in: EMPLOYEE_ROLES },
+        isActive: true,
+      });
+
+      const inactive = await Employee.countDocuments({
+        role: { $in: EMPLOYEE_ROLES },
+        isActive: false,
+      });
+
+      const departments = {};
+
+      for (const department of EMPLOYEE_DEPARTMENTS) {
+        departments[department] = await Employee.countDocuments({
+          role: { $in: EMPLOYEE_ROLES },
+          department,
+        });
+      }
+
+      const roles = {};
+
+      for (const role of EMPLOYEE_ROLES) {
+        roles[role] = await Employee.countDocuments({ role });
+      }
+
+      return res.json({
+        total,
+        active,
+        inactive,
+        disabled: inactive,
+        departments,
+        roles,
+        academic: departments.academic || 0,
+        operations: departments.operations || 0,
+        finance: departments.finance || 0,
+        support: departments.support || 0,
+        tutors: departments.tutor || 0,
+        admin: departments.admin || 0,
+      });
+    } catch (error) {
+      console.error("GET /api/employees/stats/dashboard error:", error.message);
+
+      return res.status(500).json({
+        message: "Failed to load statistics.",
+      });
+    }
+  }
+);
+
+/* ------------------ EMPLOYEE LOGS ------------------ */
+/* IMPORTANT: This route must appear before "/:id" */
+
+router.get(
+  "/logs/recent",
+  employeeAuthRequired,
+  adminEmployeeOnly,
+  async (req, res) => {
+    try {
+      const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+
+      const logs = await EmployeeLog.find({})
+        .populate("employee", "fullName username email role department")
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .lean();
+
+      return res.json(
+        logs.map((log) => ({
+          _id: log._id,
+          date: log.createdAt,
+          createdAt: log.createdAt,
+          employee: log.employee,
+          employeeName:
+            log.employee?.fullName ||
+            log.employee?.username ||
+            "Unknown employee",
+          role: log.employee?.role || "",
+          department: log.employee?.department || "",
+          action: log.action || "",
+          severity: log.severity || "normal",
+          status: log.status || "success",
+          details: log.details || {},
+          ipAddress: log.ipAddress || "",
+          userAgent: log.userAgent || "",
+        }))
+      );
+    } catch (error) {
+      console.error("GET /api/employees/logs/recent error:", error.message);
+      return res.status(500).json({ message: "Could not load logs." });
+    }
+  }
+);
+
+router.get(
+  "/logs",
+  employeeAuthRequired,
+  adminEmployeeOnly,
+  async (req, res) => {
+    try {
+      const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
+
+      const logs = await EmployeeLog.find({})
+        .populate("employee", "fullName username email role department")
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .lean();
+
+      return res.json(logs);
+    } catch (error) {
+      console.error("GET /api/employees/logs error:", error.message);
+      return res.status(500).json({ message: "Could not load logs." });
+    }
+  }
+);
+
+/* ------------------ EMPLOYEE SEARCH ------------------ */
+
+router.get(
+  "/search/:term",
+  employeeAuthRequired,
+  adminEmployeeOnly,
+  async (req, res) => {
+    try {
+      const term = cleanSpaces(req.params.term || "");
+
+      if (!term) {
+        return res.json([]);
+      }
+
+      const rx = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+
+      const employees = await Employee.find({
+        role: { $in: EMPLOYEE_ROLES },
+        $or: [
+          { fullName: rx },
+          { username: rx },
+          { email: rx },
+          { employeeNumber: rx },
+          { jobTitle: rx },
+          { phone: rx },
+        ],
+      })
+        .select(
+          "fullName username email role department employeeNumber jobTitle phone isActive emailVerified lastLoginAt createdAt updatedAt"
+        )
+        .sort({ createdAt: -1 })
+        .lean();
+
+      return res.json(employees.map(employeePayload));
+    } catch (error) {
+      console.error("GET /api/employees/search/:term error:", error.message);
+
+      return res.status(500).json({
+        message: "Search failed.",
+      });
+    }
+  }
+);
+
+/* ------------------ LIST EMPLOYEES ------------------ */
 
 router.get("/", employeeAuthRequired, adminEmployeeOnly, async (req, res) => {
   try {
-    const employees = await Employee.find({
+    const filter = {
       role: { $in: EMPLOYEE_ROLES },
-    })
+    };
+
+    if (req.query.role) {
+      const role = normalizeRole(req.query.role);
+      if (role) filter.role = role;
+    }
+
+    if (req.query.department) {
+      const department = normalizeDepartment(req.query.department);
+      if (department) filter.department = department;
+    }
+
+    if (req.query.status === "active") {
+      filter.isActive = true;
+    }
+
+    if (req.query.status === "disabled") {
+      filter.isActive = false;
+    }
+
+    if (req.query.q || req.query.search) {
+      const term = cleanSpaces(req.query.q || req.query.search);
+      const rx = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+
+      filter.$or = [
+        { fullName: rx },
+        { username: rx },
+        { email: rx },
+        { employeeNumber: rx },
+        { jobTitle: rx },
+        { phone: rx },
+      ];
+    }
+
+    const employees = await Employee.find(filter)
       .select(
         "fullName username email role department employeeNumber jobTitle phone isActive emailVerified lastLoginAt createdAt updatedAt"
       )
       .sort({ createdAt: -1 })
       .lean();
 
-    return res.json(
-      employees.map((employee) => ({
-        _id: employee._id,
-        fullName: employee.fullName || "",
-        username: employee.username || "",
-        email: employee.email || "",
-        role: employee.role || "",
-        department: employee.department || "",
-        employeeNumber: employee.employeeNumber || "",
-        jobTitle: employee.jobTitle || "",
-        phone: employee.phone || "",
-        isActive: employee.isActive !== false,
-        emailVerified: !!employee.emailVerified,
-        lastLoginAt: employee.lastLoginAt || null,
-        departments: DEPARTMENT_PERMISSIONS[employee.role] || [],
-        createdAt: employee.createdAt,
-        updatedAt: employee.updatedAt,
-      }))
-    );
+    return res.json(employees.map(employeePayload));
   } catch (error) {
     console.error("GET /api/employees error:", error.message);
     return res.status(500).json({ message: "Server error." });
   }
 });
 
-/* ------------------ ROUTE 5: CREATE EMPLOYEE ------------------ */
+/* ------------------ GET SINGLE EMPLOYEE ------------------ */
+
+router.get("/:id", employeeAuthRequired, adminEmployeeOnly, async (req, res) => {
+  try {
+    const employee = await Employee.findById(req.params.id)
+      .select(
+        "fullName username email role department employeeNumber jobTitle phone isActive emailVerified lastLoginAt createdAt updatedAt"
+      )
+      .lean();
+
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found." });
+    }
+
+    return res.json(employeePayload(employee));
+  } catch (error) {
+    console.error("GET /api/employees/:id error:", error.message);
+    return res.status(500).json({ message: "Could not load employee." });
+  }
+});
+
+/* ------------------ CREATE EMPLOYEE ------------------ */
 
 router.post("/", employeeAuthRequired, adminEmployeeOnly, async (req, res) => {
   try {
@@ -471,11 +678,21 @@ router.post("/", employeeAuthRequired, adminEmployeeOnly, async (req, res) => {
     const cleanUsername = cleanSpaces(username);
     const cleanUserEmail = cleanEmail(email);
     const cleanRole = normalizeRole(role);
-    const cleanDepartment = cleanSpaces(department || roleToDepartment(cleanRole)).toLowerCase();
+    const cleanDepartment = normalizeDepartment(
+      department || roleToDepartment(cleanRole)
+    );
 
-    if (!cleanFullName || !cleanUsername || !cleanUserEmail || !password || !cleanRole) {
+    if (
+      !cleanFullName ||
+      !cleanUsername ||
+      !cleanUserEmail ||
+      !password ||
+      !cleanRole ||
+      !cleanDepartment
+    ) {
       return res.status(400).json({
-        message: "Full name, username, email, password, and valid role are required.",
+        message:
+          "Full name, username, email, password, valid role and department are required.",
       });
     }
 
@@ -485,12 +702,18 @@ router.post("/", employeeAuthRequired, adminEmployeeOnly, async (req, res) => {
       });
     }
 
-    const existingEmail = await Employee.findOne({ email: cleanUserEmail }).select("_id");
+    const existingEmail = await Employee.findOne({
+      email: cleanUserEmail,
+    }).select("_id");
+
     if (existingEmail) {
       return res.status(409).json({ message: "Email already exists." });
     }
 
-    const existingUsername = await Employee.findOne({ username: cleanUsername }).select("_id");
+    const existingUsername = await Employee.findOne({
+      username: cleanUsername,
+    }).select("_id");
+
     if (existingUsername) {
       return res.status(409).json({ message: "Username already exists." });
     }
@@ -501,7 +724,9 @@ router.post("/", employeeAuthRequired, adminEmployeeOnly, async (req, res) => {
       }).select("_id");
 
       if (existingEmployeeNumber) {
-        return res.status(409).json({ message: "Employee number already exists." });
+        return res.status(409).json({
+          message: "Employee number already exists.",
+        });
       }
     }
 
@@ -539,20 +764,7 @@ router.post("/", employeeAuthRequired, adminEmployeeOnly, async (req, res) => {
 
     return res.status(201).json({
       message: "Employee created successfully.",
-      employee: {
-        _id: employee._id,
-        fullName: employee.fullName,
-        username: employee.username,
-        email: employee.email,
-        role: employee.role,
-        department: employee.department,
-        employeeNumber: employee.employeeNumber || "",
-        jobTitle: employee.jobTitle || "",
-        phone: employee.phone || "",
-        isActive: employee.isActive,
-        emailVerified: employee.emailVerified,
-        departments: DEPARTMENT_PERMISSIONS[employee.role] || [],
-      },
+      employee: employeePayload(employee),
     });
   } catch (error) {
     console.error("POST /api/employees error:", error.message);
@@ -560,7 +772,7 @@ router.post("/", employeeAuthRequired, adminEmployeeOnly, async (req, res) => {
   }
 });
 
-/* ------------------ ROUTE 6: UPDATE EMPLOYEE ------------------ */
+/* ------------------ UPDATE EMPLOYEE ------------------ */
 
 router.patch("/:id", employeeAuthRequired, adminEmployeeOnly, async (req, res) => {
   try {
@@ -651,7 +863,13 @@ router.patch("/:id", employeeAuthRequired, adminEmployeeOnly, async (req, res) =
     }
 
     if (typeof department === "string") {
-      employee.department = cleanSpaces(department).toLowerCase();
+      const cleanDepartment = normalizeDepartment(department);
+
+      if (!cleanDepartment) {
+        return res.status(400).json({ message: "Invalid employee department." });
+      }
+
+      employee.department = cleanDepartment;
     }
 
     if (typeof emailVerified === "boolean") {
@@ -672,7 +890,9 @@ router.patch("/:id", employeeAuthRequired, adminEmployeeOnly, async (req, res) =
         }).select("_id");
 
         if (exists) {
-          return res.status(409).json({ message: "Employee number already exists." });
+          return res.status(409).json({
+            message: "Employee number already exists.",
+          });
         }
       }
 
@@ -707,24 +927,12 @@ router.patch("/:id", employeeAuthRequired, adminEmployeeOnly, async (req, res) =
       updatedEmployeeId: employee._id,
       updatedEmployeeRole: employee.role,
       updatedEmployeeDepartment: employee.department,
+      isActive: employee.isActive,
     });
 
     return res.json({
       message: "Employee updated successfully.",
-      employee: {
-        _id: employee._id,
-        fullName: employee.fullName || "",
-        username: employee.username || "",
-        email: employee.email || "",
-        role: employee.role || "",
-        department: employee.department || "",
-        employeeNumber: employee.employeeNumber || "",
-        jobTitle: employee.jobTitle || "",
-        phone: employee.phone || "",
-        isActive: employee.isActive !== false,
-        emailVerified: !!employee.emailVerified,
-        departments: DEPARTMENT_PERMISSIONS[employee.role] || [],
-      },
+      employee: employeePayload(employee),
     });
   } catch (error) {
     console.error("PATCH /api/employees/:id error:", error.message);
@@ -732,7 +940,52 @@ router.patch("/:id", employeeAuthRequired, adminEmployeeOnly, async (req, res) =
   }
 });
 
-/* ------------------ ROUTE 7: DELETE EMPLOYEE ------------------ */
+/* ------------------ TOGGLE EMPLOYEE STATUS ------------------ */
+
+router.patch(
+  "/:id/toggle-status",
+  employeeAuthRequired,
+  adminEmployeeOnly,
+  async (req, res) => {
+    try {
+      const employee = await Employee.findById(req.params.id);
+
+      if (!employee) {
+        return res.status(404).json({
+          message: "Employee not found.",
+        });
+      }
+
+      if (String(employee._id) === String(req.user.userId)) {
+        return res.status(400).json({
+          message: "You cannot disable your own account.",
+        });
+      }
+
+      employee.isActive = !employee.isActive;
+
+      await employee.save();
+
+      await writeEmployeeLog(req, "employee_status_toggled", {
+        employeeId: employee._id,
+        isActive: employee.isActive,
+      });
+
+      return res.json({
+        message: "Employee status updated.",
+        employee: employeePayload(employee),
+      });
+    } catch (error) {
+      console.error("PATCH /api/employees/:id/toggle-status error:", error.message);
+
+      return res.status(500).json({
+        message: "Failed to update status.",
+      });
+    }
+  }
+);
+
+/* ------------------ DELETE EMPLOYEE ------------------ */
 
 router.delete("/:id", employeeAuthRequired, adminEmployeeOnly, async (req, res) => {
   try {
@@ -772,25 +1025,6 @@ router.delete("/:id", employeeAuthRequired, adminEmployeeOnly, async (req, res) 
   }
 });
 
-/* ------------------ ROUTE 8: EMPLOYEE LOGS ------------------ */
-
-router.get("/logs/recent", employeeAuthRequired, adminEmployeeOnly, async (req, res) => {
-  try {
-    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
-
-    const logs = await EmployeeLog.find({})
-      .populate("employee", "fullName username email role department")
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .lean();
-
-    return res.json(logs);
-  } catch (error) {
-    console.error("GET /api/employees/logs/recent error:", error.message);
-    return res.status(500).json({ message: "Could not load logs." });
-  }
-});
-
 /* ------------------ EXPORTS FOR OTHER ROUTES ------------------ */
 
 export {
@@ -803,3 +1037,7 @@ export {
 };
 
 export default router;
+'''
+
+Path("/mnt/data/employees.js").write_text(employees_js, encoding="utf-8")
+print("/mnt/data/employees.js")
