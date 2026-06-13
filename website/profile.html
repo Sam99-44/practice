@@ -60,9 +60,7 @@ a{
   filter:brightness(0) invert(1);
 }
 
-.accountMeta{
-  line-height:1.1;
-}
+.accountMeta{ line-height:1.1; }
 
 .accountName{
   font-size:16px;
@@ -231,13 +229,30 @@ a{
 }
 
 .announcementCountBtn{
+  position:relative;
   border:none;
-  background:var(--nav);
-  color:#fff;
-  padding:7px 13px;
-  border-radius:999px;
-  font-weight:700;
+  background:transparent;
+  padding:0;
   cursor:pointer;
+  width:40px;
+  height:40px;
+}
+
+.announcementCountBtn img{
+  width:40px;
+  height:40px;
+  filter:invert(17%) sepia(95%) saturate(5684%) hue-rotate(351deg) brightness(91%) contrast(96%);
+}
+
+#announcementCountValue{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-weight:700;
+  font-size:13px;
 }
 
 .previewBox{
@@ -315,13 +330,17 @@ a{
   right:10px;
   top:10px;
   border:none;
-  background:#fef2f2;
-  color:#b91c1c;
-  font-weight:900;
-  width:26px;
-  height:26px;
-  border-radius:50%;
+  background:transparent;
   cursor:pointer;
+  padding:0;
+  width:20px;
+  height:20px;
+}
+
+.closeAnnouncement img{
+  width:20px;
+  height:20px;
+  filter:invert(17%) sepia(95%) saturate(5684%) hue-rotate(351deg) brightness(91%) contrast(96%);
 }
 
 .mainGrid{
@@ -358,9 +377,7 @@ a{
   border-bottom:1px solid #edf2f7;
 }
 
-.row:last-child{
-  border-bottom:none;
-}
+.row:last-child{ border-bottom:none; }
 
 .label{
   color:var(--muted);
@@ -440,7 +457,10 @@ a{
         </div>
       </div>
 
-      <button id="announcementCount" class="announcementCountBtn">0</button>
+      <button id="announcementCount" class="announcementCountBtn">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773875474/square_ho8otg.svg" alt="">
+        <span id="announcementCountValue">0</span>
+      </button>
     </div>
 
     <div class="previewBox">
@@ -686,9 +706,10 @@ async function loadProfileAnnouncement(){
     const visible = announcements.filter(a => !removed.includes(String(a._id)));
 
     const countBtn = document.getElementById("announcementCount");
+    const countValue = document.getElementById("announcementCountValue");
     const listBox = document.getElementById("profileAnnouncementList");
 
-    countBtn.textContent = visible.length;
+    countValue.textContent = visible.length;
     listBox.innerHTML = "";
     listBox.style.display = "none";
 
@@ -710,7 +731,9 @@ async function loadProfileAnnouncement(){
       item.className = "announcementItem";
 
       item.innerHTML = `
-        <button class="closeAnnouncement" title="Remove">×</button>
+        <button class="closeAnnouncement" title="Remove">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773875245/cross_hznn67.svg" alt="Remove">
+        </button>
         <div class="announcementItemTitle">${escapeHtml(a.title || "Announcement")}</div>
         <div class="announcementItemText">${escapeHtml(a.message || "")}</div>
         <div class="announcementItemMeta">${escapeHtml((a.category || "general") + " • " + (a.grade || "allGrades"))}</div>
