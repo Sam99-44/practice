@@ -2,12 +2,21 @@
 import express from "express";
 import mongoose from "mongoose";
 import Announcement from "../models/Announcement.js";
+import User from "../models/User.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
+const BREVO_API_KEY = (process.env.BREVO_API_KEY || "").trim();
+const BREVO_SENDER_EMAIL = (process.env.BREVO_SENDER_EMAIL || "").trim();
+const BREVO_SENDER_NAME = (process.env.BREVO_SENDER_NAME || "Practice Online").trim();
+
 function isAdminOrEditor(user) {
-  return user && (user.role === "admin" || user.role === "editor");
+  return user && (user.role === "admin" || user.role === "editor" || user.role === "tester");
+}
+
+function getUserId(user) {
+  return user?._id || user?.userId || user?.id;
 }
 
 function normalizeGrade(value = "") {
@@ -17,7 +26,7 @@ function normalizeGrade(value = "") {
 }
 
 function normalizeCategory(value = "") {
-  const v = String(value || "").trim();
+  const v = String(value || "").trim().toLowerCase();
   const allowed = ["general", "class", "quiz", "all"];
   return allowed.includes(v) ? v : "general";
 }
@@ -26,23 +35,118 @@ function escapeRegex(value = "") {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function mapLearnerResponse(announcement, userId) {
-  const responses = Array.isArray(announcement.responses) ? announcement.responses : [];
-  const found = responses.find(
-    (r) => String(r.student) === String(userId)
-  );
-
-  return {
-    ...announcement.toObject(),
-    learnerResponse: found ? found.response : "pending",
-    responses: undefined,
-  };
+function announcementGradeToNumber(grade) {
+  const match = String(grade || "").match(/^grade(\d+)$/);
+  return match ? Number(match[1]) : null;
 }
 
-// ============================================
+function mapLearnerResponse(announcement, userId) {
+  const obj = announcement.toObject();
+  const responses = Array.isArray(obj.responses) ? obj.responses : [];
+
+  const found = responses.find((r) => String(r.student) === String(userId));
+
+  obj.learnerResponse = found ? found.response : "pending";
+  delete obj.responses;
+
+  return obj;
+}
+
+async function sendBulkEmail({ recipients, subject, html, text }) {
+  if (!BREVO_API_KEY) throw new Error("Missing BREVO_API_KEY");
+  if (!BREVO_SENDER_EMAIL) throw new Error("Missing BREVO_SENDER_EMAIL");
+
+  const cleanRecipients = recipients
+    .map((email) => String(email || "").trim().toLowerCase())
+    .filter(Boolean)
+    .map((email) => ({ email }));
+
+  if (!cleanRecipients.length) return { sent: 0 };
+
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "api-key": BREVO_API_KEY,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      sender: {
+        email: BREVO_SENDER_EMAIL,
+        name: BREVO_SENDER_NAME,
+      },
+      to: cleanRecipients,
+      subject,
+      htmlContent: html,
+      textContent: text,
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    console.error("Brevo announcement email error:", data);
+    throw new Error("Announcement saved, but email sending failed.");
+  }
+
+  return { sent: cleanRecipients.length, data };
+}
+
+async function sendAnnouncementToStudents(announcement) {
+  const filter = {
+    role: "learner",
+    accountType: "student",
+    emailVerified: true,
+    email: { $exists: true, $ne: "" },
+  };
+
+  if (announcement.grade !== "allGrades") {
+    const gradeNumber = announcementGradeToNumber(announcement.grade);
+    if (gradeNumber) filter.grade = gradeNumber;
+  }
+
+  const learners = await User.find(filter).select("email");
+  const emails = learners.map((u) => u.email).filter(Boolean);
+
+  if (!emails.length) return { sent: 0 };
+
+  const extraDetails = [];
+
+  if (announcement.category === "class" || announcement.category === "all") {
+    if (announcement.meetingDate) extraDetails.push(`Date: ${announcement.meetingDate}`);
+    if (announcement.meetingTime) extraDetails.push(`Time: ${announcement.meetingTime}`);
+    if (announcement.meetingLink) extraDetails.push(`Meeting Link: ${announcement.meetingLink}`);
+  }
+
+  if (announcement.category === "quiz" || announcement.category === "all") {
+    if (announcement.dueDate) extraDetails.push(`Due Date: ${announcement.dueDate}`);
+    if (announcement.quizStatus) extraDetails.push(`Quiz Status: ${announcement.quizStatus}`);
+  }
+
+  const htmlDetails = extraDetails.length
+    ? `<hr><p>${extraDetails.join("<br>")}</p>`
+    : "";
+
+  const textDetails = extraDetails.length
+    ? `\n\n${extraDetails.join("\n")}`
+    : "";
+
+  return await sendBulkEmail({
+    recipients: emails,
+    subject: announcement.title,
+    text: `${announcement.message}${textDetails}\n\nRegards,\nPractice Online`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a;">
+        <h2>${announcement.title}</h2>
+        <p>${String(announcement.message).replace(/\n/g, "<br>")}</p>
+        ${htmlDetails}
+        <p>Regards,<br>Practice Online</p>
+      </div>
+    `,
+  });
+}
+
 // CREATE ANNOUNCEMENT
-// admin / editor
-// ============================================
 router.post("/", protect, async (req, res) => {
   try {
     if (!isAdminOrEditor(req.user)) {
@@ -85,11 +189,28 @@ router.post("/", protect, async (req, res) => {
       meetingTime: String(meetingTime || "").trim(),
       dueDate: String(dueDate || "").trim(),
       quizStatus: String(quizStatus || "Open").trim(),
-      createdBy: req.user._id,
+      createdBy: getUserId(req.user),
     });
+
+    let emailResult = { sent: 0 };
+
+    if (newAnnouncement.sendToStudents) {
+      try {
+        emailResult = await sendAnnouncementToStudents(newAnnouncement);
+      } catch (emailErr) {
+        console.error("Announcement email failed:", emailErr.message);
+
+        return res.status(201).json({
+          message: "Announcement created, but email sending failed.",
+          emailError: emailErr.message,
+          announcement: newAnnouncement,
+        });
+      }
+    }
 
     return res.status(201).json({
       message: "Announcement created successfully.",
+      emailsSent: emailResult.sent,
       announcement: newAnnouncement,
     });
   } catch (err) {
@@ -98,22 +219,16 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
-// ============================================
-// GET ANNOUNCEMENTS FOR LEARNER / USER
-// Learners see only their grade + allGrades
-// Admin / editor see all
-// ============================================
+// GET ANNOUNCEMENTS
 router.get("/", protect, async (req, res) => {
   try {
     const { q = "", grade = "", category = "" } = req.query;
 
     const isPrivileged = isAdminOrEditor(req.user);
-
     const filter = {};
 
     if (!isPrivileged) {
-      const learnerGrade =
-        req.user?.grade != null ? `grade${req.user.grade}` : null;
+      const learnerGrade = req.user?.grade != null ? `grade${req.user.grade}` : null;
 
       filter.isPublished = true;
 
@@ -124,6 +239,7 @@ router.get("/", protect, async (req, res) => {
       }
     } else {
       if (grade) filter.grade = normalizeGrade(grade);
+
       if (typeof req.query.isPublished !== "undefined") {
         filter.isPublished = String(req.query.isPublished) === "true";
       }
@@ -145,30 +261,17 @@ router.get("/", protect, async (req, res) => {
       .sort({ urgentNotice: -1, createdAt: -1 })
       .populate("createdBy", "username email role");
 
-    const mapped = announcements.map((a) => mapLearnerResponse(a, req.user._id));
-
-    const generalAnnouncements = mapped.filter(
-      (a) => a.category === "general" || a.category === "all"
-    );
-
-    const classAnnouncements = mapped.filter(
-      (a) => a.category === "class" || a.category === "all"
-    );
-
-    const quizAnnouncements = mapped.filter(
-      (a) => a.category === "quiz" || a.category === "all"
-    );
-
-    const latestUrgent = mapped.find((a) => a.urgentNotice);
+    const userId = getUserId(req.user);
+    const mapped = announcements.map((a) => mapLearnerResponse(a, userId));
 
     res.json({
       updatedAt: mapped[0]?.updatedAt || null,
-      urgentNotice: latestUrgent?.message || "",
-      weeklyFocus: latestUrgent?.title || "",
-      generalAnnouncements,
-      classAnnouncements,
-      quizAnnouncements,
-      announcements: mapped, // useful for admin page table
+      urgentNotice: mapped.find((a) => a.urgentNotice)?.message || "",
+      weeklyFocus: mapped.find((a) => a.urgentNotice)?.title || "",
+      generalAnnouncements: mapped.filter((a) => a.category === "general" || a.category === "all"),
+      classAnnouncements: mapped.filter((a) => a.category === "class" || a.category === "all"),
+      quizAnnouncements: mapped.filter((a) => a.category === "quiz" || a.category === "all"),
+      announcements: mapped,
     });
   } catch (err) {
     console.error("GET ANNOUNCEMENTS ERROR:", err);
@@ -176,9 +279,7 @@ router.get("/", protect, async (req, res) => {
   }
 });
 
-// ============================================
-// GET ADMIN LIST
-// ============================================
+// ADMIN LIST
 router.get("/admin/list", protect, async (req, res) => {
   try {
     if (!isAdminOrEditor(req.user)) {
@@ -196,9 +297,7 @@ router.get("/admin/list", protect, async (req, res) => {
   }
 });
 
-// ============================================
 // PROFILE SUMMARY
-// ============================================
 router.get("/profile-summary", protect, async (req, res) => {
   try {
     let gradeFilter = ["allGrades"];
@@ -235,10 +334,7 @@ router.get("/profile-summary", protect, async (req, res) => {
   }
 });
 
-// ============================================
 // UPDATE ANNOUNCEMENT
-// admin / editor
-// ============================================
 router.put("/:id", protect, async (req, res) => {
   try {
     if (!isAdminOrEditor(req.user)) {
@@ -252,6 +348,7 @@ router.put("/:id", protect, async (req, res) => {
     }
 
     const announcement = await Announcement.findById(id);
+
     if (!announcement) {
       return res.status(404).json({ message: "Announcement not found." });
     }
@@ -298,10 +395,7 @@ router.put("/:id", protect, async (req, res) => {
   }
 });
 
-// ============================================
 // DELETE ANNOUNCEMENT
-// admin / editor
-// ============================================
 router.delete("/:id", protect, async (req, res) => {
   try {
     if (!isAdminOrEditor(req.user)) {
@@ -327,17 +421,20 @@ router.delete("/:id", protect, async (req, res) => {
   }
 });
 
-// ============================================
 // RESPOND TO CLASS ANNOUNCEMENT
-// learners
-// ============================================
 router.post("/:id/respond", protect, async (req, res) => {
   try {
     const { id } = req.params;
     const { response } = req.body;
 
-    if (!["accepted", "rejected"].includes(String(response || "").toLowerCase())) {
+    const cleanResponse = String(response || "").toLowerCase();
+
+    if (!["accepted", "rejected"].includes(cleanResponse)) {
       return res.status(400).json({ message: "Response must be accepted or rejected." });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid announcement id." });
     }
 
     const announcement = await Announcement.findById(id);
@@ -350,17 +447,19 @@ router.post("/:id/respond", protect, async (req, res) => {
       return res.status(400).json({ message: "This announcement does not accept class responses." });
     }
 
+    const userId = getUserId(req.user);
+
     const existing = announcement.responses.find(
-      (r) => String(r.student) === String(req.user._id)
+      (r) => String(r.student) === String(userId)
     );
 
     if (existing) {
-      existing.response = response.toLowerCase();
+      existing.response = cleanResponse;
       existing.respondedAt = new Date();
     } else {
       announcement.responses.push({
-        student: req.user._id,
-        response: response.toLowerCase(),
+        student: userId,
+        response: cleanResponse,
         respondedAt: new Date(),
       });
     }
@@ -369,7 +468,7 @@ router.post("/:id/respond", protect, async (req, res) => {
 
     return res.json({
       message: "Response saved successfully.",
-      learnerResponse: response.toLowerCase(),
+      learnerResponse: cleanResponse,
     });
   } catch (err) {
     console.error("RESPOND ANNOUNCEMENT ERROR:", err);
