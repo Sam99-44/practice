@@ -284,7 +284,6 @@ tr:hover td{background:#f8fafc}
 
 td select{min-width:105px;padding:6px 8px;font-size:13px}
 .statusSelect{min-width:135px}
-.actionSelect{min-width:130px}
 .amountInput{min-width:85px;padding:6px 8px;font-size:13px}
 
 .badge{
@@ -457,10 +456,15 @@ td select{min-width:105px;padding:6px 8px;font-size:13px}
       <div class="bulkBar">
         <div class="bulkLeft">
           <span class="selectedText" id="selectedCount">0 selected</span>
-          <button class="btn success" id="saveSelectedBtn">Save Selected</button>
+        </div>
+
+        <div class="actions">
+          <button class="btn warning" id="markContactedBtn">Mark Contacted</button>
+          <button class="btn success" id="approveBtn">Approve</button>
+          <button class="btn danger" id="rejectBtn">Reject</button>
+          <button class="btn success" id="saveSelectedBtn">Save Changes</button>
           <button class="btn danger" id="removeSelectedBtn">Remove Selected</button>
         </div>
-        
       </div>
 
       <div class="tableWrap">
@@ -483,11 +487,10 @@ td select{min-width:105px;padding:6px 8px;font-size:13px}
               <th>Contacted</th>
               <th>Paid</th>
               <th>Finance Status</th>
-              <th>Action</th>
             </tr>
           </thead>
           <tbody id="financeRows">
-            <tr><td colspan="17" class="loadingRow">Loading finance records...</td></tr>
+            <tr><td colspan="16" class="loadingRow">Loading finance records...</td></tr>
           </tbody>
         </table>
       </div>
@@ -841,25 +844,36 @@ function removeSelected(){
   show("Selected records removed from this finance table.");
 }
 
-function handleRowAction(action,id){
-  if(!action) return;
+function bulkApprove(){
+  if(!selectedIds.size) return show("Select at least one record to approve.","error");
 
-  if(action === "contacted"){
-    trackChange(id,"contacted",true);
-    trackChange(id,"status","Under Review");
-  }
-
-  if(action === "approve"){
+  [...selectedIds].forEach(id=>{
     trackChange(id,"paid",true);
     trackChange(id,"status","Approved");
-  }
+  });
 
-  if(action === "reject"){
+  renderRows();
+}
+
+function bulkReject(){
+  if(!selectedIds.size) return show("Select at least one record to reject.","error");
+
+  [...selectedIds].forEach(id=>{
     trackChange(id,"paid",false);
     trackChange(id,"status","Rejected");
-  }
+  });
 
-  selectedIds.add(id);
+  renderRows();
+}
+
+function bulkContacted(){
+  if(!selectedIds.size) return show("Select at least one record to mark as contacted.","error");
+
+  [...selectedIds].forEach(id=>{
+    trackChange(id,"contacted",true);
+    trackChange(id,"status","Under Review");
+  });
+
   renderRows();
 }
 
@@ -953,9 +967,8 @@ function renderRows(){
       <td><select onchange="trackChange('${esc(r.id)}','contacted',this.value==='Yes')"><option ${r.contacted ? "selected" : ""}>Yes</option><option ${!r.contacted ? "selected" : ""}>No</option></select></td>
       <td><select onchange="trackChange('${esc(r.id)}','paid',this.value==='Yes')"><option ${r.paid ? "selected" : ""}>Yes</option><option ${!r.paid ? "selected" : ""}>No</option></select></td>
       <td><select class="statusSelect" onchange="trackChange('${esc(r.id)}','status',this.value)"><option ${r.status==="Pending" ? "selected" : ""}>Pending</option><option ${r.status==="Under Review" ? "selected" : ""}>Under Review</option><option ${r.status==="Approved" ? "selected" : ""}>Approved</option><option ${r.status==="Rejected" ? "selected" : ""}>Rejected</option></select> ${badge(r.status || "Pending",statusColor(r.status))}</td>
-      <td><select class="actionSelect" onchange="handleRowAction(this.value,'${esc(r.id)}');this.value=''"><option value="">Action</option><option value="contacted">Mark Contacted</option><option value="approve">Approve</option><option value="reject">Reject</option></select></td>
     </tr>
-  `).join("") : `<tr><td colspan="17">No finance records found.</td></tr>`;
+  `).join("") : `<tr><td colspan="16">No finance records found.</td></tr>`;
 
   updateSelectedUI();
 }
@@ -1012,6 +1025,9 @@ function exportExcel(){
 }
 
 $("refreshBtn").onclick = ()=>loadAllFinanceData(true);
+$("markContactedBtn").onclick = bulkContacted;
+$("approveBtn").onclick = bulkApprove;
+$("rejectBtn").onclick = bulkReject;
 $("saveSelectedBtn").onclick = saveSelected;
 $("removeSelectedBtn").onclick = removeSelected;
 $("addBtn").onclick = toggleAdd;
@@ -1029,7 +1045,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 
   if(!token()){
     show("Employee token missing. Please login again from employee-login.html.","error");
-    $("financeRows").innerHTML = `<tr><td colspan="17">Please login again as a finance employee.</td></tr>`;
+    $("financeRows").innerHTML = `<tr><td colspan="16">Please login again as a finance employee.</td></tr>`;
     return;
   }
 
