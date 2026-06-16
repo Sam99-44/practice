@@ -2325,17 +2325,17 @@ body.submitted-state .solutionHolder .solutionBox{
   flex-wrap:nowrap !important;
 }
 .topQuizSquareBtn{
-  width:92px !important;
-  height:52px !important;
+  width:84px !important;
+  height:42px !important;
   border-radius:0 !important;
-  padding:4px !important;
-  gap:3px !important;
+  padding:3px 5px !important;
+  gap:2px !important;
   font-size:11px !important;
   line-height:1 !important;
 }
 .topQuizSquareBtn img{
-  width:16px !important;
-  height:16px !important;
+  width:13px !important;
+  height:13px !important;
 }
 .topQuizSquareBtn.primary{
   background:#2563eb !important;
@@ -2355,8 +2355,8 @@ body.submitted-state .solutionHolder .solutionBox{
     gap:6px !important;
   }
   .topQuizSquareBtn{
-    width:82px !important;
-    height:48px !important;
+    width:76px !important;
+    height:40px !important;
     font-size:10px !important;
   }
 }
@@ -2834,7 +2834,7 @@ function inlineQuizLoadingHtml(){
       if (fallback.length) groups.push(fallback);
     }
 
-    questionPageGroups = groups;
+    questionPageGroups = applyRandomQuestionOrder(groups);
   }
 
   function showQuestionPage(index, shouldScroll = true){
@@ -3189,6 +3189,51 @@ function inlineQuizLoadingHtml(){
 
   function cleanSpaces(s){
     return String(s || "").trim().replace(/\s+/g, " ");
+  }
+
+  /* ===== RANDOMIZE QUESTIONS + MULTIPLE CHOICE OPTIONS =====
+     - Questions are randomized in the Back/Next navigation order.
+     - Diagrams/stems stay attached to the correct question group.
+     - MCQ option positions are randomized, but each input keeps its original value,
+       so marking and backend submission still work correctly.
+  */
+  let randomizedQuestionPageOrder = [];
+
+  function shuffleArrayCopy(arr){
+    const a = Array.isArray(arr) ? arr.slice() : [];
+    for (let i = a.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function getOptionDisplayOrder(q){
+    const opts = Array.isArray(q?.options) ? q.options : [];
+    if (!opts.length) return [];
+
+    if (Array.isArray(q.__optionDisplayOrder) && q.__optionDisplayOrder.length === opts.length) {
+      return q.__optionDisplayOrder;
+    }
+
+    q.__optionDisplayOrder = shuffleArrayCopy(opts.map((_, idx) => idx));
+    return q.__optionDisplayOrder;
+  }
+
+  function resetQuestionRandomization(){
+    randomizedQuestionPageOrder = [];
+  }
+
+  function applyRandomQuestionOrder(groups){
+    if (!Array.isArray(groups) || groups.length <= 1) return groups;
+
+    if (!Array.isArray(randomizedQuestionPageOrder) || randomizedQuestionPageOrder.length !== groups.length) {
+      randomizedQuestionPageOrder = shuffleArrayCopy(groups.map((_, idx) => idx));
+    }
+
+    return randomizedQuestionPageOrder
+      .map(idx => groups[idx])
+      .filter(Boolean);
   }
 
   function normalizeIndexArray(v){
@@ -4638,6 +4683,8 @@ function inlineQuizLoadingHtml(){
       return;
     }
 
+    resetQuestionRandomization();
+
     if (quizTitle) quizTitle.textContent = cleanSpaces(quizData.title || "Assessment");
     if (quizInfo) {
       quizInfo.innerHTML = cleanSpaces(quizData.topic || "") ? `<b>Topic:</b> ${escapeHtml(cleanSpaces(quizData.topic))}` : "";
@@ -4696,6 +4743,7 @@ function inlineQuizLoadingHtml(){
       }
 
       const opts = Array.isArray(q.options) ? q.options : [];
+      const optionOrder = getOptionDisplayOrder(q);
       const multi = isMultiQuestion(q);
       const inputType = multi ? "checkbox" : "radio";
 
@@ -4703,12 +4751,14 @@ function inlineQuizLoadingHtml(){
         ${imageHtml}
         <div class="q" data-scorable="1" data-qindex="${i}">
           ${headHtml}
-          ${opts.map((o, j) => `
+          ${optionOrder.map((originalIndex) => {
+            const o = opts[originalIndex];
+            return `
             <label class="opt">
-              <input class="mcqInput" data-qindex="${i}" type="${inputType}" name="q${i}" value="${j}">
+              <input class="mcqInput" data-qindex="${i}" type="${inputType}" name="q${i}" value="${originalIndex}">
               <span class="optText">${renderMixedMath(cleanSpaces(o))}</span>
-            </label>
-          `).join("")}
+            </label>`;
+          }).join("")}
           ${hint ? `<div class="hint">Hint: <span class="hintText">${renderMixedMath(hint)}</span></div>` : ``}
           <div class="qLocalActions">
             <button class="qCheckBtn" type="button" data-qindex="${i}">Submit the Answer</button>
