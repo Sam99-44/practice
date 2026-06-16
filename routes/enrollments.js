@@ -19,8 +19,21 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+function proofFileFilter(req, file, cb) {
+  const allowed = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
+
+  if (!allowed.includes(file.mimetype)) {
+    return cb(
+      new Error("Only JPG, PNG, and PDF proof of payment files are allowed.")
+    );
+  }
+
+  cb(null, true);
+}
+
 const upload = multer({
   storage: multer.memoryStorage(),
+  fileFilter: proofFileFilter,
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
@@ -111,17 +124,28 @@ function normalizeFinanceStatus(value = "") {
   return "Pending";
 }
 
-function uploadToCloudinary(buffer, originalname = "") {
+function getCloudinaryResourceType(mimeType = "") {
+  const type = String(mimeType || "").toLowerCase();
+
+  if (type.startsWith("image/")) {
+    return "image";
+  }
+
+  return "raw";
+}
+
+function uploadToCloudinary(buffer, originalname = "", mimeType = "") {
   return new Promise((resolve, reject) => {
+    const cleanName = String(originalname || "proof")
+      .replace(/\.[^/.]+$/, "")
+      .replace(/[^a-zA-Z0-9-_]/g, "-");
+
     const stream = cloudinary.uploader.upload_stream(
       {
         folder: "practice-online/proofs",
-        resource_type: "auto",
+        resource_type: getCloudinaryResourceType(mimeType),
         type: "upload",
-        access_mode: "public",
-        public_id: `proof-${Date.now()}-${String(originalname)
-          .replace(/\.[^/.]+$/, "")
-          .replace(/[^a-zA-Z0-9-_]/g, "-")}`,
+        public_id: `proof-${Date.now()}-${cleanName}`,
       },
       (error, result) => {
         if (error) reject(error);
@@ -169,7 +193,8 @@ router.post("/", upload.single("proofOfPayment"), async (req, res) => {
 
     const uploaded = await uploadToCloudinary(
       req.file.buffer,
-      req.file.originalname
+      req.file.originalname,
+      req.file.mimetype
     );
 
     const enrollment = await Enrollment.create({
@@ -201,6 +226,12 @@ router.post("/", upload.single("proofOfPayment"), async (req, res) => {
     });
   } catch (err) {
     console.error("POST /api/enrollments error:", err);
+
+    if (err.message && err.message.includes("Only JPG")) {
+      return res.status(400).json({
+        message: err.message,
+      });
+    }
 
     return res.status(500).json({
       message: "Could not submit enrollment.",
