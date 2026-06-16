@@ -3733,11 +3733,33 @@ function inlineQuizLoadingHtml(){
     }catch(_){}
   }
 
+
+  function buildCurrentAttemptUrl(targetQuizId, keepMode = true){
+    const safeId = encodeURIComponent(String(targetQuizId || ""));
+
+    /*
+      IMPORTANT:
+      Do not hard-code attempt-assessment.html here.
+      On the live site this page may be saved/deployed as attempt.html,
+      assessment.html, or another filename. Using the current pathname
+      prevents Netlify 404 errors when moving to Previous Quiz / Next Quiz.
+    */
+    const currentPath = window.location.pathname || "attempt.html";
+    const params = new URLSearchParams();
+    params.set("quizId", safeId);
+
+    if (keepMode && practiceMode) {
+      params.set("mode", "practice");
+    }
+
+    return `${currentPath}?${params.toString()}`;
+  }
+
   function goToPreviousQuiz(){
     if (!previousQuizData) return;
     const previousId = getQuizObjectId(previousQuizData);
     if (!previousId) return;
-    window.location.href = `attempt-assessment.html?quizId=${encodeURIComponent(previousId)}`;
+    window.location.href = buildCurrentAttemptUrl(previousId, true);
   }
 
   function setNextQuizButtonState(quiz, message){
@@ -3807,8 +3829,7 @@ function inlineQuizLoadingHtml(){
     const nextId = getQuizObjectId(nextQuizData);
     if (!nextId) return;
 
-    const nextMode = practiceMode ? "&mode=practice" : "";
-    window.location.href = `attempt-assessment.html?quizId=${encodeURIComponent(nextId)}${nextMode}`;
+    window.location.href = buildCurrentAttemptUrl(nextId, true);
   }
 
 
