@@ -2680,6 +2680,7 @@ const postSubmitOverlay = document.getElementById("postSubmitOverlay");
 
   const END_KEY = `quiz_end_${quizId}_${localStorage.getItem("username") || "user"}`;
   const ANSWERS_KEY = `quiz_answers_${quizId}_${localStorage.getItem("username") || "user"}`;
+  const OPTION_ORDER_KEY = `quiz_option_order_${quizId}_${localStorage.getItem("username") || "user"}`;
 
   function typesetMath(root=document){
     if (window.MathJax?.typesetClear) {
@@ -3025,6 +3026,7 @@ function inlineQuizLoadingHtml(){
 
   function clearSavedAnswers(){
     localStorage.removeItem(ANSWERS_KEY);
+    clearStoredOptionOrders();
   }
 
   function debouncedSaveAnswers(){
@@ -3191,13 +3193,13 @@ function inlineQuizLoadingHtml(){
     return String(s || "").trim().replace(/\s+/g, " ");
   }
 
-  /* ===== RANDOMIZE QUESTIONS + MULTIPLE CHOICE OPTIONS =====
-     - Questions are randomized in the Back/Next navigation order.
-     - Diagrams/stems stay attached to the correct question group.
-     - MCQ option positions are randomized, but each input keeps its original value,
-       so marking and backend submission still work correctly.
+  /* ===== RANDOMIZE MCQ OPTIONS ONLY =====
+     - Question order stays exactly as created by the teacher.
+     - Diagrams/stems stay attached to the correct section/question.
+     - MCQ option positions are randomized once for the attempt.
+     - Each input keeps its ORIGINAL option index as the value, so marking and
+       backend submission still work correctly.
   */
-  let randomizedQuestionPageOrder = [];
 
   function shuffleArrayCopy(arr){
     const a = Array.isArray(arr) ? arr.slice() : [];
@@ -3208,32 +3210,54 @@ function inlineQuizLoadingHtml(){
     return a;
   }
 
-  function getOptionDisplayOrder(q){
+  function loadStoredOptionOrders(){
+    try{
+      return JSON.parse(localStorage.getItem(OPTION_ORDER_KEY) || "{}") || {};
+    }catch{
+      return {};
+    }
+  }
+
+  function saveStoredOptionOrders(map){
+    try{
+      localStorage.setItem(OPTION_ORDER_KEY, JSON.stringify(map || {}));
+    }catch(_){}
+  }
+
+  function clearStoredOptionOrders(){
+    localStorage.removeItem(OPTION_ORDER_KEY);
+  }
+
+  function getOptionDisplayOrder(q, qIndex){
     const opts = Array.isArray(q?.options) ? q.options : [];
     if (!opts.length) return [];
+
+    const questionKey = String(q?._id || q?.id || qIndex);
 
     if (Array.isArray(q.__optionDisplayOrder) && q.__optionDisplayOrder.length === opts.length) {
       return q.__optionDisplayOrder;
     }
 
+    const stored = loadStoredOptionOrders();
+
+    if (Array.isArray(stored[questionKey]) && stored[questionKey].length === opts.length) {
+      q.__optionDisplayOrder = stored[questionKey];
+      return q.__optionDisplayOrder;
+    }
+
     q.__optionDisplayOrder = shuffleArrayCopy(opts.map((_, idx) => idx));
+    stored[questionKey] = q.__optionDisplayOrder;
+    saveStoredOptionOrders(stored);
+
     return q.__optionDisplayOrder;
   }
 
   function resetQuestionRandomization(){
-    randomizedQuestionPageOrder = [];
+    /* Question randomization removed intentionally. Keep teacher order. */
   }
 
   function applyRandomQuestionOrder(groups){
-    if (!Array.isArray(groups) || groups.length <= 1) return groups;
-
-    if (!Array.isArray(randomizedQuestionPageOrder) || randomizedQuestionPageOrder.length !== groups.length) {
-      randomizedQuestionPageOrder = shuffleArrayCopy(groups.map((_, idx) => idx));
-    }
-
-    return randomizedQuestionPageOrder
-      .map(idx => groups[idx])
-      .filter(Boolean);
+    return Array.isArray(groups) ? groups : [];
   }
 
   function normalizeIndexArray(v){
@@ -4743,7 +4767,7 @@ function inlineQuizLoadingHtml(){
       }
 
       const opts = Array.isArray(q.options) ? q.options : [];
-      const optionOrder = getOptionDisplayOrder(q);
+      const optionOrder = getOptionDisplayOrder(q, i);
       const multi = isMultiQuestion(q);
       const inputType = multi ? "checkbox" : "radio";
 
