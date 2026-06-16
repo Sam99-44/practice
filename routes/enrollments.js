@@ -117,6 +117,8 @@ function uploadToCloudinary(buffer, originalname = "") {
       {
         folder: "practice-online/proofs",
         resource_type: "auto",
+        type: "upload",
+        access_mode: "public",
         public_id: `proof-${Date.now()}-${String(originalname)
           .replace(/\.[^/.]+$/, "")
           .replace(/[^a-zA-Z0-9-_]/g, "-")}`,
@@ -246,7 +248,10 @@ router.get(
       }
 
       const enrollments = await Enrollment.find(filter)
-        .populate("learner", "fullName username email learnerNumber grade")
+        .populate(
+          "learner",
+          "fullName username email learnerNumber grade cellphone guardianCellphone phone"
+        )
         .populate("reviewedBy", "fullName username email role")
         .sort({ createdAt: -1 })
         .lean();
