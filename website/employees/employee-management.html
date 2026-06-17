@@ -8,17 +8,15 @@
 <style>
 :root{
   --nav:#1b1648;
-  --red:#e11d2e;
-  --bg:#ffffff;
-  --card:#ffffff;
+  --org:#0b3c5d;
+  --orgDark:#082f49;
+  --red:#c81e1e;
+  --redDark:#a81818;
+  --bg:#fff;
   --border:#d9dee7;
   --text:#0f172a;
   --muted:#475569;
-  --ok:#065f46;
-  --error:#b91c1c;
   --soft:#f8fafc;
-  --orange:#92400e;
-  --blue:#1d4ed8;
 }
 
 *{box-sizing:border-box}
@@ -32,10 +30,7 @@ html,body{
 }
 
 a{text-decoration:none;color:inherit}
-
-button,input,select,option,textarea{
-  font-family:"Times New Roman",Times,serif;
-}
+button,input,select,option,textarea{font-family:"Times New Roman",Times,serif}
 
 .topbar{
   background:var(--nav);
@@ -46,9 +41,8 @@ button,input,select,option,textarea{
 }
 
 .topbar-inner{
-  max-width:1150px;
-  margin:0 auto;
-  padding:14px 18px;
+  width:100%;
+  padding:12px 18px;
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -68,17 +62,8 @@ button,input,select,option,textarea{
   filter:brightness(0) invert(1) contrast(180%);
 }
 
-.accountName{
-  font-size:14px;
-  font-weight:700;
-  color:#fff;
-}
-
-.accountType{
-  font-size:13px;
-  color:#e0e7ff;
-  margin-top:3px;
-}
+.accountName{font-size:14px;font-weight:700;color:#fff}
+.accountType{font-size:13px;color:#e0e7ff;margin-top:3px}
 
 .topbarRight{
   display:flex;
@@ -110,9 +95,9 @@ button,input,select,option,textarea{
 }
 
 .wrap{
-  max-width:1150px;
-  margin:0 auto;
-  padding:18px;
+  width:100%;
+  max-width:none;
+  padding:14px;
 }
 
 .card{
@@ -121,18 +106,16 @@ button,input,select,option,textarea{
   border-radius:0;
   box-shadow:none;
   overflow:hidden;
-  margin:0 auto 16px;
+  margin:0 0 12px;
 }
 
 .cardHead{
-  padding:14px 22px;
+  padding:14px 18px;
   border-bottom:1px solid #ececec;
   background:#fff;
 }
 
-.cardHead h1,
-.cardHead h2,
-.cardHead h3{
+.cardHead h1,.cardHead h2,.cardHead h3{
   margin:0;
   font-size:14px;
   font-weight:700;
@@ -146,54 +129,75 @@ button,input,select,option,textarea{
   line-height:1.45;
 }
 
-.body{
-  padding:22px;
-}
+.body{padding:16px}
 
 .summaryGrid{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:12px;
+  gap:10px;
 }
 
 .summaryBox{
   border:1px solid #e5e7eb;
   background:#fff;
-  padding:14px;
-}
-
-.metricLabel{
-  font-size:13px;
-  color:#475569;
-  margin-bottom:6px;
-}
-
-.metricValue{
-  font-size:24px;
-  font-weight:700;
-}
-
-.metricNote{
-  font-size:13px;
-  color:#475569;
-  margin-top:4px;
-}
-
-.formGrid{
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
+  padding:12px;
+  display:flex;
+  align-items:center;
   gap:12px;
+  min-height:92px;
 }
 
-.wide{grid-column:span 2}
-.full{grid-column:1/-1}
+.summaryIcon{
+  width:38px;
+  height:38px;
+  border:1px solid #e5e7eb;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#f8fafc;
+  flex:0 0 auto;
+}
+
+.summaryIcon img{
+  width:22px;
+  height:22px;
+}
+
+.metricLabel{font-size:13px;color:#475569;margin-bottom:5px}
+.metricValue{font-size:24px;font-weight:700;line-height:1}
+.metricNote{font-size:13px;color:#475569;margin-top:5px}
 
 .toolbar{
   display:grid;
-  grid-template-columns:170px 170px 170px 1fr auto;
-  gap:12px;
+  grid-template-columns:160px 170px 160px 160px 1fr auto;
+  gap:10px;
   align-items:end;
-  margin-bottom:14px;
+  margin-bottom:10px;
+}
+
+.bulkBar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:10px;
+  margin-bottom:10px;
+  border:1px solid #e5e7eb;
+  background:#f8fafc;
+}
+
+.bulkLeft{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.selectedText{
+  font-size:13px;
+  color:#475569;
+  font-weight:700;
 }
 
 label{
@@ -206,7 +210,7 @@ label{
 
 input,select,textarea{
   width:100%;
-  padding:10px 12px;
+  padding:9px 10px;
   border-radius:0;
   border:1px solid #d6d3d1;
   background:#fff;
@@ -214,53 +218,39 @@ input,select,textarea{
   outline:none;
 }
 
-textarea{
-  min-height:90px;
-  resize:vertical;
-}
+textarea{min-height:90px;resize:vertical}
 
-input:focus,
-select:focus,
-textarea:focus{
+input:focus,select:focus,textarea:focus{
   border-color:#cbd5e1;
   box-shadow:0 0 0 4px rgba(226,232,240,.7);
 }
 
-.actions{
+.actions,.bulkActions{
   display:flex;
-  gap:10px;
+  gap:8px;
   flex-wrap:wrap;
   align-items:center;
 }
 
-.quickActions{
-  display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
-  gap:10px;
-}
-
 .btn{
-  background:var(--red);
-  color:#fff;
-  border:1px solid var(--red);
-  border-radius:6px;
-  height:34px;
-  padding:10px 14px;
-  min-width:92px;
-  font-size:12px;
-  font-weight:700;
-  cursor:pointer;
   display:inline-flex;
   align-items:center;
   justify-content:center;
+  gap:8px;
+  height:38px;
+  padding:0 14px;
+  min-width:96px;
+  border:none;
+  border-radius:4px;
+  background:var(--org);
+  color:#fff;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
 }
 
-.btn:hover{opacity:.92}
-
-.btn:disabled{
-  opacity:.6;
-  cursor:not-allowed;
-}
+.btn:hover{background:var(--orgDark)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
 
 .btn.secondary{
   background:#fff;
@@ -268,49 +258,47 @@ textarea:focus{
   border:1px solid #d1d5db;
 }
 
-.btn.secondary:hover{
-  background:var(--soft);
+.btn.secondary:hover{background:#f8fafc}
+
+.btn.danger{background:var(--red)}
+.btn.danger:hover{background:var(--redDark)}
+
+.btn img{
+  width:15px;
+  height:15px;
+  filter:brightness(0) invert(1);
 }
 
-.btn.success{
-  background:#065f46;
-  border-color:#065f46;
+.btn.secondary img{filter:none}
+
+.formGrid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
 }
 
-.btn.warning{
-  background:#92400e;
-  border-color:#92400e;
-}
-
-.btn.danger{
-  background:#b91c1c;
-  border-color:#b91c1c;
-}
-
-.btn.small{
-  min-width:auto;
-  height:30px;
-  padding:7px 10px;
-}
+.wide{grid-column:span 2}
+.full{grid-column:1/-1}
+.hidden{display:none!important}
 
 .tableWrap{
   width:100%;
-  overflow-x:auto;
+  overflow:auto;
   border:1px solid #e5e7eb;
   background:#fff;
 }
 
-.tableWrap::-webkit-scrollbar{height:10px}
+.tableWrap::-webkit-scrollbar{height:10px;width:10px}
 .tableWrap::-webkit-scrollbar-thumb{background:#9ca3af;border-radius:20px}
 
 table{
   width:100%;
   border-collapse:collapse;
-  min-width:1320px;
+  min-width:1400px;
 }
 
 th,td{
-  padding:10px 12px;
+  padding:9px 10px;
   border-bottom:1px solid #e5e7eb;
   text-align:left;
   font-size:14px;
@@ -323,15 +311,16 @@ th{
   color:#111827;
   font-size:13px;
   font-weight:700;
+  position:sticky;
+  top:0;
+  z-index:10;
 }
 
 tr:hover td{background:#f8fafc}
 
-td select{
-  min-width:120px;
-  padding:7px 9px;
-  font-size:13px;
-}
+td select{min-width:115px;padding:6px 8px;font-size:13px}
+.checkboxCell{width:38px;text-align:center}
+.checkboxCell input{width:auto;box-shadow:none}
 
 .badge{
   display:inline-flex;
@@ -339,86 +328,43 @@ td select{
   padding:4px 8px;
   border-radius:4px;
   font-size:12px;
-  font-weight:700;
-  background:#f1f5f9;
+  font-weight:600;
+  background:#f8fafc;
   color:#334155;
-  border:1px solid #e2e8f0;
-}
-
-.badge.green{
-  background:#f0fdf4;
-  color:#065f46;
-  border-color:#bbf7d0;
-}
-
-.badge.red{
-  background:#fef2f2;
-  color:#b91c1c;
-  border-color:#fecaca;
-}
-
-.badge.orange{
-  background:#fff7ed;
-  color:#92400e;
-  border-color:#fed7aa;
-}
-
-.badge.blue{
-  background:#eff6ff;
-  color:#1d4ed8;
-  border-color:#bfdbfe;
+  border:1px solid #d9dee7;
 }
 
 .msgBox{
   display:none;
-  margin-bottom:14px;
+  margin-bottom:12px;
   padding:12px;
   border:1px solid #e5e7eb;
   font-size:14px;
 }
 
-.msgBox.ok{
-  display:block;
-  color:#065f46;
-  background:#f0fdf4;
-}
+.msgBox.ok{display:block;color:#065f46;background:#f0fdf4}
+.msgBox.error{display:block;color:#991b1b;background:#fff;border-color:#fecaca}
 
-.msgBox.error{
-  display:block;
-  color:#b91c1c;
-  background:#fef2f2;
-}
+.loadingRow{color:#475569;font-weight:700}
 
-.hidden{display:none!important}
-
-@media(max-width:1050px){
-  .quickActions{grid-template-columns:repeat(3,1fr)}
-}
-
-@media(max-width:900px){
+@media(max-width:1150px){
+  .toolbar{grid-template-columns:1fr 1fr 1fr}
   .summaryGrid{grid-template-columns:repeat(2,1fr)}
-  .toolbar{grid-template-columns:1fr 1fr}
   .formGrid{grid-template-columns:1fr 1fr}
 }
 
 @media(max-width:640px){
-  .wrap{padding:14px}
-  .body{padding:14px}
-  .cardHead{padding:12px 14px}
-  .summaryGrid,.toolbar,.formGrid,.quickActions{grid-template-columns:1fr}
+  .wrap{padding:10px}
+  .body{padding:12px}
+  .cardHead{padding:12px}
+  .summaryGrid,.toolbar,.formGrid{grid-template-columns:1fr}
   .wide{grid-column:auto}
-  .accountName,.accountType{
-    max-width:130px;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-  }
+  .accountName,.accountType{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
 </style>
 </head>
 
 <body>
-
 <header class="topbar">
   <div class="topbar-inner">
     <div class="accountLeft">
@@ -439,89 +385,66 @@ td select{
 </header>
 
 <div class="wrap">
-
   <div id="msg" class="msgBox"></div>
 
   <div class="card">
     <div class="cardHead">
       <h1>Employee Management</h1>
-      <div class="subText">Create employees, assign roles, manage departments, update statuses and export employee records.</div>
     </div>
 
     <div class="body">
       <div class="summaryGrid">
         <div class="summaryBox">
-          <div class="metricLabel">Total Employees</div>
-          <div class="metricValue" id="totalEmployees">0</div>
-          <div class="metricNote">All staff accounts</div>
+          <div class="summaryIcon"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt=""></div>
+          <div>
+            <div class="metricLabel">Total Employees</div>
+            <div class="metricValue" id="totalEmployees">0</div>
+            <div class="metricNote">All staff accounts</div>
+          </div>
         </div>
 
         <div class="summaryBox">
-          <div class="metricLabel">Active</div>
-          <div class="metricValue" id="activeEmployees">0</div>
-          <div class="metricNote">Currently enabled</div>
+          <div class="summaryIcon"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654916/Approved_dbtwvt.svg" alt=""></div>
+          <div>
+            <div class="metricLabel">Active</div>
+            <div class="metricValue" id="activeEmployees">0</div>
+            <div class="metricNote">Currently enabled</div>
+          </div>
         </div>
 
         <div class="summaryBox">
-          <div class="metricLabel">Disabled</div>
-          <div class="metricValue" id="disabledEmployees">0</div>
-          <div class="metricNote">Inactive accounts</div>
+          <div class="summaryIcon"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654917/delete_suc2ec.svg" alt=""></div>
+          <div>
+            <div class="metricLabel">Disabled</div>
+            <div class="metricValue" id="disabledEmployees">0</div>
+            <div class="metricNote">Inactive accounts</div>
+          </div>
         </div>
 
         <div class="summaryBox">
-          <div class="metricLabel">Departments</div>
-          <div class="metricValue" id="departmentCount">0</div>
-          <div class="metricNote">Departments with employees</div>
+          <div class="summaryIcon"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt=""></div>
+          <div>
+            <div class="metricLabel">Departments</div>
+            <div class="metricValue" id="departmentCount">0</div>
+            <div class="metricNote">Departments with employees</div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="card">
-    <div class="cardHead">
-      <h2>Quick Actions</h2>
-      <div class="subText">Open common employee tools quickly.</div>
-    </div>
-
-    <div class="body">
-      <div class="quickActions">
-        <button class="btn" id="showCreateBtn">Create Employee</button>
-        <button class="btn success" id="exportBtn">Export Excel</button>
-        <button class="btn secondary" id="refreshBtn">Refresh</button>
-        <a class="btn secondary" href="employee-logs.html">View Logs</a>
-        <a class="btn secondary" href="employee-dashboard.html">Dashboard</a>
-      </div>
-    </div>
-  </div>
-
-  <div class="card" id="createCard">
+  <div class="card hidden" id="createCard">
     <div class="cardHead">
       <h2>Create Employee</h2>
-      <div class="subText">Create staff, tutors, admins, testers and assign department roles.</div>
     </div>
 
     <div class="body">
       <form id="employeeForm">
         <div class="formGrid">
-          <div>
-            <label>Full Name</label>
-            <input id="fullName" required>
-          </div>
-
-          <div>
-            <label>Username</label>
-            <input id="username" required>
-          </div>
-
-          <div>
-            <label>Email</label>
-            <input id="email" type="email" required>
-          </div>
-
-          <div>
-            <label>Password</label>
-            <input id="password" type="password" required>
-          </div>
+          <div><label>Full Name</label><input id="fullName" required></div>
+          <div><label>Username</label><input id="username" required></div>
+          <div><label>Email</label><input id="email" type="email" required></div>
+          <div><label>Password</label><input id="password" type="password" required></div>
 
           <div>
             <label>Role</label>
@@ -549,32 +472,15 @@ td select{
             </select>
           </div>
 
-          <div>
-            <label>Employee Number</label>
-            <input id="employeeNumber" placeholder="Example: EMP001">
-          </div>
-
-          <div>
-            <label>Job Title</label>
-            <input id="jobTitle" placeholder="Example: Mathematics Tutor">
-          </div>
-
-          <div>
-            <label>Phone</label>
-            <input id="phone" placeholder="Example: 0712345678">
-          </div>
-
-          <div>
-            <label>Status</label>
-            <select id="isActive">
-              <option value="true">Active</option>
-              <option value="false">Disabled</option>
-            </select>
-          </div>
+          <div><label>Employee Number</label><input id="employeeNumber" placeholder="Example: EMP001"></div>
+          <div><label>Job Title</label><input id="jobTitle" placeholder="Example: Mathematics Tutor"></div>
+          <div><label>Phone</label><input id="phone" placeholder="Example: 0712345678"></div>
+          <div><label>Status</label><select id="isActive"><option value="true">Active</option><option value="false">Disabled</option></select></div>
 
           <div class="full actions">
-            <button class="btn success" id="createBtn" type="submit">Create Employee</button>
+            <button class="btn" id="createBtn" type="submit">Create Employee</button>
             <button class="btn secondary" type="reset">Reset</button>
+            <button class="btn secondary" type="button" onclick="toggleCreate()">Close</button>
           </div>
         </div>
       </form>
@@ -583,8 +489,7 @@ td select{
 
   <div class="card">
     <div class="cardHead">
-      <h2>Employee Table</h2>
-      <div class="subText">Search, filter and update employee role, department and account status directly in the table.</div>
+      <h2>Employee Records</h2>
     </div>
 
     <div class="body">
@@ -608,12 +513,12 @@ td select{
           <label>Department filter</label>
           <select id="departmentFilter">
             <option value="all">All departments</option>
+            <option value="admin">Admin</option>
             <option value="academic">Academic</option>
             <option value="operations">Operations</option>
             <option value="finance">Finance</option>
             <option value="support">Support</option>
             <option value="tutor">Tutor</option>
-            <option value="admin">Admin</option>
           </select>
         </div>
 
@@ -627,26 +532,56 @@ td select{
         </div>
 
         <div>
+          <label>Date filter</label>
+          <select id="dateFilter">
+            <option value="all">All records</option>
+            <option value="today">Today</option>
+            <option value="thisWeek">This week</option>
+            <option value="lastWeek">Last week</option>
+            <option value="thisMonth">This month</option>
+            <option value="lastMonth">Last month</option>
+            <option value="thisYear">This year</option>
+          </select>
+        </div>
+
+        <div>
           <label>Search</label>
-          <input id="searchBox" type="search" placeholder="Search name, email, username, employee number...">
+          <input id="searchBox" type="search" placeholder="Search employees">
         </div>
 
         <div class="actions">
-          <button class="btn" id="loadBtn">Load Employees</button>
+          <button class="btn secondary" id="refreshBtn">Refresh</button>
+          <button class="btn secondary" id="showCreateBtn">Add Employee</button>
+          <button class="btn" id="exportBtn">Export Excel</button>
         </div>
       </div>
 
-      <div class="actions" style="margin-bottom:12px;">
-        <button class="btn success" id="enableSelectedBtn">Enable Selected</button>
-        <button class="btn warning" id="disableSelectedBtn">Disable Selected</button>
-        <button class="btn danger" id="deleteSelectedBtn">Delete Selected</button>
+      <div class="bulkBar">
+        <div class="bulkLeft">
+          <span class="selectedText" id="selectedCount">0 selected</span>
+        </div>
+
+        <div class="bulkActions">
+          <button class="btn" id="enableSelectedBtn">
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654916/Approved_dbtwvt.svg" alt="">Enable Selected
+          </button>
+          <button class="btn" id="disableSelectedBtn">
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781656873/edit-3_c1gjk0.svg" alt="">Disable Selected
+          </button>
+          <button class="btn" id="saveSelectedBtn">
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654917/save_jw3yhm.svg" alt="">Save Changes
+          </button>
+          <button class="btn danger" id="deleteSelectedBtn">
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654917/delete_suc2ec.svg" alt="">Remove Selected
+          </button>
+        </div>
       </div>
 
       <div class="tableWrap">
         <table>
           <thead>
             <tr>
-              <th><input type="checkbox" id="selectAll"></th>
+              <th class="checkboxCell"><input type="checkbox" id="selectAll"></th>
               <th>No.</th>
               <th>Name</th>
               <th>Username</th>
@@ -658,12 +593,11 @@ td select{
               <th>Phone</th>
               <th>Status</th>
               <th>Created</th>
-              <th>Actions</th>
             </tr>
           </thead>
 
           <tbody id="rows">
-            <tr><td colspan="13">Loading employees...</td></tr>
+            <tr><td colspan="12" class="loadingRow">Loading employee records...</td></tr>
           </tbody>
         </table>
       </div>
@@ -673,12 +607,11 @@ td select{
   <div class="card">
     <div class="cardHead">
       <h2>Department Summary</h2>
-      <div class="subText">Employee count by department and account status.</div>
     </div>
 
     <div class="body">
       <div class="tableWrap">
-        <table>
+        <table style="min-width:700px">
           <thead>
             <tr>
               <th>Department</th>
@@ -687,23 +620,23 @@ td select{
               <th>Disabled</th>
             </tr>
           </thead>
-
           <tbody id="summaryRows"></tbody>
         </table>
       </div>
     </div>
   </div>
-
 </div>
 
 <script>
 const API = "https://api.practiceonline.co.za";
 let employees = [];
+let pendingChanges = {};
+let selectedIds = new Set();
 
 const $ = id => document.getElementById(id);
 
 function token(){
-  return localStorage.getItem("token") || "";
+  return localStorage.getItem("employeeToken") || localStorage.getItem("token") || "";
 }
 
 function logout(){
@@ -724,33 +657,25 @@ function show(text,type="ok"){
   const m = $("msg");
   m.textContent = text;
   m.className = "msgBox " + type;
-  setTimeout(()=>{m.className = "msgBox"},4500);
+  setTimeout(()=>{m.className="msgBox"},4500);
 }
 
 async function safeJson(res){
-  try{
-    return await res.json();
-  }catch{
-    return {};
-  }
+  try{return await res.json()}catch{return {}}
 }
 
 async function fetchJson(path,options={}){
-  const res = await fetch(API + path, {
+  const res = await fetch(API + path,{
     ...options,
     headers:{
       "Content-Type":"application/json",
-      ...(options.headers || {}),
-      Authorization:"Bearer " + token()
+      Authorization:"Bearer " + token(),
+      ...(options.headers || {})
     }
   });
 
   const data = await safeJson(res);
-
-  if(!res.ok){
-    throw new Error(data.message || path + " failed");
-  }
-
+  if(!res.ok) throw new Error(data.message || path + " failed");
   return data;
 }
 
@@ -766,48 +691,32 @@ async function requireEmployee(){
   }
 
   try{
-    let u;
-
-    try{
-      u = await fetchJson("/api/employees/me");
-    }catch{
-      u = await fetchJson("/api/auth/me");
-    }
-
+    const u = await fetchJson("/api/employees/me");
     const role = String(u.role || "").toLowerCase();
     const allowed = ["admin","tester"];
 
     if(!allowed.includes(role)){
-      show("You do not have permission to open this page.","error");
-      setTimeout(()=>location.href="employee-dashboard.html",1200);
+      setTimeout(()=>location.href="employee-dashboard.html",900);
       return null;
     }
 
     $("userPill").textContent = `${u.fullName || u.username || "Employee"} • ${role}`;
     return u;
-  }catch{
-    logout();
+  }catch(e){
+    console.error("Employee profile failed:",e);
     return null;
   }
 }
 
 function roleToDepartment(role){
   const r = String(role || "").toLowerCase();
-
-  if(r === "admin" || r === "tester"){
-    return "admin";
-  }
-
-  if(r === "editor"){
-    return "academic";
-  }
-
+  if(r === "admin" || r === "tester") return "admin";
+  if(r === "editor") return "academic";
   return r;
 }
 
 function syncDepartment(){
-  const roleValue = $("role").value;
-  $("department").value = roleToDepartment(roleValue);
+  $("department").value = roleToDepartment($("role").value);
 }
 
 function normaliseEmployee(e,i){
@@ -822,44 +731,31 @@ function normaliseEmployee(e,i){
     jobTitle:e.jobTitle || "",
     phone:e.phone || e.cellphone || e.contact || "",
     isActive:e.isActive !== false,
-    createdAt:e.createdAt || e.date || "",
-    raw:e
+    createdAt:e.createdAt || e.date || ""
   };
 }
 
-async function loadEmployees(){
-  const btn = $("loadBtn");
-  btn.disabled = true;
-  btn.textContent = "Loading...";
+async function loadEmployees(showMessage=false){
+  $("refreshBtn").disabled = true;
+  $("refreshBtn").textContent = "Loading...";
 
   try{
     const data = await fetchJson("/api/employees");
     employees = normaliseArray(data).map(normaliseEmployee);
-
-    if(!employees.length){
-      buildFallbackEmployees();
-    }
-
+    pendingChanges = {};
+    selectedIds.clear();
     renderAll();
-    show("Employees loaded.");
+    if(showMessage) show("Employee records refreshed.");
   }catch(e){
-    buildFallbackEmployees();
+    console.error("Could not load employees:",e);
+    employees = [];
+    pendingChanges = {};
+    selectedIds.clear();
     renderAll();
-    show("Could not load backend employees, so fallback employees were shown.","error");
   }finally{
-    btn.disabled = false;
-    btn.textContent = "Load Employees";
+    $("refreshBtn").disabled = false;
+    $("refreshBtn").textContent = "Refresh";
   }
-}
-
-function buildFallbackEmployees(){
-  const now = new Date().toISOString();
-
-  employees = [
-    normaliseEmployee({id:"emp-1", fullName:"Academic User", username:"academic", email:"academic@practiceonline.co.za", role:"academic", department:"academic", employeeNumber:"EMP001", jobTitle:"Academic Officer", phone:"", isActive:true, createdAt:now},0),
-    normaliseEmployee({id:"emp-2", fullName:"Finance User", username:"finance", email:"finance@practiceonline.co.za", role:"finance", department:"finance", employeeNumber:"EMP002", jobTitle:"Finance Officer", phone:"", isActive:true, createdAt:now},1),
-    normaliseEmployee({id:"emp-3", fullName:"Support User", username:"support", email:"support@practiceonline.co.za", role:"support", department:"support", employeeNumber:"EMP003", jobTitle:"Support Officer", phone:"", isActive:false, createdAt:now},2)
-  ];
 }
 
 function formatDate(v){
@@ -869,8 +765,67 @@ function formatDate(v){
   return d.toLocaleDateString("en-ZA");
 }
 
-function badge(text,color=""){
-  return `<span class="badge ${color}">${esc(text || "-")}</span>`;
+function badge(text){
+  return `<span class="badge">${esc(text || "-")}</span>`;
+}
+
+function roleOptions(selected){
+  const roles = ["admin","tester","academic","editor","operations","finance","support","tutor"];
+  return roles.map(r => `<option value="${r}" ${selected === r ? "selected" : ""}>${r}</option>`).join("");
+}
+
+function departmentOptions(selected){
+  const departments = ["admin","academic","operations","finance","support","tutor"];
+  return departments.map(d => `<option value="${d}" ${selected === d ? "selected" : ""}>${d}</option>`).join("");
+}
+
+function trackChange(id,key,value){
+  if(!pendingChanges[id]) pendingChanges[id] = {};
+  pendingChanges[id][key] = value;
+
+  employees = employees.map(e => {
+    if(e.id !== id) return e;
+    const next = {...e,[key]:value};
+    if(key === "role") next.department = roleToDepartment(value);
+    return next;
+  });
+
+  renderAll();
+}
+
+function startOfWeek(date){
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day === 0 ? 6 : day - 1;
+  d.setDate(d.getDate() - diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function passesDateFilter(row){
+  const filter = $("dateFilter").value;
+  if(filter === "all") return true;
+  if(!row.createdAt) return false;
+
+  const created = new Date(row.createdAt);
+  if(isNaN(created.getTime())) return false;
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const weekStart = startOfWeek(now);
+  const lastWeekStart = new Date(weekStart); lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+  const monthStart = new Date(now.getFullYear(),now.getMonth(),1);
+  const lastMonthStart = new Date(now.getFullYear(),now.getMonth() - 1,1);
+  const lastMonthEnd = new Date(now.getFullYear(),now.getMonth(),1);
+  const yearStart = new Date(now.getFullYear(),0,1);
+
+  if(filter === "today") return created >= todayStart;
+  if(filter === "thisWeek") return created >= weekStart;
+  if(filter === "lastWeek") return created >= lastWeekStart && created < weekStart;
+  if(filter === "thisMonth") return created >= monthStart;
+  if(filter === "lastMonth") return created >= lastMonthStart && created < lastMonthEnd;
+  if(filter === "thisYear") return created >= yearStart;
+  return true;
 }
 
 function filteredEmployees(){
@@ -884,6 +839,7 @@ function filteredEmployees(){
     if(department !== "all" && e.department !== department) return false;
     if(status === "active" && !e.isActive) return false;
     if(status === "disabled" && e.isActive) return false;
+    if(!passesDateFilter(e)) return false;
     if(q && !Object.values(e).join(" ").toLowerCase().includes(q)) return false;
     return true;
   });
@@ -893,11 +849,11 @@ function renderAll(){
   renderCounts();
   renderEmployees();
   renderDepartmentSummary();
+  updateSelectedUI();
 }
 
 function renderCounts(){
   const departments = new Set(employees.map(e => e.department).filter(Boolean));
-
   $("totalEmployees").textContent = employees.length;
   $("activeEmployees").textContent = employees.filter(e => e.isActive).length;
   $("disabledEmployees").textContent = employees.filter(e => !e.isActive).length;
@@ -909,113 +865,132 @@ function renderEmployees(){
 
   $("rows").innerHTML = rows.length ? rows.map((e,i)=>`
     <tr>
-      <td><input type="checkbox" class="rowCheck" value="${esc(e.id)}"></td>
+      <td class="checkboxCell"><input type="checkbox" class="rowCheck" value="${esc(e.id)}" ${selectedIds.has(e.id) ? "checked" : ""} onchange="toggleSelect('${esc(e.id)}',this.checked)"></td>
       <td>${i + 1}</td>
       <td><b>${esc(e.fullName || "-")}</b></td>
       <td>${esc(e.username || "-")}</td>
       <td>${esc(e.email || "-")}</td>
-      <td>
-        <select onchange="updateEmployeeLocal('${esc(e.id)}',{role:this.value,department:roleToDepartment(this.value)})">
-          ${roleOptions(e.role)}
-        </select>
-        ${badge(e.role,"blue")}
-      </td>
-      <td>
-        <select onchange="updateEmployeeLocal('${esc(e.id)}',{department:this.value})">
-          ${departmentOptions(e.department)}
-        </select>
-      </td>
+      <td><select onchange="trackChange('${esc(e.id)}','role',this.value)">${roleOptions(e.role)}</select> ${badge(e.role)}</td>
+      <td><select onchange="trackChange('${esc(e.id)}','department',this.value)">${departmentOptions(e.department)}</select></td>
       <td>${esc(e.employeeNumber || "-")}</td>
       <td>${esc(e.jobTitle || "-")}</td>
       <td>${esc(e.phone || "-")}</td>
-      <td>
-        <select onchange="updateEmployeeLocal('${esc(e.id)}',{isActive:this.value==='Active'})">
-          <option ${e.isActive ? "selected" : ""}>Active</option>
-          <option ${!e.isActive ? "selected" : ""}>Disabled</option>
-        </select>
-        ${e.isActive ? badge("Active","green") : badge("Disabled","red")}
-      </td>
+      <td><select onchange="trackChange('${esc(e.id)}','isActive',this.value==='Active')"><option ${e.isActive ? "selected" : ""}>Active</option><option ${!e.isActive ? "selected" : ""}>Disabled</option></select> ${badge(e.isActive ? "Active" : "Disabled")}</td>
       <td>${formatDate(e.createdAt)}</td>
-      <td class="actions">
-        <button class="btn small secondary" onclick="saveEmployee('${esc(e.id)}')">Save</button>
-        <button class="btn small warning" onclick="updateEmployeeLocal('${esc(e.id)}',{isActive:false})">Disable</button>
-        <button class="btn small success" onclick="updateEmployeeLocal('${esc(e.id)}',{isActive:true})">Enable</button>
-        <button class="btn small danger" onclick="deleteEmployee('${esc(e.id)}')">Delete</button>
-      </td>
     </tr>
-  `).join("") : `<tr><td colspan="13">No employees found.</td></tr>`;
-}
-
-function roleOptions(selected){
-  const roles = ["admin","tester","academic","editor","operations","finance","support","tutor"];
-  return roles.map(r => `<option value="${r}" ${selected === r ? "selected" : ""}>${r}</option>`).join("");
-}
-
-function departmentOptions(selected){
-  const departments = ["admin","academic","operations","finance","support","tutor"];
-  return departments.map(d => `<option value="${d}" ${selected === d ? "selected" : ""}>${d}</option>`).join("");
+  `).join("") : `<tr><td colspan="12">No employee records available.</td></tr>`;
 }
 
 function renderDepartmentSummary(){
   const departments = ["admin","academic","operations","finance","support","tutor"];
-
   $("summaryRows").innerHTML = departments.map(dep=>{
     const rows = employees.filter(e => e.department === dep);
-
-    return `
-      <tr>
-        <td>${esc(dep)}</td>
-        <td>${rows.length}</td>
-        <td>${rows.filter(e => e.isActive).length}</td>
-        <td>${rows.filter(e => !e.isActive).length}</td>
-      </tr>
-    `;
+    return `<tr><td>${esc(dep)}</td><td>${rows.length}</td><td>${rows.filter(e => e.isActive).length}</td><td>${rows.filter(e => !e.isActive).length}</td></tr>`;
   }).join("");
 }
 
-function updateEmployeeLocal(id,patch){
-  employees = employees.map(e => e.id === id ? {...e,...patch} : e);
+function toggleSelect(id,checked){
+  if(checked) selectedIds.add(id);
+  else selectedIds.delete(id);
+  updateSelectedUI();
+}
+
+function toggleSelectAll(checked){
+  filteredEmployees().forEach(e=>{
+    if(checked) selectedIds.add(e.id);
+    else selectedIds.delete(e.id);
+  });
   renderAll();
 }
 
-async function saveEmployee(id){
-  const e = employees.find(x => x.id === id);
+function updateSelectedUI(){
+  $("selectedCount").textContent = selectedIds.size + " selected";
+  const rows = filteredEmployees();
+  const allSelected = rows.length && rows.every(r => selectedIds.has(r.id));
+  $("selectAll").checked = !!allSelected;
+}
 
-  if(!e){
-    return;
-  }
+function applyToSelected(patch){
+  const ids = [...selectedIds];
+  if(!ids.length) return show("Please select at least one employee.","error");
 
-  if(id.startsWith("employee-") || id.startsWith("emp-")){
-    return show("This sample employee was updated locally.");
-  }
+  ids.forEach(id=>{
+    Object.keys(patch).forEach(key=>trackChange(id,key,patch[key]));
+  });
+
+  renderAll();
+}
+
+async function saveEmployeeRecord(e){
+  const patch = pendingChanges[e.id];
+  if(!patch) return false;
+
+  await fetchJson("/api/employees/" + encodeURIComponent(e.id),{
+    method:"PATCH",
+    body:JSON.stringify({
+      role:e.role,
+      department:e.department,
+      isActive:e.isActive,
+      employeeNumber:e.employeeNumber,
+      jobTitle:e.jobTitle,
+      phone:e.phone
+    })
+  });
+
+  delete pendingChanges[e.id];
+  return true;
+}
+
+async function saveSelected(){
+  const ids = [...selectedIds];
+  if(!ids.length) return show("Please select at least one employee.","error");
+
+  let saved = 0;
 
   try{
-    await fetchJson("/api/employees/" + encodeURIComponent(id), {
-      method:"PATCH",
-      body:JSON.stringify({
-        role:e.role,
-        department:e.department,
-        isActive:e.isActive,
-        employeeNumber:e.employeeNumber,
-        jobTitle:e.jobTitle,
-        phone:e.phone
-      })
-    });
+    for(const id of ids){
+      const e = employees.find(x => x.id === id);
+      if(e && pendingChanges[id]){
+        await saveEmployeeRecord(e);
+        saved++;
+      }
+    }
 
-    show("Employee saved.");
-  }catch(err){
-    show(err.message,"error");
+    if(!saved) return show("No selected employees have changes to save.","error");
+    show(saved + " employee record(s) saved.");
+    await loadEmployees(false);
+  }catch(e){
+    console.error("Save selected failed:",e);
+    show("Could not save selected employees.","error");
+  }
+}
+
+async function deleteSelected(){
+  const ids = [...selectedIds];
+  if(!ids.length) return show("Please select at least one employee.","error");
+  if(!confirm("Remove selected employees?")) return;
+
+  try{
+    for(const id of ids){
+      await fetchJson("/api/employees/" + encodeURIComponent(id),{method:"DELETE"});
+    }
+    employees = employees.filter(e => !selectedIds.has(e.id));
+    selectedIds.clear();
+    renderAll();
+    show("Selected employees removed.");
+  }catch(e){
+    console.error("Remove selected failed:",e);
+    show("Could not remove selected employees.","error");
   }
 }
 
 async function createEmployee(e){
   e.preventDefault();
-
   const btn = $("createBtn");
   btn.disabled = true;
 
   try{
-    await fetchJson("/api/employees", {
+    await fetchJson("/api/employees",{
       method:"POST",
       body:JSON.stringify({
         fullName:$("fullName").value.trim(),
@@ -1035,136 +1010,66 @@ async function createEmployee(e){
     show("Employee created.");
     e.target.reset();
     syncDepartment();
-    await loadEmployees();
+    $("createCard").classList.add("hidden");
+    await loadEmployees(false);
   }catch(err){
-    show(err.message,"error");
+    console.error("Create employee failed:",err);
+    show("Could not create employee.","error");
   }finally{
     btn.disabled = false;
   }
 }
 
-async function deleteEmployee(id){
-  if(!confirm("Delete employee?")) return;
-
-  const real = !(id.startsWith("employee-") || id.startsWith("emp-"));
-
-  try{
-    if(real){
-      await fetchJson("/api/employees/" + encodeURIComponent(id), {method:"DELETE"});
-    }
-
-    employees = employees.filter(e => e.id !== id);
-    renderAll();
-    show("Employee deleted.");
-  }catch(e){
-    show(e.message,"error");
-  }
-}
-
-function selectedIds(){
-  return [...document.querySelectorAll(".rowCheck:checked")].map(x => x.value);
-}
-
-function applyToSelected(patch){
-  const ids = selectedIds();
-
-  if(!ids.length){
-    return show("Please select at least one employee.","error");
-  }
-
-  employees = employees.map(e => ids.includes(e.id) ? {...e,...patch} : e);
-  $("selectAll").checked = false;
-  renderAll();
-  show("Selected employees updated locally.");
-}
-
-function deleteSelected(){
-  const ids = selectedIds();
-
-  if(!ids.length){
-    return show("Please select at least one employee.","error");
-  }
-
-  if(!confirm("Delete selected employees?")) return;
-
-  employees = employees.filter(e => !ids.includes(e.id));
-  $("selectAll").checked = false;
-  renderAll();
-  show("Selected employees removed locally.");
+function toggleCreate(){
+  $("createCard").classList.toggle("hidden");
 }
 
 function exportExcel(){
   const rows = filteredEmployees();
-
-  if(!rows.length){
-    return show("No employees to export.","error");
-  }
+  if(!rows.length) return show("No employee records to export.","error");
 
   const headers = ["No","Name","Username","Email","Role","Department","Employee No","Job Title","Phone","Status","Created"];
-  const body = rows.map((e,i)=>[
-    i + 1,
-    e.fullName,
-    e.username,
-    e.email,
-    e.role,
-    e.department,
-    e.employeeNumber,
-    e.jobTitle,
-    e.phone,
-    e.isActive ? "Active" : "Disabled",
-    formatDate(e.createdAt)
-  ]);
-
-  const table = `
-    <table border="1">
-      <tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>
-      ${body.map(row=>`<tr>${row.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}
-    </table>
-  `;
-
-  const blob = new Blob(
-    [`<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`],
-    {type:"application/vnd.ms-excel"}
-  );
-
+  const body = rows.map((e,i)=>[i+1,e.fullName,e.username,e.email,e.role,e.department,e.employeeNumber,e.jobTitle,e.phone,e.isActive ? "Active" : "Disabled",formatDate(e.createdAt)]);
+  const table = `<table border="1"><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>${body.map(row=>`<tr>${row.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table>`;
+  const blob = new Blob([`<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`],{type:"application/vnd.ms-excel"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "employees-management.xls";
+  a.download = "employee-management.xls";
   a.click();
   URL.revokeObjectURL(url);
-
   show("Excel file exported.");
 }
 
 $("employeeForm").addEventListener("submit",createEmployee);
-
-$("showCreateBtn").onclick = ()=>{
-  $("createCard").classList.toggle("hidden");
-};
-
-$("loadBtn").onclick = loadEmployees;
-$("refreshBtn").onclick = loadEmployees;
+$("showCreateBtn").onclick = toggleCreate;
+$("refreshBtn").onclick = ()=>loadEmployees(true);
 $("exportBtn").onclick = exportExcel;
-
 $("enableSelectedBtn").onclick = ()=>applyToSelected({isActive:true});
 $("disableSelectedBtn").onclick = ()=>applyToSelected({isActive:false});
+$("saveSelectedBtn").onclick = saveSelected;
 $("deleteSelectedBtn").onclick = deleteSelected;
+$("selectAll").onchange = e=>toggleSelectAll(e.target.checked);
 
-$("selectAll").onchange = ()=>{
-  document.querySelectorAll(".rowCheck").forEach(c => c.checked = $("selectAll").checked);
-};
+$("roleFilter").onchange = ()=>{selectedIds.clear();renderAll();};
+$("departmentFilter").onchange = ()=>{selectedIds.clear();renderAll();};
+$("statusFilter").onchange = ()=>{selectedIds.clear();renderAll();};
+$("dateFilter").onchange = ()=>{selectedIds.clear();renderAll();};
+$("searchBox").oninput = ()=>{selectedIds.clear();renderAll();};
 
-$("roleFilter").onchange = renderAll;
-$("departmentFilter").onchange = renderAll;
-$("statusFilter").onchange = renderAll;
-$("searchBox").oninput = renderAll;
+document.addEventListener("DOMContentLoaded",()=>{
+  renderAll();
 
-requireEmployee().then(()=>{
-  syncDepartment();
-  loadEmployees();
+  if(!token()){
+    $("rows").innerHTML = `<tr><td colspan="12">Please login again as an employee.</td></tr>`;
+    return;
+  }
+
+  requireEmployee().then(user=>{
+    syncDepartment();
+    if(user) loadEmployees(false);
+  });
 });
 </script>
-
 </body>
 </html>
