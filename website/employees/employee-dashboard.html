@@ -8,7 +8,10 @@
 <style>
 :root{
   --nav:#1b1648;
-  --red:#e11d2e;
+  --blue:#0b3c5d;
+  --blueDark:#082f49;
+  --red:#c81e1e;
+  --redDark:#a81818;
   --bg:#ffffff;
   --card:#ffffff;
   --border:#d9dee7;
@@ -46,9 +49,10 @@ button,input,select,option{
 }
 
 .topbar-inner{
-  max-width:1150px;
+  width:100%;
+  max-width:none;
   margin:0 auto;
-  padding:14px 18px;
+  padding:12px 18px;
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -110,9 +114,10 @@ button,input,select,option{
 }
 
 .wrap{
-  max-width:1150px;
+  width:100%;
+  max-width:none;
   margin:0 auto;
-  padding:18px;
+  padding:12px;
 }
 
 .card{
@@ -160,6 +165,16 @@ button,input,select,option{
   border:1px solid #e5e7eb;
   background:#fff;
   padding:14px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.summaryIcon{
+  width:26px;
+  height:26px;
+  object-fit:contain;
 }
 
 .metricLabel{
@@ -204,7 +219,7 @@ button,input,select,option{
 
 .toolbar{
   display:grid;
-  grid-template-columns:190px 190px 1fr auto;
+  grid-template-columns:170px 170px 160px 1fr auto;
   gap:12px;
   align-items:end;
   margin-bottom:14px;
@@ -248,12 +263,12 @@ select:focus{
 }
 
 .btn{
-  background:var(--red);
+  background:var(--blue);
   color:#fff;
-  border:1px solid var(--red);
+  border:1px solid var(--blue);
   border-radius:6px;
-  height:34px;
-  padding:10px 14px;
+  height:36px;
+  padding:8px 12px;
   min-width:92px;
   font-size:12px;
   font-weight:700;
@@ -263,7 +278,7 @@ select:focus{
   justify-content:center;
 }
 
-.btn:hover{opacity:.92}
+.btn:hover{background:var(--blueDark);border-color:var(--blueDark)}
 
 .btn.secondary{
   background:#fff;
@@ -276,8 +291,8 @@ select:focus{
 }
 
 .btn.success{
-  background:#065f46;
-  border-color:#065f46;
+  background:var(--blue);
+  border-color:var(--blue);
 }
 
 .btn.small{
@@ -285,6 +300,11 @@ select:focus{
   height:30px;
   padding:7px 10px;
 }
+
+.btn img{width:15px;height:15px;filter:brightness(0) invert(1)}
+.btn.secondary img{filter:none}
+.btn.danger{background:var(--red);border-color:var(--red)}
+.btn.danger:hover{background:var(--redDark);border-color:var(--redDark)}
 
 .tableWrap{
   width:100%;
@@ -326,35 +346,12 @@ tr:hover td{background:#f8fafc}
   padding:4px 8px;
   border-radius:4px;
   font-size:12px;
-  font-weight:700;
-  background:#f1f5f9;
+  font-weight:600;
+  background:#f8fafc;
   color:#334155;
-  border:1px solid #e2e8f0;
+  border:1px solid #d9dee7;
 }
 
-.badge.green{
-  background:#f0fdf4;
-  color:#065f46;
-  border-color:#bbf7d0;
-}
-
-.badge.red{
-  background:#fef2f2;
-  color:#b91c1c;
-  border-color:#fecaca;
-}
-
-.badge.orange{
-  background:#fff7ed;
-  color:#92400e;
-  border-color:#fed7aa;
-}
-
-.badge.blue{
-  background:#eff6ff;
-  color:#1d4ed8;
-  border-color:#bfdbfe;
-}
 
 .msgBox{
   display:none;
@@ -374,6 +371,62 @@ tr:hover td{background:#f8fafc}
   display:block;
   color:#b91c1c;
   background:#fef2f2;
+}
+
+
+.modalOverlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.25);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:99999;
+}
+
+.modalOverlay.show{display:flex}
+
+.modalCard{
+  width:420px;
+  max-width:calc(100% - 28px);
+  background:#fff;
+  border:1px solid #d9dee7;
+  padding:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+}
+
+.modalTitle{
+  font-size:18px;
+  font-weight:700;
+  margin-bottom:10px;
+  color:#0f172a;
+}
+
+.modalText{
+  margin-bottom:20px;
+  color:#475569;
+  font-size:14px;
+}
+
+.modalButtons{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+}
+
+.modalBtn{
+  min-width:90px;
+  height:38px;
+  border:1px solid #d9dee7;
+  background:#fff;
+  cursor:pointer;
+  font-weight:600;
+}
+
+.modalBtn.primary{
+  background:#0b3c5d;
+  color:#fff;
+  border-color:#0b3c5d;
 }
 
 @media(max-width:1050px){
@@ -472,33 +525,45 @@ tr:hover td{background:#f8fafc}
   <div class="card">
     <div class="cardHead">
       <h2>Live Overview</h2>
-      <div class="subText">These values are loaded from available backend routes where possible. If a route is unavailable, the page uses safe fallback values.</div>
+      <div class="subText">Clean overview of staff activity, support requests, finance items and announcements.</div>
     </div>
 
     <div class="body">
       <div class="summaryGrid">
         <div class="summaryBox">
-          <div class="metricLabel">Employees</div>
-          <div class="metricValue" id="employeesCount">0</div>
-          <div class="metricNote">Total employee records</div>
+          <div>
+            <div class="metricLabel">Employees</div>
+            <div class="metricValue" id="employeesCount">0</div>
+            <div class="metricNote">Total employee records</div>
+          </div>
+          <img class="summaryIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="">
         </div>
 
         <div class="summaryBox">
-          <div class="metricLabel">Open Support Tickets</div>
-          <div class="metricValue" id="supportCount">0</div>
-          <div class="metricNote">New + in progress tickets</div>
+          <div>
+            <div class="metricLabel">Open Support Tickets</div>
+            <div class="metricValue" id="supportCount">0</div>
+            <div class="metricNote">New + in progress tickets</div>
+          </div>
+          <img class="summaryIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781656873/edit-3_c1gjk0.svg" alt="">
         </div>
 
         <div class="summaryBox">
-          <div class="metricLabel">Pending Payments</div>
-          <div class="metricValue" id="paymentsCount">0</div>
-          <div class="metricNote">Manual payments awaiting review</div>
+          <div>
+            <div class="metricLabel">Pending Payments</div>
+            <div class="metricValue" id="paymentsCount">0</div>
+            <div class="metricNote">Manual payments awaiting review</div>
+          </div>
+          <img class="summaryIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654915/Money_lk10o6.svg" alt="">
         </div>
 
         <div class="summaryBox">
-          <div class="metricLabel">Active Announcements</div>
-          <div class="metricValue" id="announcementsCount">0</div>
-          <div class="metricNote">Published or active posts</div>
+          <div>
+            <div class="metricLabel">Active Announcements</div>
+            <div class="metricValue" id="announcementsCount">0</div>
+            <div class="metricNote">Published or active posts</div>
+          </div>
+          <img class="summaryIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654916/Approved_dbtwvt.svg" alt="">
         </div>
       </div>
     </div>
@@ -512,11 +577,11 @@ tr:hover td{background:#f8fafc}
 
     <div class="body">
       <div class="quickActions">
-        <a class="btn" href="employee-management.html">Create Employee</a>
-        <a class="btn" href="operations-admin.html">Create Announcement</a>
-        <a class="btn" href="finance-admin.html">Open Finance</a>
-        <a class="btn" href="support-admin.html">Open Support</a>
-        <a class="btn" href="academic-admin.html">Open Academic</a>
+        <a class="btn" href="employee-management.html"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781656873/edit-3_c1gjk0.svg" alt="">Create Employee</a>
+        <a class="btn" href="operations-admin.html"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781656873/edit-3_c1gjk0.svg" alt="">Create Announcement</a>
+        <a class="btn" href="finance-admin.html"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654915/Money_lk10o6.svg" alt="">Open Finance</a>
+        <a class="btn" href="support-admin.html"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781656873/edit-3_c1gjk0.svg" alt="">Open Support</a>
+        <a class="btn" href="academic-admin.html"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654916/Approved_dbtwvt.svg" alt="">Open Academic</a>
         <a class="btn secondary" href="employee-logs.html">View Logs</a>
       </div>
     </div>
@@ -580,13 +645,26 @@ tr:hover td{background:#f8fafc}
         </div>
 
         <div>
+          <label>Date filter</label>
+          <select id="dateFilter">
+            <option value="all">All dates</option>
+            <option value="today">Today</option>
+            <option value="thisWeek">This week</option>
+            <option value="lastWeek">Last week</option>
+            <option value="thisMonth">This month</option>
+            <option value="lastMonth">Last month</option>
+            <option value="thisYear">This year</option>
+          </select>
+        </div>
+
+        <div>
           <label>Search</label>
           <input id="searchBox" type="search" placeholder="Search employee, action, department...">
         </div>
 
         <div class="actions">
-          <button class="btn" id="refreshBtn">Refresh</button>
-          <button class="btn success" id="exportBtn">Export Excel</button>
+          <button class="btn secondary" id="refreshBtn">Refresh</button>
+          <button class="btn" id="exportBtn"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654917/save_jw3yhm.svg" alt="">Export Excel</button>
         </div>
       </div>
 
@@ -613,6 +691,18 @@ tr:hover td{background:#f8fafc}
 
 </div>
 
+<div id="confirmModal" class="modalOverlay">
+  <div class="modalCard">
+    <div class="modalTitle">Practice Online</div>
+    <div class="modalText" id="modalText">Confirm action</div>
+    <div class="modalButtons">
+      <button id="modalYes" class="modalBtn primary">Yes</button>
+      <button id="modalNo" class="modalBtn">No</button>
+      <button id="modalCancel" class="modalBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const API = "https://api.practiceonline.co.za";
 let activities = [];
@@ -623,11 +713,24 @@ let announcements = [];
 
 const $ = id => document.getElementById(id);
 
-function token(){
-  return localStorage.getItem("token") || "";
+function confirmDialog(message){
+  return new Promise(resolve=>{
+    const modal = $("confirmModal");
+    $("modalText").textContent = message;
+    modal.classList.add("show");
+    $("modalYes").onclick = ()=>{modal.classList.remove("show");resolve(true)};
+    $("modalNo").onclick = ()=>{modal.classList.remove("show");resolve(false)};
+    $("modalCancel").onclick = ()=>{modal.classList.remove("show");resolve(null)};
+  });
 }
 
-function logout(){
+function token(){
+  return localStorage.getItem("employeeToken") || localStorage.getItem("token") || "";
+}
+
+async function logout(){
+  const answer = await confirmDialog("Logout of Employee Dashboard?");
+  if(answer !== true) return;
   localStorage.clear();
   location.href = "employee-login.html";
 }
@@ -717,20 +820,6 @@ async function requireEmployee(){
 }
 
 function statusBadge(status){
-  const s = String(status || "").toLowerCase();
-
-  if(s.includes("complete") || s.includes("reviewed") || s.includes("active") || s.includes("published")){
-    return `<span class="badge green">${esc(status)}</span>`;
-  }
-
-  if(s.includes("pending")){
-    return `<span class="badge orange">${esc(status)}</span>`;
-  }
-
-  if(s.includes("progress") || s.includes("open")){
-    return `<span class="badge blue">${esc(status)}</span>`;
-  }
-
   return `<span class="badge">${esc(status || "-")}</span>`;
 }
 
@@ -752,7 +841,7 @@ function addActivity(date,employee,department,action,status,link){
   });
 }
 
-async function loadDashboardData(){
+async function loadDashboardData(showMessage=false){
   try{
     const [empRes, supportRes, payRes, annRes] = await Promise.allSettled([
       fetchJson("/api/employees"),
@@ -771,13 +860,13 @@ async function loadDashboardData(){
     renderDepartments();
     renderActivities();
 
-    show("Dashboard refreshed.");
+    if(showMessage) show("Dashboard refreshed.");
   }catch(e){
+    console.error(e);
     buildFallbackData();
     updateOverview();
     renderDepartments();
     renderActivities();
-    show("Some backend routes could not load, so fallback dashboard data was used.","error");
   }
 }
 
@@ -892,6 +981,49 @@ function countActivities(department){
   return activities.filter(a => a.department === department).length;
 }
 
+
+function getActivityDate(a){
+  const d = new Date(a.date || "");
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function startOfDay(d){
+  const x = new Date(d);
+  x.setHours(0,0,0,0);
+  return x;
+}
+
+function startOfWeek(d){
+  const x = startOfDay(d);
+  const day = x.getDay();
+  const diff = day === 0 ? 6 : day - 1;
+  x.setDate(x.getDate() - diff);
+  return x;
+}
+
+function passesDateFilter(a){
+  const f = $("dateFilter").value;
+  if(f === "all") return true;
+  const d = getActivityDate(a);
+  if(!d) return false;
+  const now = new Date();
+  const today = startOfDay(now);
+  const thisWeek = startOfWeek(now);
+  const lastWeek = new Date(thisWeek);
+  lastWeek.setDate(lastWeek.getDate() - 7);
+  const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  if(f === "today") return d >= today;
+  if(f === "thisWeek") return d >= thisWeek;
+  if(f === "lastWeek") return d >= lastWeek && d < thisWeek;
+  if(f === "thisMonth") return d >= thisMonth && d < nextMonth;
+  if(f === "lastMonth") return d >= lastMonth && d < thisMonth;
+  if(f === "thisYear") return d.getFullYear() === now.getFullYear();
+  return true;
+}
+
 function filteredActivities(){
   const department = $("departmentFilter").value;
   const status = $("statusFilter").value;
@@ -900,6 +1032,7 @@ function filteredActivities(){
   return activities.filter(a=>{
     if(department !== "all" && a.department !== department) return false;
     if(status !== "all" && a.status !== status) return false;
+    if(!passesDateFilter(a)) return false;
     if(q && !Object.values(a).join(" ").toLowerCase().includes(q)) return false;
     return true;
   });
@@ -921,7 +1054,9 @@ function renderActivities(){
   `).join("") : `<tr><td colspan="7">No activity records found.</td></tr>`;
 }
 
-function exportExcel(){
+async function exportExcel(){
+  const answer = await confirmDialog("Export activity records to Excel?");
+  if(answer !== true) return;
   const rows = filteredActivities();
 
   if(!rows.length){
@@ -953,13 +1088,14 @@ function exportExcel(){
   show("Excel file exported.");
 }
 
-$("refreshBtn").onclick = loadDashboardData;
+$("refreshBtn").onclick = ()=>loadDashboardData(true);
 $("exportBtn").onclick = exportExcel;
 $("departmentFilter").onchange = renderActivities;
 $("statusFilter").onchange = renderActivities;
+$("dateFilter").onchange = renderActivities;
 $("searchBox").oninput = renderActivities;
 
-requireEmployee().then(()=>loadDashboardData());
+requireEmployee().then(()=>loadDashboardData(false));
 </script>
 
 </body>
