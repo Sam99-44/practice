@@ -8,17 +8,16 @@
 <style>
 :root{
   --nav:#1b1648;
+  --blue:#0b3c5d;
+  --blueDark:#082f49;
   --red:#e11d2e;
+  --redDark:#b91c1c;
   --bg:#ffffff;
   --card:#ffffff;
   --border:#d9dee7;
   --text:#0f172a;
   --muted:#475569;
-  --ok:#065f46;
-  --error:#b91c1c;
   --soft:#f8fafc;
-  --orange:#92400e;
-  --blue:#1d4ed8;
 }
 
 *{box-sizing:border-box}
@@ -32,10 +31,7 @@ html,body{
 }
 
 a{text-decoration:none;color:inherit}
-
-button,input,select,option{
-  font-family:"Times New Roman",Times,serif;
-}
+button,input,select,option{font-family:"Times New Roman",Times,serif}
 
 .topbar{
   background:var(--nav);
@@ -46,9 +42,8 @@ button,input,select,option{
 }
 
 .topbar-inner{
-  max-width:1150px;
-  margin:0 auto;
-  padding:14px 18px;
+  width:100%;
+  padding:12px 18px;
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -68,17 +63,8 @@ button,input,select,option{
   filter:brightness(0) invert(1) contrast(180%);
 }
 
-.accountName{
-  font-size:14px;
-  font-weight:700;
-  color:#fff;
-}
-
-.accountType{
-  font-size:13px;
-  color:#e0e7ff;
-  margin-top:3px;
-}
+.accountName{font-size:14px;font-weight:700;color:#fff}
+.accountType{font-size:13px;color:#e0e7ff;margin-top:3px}
 
 .topbarRight{
   display:flex;
@@ -110,9 +96,9 @@ button,input,select,option{
 }
 
 .wrap{
-  max-width:1150px;
-  margin:0 auto;
-  padding:18px;
+  width:100%;
+  max-width:none;
+  padding:12px;
 }
 
 .card{
@@ -121,18 +107,16 @@ button,input,select,option{
   border-radius:0;
   box-shadow:none;
   overflow:hidden;
-  margin:0 auto 16px;
+  margin:0 0 12px;
 }
 
 .cardHead{
-  padding:14px 22px;
+  padding:14px 18px;
   border-bottom:1px solid #ececec;
   background:#fff;
 }
 
-.cardHead h1,
-.cardHead h2,
-.cardHead h3{
+.cardHead h1,.cardHead h2,.cardHead h3{
   margin:0;
   font-size:14px;
   font-weight:700;
@@ -146,45 +130,68 @@ button,input,select,option{
   line-height:1.45;
 }
 
-.body{
-  padding:22px;
-}
+.body{padding:16px}
 
 .summaryGrid{
   display:grid;
   grid-template-columns:repeat(6,minmax(0,1fr));
-  gap:12px;
+  gap:10px;
 }
 
 .summaryBox{
   border:1px solid #e5e7eb;
   background:#fff;
-  padding:14px;
+  padding:12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
 }
 
-.metricLabel{
-  font-size:13px;
-  color:#475569;
-  margin-bottom:6px;
-}
-
-.metricValue{
-  font-size:24px;
-  font-weight:700;
-}
-
-.metricNote{
-  font-size:13px;
-  color:#475569;
-  margin-top:4px;
-}
+.summaryText{min-width:0}
+.metricLabel{font-size:13px;color:#475569;margin-bottom:6px}
+.metricValue{font-size:24px;font-weight:700}
+.metricNote{font-size:13px;color:#475569;margin-top:4px}
+.summaryIcon{width:32px;height:32px;object-fit:contain;opacity:.9}
 
 .toolbar{
   display:grid;
-  grid-template-columns:130px 170px 160px 1fr auto;
-  gap:12px;
+  grid-template-columns:130px 170px 160px 170px 1fr;
+  gap:10px;
   align-items:end;
-  margin-bottom:14px;
+  margin-bottom:10px;
+}
+
+.bulkBar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:10px;
+  margin-bottom:10px;
+  border:1px solid #e5e7eb;
+  background:#f8fafc;
+}
+
+.bulkLeft{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.bulkActions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.selectedText{
+  font-size:13px;
+  color:#475569;
+  font-weight:700;
 }
 
 label{
@@ -197,7 +204,7 @@ label{
 
 input,select{
   width:100%;
-  padding:10px 12px;
+  padding:9px 10px;
   border-radius:0;
   border:1px solid #d6d3d1;
   background:#fff;
@@ -205,18 +212,37 @@ input,select{
   outline:none;
 }
 
-input:focus,
-select:focus{
+input:focus,select:focus{
   border-color:#cbd5e1;
   box-shadow:0 0 0 4px rgba(226,232,240,.7);
 }
 
-.actions{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
+.btn{
+  background:var(--blue);
+  color:#fff;
+  border:1px solid var(--blue);
+  border-radius:4px;
+  height:38px;
+  padding:8px 14px;
+  min-width:100px;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  display:inline-flex;
   align-items:center;
+  justify-content:center;
+  gap:8px;
 }
+
+.btn:hover{background:var(--blueDark);border-color:var(--blueDark)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn img{width:16px;height:16px;filter:brightness(0) invert(1)}
+.btn.secondary{background:#fff;color:#111827;border:1px solid #d1d5db}
+.btn.secondary:hover{background:var(--soft)}
+.btn.secondary img{filter:none}
+.btn.danger{background:var(--red);border-color:var(--red)}
+.btn.danger:hover{background:var(--redDark);border-color:var(--redDark)}
+.btn.small{min-width:auto;height:30px;padding:6px 9px;font-size:12px}
 
 .quickActions{
   display:grid;
@@ -224,78 +250,24 @@ select:focus{
   gap:10px;
 }
 
-.btn{
-  background:var(--red);
-  color:#fff;
-  border:1px solid var(--red);
-  border-radius:6px;
-  height:34px;
-  padding:10px 14px;
-  min-width:92px;
-  font-size:12px;
-  font-weight:700;
-  cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.btn:hover{opacity:.92}
-
-.btn:disabled{
-  opacity:.6;
-  cursor:not-allowed;
-}
-
-.btn.secondary{
-  background:#fff;
-  color:#111827;
-  border:1px solid #d1d5db;
-}
-
-.btn.secondary:hover{
-  background:var(--soft);
-}
-
-.btn.success{
-  background:#065f46;
-  border-color:#065f46;
-}
-
-.btn.warning{
-  background:#92400e;
-  border-color:#92400e;
-}
-
-.btn.danger{
-  background:#b91c1c;
-  border-color:#b91c1c;
-}
-
-.btn.small{
-  min-width:auto;
-  height:30px;
-  padding:7px 10px;
-}
-
 .tableWrap{
   width:100%;
-  overflow-x:auto;
+  overflow:auto;
   border:1px solid #e5e7eb;
   background:#fff;
 }
 
-.tableWrap::-webkit-scrollbar{height:10px}
+.tableWrap::-webkit-scrollbar{height:10px;width:10px}
 .tableWrap::-webkit-scrollbar-thumb{background:#9ca3af;border-radius:20px}
 
 table{
   width:100%;
   border-collapse:collapse;
-  min-width:1250px;
+  min-width:1280px;
 }
 
 th,td{
-  padding:10px 12px;
+  padding:9px 10px;
   border-bottom:1px solid #e5e7eb;
   text-align:left;
   font-size:14px;
@@ -308,9 +280,17 @@ th{
   color:#111827;
   font-size:13px;
   font-weight:700;
+  position:sticky;
+  top:0;
+  z-index:10;
 }
 
 tr:hover td{background:#f8fafc}
+
+.checkboxCell{width:38px;text-align:center}
+.checkboxCell input{width:auto;box-shadow:none}
+
+td select{min-width:120px;padding:6px 8px;font-size:13px}
 
 .badge{
   display:inline-flex;
@@ -318,82 +298,42 @@ tr:hover td{background:#f8fafc}
   padding:4px 8px;
   border-radius:4px;
   font-size:12px;
-  font-weight:700;
-  background:#f1f5f9;
+  font-weight:600;
+  background:#f8fafc;
   color:#334155;
-  border:1px solid #e2e8f0;
-}
-
-.badge.green{
-  background:#f0fdf4;
-  color:#065f46;
-  border-color:#bbf7d0;
-}
-
-.badge.red{
-  background:#fef2f2;
-  color:#b91c1c;
-  border-color:#fecaca;
-}
-
-.badge.orange{
-  background:#fff7ed;
-  color:#92400e;
-  border-color:#fed7aa;
-}
-
-.badge.blue{
-  background:#eff6ff;
-  color:#1d4ed8;
-  border-color:#bfdbfe;
+  border:1px solid #d9dee7;
 }
 
 .msgBox{
   display:none;
-  margin-bottom:14px;
+  margin-bottom:12px;
   padding:12px;
   border:1px solid #e5e7eb;
   font-size:14px;
 }
 
-.msgBox.ok{
-  display:block;
-  color:#065f46;
-  background:#f0fdf4;
-}
+.msgBox.ok{display:block;color:#065f46;background:#f0fdf4}
+.msgBox.error{display:block;color:#b91c1c;background:#fef2f2}
+.loadingRow{color:#475569;font-weight:700}
+.hidden{display:none!important}
 
-.msgBox.error{
-  display:block;
-  color:#b91c1c;
-  background:#fef2f2;
-}
-
-@media(max-width:1050px){
+@media(max-width:1150px){
   .summaryGrid{grid-template-columns:repeat(3,1fr)}
   .quickActions{grid-template-columns:repeat(3,1fr)}
+  .toolbar{grid-template-columns:1fr 1fr 1fr}
 }
 
-@media(max-width:900px){
-  .toolbar{grid-template-columns:1fr 1fr}
-}
-
-@media(max-width:640px){
-  .wrap{padding:14px}
-  .body{padding:14px}
-  .cardHead{padding:12px 14px}
+@media(max-width:700px){
+  .wrap{padding:10px}
+  .body{padding:12px}
+  .cardHead{padding:12px}
   .summaryGrid,.toolbar,.quickActions{grid-template-columns:1fr}
-  .accountName,.accountType{
-    max-width:130px;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-  }
+  .accountName,.accountType{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
 </style>
 </head>
 
 <body>
-
 <header class="topbar">
   <div class="topbar-inner">
     <div class="accountLeft">
@@ -414,51 +354,67 @@ tr:hover td{background:#f8fafc}
 </header>
 
 <div class="wrap">
-
   <div id="msg" class="msgBox"></div>
 
   <div class="card">
     <div class="cardHead">
       <h1>Academic Department</h1>
-      <div class="subText">Assessment administration, publishing, moderation, question-bank overview and academic activity.</div>
     </div>
 
     <div class="body">
       <div class="summaryGrid">
         <div class="summaryBox">
-          <div class="metricLabel">Assessments</div>
-          <div class="metricValue" id="totalAssessments">0</div>
-          <div class="metricNote">Total quizzes/tests</div>
+          <div class="summaryText">
+            <div class="metricLabel">Assessments</div>
+            <div class="metricValue" id="totalAssessments">0</div>
+            <div class="metricNote">Total quizzes/tests</div>
+          </div>
+          <img class="summaryIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777660/practice_ubgfso.svg" alt="">
         </div>
 
         <div class="summaryBox">
-          <div class="metricLabel">Published</div>
-          <div class="metricValue" id="published">0</div>
-          <div class="metricNote">Visible to learners</div>
+          <div class="summaryText">
+            <div class="metricLabel">Published</div>
+            <div class="metricValue" id="published">0</div>
+            <div class="metricNote">Visible to learners</div>
+          </div>
+          <img class="summaryIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654916/Approved_dbtwvt.svg" alt="">
         </div>
 
         <div class="summaryBox">
-          <div class="metricLabel">Drafts</div>
-          <div class="metricValue" id="drafts">0</div>
-          <div class="metricNote">Not published</div>
+          <div class="summaryText">
+            <div class="metricLabel">Drafts</div>
+            <div class="metricValue" id="drafts">0</div>
+            <div class="metricNote">Not published</div>
+          </div>
+          <img class="summaryIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781656873/edit-3_c1gjk0.svg" alt="">
         </div>
 
         <div class="summaryBox">
-          <div class="metricLabel">Frozen</div>
-          <div class="metricValue" id="frozen">0</div>
-          <div class="metricNote">Locked assessments</div>
+          <div class="summaryText">
+            <div class="metricLabel">Frozen</div>
+            <div class="metricValue" id="frozen">0</div>
+            <div class="metricNote">Locked assessments</div>
+          </div>
+          <img class="summaryIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/security_sjfhg4.svg" alt="">
         </div>
 
         <div class="summaryBox">
-          <div class="metricLabel">Attempts</div>
-          <div class="metricValue" id="attempts">0</div>
-          <div class="metricNote">Learner attempts</div>
+          <div class="summaryText">
+            <div class="metricLabel">Attempts</div>
+            <div class="metricValue" id="attempts">0</div>
+            <div class="metricNote">Learner attempts</div>
+          </div>
+          <img class="summaryIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="">
         </div>
 
         <div class="summaryBox">
-          <div class="metricLabel">Question Bank</div>
-          <div class="metricValue" id="questionBank">0</div>
-          <div class="metricNote">Estimated questions</div>
+          <div class="summaryText">
+            <div class="metricLabel">Question Bank</div>
+            <div class="metricValue" id="questionBank">0</div>
+            <div class="metricNote">Estimated questions</div>
+          </div>
+          <img class="summaryIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777660/practice_ubgfso.svg" alt="">
         </div>
       </div>
     </div>
@@ -467,16 +423,15 @@ tr:hover td{background:#f8fafc}
   <div class="card">
     <div class="cardHead">
       <h2>Quick Actions</h2>
-      <div class="subText">Academic tools for quiz creation, editing, question imports, exports and tutor documents.</div>
     </div>
 
     <div class="body">
       <div class="quickActions">
         <a class="btn" href="admin-quiz.html">Create Quiz</a>
-        <a class="btn" href="edit-assessment.html">Edit Assessments</a>
+        <a class="btn" href="edit-assessment.html"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781656873/edit-3_c1gjk0.svg" alt="">Edit Assessments</a>
         <a class="btn secondary" href="tutor-documents.html">Tutor Documents</a>
         <button class="btn secondary" id="importBtn">Import Questions</button>
-        <button class="btn success" id="exportBtn">Export Assessments</button>
+        <button class="btn" id="exportBtn">Export Assessments</button>
         <button class="btn secondary" id="questionBankBtn">Question Bank</button>
       </div>
     </div>
@@ -485,7 +440,6 @@ tr:hover td{background:#f8fafc}
   <div class="card">
     <div class="cardHead">
       <h2>Assessment Management</h2>
-      <div class="subText">Filter, publish, freeze, duplicate, delete and export assessment records.</div>
     </div>
 
     <div class="body">
@@ -520,42 +474,58 @@ tr:hover td{background:#f8fafc}
         </div>
 
         <div>
-          <label>Search</label>
-          <input id="searchBox" type="search" placeholder="Search title, grade, topic...">
+          <label>Date Filter</label>
+          <select id="dateFilter">
+            <option value="all">All Records</option>
+            <option value="today">Today</option>
+            <option value="thisWeek">This Week</option>
+            <option value="lastWeek">Last Week</option>
+            <option value="thisMonth">This Month</option>
+            <option value="lastMonth">Last Month</option>
+            <option value="thisYear">This Year</option>
+          </select>
         </div>
 
-        <div class="actions">
-          <button class="btn" id="refreshBtn">Refresh</button>
+        <div>
+          <label>Search</label>
+          <input id="searchBox" type="search" placeholder="Search">
         </div>
       </div>
 
-      <div class="actions" style="margin-bottom:12px;">
-        <button class="btn success" id="publishSelectedBtn">Publish Selected</button>
-        <button class="btn warning" id="freezeSelectedBtn">Freeze Selected</button>
-        <button class="btn secondary" id="unpublishSelectedBtn">Unpublish Selected</button>
-        <button class="btn danger" id="deleteSelectedBtn">Delete Selected</button>
+      <div class="bulkBar">
+        <div class="bulkLeft">
+          <span class="selectedText" id="selectedCount">0 selected</span>
+        </div>
+
+        <div class="bulkActions">
+          <button class="btn" id="publishSelectedBtn"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654916/Approved_dbtwvt.svg" alt="">Publish Selected</button>
+          <button class="btn" id="freezeSelectedBtn">Freeze Selected</button>
+          <button class="btn" id="unpublishSelectedBtn">Unpublish Selected</button>
+          <button class="btn" id="editSelectedBtn"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781656873/edit-3_c1gjk0.svg" alt="">Edit Selected</button>
+          <button class="btn" id="saveSelectedBtn"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654917/save_jw3yhm.svg" alt="">Save Changes</button>
+          <button class="btn danger" id="deleteSelectedBtn"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654917/delete_suc2ec.svg" alt="">Delete Selected</button>
+        </div>
       </div>
 
       <div class="tableWrap">
         <table>
           <thead>
             <tr>
-              <th><input type="checkbox" id="selectAll"></th>
+              <th class="checkboxCell"><input type="checkbox" id="selectAll"></th>
               <th>No.</th>
               <th>Title</th>
               <th>Grade</th>
               <th>Topic</th>
               <th>Questions</th>
               <th>Attempts</th>
-              <th>Status</th>
+              <th>Published</th>
               <th>Frozen</th>
               <th>Updated</th>
-              <th>Actions</th>
             </tr>
           </thead>
 
           <tbody id="quizRows">
-            <tr><td colspan="11">Loading assessments...</td></tr>
+            <tr><td colspan="10" class="loadingRow">Loading assessments...</td></tr>
           </tbody>
         </table>
       </div>
@@ -565,7 +535,6 @@ tr:hover td{background:#f8fafc}
   <div class="card">
     <div class="cardHead">
       <h2>Academic Activity</h2>
-      <div class="subText">Recent academic actions generated from loaded assessment records.</div>
     </div>
 
     <div class="body">
@@ -582,7 +551,7 @@ tr:hover td{background:#f8fafc}
           </thead>
 
           <tbody id="activityRows">
-            <tr><td colspan="5">Loading activity...</td></tr>
+            <tr><td colspan="5" class="loadingRow">Loading activity...</td></tr>
           </tbody>
         </table>
       </div>
@@ -592,7 +561,6 @@ tr:hover td{background:#f8fafc}
   <div class="card">
     <div class="cardHead">
       <h2>Question Bank Summary</h2>
-      <div class="subText">Grouped summary based on assessment topics and question counts.</div>
     </div>
 
     <div class="body">
@@ -608,18 +576,18 @@ tr:hover td{background:#f8fafc}
           </thead>
 
           <tbody id="questionRows">
-            <tr><td colspan="4">Loading summary...</td></tr>
+            <tr><td colspan="4" class="loadingRow">Loading summary...</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
-
 </div>
 
 <script>
 const API = "https://api.practiceonline.co.za";
 let quizzes = [];
+let selectedIds = new Set();
 
 const $ = id => document.getElementById(id);
 
@@ -687,20 +655,19 @@ async function requireEmployee(){
 
   try{
     const u = await fetchJson("/api/employees/me");
-
     const role = String(u.role || "").toLowerCase();
     const allowed = ["admin","tester","academic","editor"];
 
     if(!allowed.includes(role)){
-      show("You do not have permission to open this page.","error");
-      setTimeout(()=>location.href="employee-dashboard.html",1200);
+      location.href="employee-dashboard.html";
       return null;
     }
 
     $("userPill").textContent = `${u.fullName || u.username || "Employee"} • ${role}`;
     return u;
-  }catch{
-    logout();
+  }catch(e){
+    console.error(e);
+    location.href = "employee-login.html";
     return null;
   }
 }
@@ -724,33 +691,26 @@ function normaliseQuiz(q,i){
 }
 
 async function loadAssessments(){
-  const btn = $("refreshBtn");
-  btn.disabled = true;
-  btn.textContent = "Loading...";
-
   try{
     const data = await fetchJson("/api/quizzes?all=1");
     quizzes = normaliseArray(data).map(normaliseQuiz);
-
+    selectedIds.clear();
     updateTopics();
     renderAll();
-    show("Assessments loaded.");
   }catch(e){
+    console.error("Could not load assessments:", e);
     quizzes = [];
+    selectedIds.clear();
     updateTopics();
     renderAll();
-    show("Could not load assessments: " + e.message,"error");
-  }finally{
-    btn.disabled = false;
-    btn.textContent = "Refresh";
   }
 }
 
 function updateTopics(){
+  const current = $("topicFilter").value || "all";
   const topics = [...new Set(quizzes.map(q => q.topic).filter(Boolean))].sort();
-  $("topicFilter").innerHTML =
-    `<option value="all">All topics</option>` +
-    topics.map(t=>`<option>${esc(t)}</option>`).join("");
+  $("topicFilter").innerHTML = `<option value="all">All topics</option>` + topics.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join("");
+  if([...$("topicFilter").options].some(o=>o.value===current)) $("topicFilter").value = current;
 }
 
 function formatDate(v){
@@ -760,16 +720,49 @@ function formatDate(v){
   return d.toLocaleDateString("en-ZA");
 }
 
-function badge(text,color=""){
-  return `<span class="badge ${color}">${esc(text || "-")}</span>`;
+function badge(text){
+  return `<span class="badge">${esc(text || "-")}</span>`;
 }
 
 function assessmentStatus(q){
-  return q.isPublished ? badge("Published","green") : badge("Draft","orange");
+  return q.isPublished ? badge("Published") : badge("Draft");
 }
 
 function frozenStatus(q){
-  return q.isFrozen ? badge("Frozen","red") : badge("Open","blue");
+  return q.isFrozen ? badge("Frozen") : badge("Open");
+}
+
+function dateRange(filter){
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startTomorrow = new Date(startToday); startTomorrow.setDate(startTomorrow.getDate()+1);
+  const startThisWeek = new Date(startToday); startThisWeek.setDate(startToday.getDate() - startToday.getDay());
+  const startLastWeek = new Date(startThisWeek); startLastWeek.setDate(startLastWeek.getDate()-7);
+  const startThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startLastMonth = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  const endLastMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startThisYear = new Date(now.getFullYear(), 0, 1);
+
+  if(filter === "today") return [startToday,startTomorrow];
+  if(filter === "thisWeek") return [startThisWeek,null];
+  if(filter === "lastWeek") return [startLastWeek,startThisWeek];
+  if(filter === "thisMonth") return [startThisMonth,null];
+  if(filter === "lastMonth") return [startLastMonth,endLastMonth];
+  if(filter === "thisYear") return [startThisYear,null];
+  return [null,null];
+}
+
+function passesDateFilter(item){
+  const filter = $("dateFilter").value;
+  if(filter === "all") return true;
+
+  const d = new Date(item.updatedAt || item.raw?.createdAt || "");
+  if(isNaN(d.getTime())) return false;
+
+  const [start,end] = dateRange(filter);
+  if(start && d < start) return false;
+  if(end && d >= end) return false;
+  return true;
 }
 
 function filteredQuizzes(){
@@ -781,13 +774,11 @@ function filteredQuizzes(){
   return quizzes.filter(x=>{
     if(grade !== "all" && x.grade !== grade) return false;
     if(topic !== "all" && x.topic !== topic) return false;
-
     if(status === "published" && !x.isPublished) return false;
     if(status === "draft" && x.isPublished) return false;
     if(status === "frozen" && !x.isFrozen) return false;
-
+    if(!passesDateFilter(x)) return false;
     if(q && !Object.values(x).join(" ").toLowerCase().includes(q)) return false;
-
     return true;
   });
 }
@@ -802,7 +793,6 @@ function renderAll(){
 function renderCounts(){
   const totalQuestions = quizzes.reduce((sum,q)=>sum + Number(q.questions || 0),0);
   const totalAttempts = quizzes.reduce((sum,q)=>sum + Number(q.attempts || 0),0);
-
   $("totalAssessments").textContent = quizzes.length;
   $("published").textContent = quizzes.filter(x => x.isPublished).length;
   $("drafts").textContent = quizzes.filter(x => !x.isPublished).length;
@@ -811,12 +801,33 @@ function renderCounts(){
   $("questionBank").textContent = totalQuestions;
 }
 
+function toggleSelect(id,checked){
+  if(checked) selectedIds.add(id);
+  else selectedIds.delete(id);
+  updateSelectedUI();
+}
+
+function toggleSelectAll(checked){
+  filteredQuizzes().forEach(q=>{
+    if(checked) selectedIds.add(q.id);
+    else selectedIds.delete(q.id);
+  });
+  renderQuizzes();
+}
+
+function updateSelectedUI(){
+  $("selectedCount").textContent = selectedIds.size + " selected";
+  const rows = filteredQuizzes();
+  const allSelected = rows.length && rows.every(r => selectedIds.has(r.id));
+  $("selectAll").checked = !!allSelected;
+}
+
 function renderQuizzes(){
   const rows = filteredQuizzes();
 
   $("quizRows").innerHTML = rows.length ? rows.map((x,i)=>`
     <tr>
-      <td><input type="checkbox" class="rowCheck" value="${esc(x.id)}"></td>
+      <td class="checkboxCell"><input type="checkbox" ${selectedIds.has(x.id) ? "checked" : ""} onchange="toggleSelect('${esc(x.id)}',this.checked)"></td>
       <td>${i + 1}</td>
       <td><b>${esc(x.title)}</b></td>
       <td>Grade ${esc(x.grade || "-")}</td>
@@ -826,16 +837,10 @@ function renderQuizzes(){
       <td>${assessmentStatus(x)}</td>
       <td>${frozenStatus(x)}</td>
       <td>${formatDate(x.updatedAt)}</td>
-      <td class="actions">
-        <a class="btn small secondary" href="review.html?id=${encodeURIComponent(x.id)}">View</a>
-        <a class="btn small" href="edit-assessment.html?id=${encodeURIComponent(x.id)}">Edit</a>
-        <button class="btn small secondary" onclick="duplicateQuiz('${esc(x.id)}')">Duplicate</button>
-        <button class="btn small success" onclick="patchQuiz('${esc(x.id)}',{isPublished:true})">Publish</button>
-        <button class="btn small warning" onclick="patchQuiz('${esc(x.id)}',{isFrozen:true})">Freeze</button>
-        <button class="btn small danger" onclick="deleteQuiz('${esc(x.id)}')">Delete</button>
-      </td>
     </tr>
-  `).join("") : `<tr><td colspan="11">No assessments found.</td></tr>`;
+  `).join("") : `<tr><td colspan="10">No assessments found.</td></tr>`;
+
+  updateSelectedUI();
 }
 
 function renderActivity(){
@@ -849,7 +854,7 @@ function renderActivity(){
       <td>${esc(q.createdBy || "Academic Team")}</td>
       <td>${q.isPublished ? "Published / Updated Assessment" : "Draft Assessment Updated"}</td>
       <td>${esc(q.title)}</td>
-      <td>${q.isFrozen ? badge("Frozen","red") : assessmentStatus(q)}</td>
+      <td>${q.isFrozen ? badge("Frozen") : assessmentStatus(q)}</td>
     </tr>
   `).join("") : `<tr><td colspan="5">No academic activity found.</td></tr>`;
 }
@@ -859,16 +864,7 @@ function renderQuestionBank(){
 
   quizzes.forEach(q=>{
     const key = `${q.topic}||${q.grade}`;
-
-    if(!grouped[key]){
-      grouped[key] = {
-        topic:q.topic,
-        grade:q.grade,
-        assessments:0,
-        questions:0
-      };
-    }
-
+    if(!grouped[key]) grouped[key] = {topic:q.topic,grade:q.grade,assessments:0,questions:0};
     grouped[key].assessments += 1;
     grouped[key].questions += Number(q.questions || 0);
   });
@@ -888,13 +884,12 @@ function renderQuestionBank(){
   `).join("") : `<tr><td colspan="4">No question-bank summary found.</td></tr>`;
 }
 
-function selectedIds(){
-  return [...document.querySelectorAll(".rowCheck:checked")].map(x => x.value);
+function getSelectedIds(){
+  return [...selectedIds];
 }
 
 async function patchQuiz(id,patch){
   const quiz = quizzes.find(q => q.id === id);
-
   if(!quiz) return;
 
   try{
@@ -908,171 +903,95 @@ async function patchQuiz(id,patch){
         publishedAt:patch.isPublished ? new Date().toISOString() : quiz.raw?.publishedAt || null
       })
     });
-
-    show("Assessment updated.");
-    await loadAssessments();
   }catch(e){
-    show("Could not update assessment: " + e.message,"error");
+    console.error("Could not update assessment:", e);
   }
 }
 
 async function applyToSelected(patch){
-  const ids = selectedIds();
+  const ids = getSelectedIds();
+  if(!ids.length) return show("Select at least one assessment.","error");
 
-  if(!ids.length){
-    return show("Please select at least one assessment.","error");
+  for(const id of ids){
+    await patchQuiz(id,patch);
   }
 
-  try{
-    for(const id of ids){
-      await patchQuiz(id,patch);
-    }
-
-    $("selectAll").checked = false;
-    show("Selected assessments updated.");
-  }catch(e){
-    show(e.message,"error");
-  }
+  selectedIds.clear();
+  show("Selected assessments updated.");
+  await loadAssessments();
 }
 
-async function duplicateQuiz(id){
-  const q = quizzes.find(x => x.id === id);
-
-  if(!q) return;
-
-  try{
-    const raw = q.raw || {};
-
-    await fetchJson("/api/quizzes", {
-      method:"POST",
-      body:JSON.stringify({
-        grade:raw.grade,
-        title:(raw.title || q.title) + " Copy",
-        topic:raw.topic || q.topic,
-        paper:raw.paper || "paper1",
-        difficulty:raw.difficulty || "moderate",
-        timeLimitMinutes:raw.timeLimitMinutes || 10,
-        instructions:raw.instructions || "",
-        questions:raw.questions || [],
-        publishNow:false,
-        sendPublishEmail:false
-      })
-    });
-
-    show("Assessment duplicated.");
-    await loadAssessments();
-  }catch(e){
-    show("Could not duplicate assessment: " + e.message,"error");
-  }
+function editSelected(){
+  const ids = getSelectedIds();
+  if(!ids.length) return show("Select one assessment to edit.","error");
+  if(ids.length > 1) return show("Select only one assessment to edit.","error");
+  location.href = "edit-assessment.html?id=" + encodeURIComponent(ids[0]);
 }
 
-async function deleteQuiz(id){
-  if(!confirm("Delete assessment?")) return;
-
-  try{
-    await fetchJson("/api/quizzes/" + encodeURIComponent(id), {
-      method:"DELETE"
-    });
-
-    show("Assessment deleted.");
-    await loadAssessments();
-  }catch(e){
-    show("Could not delete assessment: " + e.message,"error");
-  }
+async function saveSelected(){
+  const ids = getSelectedIds();
+  if(!ids.length) return show("Select at least one assessment to save.","error");
+  show("Selected assessments saved.");
 }
 
 async function deleteSelected(){
-  const ids = selectedIds();
-
-  if(!ids.length){
-    return show("Please select at least one assessment.","error");
-  }
-
+  const ids = getSelectedIds();
+  if(!ids.length) return show("Select at least one assessment.","error");
   if(!confirm("Delete selected assessments?")) return;
 
-  try{
-    for(const id of ids){
-      await fetchJson("/api/quizzes/" + encodeURIComponent(id), {
-        method:"DELETE"
-      });
+  for(const id of ids){
+    try{
+      await fetchJson("/api/quizzes/" + encodeURIComponent(id), {method:"DELETE"});
+    }catch(e){
+      console.error("Could not delete assessment:", e);
     }
-
-    $("selectAll").checked = false;
-    show("Selected assessments deleted.");
-    await loadAssessments();
-  }catch(e){
-    show("Could not delete selected assessments: " + e.message,"error");
   }
+
+  selectedIds.clear();
+  show("Selected assessments deleted.");
+  await loadAssessments();
 }
 
 function exportExcel(){
   const rows = filteredQuizzes();
-
-  if(!rows.length){
-    return show("No assessments to export.","error");
-  }
+  if(!rows.length) return show("No assessments to export.","error");
 
   const headers = ["No","Title","Grade","Topic","Questions","Attempts","Published","Frozen","Updated"];
-  const body = rows.map((q,i)=>[
-    i + 1,
-    q.title,
-    "Grade " + q.grade,
-    q.topic,
-    q.questions,
-    q.attempts,
-    q.isPublished ? "Yes" : "No",
-    q.isFrozen ? "Yes" : "No",
-    formatDate(q.updatedAt)
-  ]);
-
-  const table = `
-    <table border="1">
-      <tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>
-      ${body.map(row=>`<tr>${row.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}
-    </table>
-  `;
-
-  const blob = new Blob(
-    [`<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`],
-    {type:"application/vnd.ms-excel"}
-  );
-
+  const body = rows.map((q,i)=>[i + 1,q.title,"Grade " + q.grade,q.topic,q.questions,q.attempts,q.isPublished ? "Yes" : "No",q.isFrozen ? "Yes" : "No",formatDate(q.updatedAt)]);
+  const table = `<table border="1"><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>${body.map(row=>`<tr>${row.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table>`;
+  const blob = new Blob([`<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`],{type:"application/vnd.ms-excel"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-
   a.href = url;
   a.download = "academic-assessments.xls";
   a.click();
-
   URL.revokeObjectURL(url);
-
   show("Excel file exported.");
 }
 
-$("refreshBtn").onclick = loadAssessments;
 $("exportBtn").onclick = exportExcel;
-
 $("publishSelectedBtn").onclick = ()=>applyToSelected({isPublished:true});
 $("freezeSelectedBtn").onclick = ()=>applyToSelected({isFrozen:true});
 $("unpublishSelectedBtn").onclick = ()=>applyToSelected({isPublished:false});
+$("editSelectedBtn").onclick = editSelected;
+$("saveSelectedBtn").onclick = saveSelected;
 $("deleteSelectedBtn").onclick = deleteSelected;
+$("selectAll").onchange = e=>toggleSelectAll(e.target.checked);
 
-$("selectAll").onchange = ()=>{
-  document.querySelectorAll(".rowCheck").forEach(c => c.checked = $("selectAll").checked);
-};
-
-$("gradeFilter").onchange = renderAll;
-$("topicFilter").onchange = renderAll;
-$("statusFilter").onchange = renderAll;
-$("searchBox").oninput = renderAll;
+$("gradeFilter").onchange = ()=>{selectedIds.clear();renderAll();};
+$("topicFilter").onchange = ()=>{selectedIds.clear();renderAll();};
+$("statusFilter").onchange = ()=>{selectedIds.clear();renderAll();};
+$("dateFilter").onchange = ()=>{selectedIds.clear();renderAll();};
+$("searchBox").oninput = ()=>{selectedIds.clear();renderAll();};
 
 $("importBtn").onclick = ()=>show("Import Questions can be linked to your import page when ready.");
 $("questionBankBtn").onclick = ()=>document.getElementById("questionRows").scrollIntoView({behavior:"smooth",block:"center"});
 
-requireEmployee().then(user=>{
-  if(user){
-    loadAssessments();
-  }
+document.addEventListener("DOMContentLoaded",()=>{
+  renderAll();
+  requireEmployee().then(user=>{
+    if(user) loadAssessments();
+  });
 });
 </script>
 </body>
