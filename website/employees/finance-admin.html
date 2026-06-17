@@ -8,17 +8,18 @@
 <style>
 :root{
   --nav:#1b1648;
-  --red:#e11d2e;
+  --blue:#0b3c5d;
+  --blueDark:#082f49;
+  --red:#c81e1e;
+  --redDark:#a81818;
   --bg:#fff;
   --card:#fff;
   --border:#d9dee7;
   --text:#0f172a;
   --muted:#475569;
+  --soft:#f8fafc;
   --ok:#065f46;
   --error:#b91c1c;
-  --soft:#f8fafc;
-  --orange:#92400e;
-  --blue:#1d4ed8;
 }
 
 *{box-sizing:border-box}
@@ -67,11 +68,7 @@ button,input,select,option{font-family:"Times New Roman",Times,serif}
 .accountName{font-size:14px;font-weight:700;color:#fff}
 .accountType{font-size:13px;color:#e0e7ff;margin-top:3px}
 
-.topbarRight{
-  display:flex;
-  align-items:center;
-  gap:18px;
-}
+.topbarRight{display:flex;align-items:center;gap:18px}
 
 .iconBtn{
   min-width:50px;
@@ -96,10 +93,7 @@ button,input,select,option{font-family:"Times New Roman",Times,serif}
   cursor:pointer;
 }
 
-.wrap{
-  width:100%;
-  padding:12px;
-}
+.wrap{width:100%;padding:12px}
 
 .card{
   background:#fff;
@@ -123,13 +117,6 @@ button,input,select,option{font-family:"Times New Roman",Times,serif}
   text-transform:uppercase;
 }
 
-.subText{
-  margin-top:6px;
-  color:#111827;
-  font-size:14px;
-  line-height:1.45;
-}
-
 .body{padding:16px}
 
 .summaryGrid{
@@ -142,6 +129,16 @@ button,input,select,option{font-family:"Times New Roman",Times,serif}
   border:1px solid #e5e7eb;
   background:#fff;
   padding:12px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.summaryIcon{
+  width:26px;
+  height:26px;
+  object-fit:contain;
 }
 
 .metricLabel{font-size:13px;color:#475569;margin-bottom:6px}
@@ -150,7 +147,7 @@ button,input,select,option{font-family:"Times New Roman",Times,serif}
 
 .toolbar{
   display:grid;
-  grid-template-columns:170px 190px 1fr auto;
+  grid-template-columns:160px 160px 170px 1fr auto;
   gap:10px;
   align-items:end;
   margin-bottom:10px;
@@ -168,18 +165,8 @@ button,input,select,option{font-family:"Times New Roman",Times,serif}
   background:#f8fafc;
 }
 
-.bulkLeft{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  flex-wrap:wrap;
-}
-
-.selectedText{
-  font-size:13px;
-  color:#475569;
-  font-weight:700;
-}
+.bulkLeft{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.selectedText{font-size:13px;color:#475569;font-weight:700}
 
 label{
   display:block;
@@ -204,19 +191,14 @@ input:focus,select:focus{
   box-shadow:0 0 0 4px rgba(226,232,240,.7);
 }
 
-.actions{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  align-items:center;
-}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
 .btn{
-  background:var(--red);
   color:#fff;
-  border:1px solid var(--red);
+  border:1px solid var(--blue);
+  background:var(--blue);
   border-radius:6px;
-  height:34px;
+  height:36px;
   padding:8px 12px;
   min-width:90px;
   font-size:12px;
@@ -225,22 +207,18 @@ input:focus,select:focus{
   display:inline-flex;
   align-items:center;
   justify-content:center;
+  gap:7px;
 }
 
-.btn:hover{opacity:.92}
+.btn:hover{background:var(--blueDark);border-color:var(--blueDark)}
 .btn:disabled{opacity:.6;cursor:not-allowed}
-
-.btn.secondary{
-  background:#fff;
-  color:#111827;
-  border:1px solid #d1d5db;
-}
-
-.btn.secondary:hover{background:var(--soft)}
-.btn.success{background:#065f46;border-color:#065f46}
-.btn.warning{background:#92400e;border-color:#92400e}
-.btn.danger{background:#b91c1c;border-color:#b91c1c}
+.btn.secondary{background:#fff;color:#111827;border:1px solid #d1d5db}
+.btn.secondary:hover{background:var(--soft);border-color:#d1d5db}
+.btn.danger{background:var(--red);border-color:var(--red)}
+.btn.danger:hover{background:var(--redDark);border-color:var(--redDark)}
 .btn.small{min-width:auto;height:30px;padding:6px 9px}
+.btn img{width:15px;height:15px;filter:brightness(0) invert(1)}
+.btn.secondary img{filter:none}
 
 .tableWrap{
   width:100%;
@@ -252,11 +230,7 @@ input:focus,select:focus{
 .tableWrap::-webkit-scrollbar{height:10px;width:10px}
 .tableWrap::-webkit-scrollbar-thumb{background:#9ca3af;border-radius:20px}
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  min-width:1500px;
-}
+table{width:100%;border-collapse:collapse;min-width:1420px}
 
 th,td{
   padding:9px 10px;
@@ -278,10 +252,8 @@ th{
 }
 
 tr:hover td{background:#f8fafc}
-
 .checkboxCell{width:38px;text-align:center}
 .checkboxCell input{width:auto;box-shadow:none}
-
 td select{min-width:105px;padding:6px 8px;font-size:13px}
 .statusSelect{min-width:135px}
 .amountInput{min-width:85px;padding:6px 8px;font-size:13px}
@@ -292,16 +264,11 @@ td select{min-width:105px;padding:6px 8px;font-size:13px}
   padding:4px 8px;
   border-radius:4px;
   font-size:12px;
-  font-weight:700;
-  background:#f1f5f9;
+  font-weight:600;
+  background:#f8fafc;
   color:#334155;
-  border:1px solid #e2e8f0;
+  border:1px solid #d9dee7;
 }
-
-.badge.green{background:#f0fdf4;color:#065f46;border-color:#bbf7d0}
-.badge.red{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
-.badge.orange{background:#fff7ed;color:#92400e;border-color:#fed7aa}
-.badge.blue{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
 
 .msgBox{
   display:none;
@@ -311,21 +278,16 @@ td select{min-width:105px;padding:6px 8px;font-size:13px}
   font-size:14px;
 }
 
-.msgBox.ok{display:block;color:#065f46;background:#f0fdf4}
-.msgBox.error{display:block;color:#b91c1c;background:#fef2f2}
+.msgBox.ok{display:block;color:var(--ok);background:#f0fdf4}
+.msgBox.error{display:block;color:var(--error);background:#fef2f2}
 
-.formBox{
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:12px;
-}
-
+.formBox{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .wide{grid-column:span 2}
 .full{grid-column:1/-1}
 .hidden{display:none!important}
 .loadingRow{color:#475569;font-weight:700}
 
-@media(max-width:1050px){
+@media(max-width:1100px){
   .summaryGrid{grid-template-columns:repeat(2,1fr)}
   .toolbar{grid-template-columns:1fr 1fr}
   .formBox{grid-template-columns:1fr 1fr}
@@ -349,7 +311,7 @@ td select{min-width:105px;padding:6px 8px;font-size:13px}
       <img class="accountIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="">
       <div>
         <div class="accountName">Practice Online</div>
-        <div class="accountType" id="userPill">Finance Department</div>
+        <div class="accountType">Finance Department</div>
       </div>
     </div>
 
@@ -368,40 +330,58 @@ td select{min-width:105px;padding:6px 8px;font-size:13px}
   <div class="card">
     <div class="cardHead">
       <h1>Finance Department</h1>
-      
     </div>
 
     <div class="body">
       <div class="summaryGrid">
         <div class="summaryBox">
-          <div class="metricLabel">Total Records</div>
-          <div class="metricValue" id="totalCount">0</div>
-          <div class="metricNote">Quotes + enrollments + payments</div>
+          <div>
+            <div class="metricLabel">Total Records</div>
+            <div class="metricValue" id="totalCount">0</div>
+            <div class="metricNote">Quotes + enrollments + payments</div>
+          </div>
         </div>
+
         <div class="summaryBox">
-          <div class="metricLabel">Quote Requests</div>
-          <div class="metricValue" id="quoteCount">0</div>
-          <div class="metricNote">Parents to call</div>
+          <div>
+            <div class="metricLabel">Quote Requests</div>
+            <div class="metricValue" id="quoteCount">0</div>
+            <div class="metricNote">Parents to call</div>
+          </div>
         </div>
+
         <div class="summaryBox">
-          <div class="metricLabel">Enrollments</div>
-          <div class="metricValue" id="enrollmentCount">0</div>
-          <div class="metricNote">Proof submitted</div>
+          <div>
+            <div class="metricLabel">Enrollments</div>
+            <div class="metricValue" id="enrollmentCount">0</div>
+            <div class="metricNote">Proof submitted</div>
+          </div>
         </div>
+
         <div class="summaryBox">
-          <div class="metricLabel">Not Contacted</div>
-          <div class="metricValue" id="notContactedCount">0</div>
-          <div class="metricNote">Follow up required</div>
+          <div>
+            <div class="metricLabel">Not Contacted</div>
+            <div class="metricValue" id="notContactedCount">0</div>
+            <div class="metricNote">Follow up required</div>
+          </div>
         </div>
+
         <div class="summaryBox">
-          <div class="metricLabel">Approved / Paid</div>
-          <div class="metricValue" id="paidCount">0</div>
-          <div class="metricNote">Class access ready</div>
+          <div>
+            <div class="metricLabel">Approved / Paid</div>
+            <div class="metricValue" id="paidCount">0</div>
+            <div class="metricNote">Class access ready</div>
+          </div>
+          <img class="summaryIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654916/Approved_dbtwvt.svg" alt="">
         </div>
+
         <div class="summaryBox">
-          <div class="metricLabel">Revenue</div>
-          <div class="metricValue" id="revenueCount">R0</div>
-          <div class="metricNote">Paid records only</div>
+          <div>
+            <div class="metricLabel">Revenue</div>
+            <div class="metricValue" id="revenueCount">R0</div>
+            <div class="metricNote">Paid records only</div>
+          </div>
+          <img class="summaryIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654915/Money_lk10o6.svg" alt="">
         </div>
       </div>
     </div>
@@ -410,7 +390,6 @@ td select{min-width:105px;padding:6px 8px;font-size:13px}
   <div class="card">
     <div class="cardHead">
       <h2>Finance Records</h2>
- 
     </div>
 
     <div class="body">
@@ -431,6 +410,19 @@ td select{min-width:105px;padding:6px 8px;font-size:13px}
         </div>
 
         <div>
+          <label>Date filter</label>
+          <select id="dateFilter">
+            <option value="all">All dates</option>
+            <option value="today">Today</option>
+            <option value="thisWeek">This week</option>
+            <option value="lastWeek">Last week</option>
+            <option value="thisMonth">This month</option>
+            <option value="lastMonth">Last month</option>
+            <option value="thisYear">This year</option>
+          </select>
+        </div>
+
+        <div>
           <label>Record type</label>
           <select id="typeFilter">
             <option value="all">All types</option>
@@ -443,13 +435,13 @@ td select{min-width:105px;padding:6px 8px;font-size:13px}
 
         <div>
           <label>Search</label>
-          <input id="searchBox" type="search" placeholder="Search ">
+          <input id="searchBox" type="search" placeholder="Search">
         </div>
 
         <div class="actions">
           <button class="btn secondary" id="refreshBtn">Refresh</button>
           <button class="btn secondary" id="addBtn">Add Manual Row</button>
-          <button class="btn success" id="exportBtn">Export Excel</button>
+          <button class="btn" id="exportBtn">Export Excel</button>
         </div>
       </div>
 
@@ -459,11 +451,20 @@ td select{min-width:105px;padding:6px 8px;font-size:13px}
         </div>
 
         <div class="actions">
-          <button class="btn warning" id="markContactedBtn">Mark Contacted</button>
-          <button class="btn success" id="approveBtn">Approve</button>
-          <button class="btn danger" id="rejectBtn">Reject</button>
-          <button class="btn success" id="saveSelectedBtn">Save Changes</button>
-          <button class="btn danger" id="removeSelectedBtn">Remove Selected</button>
+          <button class="btn" id="markContactedBtn">Mark Contacted</button>
+          <button class="btn" id="approveBtn">
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654916/Approved_dbtwvt.svg" alt="">
+            Approve
+          </button>
+          <button class="btn" id="rejectBtn">Reject</button>
+          <button class="btn" id="saveSelectedBtn">
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654917/save_jw3yhm.svg" alt="">
+            Save Changes
+          </button>
+          <button class="btn danger" id="removeSelectedBtn">
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654917/delete_suc2ec.svg" alt="">
+            Remove Selected
+          </button>
         </div>
       </div>
 
@@ -498,11 +499,7 @@ td select{min-width:105px;padding:6px 8px;font-size:13px}
   </div>
 
   <div class="card hidden" id="addFormCard">
-    <div class="cardHead">
-      <h3>Add Manual Finance Record</h3>
-      <div class="subText">Add a finance row manually when the record is not yet coming from the backend.</div>
-    </div>
-
+    <div class="cardHead"><h3>Add Manual Finance Record</h3></div>
     <div class="body">
       <div class="formBox">
         <div><label>Type</label><select id="fType"><option value="manual">Manual Row</option><option value="quote">Quote</option><option value="manual-payment">Manual Payment</option><option value="enrollment">Enrollment</option></select></div>
@@ -518,7 +515,7 @@ td select{min-width:105px;padding:6px 8px;font-size:13px}
         <div><label>Contacted</label><select id="fContacted"><option>No</option><option>Yes</option></select></div>
         <div><label>Paid</label><select id="fPaid"><option>No</option><option>Yes</option></select></div>
         <div><label>Finance Status</label><select id="fStatus"><option>Pending</option><option>Under Review</option><option>Approved</option><option>Rejected</option></select></div>
-        <div class="full actions"><button class="btn success" id="saveManualBtn">Save Row</button><button class="btn secondary" id="cancelAddBtn">Cancel</button></div>
+        <div class="full actions"><button class="btn" id="saveManualBtn">Save Row</button><button class="btn secondary" id="cancelAddBtn">Cancel</button></div>
       </div>
     </div>
   </div>
@@ -526,529 +523,281 @@ td select{min-width:105px;padding:6px 8px;font-size:13px}
 
 <script>
 const API = "https://api.practiceonline.co.za";
-
 let records = [];
 let pendingChanges = {};
 let selectedIds = new Set();
-
 const $ = id => document.getElementById(id);
 
-function token(){
-  return localStorage.getItem("employeeToken") ||
-         localStorage.getItem("token") ||
-         "";
-}
-
-function logout(){
-  localStorage.clear();
-  location.href = "employee-login.html";
-}
-
-function esc(v){
-  return String(v ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-function show(text,type="ok"){
-  const m = $("msg");
-  m.textContent = text;
-  m.className = "msgBox " + type;
-  setTimeout(()=>{m.className="msgBox"},6000);
-}
-
-function money(v){
-  const n = Number(v || 0);
-  return n ? "R" + n.toLocaleString("en-ZA",{minimumFractionDigits:2,maximumFractionDigits:2}) : "";
-}
+function token(){return localStorage.getItem("employeeToken") || localStorage.getItem("token") || ""}
+function logout(){localStorage.clear();location.href="employee-login.html"}
+function esc(v){return String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+function show(text,type="ok"){const m=$("msg");m.textContent=text;m.className="msgBox "+type;setTimeout(()=>{m.className="msgBox"},6000)}
+function money(v){const n=Number(v||0);return n?"R"+n.toLocaleString("en-ZA",{minimumFractionDigits:2,maximumFractionDigits:2}):""}
 
 function normaliseStatus(v){
-  const s = String(v || "").toLowerCase();
-  if(s === "approved" || s === "paid" || s === "closed") return "Approved";
-  if(s === "rejected" || s === "refunded" || s === "removed") return "Rejected";
-  if(s === "under review" || s === "contacted" || s === "client contacted") return "Under Review";
-  return "Pending";
+  const s=String(v||"").toLowerCase();
+  if(s==="approved"||s==="paid"||s==="closed")return"Approved";
+  if(s==="rejected"||s==="refunded"||s==="removed")return"Rejected";
+  if(s==="under review"||s==="contacted"||s==="client contacted")return"Under Review";
+  return"Pending";
 }
 
-function idOf(prefix,o,i){
-  return o._id || o.id || o.paymentReference || o.learnerNumber || o.email || `${prefix}-${i}`;
-}
+function idOf(prefix,o,i){return o._id||o.id||o.paymentReference||o.learnerNumber||o.email||`${prefix}-${i}`}
+function recordKey(r){return `${r.source}:${r.backendId||r.id||r.reference||r.email}`}
+function typeLabel(type){if(type==="quote")return"Quote";if(type==="enrollment")return"Enrollment";if(type==="manual-payment")return"Manual Payment";return"Manual"}
+function getManual(){try{return JSON.parse(localStorage.getItem("finance_manual_rows")||"[]")}catch{return[]}}
+function saveManual(rows){localStorage.setItem("finance_manual_rows",JSON.stringify(rows))}
+function getRemovedKeys(){try{return JSON.parse(localStorage.getItem("finance_removed_keys")||"[]")}catch{return[]}}
+function saveRemovedKeys(keys){localStorage.setItem("finance_removed_keys",JSON.stringify([...new Set(keys)]))}
 
-function recordKey(r){
-  return `${r.source}:${r.backendId || r.id || r.reference || r.email}`;
-}
-
-function typeLabel(type){
-  if(type === "quote") return "Quote";
-  if(type === "enrollment") return "Enrollment";
-  if(type === "manual-payment") return "Manual Payment";
-  return "Manual";
-}
-
-function getManual(){
-  try{return JSON.parse(localStorage.getItem("finance_manual_rows") || "[]")}
-  catch{return []}
-}
-
-function saveManual(rows){
-  localStorage.setItem("finance_manual_rows",JSON.stringify(rows));
-}
-
-function getRemovedKeys(){
-  try{return JSON.parse(localStorage.getItem("finance_removed_keys") || "[]")}
-  catch{return []}
-}
-
-function saveRemovedKeys(keys){
-  localStorage.setItem("finance_removed_keys",JSON.stringify([...new Set(keys)]));
-}
-
-function normaliseQuote(q,i){
-  return {
-    id:String(idOf("quote",q,i)),
-    backendId:q._id || "",
-    source:"quote",
-    type:"quote",
-    fullName:q.fullName || "",
-    email:q.email || "",
-    phone:q.cellphone || q.phone || "",
-    grade:q.grade || "",
-    subject:q.subject || "Mathematics",
-    packagePlan:q.package || "",
-    amount:q.amount || "",
-    paymentDate:q.createdAt || "",
-    reference:q._id || "Quote Request",
-    proof:"",
-    contacted:!!q.contacted || String(q.status || "").toLowerCase() === "contacted",
-    paid:!!q.paid || String(q.financeStatus || "").toLowerCase() === "approved",
-    status:normaliseStatus(q.financeStatus || q.status)
-  };
-}
-
-function normaliseManualPayment(p,i){
-  return {
-    id:String(idOf("manual-payment",p,i)),
-    backendId:p._id || "",
-    source:"manual-payment",
-    type:"manual-payment",
-    fullName:p.fullName || p.userId?.fullName || "",
-    email:p.email || p.userId?.email || "",
-    phone:p.phone || p.userId?.cellphone || p.userId?.phone || "",
-    grade:p.grade || p.userId?.grade || "",
-    subject:p.subject || "Mathematics",
-    packagePlan:p.planType || "",
-    amount:p.amount || "",
-    paymentDate:p.paymentDate || p.createdAt || "",
-    reference:p.paymentReference || "",
-    proof:p.proofUrl || "",
-    contacted:!!p.contacted,
-    paid:!!p.paid || String(p.status || p.financeStatus || "").toLowerCase() === "approved",
-    status:normaliseStatus(p.financeStatus || p.status)
-  };
-}
-
-function normaliseEnrollment(e,i){
-  return {
-    id:String(idOf("enrollment",e,i)),
-    backendId:e._id || "",
-    source:"enrollment",
-    type:"enrollment",
-    fullName:e.learner?.fullName || e.learner?.username || "",
-    email:e.learner?.email || "",
-    phone:e.learner?.cellphone || e.learner?.phone || e.learner?.guardianCellphone || "",
-    grade:e.learner?.grade || "",
-    subject:e.subject || "Mathematics",
-    packagePlan:e.paymentPlan || "Online Mathematics Classes",
-    amount:e.amount || "",
-    paymentDate:e.createdAt || "",
-    reference:e.learnerNumber || e.learner?.learnerNumber || "",
-    proof:e.proofOfPaymentUrl || "",
-    contacted:!!e.contacted,
-    paid:!!e.paid || String(e.status || e.financeStatus || "").toLowerCase() === "approved",
-    status:normaliseStatus(e.financeStatus || e.status)
-  };
-}
+function normaliseQuote(q,i){return{id:String(idOf("quote",q,i)),backendId:q._id||"",source:"quote",type:"quote",fullName:q.fullName||"",email:q.email||"",phone:q.cellphone||q.phone||"",grade:q.grade||"",subject:q.subject||"Mathematics",packagePlan:q.package||"",amount:q.amount||"",paymentDate:q.createdAt||"",reference:q._id||"Quote Request",proof:"",contacted:!!q.contacted||String(q.status||"").toLowerCase()==="contacted",paid:!!q.paid||String(q.financeStatus||"").toLowerCase()==="approved",status:normaliseStatus(q.financeStatus||q.status)}}
+function normaliseManualPayment(p,i){return{id:String(idOf("manual-payment",p,i)),backendId:p._id||"",source:"manual-payment",type:"manual-payment",fullName:p.fullName||p.userId?.fullName||"",email:p.email||p.userId?.email||"",phone:p.phone||p.userId?.cellphone||p.userId?.phone||"",grade:p.grade||p.userId?.grade||"",subject:p.subject||"Mathematics",packagePlan:p.planType||"",amount:p.amount||"",paymentDate:p.paymentDate||p.createdAt||"",reference:p.paymentReference||"",proof:p.proofUrl||"",contacted:!!p.contacted,paid:!!p.paid||String(p.status||p.financeStatus||"").toLowerCase()==="approved",status:normaliseStatus(p.financeStatus||p.status)}}
+function normaliseEnrollment(e,i){return{id:String(idOf("enrollment",e,i)),backendId:e._id||"",source:"enrollment",type:"enrollment",fullName:e.learner?.fullName||e.learner?.username||"",email:e.learner?.email||"",phone:e.learner?.cellphone||e.learner?.phone||e.learner?.guardianCellphone||"",grade:e.learner?.grade||"",subject:e.subject||"Mathematics",packagePlan:e.paymentPlan||"Online Mathematics Classes",amount:e.amount||"",paymentDate:e.createdAt||"",reference:e.learnerNumber||e.learner?.learnerNumber||"",proof:e.proofOfPaymentUrl||"",contacted:!!e.contacted,paid:!!e.paid||String(e.status||e.financeStatus||"").toLowerCase()==="approved",status:normaliseStatus(e.financeStatus||e.status)}}
 
 async function fetchJson(path,options={}){
-  const res = await fetch(API + path,{
-    ...options,
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:"Bearer " + token(),
-      ...(options.headers || {})
-    }
-  });
-
-  const data = await res.json().catch(()=>({}));
-  if(!res.ok) throw new Error(data.message || path + " failed");
+  const res=await fetch(API+path,{...options,headers:{"Content-Type":"application/json",Authorization:"Bearer "+token(),...(options.headers||{})}});
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok)throw new Error(data.message||"Request failed");
   return data;
 }
 
-function asArray(data,key){
-  if(Array.isArray(data)) return data;
-  return data?.data || data?.items || data?.[key] || [];
-}
+function asArray(data,key){if(Array.isArray(data))return data;return data?.data||data?.items||data?.[key]||[]}
 
 async function loadAllFinanceData(showMessage=false){
-  $("refreshBtn").disabled = true;
-  $("refreshBtn").textContent = "Loading...";
-  let errors = [];
-
+  $("refreshBtn").disabled=true;
+  $("refreshBtn").textContent="Loading...";
   try{
-    let quotes = [];
-    let payments = [];
-    let enrollments = [];
+    let quotes=[],payments=[],enrollments=[];
+    try{quotes=asArray(await fetchJson("/api/request-quote"),"quotes")}catch(e){}
+    try{enrollments=asArray(await fetchJson("/api/enrollments"),"enrollments")}catch(e){}
+    try{payments=asArray(await fetchJson("/api/manual-payments"),"payments")}catch(e){}
 
-    try{ quotes = asArray(await fetchJson("/api/request-quote"),"quotes"); }
-    catch(e){ errors.push("Quotes: " + e.message); }
-
-    try{ enrollments = asArray(await fetchJson("/api/enrollments"),"enrollments"); }
-    catch(e){ errors.push("Enrollments: " + e.message); }
-
-    try{ payments = asArray(await fetchJson("/api/manual-payments"),"payments"); }
-    catch(e){ errors.push("Manual payments: " + e.message); }
-
-    const removed = new Set(getRemovedKeys());
-
-    records = [
-      ...quotes.map(normaliseQuote),
-      ...enrollments.map(normaliseEnrollment),
-      ...payments.map(normaliseManualPayment),
-      ...getManual()
-    ].filter(r => !removed.has(recordKey(r)));
-
-    pendingChanges = {};
+    const removed=new Set(getRemovedKeys());
+    records=[...quotes.map(normaliseQuote),...enrollments.map(normaliseEnrollment),...payments.map(normaliseManualPayment),...getManual()].filter(r=>!removed.has(recordKey(r)));
+    pendingChanges={};
     selectedIds.clear();
     renderRows();
-
-    if(errors.length){
-      show("Some data could not load: " + errors.join(" | "),"error");
-    }else if(showMessage){
-      show("Finance records refreshed.");
-    }
+    if(showMessage)show("Finance records refreshed.");
   }catch(e){
-    show("Could not load finance data: " + e.message,"error");
+    show("Could not load finance records. Please refresh or login again.","error");
   }finally{
-    $("refreshBtn").disabled = false;
-    $("refreshBtn").textContent = "Refresh";
+    $("refreshBtn").disabled=false;
+    $("refreshBtn").textContent="Refresh";
   }
 }
 
 function trackChange(id,key,value){
-  if(!pendingChanges[id]) pendingChanges[id] = {};
-  pendingChanges[id][key] = value;
-
-  const index = records.findIndex(r => r.id === id);
-  if(index !== -1){
-    records[index][key] = value;
-    if(key === "status" && value === "Approved") records[index].paid = true;
-    if(key === "status" && value === "Rejected") records[index].paid = false;
+  if(!pendingChanges[id])pendingChanges[id]={};
+  pendingChanges[id][key]=value;
+  const index=records.findIndex(r=>r.id===id);
+  if(index!==-1){
+    records[index][key]=value;
+    if(key==="status"&&value==="Approved")records[index].paid=true;
+    if(key==="status"&&value==="Rejected")records[index].paid=false;
+    selectedIds.add(id);
     renderSummary();
+    updateSelectedUI();
   }
 }
 
 async function saveBackend(r,patch){
-  let endpoint = "";
-  if(r.source === "quote") endpoint = `/api/request-quote/${r.backendId}`;
-  if(r.source === "manual-payment") endpoint = `/api/manual-payments/${r.backendId}`;
-  if(r.source === "enrollment") endpoint = `/api/enrollments/${r.backendId}`;
-  if(!endpoint) return;
-
-  const body = {};
-  if("contacted" in patch) body.contacted = patch.contacted;
-  if("paid" in patch) body.paid = patch.paid;
-  if("amount" in patch) body.amount = Number(patch.amount) || 0;
-
+  let endpoint="";
+  if(r.source==="quote")endpoint=`/api/request-quote/${r.backendId}`;
+  if(r.source==="manual-payment")endpoint=`/api/manual-payments/${r.backendId}`;
+  if(r.source==="enrollment")endpoint=`/api/enrollments/${r.backendId}`;
+  if(!endpoint)return;
+  const body={};
+  if("contacted" in patch)body.contacted=patch.contacted;
+  if("paid" in patch)body.paid=patch.paid;
+  if("amount" in patch)body.amount=Number(patch.amount)||0;
   if("status" in patch){
-    body.financeStatus = patch.status;
-    if(patch.status === "Approved"){
-      body.status = "approved";
-      body.paid = true;
-    }
-    if(patch.status === "Rejected"){
-      body.status = "rejected";
-      body.paid = false;
-    }
-    if(patch.status === "Pending" || patch.status === "Under Review"){
-      body.status = "pending";
-    }
+    body.financeStatus=patch.status;
+    if(patch.status==="Approved"){body.status="approved";body.paid=true}
+    if(patch.status==="Rejected"){body.status="rejected";body.paid=false}
+    if(patch.status==="Pending"||patch.status==="Under Review")body.status="pending";
   }
-
   await fetchJson(endpoint,{method:"PATCH",body:JSON.stringify(body)});
 }
 
 async function saveRecord(record){
-  const patch = pendingChanges[record.id];
-  if(!patch) return false;
-
-  if(record.source === "manual"){
-    const manualRows = getManual().map(r => r.id === record.id ? {...r,...patch} : r);
-    saveManual(manualRows);
-  }else{
-    await saveBackend(record,patch);
-  }
-
+  const patch=pendingChanges[record.id];
+  if(!patch)return false;
+  if(record.source==="manual")saveManual(getManual().map(r=>r.id===record.id?{...r,...patch}:r));
+  else await saveBackend(record,patch);
   delete pendingChanges[record.id];
   return true;
 }
 
 async function saveSelected(){
-  const ids = [...selectedIds];
-  if(!ids.length) return show("Select at least one record to save.","error");
-
-  let saved = 0;
+  const ids=[...selectedIds];
+  if(!ids.length)return show("Select at least one record to save.","error");
+  let saved=0;
   try{
-    for(const id of ids){
-      const record = records.find(r => r.id === id);
-      if(record && pendingChanges[id]){
-        await saveRecord(record);
-        saved++;
-      }
-    }
-
-    if(!saved) return show("No selected records have changes to save.","error");
-    show(saved + " record(s) saved successfully.");
+    for(const id of ids){const record=records.find(r=>r.id===id);if(record&&pendingChanges[id]){await saveRecord(record);saved++}}
+    if(!saved)return show("No selected records have changes to save.","error");
+    show(saved+" record(s) saved successfully.");
     await loadAllFinanceData(false);
-  }catch(e){
-    show("Could not save selected records: " + e.message,"error");
-  }
+  }catch(e){show("Could not save selected records.","error")}
 }
 
 function removeSelected(){
-  const ids = [...selectedIds];
-  if(!ids.length) return show("Select at least one record to remove.","error");
-
-  const ok = confirm("Remove selected records from the Finance Admin table?");
-  if(!ok) return;
-
-  const removedKeys = getRemovedKeys();
-
+  const ids=[...selectedIds];
+  if(!ids.length)return show("Select at least one record to remove.","error");
+  if(!confirm("Remove selected records from the Finance Admin table?"))return;
+  const removedKeys=getRemovedKeys();
   for(const id of ids){
-    const record = records.find(r => r.id === id);
-    if(!record) continue;
-
-    if(record.source === "manual"){
-      saveManual(getManual().filter(r => r.id !== id));
-    }else{
-      removedKeys.push(recordKey(record));
-    }
+    const record=records.find(r=>r.id===id);
+    if(!record)continue;
+    if(record.source==="manual")saveManual(getManual().filter(r=>r.id!==id));
+    else removedKeys.push(recordKey(record));
   }
-
   saveRemovedKeys(removedKeys);
-  records = records.filter(r => !selectedIds.has(r.id));
+  records=records.filter(r=>!selectedIds.has(r.id));
   selectedIds.clear();
   renderRows();
-  show("Selected records removed from this finance table.");
+  show("Selected records removed.");
 }
 
-function bulkApprove(){
-  if(!selectedIds.size) return show("Select at least one record to approve.","error");
+function bulkContacted(){if(!selectedIds.size)return show("Select at least one record.","error");[...selectedIds].forEach(id=>{trackChange(id,"contacted",true);trackChange(id,"status","Under Review")});renderRows()}
+function bulkApprove(){if(!selectedIds.size)return show("Select at least one record.","error");[...selectedIds].forEach(id=>{trackChange(id,"paid",true);trackChange(id,"status","Approved")});renderRows()}
+function bulkReject(){if(!selectedIds.size)return show("Select at least one record.","error");[...selectedIds].forEach(id=>{trackChange(id,"paid",false);trackChange(id,"status","Rejected")});renderRows()}
 
-  [...selectedIds].forEach(id=>{
-    trackChange(id,"paid",true);
-    trackChange(id,"status","Approved");
-  });
-
-  renderRows();
-}
-
-function bulkReject(){
-  if(!selectedIds.size) return show("Select at least one record to reject.","error");
-
-  [...selectedIds].forEach(id=>{
-    trackChange(id,"paid",false);
-    trackChange(id,"status","Rejected");
-  });
-
-  renderRows();
-}
-
-function bulkContacted(){
-  if(!selectedIds.size) return show("Select at least one record to mark as contacted.","error");
-
-  [...selectedIds].forEach(id=>{
-    trackChange(id,"contacted",true);
-    trackChange(id,"status","Under Review");
-  });
-
-  renderRows();
-}
-
-function toggleSelect(id,checked){
-  if(checked) selectedIds.add(id);
-  else selectedIds.delete(id);
-  updateSelectedUI();
-}
-
-function toggleSelectAll(checked){
-  filtered().forEach(r=>{
-    if(checked) selectedIds.add(r.id);
-    else selectedIds.delete(r.id);
-  });
-  renderRows();
-}
-
+function toggleSelect(id,checked){if(checked)selectedIds.add(id);else selectedIds.delete(id);updateSelectedUI()}
+function toggleSelectAll(checked){filtered().forEach(r=>{if(checked)selectedIds.add(r.id);else selectedIds.delete(r.id)});renderRows()}
 function updateSelectedUI(){
-  $("selectedCount").textContent = selectedIds.size + " selected";
-  const rows = filtered();
-  const allSelected = rows.length && rows.every(r => selectedIds.has(r.id));
-  $("selectAllBox").checked = !!allSelected;
+  $("selectedCount").textContent=selectedIds.size+" selected";
+  const rows=filtered();
+  const allSelected=rows.length&&rows.every(r=>selectedIds.has(r.id));
+  $("selectAllBox").checked=!!allSelected;
 }
 
-function viewProof(url){
-  if(!url) return show("No proof of payment uploaded.","error");
-  window.open(url,"_blank","noopener,noreferrer");
-}
+function viewProof(url){if(!url)return show("No proof of payment uploaded.","error");window.open(url,"_blank","noopener,noreferrer")}
+function badge(text){return`<span class="badge">${esc(text)}</span>`}
 
-function badge(text,c=""){
-  return `<span class="badge ${c}">${esc(text)}</span>`;
-}
-
-function statusColor(s){
-  s = String(s || "").toLowerCase();
-  if(s.includes("approved")) return "green";
-  if(s.includes("reject")) return "red";
-  if(s.includes("review") || s.includes("pending")) return "orange";
-  return "blue";
+function getRecordDate(r){const d=new Date(r.paymentDate||r.createdAt||"");return isNaN(d.getTime())?null:d}
+function startOfDay(d){const x=new Date(d);x.setHours(0,0,0,0);return x}
+function startOfWeek(d){const x=startOfDay(d);const day=x.getDay();const diff=day===0?6:day-1;x.setDate(x.getDate()-diff);return x}
+function passesDateFilter(r){
+  const f=$("dateFilter").value;
+  if(f==="all")return true;
+  const d=getRecordDate(r);
+  if(!d)return false;
+  const now=new Date();
+  const today=startOfDay(now);
+  const thisWeek=startOfWeek(now);
+  const lastWeek=new Date(thisWeek);lastWeek.setDate(lastWeek.getDate()-7);
+  const thisMonth=new Date(now.getFullYear(),now.getMonth(),1);
+  const lastMonth=new Date(now.getFullYear(),now.getMonth()-1,1);
+  const nextThisMonth=new Date(now.getFullYear(),now.getMonth()+1,1);
+  if(f==="today")return d>=today;
+  if(f==="thisWeek")return d>=thisWeek;
+  if(f==="lastWeek")return d>=lastWeek&&d<thisWeek;
+  if(f==="thisMonth")return d>=thisMonth&&d<nextThisMonth;
+  if(f==="lastMonth")return d>=lastMonth&&d<thisMonth;
+  if(f==="thisYear")return d.getFullYear()===now.getFullYear();
+  return true;
 }
 
 function filtered(){
-  const sf = $("statusFilter").value;
-  const tf = $("typeFilter").value;
-  const q = $("searchBox").value.toLowerCase().trim();
-
+  const sf=$("statusFilter").value,tf=$("typeFilter").value,q=$("searchBox").value.toLowerCase().trim();
   return records.filter(r=>{
-    if(tf !== "all" && r.type !== tf) return false;
-    const st = String(r.status || "").toLowerCase();
-    if(sf === "not contacted" && r.contacted) return false;
-    if(sf === "client contacted" && !r.contacted) return false;
-    if(sf === "not paid" && r.paid) return false;
-    if(sf === "paid" && !r.paid) return false;
-    if(sf === "pending" && st !== "pending") return false;
-    if(sf === "under review" && st !== "under review") return false;
-    if(sf === "approved" && st !== "approved") return false;
-    if(sf === "rejected" && st !== "rejected") return false;
-    if(q && !Object.values(r).join(" ").toLowerCase().includes(q)) return false;
+    if(tf!=="all"&&r.type!==tf)return false;
+    if(!passesDateFilter(r))return false;
+    const st=String(r.status||"").toLowerCase();
+    if(sf==="not contacted"&&r.contacted)return false;
+    if(sf==="client contacted"&&!r.contacted)return false;
+    if(sf==="not paid"&&r.paid)return false;
+    if(sf==="paid"&&!r.paid)return false;
+    if(sf==="pending"&&st!=="pending")return false;
+    if(sf==="under review"&&st!=="under review")return false;
+    if(sf==="approved"&&st!=="approved")return false;
+    if(sf==="rejected"&&st!=="rejected")return false;
+    if(q&&!Object.values(r).join(" ").toLowerCase().includes(q))return false;
     return true;
   });
 }
 
 function renderSummary(){
-  $("totalCount").textContent = records.length;
-  $("quoteCount").textContent = records.filter(r => r.type === "quote").length;
-  $("enrollmentCount").textContent = records.filter(r => r.type === "enrollment").length;
-  $("notContactedCount").textContent = records.filter(r => !r.contacted).length;
-  $("paidCount").textContent = records.filter(r => r.paid || r.status === "Approved").length;
-  $("revenueCount").textContent = money(records.filter(r => r.paid || r.status === "Approved").reduce((s,r)=>s + Number(r.amount || 0),0)) || "R0";
+  $("totalCount").textContent=records.length;
+  $("quoteCount").textContent=records.filter(r=>r.type==="quote").length;
+  $("enrollmentCount").textContent=records.filter(r=>r.type==="enrollment").length;
+  $("notContactedCount").textContent=records.filter(r=>!r.contacted).length;
+  $("paidCount").textContent=records.filter(r=>r.paid||r.status==="Approved").length;
+  $("revenueCount").textContent=money(records.filter(r=>r.paid||r.status==="Approved").reduce((s,r)=>s+Number(r.amount||0),0))||"R0";
 }
 
 function renderRows(){
-  const rows = filtered();
+  const rows=filtered();
   renderSummary();
-
-  $("financeRows").innerHTML = rows.length ? rows.map((r,i)=>`
+  $("financeRows").innerHTML=rows.length?rows.map((r,i)=>`
     <tr>
-      <td class="checkboxCell"><input type="checkbox" ${selectedIds.has(r.id) ? "checked" : ""} onchange="toggleSelect('${esc(r.id)}',this.checked)"></td>
-      <td>${i + 1}</td>
-      <td>${badge(typeLabel(r.type), r.type==="quote" ? "blue" : r.type==="enrollment" ? "green" : "orange")}</td>
-      <td>${esc(r.fullName || "-")}</td>
-      <td>${esc(r.email || "-")}</td>
-      <td>${esc(r.phone || "-")}</td>
-      <td>${esc(r.grade || "-")}</td>
-      <td>${esc(r.subject || "-")}</td>
-      <td>${esc(r.packagePlan || "-")}</td>
-      <td><input class="amountInput" type="number" step="0.01" value="${esc(r.amount || "")}" onchange="trackChange('${esc(r.id)}','amount',this.value)"></td>
-      <td>${r.paymentDate ? esc(new Date(r.paymentDate).toLocaleDateString("en-ZA")) : "-"}</td>
-      <td>${esc(r.reference || "-")}</td>
-      <td>${r.proof ? `<button class="btn small secondary" onclick="viewProof('${esc(r.proof)}')">Proof</button>` : `<span class="badge red">No Proof</span>`}</td>
-      <td><select onchange="trackChange('${esc(r.id)}','contacted',this.value==='Yes')"><option ${r.contacted ? "selected" : ""}>Yes</option><option ${!r.contacted ? "selected" : ""}>No</option></select></td>
-      <td><select onchange="trackChange('${esc(r.id)}','paid',this.value==='Yes')"><option ${r.paid ? "selected" : ""}>Yes</option><option ${!r.paid ? "selected" : ""}>No</option></select></td>
-      <td><select class="statusSelect" onchange="trackChange('${esc(r.id)}','status',this.value)"><option ${r.status==="Pending" ? "selected" : ""}>Pending</option><option ${r.status==="Under Review" ? "selected" : ""}>Under Review</option><option ${r.status==="Approved" ? "selected" : ""}>Approved</option><option ${r.status==="Rejected" ? "selected" : ""}>Rejected</option></select> ${badge(r.status || "Pending",statusColor(r.status))}</td>
+      <td class="checkboxCell"><input type="checkbox" ${selectedIds.has(r.id)?"checked":""} onchange="toggleSelect('${esc(r.id)}',this.checked)"></td>
+      <td>${i+1}</td>
+      <td>${badge(typeLabel(r.type))}</td>
+      <td>${esc(r.fullName||"-")}</td>
+      <td>${esc(r.email||"-")}</td>
+      <td>${esc(r.phone||"-")}</td>
+      <td>${esc(r.grade||"-")}</td>
+      <td>${esc(r.subject||"-")}</td>
+      <td>${esc(r.packagePlan||"-")}</td>
+      <td><input class="amountInput" type="number" step="0.01" value="${esc(r.amount||"")}" onchange="trackChange('${esc(r.id)}','amount',this.value)"></td>
+      <td>${r.paymentDate?esc(new Date(r.paymentDate).toLocaleDateString("en-ZA")):"-"}</td>
+      <td>${esc(r.reference||"-")}</td>
+      <td>${r.proof?`<button class="btn small secondary" onclick="viewProof('${esc(r.proof)}')">Proof</button>`:`<span class="badge">No Proof</span>`}</td>
+      <td><select onchange="trackChange('${esc(r.id)}','contacted',this.value==='Yes')"><option ${r.contacted?"selected":""}>Yes</option><option ${!r.contacted?"selected":""}>No</option></select></td>
+      <td><select onchange="trackChange('${esc(r.id)}','paid',this.value==='Yes')"><option ${r.paid?"selected":""}>Yes</option><option ${!r.paid?"selected":""}>No</option></select></td>
+      <td><select class="statusSelect" onchange="trackChange('${esc(r.id)}','status',this.value)"><option ${r.status==="Pending"?"selected":""}>Pending</option><option ${r.status==="Under Review"?"selected":""}>Under Review</option><option ${r.status==="Approved"?"selected":""}>Approved</option><option ${r.status==="Rejected"?"selected":""}>Rejected</option></select> ${badge(r.status||"Pending")}</td>
     </tr>
-  `).join("") : `<tr><td colspan="16">No finance records found.</td></tr>`;
-
+  `).join(""):`<tr><td colspan="16">No finance records found.</td></tr>`;
   updateSelectedUI();
 }
 
-function toggleAdd(){
-  $("addFormCard").classList.toggle("hidden");
-}
-
+function toggleAdd(){$("addFormCard").classList.toggle("hidden")}
 function addManual(){
-  const row = {
-    id:"manual-" + Date.now(),
-    source:"manual",
-    type:$("fType").value || "manual",
-    fullName:$("fFullName").value,
-    email:$("fEmail").value,
-    phone:$("fPhone").value,
-    grade:$("fGrade").value,
-    subject:$("fSubject").value,
-    packagePlan:$("fPackage").value,
-    amount:$("fAmount").value,
-    paymentDate:$("fPaymentDate").value,
-    reference:$("fReference").value,
-    proof:"",
-    contacted:$("fContacted").value === "Yes",
-    paid:$("fPaid").value === "Yes",
-    status:$("fStatus").value
-  };
-
-  const rows = getManual();
-  rows.push(row);
-  saveManual(rows);
-  records.push(row);
-  renderRows();
-  toggleAdd();
-  show("Manual row added.");
+  const row={id:"manual-"+Date.now(),source:"manual",type:$("fType").value||"manual",fullName:$("fFullName").value,email:$("fEmail").value,phone:$("fPhone").value,grade:$("fGrade").value,subject:$("fSubject").value,packagePlan:$("fPackage").value,amount:$("fAmount").value,paymentDate:$("fPaymentDate").value,reference:$("fReference").value,proof:"",contacted:$("fContacted").value==="Yes",paid:$("fPaid").value==="Yes",status:$("fStatus").value};
+  const rows=getManual();rows.push(row);saveManual(rows);records.push(row);renderRows();toggleAdd();show("Manual row added.");
 }
 
 function exportExcel(){
-  const rows = filtered();
-  if(!rows.length) return show("No records to export.","error");
-
-  const headers = ["No","Type","Full Name","Email","Phone","Grade","Subject","Package / Plan","Amount","Payment Date","Reference","Proof","Client Contacted","Paid","Finance Status"];
-  const body = rows.map((r,i)=>[i+1,typeLabel(r.type),r.fullName,r.email,r.phone,r.grade,r.subject,r.packagePlan,r.amount,r.paymentDate ? new Date(r.paymentDate).toLocaleDateString("en-ZA") : "",r.reference,r.proof,r.contacted ? "Yes" : "No",r.paid ? "Yes" : "No",r.status]);
-
-  const table = `<table border="1"><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>${body.map(row=>`<tr>${row.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table>`;
-  const blob = new Blob([`<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`],{type:"application/vnd.ms-excel"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "finance-admin-records.xls";
+  const rows=filtered();
+  if(!rows.length)return show("No records to export.","error");
+  const headers=["No","Type","Full Name","Email","Phone","Grade","Subject","Package / Plan","Amount","Payment Date","Reference","Proof","Client Contacted","Paid","Finance Status"];
+  const body=rows.map((r,i)=>[i+1,typeLabel(r.type),r.fullName,r.email,r.phone,r.grade,r.subject,r.packagePlan,r.amount,r.paymentDate?new Date(r.paymentDate).toLocaleDateString("en-ZA"):"",r.reference,r.proof,r.contacted?"Yes":"No",r.paid?"Yes":"No",r.status]);
+  const table=`<table border="1"><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>${body.map(row=>`<tr>${row.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table>`;
+  const blob=new Blob([`<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`],{type:"application/vnd.ms-excel"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="finance-admin-records.xls";
   a.click();
   URL.revokeObjectURL(url);
   show("Excel file exported.");
 }
 
-$("refreshBtn").onclick = ()=>loadAllFinanceData(true);
-$("markContactedBtn").onclick = bulkContacted;
-$("approveBtn").onclick = bulkApprove;
-$("rejectBtn").onclick = bulkReject;
-$("saveSelectedBtn").onclick = saveSelected;
-$("removeSelectedBtn").onclick = removeSelected;
-$("addBtn").onclick = toggleAdd;
-$("cancelAddBtn").onclick = toggleAdd;
-$("saveManualBtn").onclick = addManual;
-$("exportBtn").onclick = exportExcel;
-$("selectAllBox").onchange = e=>toggleSelectAll(e.target.checked);
-$("statusFilter").onchange = ()=>{selectedIds.clear();renderRows();};
-$("typeFilter").onchange = ()=>{selectedIds.clear();renderRows();};
-$("searchBox").oninput = ()=>{selectedIds.clear();renderRows();};
+$("refreshBtn").onclick=()=>loadAllFinanceData(true);
+$("saveSelectedBtn").onclick=saveSelected;
+$("removeSelectedBtn").onclick=removeSelected;
+$("markContactedBtn").onclick=bulkContacted;
+$("approveBtn").onclick=bulkApprove;
+$("rejectBtn").onclick=bulkReject;
+$("addBtn").onclick=toggleAdd;
+$("cancelAddBtn").onclick=toggleAdd;
+$("saveManualBtn").onclick=addManual;
+$("exportBtn").onclick=exportExcel;
+$("selectAllBox").onchange=e=>toggleSelectAll(e.target.checked);
+$("statusFilter").onchange=()=>{selectedIds.clear();renderRows()};
+$("dateFilter").onchange=()=>{selectedIds.clear();renderRows()};
+$("typeFilter").onchange=()=>{selectedIds.clear();renderRows()};
+$("searchBox").oninput=()=>{selectedIds.clear();renderRows()};
 
 document.addEventListener("DOMContentLoaded",()=>{
-  records = getManual();
+  records=getManual();
   renderRows();
-
   if(!token()){
-    show("Employee token missing. Please login again from employee-login.html.","error");
-    $("financeRows").innerHTML = `<tr><td colspan="16">Please login again as a finance employee.</td></tr>`;
+    show("Please login again as a finance employee.","error");
+    $("financeRows").innerHTML=`<tr><td colspan="16">Please login again as a finance employee.</td></tr>`;
     return;
   }
-
   loadAllFinanceData(false);
 });
 </script>
