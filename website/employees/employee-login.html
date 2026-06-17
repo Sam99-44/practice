@@ -8,10 +8,13 @@
 <style>
 :root{
   --nav:#1b1648;
-  --primary:#0b4a70;
-  --bg:#ffffff;
-  --border:#d8dde8;
+  --blue:#0b3c5d;
+  --blueDark:#082f49;
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --border:#d9dee7;
   --text:#0f172a;
+  --muted:#475569;
   --danger:#dc2626;
 }
 
@@ -23,202 +26,248 @@
 }
 
 body{
-  background:var(--bg);
   min-height:100vh;
+  background:var(--bg);
   color:var(--text);
 }
 
 .topbar{
   background:var(--nav);
-  color:white;
-  padding:14px 40px;
+  color:#fff;
+  padding:12px 22px;
   display:flex;
-  justify-content:space-between;
   align-items:center;
+  justify-content:space-between;
 }
 
 .brand{
   display:flex;
   align-items:center;
-  gap:14px;
+  gap:12px;
 }
 
 .brand img{
-  width:45px;
-  height:45px;
+  width:40px;
+  height:40px;
   filter:brightness(0) invert(1);
 }
 
 .brand h2{
-  font-size:18px;
+  font-size:16px;
+  font-weight:700;
 }
 
 .brand p{
   font-size:13px;
-  opacity:0.9;
+  margin-top:2px;
+  color:#e0e7ff;
 }
 
-.container{
+.page{
+  min-height:calc(100vh - 64px);
   display:flex;
-  justify-content:center;
   align-items:center;
-  padding:50px 20px;
+  justify-content:center;
+  padding:28px 16px;
 }
 
-.login-card{
+.loginCard{
   width:100%;
-  max-width:520px;
-  background:white;
+  max-width:500px;
+  background:#fff;
   border:1px solid var(--border);
-  border-radius:0;
-  padding:30px;
-  box-shadow:none;
+  padding:36px;
+  text-align:center;
 }
 
-.login-card h1{
-  color:#00102e;
-  margin-bottom:10px;
-  font-size:22px;
+.heroBird{
+  width:220px;
+  max-width:100%;
+  display:block;
+  margin:0 auto 10px;
 }
 
-.login-card p{
-  color:#475569;
-  margin-bottom:25px;
+.loginCard h1{
+  font-size:25px;
+  margin-bottom:6px;
+  color:#0f172a;
+}
+
+.intro{
   font-size:14px;
+  color:var(--muted);
+  margin-bottom:24px;
+}
+
+.formArea{
+  text-align:left;
+}
+
+.error{
+  display:none;
+  margin-bottom:16px;
+  background:#fef2f2;
+  color:var(--danger);
+  padding:12px;
+  border:1px solid #fecaca;
+  font-size:14px;
+  text-align:left;
 }
 
 label{
   display:block;
-  margin-bottom:8px;
-  font-weight:700;
+  margin-bottom:7px;
   font-size:14px;
+  font-weight:700;
+  color:#111827;
 }
 
 input{
   width:100%;
-  padding:14px;
+  height:45px;
+  padding:0 12px;
   border:1px solid var(--border);
   border-radius:0;
-  margin-bottom:20px;
+  margin-bottom:16px;
   font-size:15px;
+  background:#fff;
 }
 
 input:focus{
   outline:none;
-  border-color:var(--primary);
+  border-color:var(--blue);
+  box-shadow:0 0 0 4px rgba(11,60,93,.08);
 }
 
 .btn{
   width:100%;
+  height:47px;
   border:none;
-  background:var(--primary);
-  color:white;
-  padding:15px;
   border-radius:0;
-  font-size:16px;
+  background:var(--blue);
+  color:#fff;
+  font-size:15px;
   font-weight:700;
   cursor:pointer;
 }
 
-.btn:hover{background:#083c5b}
+.btn:hover{
+  background:var(--blueDark);
+}
 
 .btn:disabled{
   opacity:.6;
   cursor:not-allowed;
 }
 
-.error{
-  display:none;
-  margin-bottom:20px;
-  background:#fef2f2;
-  color:var(--danger);
-  padding:12px;
-  border:1px solid #fecaca;
-  font-size:14px;
-}
-
-.footer-links{
+.footerLinks{
   display:flex;
   justify-content:space-between;
-  margin-top:20px;
   gap:12px;
+  margin-top:18px;
 }
 
-.footer-links a{
+.footerLinks a{
+  color:var(--blue);
   text-decoration:none;
-  color:var(--primary);
-  font-weight:600;
   font-size:14px;
-}
-
-.roles{
-  margin-top:25px;
-  background:#f8fafc;
-  padding:15px;
-  border:1px solid #e5e7eb;
-}
-
-.roles h4{margin-bottom:10px}
-
-.role-badge{
-  display:inline-block;
-  background:#e0ecff;
-  color:#1d4ed8;
-  padding:6px 10px;
-  border-radius:0;
-  margin:4px;
-  font-size:13px;
   font-weight:700;
+}
+
+.securityNote{
+  margin-top:22px;
+  border:1px solid var(--border);
+  background:#f8fafc;
+  padding:12px;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.45;
+  text-align:left;
+}
+
+@media(max-width:520px){
+  .topbar{
+    padding:12px 14px;
+  }
+
+  .loginCard{
+    padding:24px 18px;
+  }
+
+  .heroBird{
+    width:170px;
+  }
+
+  .footerLinks{
+    flex-direction:column;
+  }
 }
 </style>
 </head>
 
 <body>
+
 <header class="topbar">
   <div class="brand">
     <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="">
     <div>
       <h2>Practice Online</h2>
-      <p>Employee Portal Login</p>
+      <p>Employee Portal</p>
     </div>
   </div>
 </header>
 
-<div class="container">
-  <div class="login-card">
-    <h1>Employee Login</h1>
-    <p>Access the Practice Online employee portal.</p>
+<main class="page">
+
+  <div class="loginCard">
+
+    <img
+      class="heroBird"
+      src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781711717/bird_ijxmjp.svg"
+      alt="Practice Online"
+    >
+
+    <h1>Welcome Back</h1>
+    
 
     <div class="error" id="errorBox"></div>
 
-    <form id="loginForm">
-      <label>Email</label>
-      <input type="email" id="email" placeholder="Enter your email" required>
+    <form id="loginForm" class="formArea">
+
+      <label>Email Address</label>
+      <input
+        type="email"
+        id="email"
+        placeholder="Enter your email"
+        required
+      >
 
       <label>Password</label>
-      <input type="password" id="password" placeholder="Enter your password" required>
+      <input
+        type="password"
+        id="password"
+        placeholder="Enter your password"
+        required
+      >
 
-      <button type="submit" class="btn" id="loginBtn">Login</button>
+      <button type="submit" class="btn" id="loginBtn">
+        Login
+      </button>
+
     </form>
 
-    <div class="footer-links">
+    <div class="footerLinks">
       <a href="../forgot-password.html">Forgot Password?</a>
       <a href="../index.html">Back Home</a>
     </div>
 
-    <div class="roles">
-      <h4>Authorized Roles</h4>
-      <span class="role-badge">Admin</span>
-      <span class="role-badge">Tester</span>
-      <span class="role-badge">Academic</span>
-      <span class="role-badge">Editor</span>
-      <span class="role-badge">Operations</span>
-      <span class="role-badge">Finance</span>
-      <span class="role-badge">Support</span>
-      <span class="role-badge">Tutor</span>
+
+   
     </div>
+
   </div>
-</div>
+
+</main>
 
 <script>
 const API = "https://api.practiceonline.co.za";
@@ -229,7 +278,7 @@ const loginBtn = document.getElementById("loginBtn");
 
 function showError(message){
   errorBox.style.display = "block";
-  errorBox.textContent = message;
+  errorBox.textContent = message || "Login failed. Please try again.";
 }
 
 function getEmployee(data){
@@ -278,7 +327,9 @@ form.addEventListener("submit", async (e)=>{
   try{
     const response = await fetch(API + "/api/employees/login",{
       method:"POST",
-      headers:{"Content-Type":"application/json"},
+      headers:{
+        "Content-Type":"application/json"
+      },
       body:JSON.stringify({
         email:document.getElementById("email").value.trim(),
         password:document.getElementById("password").value
@@ -294,13 +345,12 @@ form.addEventListener("submit", async (e)=>{
     const employee = getEmployee(data);
 
     if(!data.token){
-      throw new Error("Login succeeded but no employee token was returned.");
+      throw new Error("Login failed. Please try again.");
     }
 
     localStorage.setItem("employeeToken", data.token);
     localStorage.setItem("employeeUser", JSON.stringify(employee || {}));
 
-    /* Optional fallback for old pages */
     localStorage.setItem("token", data.token);
     localStorage.setItem("employee", JSON.stringify(employee || {}));
 
@@ -314,5 +364,6 @@ form.addEventListener("submit", async (e)=>{
   }
 });
 </script>
+
 </body>
 </html>
