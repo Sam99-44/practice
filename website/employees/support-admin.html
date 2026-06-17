@@ -246,6 +246,34 @@ input:focus,select:focus,textarea:focus{
 .btn img{width:15px;height:15px;filter:brightness(0) invert(1)}
 .btn.secondary img{filter:none}
 
+.bulkActions .btn{
+  background:var(--blue);
+  border-color:var(--blue);
+}
+
+.bulkActions .btn:hover{
+  background:var(--blueDark);
+  border-color:var(--blueDark);
+}
+
+.bulkActions .btn.danger{
+  background:var(--red);
+  border-color:var(--red);
+}
+
+.bulkActions .btn.danger:hover{
+  background:#a81818;
+  border-color:#a81818;
+}
+
+tr.rowSelected td{
+  background:#f8fafc;
+}
+
+tr.rowEditing td{
+  background:#f8fafc;
+}
+
 .tableWrap{
   width:100%;
   overflow:auto;
@@ -370,6 +398,7 @@ td select{min-width:112px;padding:6px 8px;font-size:13px}
             <div class="metricValue" id="totalCount">0</div>
             <div class="metricNote">All support records</div>
           </div>
+          <img class="metricIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781656873/edit-3_c1gjk0.svg" alt="">
         </div>
         <div class="summaryBox">
           <div>
@@ -398,6 +427,7 @@ td select{min-width:112px;padding:6px 8px;font-size:13px}
             <div class="metricValue" id="resolvedCount">0</div>
             <div class="metricNote">Completed tickets</div>
           </div>
+          <img class="metricIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654916/Approved_dbtwvt.svg" alt="">
         </div>
       </div>
     </div>
@@ -416,7 +446,7 @@ td select{min-width:112px;padding:6px 8px;font-size:13px}
             <option value="all">All records</option>
             <option value="new">New</option>
             <option value="in progress">In Progress</option>
-            <option value="waiting for learner">Waiting for Learner</option>
+            
             <option value="escalated">Escalated</option>
             <option value="resolved">Resolved</option>
             <option value="closed">Closed</option>
@@ -463,12 +493,29 @@ td select{min-width:112px;padding:6px 8px;font-size:13px}
         <div class="bulkLeft">
           <span class="selectedText" id="selectedCount">0 selected</span>
         </div>
-        <div class="actions">
-          <button class="btn" id="markContactedBtn">Mark Contacted</button>
-          <button class="btn" id="escalateBtn">Escalate</button>
-          <button class="btn" id="resolveBtn">Resolve</button>
-          <button class="btn" id="saveSelectedBtn">Save Changes</button>
-          <button class="btn danger" id="removeSelectedBtn">Remove Selected</button>
+        <div class="actions bulkActions">
+          <button class="btn" id="editSelectedBtn">
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781656873/edit-3_c1gjk0.svg" alt="">
+            Edit Selected
+          </button>
+          <button class="btn" id="markContactedBtn">
+            Mark Contacted
+          </button>
+          <button class="btn" id="escalateBtn">
+            Escalate
+          </button>
+          <button class="btn" id="resolveBtn">
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654916/Approved_dbtwvt.svg" alt="">
+            Resolve
+          </button>
+          <button class="btn" id="saveSelectedBtn">
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654917/save_jw3yhm.svg" alt="">
+            Save Changes
+          </button>
+          <button class="btn danger" id="removeSelectedBtn">
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654917/delete_suc2ec.svg" alt="">
+            Remove Selected
+          </button>
         </div>
       </div>
 
@@ -531,6 +578,7 @@ const API = "https://api.practiceonline.co.za";
 let tickets = [];
 let pendingChanges = {};
 let selectedIds = new Set();
+let editingIds = new Set();
 
 const $ = id => document.getElementById(id);
 
@@ -659,6 +707,7 @@ async function loadAllSupportTickets(showMessage=false){
     tickets = [...rows.map(normaliseSupportTicket), ...getManual()].filter(t=>!removed.has(recordKey(t)));
     pendingChanges = {};
     selectedIds.clear();
+    editingIds.clear();
     renderRows();
     if(showMessage) show("Support records refreshed.");
   }finally{
@@ -748,8 +797,16 @@ function removeSelected(){
   saveRemovedKeys(removedKeys);
   tickets = tickets.filter(t=>!selectedIds.has(t.id));
   selectedIds.clear();
+  editingIds.clear();
   renderRows();
   show("Selected records removed from this support table.");
+}
+
+function editSelected(){
+  if(!selectedIds.size) return show("Select at least one record to edit.","error");
+  selectedIds.forEach(id=>editingIds.add(id));
+  renderRows();
+  show("Selected records are ready for editing. Make changes in the table, then click Save Changes.");
 }
 
 function bulkContacted(){
@@ -873,7 +930,7 @@ function renderRows(){
   renderSummary();
 
   $("supportRows").innerHTML = rows.length ? rows.map((t,i)=>`
-    <tr>
+    <tr class="${selectedIds.has(t.id) ? 'rowSelected' : ''} ${editingIds.has(t.id) ? 'rowEditing' : ''}">
       <td class="checkboxCell"><input type="checkbox" ${selectedIds.has(t.id) ? "checked" : ""} onchange="toggleSelect('${esc(t.id)}',this.checked)"></td>
       <td>${i + 1}</td>
       <td>${esc(t.ticketNo || "-")}</td>
@@ -944,6 +1001,7 @@ function exportExcel(){
 }
 
 $("refreshBtn").onclick = ()=>loadAllSupportTickets(true);
+$("editSelectedBtn").onclick = editSelected;
 $("markContactedBtn").onclick = bulkContacted;
 $("escalateBtn").onclick = bulkEscalate;
 $("resolveBtn").onclick = bulkResolve;
