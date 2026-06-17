@@ -287,6 +287,70 @@ td select{min-width:105px;padding:6px 8px;font-size:13px}
 .hidden{display:none!important}
 .loadingRow{color:#475569;font-weight:700}
 
+
+.modalOverlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.25);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:99999;
+}
+
+.modalOverlay.show{
+  display:flex;
+}
+
+.modalCard{
+  width:420px;
+  max-width:calc(100% - 28px);
+  background:#fff;
+  border:1px solid var(--border);
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+  padding:20px;
+}
+
+.modalTitle{
+  font-size:18px;
+  font-weight:700;
+  margin-bottom:10px;
+  color:var(--text);
+}
+
+.modalText{
+  font-size:14px;
+  color:var(--muted);
+  margin-bottom:20px;
+}
+
+.modalButtons{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+}
+
+.modalBtn{
+  min-width:90px;
+  height:38px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--text);
+  cursor:pointer;
+  font-weight:600;
+}
+
+.modalBtn.primary{
+  background:var(--blue);
+  color:#fff;
+  border-color:var(--blue);
+}
+
+.modalBtn.primary:hover{
+  background:var(--blueDark);
+  border-color:var(--blueDark);
+}
+
 @media(max-width:1100px){
   .summaryGrid{grid-template-columns:repeat(2,1fr)}
   .toolbar{grid-template-columns:1fr 1fr}
@@ -521,6 +585,19 @@ td select{min-width:105px;padding:6px 8px;font-size:13px}
   </div>
 </div>
 
+
+<div id="confirmModal" class="modalOverlay">
+  <div class="modalCard">
+    <div class="modalTitle">Practice Online</div>
+    <div class="modalText" id="modalText">Confirm action</div>
+    <div class="modalButtons">
+      <button id="modalYes" class="modalBtn primary">Yes</button>
+      <button id="modalNo" class="modalBtn">No</button>
+      <button id="modalCancel" class="modalBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const API = "https://api.practiceonline.co.za";
 let records = [];
@@ -630,27 +707,65 @@ async function saveRecord(record){
 
 async function saveSelected(){
   const ids=[...selectedIds];
-  if(!ids.length)return show("Select at least one record to save.","error");
+
+  if(!ids.length){
+    return show("Select at least one record to save.","error");
+  }
+
+  const answer = await confirmDialog("Save changes?");
+
+  if(answer !== true){
+    return;
+  }
+
   let saved=0;
+
   try{
-    for(const id of ids){const record=records.find(r=>r.id===id);if(record&&pendingChanges[id]){await saveRecord(record);saved++}}
-    if(!saved)return show("No selected records have changes to save.","error");
+    for(const id of ids){
+      const record=records.find(r=>r.id===id);
+      if(record&&pendingChanges[id]){
+        await saveRecord(record);
+        saved++;
+      }
+    }
+
+    if(!saved){
+      return show("No selected records have changes to save.","error");
+    }
+
     show(saved+" record(s) saved successfully.");
     await loadAllFinanceData(false);
-  }catch(e){show("Could not save selected records.","error")}
+  }catch(e){
+    show("Could not save selected records.","error");
+  }
 }
 
-function removeSelected(){
+async function removeSelected(){
   const ids=[...selectedIds];
-  if(!ids.length)return show("Select at least one record to remove.","error");
-  if(!confirm("Remove selected records from the Finance Admin table?"))return;
+
+  if(!ids.length){
+    return show("Select at least one record to remove.","error");
+  }
+
+  const answer = await confirmDialog("Remove selected records?");
+
+  if(answer !== true){
+    return;
+  }
+
   const removedKeys=getRemovedKeys();
+
   for(const id of ids){
     const record=records.find(r=>r.id===id);
     if(!record)continue;
-    if(record.source==="manual")saveManual(getManual().filter(r=>r.id!==id));
-    else removedKeys.push(recordKey(record));
+
+    if(record.source==="manual"){
+      saveManual(getManual().filter(r=>r.id!==id));
+    }else{
+      removedKeys.push(recordKey(record));
+    }
   }
+
   saveRemovedKeys(removedKeys);
   records=records.filter(r=>!selectedIds.has(r.id));
   selectedIds.clear();
@@ -772,6 +887,32 @@ function exportExcel(){
   a.click();
   URL.revokeObjectURL(url);
   show("Excel file exported.");
+}
+
+
+function confirmDialog(message){
+  return new Promise(resolve=>{
+    const modal=document.getElementById("confirmModal");
+    const modalText=document.getElementById("modalText");
+    const yes=document.getElementById("modalYes");
+    const no=document.getElementById("modalNo");
+    const cancel=document.getElementById("modalCancel");
+
+    modalText.textContent=message;
+    modal.classList.add("show");
+
+    function close(value){
+      modal.classList.remove("show");
+      yes.onclick=null;
+      no.onclick=null;
+      cancel.onclick=null;
+      resolve(value);
+    }
+
+    yes.onclick=()=>close(true);
+    no.onclick=()=>close(false);
+    cancel.onclick=()=>close(null);
+  });
 }
 
 $("refreshBtn").onclick=()=>loadAllFinanceData(true);
