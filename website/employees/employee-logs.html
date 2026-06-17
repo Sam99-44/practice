@@ -8,17 +8,14 @@
 <style>
 :root{
   --nav:#1b1648;
-  --red:#e11d2e;
-  --bg:#ffffff;
-  --card:#ffffff;
+  --blue:#0b3c5d;
+  --blueDark:#082f49;
+  --red:#c81e1e;
+  --redDark:#a81818;
   --border:#d9dee7;
   --text:#0f172a;
   --muted:#475569;
-  --ok:#065f46;
-  --error:#b91c1c;
   --soft:#f8fafc;
-  --orange:#92400e;
-  --blue:#1d4ed8;
 }
 
 *{box-sizing:border-box}
@@ -32,10 +29,7 @@ html,body{
 }
 
 a{text-decoration:none;color:inherit}
-
-button,input,select,option{
-  font-family:"Times New Roman",Times,serif;
-}
+button,input,select,option{font-family:"Times New Roman",Times,serif}
 
 .topbar{
   background:var(--nav);
@@ -46,74 +40,24 @@ button,input,select,option{
 }
 
 .topbar-inner{
-  max-width:1150px;
-  margin:0 auto;
-  padding:14px 18px;
+  width:100%;
+  padding:12px 18px;
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:12px;
 }
 
-.accountLeft{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  min-width:0;
-}
+.accountLeft{display:flex;align-items:center;gap:12px;min-width:0}
+.accountIcon{width:40px;height:40px;filter:brightness(0) invert(1) contrast(180%)}
+.accountName{font-size:14px;font-weight:700;color:#fff}
+.accountType{font-size:13px;color:#e0e7ff;margin-top:3px}
+.topbarRight{display:flex;align-items:center;gap:18px}
+.iconBtn{min-width:50px;height:50px;display:flex;align-items:center;justify-content:center}
+.iconBtn img{width:30px;height:30px;filter:brightness(0) invert(1) contrast(180%)}
+.menuLink{color:#fff;font-size:13px;font-weight:700;background:transparent;border:0;cursor:pointer}
 
-.accountIcon{
-  width:40px;
-  height:40px;
-  filter:brightness(0) invert(1) contrast(180%);
-}
-
-.accountName{
-  font-size:14px;
-  font-weight:700;
-  color:#fff;
-}
-
-.accountType{
-  font-size:13px;
-  color:#e0e7ff;
-  margin-top:3px;
-}
-
-.topbarRight{
-  display:flex;
-  align-items:center;
-  gap:18px;
-}
-
-.iconBtn{
-  min-width:50px;
-  height:50px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.iconBtn img{
-  width:30px;
-  height:30px;
-  filter:brightness(0) invert(1) contrast(180%);
-}
-
-.menuLink{
-  color:#fff;
-  font-size:13px;
-  font-weight:700;
-  background:transparent;
-  border:0;
-  cursor:pointer;
-}
-
-.wrap{
-  max-width:1150px;
-  margin:0 auto;
-  padding:18px;
-}
+.wrap{width:100%;max-width:none;padding:12px}
 
 .card{
   background:#fff;
@@ -121,175 +65,93 @@ button,input,select,option{
   border-radius:0;
   box-shadow:none;
   overflow:hidden;
-  margin:0 auto 16px;
+  margin:0 0 12px;
 }
 
-.cardHead{
-  padding:14px 22px;
-  border-bottom:1px solid #ececec;
-  background:#fff;
-}
-
-.cardHead h1,
-.cardHead h2,
-.cardHead h3{
-  margin:0;
-  font-size:14px;
-  font-weight:700;
-  text-transform:uppercase;
-}
-
-.subText{
-  margin-top:6px;
-  color:#111827;
-  font-size:14px;
-  line-height:1.45;
-}
-
-.body{padding:22px}
+.cardHead{padding:14px 18px;border-bottom:1px solid #ececec;background:#fff}
+.cardHead h1,.cardHead h2{margin:0;font-size:14px;font-weight:700;text-transform:uppercase}
+.body{padding:16px}
 
 .summaryGrid{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:12px;
+  gap:10px;
 }
 
 .summaryBox{
   border:1px solid #e5e7eb;
   background:#fff;
-  padding:14px;
+  padding:12px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
 }
 
-.metricLabel{
-  font-size:13px;
-  color:#475569;
-  margin-bottom:6px;
-}
-
-.metricValue{
-  font-size:24px;
-  font-weight:700;
-}
-
-.metricNote{
-  font-size:13px;
-  color:#475569;
-  margin-top:4px;
-}
+.summaryIcon{width:26px;height:26px;object-fit:contain}
+.metricLabel{font-size:13px;color:#475569;margin-bottom:6px}
+.metricValue{font-size:24px;font-weight:700}
+.metricNote{font-size:13px;color:#475569;margin-top:4px}
 
 .toolbar{
   display:grid;
-  grid-template-columns:160px 160px 150px 150px 1fr auto;
-  gap:12px;
+  grid-template-columns:160px 170px 150px 160px 1fr auto;
+  gap:10px;
   align-items:end;
-  margin-bottom:14px;
+  margin-bottom:10px;
 }
 
-label{
-  display:block;
-  font-size:14px;
-  font-weight:400;
-  margin-bottom:6px;
-  color:#111827;
-}
-
+label{display:block;font-size:14px;font-weight:400;margin-bottom:6px;color:#111827}
 input,select{
   width:100%;
-  padding:10px 12px;
+  padding:9px 10px;
   border-radius:0;
   border:1px solid #d6d3d1;
   background:#fff;
   font-size:14px;
   outline:none;
 }
+input:focus,select:focus{border-color:#cbd5e1;box-shadow:0 0 0 4px rgba(226,232,240,.7)}
 
-input:focus,
-select:focus{
-  border-color:#cbd5e1;
-  box-shadow:0 0 0 4px rgba(226,232,240,.7);
-}
-
-.actions{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:center;
-}
-
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .btn{
-  background:var(--red);
   color:#fff;
-  border:1px solid var(--red);
+  border:1px solid var(--blue);
+  background:var(--blue);
   border-radius:6px;
-  height:34px;
-  padding:10px 14px;
-  min-width:92px;
+  height:36px;
+  padding:8px 12px;
+  min-width:90px;
   font-size:12px;
   font-weight:700;
   cursor:pointer;
   display:inline-flex;
   align-items:center;
   justify-content:center;
+  gap:7px;
 }
+.btn:hover{background:var(--blueDark);border-color:var(--blueDark)}
+.btn.secondary{background:#fff;color:#111827;border:1px solid #d1d5db}
+.btn.secondary:hover{background:var(--soft);border-color:#d1d5db}
+.btn.danger{background:var(--red);border-color:var(--red)}
+.btn.danger:hover{background:var(--redDark);border-color:var(--redDark)}
+.btn.small{min-width:auto;height:30px;padding:6px 9px}
+.btn img{width:15px;height:15px;filter:brightness(0) invert(1)}
 
-.btn:hover{opacity:.92}
-
-.btn.secondary{
-  background:#fff;
-  color:#111827;
-  border:1px solid #d1d5db;
-}
-
-.btn.secondary:hover{background:var(--soft)}
-
-.btn.success{
-  background:#065f46;
-  border-color:#065f46;
-}
-
-.btn.warning{
-  background:#92400e;
-  border-color:#92400e;
-}
-
-.btn.small{
-  min-width:auto;
-  height:30px;
-  padding:7px 10px;
-}
-
-.tableWrap{
-  width:100%;
-  overflow-x:auto;
-  border:1px solid #e5e7eb;
-  background:#fff;
-}
-
-.tableWrap::-webkit-scrollbar{height:10px}
+.tableWrap{width:100%;overflow:auto;border:1px solid #e5e7eb;background:#fff}
+.tableWrap::-webkit-scrollbar{height:10px;width:10px}
 .tableWrap::-webkit-scrollbar-thumb{background:#9ca3af;border-radius:20px}
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  min-width:1120px;
-}
-
+table{width:100%;border-collapse:collapse;min-width:1120px}
 th,td{
-  padding:10px 12px;
+  padding:9px 10px;
   border-bottom:1px solid #e5e7eb;
   text-align:left;
   font-size:14px;
   vertical-align:middle;
   white-space:nowrap;
 }
-
-th{
-  background:#f8fafc;
-  color:#111827;
-  font-size:13px;
-  font-weight:700;
-}
-
+th{background:#f8fafc;color:#111827;font-size:13px;font-weight:700;position:sticky;top:0;z-index:10}
 tr:hover td{background:#f8fafc}
 
 .badge{
@@ -298,76 +160,33 @@ tr:hover td{background:#f8fafc}
   padding:4px 8px;
   border-radius:4px;
   font-size:12px;
-  font-weight:700;
-  background:#f1f5f9;
+  font-weight:600;
+  background:#f8fafc;
   color:#334155;
-  border:1px solid #e2e8f0;
+  border:1px solid #d9dee7;
 }
 
-.badge.green{
-  background:#f0fdf4;
-  color:#065f46;
-  border-color:#bbf7d0;
-}
+.msgBox{display:none;margin-bottom:12px;padding:12px;border:1px solid #e5e7eb;font-size:14px}
+.msgBox.ok{display:block;color:#065f46;background:#f0fdf4}
+.msgBox.error{display:block;color:#b91c1c;background:#fef2f2}
 
-.badge.red{
-  background:#fef2f2;
-  color:#b91c1c;
-  border-color:#fecaca;
-}
-
-.badge.orange{
-  background:#fff7ed;
-  color:#92400e;
-  border-color:#fed7aa;
-}
-
-.badge.blue{
-  background:#eff6ff;
-  color:#1d4ed8;
-  border-color:#bfdbfe;
-}
-
-.msgBox{
-  display:none;
-  margin-bottom:14px;
-  padding:12px;
-  border:1px solid #e5e7eb;
-  font-size:14px;
-}
-
-.msgBox.ok{
-  display:block;
-  color:#065f46;
-  background:#f0fdf4;
-}
-
-.msgBox.error{
-  display:block;
-  color:#b91c1c;
-  background:#fef2f2;
-}
-
-.modal{
+.modalOverlay{
   position:fixed;
   inset:0;
-  background:rgba(15,23,42,.45);
+  background:rgba(0,0,0,.25);
   display:none;
   align-items:center;
   justify-content:center;
-  padding:18px;
-  z-index:2000;
+  z-index:99999;
+  padding:16px;
 }
-
-.modal.open{display:flex}
-
-.modalBox{
-  width:min(720px,100%);
+.modalOverlay.show{display:flex}
+.modalCard{
+  width:min(760px,100%);
   background:#fff;
   border:1px solid #d9dee7;
-  box-shadow:0 20px 40px rgba(0,0,0,.18);
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
 }
-
 .modalHead{
   padding:14px 18px;
   border-bottom:1px solid #e5e7eb;
@@ -376,65 +195,29 @@ tr:hover td{background:#f8fafc}
   justify-content:space-between;
   gap:10px;
 }
-
-.modalHead h3{
-  margin:0;
-  font-size:14px;
-  text-transform:uppercase;
-}
-
-.modalBody{padding:18px}
-
-.detailGrid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:12px;
-}
-
-.detailBox{
-  border:1px solid #e5e7eb;
-  padding:10px;
-}
-
-.detailLabel{
-  font-size:13px;
-  color:#475569;
-  margin-bottom:5px;
-}
-
-.detailValue{
-  font-size:14px;
-  font-weight:700;
-  word-break:break-word;
-}
-
+.modalTitle{font-size:16px;font-weight:700;text-transform:uppercase}
+.modalBody{padding:18px;max-height:70vh;overflow:auto}
+.detailGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.detailBox{border:1px solid #e5e7eb;padding:10px;background:#fff}
+.detailLabel{font-size:13px;color:#475569;margin-bottom:5px}
+.detailValue{font-size:14px;font-weight:700;word-break:break-word;white-space:pre-wrap}
 .fullDetail{grid-column:1/-1}
 
-@media(max-width:1050px){
-  .toolbar{grid-template-columns:repeat(3,1fr)}
-}
-
-@media(max-width:900px){
+@media(max-width:1100px){
   .summaryGrid{grid-template-columns:repeat(2,1fr)}
+  .toolbar{grid-template-columns:1fr 1fr}
 }
-
 @media(max-width:640px){
-  .wrap{padding:14px}
-  .body{padding:14px}
-  .cardHead{padding:12px 14px}
+  .wrap{padding:10px}
+  .body{padding:12px}
+  .cardHead{padding:12px}
   .summaryGrid,.toolbar,.detailGrid{grid-template-columns:1fr}
-  .accountName,.accountType{
-    max-width:130px;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-  }
+  .accountName,.accountType{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
 </style>
 </head>
 
 <body>
-
 <header class="topbar">
   <div class="topbar-inner">
     <div class="accountLeft">
@@ -458,72 +241,44 @@ tr:hover td{background:#f8fafc}
   <div id="msg" class="msgBox"></div>
 
   <div class="card">
-    <div class="cardHead">
-      <h1>Employee Logs</h1>
-      <div class="subText">Audit trail showing who edited, created, deleted, approved or reviewed work across departments.</div>
-    </div>
-
+    <div class="cardHead"><h1>Employee Logs</h1></div>
     <div class="body">
       <div class="summaryGrid">
         <div class="summaryBox">
-          <div class="metricLabel">Total Logs</div>
-          <div class="metricValue" id="totalCount">0</div>
-          <div class="metricNote">All activity records</div>
+          <div>
+            <div class="metricLabel">Total Logs</div>
+            <div class="metricValue" id="totalCount">0</div>
+            <div class="metricNote">All activity records</div>
+          </div>
         </div>
-
         <div class="summaryBox">
-          <div class="metricLabel">Critical Logs</div>
-          <div class="metricValue" id="criticalCount">0</div>
-          <div class="metricNote">High-risk actions</div>
+          <div>
+            <div class="metricLabel">Critical Logs</div>
+            <div class="metricValue" id="criticalCount">0</div>
+            <div class="metricNote">High-risk actions</div>
+          </div>
         </div>
-
         <div class="summaryBox">
-          <div class="metricLabel">Today's Activity</div>
-          <div class="metricValue" id="todayCount">0</div>
-          <div class="metricNote">Actions performed today</div>
+          <div>
+            <div class="metricLabel">Today</div>
+            <div class="metricValue" id="todayCount">0</div>
+            <div class="metricNote">Actions today</div>
+          </div>
         </div>
-
         <div class="summaryBox">
-          <div class="metricLabel">Active Employees</div>
-          <div class="metricValue" id="activeCount">0</div>
-          <div class="metricNote">Employees active today</div>
+          <div>
+            <div class="metricLabel">Active Employees</div>
+            <div class="metricValue" id="activeCount">0</div>
+            <div class="metricNote">Active today</div>
+          </div>
+          <img class="summaryIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654916/Approved_dbtwvt.svg" alt="">
         </div>
       </div>
     </div>
   </div>
 
   <div class="card">
-    <div class="cardHead">
-      <h2>Audit Summary</h2>
-      <div class="subText">Department summary based on currently loaded logs.</div>
-    </div>
-
-    <div class="body">
-      <div class="tableWrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Department</th>
-              <th>Logs Today</th>
-              <th>Critical</th>
-              <th>Last Activity</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="summaryRows">
-            <tr><td colspan="5">Loading summary...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="cardHead">
-      <h2>Activity Logs</h2>
-      <div class="subText">Filter, review, and export employee audit logs.</div>
-    </div>
-
+    <div class="cardHead"><h2>Activity Logs</h2></div>
     <div class="body">
       <div class="toolbar">
         <div>
@@ -538,14 +293,12 @@ tr:hover td{background:#f8fafc}
             <option value="admin">Admin</option>
           </select>
         </div>
-
         <div>
           <label>Employee</label>
           <select id="employeeFilter">
             <option value="all">All employees</option>
           </select>
         </div>
-
         <div>
           <label>Severity</label>
           <select id="severityFilter">
@@ -555,21 +308,25 @@ tr:hover td{background:#f8fafc}
             <option value="info">Info</option>
           </select>
         </div>
-
         <div>
-          <label>Date</label>
-          <input id="dateFilter" type="date">
+          <label>Date filter</label>
+          <select id="dateFilter">
+            <option value="all">All dates</option>
+            <option value="today">Today</option>
+            <option value="thisWeek">This week</option>
+            <option value="lastWeek">Last week</option>
+            <option value="thisMonth">This month</option>
+            <option value="lastMonth">Last month</option>
+            <option value="thisYear">This year</option>
+          </select>
         </div>
-
         <div>
           <label>Search</label>
-          <input id="searchBox" type="search" placeholder="Search action, employee, role, department...">
+          <input id="searchBox" type="search" placeholder="Search">
         </div>
-
         <div class="actions">
-          <button class="btn" id="refreshBtn">Refresh</button>
-          <button class="btn warning" id="criticalBtn">Critical Only</button>
-          <button class="btn success" id="excelBtn">Export Excel</button>
+          <button class="btn" id="criticalBtn">Critical Only</button>
+          <button class="btn" id="excelBtn">Export Excel</button>
           <button class="btn secondary" id="csvBtn">Export CSV</button>
         </div>
       </div>
@@ -589,9 +346,8 @@ tr:hover td{background:#f8fafc}
               <th>View</th>
             </tr>
           </thead>
-
           <tbody id="logRows">
-            <tr><td colspan="9">Loading...</td></tr>
+            <tr><td colspan="9">Loading logs...</td></tr>
           </tbody>
         </table>
       </div>
@@ -599,13 +355,12 @@ tr:hover td{background:#f8fafc}
   </div>
 </div>
 
-<div class="modal" id="logModal">
-  <div class="modalBox">
+<div id="logModal" class="modalOverlay">
+  <div class="modalCard">
     <div class="modalHead">
-      <h3>Log Details</h3>
+      <div class="modalTitle">Log Details</div>
       <button class="btn small secondary" id="closeModalBtn">Close</button>
     </div>
-
     <div class="modalBody">
       <div class="detailGrid" id="modalDetails"></div>
     </div>
@@ -616,117 +371,56 @@ tr:hover td{background:#f8fafc}
 const API = "https://api.practiceonline.co.za";
 let logs = [];
 let criticalOnly = false;
-
 const $ = id => document.getElementById(id);
 
-function token(){
-  return localStorage.getItem("employeeToken") ||
-         localStorage.getItem("token") ||
-         "";
-}
+function token(){return localStorage.getItem("employeeToken") || localStorage.getItem("token") || ""}
+function logout(){localStorage.clear();location.href="employee-login.html"}
+function esc(v){return String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+function show(text,type="ok"){const m=$("msg");m.textContent=text;m.className="msgBox "+type;setTimeout(()=>{m.className="msgBox"},4500)}
 
-function logout(){
-  localStorage.clear();
-  location.href = "employee-login.html";
-}
-
-function esc(v){
-  return String(v ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-function show(text,type="ok"){
-  const m = $("msg");
-  m.textContent = text;
-  m.className = "msgBox " + type;
-  setTimeout(()=>{m.className = "msgBox"},4500);
-}
-
-async function safeJson(res){
-  try{return await res.json()}
-  catch{return {}}
-}
-
+async function safeJson(res){try{return await res.json()}catch{return {}}}
 async function fetchJson(path){
-  const res = await fetch(API + path, {
-    headers:{
-      Authorization:"Bearer " + token()
-    }
-  });
-
+  const res = await fetch(API + path,{headers:{Authorization:"Bearer " + token()}});
   const data = await safeJson(res);
-
-  if(!res.ok){
-    throw new Error(data.message || path + " failed");
-  }
-
+  if(!res.ok) throw new Error(data.message || "Request failed");
   return data;
 }
-
-function normaliseArray(data){
-  if(Array.isArray(data)) return data;
-  return data.items || data.data || data.logs || data.results || [];
-}
+function normaliseArray(data){if(Array.isArray(data))return data;return data.items||data.data||data.logs||data.results||[]}
 
 async function requireEmployee(){
-  if(!token()){
-    location.href = "employee-login.html";
-    return null;
-  }
-
+  if(!token()){location.href="employee-login.html";return null}
   try{
     const u = await fetchJson("/api/employees/me");
-
     const role = String(u.role || "").toLowerCase();
-    const allowed = ["admin","tester"];
-
-    if(!allowed.includes(role)){
-      show("You do not have permission to open this page.","error");
-      setTimeout(()=>location.href="employee-dashboard.html",1200);
-      return null;
-    }
-
+    if(!["admin","tester"].includes(role)){location.href="employee-dashboard.html";return null}
     $("userPill").textContent = `${u.fullName || u.username || "Employee"} • ${role}`;
     return u;
-  }catch{
-    logout();
-    return null;
-  }
+  }catch(e){logout();return null}
 }
 
 function normaliseDepartment(value){
   const v = String(value || "").toLowerCase().trim();
-
   if(v === "academic") return "academic";
   if(v === "operations") return "operations";
   if(v === "finance") return "finance";
   if(v === "support") return "support";
   if(v === "tutors" || v === "tutor") return "tutor";
   if(v === "employees" || v === "admin") return "admin";
-
   return v || "-";
 }
-
 function departmentLabel(value){
   const v = normaliseDepartment(value);
-
   if(v === "academic") return "Academic";
   if(v === "operations") return "Operations";
   if(v === "finance") return "Finance";
   if(v === "support") return "Support";
   if(v === "tutor") return "Tutor";
   if(v === "admin") return "Admin";
-
   return "-";
 }
 
 function normaliseLog(l,i){
   const employeeObj = l.employee || {};
-
   return {
     id:l._id || l.id || `log-${i}`,
     date:l.createdAt || l.date || l.timestamp || "",
@@ -734,7 +428,7 @@ function normaliseLog(l,i){
     role:employeeObj.role || l.role || "-",
     department:normaliseDepartment(l.department || employeeObj.department),
     action:l.action || l.event || l.activity || "-",
-    severity:(l.severity || "info").toLowerCase(),
+    severity:String(l.severity || "info").toLowerCase(),
     status:l.status || "success",
     details:l.details || l.description || l.message || "",
     ipAddress:l.ipAddress || "",
@@ -744,159 +438,104 @@ function normaliseLog(l,i){
 }
 
 async function loadLogs(){
-  const btn = $("refreshBtn");
-  btn.disabled = true;
-  btn.textContent = "Loading...";
-
   try{
     let data;
-
-    try{
-      data = await fetchJson("/api/employees/logs/recent?limit=200");
-    }catch{
-      data = await fetchJson("/api/employees/logs");
-    }
-
+    try{data = await fetchJson("/api/employees/logs/recent?limit=200");}
+    catch(e){data = await fetchJson("/api/employees/logs");}
     logs = normaliseArray(data).map(normaliseLog);
     criticalOnly = false;
     $("severityFilter").value = "all";
     $("criticalBtn").textContent = "Critical Only";
-
     fillEmployeeFilter();
     updateCounts();
-    renderSummary();
     renderLogs();
-
-    show("Logs loaded.");
   }catch(e){
+    console.error("Could not load logs",e);
     logs = [];
     fillEmployeeFilter();
     updateCounts();
-    renderSummary();
     renderLogs();
-    show("Could not load employee logs: " + e.message,"error");
-  }finally{
-    btn.disabled = false;
-    btn.textContent = "Refresh";
   }
 }
 
 function fillEmployeeFilter(){
-  const names = [...new Set(logs.map(l => l.employee).filter(Boolean))].sort();
-
-  $("employeeFilter").innerHTML =
-    `<option value="all">All employees</option>` +
-    names.map(n=>`<option>${esc(n)}</option>`).join("");
+  const names = [...new Set(logs.map(l=>l.employee).filter(Boolean))].sort();
+  $("employeeFilter").innerHTML = `<option value="all">All employees</option>` + names.map(n=>`<option>${esc(n)}</option>`).join("");
 }
 
 function sameDay(a,b){
-  const da = new Date(a);
-  const db = new Date(b);
-
+  const da = new Date(a), db = new Date(b);
   if(isNaN(da.getTime()) || isNaN(db.getTime())) return false;
-
   return da.toDateString() === db.toDateString();
 }
-
 function formatDate(v){
   if(!v) return "-";
-
   const d = new Date(v);
-
   if(isNaN(d.getTime())) return esc(v);
-
   return d.toLocaleString("en-ZA");
 }
-
+function badge(text){return `<span class="badge">${esc(text || "-")}</span>`}
 function severityBadge(severity){
   const s = String(severity || "info").toLowerCase();
-
-  if(s === "critical"){
-    return `<span class="badge red">Critical</span>`;
-  }
-
-  if(s === "warning"){
-    return `<span class="badge orange">Warning</span>`;
-  }
-
-  return `<span class="badge blue">Info</span>`;
+  if(s === "critical") return badge("Critical");
+  if(s === "warning") return badge("Warning");
+  return badge("Info");
 }
-
-function statusBadge(status){
-  const s = String(status || "").toLowerCase();
-
-  if(s.includes("success") || s.includes("complete")){
-    return `<span class="badge green">${esc(status)}</span>`;
-  }
-
-  if(s.includes("fail") || s.includes("error")){
-    return `<span class="badge red">${esc(status)}</span>`;
-  }
-
-  return `<span class="badge">${esc(status || "-")}</span>`;
-}
+function statusBadge(status){return badge(status || "-")}
 
 function updateCounts(){
   const today = new Date();
-  const todayLogs = logs.filter(l => sameDay(l.date,today));
-  const activeEmployees = new Set(todayLogs.map(l => l.employee).filter(Boolean));
-
+  const todayLogs = logs.filter(l=>sameDay(l.date,today));
+  const activeEmployees = new Set(todayLogs.map(l=>l.employee).filter(Boolean));
   $("totalCount").textContent = logs.length;
-  $("criticalCount").textContent = logs.filter(l => l.severity === "critical").length;
+  $("criticalCount").textContent = logs.filter(l=>l.severity === "critical").length;
   $("todayCount").textContent = todayLogs.length;
   $("activeCount").textContent = activeEmployees.size;
+}
+
+function getLogDate(log){const d = new Date(log.date || "");return isNaN(d.getTime()) ? null : d}
+function startOfDay(d){const x = new Date(d);x.setHours(0,0,0,0);return x}
+function startOfWeek(d){const x=startOfDay(d);const day=x.getDay();const diff=day===0?6:day-1;x.setDate(x.getDate()-diff);return x}
+function passesDateFilter(log){
+  const f = $("dateFilter").value;
+  if(f === "all") return true;
+  const d = getLogDate(log);
+  if(!d) return false;
+  const now = new Date();
+  const today = startOfDay(now);
+  const thisWeek = startOfWeek(now);
+  const lastWeek = new Date(thisWeek);lastWeek.setDate(lastWeek.getDate()-7);
+  const thisMonth = new Date(now.getFullYear(),now.getMonth(),1);
+  const lastMonth = new Date(now.getFullYear(),now.getMonth()-1,1);
+  const nextThisMonth = new Date(now.getFullYear(),now.getMonth()+1,1);
+  if(f === "today") return d >= today;
+  if(f === "thisWeek") return d >= thisWeek;
+  if(f === "lastWeek") return d >= lastWeek && d < thisWeek;
+  if(f === "thisMonth") return d >= thisMonth && d < nextThisMonth;
+  if(f === "lastMonth") return d >= lastMonth && d < thisMonth;
+  if(f === "thisYear") return d.getFullYear() === now.getFullYear();
+  return true;
 }
 
 function filteredLogs(){
   const department = $("departmentFilter").value;
   const employee = $("employeeFilter").value;
   const severity = $("severityFilter").value;
-  const date = $("dateFilter").value;
   const q = $("searchBox").value.toLowerCase().trim();
-
   return logs.filter(l=>{
     if(criticalOnly && l.severity !== "critical") return false;
     if(department !== "all" && l.department !== department) return false;
     if(employee !== "all" && l.employee !== employee) return false;
     if(severity !== "all" && l.severity !== severity) return false;
-    if(date && !sameDay(l.date,date)) return false;
+    if(!passesDateFilter(l)) return false;
     if(q && !Object.values(l).join(" ").toLowerCase().includes(q)) return false;
-
     return true;
   });
 }
 
-function renderSummary(){
-  const departments = [
-    "academic",
-    "operations",
-    "finance",
-    "support",
-    "tutor",
-    "admin"
-  ];
-
-  $("summaryRows").innerHTML = departments.map(dep=>{
-    const depLogs = logs.filter(l => l.department === dep);
-    const today = depLogs.filter(l => sameDay(l.date,new Date()));
-    const critical = depLogs.filter(l => l.severity === "critical");
-    const last = depLogs.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
-
-    return `
-      <tr>
-        <td>${esc(departmentLabel(dep))}</td>
-        <td>${today.length}</td>
-        <td>${critical.length}</td>
-        <td>${last ? formatDate(last.date) : "-"}</td>
-        <td>${last ? statusBadge("success") : statusBadge("No activity")}</td>
-      </tr>
-    `;
-  }).join("");
-}
-
 function renderLogs(){
   const rows = filteredLogs();
-
+  updateCounts();
   $("logRows").innerHTML = rows.length ? rows.map((l,i)=>`
     <tr>
       <td>${i + 1}</td>
@@ -913,19 +552,11 @@ function renderLogs(){
 }
 
 function detailBox(label,value,full=false){
-  return `
-    <div class="detailBox ${full ? "fullDetail" : ""}">
-      <div class="detailLabel">${esc(label)}</div>
-      <div class="detailValue">${esc(value || "-")}</div>
-    </div>
-  `;
+  return `<div class="detailBox ${full ? "fullDetail" : ""}"><div class="detailLabel">${esc(label)}</div><div class="detailValue">${esc(value || "-")}</div></div>`;
 }
-
 function openLogDetails(id){
-  const log = logs.find(l => l.id === id);
-
+  const log = logs.find(l=>l.id === id);
   if(!log) return;
-
   $("modalDetails").innerHTML = [
     detailBox("Employee",log.employee),
     detailBox("Role",log.role),
@@ -937,128 +568,60 @@ function openLogDetails(id){
     detailBox("Log ID",log.id),
     detailBox("IP Address",log.ipAddress),
     detailBox("User Agent",log.userAgent,true),
-    detailBox(
-      "Details",
-      typeof log.details === "object"
-        ? JSON.stringify(log.details,null,2)
-        : log.details || JSON.stringify(log.raw,null,2),
-      true
-    )
+    detailBox("Details",typeof log.details === "object" ? JSON.stringify(log.details,null,2) : log.details || JSON.stringify(log.raw,null,2),true)
   ].join("");
-
-  $("logModal").classList.add("open");
+  $("logModal").classList.add("show");
 }
-
-function closeModal(){
-  $("logModal").classList.remove("open");
-}
+function closeModal(){$("logModal").classList.remove("show")}
 
 function exportRows(format){
   const rows = filteredLogs();
-
-  if(!rows.length){
-    return show("No logs to export.","error");
-  }
-
-  const headers = [
-    "No",
-    "Date",
-    "Employee",
-    "Role",
-    "Department",
-    "Action",
-    "Severity",
-    "Status",
-    "IP Address",
-    "User Agent",
-    "Details"
-  ];
-
-  const body = rows.map((l,i)=>[
-    i + 1,
-    formatDate(l.date),
-    l.employee,
-    l.role,
-    departmentLabel(l.department),
-    l.action,
-    l.severity,
-    l.status,
-    l.ipAddress,
-    l.userAgent,
-    typeof l.details === "object" ? JSON.stringify(l.details) : l.details
-  ]);
+  if(!rows.length) return show("No logs to export.","error");
+  const headers = ["No","Date","Employee","Role","Department","Action","Severity","Status","IP Address","User Agent","Details"];
+  const body = rows.map((l,i)=>[i+1,formatDate(l.date),l.employee,l.role,departmentLabel(l.department),l.action,l.severity,l.status,l.ipAddress,l.userAgent,typeof l.details === "object" ? JSON.stringify(l.details) : l.details]);
 
   if(format === "csv"){
-    const csv = [
-      headers.join(","),
-      ...body.map(row => row.map(c => `"${String(c ?? "").replaceAll('"','""')}"`).join(","))
-    ].join("\n");
-
-    const blob = new Blob([csv], {type:"text/csv"});
+    const csv = [headers.join(","),...body.map(row=>row.map(c=>`"${String(c ?? "").replaceAll('"','""')}"`).join(","))].join("\n");
+    const blob = new Blob([csv],{type:"text/csv"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-
     a.href = url;
     a.download = "employee-logs.csv";
     a.click();
-
     URL.revokeObjectURL(url);
-
     return show("CSV file exported.");
   }
 
-  const table = `
-    <table border="1">
-      <tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>
-      ${body.map(row=>`<tr>${row.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}
-    </table>
-  `;
-
-  const blob = new Blob(
-    [`<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`],
-    {type:"application/vnd.ms-excel"}
-  );
-
+  const table = `<table border="1"><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>${body.map(row=>`<tr>${row.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table>`;
+  const blob = new Blob([`<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`],{type:"application/vnd.ms-excel"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-
   a.href = url;
   a.download = "employee-logs.xls";
   a.click();
-
   URL.revokeObjectURL(url);
-
   show("Excel file exported.");
 }
 
-$("refreshBtn").onclick = loadLogs;
-
-$("criticalBtn").onclick = ()=>{
-  criticalOnly = !criticalOnly;
-  $("criticalBtn").textContent = criticalOnly ? "Show All" : "Critical Only";
-  renderLogs();
-};
-
+$("criticalBtn").onclick = ()=>{criticalOnly = !criticalOnly;$("criticalBtn").textContent = criticalOnly ? "Show All" : "Critical Only";renderLogs()};
 $("excelBtn").onclick = ()=>exportRows("excel");
 $("csvBtn").onclick = ()=>exportRows("csv");
 $("closeModalBtn").onclick = closeModal;
-
 $("departmentFilter").onchange = renderLogs;
 $("employeeFilter").onchange = renderLogs;
 $("severityFilter").onchange = renderLogs;
 $("dateFilter").onchange = renderLogs;
 $("searchBox").oninput = renderLogs;
+$("logModal").addEventListener("click",e=>{if(e.target.id === "logModal") closeModal()});
 
-$("logModal").addEventListener("click", e=>{
-  if(e.target.id === "logModal") closeModal();
-});
-
-requireEmployee().then(user=>{
-  if(user){
-    loadLogs();
+document.addEventListener("DOMContentLoaded",()=>{
+  updateCounts();
+  if(!token()){
+    $("logRows").innerHTML = `<tr><td colspan="9">Please login again.</td></tr>`;
+    return;
   }
+  requireEmployee().then(user=>{if(user)loadLogs()});
 });
 </script>
-
 </body>
 </html>
