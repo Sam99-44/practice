@@ -8,17 +8,15 @@
 <style>
 :root{
   --nav:#1b1648;
-  --red:#e11d2e;
-  --bg:#ffffff;
-  --card:#ffffff;
+  --blue:#0b3c5d;
+  --blueDark:#082f49;
+  --red:#c81e1e;
+  --bg:#fff;
+  --card:#fff;
   --border:#d9dee7;
   --text:#0f172a;
   --muted:#475569;
-  --ok:#065f46;
-  --error:#b91c1c;
   --soft:#f8fafc;
-  --orange:#92400e;
-  --blue:#1d4ed8;
 }
 
 *{box-sizing:border-box}
@@ -32,10 +30,7 @@ html,body{
 }
 
 a{text-decoration:none;color:inherit}
-
-button,input,select,option,textarea{
-  font-family:"Times New Roman",Times,serif;
-}
+button,input,select,option,textarea{font-family:"Times New Roman",Times,serif}
 
 .topbar{
   background:var(--nav);
@@ -46,9 +41,8 @@ button,input,select,option,textarea{
 }
 
 .topbar-inner{
-  max-width:1150px;
-  margin:0 auto;
-  padding:14px 18px;
+  width:100%;
+  padding:12px 18px;
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -68,17 +62,8 @@ button,input,select,option,textarea{
   filter:brightness(0) invert(1) contrast(180%);
 }
 
-.accountName{
-  font-size:14px;
-  font-weight:700;
-  color:#fff;
-}
-
-.accountType{
-  font-size:13px;
-  color:#e0e7ff;
-  margin-top:3px;
-}
+.accountName{font-size:14px;font-weight:700;color:#fff}
+.accountType{font-size:13px;color:#e0e7ff;margin-top:3px}
 
 .topbarRight{
   display:flex;
@@ -109,11 +94,7 @@ button,input,select,option,textarea{
   cursor:pointer;
 }
 
-.wrap{
-  max-width:1150px;
-  margin:0 auto;
-  padding:18px;
-}
+.wrap{width:100%;padding:12px}
 
 .card{
   background:#fff;
@@ -121,18 +102,16 @@ button,input,select,option,textarea{
   border-radius:0;
   box-shadow:none;
   overflow:hidden;
-  margin:0 auto 16px;
+  margin:0 0 12px;
 }
 
 .cardHead{
-  padding:14px 22px;
+  padding:14px 18px;
   border-bottom:1px solid #ececec;
   background:#fff;
 }
 
-.cardHead h1,
-.cardHead h2,
-.cardHead h3{
+.cardHead h1,.cardHead h2,.cardHead h3{
   margin:0;
   font-size:14px;
   font-weight:700;
@@ -146,45 +125,65 @@ button,input,select,option,textarea{
   line-height:1.45;
 }
 
-.body{
-  padding:22px;
-}
+.body{padding:16px}
 
 .summaryGrid{
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:12px;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:10px;
 }
 
 .summaryBox{
   border:1px solid #e5e7eb;
   background:#fff;
-  padding:14px;
+  padding:12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
 }
 
-.metricLabel{
-  font-size:13px;
-  color:#475569;
-  margin-bottom:6px;
-}
-
-.metricValue{
-  font-size:24px;
-  font-weight:700;
-}
-
-.metricNote{
-  font-size:13px;
-  color:#475569;
-  margin-top:4px;
+.metricLabel{font-size:13px;color:#475569;margin-bottom:6px}
+.metricValue{font-size:24px;font-weight:700}
+.metricNote{font-size:13px;color:#475569;margin-top:4px}
+.metricIcon{
+  width:34px;
+  height:34px;
+  object-fit:contain;
+  opacity:.9;
 }
 
 .toolbar{
   display:grid;
-  grid-template-columns:180px 190px 1fr auto;
-  gap:12px;
+  grid-template-columns:170px 170px 170px 1fr auto;
+  gap:10px;
   align-items:end;
-  margin-bottom:14px;
+  margin-bottom:10px;
+}
+
+.bulkBar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:10px;
+  margin-bottom:10px;
+  border:1px solid #e5e7eb;
+  background:#f8fafc;
+}
+
+.bulkLeft{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.selectedText{
+  font-size:13px;
+  color:#475569;
+  font-weight:700;
 }
 
 label{
@@ -197,7 +196,7 @@ label{
 
 input,select,textarea{
   width:100%;
-  padding:10px 12px;
+  padding:9px 10px;
   border-radius:0;
   border:1px solid #d6d3d1;
   background:#fff;
@@ -205,32 +204,27 @@ input,select,textarea{
   outline:none;
 }
 
-textarea{
-  min-height:86px;
-  resize:vertical;
-}
+textarea{min-height:90px;resize:vertical}
 
-input:focus,
-select:focus,
-textarea:focus{
+input:focus,select:focus,textarea:focus{
   border-color:#cbd5e1;
   box-shadow:0 0 0 4px rgba(226,232,240,.7);
 }
 
 .actions{
   display:flex;
-  gap:10px;
+  gap:8px;
   flex-wrap:wrap;
   align-items:center;
 }
 
 .btn{
-  background:var(--red);
+  background:var(--blue);
   color:#fff;
-  border:1px solid var(--red);
-  border-radius:6px;
-  height:34px;
-  padding:10px 14px;
+  border:1px solid var(--blue);
+  border-radius:4px;
+  height:36px;
+  padding:8px 13px;
   min-width:92px;
   font-size:12px;
   font-weight:700;
@@ -238,59 +232,38 @@ textarea:focus{
   display:inline-flex;
   align-items:center;
   justify-content:center;
+  gap:7px;
 }
 
-.btn:hover{opacity:.92}
+.btn:hover{background:var(--blueDark);border-color:var(--blueDark)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
 
-.btn:disabled{
-  opacity:.6;
-  cursor:not-allowed;
-}
-
-.btn.secondary{
-  background:#fff;
-  color:#111827;
-  border:1px solid #d1d5db;
-}
-
-.btn.secondary:hover{
-  background:var(--soft);
-}
-
-.btn.success{
-  background:#065f46;
-  border-color:#065f46;
-}
-
-.btn.warning{
-  background:#92400e;
-  border-color:#92400e;
-}
-
-.btn.small{
-  min-width:auto;
-  height:30px;
-  padding:7px 10px;
-}
+.btn.secondary{background:#fff;color:#111827;border:1px solid #d1d5db}
+.btn.secondary:hover{background:var(--soft);border-color:#cbd5e1}
+.btn.danger{background:var(--red);border-color:var(--red)}
+.btn.danger:hover{background:#a81818;border-color:#a81818}
+.btn.small{min-width:auto;height:30px;padding:6px 9px}
+.btn img{width:15px;height:15px;filter:brightness(0) invert(1)}
+.btn.secondary img{filter:none}
 
 .tableWrap{
   width:100%;
-  overflow-x:auto;
+  overflow:auto;
   border:1px solid #e5e7eb;
   background:#fff;
 }
 
-.tableWrap::-webkit-scrollbar{height:10px}
+.tableWrap::-webkit-scrollbar{height:10px;width:10px}
 .tableWrap::-webkit-scrollbar-thumb{background:#9ca3af;border-radius:20px}
 
 table{
   width:100%;
   border-collapse:collapse;
-  min-width:1780px;
+  min-width:1450px;
 }
 
 th,td{
-  padding:10px 12px;
+  padding:9px 10px;
   border-bottom:1px solid #e5e7eb;
   text-align:left;
   font-size:14px;
@@ -303,19 +276,18 @@ th{
   color:#111827;
   font-size:13px;
   font-weight:700;
+  position:sticky;
+  top:0;
+  z-index:10;
 }
 
-tr:hover td{
-  background:#f8fafc;
-}
+tr:hover td{background:#f8fafc}
 
-td select{
-  min-width:120px;
-  padding:7px 9px;
-  font-size:13px;
-}
+.checkboxCell{width:38px;text-align:center}
+.checkboxCell input{width:auto;box-shadow:none}
 
-.statusSelect{min-width:155px}
+td select{min-width:112px;padding:6px 8px;font-size:13px}
+.statusSelect{min-width:145px}
 .prioritySelect{min-width:110px}
 
 .badge{
@@ -324,55 +296,15 @@ td select{
   padding:4px 8px;
   border-radius:4px;
   font-size:12px;
-  font-weight:700;
-  background:#f1f5f9;
+  font-weight:600;
+  background:#f8fafc;
   color:#334155;
-  border:1px solid #e2e8f0;
+  border:1px solid #d9dee7;
 }
 
-.badge.green{
-  background:#f0fdf4;
-  color:#065f46;
-  border-color:#bbf7d0;
-}
-
-.badge.red{
-  background:#fef2f2;
-  color:#b91c1c;
-  border-color:#fecaca;
-}
-
-.badge.orange{
-  background:#fff7ed;
-  color:#92400e;
-  border-color:#fed7aa;
-}
-
-.badge.blue{
-  background:#eff6ff;
-  color:#1d4ed8;
-  border-color:#bfdbfe;
-}
-
-.msgBox{
-  display:none;
-  margin-bottom:14px;
-  padding:12px;
-  border:1px solid #e5e7eb;
-  font-size:14px;
-}
-
-.msgBox.ok{
-  display:block;
-  color:#065f46;
-  background:#f0fdf4;
-}
-
-.msgBox.error{
-  display:block;
-  color:#b91c1c;
-  background:#fef2f2;
-}
+.msgBox{display:none;margin-bottom:12px;padding:12px;border:1px solid #e5e7eb;font-size:14px}
+.msgBox.ok{display:block;color:#065f46;background:#f0fdf4}
+.msgBox.error{display:block;color:#b91c1c;background:#fef2f2}
 
 .formBox{
   display:grid;
@@ -383,31 +315,26 @@ td select{
 .wide{grid-column:span 2}
 .full{grid-column:1/-1}
 .hidden{display:none!important}
+.loadingRow{color:#475569;font-weight:700}
 
-@media(max-width:900px){
+@media(max-width:1100px){
   .summaryGrid{grid-template-columns:repeat(2,1fr)}
   .toolbar{grid-template-columns:1fr 1fr}
   .formBox{grid-template-columns:1fr 1fr}
 }
 
 @media(max-width:640px){
-  .wrap{padding:14px}
-  .body{padding:14px}
-  .cardHead{padding:12px 14px}
+  .wrap{padding:10px}
+  .body{padding:12px}
+  .cardHead{padding:12px}
   .summaryGrid,.toolbar,.formBox{grid-template-columns:1fr}
   .wide{grid-column:auto}
-  .accountName,.accountType{
-    max-width:130px;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-  }
+  .accountName,.accountType{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
 </style>
 </head>
 
 <body>
-
 <header class="topbar">
   <div class="topbar-inner">
     <div class="accountLeft">
@@ -428,38 +355,49 @@ td select{
 </header>
 
 <div class="wrap">
-
   <div id="msg" class="msgBox"></div>
 
   <div class="card">
     <div class="cardHead">
       <h1>Support Department</h1>
-      <div class="subText">
-        Combined support management table for learner tickets, account requests, verification help, access issues and follow-ups.
-      </div>
     </div>
 
     <div class="body">
       <div class="summaryGrid">
         <div class="summaryBox">
-          <div class="metricLabel">Total Tickets</div>
-          <div class="metricValue" id="totalCount">0</div>
-          <div class="metricNote">All support records</div>
+          <div>
+            <div class="metricLabel">Total Tickets</div>
+            <div class="metricValue" id="totalCount">0</div>
+            <div class="metricNote">All support records</div>
+          </div>
         </div>
-
         <div class="summaryBox">
-          <div class="metricLabel">New Tickets</div>
-          <div class="metricValue" id="newCount">0</div>
+          <div>
+            <div class="metricLabel">New Tickets</div>
+            <div class="metricValue" id="newCount">0</div>
+            <div class="metricNote">Needs attention</div>
+          </div>
         </div>
-
         <div class="summaryBox">
-          <div class="metricLabel">In Progress</div>
-          <div class="metricValue" id="progressCount">0</div>
+          <div>
+            <div class="metricLabel">In Progress</div>
+            <div class="metricValue" id="progressCount">0</div>
+            <div class="metricNote">Being handled</div>
+          </div>
         </div>
-
         <div class="summaryBox">
-          <div class="metricLabel">Resolved</div>
-          <div class="metricValue" id="resolvedCount">0</div>
+          <div>
+            <div class="metricLabel">Escalated</div>
+            <div class="metricValue" id="escalatedCount">0</div>
+            <div class="metricNote">Urgent support</div>
+          </div>
+        </div>
+        <div class="summaryBox">
+          <div>
+            <div class="metricLabel">Resolved</div>
+            <div class="metricValue" id="resolvedCount">0</div>
+            <div class="metricNote">Completed tickets</div>
+          </div>
         </div>
       </div>
     </div>
@@ -467,10 +405,7 @@ td select{
 
   <div class="card">
     <div class="cardHead">
-      <h2>Support Management Logs</h2>
-      <div class="subText">
-        Update contacted, resolved, priority and support status directly inside the table.
-      </div>
+      <h2>Support Records</h2>
     </div>
 
     <div class="body">
@@ -500,14 +435,40 @@ td select{
         </div>
 
         <div>
+          <label>Date filter</label>
+          <select id="dateFilter">
+            <option value="all">All Records</option>
+            <option value="today">Today</option>
+            <option value="thisWeek">This Week</option>
+            <option value="lastWeek">Last Week</option>
+            <option value="thisMonth">This Month</option>
+            <option value="lastMonth">Last Month</option>
+            <option value="thisYear">This Year</option>
+          </select>
+        </div>
+
+        <div>
           <label>Search</label>
-          <input id="searchBox" type="search" placeholder="Search name, email, contact, request, message...">
+          <input id="searchBox" type="search" placeholder="Search">
         </div>
 
         <div class="actions">
-          <button class="btn" id="loadBtn">Load Tickets</button>
+          <button class="btn secondary" id="refreshBtn">Refresh</button>
           <button class="btn secondary" id="addBtn">Add Manual Ticket</button>
-          <button class="btn success" id="exportBtn">Export Excel</button>
+          <button class="btn" id="exportBtn">Export Excel</button>
+        </div>
+      </div>
+
+      <div class="bulkBar">
+        <div class="bulkLeft">
+          <span class="selectedText" id="selectedCount">0 selected</span>
+        </div>
+        <div class="actions">
+          <button class="btn" id="markContactedBtn">Mark Contacted</button>
+          <button class="btn" id="escalateBtn">Escalate</button>
+          <button class="btn" id="resolveBtn">Resolve</button>
+          <button class="btn" id="saveSelectedBtn">Save Changes</button>
+          <button class="btn danger" id="removeSelectedBtn">Remove Selected</button>
         </div>
       </div>
 
@@ -515,6 +476,7 @@ td select{
         <table>
           <thead>
             <tr>
+              <th class="checkboxCell"><input type="checkbox" id="selectAllBox"></th>
               <th>No.</th>
               <th>Ticket No.</th>
               <th>Date</th>
@@ -524,18 +486,14 @@ td select{
               <th>Request Type</th>
               <th>Subject</th>
               <th>Message</th>
-              <th>Assigned To</th>
-              <th>Notes</th>
               <th>Contacted</th>
               <th>Resolved</th>
               <th>Priority</th>
               <th>Support Status</th>
-              <th>Actions</th>
             </tr>
           </thead>
-
           <tbody id="supportRows">
-            <tr><td colspan="16">Click Load Tickets or add a manual ticket.</td></tr>
+            <tr><td colspan="14" class="loadingRow">Loading support records...</td></tr>
           </tbody>
         </table>
       </div>
@@ -545,120 +503,39 @@ td select{
   <div class="card hidden" id="addFormCard">
     <div class="cardHead">
       <h3>Add Manual Support Ticket</h3>
-      <div class="subText">Add a support ticket manually when it is not yet coming from the backend.</div>
     </div>
 
     <div class="body">
       <div class="formBox">
-        <div>
-          <label>Ticket No.</label>
-          <input id="fTicketNo" placeholder="Auto if empty">
-        </div>
-
-        <div>
-          <label>Date</label>
-          <input id="fDate" type="date">
-        </div>
-
-        <div>
-          <label>Learner</label>
-          <input id="fLearner">
-        </div>
-
-        <div>
-          <label>Email</label>
-          <input id="fEmail" type="email">
-        </div>
-
-        <div>
-          <label>Contact</label>
-          <input id="fContact">
-        </div>
-
-        <div>
-          <label>Request Type</label>
-          <select id="fRequestType">
-            <option>Math help</option>
-            <option>Change of account</option>
-            <option>Verification Help</option>
-            <option>Access Issue</option>
-            <option>Other</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Subject</label>
-          <input id="fSubject" value="Maths">
-        </div>
-
-        <div>
-          <label>Assigned To</label>
-          <input id="fAssignedTo" placeholder="Support team">
-        </div>
-
-        <div>
-          <label>Contacted</label>
-          <select id="fContacted">
-            <option>No</option>
-            <option>Yes</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Resolved</label>
-          <select id="fResolved">
-            <option>No</option>
-            <option>Yes</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Priority</label>
-          <select id="fPriority">
-            <option>Low</option>
-            <option selected>Medium</option>
-            <option>High</option>
-            <option>Urgent</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Support Status</label>
-          <select id="fStatus">
-            <option>New</option>
-            <option>In Progress</option>
-            <option>Waiting for Learner</option>
-            <option>Escalated</option>
-            <option>Resolved</option>
-            <option>Closed</option>
-          </select>
-        </div>
-
-        <div class="full">
-          <label>Message</label>
-          <textarea id="fMessage"></textarea>
-        </div>
-
+        <div><label>Learner</label><input id="fLearner"></div>
+        <div><label>Email</label><input id="fEmail" type="email"></div>
+        <div><label>Contact</label><input id="fContact"></div>
+        <div><label>Request Type</label><select id="fRequestType"><option>Math help</option><option>Change of account</option><option>Verification Help</option><option>Access Issue</option><option>Other</option></select></div>
+        <div><label>Subject</label><input id="fSubject" value="Maths"></div>
+        <div><label>Contacted</label><select id="fContacted"><option>No</option><option>Yes</option></select></div>
+        <div><label>Resolved</label><select id="fResolved"><option>No</option><option>Yes</option></select></div>
+        <div><label>Priority</label><select id="fPriority"><option>Low</option><option selected>Medium</option><option>High</option><option>Urgent</option></select></div>
+        <div><label>Support Status</label><select id="fStatus"><option>New</option><option>In Progress</option><option>Waiting for Learner</option><option>Escalated</option><option>Resolved</option><option>Closed</option></select></div>
+        <div class="full"><label>Message</label><textarea id="fMessage"></textarea></div>
         <div class="full actions">
-          <button class="btn success" id="saveManualBtn">Save Ticket</button>
+          <button class="btn" id="saveManualBtn">Save Ticket</button>
           <button class="btn secondary" id="cancelAddBtn">Cancel</button>
         </div>
       </div>
     </div>
   </div>
-
 </div>
 
 <script>
 const API = "https://api.practiceonline.co.za";
 let tickets = [];
+let pendingChanges = {};
+let selectedIds = new Set();
 
 const $ = id => document.getElementById(id);
 
 function token(){
-  return localStorage.getItem("employeeToken") ||
-         localStorage.getItem("token") ||
-         "";
+  return localStorage.getItem("employeeToken") || localStorage.getItem("token") || "";
 }
 
 function logout(){
@@ -675,50 +552,66 @@ function esc(v){
     .replaceAll("'","&#039;");
 }
 
-function clean(v){
-  return String(v || "").trim();
-}
+function clean(v){return String(v || "").trim()}
 
 function show(text,type="ok"){
   const m = $("msg");
   m.textContent = text;
   m.className = "msgBox " + type;
-  setTimeout(()=>{m.className = "msgBox"},4500);
+  setTimeout(()=>{m.className="msgBox"},5000);
 }
 
 function ticketId(prefix,o,i){
   return o._id || o.id || o.ticketNo || o.email || `${prefix}-${i}`;
 }
 
+function recordKey(t){
+  return `${t.source || "support"}:${t.backendId || t.id || t.ticketNo || t.email}`;
+}
+
+function getRemovedKeys(){
+  try{return JSON.parse(localStorage.getItem("support_removed_keys") || "[]")}
+  catch{return []}
+}
+
+function saveRemovedKeys(keys){
+  localStorage.setItem("support_removed_keys",JSON.stringify([...new Set(keys)]));
+}
+
+function getManual(){
+  try{return JSON.parse(localStorage.getItem("support_manual_rows") || "[]")}
+  catch{return []}
+}
+
+function saveManual(rows){
+  localStorage.setItem("support_manual_rows",JSON.stringify(rows));
+}
+
 function normalizeStatus(value){
   const v = String(value || "").trim().toLowerCase();
-
-  if (v === "open" || v === "new") return "New";
-  if (v === "in_progress" || v === "in progress") return "In Progress";
-  if (v === "waiting" || v === "waiting for learner") return "Waiting for Learner";
-  if (v === "escalated") return "Escalated";
-  if (v === "resolved") return "Resolved";
-  if (v === "closed") return "Closed";
-
+  if(v === "open" || v === "new") return "New";
+  if(v === "in_progress" || v === "in progress") return "In Progress";
+  if(v === "waiting" || v === "waiting for learner") return "Waiting for Learner";
+  if(v === "escalated") return "Escalated";
+  if(v === "resolved") return "Resolved";
+  if(v === "closed") return "Closed";
   return "New";
 }
 
 function normalizePriority(value){
   const v = String(value || "").trim().toLowerCase();
-
-  if (v === "low") return "Low";
-  if (v === "high") return "High";
-  if (v === "urgent") return "Urgent";
-
+  if(v === "low") return "Low";
+  if(v === "high") return "High";
+  if(v === "urgent") return "Urgent";
   return "Medium";
 }
 
 function normaliseSupportTicket(t,i){
   const status = normalizeStatus(t.status || "New");
-
   return {
     id:String(ticketId("support",t,i)),
     backendId:t._id || t.id || "",
+    source:"support",
     ticketNo:t.ticketNo || t.ticketNumber || t._id || t.id || `SUP-${String(i + 1).padStart(4,"0")}`,
     date:t.createdAt || t.date || "",
     learner:t.fullName || t.username || t.user?.fullName || t.user?.username || t.name || "",
@@ -727,8 +620,6 @@ function normaliseSupportTicket(t,i){
     requestType:t.requestType || t.type || "",
     subject:t.subject || "Maths",
     message:t.message || t.requestFollowUp || "",
-    assignedTo:t.assignedTo || "Support team",
-    notes:t.notes || "",
     contacted:!!t.contacted,
     resolved:!!t.resolved || ["Resolved","Closed"].includes(status),
     priority:normalizePriority(t.priority),
@@ -736,13 +627,8 @@ function normaliseSupportTicket(t,i){
   };
 }
 
-async function safeJson(res){
-  try{return await res.json()}
-  catch{return {}}
-}
-
 async function fetchJson(path, options={}){
-  const res = await fetch(API + path, {
+  const res = await fetch(API + path,{
     ...options,
     headers:{
       "Content-Type":"application/json",
@@ -750,163 +636,212 @@ async function fetchJson(path, options={}){
       ...(options.headers || {})
     }
   });
-
-  const data = await safeJson(res);
-
-  if(!res.ok){
-    throw new Error(data.message || path + " failed");
-  }
-
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.message || path + " failed");
   return data;
 }
 
-async function requireEmployee(){
-  if(!token()){
-    location.href = "employee-login.html";
-    return null;
-  }
-
-  try{
-    const u = await fetchJson("/api/employees/me");
-
-    const role = String(u.role || "").toLowerCase();
-    const allowed = ["admin","tester","support"];
-
-    if(!allowed.includes(role)){
-      show("You do not have permission to open this page.","error");
-      setTimeout(()=>location.href="employee-portal.html",1200);
-      return null;
-    }
-
-    $("userPill").textContent = `${u.fullName || u.username || "Employee"} • ${role}`;
-    return u;
-  }catch{
-    logout();
-    return null;
-  }
+function asArray(data){
+  if(Array.isArray(data)) return data;
+  return data?.items || data?.data || data?.tickets || data?.support || [];
 }
 
-async function loadAllSupportTickets(){
-  const btn = $("loadBtn");
-  btn.disabled = true;
-  btn.textContent = "Loading...";
+async function loadAllSupportTickets(showMessage=false){
+  $("refreshBtn").disabled = true;
+  $("refreshBtn").textContent = "Loading...";
 
   try{
-    let rows = await fetchJson("/api/support");
+    let rows = [];
+    try{ rows = asArray(await fetchJson("/api/support")); }
+    catch(e){ console.error("Support records could not load:",e); rows = []; }
 
-    if(!Array.isArray(rows)){
-      rows = rows.items || rows.data || rows.tickets || rows.support || [];
-    }
-
-    tickets = rows.map(normaliseSupportTicket);
-
+    const removed = new Set(getRemovedKeys());
+    tickets = [...rows.map(normaliseSupportTicket), ...getManual()].filter(t=>!removed.has(recordKey(t)));
+    pendingChanges = {};
+    selectedIds.clear();
     renderRows();
-    show("Support tickets loaded.");
-  }catch(e){
-    show("Could not load support tickets: " + e.message,"error");
+    if(showMessage) show("Support records refreshed.");
   }finally{
-    btn.disabled = false;
-    btn.textContent = "Load Tickets";
+    $("refreshBtn").disabled = false;
+    $("refreshBtn").textContent = "Refresh";
   }
 }
 
-async function patchTicket(id, patch){
-  const index = tickets.findIndex(t => t.id === id);
-  if(index === -1) return;
+function trackChange(id,key,value){
+  if(!pendingChanges[id]) pendingChanges[id] = {};
+  pendingChanges[id][key] = value;
 
-  const oldTicket = {...tickets[index]};
-  const updated = {...tickets[index], ...patch};
+  const index = tickets.findIndex(t=>t.id===id);
+  if(index !== -1){
+    tickets[index][key] = value;
+    if(key === "status" && (value === "Resolved" || value === "Closed")) tickets[index].resolved = true;
+    renderSummary();
+  }
+}
 
-  if(updated.status === "Resolved" || updated.status === "Closed"){
-    updated.resolved = true;
+async function saveBackend(t,patch){
+  if(!t.backendId) return;
+  const body = {};
+  if("status" in patch) body.status = patch.status;
+  if("priority" in patch) body.priority = patch.priority;
+  if("contacted" in patch) body.contacted = patch.contacted;
+  if("resolved" in patch) body.resolved = patch.resolved;
+
+  await fetchJson(`/api/support/${t.backendId}`,{
+    method:"PATCH",
+    body:JSON.stringify(body)
+  });
+}
+
+async function saveTicket(ticket){
+  const patch = pendingChanges[ticket.id];
+  if(!patch) return false;
+
+  if(ticket.source === "manual"){
+    saveManual(getManual().map(t=>t.id===ticket.id ? {...t,...patch} : t));
+  }else{
+    await saveBackend(ticket,patch);
   }
 
-  tickets[index] = updated;
-  renderRows();
+  delete pendingChanges[ticket.id];
+  return true;
+}
 
+async function saveSelected(){
+  const ids = [...selectedIds];
+  if(!ids.length) return show("Select at least one record to save.","error");
+
+  let saved = 0;
   try{
-    if(!updated.backendId){
-      show("This ticket has no backend ID.","error");
-      return;
+    for(const id of ids){
+      const ticket = tickets.find(t=>t.id===id);
+      if(ticket && pendingChanges[id]){
+        await saveTicket(ticket);
+        saved++;
+      }
     }
-
-    await fetchJson(`/api/support/${updated.backendId}`, {
-      method:"PATCH",
-      body:JSON.stringify({
-        status:updated.status,
-        priority:updated.priority,
-        contacted:updated.contacted,
-        resolved:updated.resolved,
-        assignedTo:updated.assignedTo,
-        notes:updated.notes,
-        message:updated.message
-      })
-    });
-
-    show("Ticket updated.");
-    await loadAllSupportTickets();
+    if(!saved) return show("No selected records have changes to save.","error");
+    show(saved + " record(s) saved successfully.");
+    await loadAllSupportTickets(false);
   }catch(e){
-    tickets[index] = oldTicket;
-    renderRows();
-    show("Could not update ticket: " + e.message,"error");
+    console.error(e);
+    show("Could not save selected records.","error");
   }
 }
 
-async function addManual(){
-  const today = new Date().toISOString().slice(0,10);
+function removeSelected(){
+  const ids = [...selectedIds];
+  if(!ids.length) return show("Select at least one record to remove.","error");
 
-  const body = {
-    username:clean($("fLearner").value),
-    email:clean($("fEmail").value),
-    contact:clean($("fContact").value),
-    requestType:clean($("fRequestType").value) || "Other",
-    subject:clean($("fSubject").value) || "Maths",
-    message:clean($("fMessage").value),
-    assignedTo:clean($("fAssignedTo").value) || "Support team",
-    contacted:$("fContacted").value === "Yes",
-    resolved:$("fResolved").value === "Yes",
-    priority:$("fPriority").value,
-    status:$("fStatus").value,
-    notes:""
-  };
+  const ok = confirm("Remove selected records from the Support Admin table?");
+  if(!ok) return;
 
-  try{
-    await fetchJson("/api/support", {
-      method:"POST",
-      body:JSON.stringify(body)
-    });
+  const removedKeys = getRemovedKeys();
 
-    toggleAdd();
-    show("Support ticket saved.");
-    await loadAllSupportTickets();
-  }catch(e){
-    show("Could not save ticket: " + e.message,"error");
+  for(const id of ids){
+    const ticket = tickets.find(t=>t.id===id);
+    if(!ticket) continue;
+    if(ticket.source === "manual") saveManual(getManual().filter(t=>t.id!==id));
+    else removedKeys.push(recordKey(ticket));
   }
+
+  saveRemovedKeys(removedKeys);
+  tickets = tickets.filter(t=>!selectedIds.has(t.id));
+  selectedIds.clear();
+  renderRows();
+  show("Selected records removed from this support table.");
 }
 
-function badge(text,color=""){
-  return `<span class="badge ${color}">${esc(text)}</span>`;
+function bulkContacted(){
+  if(!selectedIds.size) return show("Select at least one record.","error");
+  [...selectedIds].forEach(id=>{
+    trackChange(id,"contacted",true);
+    trackChange(id,"status","In Progress");
+  });
+  renderRows();
 }
 
-function statusColor(status){
-  status = String(status || "").toLowerCase();
-
-  if(status === "resolved" || status === "closed") return "green";
-  if(status === "escalated") return "red";
-  if(status === "in progress") return "blue";
-  if(status === "waiting for learner") return "orange";
-
-  return "";
+function bulkEscalate(){
+  if(!selectedIds.size) return show("Select at least one record.","error");
+  [...selectedIds].forEach(id=>{
+    trackChange(id,"priority","Urgent");
+    trackChange(id,"status","Escalated");
+  });
+  renderRows();
 }
 
-function priorityColor(priority){
-  priority = String(priority || "").toLowerCase();
+function bulkResolve(){
+  if(!selectedIds.size) return show("Select at least one record.","error");
+  [...selectedIds].forEach(id=>{
+    trackChange(id,"resolved",true);
+    trackChange(id,"status","Resolved");
+  });
+  renderRows();
+}
 
-  if(priority === "urgent") return "red";
-  if(priority === "high") return "orange";
-  if(priority === "medium") return "blue";
+function toggleSelect(id,checked){
+  if(checked) selectedIds.add(id);
+  else selectedIds.delete(id);
+  updateSelectedUI();
+}
 
-  return "";
+function toggleSelectAll(checked){
+  filtered().forEach(t=>{
+    if(checked) selectedIds.add(t.id);
+    else selectedIds.delete(t.id);
+  });
+  renderRows();
+}
+
+function updateSelectedUI(){
+  $("selectedCount").textContent = selectedIds.size + " selected";
+  const rows = filtered();
+  $("selectAllBox").checked = !!(rows.length && rows.every(t=>selectedIds.has(t.id)));
+}
+
+function formatDate(v){
+  if(!v) return "-";
+  const d = new Date(v);
+  if(isNaN(d.getTime())) return esc(v);
+  return d.toLocaleDateString("en-ZA");
+}
+
+function shortMessage(v){
+  const s = clean(v);
+  if(!s) return "-";
+  return s.length > 55 ? esc(s.slice(0,55)) + "..." : esc(s);
+}
+
+function badge(text){
+  return `<span class="badge">${esc(text)}</span>`;
+}
+
+function passesDateFilter(ticket){
+  const filter = $("dateFilter").value;
+  if(filter === "all") return true;
+
+  const created = new Date(ticket.date);
+  if(isNaN(created.getTime())) return false;
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const startOfWeek = new Date(today);
+  const day = startOfWeek.getDay();
+  const diff = day === 0 ? 6 : day - 1;
+  startOfWeek.setDate(startOfWeek.getDate() - diff);
+  const startOfLastWeek = new Date(startOfWeek);
+  startOfLastWeek.setDate(startOfLastWeek.getDate() - 7);
+  const startOfMonth = new Date(now.getFullYear(),now.getMonth(),1);
+  const startOfLastMonth = new Date(now.getFullYear(),now.getMonth()-1,1);
+  const startOfYear = new Date(now.getFullYear(),0,1);
+
+  if(filter === "today") return created >= today;
+  if(filter === "thisWeek") return created >= startOfWeek;
+  if(filter === "lastWeek") return created >= startOfLastWeek && created < startOfWeek;
+  if(filter === "thisMonth") return created >= startOfMonth;
+  if(filter === "lastMonth") return created >= startOfLastMonth && created < startOfMonth;
+  if(filter === "thisYear") return created >= startOfYear;
+  return true;
 }
 
 function filtered(){
@@ -917,53 +852,29 @@ function filtered(){
   return tickets.filter(t=>{
     const status = String(t.status || "").toLowerCase();
     const priority = String(t.priority || "").toLowerCase();
-
     if(statusFilter !== "all" && status !== statusFilter) return false;
     if(priorityFilter !== "all" && priority !== priorityFilter) return false;
-
+    if(!passesDateFilter(t)) return false;
     if(q && !Object.values(t).join(" ").toLowerCase().includes(q)) return false;
-
     return true;
   });
 }
 
-function formatDate(v){
-  if(!v) return "-";
-
-  const d = new Date(v);
-
-  if(isNaN(d.getTime())) return esc(v);
-
-  return d.toLocaleDateString("en-ZA");
-}
-
-function shortMessage(v){
-  const s = clean(v);
-
-  if(!s) return "-";
-
-  return s.length > 55 ? esc(s.slice(0,55)) + "..." : esc(s);
-}
-
-function updateSummary(){
+function renderSummary(){
   $("totalCount").textContent = tickets.length;
-  $("newCount").textContent =
-    tickets.filter(t => String(t.status).toLowerCase() === "new").length;
-
-  $("progressCount").textContent =
-    tickets.filter(t => String(t.status).toLowerCase() === "in progress").length;
-
-  $("resolvedCount").textContent =
-    tickets.filter(t => t.resolved || ["resolved","closed"].includes(String(t.status).toLowerCase())).length;
+  $("newCount").textContent = tickets.filter(t=>String(t.status).toLowerCase()==="new").length;
+  $("progressCount").textContent = tickets.filter(t=>String(t.status).toLowerCase()==="in progress").length;
+  $("escalatedCount").textContent = tickets.filter(t=>String(t.status).toLowerCase()==="escalated").length;
+  $("resolvedCount").textContent = tickets.filter(t=>t.resolved || ["resolved","closed"].includes(String(t.status).toLowerCase())).length;
 }
 
 function renderRows(){
   const rows = filtered();
-
-  updateSummary();
+  renderSummary();
 
   $("supportRows").innerHTML = rows.length ? rows.map((t,i)=>`
     <tr>
+      <td class="checkboxCell"><input type="checkbox" ${selectedIds.has(t.id) ? "checked" : ""} onchange="toggleSelect('${esc(t.id)}',this.checked)"></td>
       <td>${i + 1}</td>
       <td>${esc(t.ticketNo || "-")}</td>
       <td>${formatDate(t.date)}</td>
@@ -973,142 +884,92 @@ function renderRows(){
       <td>${esc(t.requestType || "-")}</td>
       <td>${esc(t.subject || "-")}</td>
       <td title="${esc(t.message || "")}">${shortMessage(t.message)}</td>
-
-      <td>
-        <input
-          value="${esc(t.assignedTo || "")}"
-          onchange="patchTicket('${esc(t.id)}',{assignedTo:this.value})"
-        >
-      </td>
-
-      <td>
-        <input
-          value="${esc(t.notes || "")}"
-          placeholder="Support notes"
-          onchange="patchTicket('${esc(t.id)}',{notes:this.value})"
-        >
-      </td>
-
-      <td>
-        <select onchange="patchTicket('${esc(t.id)}',{contacted:this.value==='Yes',status:this.value==='Yes'?'In Progress':tickets.find(x=>x.id==='${esc(t.id)}').status})">
-          <option ${t.contacted ? "selected" : ""}>Yes</option>
-          <option ${!t.contacted ? "selected" : ""}>No</option>
-        </select>
-      </td>
-
-      <td>
-        <select onchange="patchTicket('${esc(t.id)}',{resolved:this.value==='Yes',status:this.value==='Yes'?'Resolved':tickets.find(x=>x.id==='${esc(t.id)}').status})">
-          <option ${t.resolved ? "selected" : ""}>Yes</option>
-          <option ${!t.resolved ? "selected" : ""}>No</option>
-        </select>
-      </td>
-
-      <td>
-        <select class="prioritySelect" onchange="patchTicket('${esc(t.id)}',{priority:this.value})">
-          <option ${t.priority==="Low" ? "selected" : ""}>Low</option>
-          <option ${t.priority==="Medium" ? "selected" : ""}>Medium</option>
-          <option ${t.priority==="High" ? "selected" : ""}>High</option>
-          <option ${t.priority==="Urgent" ? "selected" : ""}>Urgent</option>
-        </select>
-        ${badge(t.priority || "Medium", priorityColor(t.priority))}
-      </td>
-
-      <td>
-        <select class="statusSelect" onchange="patchTicket('${esc(t.id)}',{status:this.value,resolved:(this.value==='Resolved'||this.value==='Closed')})">
-          <option ${t.status==="New" ? "selected" : ""}>New</option>
-          <option ${t.status==="In Progress" ? "selected" : ""}>In Progress</option>
-          <option ${t.status==="Waiting for Learner" ? "selected" : ""}>Waiting for Learner</option>
-          <option ${t.status==="Escalated" ? "selected" : ""}>Escalated</option>
-          <option ${t.status==="Resolved" ? "selected" : ""}>Resolved</option>
-          <option ${t.status==="Closed" ? "selected" : ""}>Closed</option>
-        </select>
-        ${badge(t.status || "New", statusColor(t.status))}
-      </td>
-
-      <td class="actions">
-        <button class="btn small secondary" onclick="patchTicket('${esc(t.id)}',{contacted:true,status:'In Progress'})">Contacted</button>
-        <button class="btn small warning" onclick="patchTicket('${esc(t.id)}',{priority:'Urgent',status:'Escalated'})">Escalate</button>
-        <button class="btn small success" onclick="patchTicket('${esc(t.id)}',{resolved:true,status:'Resolved'})">Resolve</button>
-      </td>
+      <td><select onchange="trackChange('${esc(t.id)}','contacted',this.value==='Yes')"><option ${t.contacted ? "selected" : ""}>Yes</option><option ${!t.contacted ? "selected" : ""}>No</option></select></td>
+      <td><select onchange="trackChange('${esc(t.id)}','resolved',this.value==='Yes')"><option ${t.resolved ? "selected" : ""}>Yes</option><option ${!t.resolved ? "selected" : ""}>No</option></select></td>
+      <td><select class="prioritySelect" onchange="trackChange('${esc(t.id)}','priority',this.value)"><option ${t.priority==="Low" ? "selected" : ""}>Low</option><option ${t.priority==="Medium" ? "selected" : ""}>Medium</option><option ${t.priority==="High" ? "selected" : ""}>High</option><option ${t.priority==="Urgent" ? "selected" : ""}>Urgent</option></select> ${badge(t.priority || "Medium")}</td>
+      <td><select class="statusSelect" onchange="trackChange('${esc(t.id)}','status',this.value)"><option ${t.status==="New" ? "selected" : ""}>New</option><option ${t.status==="In Progress" ? "selected" : ""}>In Progress</option><option ${t.status==="Waiting for Learner" ? "selected" : ""}>Waiting for Learner</option><option ${t.status==="Escalated" ? "selected" : ""}>Escalated</option><option ${t.status==="Resolved" ? "selected" : ""}>Resolved</option><option ${t.status==="Closed" ? "selected" : ""}>Closed</option></select> ${badge(t.status || "New")}</td>
     </tr>
-  `).join("") : `<tr><td colspan="16">No support tickets found.</td></tr>`;
+  `).join("") : `<tr><td colspan="14">No support records found.</td></tr>`;
+
+  updateSelectedUI();
 }
 
 function toggleAdd(){
   $("addFormCard").classList.toggle("hidden");
 }
 
+async function addManual(){
+  const row = {
+    id:"manual-" + Date.now(),
+    source:"manual",
+    backendId:"",
+    ticketNo:"SUP-" + Date.now(),
+    date:new Date().toISOString(),
+    learner:clean($("fLearner").value),
+    email:clean($("fEmail").value),
+    contact:clean($("fContact").value),
+    requestType:clean($("fRequestType").value) || "Other",
+    subject:clean($("fSubject").value) || "Maths",
+    message:clean($("fMessage").value),
+    contacted:$("fContacted").value === "Yes",
+    resolved:$("fResolved").value === "Yes",
+    priority:$("fPriority").value,
+    status:$("fStatus").value
+  };
+
+  const rows = getManual();
+  rows.push(row);
+  saveManual(rows);
+  tickets.push(row);
+  renderRows();
+  toggleAdd();
+  show("Support ticket saved.");
+}
+
 function exportExcel(){
   const rows = filtered();
+  if(!rows.length) return show("No records to export.","error");
 
-  if(!rows.length){
-    return show("No tickets to export.","error");
-  }
-
-  const headers = [
-    "No","Ticket No","Date","Learner","Email","Contact","Request Type",
-    "Subject","Message","Assigned To","Notes","Contacted","Resolved",
-    "Priority","Support Status"
-  ];
-
-  const body = rows.map((t,i)=>[
-    i + 1,
-    t.ticketNo,
-    formatDate(t.date),
-    t.learner,
-    t.email,
-    t.contact,
-    t.requestType,
-    t.subject,
-    t.message,
-    t.assignedTo,
-    t.notes,
-    t.contacted ? "Yes" : "No",
-    t.resolved ? "Yes" : "No",
-    t.priority,
-    t.status
-  ]);
-
-  const table = `
-    <table border="1">
-      <tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>
-      ${body.map(row=>`<tr>${row.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}
-    </table>
-  `;
-
-  const blob = new Blob(
-    [`<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`],
-    {type:"application/vnd.ms-excel"}
-  );
-
+  const headers = ["No","Ticket No","Date","Learner","Email","Contact","Request Type","Subject","Message","Contacted","Resolved","Priority","Support Status"];
+  const body = rows.map((t,i)=>[i+1,t.ticketNo,formatDate(t.date),t.learner,t.email,t.contact,t.requestType,t.subject,t.message,t.contacted?"Yes":"No",t.resolved?"Yes":"No",t.priority,t.status]);
+  const table = `<table border="1"><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>${body.map(row=>`<tr>${row.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table>`;
+  const blob = new Blob([`<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`],{type:"application/vnd.ms-excel"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-
   a.href = url;
-  a.download = "support-management-table.xls";
+  a.download = "support-admin-records.xls";
   a.click();
-
   URL.revokeObjectURL(url);
-
   show("Excel file exported.");
 }
 
-$("loadBtn").onclick = loadAllSupportTickets;
+$("refreshBtn").onclick = ()=>loadAllSupportTickets(true);
+$("markContactedBtn").onclick = bulkContacted;
+$("escalateBtn").onclick = bulkEscalate;
+$("resolveBtn").onclick = bulkResolve;
+$("saveSelectedBtn").onclick = saveSelected;
+$("removeSelectedBtn").onclick = removeSelected;
 $("addBtn").onclick = toggleAdd;
 $("cancelAddBtn").onclick = toggleAdd;
 $("saveManualBtn").onclick = addManual;
 $("exportBtn").onclick = exportExcel;
+$("selectAllBox").onchange = e=>toggleSelectAll(e.target.checked);
+$("statusFilter").onchange = ()=>{selectedIds.clear();renderRows();};
+$("priorityFilter").onchange = ()=>{selectedIds.clear();renderRows();};
+$("dateFilter").onchange = ()=>{selectedIds.clear();renderRows();};
+$("searchBox").oninput = ()=>{selectedIds.clear();renderRows();};
 
-$("statusFilter").onchange = renderRows;
-$("priorityFilter").onchange = renderRows;
-$("searchBox").oninput = renderRows;
+document.addEventListener("DOMContentLoaded",()=>{
+  tickets = getManual();
+  renderRows();
 
-requireEmployee().then(user=>{
-  if(user){
-    loadAllSupportTickets();
+  if(!token()){
+    $("supportRows").innerHTML = `<tr><td colspan="14">Please login again as a support employee.</td></tr>`;
+    return;
   }
+
+  loadAllSupportTickets(false);
 });
 </script>
-
 </body>
 </html>
