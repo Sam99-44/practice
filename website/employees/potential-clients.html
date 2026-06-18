@@ -1,42 +1,977 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Potential Clients | Practice Online</title>
-<style>
-:root{--nav:#1b1648;--org:#0b3c5d;--orgDark:#082f49;--red:#c81e1e;--border:#d9dee7;--text:#0f172a;--muted:#475569;--soft:#f8fafc}
-*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:"Times New Roman",Times,serif;background:#fff;color:var(--text)}a{text-decoration:none;color:inherit}button,input,select{font-family:"Times New Roman",Times,serif}.topbar{background:var(--nav);color:#fff;position:sticky;top:0;z-index:1000}.topbar-inner{width:100%;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}.accountLeft{display:flex;align-items:center;gap:12px}.accountIcon{width:40px;height:40px;filter:brightness(0) invert(1) contrast(180%)}.accountName{font-size:14px;font-weight:700}.accountType{font-size:13px;color:#e0e7ff;margin-top:3px}.topbarRight{display:flex;align-items:center;gap:18px}.iconBtn{min-width:50px;height:50px;display:flex;align-items:center;justify-content:center}.iconBtn img{width:30px;height:30px;filter:brightness(0) invert(1) contrast(180%)}.menuLink{color:#fff;font-size:13px;font-weight:700;background:transparent;border:0;cursor:pointer}.wrap{width:100%;padding:14px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:0;box-shadow:none;overflow:hidden;margin:0 0 12px}.cardHead{padding:14px 18px;border-bottom:1px solid #ececec;background:#fff}.cardHead h1,.cardHead h2{margin:0;font-size:14px;font-weight:700;text-transform:uppercase}.body{padding:16px}.summaryGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.summaryBox{border:1px solid #e5e7eb;background:#fff;padding:12px;display:flex;align-items:center;gap:12px;min-height:88px}.summaryIcon{width:38px;height:38px;border:1px solid #e5e7eb;background:#f8fafc;display:flex;align-items:center;justify-content:center;flex:0 0 auto}.summaryIcon img{width:22px;height:22px}.metricLabel{font-size:13px;color:#475569;margin-bottom:5px}.metricValue{font-size:24px;font-weight:700;line-height:1}.metricNote{font-size:13px;color:#475569;margin-top:5px}.toolbar{display:grid;grid-template-columns:150px 170px 170px 170px 1fr auto;gap:10px;align-items:end;margin-bottom:10px}label{display:block;font-size:14px;font-weight:400;margin-bottom:6px;color:#111827}input,select{width:100%;padding:9px 10px;border-radius:0;border:1px solid #d6d3d1;background:#fff;font-size:14px;outline:none}input:focus,select:focus{border-color:#cbd5e1;box-shadow:0 0 0 4px rgba(226,232,240,.7)}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:38px;padding:0 14px;min-width:96px;border:none;border-radius:4px;background:var(--org);color:#fff;font-size:12px;font-weight:700;cursor:pointer}.btn:hover{background:var(--orgDark)}.btn.secondary{background:#fff;color:#111827;border:1px solid #d1d5db}.btn.secondary:hover{background:#f8fafc}.btn img{width:15px;height:15px;filter:brightness(0) invert(1)}.tableWrap{width:100%;overflow:auto;border:1px solid #e5e7eb;background:#fff}.tableWrap::-webkit-scrollbar{height:10px;width:10px}.tableWrap::-webkit-scrollbar-thumb{background:#9ca3af;border-radius:20px}table{width:100%;border-collapse:collapse;min-width:1450px}th,td{padding:9px 10px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:14px;vertical-align:middle;white-space:nowrap}th{background:#f8fafc;color:#111827;font-size:13px;font-weight:700;position:sticky;top:0;z-index:10}tr:hover td{background:#f8fafc}.badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:600;background:#f8fafc;color:#334155;border:1px solid #d9dee7}.msgBox{display:none;margin-bottom:12px;padding:12px;border:1px solid #e5e7eb;font-size:14px}.msgBox.ok{display:block;color:#065f46;background:#f0fdf4}.msgBox.error{display:block;color:#991b1b;background:#fff;border-color:#fecaca}.loadingRow{color:#475569;font-weight:700}@media(max-width:1150px){.toolbar{grid-template-columns:1fr 1fr 1fr}.summaryGrid{grid-template-columns:repeat(2,1fr)}}@media(max-width:640px){.wrap{padding:10px}.body{padding:12px}.cardHead{padding:12px}.summaryGrid,.toolbar{grid-template-columns:1fr}.accountName,.accountType{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Potential Clients | Practice Online</title>
+
+  <style>
+    :root{
+      --nav:#1b1648;
+      --org:#0b3c5d;
+      --orgDark:#082f49;
+      --border:#d9dee7;
+      --text:#0f172a;
+      --muted:#475569;
+      --soft:#f8fafc;
+      --ok:#065f46;
+      --error:#991b1b;
+    }
+
+    *{
+      box-sizing:border-box;
+    }
+
+    html,
+    body{
+      margin:0;
+      padding:0;
+      font-family:"Times New Roman", Times, serif;
+      background:#fff;
+      color:var(--text);
+    }
+
+    a{
+      text-decoration:none;
+      color:inherit;
+    }
+
+    button,
+    input,
+    select{
+      font-family:"Times New Roman", Times, serif;
+    }
+
+    .topbar{
+      background:var(--nav);
+      color:#fff;
+      position:sticky;
+      top:0;
+      z-index:1000;
+    }
+
+    .topbar-inner{
+      width:100%;
+      padding:12px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .accountLeft{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .accountIcon{
+      width:40px;
+      height:40px;
+      filter:brightness(0) invert(1) contrast(180%);
+    }
+
+    .accountName{
+      font-size:14px;
+      font-weight:700;
+      color:#fff;
+    }
+
+    .accountType{
+      font-size:13px;
+      color:#e0e7ff;
+      margin-top:3px;
+    }
+
+    .topbarRight{
+      display:flex;
+      align-items:center;
+      gap:18px;
+    }
+
+    .iconBtn{
+      min-width:50px;
+      height:50px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .iconBtn img{
+      width:30px;
+      height:30px;
+      filter:brightness(0) invert(1) contrast(180%);
+    }
+
+    .menuLink{
+      color:#fff;
+      font-size:13px;
+      font-weight:700;
+      background:transparent;
+      border:0;
+      cursor:pointer;
+    }
+
+    .wrap{
+      width:100%;
+      padding:14px;
+    }
+
+    .card{
+      background:#fff;
+      border:1px solid #e5e7eb;
+      border-radius:0;
+      box-shadow:none;
+      overflow:hidden;
+      margin:0 0 12px;
+    }
+
+    .cardHead{
+      padding:14px 18px;
+      border-bottom:1px solid #ececec;
+      background:#fff;
+    }
+
+    .cardHead h1,
+    .cardHead h2{
+      margin:0;
+      font-size:14px;
+      font-weight:700;
+      text-transform:uppercase;
+    }
+
+    .body{
+      padding:16px;
+    }
+
+    .summaryGrid{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0, 1fr));
+      gap:10px;
+    }
+
+    .summaryBox{
+      border:1px solid #e5e7eb;
+      background:#fff;
+      padding:12px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-height:88px;
+    }
+
+    .summaryIcon{
+      width:38px;
+      height:38px;
+      border:1px solid #e5e7eb;
+      background:#f8fafc;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex:0 0 auto;
+    }
+
+    .summaryIcon img{
+      width:22px;
+      height:22px;
+      object-fit:contain;
+    }
+
+    .metricLabel{
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:5px;
+    }
+
+    .metricValue{
+      font-size:24px;
+      font-weight:700;
+      line-height:1;
+    }
+
+    .metricNote{
+      font-size:13px;
+      color:var(--muted);
+      margin-top:5px;
+    }
+
+    .toolbar{
+      display:grid;
+      grid-template-columns:150px 170px 170px 170px 1fr auto;
+      gap:10px;
+      align-items:end;
+      margin-bottom:10px;
+    }
+
+    label{
+      display:block;
+      font-size:14px;
+      font-weight:400;
+      margin-bottom:6px;
+      color:#111827;
+    }
+
+    input,
+    select{
+      width:100%;
+      padding:9px 10px;
+      border-radius:0;
+      border:1px solid #d6d3d1;
+      background:#fff;
+      font-size:14px;
+      outline:none;
+    }
+
+    input:focus,
+    select:focus{
+      border-color:#cbd5e1;
+      box-shadow:0 0 0 4px rgba(226,232,240,.7);
+    }
+
+    .actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      height:38px;
+      padding:0 14px;
+      min-width:96px;
+      border:none;
+      border-radius:4px;
+      background:var(--org);
+      color:#fff;
+      font-size:12px;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .btn:hover{
+      background:var(--orgDark);
+    }
+
+    .btn:disabled{
+      opacity:.6;
+      cursor:not-allowed;
+    }
+
+    .btn.secondary{
+      background:#fff;
+      color:#111827;
+      border:1px solid #d1d5db;
+    }
+
+    .btn.secondary:hover{
+      background:#f8fafc;
+    }
+
+    .btn img{
+      width:15px;
+      height:15px;
+      object-fit:contain;
+      filter:brightness(0) invert(1);
+    }
+
+    .tableWrap{
+      width:100%;
+      overflow:auto;
+      border:1px solid #e5e7eb;
+      background:#fff;
+    }
+
+    .tableWrap::-webkit-scrollbar{
+      height:10px;
+      width:10px;
+    }
+
+    .tableWrap::-webkit-scrollbar-thumb{
+      background:#9ca3af;
+      border-radius:20px;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:1500px;
+    }
+
+    th,
+    td{
+      padding:9px 10px;
+      border-bottom:1px solid #e5e7eb;
+      text-align:left;
+      font-size:14px;
+      vertical-align:middle;
+      white-space:nowrap;
+    }
+
+    th{
+      background:#f8fafc;
+      color:#111827;
+      font-size:13px;
+      font-weight:700;
+      position:sticky;
+      top:0;
+      z-index:10;
+    }
+
+    tr:hover td{
+      background:#f8fafc;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      padding:4px 8px;
+      border-radius:4px;
+      font-size:12px;
+      font-weight:600;
+      background:#f8fafc;
+      color:#334155;
+      border:1px solid #d9dee7;
+    }
+
+    .msgBox{
+      display:none;
+      margin-bottom:12px;
+      padding:12px;
+      border:1px solid #e5e7eb;
+      font-size:14px;
+    }
+
+    .msgBox.ok{
+      display:block;
+      color:var(--ok);
+      background:#f0fdf4;
+    }
+
+    .msgBox.error{
+      display:block;
+      color:var(--error);
+      background:#fff;
+      border-color:#fecaca;
+    }
+
+    .loadingRow{
+      color:var(--muted);
+      font-weight:700;
+    }
+
+    @media(max-width:1150px){
+      .toolbar{
+        grid-template-columns:1fr 1fr 1fr;
+      }
+
+      .summaryGrid{
+        grid-template-columns:repeat(2, 1fr);
+      }
+    }
+
+    @media(max-width:640px){
+      .wrap{
+        padding:10px;
+      }
+
+      .body{
+        padding:12px;
+      }
+
+      .cardHead{
+        padding:12px;
+      }
+
+      .summaryGrid,
+      .toolbar{
+        grid-template-columns:1fr;
+      }
+
+      .accountName,
+      .accountType{
+        max-width:130px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<header class="topbar"><div class="topbar-inner"><div class="accountLeft"><img class="accountIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt=""><div><div class="accountName">Practice Online</div><div class="accountType" id="userPill">Potential Clients</div></div></div><div class="topbarRight"><a href="employee-dashboard.html" class="iconBtn" title="Dashboard"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt=""></a><button class="menuLink" onclick="logout()">Logout</button></div></div></header>
-<div class="wrap"><div id="msg" class="msgBox"></div>
-<div class="card"><div class="cardHead"><h1>Potential Clients</h1></div><div class="body"><div class="summaryGrid"><div class="summaryBox"><div class="summaryIcon"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt=""></div><div><div class="metricLabel">Total Leads</div><div class="metricValue" id="totalCount">0</div><div class="metricNote">Registered learners</div></div></div><div class="summaryBox"><div class="summaryIcon"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654916/Approved_dbtwvt.svg" alt=""></div><div><div class="metricLabel">Students</div><div class="metricValue" id="studentCount">0</div><div class="metricNote">Student accounts</div></div></div><div class="summaryBox"><div class="summaryIcon"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781656873/edit-3_c1gjk0.svg" alt=""></div><div><div class="metricLabel">Practice Accounts</div><div class="metricValue" id="practiceCount">0</div><div class="metricNote">Quiz practice only</div></div></div><div class="summaryBox"><div class="summaryIcon"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654915/Money_lk10o6.svg" alt=""></div><div><div class="metricLabel">This Month</div><div class="metricValue" id="monthCount">0</div><div class="metricNote">New registrations</div></div></div></div></div></div>
-<div class="card"><div class="cardHead"><h2>Registered Learners</h2></div><div class="body"><div class="toolbar"><div><label>Grade</label><select id="gradeFilter"><option value="all">All grades</option><option value="8">Grade 8</option><option value="9">Grade 9</option><option value="10">Grade 10</option><option value="11">Grade 11</option><option value="12">Grade 12</option></select></div><div><label>Account Type</label><select id="typeFilter"><option value="all">All types</option><option value="student">Student</option><option value="materials">Practice Account</option></select></div><div><label>Province</label><select id="provinceFilter"><option value="all">All provinces</option></select></div><div><label>Date Filter</label><select id="dateFilter"><option value="all">All records</option><option value="today">Today</option><option value="thisWeek">This week</option><option value="lastWeek">Last week</option><option value="thisMonth">This month</option><option value="lastMonth">Last month</option><option value="thisYear">This year</option></select></div><div><label>Search</label><input id="searchBox" type="search" placeholder="Search name, email, phone, school"></div><div class="actions"><button class="btn secondary" id="refreshBtn">Refresh</button><button class="btn" id="exportBtn">Export Excel</button></div></div><div class="tableWrap"><table><thead><tr><th>No.</th><th>Status</th><th>Full Name</th><th>Username</th><th>Email</th><th>Cellphone</th><th>Guardian Cellphone</th><th>Grade</th><th>School</th><th>Province</th><th>District</th><th>Current Mark</th><th>Account Type</th><th>Registered Date</th></tr></thead><tbody id="rows"><tr><td colspan="14" class="loadingRow">Loading potential clients...</td></tr></tbody></table></div></div></div></div>
-<script>
-const API="https://api.practiceonline.co.za";let clients=[];const $=id=>document.getElementById(id);
-function token(){return localStorage.getItem("employeeToken")||localStorage.getItem("token")||""}
-function logout(){localStorage.clear();location.href="employee-login.html"}
-function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
-function show(text,type="ok"){const m=$("msg");m.textContent=text;m.className="msgBox "+type;setTimeout(()=>{m.className="msgBox"},4500)}
-async function safeJson(res){try{return await res.json()}catch{return {}}}
-async function fetchJson(path){const res=await fetch(API+path,{headers:{Authorization:"Bearer "+token()}});const data=await safeJson(res);if(!res.ok)throw new Error(data.message||"Request failed");return data}
-function asArray(data){if(Array.isArray(data))return data;return data.users||data.learners||data.clients||data.items||data.data||[]}
-async function requireEmployee(){if(!token()){location.href="employee-login.html";return null}try{const u=await fetchJson("/api/employees/me");const role=String(u.role||"").toLowerCase();const dep=String(u.department||"").toLowerCase();const allowed=["admin","tester","finance","support","operations"];if(!allowed.includes(role)&&!allowed.includes(dep)){location.href="employee-dashboard.html";return null}$("userPill").textContent=`${u.fullName||u.username||"Employee"} • Potential Clients`;return u}catch(e){console.error(e);return null}}
-function normaliseUser(u,i){return{id:String(u._id||u.id||`client-${i}`),fullName:u.fullName||[u.firstName,u.surname].filter(Boolean).join(" ")||u.username||"",username:u.username||"",email:u.email||"",cellphone:u.cellphone||u.phone||"",guardianCellphone:u.guardianCellphone||u.parentPhone||"",grade:String(u.grade||""),schoolName:u.schoolName||u.school||"",province:u.province||"",district:u.district||"",currentMarkRange:u.currentMarkRange||"",accountType:String(u.accountType||u.role||"student").toLowerCase(),createdAt:u.createdAt||u.date||u.registeredAt||""}}
-async function loadClients(showMessage=false){$("refreshBtn").disabled=true;$("refreshBtn").textContent="Loading...";try{let data;try{data=await fetchJson("/api/users?role=student")}catch(e){data=await fetchJson("/api/users")}clients=asArray(data).map(normaliseUser).filter(c=>!["admin","tester","academic","editor","operations","finance","support","tutor"].includes(c.accountType));fillProvinceFilter();renderAll();if(showMessage)show("Potential clients refreshed.")}catch(e){console.error("Could not load potential clients:",e);clients=[];renderAll()}finally{$("refreshBtn").disabled=false;$("refreshBtn").textContent="Refresh"}}
-function fillProvinceFilter(){const current=$("provinceFilter").value;const provinces=[...new Set(clients.map(c=>c.province).filter(Boolean))].sort();$("provinceFilter").innerHTML='<option value="all">All provinces</option>'+provinces.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join("");if(provinces.includes(current))$("provinceFilter").value=current}
-function formatDate(v){if(!v)return"-";const d=new Date(v);if(isNaN(d.getTime()))return esc(v);return d.toLocaleDateString("en-ZA")}
-function badge(t){return`<span class="badge">${esc(t||"Potential Client")}</span>`}
-function startOfWeek(date){const d=new Date(date);const day=d.getDay();const diff=day===0?6:day-1;d.setDate(d.getDate()-diff);d.setHours(0,0,0,0);return d}
-function passesDateFilter(row){const f=$("dateFilter").value;if(f==="all")return true;if(!row.createdAt)return false;const created=new Date(row.createdAt);if(isNaN(created.getTime()))return false;const now=new Date();const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());const week=startOfWeek(now);const lastWeek=new Date(week);lastWeek.setDate(lastWeek.getDate()-7);const month=new Date(now.getFullYear(),now.getMonth(),1);const lastMonth=new Date(now.getFullYear(),now.getMonth()-1,1);const thisMonth=new Date(now.getFullYear(),now.getMonth(),1);const nextMonth=new Date(now.getFullYear(),now.getMonth()+1,1);const year=new Date(now.getFullYear(),0,1);if(f==="today")return created>=today;if(f==="thisWeek")return created>=week;if(f==="lastWeek")return created>=lastWeek&&created<week;if(f==="thisMonth")return created>=thisMonth&&created<nextMonth;if(f==="lastMonth")return created>=lastMonth&&created<month;if(f==="thisYear")return created>=year;return true}
-function filtered(){const grade=$("gradeFilter").value,type=$("typeFilter").value,prov=$("provinceFilter").value,q=$("searchBox").value.toLowerCase().trim();return clients.filter(c=>{if(grade!=="all"&&c.grade!==grade)return false;if(type!=="all"&&c.accountType!==type)return false;if(prov!=="all"&&c.province!==prov)return false;if(!passesDateFilter(c))return false;if(q&&!Object.values(c).join(" ").toLowerCase().includes(q))return false;return true})}
-function renderSummary(){const now=new Date();$("totalCount").textContent=clients.length;$("studentCount").textContent=clients.filter(c=>c.accountType==="student").length;$("practiceCount").textContent=clients.filter(c=>c.accountType==="materials").length;$("monthCount").textContent=clients.filter(c=>{const d=new Date(c.createdAt);return !isNaN(d.getTime())&&d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()}).length}
-function renderRows(){const rows=filtered();$("rows").innerHTML=rows.length?rows.map((c,i)=>`<tr><td>${i+1}</td><td>${badge("Potential Client")}</td><td><b>${esc(c.fullName||"-")}</b></td><td>${esc(c.username||"-")}</td><td>${esc(c.email||"-")}</td><td>${esc(c.cellphone||"-")}</td><td>${esc(c.guardianCellphone||"-")}</td><td>${c.grade?"Grade "+esc(c.grade):"-"}</td><td>${esc(c.schoolName||"-")}</td><td>${esc(c.province||"-")}</td><td>${esc(c.district||"-")}</td><td>${esc(c.currentMarkRange||"-")}</td><td>${esc(c.accountType==="materials"?"Practice Account":"Student")}</td><td>${formatDate(c.createdAt)}</td></tr>`).join(""):`<tr><td colspan="14">No potential clients available.</td></tr>`}
-function renderAll(){renderSummary();renderRows()}
-function exportExcel(){const rows=filtered();if(!rows.length)return show("No potential clients to export.","error");const headers=["No","Status","Full Name","Username","Email","Cellphone","Guardian Cellphone","Grade","School","Province","District","Current Mark","Account Type","Registered Date"];const body=rows.map((c,i)=>[i+1,"Potential Client",c.fullName,c.username,c.email,c.cellphone,c.guardianCellphone,c.grade,c.schoolName,c.province,c.district,c.currentMarkRange,c.accountType,formatDate(c.createdAt)]);const table=`<table border="1"><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>${body.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table>`;const blob=new Blob([`<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`],{type:"application/vnd.ms-excel"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="potential-clients.xls";a.click();URL.revokeObjectURL(url);show("Excel file exported.")}
-$("refreshBtn").onclick=()=>loadClients(true);$("exportBtn").onclick=exportExcel;["gradeFilter","typeFilter","provinceFilter","dateFilter"].forEach(id=>$(id).onchange=renderAll);$("searchBox").oninput=renderAll;document.addEventListener("DOMContentLoaded",()=>{renderAll();requireEmployee().then(u=>{if(u)loadClients(false)})});
-</script>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="accountLeft">
+        <img
+          class="accountIcon"
+          src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
+          alt=""
+        >
+
+        <div>
+          <div class="accountName">Practice Online</div>
+          <div class="accountType" id="userPill">Potential Clients</div>
+        </div>
+      </div>
+
+      <div class="topbarRight">
+        <a href="employee-dashboard.html" class="iconBtn" title="Dashboard">
+          <img
+            src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg"
+            alt=""
+          >
+        </a>
+
+        <button class="menuLink" onclick="logout()">
+          Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div id="msg" class="msgBox"></div>
+
+    <section class="card">
+      <div class="cardHead">
+        <h1>Potential Clients</h1>
+      </div>
+
+      <div class="body">
+        <div class="summaryGrid">
+          <div class="summaryBox">
+            <div class="summaryIcon">
+              <img
+                src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781823450/client_qxhpzm.svg"
+                alt=""
+              >
+            </div>
+
+            <div>
+              <div class="metricLabel">Total Leads</div>
+              <div class="metricValue" id="totalCount">0</div>
+              <div class="metricNote">Registered learners</div>
+            </div>
+          </div>
+
+          <div class="summaryBox">
+            <div class="summaryIcon">
+              <img
+                src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654916/Approved_dbtwvt.svg"
+                alt=""
+              >
+            </div>
+
+            <div>
+              <div class="metricLabel">Students</div>
+              <div class="metricValue" id="studentCount">0</div>
+              <div class="metricNote">Student accounts</div>
+            </div>
+          </div>
+
+          <div class="summaryBox">
+            <div class="summaryIcon">
+              <img
+                src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781656873/edit-3_c1gjk0.svg"
+                alt=""
+              >
+            </div>
+
+            <div>
+              <div class="metricLabel">Practice Accounts</div>
+              <div class="metricValue" id="practiceCount">0</div>
+              <div class="metricNote">Quiz practice only</div>
+            </div>
+          </div>
+
+          <div class="summaryBox">
+            <div class="summaryIcon">
+              <img
+                src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654915/Money_lk10o6.svg"
+                alt=""
+              >
+            </div>
+
+            <div>
+              <div class="metricLabel">This Month</div>
+              <div class="metricValue" id="monthCount">0</div>
+              <div class="metricNote">New registrations</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="cardHead">
+        <h2>Registered Learners</h2>
+      </div>
+
+      <div class="body">
+        <div class="toolbar">
+          <div>
+            <label>Grade</label>
+            <select id="gradeFilter">
+              <option value="all">All grades</option>
+              <option value="8">Grade 8</option>
+              <option value="9">Grade 9</option>
+              <option value="10">Grade 10</option>
+              <option value="11">Grade 11</option>
+              <option value="12">Grade 12</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Account Type</label>
+            <select id="typeFilter">
+              <option value="all">All types</option>
+              <option value="student">Student</option>
+              <option value="materials">Practice Account</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Province</label>
+            <select id="provinceFilter">
+              <option value="all">All provinces</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Date Filter</label>
+            <select id="dateFilter">
+              <option value="all">All records</option>
+              <option value="today">Today</option>
+              <option value="thisWeek">This week</option>
+              <option value="lastWeek">Last week</option>
+              <option value="thisMonth">This month</option>
+              <option value="lastMonth">Last month</option>
+              <option value="thisYear">This year</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Search</label>
+            <input
+              id="searchBox"
+              type="search"
+              placeholder="Search name, email, phone, school"
+            >
+          </div>
+
+          <div class="actions">
+            <button class="btn secondary" id="refreshBtn">
+              Refresh
+            </button>
+
+            <button class="btn" id="exportBtn">
+              Export Excel
+            </button>
+          </div>
+        </div>
+
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Status</th>
+                <th>Full Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Cellphone</th>
+                <th>Guardian Cellphone</th>
+                <th>Grade</th>
+                <th>School</th>
+                <th>Province</th>
+                <th>District</th>
+                <th>Current Mark</th>
+                <th>Account Type</th>
+                <th>Learner Number</th>
+                <th>Registered Date</th>
+              </tr>
+            </thead>
+
+            <tbody id="rows">
+              <tr>
+                <td colspan="15" class="loadingRow">
+                  Loading potential clients...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API = "https://api.practiceonline.co.za";
+
+    let clients = [];
+
+    const $ = id => document.getElementById(id);
+
+    function token(){
+      return localStorage.getItem("employeeToken") || localStorage.getItem("token") || "";
+    }
+
+    function logout(){
+      localStorage.clear();
+      location.href = "employee-login.html";
+    }
+
+    function esc(value){
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function show(message, type = "ok"){
+      const box = $("msg");
+      box.textContent = message;
+      box.className = "msgBox " + type;
+
+      setTimeout(() => {
+        box.className = "msgBox";
+      }, 4500);
+    }
+
+    async function safeJson(response){
+      try{
+        return await response.json();
+      }catch{
+        return {};
+      }
+    }
+
+    async function fetchJson(path){
+      const response = await fetch(API + path, {
+        headers:{
+          Authorization:"Bearer " + token()
+        }
+      });
+
+      const data = await safeJson(response);
+
+      if(!response.ok){
+        throw new Error(data.message || "Request failed");
+      }
+
+      return data;
+    }
+
+    function asArray(data){
+      if(Array.isArray(data)) return data;
+      return data.users || data.learners || data.clients || data.items || data.data || [];
+    }
+
+    async function requireEmployee(){
+      if(!token()){
+        location.href = "employee-login.html";
+        return null;
+      }
+
+      try{
+        const user = await fetchJson("/api/employees/me");
+        const role = String(user.role || "").toLowerCase();
+        const department = String(user.department || "").toLowerCase();
+
+        const allowed = ["admin", "tester", "finance", "support", "operations"];
+
+        if(!allowed.includes(role) && !allowed.includes(department)){
+          location.href = "employee-dashboard.html";
+          return null;
+        }
+
+        $("userPill").textContent = `${user.fullName || user.username || "Employee"} • Potential Clients`;
+        return user;
+
+      }catch(error){
+        console.error(error);
+        return null;
+      }
+    }
+
+    function normaliseUser(user, index){
+      return {
+        id:String(user._id || user.id || "client-" + index),
+        fullName:user.fullName || [user.firstName, user.surname].filter(Boolean).join(" ") || user.username || "",
+        username:user.username || "",
+        email:user.email || "",
+        cellphone:user.cellphone || user.phone || "",
+        guardianCellphone:user.guardianCellphone || user.parentPhone || "",
+        grade:String(user.grade || ""),
+        schoolName:user.schoolName || user.school || "",
+        province:user.province || "",
+        district:user.district || "",
+        currentMarkRange:user.currentMarkRange || "",
+        accountType:String(user.accountType || "student").toLowerCase(),
+        learnerNumber:user.learnerNumber || user.studentNumber || "",
+        createdAt:user.createdAt || user.date || user.registeredAt || ""
+      };
+    }
+
+    async function loadClients(showMessage = false){
+      $("refreshBtn").disabled = true;
+      $("refreshBtn").textContent = "Loading...";
+
+      try{
+        const data = await fetchJson("/api/finance/potential-clients");
+
+        clients = asArray(data)
+          .map(normaliseUser)
+          .filter(client => ["student", "materials"].includes(client.accountType));
+
+        fillProvinceFilter();
+        renderAll();
+
+        if(showMessage){
+          show("Potential clients refreshed.");
+        }
+
+      }catch(error){
+        console.error("Could not load potential clients:", error);
+        clients = [];
+        renderAll();
+        show("Could not load potential clients. Please check the backend route.", "error");
+
+      }finally{
+        $("refreshBtn").disabled = false;
+        $("refreshBtn").textContent = "Refresh";
+      }
+    }
+
+    function fillProvinceFilter(){
+      const current = $("provinceFilter").value;
+      const provinces = [...new Set(clients.map(client => client.province).filter(Boolean))].sort();
+
+      $("provinceFilter").innerHTML =
+        '<option value="all">All provinces</option>' +
+        provinces.map(province => `<option value="${esc(province)}">${esc(province)}</option>`).join("");
+
+      if(provinces.includes(current)){
+        $("provinceFilter").value = current;
+      }
+    }
+
+    function formatDate(value){
+      if(!value) return "-";
+
+      const date = new Date(value);
+      if(isNaN(date.getTime())) return esc(value);
+
+      return date.toLocaleDateString("en-ZA");
+    }
+
+    function badge(text){
+      return `<span class="badge">${esc(text || "Potential Client")}</span>`;
+    }
+
+    function startOfWeek(date){
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = day === 0 ? 6 : day - 1;
+
+      d.setDate(d.getDate() - diff);
+      d.setHours(0, 0, 0, 0);
+
+      return d;
+    }
+
+    function passesDateFilter(row){
+      const filter = $("dateFilter").value;
+
+      if(filter === "all") return true;
+      if(!row.createdAt) return false;
+
+      const created = new Date(row.createdAt);
+      if(isNaN(created.getTime())) return false;
+
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const week = startOfWeek(now);
+      const lastWeek = new Date(week);
+      const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const year = new Date(now.getFullYear(), 0, 1);
+
+      lastWeek.setDate(lastWeek.getDate() - 7);
+
+      if(filter === "today") return created >= today;
+      if(filter === "thisWeek") return created >= week;
+      if(filter === "lastWeek") return created >= lastWeek && created < week;
+      if(filter === "thisMonth") return created >= thisMonth && created < nextMonth;
+      if(filter === "lastMonth") return created >= lastMonth && created < thisMonth;
+      if(filter === "thisYear") return created >= year;
+
+      return true;
+    }
+
+    function filtered(){
+      const grade = $("gradeFilter").value;
+      const type = $("typeFilter").value;
+      const province = $("provinceFilter").value;
+      const search = $("searchBox").value.toLowerCase().trim();
+
+      return clients.filter(client => {
+        if(grade !== "all" && client.grade !== grade) return false;
+        if(type !== "all" && client.accountType !== type) return false;
+        if(province !== "all" && client.province !== province) return false;
+        if(!passesDateFilter(client)) return false;
+
+        if(search && !Object.values(client).join(" ").toLowerCase().includes(search)){
+          return false;
+        }
+
+        return true;
+      });
+    }
+
+    function renderSummary(){
+      const now = new Date();
+
+      $("totalCount").textContent = clients.length;
+      $("studentCount").textContent = clients.filter(client => client.accountType === "student").length;
+      $("practiceCount").textContent = clients.filter(client => client.accountType === "materials").length;
+
+      $("monthCount").textContent = clients.filter(client => {
+        const date = new Date(client.createdAt);
+
+        return !isNaN(date.getTime()) &&
+          date.getFullYear() === now.getFullYear() &&
+          date.getMonth() === now.getMonth();
+      }).length;
+    }
+
+    function renderRows(){
+      const rows = filtered();
+
+      if(!rows.length){
+        $("rows").innerHTML = `<tr><td colspan="15">No potential clients available.</td></tr>`;
+        return;
+      }
+
+      $("rows").innerHTML = rows.map((client, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${badge("Potential Client")}</td>
+          <td><b>${esc(client.fullName || "-")}</b></td>
+          <td>${esc(client.username || "-")}</td>
+          <td>${esc(client.email || "-")}</td>
+          <td>${esc(client.cellphone || "-")}</td>
+          <td>${esc(client.guardianCellphone || "-")}</td>
+          <td>${client.grade ? "Grade " + esc(client.grade) : "-"}</td>
+          <td>${esc(client.schoolName || "-")}</td>
+          <td>${esc(client.province || "-")}</td>
+          <td>${esc(client.district || "-")}</td>
+          <td>${esc(client.currentMarkRange || "-")}</td>
+          <td>${esc(client.accountType === "materials" ? "Practice Account" : "Student")}</td>
+          <td>${esc(client.learnerNumber || "-")}</td>
+          <td>${formatDate(client.createdAt)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderAll(){
+      renderSummary();
+      renderRows();
+    }
+
+    function exportExcel(){
+      const rows = filtered();
+
+      if(!rows.length){
+        return show("No potential clients to export.", "error");
+      }
+
+      const headers = [
+        "No",
+        "Status",
+        "Full Name",
+        "Username",
+        "Email",
+        "Cellphone",
+        "Guardian Cellphone",
+        "Grade",
+        "School",
+        "Province",
+        "District",
+        "Current Mark",
+        "Account Type",
+        "Learner Number",
+        "Registered Date"
+      ];
+
+      const body = rows.map((client, index) => [
+        index + 1,
+        "Potential Client",
+        client.fullName,
+        client.username,
+        client.email,
+        client.cellphone,
+        client.guardianCellphone,
+        client.grade,
+        client.schoolName,
+        client.province,
+        client.district,
+        client.currentMarkRange,
+        client.accountType === "materials" ? "Practice Account" : "Student",
+        client.learnerNumber,
+        formatDate(client.createdAt)
+      ]);
+
+      const table = `
+        <table border="1">
+          <tr>${headers.map(header => `<th>${esc(header)}</th>`).join("")}</tr>
+          ${body.map(row => `<tr>${row.map(cell => `<td>${esc(cell)}</td>`).join("")}</tr>`).join("")}
+        </table>
+      `;
+
+      const blob = new Blob([
+        `<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`
+      ], {
+        type:"application/vnd.ms-excel"
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "potential-clients.xls";
+      link.click();
+
+      URL.revokeObjectURL(url);
+      show("Excel file exported.");
+    }
+
+    $("refreshBtn").onclick = () => loadClients(true);
+    $("exportBtn").onclick = exportExcel;
+
+    ["gradeFilter", "typeFilter", "provinceFilter", "dateFilter"].forEach(id => {
+      $(id).onchange = renderAll;
+    });
+
+    $("searchBox").oninput = renderAll;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderAll();
+
+      requireEmployee().then(user => {
+        if(user){
+          loadClients(false);
+        }
+      });
+    });
+  </script>
 </body>
 </html>
