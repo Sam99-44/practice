@@ -594,6 +594,30 @@ async function quizManagerOnly(req, res, next) {
     res.status(500).json({ message: "Server error" });
   }
 }
+/* ------------------ POTENTIAL CLIENTS ------------------ */
+
+app.get("/api/finance/potential-clients", authRequired, async (req, res) => {
+  try {
+    const users = await User.find({
+      role: "learner",
+      accountType: { $in: ["student", "materials"] }
+    })
+      .select(
+        "fullName username email cellphone guardianCellphone grade province district accountType learnerNumber createdAt"
+      )
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.json(users);
+
+  } catch (error) {
+    console.error("Potential clients error:", error);
+
+    return res.status(500).json({
+      message: "Could not load potential clients."
+    });
+  }
+});
 
 /* ------------------ PUBLISH HELPERS ------------------ */
 async function sendPublishedQuizEmails(quiz) {
