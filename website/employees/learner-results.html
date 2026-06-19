@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learner Results | Practice Online</title>
+
+<style>
+:root{
+  --nav:#1b1648;
+  --blue:#0b3c5d;
+  --blueDark:#082f49;
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --border:#d9dee7;
+  --text:#0f172a;
+  --muted:#475569;
+  --red:#e11d2e;
+  --green:#166534;
+  --orange:#b45309;
+}
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"Times New Roman", Times, serif;
+}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+
+button,input,select{
+  font-family:"Times New Roman", Times, serif;
+}
+
+.topbar{
+  background:var(--nav);
+  color:#fff;
+  min-height:66px;
+  padding:12px 22px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  position:sticky;
+  top:0;
+  z-index:20;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.brandIcon{
+  width:40px;
+  height:40px;
+  object-fit:contain;
+  filter:brightness(0) invert(1);
+}
+
+.brand h2{
+  font-size:17px;
+  line-height:1.1;
+}
+
+.brand p{
+  font-size:13px;
+  color:#dbeafe;
+  margin-top:2px;
+}
+
+.topActions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.accountBox{
+  border:1px solid rgba(255,255,255,.25);
+  padding:7px 10px;
+  font-size:13px;
+  color:#fff;
+  background:rgba(255,255,255,.08);
+}
+
+.page{
+  padding:22px;
+}
+
+.headerCard{
+  background:#fff;
+  border:1px solid var(--border);
+  padding:18px;
+  display:flex;
+  justify-content:space-between;
+  gap:18px;
+  align-items:flex-start;
+  margin-bottom:16px;
+}
+
+.headerLeft{
+  display:flex;
+  gap:14px;
+  align-items:center;
+}
+
+.headerIcon{
+  width:52px;
+  height:52px;
+  object-fit:contain;
+}
+
+.headerCard h1{
+  font-size:24px;
+  color:#0f172a;
+  margin-bottom:4px;
+}
+
+.headerCard p{
+  color:var(--muted);
+  font-size:14px;
+}
+
+.headerButtons{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.btn{
+  border:1px solid var(--blue);
+  background:var(--blue);
+  color:#fff;
+  padding:10px 13px;
+  min-height:39px;
+  cursor:pointer;
+  font-size:14px;
+  font-weight:700;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  text-decoration:none;
+  border-radius:0;
+}
+
+.btn:hover{
+  background:var(--blueDark);
+}
+
+.btn.secondary{
+  background:#fff;
+  color:var(--blue);
+}
+
+.btn.secondary:hover{
+  background:#eef6fb;
+}
+
+.btn.red{
+  background:var(--red);
+  border-color:var(--red);
+}
+
+.btn.red:hover{
+  background:#b91c1c;
+}
+
+.btn.small{
+  padding:7px 10px;
+  min-height:33px;
+  font-size:13px;
+}
+
+.btn img{
+  width:17px;
+  height:17px;
+  object-fit:contain;
+}
+
+.btn:not(.secondary) img{
+  filter:brightness(0) invert(1);
+}
+
+.statsGrid{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:12px;
+  margin-bottom:16px;
+}
+
+.statCard{
+  background:#fff;
+  border:1px solid var(--border);
+  padding:15px;
+}
+
+.statCard span{
+  display:block;
+  color:var(--muted);
+  font-size:13px;
+  margin-bottom:7px;
+}
+
+.statCard strong{
+  font-size:22px;
+  color:#0f172a;
+}
+
+.filtersCard{
+  background:#fff;
+  border:1px solid var(--border);
+  padding:16px;
+  margin-bottom:16px;
+}
+
+.filtersTop{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+  align-items:center;
+}
+
+.filtersTop h3{
+  font-size:17px;
+  color:#0f172a;
+}
+
+.filterGrid{
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;
+  gap:10px;
+}
+
+.filterGrid.second{
+  grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;
+  margin-top:10px;
+}
+
+.field label{
+  display:block;
+  font-size:13px;
+  font-weight:700;
+  margin-bottom:6px;
+  color:#111827;
+}
+
+input,select{
+  width:100%;
+  height:39px;
+  border:1px solid var(--border);
+  border-radius:0;
+  background:#fff;
+  color:#0f172a;
+  padding:0 10px;
+  font-size:14px;
+}
+
+input:focus,select:focus{
+  outline:none;
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(11,60,93,.08);
+}
+
+.tableCard{
+  background:#fff;
+  border:1px solid var(--border);
+  overflow:hidden;
+}
+
+.tableHeader{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+}
+
+.tableHeader h3{
+  font-size:17px;
+}
+
+.tableHeader p{
+  color:var(--muted);
+  font-size:13px;
+  margin-top:3px;
+}
+
+.tableWrap{
+  overflow:auto;
+  width:100%;
+}
+
+table{
+  border-collapse:collapse;
+  width:100%;
+  min-width:1480px;
+}
+
+th,td{
+  border-bottom:1px solid var(--border);
+  text-align:left;
+  padding:11px 10px;
+  font-size:13px;
+  vertical-align:middle;
+  white-space:nowrap;
+}
+
+th{
+  background:#f8fafc;
+  color:#111827;
+  font-weight:700;
+  position:sticky;
+  top:0;
+  z-index:5;
+}
+
+tr:hover td{
+  background:#fbfdff;
+}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--blue);
+  color:#fff;
+  padding:5px 8px;
+  font-size:12px;
+  font-weight:700;
+  border-radius:0;
+}
+
+.badge.pass{
+  background:var(--green);
+}
+
+.badge.fail{
+  background:var(--red);
+}
+
+.badge.orange{
+  background:var(--orange);
+}
+
+.percentCell{
+  font-weight:700;
+  color:#0f172a;
+}
+
+.emptyState{
+  display:none;
+  padding:28px;
+  text-align:center;
+  color:var(--muted);
+  border-top:1px solid var(--border);
+}
+
+.loadingBar{
+  display:none;
+  padding:10px 16px;
+  background:#eef6fb;
+  border-bottom:1px solid var(--border);
+  color:var(--blue);
+  font-weight:700;
+  font-size:14px;
+}
+
+.toast{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  background:#0f172a;
+  color:#fff;
+  padding:12px 14px;
+  display:none;
+  z-index:80;
+  border:1px solid rgba(255,255,255,.2);
+  font-size:14px;
+  max-width:360px;
+}
+
+.modalOverlay{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.55);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:70;
+  padding:18px;
+}
+
+.modal{
+  width:100%;
+  max-width:850px;
+  background:#fff;
+  border:1px solid var(--border);
+  max-height:88vh;
+  overflow:auto;
+}
+
+.modalHeader{
+  padding:15px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+}
+
+.modalHeader h3{
+  font-size:18px;
+}
+
+.modalBody{
+  padding:16px;
+}
+
+.detailGrid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-bottom:15px;
+}
+
+.detailItem{
+  border:1px solid var(--border);
+  padding:10px;
+  background:#f8fafc;
+}
+
+.detailItem span{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  margin-bottom:4px;
+}
+
+.detailItem strong{
+  font-size:14px;
+}
+
+@media(max-width:1200px){
+  .statsGrid{grid-template-columns:repeat(3,1fr)}
+  .filterGrid,.filterGrid.second{grid-template-columns:repeat(3,1fr)}
+}
+
+@media(max-width:760px){
+  .topbar,.headerCard,.filtersTop,.tableHeader{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+  .page{padding:14px}
+  .statsGrid{grid-template-columns:repeat(2,1fr)}
+  .filterGrid,.filterGrid.second{grid-template-columns:1fr}
+  .headerButtons,.topActions{width:100%}
+  .btn{width:100%}
+  .detailGrid{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+<header class="topbar">
+  <div class="brand">
+    <img class="brandIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="">
+    <div>
+      <h2>Practice Online</h2>
+      <p>Learner Results Admin</p>
+    </div>
+  </div>
+
+  <div class="topActions">
+    <div class="accountBox" id="accountBox">Employee Portal</div>
+    <a class="btn secondary small" href="finance-admin.html">Finance Admin</a>
+    <a class="btn secondary small" href="potential-clients.html">Potential Clients</a>
+  </div>
+</header>
+
+<main class="page">
+  <section class="headerCard">
+    <div class="headerLeft">
+      <img class="headerIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781823450/client_qxhpzm.svg" alt="">
+      <div>
+        <h1>Learner Results</h1>
+        <p>View every learner submission, filter results, and export data for analysis.</p>
+      </div>
+    </div>
+
+    <div class="headerButtons">
+      <button class="btn secondary" id="refreshBtn">Refresh</button>
+      <button class="btn secondary" id="printBtn">Print</button>
+      <button class="btn" id="exportFilteredBtn">Export Filtered CSV</button>
+      <button class="btn" id="exportAllBtn">Export All CSV</button>
+    </div>
+  </section>
+
+  <section class="statsGrid">
+    <div class="statCard">
+      <span>Total Submissions</span>
+      <strong id="statTotal">0</strong>
+    </div>
+    <div class="statCard">
+      <span>Average Score</span>
+      <strong id="statAverage">0%</strong>
+    </div>
+    <div class="statCard">
+      <span>Pass Rate</span>
+      <strong id="statPassRate">0%</strong>
+    </div>
+    <div class="statCard">
+      <span>Highest Score</span>
+      <strong id="statHighest">0%</strong>
+    </div>
+    <div class="statCard">
+      <span>Top Province</span>
+      <strong id="statProvince">-</strong>
+    </div>
+    <div class="statCard">
+      <span>Top District</span>
+      <strong id="statDistrict">-</strong>
+    </div>
+  </section>
+
+  <section class="filtersCard">
+    <div class="filtersTop">
+      <h3>Filters</h3>
+      <button class="btn secondary small" id="clearFiltersBtn">Clear Filters</button>
+    </div>
+
+    <div class="filterGrid">
+      <div class="field">
+        <label>Search</label>
+        <input id="searchInput" type="text" placeholder="Search name, email, learner number, quiz, topic">
+      </div>
+      <div class="field">
+        <label>Grade</label>
+        <select id="gradeFilter">
+          <option value="">All Grades</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Province</label>
+        <select id="provinceFilter">
+          <option value="">All Provinces</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>District</label>
+        <select id="districtFilter">
+          <option value="">All Districts</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Learner Number</label>
+        <input id="learnerNoFilter" type="text" placeholder="PO26xxxxx">
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="statusFilter">
+          <option value="">All</option>
+          <option value="PASS">PASS</option>
+          <option value="FAIL">FAIL</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filterGrid second">
+      <div class="field">
+        <label>Quiz Title</label>
+        <select id="quizFilter">
+          <option value="">All Quizzes</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Topic</label>
+        <select id="topicFilter">
+          <option value="">All Topics</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Date Period</label>
+        <select id="datePreset">
+          <option value="">All Dates</option>
+          <option value="today">Today</option>
+          <option value="thisWeek">This Week</option>
+          <option value="lastWeek">Last Week</option>
+          <option value="thisMonth">This Month</option>
+          <option value="lastMonth">Last Month</option>
+          <option value="custom">Custom Range</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>From Date</label>
+        <input id="fromDate" type="date">
+      </div>
+      <div class="field">
+        <label>To Date</label>
+        <input id="toDate" type="date">
+      </div>
+      <div class="field">
+        <label>Minimum %</label>
+        <input id="minPercent" type="number" min="0" max="100" placeholder="0">
+      </div>
+    </div>
+  </section>
+
+  <section class="tableCard">
+    <div class="tableHeader">
+      <div>
+        <h3>Submissions</h3>
+        <p id="tableSummary">Showing 0 submissions</p>
+      </div>
+      <div>
+        <button class="btn secondary small" id="sortRecentBtn">Sort Recent</button>
+        <button class="btn secondary small" id="sortHighestBtn">Sort Highest</button>
+      </div>
+    </div>
+
+    <div class="loadingBar" id="loadingBar">Loading learner results...</div>
+
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Learner Name</th>
+            <th>Learner No.</th>
+            <th>Email</th>
+            <th>Grade</th>
+            <th>Province</th>
+            <th>District</th>
+            <th>Quiz Title</th>
+            <th>Topic</th>
+            <th>Score</th>
+            <th>Total</th>
+            <th>%</th>
+            <th>Status</th>
+            <th>Time Taken</th>
+            <th>Submitted</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+
+    <div class="emptyState" id="emptyState">No learner results found.</div>
+  </section>
+</main>
+
+<div class="modalOverlay" id="detailsModal">
+  <div class="modal">
+    <div class="modalHeader">
+      <h3>Submission Details</h3>
+      <button class="btn secondary small" id="closeModalBtn">Close</button>
+    </div>
+    <div class="modalBody" id="detailsBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = "https://api.practiceonline.co.za";
+
+const $ = (id) => document.getElementById(id);
+
+let allResults = [];
+let filteredResults = [];
+let currentSort = "recent";
+
+const token = localStorage.getItem("employeeToken") || localStorage.getItem("token") || "";
+const employeeRaw = localStorage.getItem("employeeUser") || localStorage.getItem("employee") || "{}";
+let employee = {};
+try{ employee = JSON.parse(employeeRaw); }catch(e){ employee = {}; }
+
+function toast(message){
+  const box = $("toast");
+  box.textContent = message;
+  box.style.display = "block";
+  setTimeout(()=>box.style.display="none", 3500);
+}
+
+function authHeaders(){
+  return {
+    "Content-Type":"application/json",
+    "Authorization":"Bearer " + token
+  };
+}
+
+function safeText(value){
+  return String(value ?? "").replace(/[&<>"]/g, (s)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[s]));
+}
+
+function formatDate(value){
+  if(!value) return "";
+  const d = new Date(value);
+  if(isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-ZA", {year:"numeric", month:"short", day:"2-digit"}) + " " +
+    d.toLocaleTimeString("en-ZA", {hour:"2-digit", minute:"2-digit"});
+}
+
+function formatDateOnlyInput(date){
+  const y = date.getFullYear();
+  const m = String(date.getMonth()+1).padStart(2,"0");
+  const d = String(date.getDate()).padStart(2,"0");
+  return `${y}-${m}-${d}`;
+}
+
+function formatTime(seconds){
+  const s = Number(seconds || 0);
+  const mins = Math.floor(s / 60);
+  const secs = s % 60;
+  if(mins <= 0) return secs + "s";
+  return mins + "m " + secs + "s";
+}
+
+function number(value){
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function uniqueValues(field){
+  return [...new Set(allResults.map(r => String(r[field] || "").trim()).filter(Boolean))]
+    .sort((a,b)=>a.localeCompare(b));
+}
+
+function setOptions(selectId, values, firstText){
+  const select = $(selectId);
+  const current = select.value;
+  select.innerHTML = `<option value="">${firstText}</option>`;
+  values.forEach(v => {
+    const opt = document.createElement("option");
+    opt.value = v;
+    opt.textContent = v;
+    select.appendChild(opt);
+  });
+  if(values.includes(current)) select.value = current;
+}
+
+function getDateRange(){
+  const preset = $("datePreset").value;
+  const now = new Date();
+  let start = null;
+  let end = null;
+
+  if(preset === "today"){
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  }
+
+  if(preset === "thisWeek"){
+    const day = now.getDay();
+    const diff = day === 0 ? 6 : day - 1;
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diff);
+    end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  }
+
+  if(preset === "lastWeek"){
+    const day = now.getDay();
+    const diff = day === 0 ? 6 : day - 1;
+    const mondayThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diff);
+    start = new Date(mondayThisWeek);
+    start.setDate(start.getDate() - 7);
+    end = new Date(mondayThisWeek);
+  }
+
+  if(preset === "thisMonth"){
+    start = new Date(now.getFullYear(), now.getMonth(), 1);
+    end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  }
+
+  if(preset === "lastMonth"){
+    start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    end = new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+
+  if(preset === "custom"){
+    const from = $("fromDate").value;
+    const to = $("toDate").value;
+    if(from) start = new Date(from + "T00:00:00");
+    if(to) end = new Date(to + "T23:59:59");
+  }
+
+  return {start, end};
+}
+
+async function loadResults(){
+  if(!token){
+    toast("Please login as an employee first.");
+    return;
+  }
+
+  $("loadingBar").style.display = "block";
+  $("emptyState").style.display = "none";
+
+  try{
+    const res = await fetch(API + "/api/admin/learner-results", {
+      method:"GET",
+      headers:authHeaders()
+    });
+
+    const data = await res.json().catch(()=>[]);
+
+    if(!res.ok){
+      throw new Error(data.message || "Could not load learner results.");
+    }
+
+    allResults = Array.isArray(data) ? data : [];
+    populateFilters();
+    applyFilters();
+    toast("Learner results loaded.");
+  }catch(error){
+    console.error(error);
+    toast(error.message || "Could not load learner results.");
+  }finally{
+    $("loadingBar").style.display = "none";
+  }
+}
+
+function populateFilters(){
+  setOptions("gradeFilter", uniqueValues("grade").sort((a,b)=>Number(a)-Number(b)), "All Grades");
+  setOptions("provinceFilter", uniqueValues("province"), "All Provinces");
+  setOptions("districtFilter", uniqueValues("district"), "All Districts");
+  setOptions("quizFilter", uniqueValues("quizTitle"), "All Quizzes");
+  setOptions("topicFilter", uniqueValues("topic"), "All Topics");
+}
+
+function applyFilters(){
+  const search = $("searchInput").value.trim().toLowerCase();
+  const grade = $("gradeFilter").value;
+  const province = $("provinceFilter").value;
+  const district = $("districtFilter").value;
+  const learnerNo = $("learnerNoFilter").value.trim().toLowerCase();
+  const status = $("statusFilter").value;
+  const quiz = $("quizFilter").value;
+  const topic = $("topicFilter").value;
+  const minPercent = Number($("minPercent").value || "");
+  const hasMinPercent = $("minPercent").value !== "";
+  const {start, end} = getDateRange();
+
+  filteredResults = allResults.filter(row => {
+    const haystack = [
+      row.learnerName,
+      row.username,
+      row.email,
+      row.learnerNumber,
+      row.grade,
+      row.province,
+      row.district,
+      row.quizTitle,
+      row.topic,
+      row.status
+    ].join(" ").toLowerCase();
+
+    if(search && !haystack.includes(search)) return false;
+    if(grade && String(row.grade) !== String(grade)) return false;
+    if(province && String(row.province) !== String(province)) return false;
+    if(district && String(row.district) !== String(district)) return false;
+    if(learnerNo && !String(row.learnerNumber || "").toLowerCase().includes(learnerNo)) return false;
+    if(status && String(row.status) !== String(status)) return false;
+    if(quiz && String(row.quizTitle) !== String(quiz)) return false;
+    if(topic && String(row.topic) !== String(topic)) return false;
+    if(hasMinPercent && number(row.percent) < minPercent) return false;
+
+    const submitted = row.submittedAt ? new Date(row.submittedAt) : null;
+    if(start && (!submitted || submitted < start)) return false;
+    if(end && (!submitted || submitted > end)) return false;
+
+    return true;
+  });
+
+  sortResults();
+  renderTable();
+  renderStats();
+}
+
+function sortResults(){
+  if(currentSort === "highest"){
+    filteredResults.sort((a,b)=>number(b.percent)-number(a.percent));
+  }else{
+    filteredResults.sort((a,b)=>new Date(b.submittedAt || 0)-new Date(a.submittedAt || 0));
+  }
+}
+
+function renderStats(){
+  const total = filteredResults.length;
+  const avg = total ? Math.round(filteredResults.reduce((s,r)=>s+number(r.percent),0)/total) : 0;
+  const passCount = filteredResults.filter(r => String(r.status).toUpperCase() === "PASS").length;
+  const passRate = total ? Math.round((passCount/total)*100) : 0;
+  const highest = total ? Math.round(Math.max(...filteredResults.map(r=>number(r.percent)))) : 0;
+
+  $("statTotal").textContent = total;
+  $("statAverage").textContent = avg + "%";
+  $("statPassRate").textContent = passRate + "%";
+  $("statHighest").textContent = highest + "%";
+  $("statProvince").textContent = topValue("province") || "-";
+  $("statDistrict").textContent = topValue("district") || "-";
+}
+
+function topValue(field){
+  const counts = {};
+  filteredResults.forEach(r => {
+    const value = String(r[field] || "").trim();
+    if(!value) return;
+    counts[value] = (counts[value] || 0) + 1;
+  });
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0] || "";
+}
+
+function renderTable(){
+  const body = $("resultsBody");
+  body.innerHTML = "";
+
+  $("tableSummary").textContent = `Showing ${filteredResults.length} of ${allResults.length} submissions`;
+  $("emptyState").style.display = filteredResults.length ? "none" : "block";
+
+  filteredResults.forEach((row, index) => {
+    const tr = document.createElement("tr");
+    const statusClass = String(row.status).toUpperCase() === "PASS" ? "pass" : "fail";
+
+    tr.innerHTML = `
+      <td>${index + 1}</td>
+      <td><strong>${safeText(row.learnerName || row.username || "-")}</strong></td>
+      <td>${safeText(row.learnerNumber || "-")}</td>
+      <td>${safeText(row.email || "-")}</td>
+      <td><span class="badge">Grade ${safeText(row.grade || "-")}</span></td>
+      <td>${safeText(row.province || "-")}</td>
+      <td>${safeText(row.district || "-")}</td>
+      <td>${safeText(row.quizTitle || "Assessment")}</td>
+      <td>${safeText(row.topic || "General")}</td>
+      <td>${safeText(row.score ?? 0)}</td>
+      <td>${safeText(row.total ?? 0)}</td>
+      <td class="percentCell">${Math.round(number(row.percent))}%</td>
+      <td><span class="badge ${statusClass}">${safeText(row.status || "-")}</span></td>
+      <td>${formatTime(row.timeTakenSeconds)}</td>
+      <td>${formatDate(row.submittedAt)}</td>
+      <td><button class="btn secondary small" data-view="${safeText(row._id)}">View</button></td>
+    `;
+
+    body.appendChild(tr);
+  });
+
+  body.querySelectorAll("[data-view]").forEach(btn => {
+    btn.addEventListener("click", () => openDetails(btn.getAttribute("data-view")));
+  });
+}
+
+function openDetails(id){
+  const row = allResults.find(r => String(r._id) === String(id));
+  if(!row) return;
+
+  $("detailsBody").innerHTML = `
+    <div class="detailGrid">
+      <div class="detailItem"><span>Learner</span><strong>${safeText(row.learnerName || row.username || "-")}</strong></div>
+      <div class="detailItem"><span>Learner Number</span><strong>${safeText(row.learnerNumber || "-")}</strong></div>
+      <div class="detailItem"><span>Email</span><strong>${safeText(row.email || "-")}</strong></div>
+      <div class="detailItem"><span>Grade</span><strong>${safeText(row.grade || "-")}</strong></div>
+      <div class="detailItem"><span>Province</span><strong>${safeText(row.province || "-")}</strong></div>
+      <div class="detailItem"><span>District</span><strong>${safeText(row.district || "-")}</strong></div>
+      <div class="detailItem"><span>Quiz Title</span><strong>${safeText(row.quizTitle || "Assessment")}</strong></div>
+      <div class="detailItem"><span>Topic</span><strong>${safeText(row.topic || "General")}</strong></div>
+      <div class="detailItem"><span>Paper</span><strong>${safeText(row.paper || "-")}</strong></div>
+      <div class="detailItem"><span>Difficulty</span><strong>${safeText(row.difficulty || "-")}</strong></div>
+      <div class="detailItem"><span>Score</span><strong>${safeText(row.score ?? 0)} / ${safeText(row.total ?? 0)}</strong></div>
+      <div class="detailItem"><span>Percentage</span><strong>${Math.round(number(row.percent))}%</strong></div>
+      <div class="detailItem"><span>Status</span><strong>${safeText(row.status || "-")}</strong></div>
+      <div class="detailItem"><span>Time Taken</span><strong>${formatTime(row.timeTakenSeconds)}</strong></div>
+      <div class="detailItem"><span>Submitted</span><strong>${formatDate(row.submittedAt)}</strong></div>
+    </div>
+    <button class="btn" onclick="exportRowsToCsv([allResults.find(r => String(r._id) === '${safeText(id)}')], 'learner-result-${safeText(row.learnerNumber || 'single')}.csv')">Export This Result</button>
+  `;
+
+  $("detailsModal").style.display = "flex";
+}
+
+function clearFilters(){
+  ["searchInput","learnerNoFilter","fromDate","toDate","minPercent"].forEach(id => $(id).value = "");
+  ["gradeFilter","provinceFilter","districtFilter","statusFilter","quizFilter","topicFilter","datePreset"].forEach(id => $(id).value = "");
+  applyFilters();
+}
+
+function csvEscape(value){
+  const text = String(value ?? "");
+  return '"' + text.replace(/"/g, '""') + '"';
+}
+
+function exportRowsToCsv(rows, filename){
+  if(!rows || !rows.length){
+    toast("No rows to export.");
+    return;
+  }
+
+  const headers = [
+    "Learner Name",
+    "Username",
+    "Learner Number",
+    "Email",
+    "Cellphone",
+    "Guardian Cellphone",
+    "Grade",
+    "Province",
+    "District",
+    "Quiz Title",
+    "Topic",
+    "Paper",
+    "Difficulty",
+    "Score",
+    "Total Marks",
+    "Percentage",
+    "Status",
+    "Time Taken Seconds",
+    "Time Taken",
+    "Attempt No",
+    "Admin Attempt",
+    "Submitted At"
+  ];
+
+  const lines = [headers.map(csvEscape).join(",")];
+
+  rows.forEach(r => {
+    lines.push([
+      r.learnerName,
+      r.username,
+      r.learnerNumber,
+      r.email,
+      r.cellphone,
+      r.guardianCellphone,
+      r.grade,
+      r.province,
+      r.district,
+      r.quizTitle,
+      r.topic,
+      r.paper,
+      r.difficulty,
+      r.score,
+      r.total,
+      r.percent,
+      r.status,
+      r.timeTakenSeconds,
+      formatTime(r.timeTakenSeconds),
+      r.attemptNo,
+      r.isAdminAttempt ? "Yes" : "No",
+      formatDate(r.submittedAt)
+    ].map(csvEscape).join(","));
+  });
+
+  const blob = new Blob([lines.join("\n")], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast("CSV exported successfully.");
+}
+
+function setupEvents(){
+  [
+    "searchInput",
+    "gradeFilter",
+    "provinceFilter",
+    "districtFilter",
+    "learnerNoFilter",
+    "statusFilter",
+    "quizFilter",
+    "topicFilter",
+    "datePreset",
+    "fromDate",
+    "toDate",
+    "minPercent"
+  ].forEach(id => {
+    $(id).addEventListener("input", applyFilters);
+    $(id).addEventListener("change", applyFilters);
+  });
+
+  $("refreshBtn").onclick = loadResults;
+  $("clearFiltersBtn").onclick = clearFilters;
+  $("exportAllBtn").onclick = () => exportRowsToCsv(allResults, "all-learner-results.csv");
+  $("exportFilteredBtn").onclick = () => exportRowsToCsv(filteredResults, "filtered-learner-results.csv");
+  $("printBtn").onclick = () => window.print();
+
+  $("sortRecentBtn").onclick = () => {
+    currentSort = "recent";
+    applyFilters();
+  };
+
+  $("sortHighestBtn").onclick = () => {
+    currentSort = "highest";
+    applyFilters();
+  };
+
+  $("closeModalBtn").onclick = () => $("detailsModal").style.display = "none";
+  $("detailsModal").addEventListener("click", (e) => {
+    if(e.target.id === "detailsModal") $("detailsModal").style.display = "none";
+  });
+}
+
+function init(){
+  const name = employee.fullName || employee.username || employee.email || "Employee Portal";
+  const role = employee.role || employee.department || "";
+  $("accountBox").textContent = role ? `${name} • ${role}` : name;
+  setupEvents();
+  loadResults();
+}
+
+init();
+</script>
+</body>
+</html>
