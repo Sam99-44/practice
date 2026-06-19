@@ -596,6 +596,34 @@ async function quizManagerOnly(req, res, next) {
 }
 /* ------------------ POTENTIAL CLIENTS ------------------ */
 
+app.get(
+  "/api/finance/potential-clients",
+  authRequired,
+  async (req, res) => {
+    try {
+      const users = await User.find({
+        role: "learner"
+      })
+        .select(
+          "_id fullName username email cellphone guardianCellphone grade province district accountType learnerNumber createdAt emailVerified"
+        )
+        .sort({ createdAt: -1 })
+        .lean();
+
+      return res.json(users);
+    } catch (error) {
+      console.error(
+        "GET /api/finance/potential-clients error:",
+        error
+      );
+
+      return res.status(500).json({
+        message: "Could not load potential clients."
+      });
+    }
+  }
+);
+
 app.patch("/api/finance/potential-clients/:id", authRequired, adminOnly, async (req, res) => {
   try {
     const allowedUpdates = {};
