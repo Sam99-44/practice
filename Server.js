@@ -65,6 +65,7 @@ import employeesRoutes from "./routes/employees.js";
 import tutorRoutes from "./routes/tutors.js";
 import supportRoutes from "./routes/support.js";
 import requestQuoteRoutes from "./routes/requestQuote.js";
+import Employee from "./models/Employee.js";
 
 
 import helmet from "helmet";
@@ -579,6 +580,32 @@ async function adminOnly(req, res, next) {
     res.status(500).json({ message: "Server error" });
   }
 }
+async function employeeAdminOnly(req, res, next) {
+  try {
+    const employee = await Employee.findById(req.user.userId).select("role");
+
+    if (!employee) {
+      return res.status(401).json({
+        message: "Employee not found."
+      });
+    }
+
+    const role = String(employee.role || "").toLowerCase();
+
+    if (!["admin", "tester"].includes(role)) {
+      return res.status(403).json({
+        message: "Only admin can edit or remove potential clients."
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Server error."
+    });
+  }
+}
 
 async function quizManagerOnly(req, res, next) {
   try {
@@ -624,7 +651,7 @@ app.get(
   }
 );
 
-app.patch("/api/finance/potential-clients/:id", authRequired, adminOnly, async (req, res) => {
+app.patch("/api/finance/potential-clients/:id", authRequired, employeeAdminOnly, async (req, res) => {
   try {
     const allowedUpdates = {};
 
@@ -689,7 +716,7 @@ app.patch("/api/finance/potential-clients/:id", authRequired, adminOnly, async (
   }
 });
 
-app.delete("/api/finance/potential-clients/:id", authRequired, adminOnly, async (req, res) => {
+app.delete("/api/finance/potential-clients/:id", authRequired, employeeAdminOnly, async (req, res) => {
   try {
     const user = await User.findOneAndDelete({
       _id: req.params.id,
