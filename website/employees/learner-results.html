@@ -296,6 +296,59 @@ input:focus,select:focus{
   margin-top:3px;
 }
 
+
+.tableToolbar{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.adminToolbar{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+  border-right:1px solid var(--border);
+  padding-right:10px;
+}
+
+.checkboxCell{
+  width:42px;
+  text-align:center;
+}
+
+.checkboxCell input{
+  width:auto;
+  height:auto;
+  box-shadow:none;
+}
+
+.editableInput{
+  height:32px;
+  min-width:80px;
+  padding:0 8px;
+  font-size:13px;
+}
+
+.editableSelect{
+  height:32px;
+  min-width:92px;
+  padding:0 8px;
+  font-size:13px;
+}
+
+tr.rowSelected td,
+tr.rowEditing td{
+  background:#f8fafc;
+}
+
+.adminOnly.isHidden{
+  display:none!important;
+}
+
 .tableWrap{
   overflow:auto;
   width:100%;
@@ -622,7 +675,12 @@ tr:hover td{
         <h3>Submissions</h3>
         <p id="tableSummary">Showing 0 submissions</p>
       </div>
-      <div>
+      <div class="tableToolbar">
+        <div class="adminToolbar adminOnly" id="adminToolbar">
+          <button class="btn secondary small" id="editSelectedBtn">Edit Selected</button>
+          <button class="btn small" id="saveSelectedBtn">Save Changes</button>
+          <button class="btn red small" id="removeSelectedBtn">Remove Selected</button>
+        </div>
         <button class="btn secondary small" id="sortRecentBtn">Sort Recent</button>
         <button class="btn secondary small" id="sortHighestBtn">Sort Highest</button>
       </div>
@@ -634,6 +692,7 @@ tr:hover td{
       <table>
         <thead>
           <tr>
+            <th class="adminOnly checkboxCell"><input type="checkbox" id="selectAllBox"></th>
             <th>#</th>
             <th>Learner Name</th>
             <th>Learner No.</th>
@@ -680,11 +739,17 @@ const $ = (id) => document.getElementById(id);
 let allResults = [];
 let filteredResults = [];
 let currentSort = "recent";
+let selectedIds = new Set();
+let editingIds = new Set();
+let pendingChanges = {};
 
 const token = localStorage.getItem("employeeToken") || localStorage.getItem("token") || "";
 const employeeRaw = localStorage.getItem("employeeUser") || localStorage.getItem("employee") || "{}";
 let employee = {};
 try{ employee = JSON.parse(employeeRaw); }catch(e){ employee = {}; }
+
+const employeeRole = String(employee.role || employee.department || "").toLowerCase();
+const isAdmin = employeeRole === "admin" || employeeRole === "tester";
 
 function toast(message){
   const box = $("toast");
@@ -920,6 +985,159 @@ function topValue(field){
   return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0] || "";
 }
 
+function toggleSelect(id, checked){
+  if(checked) selectedIds.add(String(id));
+  else selectedIds.delete(String(id));
+  updateSelectedUI();
+}
+
+function toggleSelectAll(checked){
+  filteredResults.forEach(row => {
+    if(checked) selectedIds.add(String(row._id));
+    else selectedIds.delete(String(row._id));
+  });
+  renderTable();
+}
+
+function updateSelectedUI(){
+  const selectAll = $("selectAllBox");
+  if(selectAll){
+    selectAll.checked = !!(filteredResults.length && filteredResults.every(row => selectedIds.has(String(row._id))));
+  }
+}
+
+function setAdminVisibility(){
+  document.querySelectorAll(".adminOnly").forEach(el => {
+    if(isAdmin) el.classList.remove("isHidden");
+    else el.classList.add("isHidden");
+  });
+}
+
+function editSelected(){
+  if(!isAdmin) return;
+  if(!selectedIds.size){
+    toast("Select at least one result to edit.");
+    return;
+  }
+  selectedIds.forEach(id => editingIds.add(String(id)));
+  renderTable();
+  toast("Selected results are ready for editing.");
+}
+
+function trackChange(id, field, value){
+  id = String(id);
+  if(!pendingChanges[id]) pendingChanges[id] = {};
+  pendingChanges[id][field] = value;
+
+  const row = allResults.find(r => String(r._id) === id);
+  if(row){
+    row[field] = value;
+    if(field === "quizTitle") row.title = value;
+    if(field === "score" || field === "total" || field === "percent" || field === "grade" || field === "timeTakenSeconds"){
+      row[field] = number(value);
+    }
+  }
+  applyFilters();
+}
+
+function editCell(row, field, type="text"){
+  const id = safeText(row._id);
+  const value = row[field] ?? "";
+  if(type === "selectStatus"){
+    const current = String(value || "").toUpperCase();
+    return `<select class="editableSelect" onchange="trackChange('${id}','${field}',this.value)">
+      <option value="PASS" ${current === "PASS" ? "selected" : ""}>PASS</option>
+      <option value="FAIL" ${current === "FAIL" ? "selected" : ""}>FAIL</option>
+    </select>`;
+  }
+  return `<input class="editableInput" type="${type}" value="${safeText(value)}" onchange="trackChange('${id}','${field}',this.value)">`;
+}
+
+async function saveSelected(){
+  if(!isAdmin) return;
+  const ids = [...selectedIds];
+  if(!ids.length){
+    toast("Select at least one result to save.");
+    return;
+  }
+
+  let saved = 0;
+
+  try{
+    for(const id of ids){
+      const changes = pendingChanges[id];
+      if(!changes) continue;
+
+      const body = {};
+      if(changes.score !== undefined) body.score = number(changes.score);
+      if(changes.total !== undefined) body.total = number(changes.total);
+      if(changes.percent !== undefined) body.percent = number(changes.percent);
+      if(changes.status !== undefined) body.status = String(changes.status || "").toUpperCase();
+      if(changes.topic !== undefined) body.topic = String(changes.topic || "").trim();
+      if(changes.quizTitle !== undefined) body.title = String(changes.quizTitle || "").trim();
+      if(changes.grade !== undefined) body.grade = number(changes.grade);
+      if(changes.timeTakenSeconds !== undefined) body.timeTakenSeconds = number(changes.timeTakenSeconds);
+
+      const res = await fetch(API + `/api/admin/learner-results/${id}`, {
+        method:"PATCH",
+        headers:authHeaders(),
+        body:JSON.stringify(body)
+      });
+
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(data.message || "Could not save result.");
+      saved++;
+    }
+
+    if(!saved){
+      toast("No selected results have changes to save.");
+      return;
+    }
+
+    selectedIds.clear();
+    editingIds.clear();
+    pendingChanges = {};
+    await loadResults();
+    toast(saved + " result(s) saved successfully.");
+  }catch(error){
+    console.error(error);
+    toast(error.message || "Could not save selected results.");
+  }
+}
+
+async function removeSelected(){
+  if(!isAdmin) return;
+  const ids = [...selectedIds];
+  if(!ids.length){
+    toast("Select at least one result to remove.");
+    return;
+  }
+
+  const ok = confirm("Remove selected learner result(s)? This cannot be undone.");
+  if(!ok) return;
+
+  try{
+    for(const id of ids){
+      const res = await fetch(API + `/api/admin/learner-results/${id}`, {
+        method:"DELETE",
+        headers:authHeaders()
+      });
+
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(data.message || "Could not remove result.");
+    }
+
+    selectedIds.clear();
+    editingIds.clear();
+    pendingChanges = {};
+    await loadResults();
+    toast("Selected result(s) removed successfully.");
+  }catch(error){
+    console.error(error);
+    toast(error.message || "Could not remove selected results.");
+  }
+}
+
 function renderTable(){
   const body = $("resultsBody");
   body.innerHTML = "";
@@ -930,24 +1148,61 @@ function renderTable(){
   filteredResults.forEach((row, index) => {
     const tr = document.createElement("tr");
     const statusClass = String(row.status).toUpperCase() === "PASS" ? "pass" : "fail";
+    const id = String(row._id);
+    const isEditing = editingIds.has(id);
+    const checked = selectedIds.has(id);
+    tr.className = `${checked ? "rowSelected" : ""} ${isEditing ? "rowEditing" : ""}`;
+
+    const gradeCell = isAdmin && isEditing
+      ? editCell(row, "grade", "number")
+      : `<span class="badge">Grade ${safeText(row.grade || "-")}</span>`;
+
+    const quizCell = isAdmin && isEditing
+      ? editCell(row, "quizTitle")
+      : safeText(row.quizTitle || "Assessment");
+
+    const topicCell = isAdmin && isEditing
+      ? editCell(row, "topic")
+      : safeText(row.topic || "General");
+
+    const scoreCell = isAdmin && isEditing
+      ? editCell(row, "score", "number")
+      : safeText(row.score ?? 0);
+
+    const totalCell = isAdmin && isEditing
+      ? editCell(row, "total", "number")
+      : safeText(row.total ?? 0);
+
+    const percentCell = isAdmin && isEditing
+      ? editCell(row, "percent", "number")
+      : `${Math.round(number(row.percent))}%`;
+
+    const statusCell = isAdmin && isEditing
+      ? editCell(row, "status", "selectStatus")
+      : `<span class="badge ${statusClass}">${safeText(row.status || "-")}</span>`;
+
+    const timeCell = isAdmin && isEditing
+      ? editCell(row, "timeTakenSeconds", "number")
+      : formatTime(row.timeTakenSeconds);
 
     tr.innerHTML = `
+      <td class="adminOnly checkboxCell"><input type="checkbox" ${checked ? "checked" : ""} onchange="toggleSelect('${safeText(id)}',this.checked)"></td>
       <td>${index + 1}</td>
       <td><strong>${safeText(row.learnerName || row.username || "-")}</strong></td>
       <td>${safeText(row.learnerNumber || "-")}</td>
       <td>${safeText(row.email || "-")}</td>
-      <td><span class="badge">Grade ${safeText(row.grade || "-")}</span></td>
+      <td>${gradeCell}</td>
       <td>${safeText(row.province || "-")}</td>
       <td>${safeText(row.district || "-")}</td>
-      <td>${safeText(row.quizTitle || "Assessment")}</td>
-      <td>${safeText(row.topic || "General")}</td>
-      <td>${safeText(row.score ?? 0)}</td>
-      <td>${safeText(row.total ?? 0)}</td>
-      <td class="percentCell">${Math.round(number(row.percent))}%</td>
-      <td><span class="badge ${statusClass}">${safeText(row.status || "-")}</span></td>
-      <td>${formatTime(row.timeTakenSeconds)}</td>
+      <td>${quizCell}</td>
+      <td>${topicCell}</td>
+      <td>${scoreCell}</td>
+      <td>${totalCell}</td>
+      <td class="percentCell">${percentCell}</td>
+      <td>${statusCell}</td>
+      <td>${timeCell}</td>
       <td>${formatDate(row.submittedAt)}</td>
-      <td><button class="btn secondary small" data-view="${safeText(row._id)}">View</button></td>
+      <td><button class="btn secondary small" data-view="${safeText(id)}">View</button></td>
     `;
 
     body.appendChild(tr);
@@ -956,8 +1211,10 @@ function renderTable(){
   body.querySelectorAll("[data-view]").forEach(btn => {
     btn.addEventListener("click", () => openDetails(btn.getAttribute("data-view")));
   });
-}
 
+  setAdminVisibility();
+  updateSelectedUI();
+}
 function openDetails(id){
   const row = allResults.find(r => String(r._id) === String(id));
   if(!row) return;
@@ -1104,6 +1361,11 @@ function setupEvents(){
     applyFilters();
   };
 
+  if($("selectAllBox")) $("selectAllBox").onchange = (e) => toggleSelectAll(e.target.checked);
+  if($("editSelectedBtn")) $("editSelectedBtn").onclick = editSelected;
+  if($("saveSelectedBtn")) $("saveSelectedBtn").onclick = saveSelected;
+  if($("removeSelectedBtn")) $("removeSelectedBtn").onclick = removeSelected;
+
   $("closeModalBtn").onclick = () => $("detailsModal").style.display = "none";
   $("detailsModal").addEventListener("click", (e) => {
     if(e.target.id === "detailsModal") $("detailsModal").style.display = "none";
@@ -1115,6 +1377,7 @@ function init(){
   const role = employee.role || employee.department || "";
   $("accountBox").textContent = role ? `${name} • ${role}` : name;
   setupEvents();
+  setAdminVisibility();
   loadResults();
 }
 
