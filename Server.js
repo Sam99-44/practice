@@ -742,7 +742,7 @@ app.delete("/api/finance/potential-clients/:id", authRequired, employeeAdminOnly
 });
 /* ------------------ LEARNER RESULTS ------------------ */
 
-app.get("/api/admin/learner-results", authRequired, employeeAdminOnly, async (req, res) => {
+app.get("/api/admin/learner-results", authRequired, async (req, res) => {
   try {
     const results = await Result.find({})
       .populate(
@@ -798,6 +798,91 @@ app.get("/api/admin/learner-results", authRequired, employeeAdminOnly, async (re
 
     return res.status(500).json({
       message: "Could not load learner results.",
+    });
+  }
+});
+app.patch("/api/admin/learner-results/:id", authRequired, employeeAdminOnly, async (req, res) => {
+  try {
+    const allowedUpdates = {};
+
+    const fields = [
+      "score",
+      "total",
+      "percent",
+      "status",
+      "topic",
+      "title",
+      "grade",
+      "timeTakenSeconds"
+    ];
+
+    fields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        allowedUpdates[field] = req.body[field];
+      }
+    });
+
+    if (allowedUpdates.score !== undefined) {
+      allowedUpdates.score = Number(allowedUpdates.score);
+    }
+
+    if (allowedUpdates.total !== undefined) {
+      allowedUpdates.total = Number(allowedUpdates.total);
+    }
+
+    if (allowedUpdates.percent !== undefined) {
+      allowedUpdates.percent = Number(allowedUpdates.percent);
+    }
+
+    if (allowedUpdates.grade !== undefined && allowedUpdates.grade !== "") {
+      allowedUpdates.grade = Number(allowedUpdates.grade);
+    }
+
+    const result = await Result.findByIdAndUpdate(
+      req.params.id,
+      { $set: allowedUpdates },
+      { new: true, runValidators: true }
+    );
+
+    if (!result) {
+      return res.status(404).json({
+        message: "Learner result not found."
+      });
+    }
+
+    return res.json({
+      message: "Learner result updated successfully.",
+      result
+    });
+
+  } catch (error) {
+    console.error("PATCH /api/admin/learner-results/:id error:", error);
+
+    return res.status(500).json({
+      message: "Could not update learner result."
+    });
+  }
+});
+
+app.delete("/api/admin/learner-results/:id", authRequired, employeeAdminOnly, async (req, res) => {
+  try {
+    const result = await Result.findByIdAndDelete(req.params.id);
+
+    if (!result) {
+      return res.status(404).json({
+        message: "Learner result not found."
+      });
+    }
+
+    return res.json({
+      message: "Learner result removed successfully."
+    });
+
+  } catch (error) {
+    console.error("DELETE /api/admin/learner-results/:id error:", error);
+
+    return res.status(500).json({
+      message: "Could not remove learner result."
     });
   }
 });
