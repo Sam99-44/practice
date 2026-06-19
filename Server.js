@@ -596,25 +596,92 @@ async function quizManagerOnly(req, res, next) {
 }
 /* ------------------ POTENTIAL CLIENTS ------------------ */
 
-app.get("/api/finance/potential-clients", authRequired, async (req, res) => {
+app.patch("/api/finance/potential-clients/:id", authRequired, adminOnly, async (req, res) => {
   try {
-    const users = await User.find({
-      role: "learner",
-      accountType: { $in: ["student", "materials"] }
-    })
-      .select(
-        "fullName username email cellphone guardianCellphone grade province district accountType learnerNumber createdAt"
-      )
-      .sort({ createdAt: -1 })
-      .lean();
+    const allowedUpdates = {};
 
-    return res.json(users);
+    const fields = [
+      "fullName",
+      "username",
+      "email",
+      "cellphone",
+      "guardianCellphone",
+      "grade",
+      "schoolName",
+      "currentMarkRange",
+      "province",
+      "district",
+      "accountType"
+    ];
 
+    fields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        allowedUpdates[field] = req.body[field];
+      }
+    });
+
+    if (allowedUpdates.email) {
+      allowedUpdates.email = String(allowedUpdates.email).trim().toLowerCase();
+    }
+
+    if (allowedUpdates.grade !== undefined && allowedUpdates.grade !== "") {
+      allowedUpdates.grade = Number(allowedUpdates.grade);
+    }
+
+    const user = await User.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        role: "learner",
+      },
+      { $set: allowedUpdates },
+      {
+        new: true,
+        runValidators: true,
+      }
+    ).select(
+      "fullName username email cellphone guardianCellphone grade schoolName currentMarkRange province district accountType learnerNumber createdAt"
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Potential client not found.",
+      });
+    }
+
+    return res.json({
+      message: "Potential client updated successfully.",
+      user,
+    });
   } catch (error) {
-    console.error("Potential clients error:", error);
+    console.error("PATCH /api/finance/potential-clients/:id error:", error);
 
     return res.status(500).json({
-      message: "Could not load potential clients."
+      message: "Could not update potential client.",
+    });
+  }
+});
+
+app.delete("/api/finance/potential-clients/:id", authRequired, adminOnly, async (req, res) => {
+  try {
+    const user = await User.findOneAndDelete({
+      _id: req.params.id,
+      role: "learner",
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Potential client not found.",
+      });
+    }
+
+    return res.json({
+      message: "Potential client removed successfully.",
+    });
+  } catch (error) {
+    console.error("DELETE /api/finance/potential-clients/:id error:", error);
+
+    return res.status(500).json({
+      message: "Could not remove potential client.",
     });
   }
 });
