@@ -740,6 +740,67 @@ app.delete("/api/finance/potential-clients/:id", authRequired, employeeAdminOnly
     });
   }
 });
+/* ------------------ LEARNER RESULTS ------------------ */
+
+app.get("/api/admin/learner-results", authRequired, employeeAdminOnly, async (req, res) => {
+  try {
+    const results = await Result.find({})
+      .populate(
+        "userId",
+        "fullName username email learnerNumber grade province district cellphone guardianCellphone accountType"
+      )
+      .populate(
+        "quizId",
+        "title topic grade paper difficulty"
+      )
+      .sort({ attemptedAt: -1, createdAt: -1 })
+      .lean();
+
+    const rows = results.map((result) => {
+      const learner = result.userId || {};
+      const quiz = result.quizId || {};
+
+      return {
+        _id: result._id,
+
+        learnerName: learner.fullName || learner.username || "",
+        username: learner.username || "",
+        email: learner.email || "",
+        learnerNumber: learner.learnerNumber || "",
+        cellphone: learner.cellphone || "",
+        guardianCellphone: learner.guardianCellphone || "",
+
+        grade: learner.grade || result.grade || quiz.grade || "",
+        province: learner.province || "",
+        district: learner.district || "",
+
+        quizTitle: result.title || quiz.title || "Assessment",
+        topic: result.topic || quiz.topic || "General",
+        paper: quiz.paper || "",
+        difficulty: quiz.difficulty || "",
+
+        score: result.score || 0,
+        total: result.total || 0,
+        percent: result.percent || 0,
+        status: result.status || "",
+
+        timeTakenSeconds: result.timeTakenSeconds || 0,
+        attemptNo: result.attemptNo || 1,
+        isAdminAttempt: !!result.isAdminAttempt,
+
+        submittedAt: result.attemptedAt || result.createdAt,
+      };
+    });
+
+    return res.json(rows);
+  } catch (error) {
+    console.error("GET /api/admin/learner-results error:", error);
+
+    return res.status(500).json({
+      message: "Could not load learner results.",
+    });
+  }
+});
 
 /* ------------------ PUBLISH HELPERS ------------------ */
 async function sendPublishedQuizEmails(quiz) {
