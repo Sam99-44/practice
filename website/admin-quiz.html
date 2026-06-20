@@ -31,6 +31,7 @@
         TIME_LIMIT:
         DIFFICULTY:
         PAPER:
+        CONTENT_TYPE: quiz | activity | homework | assignment | gradeChallenge | weeklyChallenge
         SEND_EMAIL:
 -->
 <!DOCTYPE html>
@@ -38,7 +39,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin | Add Assessment</title>
+  <title>Admin | Add Learning Content</title>
 
   <script>
     window.MathJax = {
@@ -771,7 +772,7 @@
 
   <div class="topbar">
     <div>
-      <h2 style="margin:0;">Practice Online – Add Assessment</h2>
+      <h2 style="margin:0;">Practice Online – Add Learning Content</h2>
       <div class="muted" id="who">Checking login...</div>
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -809,6 +810,19 @@
       <div>
         <label>Assessment Title</label>
         <input id="title" placeholder="e.g. Moderate : Quiz 1" />
+      </div>
+
+      <div>
+        <label>Content Type</label>
+        <select id="contentType">
+          <option value="quiz" selected>Quiz</option>
+          <option value="activity">Activity</option>
+          <option value="homework">Homework</option>
+          <option value="assignment">Assignment</option>
+          <option value="gradeChallenge">Grade Challenge</option>
+          <option value="weeklyChallenge">Challenge of the Week</option>
+        </select>
+        <div class="muted tiny" id="contentTypeHelp">Quiz appears under the Quizzes tab.</div>
       </div>
 
       <div>
@@ -925,6 +939,8 @@
       <br />
       PAPER: paper1
       <br />
+      CONTENT_TYPE: quiz
+      <br />
       SEND_EMAIL: false
       <br /><br />
       NOTE: Consider the sequence...
@@ -979,8 +995,8 @@
     <hr>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <button class="btn" id="saveBtn" disabled type="button">Save Assessment</button>
-      <button class="btn btn2" id="publishBtn" disabled type="button">Publish Assessment</button>
+      <button class="btn" id="saveBtn" disabled type="button">Save Content</button>
+      <button class="btn btn2" id="publishBtn" disabled type="button">Publish Content</button>
       <button class="btn btn2" id="previewPaperBtn" type="button">Preview Exam Paper</button>
     </div>
     <p class="msg muted" id="msg"></p>
@@ -1046,6 +1062,8 @@
     const topicEl = document.getElementById("topic");
     const timeLimitEl = document.getElementById("timeLimit");
     const titleEl = document.getElementById("title");
+    const contentTypeEl = document.getElementById("contentType");
+    const contentTypeHelp = document.getElementById("contentTypeHelp");
     const difficultyEl = document.getElementById("difficulty");
     const paperEl = document.getElementById("paper");
 
@@ -1226,6 +1244,27 @@
       return "paper1";
     }
 
+    function normalizeContentType(v){
+      const t = String(v || "").trim();
+      const allowed = ["quiz","activity","homework","assignment","gradeChallenge","weeklyChallenge"];
+      return allowed.includes(t) ? t : "quiz";
+    }
+
+    function contentTypeLabel(type){
+      return {
+        quiz:"Quiz",
+        activity:"Activity",
+        homework:"Homework",
+        assignment:"Assignment",
+        gradeChallenge:"Grade Challenge",
+        weeklyChallenge:"Challenge of the Week"
+      }[type] || "Quiz";
+    }
+
+    function isForAllLearnersType(type){
+      return normalizeContentType(type) === "weeklyChallenge";
+    }
+
     function typesetMath(root=document){
       if (window.MathJax?.typesetClear) {
         try { window.MathJax.typesetClear([root]); } catch(e) {}
@@ -1325,7 +1364,10 @@ function escapeHtml(str){
       previewAttemptModeBtn?.classList.toggle("btn", currentFullPreviewMode === "attempt");
       previewReviewModeBtn?.classList.toggle("btn", currentFullPreviewMode === "review");
       const title = cleanSpaces(titleEl.value || "Assessment Title");
-      const grade = cleanSpaces(gradeEl.options[gradeEl.selectedIndex]?.text || "");
+      const contentType = normalizeContentType(contentTypeEl.value);
+      const grade = contentType === "weeklyChallenge"
+        ? "All Learners"
+        : cleanSpaces(gradeEl.options[gradeEl.selectedIndex]?.text || "");
       const topic = cleanSpaces(topicEl.value || "");
       const instructions = cleanSpaces(instructionsEl.value || "");
       const cards = [...questionsWrap.querySelectorAll(".qcard")];
@@ -1374,6 +1416,35 @@ function escapeHtml(str){
     }
     publishModeEl.addEventListener("change", updatePublishUI);
     updatePublishUI();
+
+    function updateContentTypeUI(){
+      const type = normalizeContentType(contentTypeEl.value);
+
+      const helpText = {
+        quiz:"Quiz appears under the Quizzes tab.",
+        activity:"Activity appears under the Activities tab for the selected grade.",
+        homework:"Homework appears under the Homework tab for the selected grade.",
+        assignment:"Assignment appears under the Assignments tab for the selected grade.",
+        gradeChallenge:"Grade Challenge appears only for learners in the selected grade.",
+        weeklyChallenge:"Challenge of the Week appears for every learner, regardless of grade."
+      };
+
+      contentTypeHelp.textContent = helpText[type] || helpText.quiz;
+
+      if(type === "weeklyChallenge"){
+        gradeEl.disabled = true;
+        gradeEl.value = "";
+        gradeEl.title = "Challenge of the Week is accessible by every learner.";
+      }else{
+        gradeEl.disabled = false;
+        gradeEl.title = "";
+      }
+
+      refreshFullLearnerPreview();
+    }
+
+    contentTypeEl.addEventListener("change", updateContentTypeUI);
+    updateContentTypeUI();
 
     (async () => {
       const token = localStorage.getItem("token");
@@ -1429,7 +1500,7 @@ function escapeHtml(str){
         publishBtn.title = "Admin, tester, and editor can publish assessments.";
       }
 
-      setMsg("Ready to add an assessment.", "ok");
+      setMsg("Ready to add learning content.", "ok");
     })();
 
     let qCount = 0;
@@ -2392,6 +2463,11 @@ function escapeHtml(str){
           case "TIME_LIMIT_MINUTES": meta.timeLimitMinutes = Number(value.trim() || 10); break;
           case "DIFFICULTY": meta.difficulty = value.trim(); break;
           case "PAPER": meta.paper = value.trim(); break;
+          case "CONTENT_TYPE":
+          case "TYPE_OF_CONTENT":
+          case "ASSESSMENT_TYPE":
+            meta.contentType = normalizeContentType(value.trim());
+            break;
           case "INSTRUCTIONS": meta.instructions = value.trim(); break;
           case "PUBLISH_MODE": meta.publishMode = value.trim(); break;
           case "PUBLISH_AT": meta.publishAt = value.trim(); break;
@@ -2636,6 +2712,7 @@ function escapeHtml(str){
           timeLimitMinutes: Number(meta.timeLimitMinutes || 10),
           difficulty: normalizeDifficulty(meta.difficulty),
           paper: normalizePaper(meta.paper),
+          contentType: normalizeContentType(meta.contentType),
           instructions: String(meta.instructions || "").trim(),
           publishMode: normalizePublishMode(meta.publishMode),
           publishAt: String(meta.publishAt || "").trim(),
@@ -2709,6 +2786,7 @@ function escapeHtml(str){
       timeLimitEl.value = Number.isFinite(Number(meta.timeLimitMinutes)) ? String(meta.timeLimitMinutes) : "10";
       difficultyEl.value = normalizeDifficulty(meta.difficulty);
       paperEl.value = normalizePaper(meta.paper);
+      contentTypeEl.value = normalizeContentType(meta.contentType);
       instructionsEl.value = meta.instructions || "";
       publishModeEl.value = normalizePublishMode(meta.publishMode);
       publishAtEl.value = meta.publishAt || "";
@@ -2718,6 +2796,7 @@ function escapeHtml(str){
 
       renderInstructionsPreview();
       updatePublishUI();
+      updateContentTypeUI();
 
       clearAllCards();
       clearParseErrors();
@@ -2759,12 +2838,15 @@ function escapeHtml(str){
       const instructions = cleanSpaces(meta.instructions || "");
       const difficulty = normalizeDifficulty(meta.difficulty);
       const paper = normalizePaper(meta.paper);
+      const contentType = normalizeContentType(meta.contentType);
       const availableFrom = meta.availableFrom || null;
       const availableUntil = meta.availableUntil || null;
       const publishMode = normalizePublishMode(meta.publishMode);
       const publishAt = meta.publishAt || null;
 
-      if (!grade) throw new Error(`Missing or invalid GRADE in "${meta.title || "file"}".`);
+      if (!grade && contentType !== "weeklyChallenge") {
+        throw new Error(`Missing or invalid GRADE in "${meta.title || "file"}".`);
+      }
       if (!topic) throw new Error(`Missing TOPIC in "${meta.title || "file"}".`);
       if (!title) throw new Error(`Missing TITLE in "${meta.title || "file"}".`);
       if (!Number.isFinite(timeLimitMinutes) || timeLimitMinutes < 1 || timeLimitMinutes > 180) {
@@ -2804,10 +2886,17 @@ function escapeHtml(str){
       else if (publishMode === "schedule") finalPublishAt = publishAt;
 
       return {
-        grade,
+        grade: contentType === "weeklyChallenge" ? null : grade,
         title,
         topic,
         paper,
+        contentType,
+        contentTypeLabel: contentTypeLabel(contentType),
+        audience: contentType === "weeklyChallenge" ? "all" : "grade",
+        isForAllLearners: contentType === "weeklyChallenge",
+        contentType,
+        audience: contentType === "weeklyChallenge" ? "all" : "grade",
+        isForAllLearners: contentType === "weeklyChallenge",
         timeLimitMinutes,
         instructions,
         difficulty,
@@ -2965,6 +3054,7 @@ function escapeHtml(str){
       const grade = Number(gradeEl.value);
       const topic = toTitleCase(topicEl.value);
       const title = cleanSpaces(titleEl.value);
+      const contentType = normalizeContentType(contentTypeEl.value);
       const timeLimitMinutes = Number(timeLimitEl.value);
       const instructions = cleanSpaces(instructionsEl.value || "");
       const difficulty = normalizeDifficulty(difficultyEl.value);
@@ -2973,7 +3063,9 @@ function escapeHtml(str){
       const availableFrom = availableFromEl.value ? availableFromEl.value : null;
       const availableUntil = availableUntilEl.value ? availableUntilEl.value : null;
 
-      if (!grade) throw new Error("Please select grade.");
+      if (!grade && contentType !== "weeklyChallenge") {
+        throw new Error("Please select grade.");
+      }
       if (!topic) throw new Error("Please enter topic.");
       if (!title) throw new Error("Please enter assessment title.");
 
@@ -3010,10 +3102,17 @@ function escapeHtml(str){
       }
 
       return {
-        grade,
+        grade: contentType === "weeklyChallenge" ? null : grade,
         title,
         topic,
         paper,
+        contentType,
+        contentTypeLabel: contentTypeLabel(contentType),
+        audience: contentType === "weeklyChallenge" ? "all" : "grade",
+        isForAllLearners: contentType === "weeklyChallenge",
+        contentType,
+        audience: contentType === "weeklyChallenge" ? "all" : "grade",
+        isForAllLearners: contentType === "weeklyChallenge",
         timeLimitMinutes,
         instructions,
         difficulty,
