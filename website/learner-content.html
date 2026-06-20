@@ -1,0 +1,966 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Learning Content | Practice Online</title>
+
+<style>
+:root{
+  --nav:#1b1648;
+  --accent:#0b3c5d;
+  --bg:#ffffff;
+  --card:#ffffff;
+  --border:#d9dee7;
+  --text:#0f172a;
+  --muted:#475569;
+  --red:#e11d2e;
+}
+
+*{box-sizing:border-box}
+
+html,body{
+  margin:0;
+  padding:0;
+  font-family:"Times New Roman", Times, serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+a{text-decoration:none;color:inherit}
+button{font:inherit}
+
+/* TOPBAR */
+.topbar{
+  background:var(--nav);
+  color:#fff;
+  position:sticky;
+  top:0;
+  z-index:1000;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.topbar-inner{
+  max-width:1150px;
+  margin:0 auto;
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.accountLeft{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+
+.accountIcon{
+  width:40px;
+  height:40px;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.accountName{
+  font-size:16px;
+  font-weight:700;
+  color:#fff;
+}
+
+.accountType{
+  font-size:13px;
+  color:#e0e7ff;
+  margin-top:3px;
+}
+
+.topbarRight{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  position:relative;
+}
+
+.iconBtn{
+  min-width:50px;
+  height:50px;
+  border:none;
+  background:transparent;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  cursor:pointer;
+}
+
+.iconBtn img{
+  width:30px;
+  height:30px;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.navBadge{
+  color:#ffd6db;
+  font-size:13px;
+  font-weight:700;
+}
+
+.menuBtn{
+  height:50px;
+  border:none;
+  background:transparent;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+}
+
+.menuBtnText{
+  font-size:14px;
+  font-weight:700;
+}
+
+.menuBtn img{
+  width:28px;
+  height:28px;
+  filter:brightness(0) invert(1) contrast(180%);
+}
+
+.menuDropdown{
+  position:absolute;
+  top:48px;
+  right:0;
+  width:230px;
+  background:#f7f7f8;
+  color:#111827;
+  border:1px solid var(--border);
+  border-radius:0;
+  box-shadow:0 14px 30px rgba(15,23,42,.14);
+  padding:10px 0;
+  display:none;
+}
+
+.menuDropdown.open{display:block}
+
+.menuItem{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 18px;
+  color:#111827;
+  font-size:14px;
+  font-weight:700;
+  background:transparent;
+  border:none;
+  text-align:left;
+  cursor:pointer;
+}
+
+.menuItem:hover{background:#eef2f7}
+
+.menuItem img{
+  width:18px;
+  height:18px;
+}
+
+.profileTextOnly{padding-left:38px}
+
+.menuDivider{
+  height:1px;
+  background:#dde4ec;
+  margin:8px 0 6px;
+}
+
+.logoutMenuBtn{
+  width:100%;
+  border:none;
+  background:transparent;
+}
+
+/* PAGE */
+.wrap{
+  max-width:1150px;
+  margin:0 auto;
+  padding:18px;
+}
+
+.pageTitle{
+  background:#fff;
+  padding:18px 22px;
+  margin-bottom:14px;
+}
+
+.pageTitle h1{
+  margin:0;
+  font-size:22px;
+  color:var(--nav);
+}
+
+.pageTitle p{
+  margin:6px 0 0;
+  font-size:14px;
+  color:var(--muted);
+}
+
+.learning-shell{
+  display:grid;
+  grid-template-columns:270px 1fr;
+  background:#fff;
+  min-height:650px;
+}
+
+/* LEFT CONTENTS */
+.sidebar{
+  background:#164e78;
+  min-height:650px;
+}
+
+.sidebar-header{
+  background:#bfe6f8;
+  color:#001b3d;
+  text-align:center;
+  padding:8px 16px;
+  font-family:"Times New Roman", Times, serif;
+  font-size:17px;
+  font-weight:400;
+  letter-spacing:0;
+}
+
+.nav-btn{
+  width:calc(100% - 48px);
+  margin:0 24px;
+  border:none;
+  border-bottom:1px solid rgba(255,255,255,.45);
+  background:transparent;
+  padding:16px 20px;
+  text-align:left;
+  cursor:pointer;
+  font-size:14px;
+  font-weight:700;
+  color:#ffffff;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.nav-btn:hover{
+  background:#1a84bd;
+  color:#ffffff;
+}
+
+.nav-btn.active{
+  background:#1787c7;
+  color:#ffffff;
+  font-weight:800;
+  border-bottom-color:#1787c7;
+}
+
+.sidebar-header + .nav-btn{
+  margin-top:16px;
+}
+
+/* RIGHT */
+.content-area{
+  padding:24px 24px 24px 70px;
+}
+
+.content-panel{
+  display:none;
+}
+
+.content-panel.active{
+  display:block;
+}
+
+.section-title{
+  margin:0;
+  font-size:24px;
+  color:var(--nav);
+}
+
+.section-subtitle{
+  margin:8px 0 22px;
+  color:var(--muted);
+  font-size:14px;
+}
+
+.item-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+
+.item-card{
+  border:1px solid var(--border);
+  background:#fff;
+  padding:18px;
+  min-height:130px;
+}
+
+.item-card h3{
+  margin:0 0 8px;
+  font-size:18px;
+  color:#000;
+}
+
+.item-card p{
+  margin:0;
+  color:#334155;
+  font-size:14px;
+  line-height:1.5;
+}
+
+.action-btn{
+  margin-top:14px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:36px;
+  padding:0 16px;
+  background:var(--nav);
+  color:#fff;
+  border:1px solid var(--nav);
+  font-size:13px;
+  font-weight:700;
+  font-family:Arial, Helvetica, sans-serif;
+  cursor:pointer;
+}
+
+.action-btn.secondary{
+  background:#fff;
+  color:#111827;
+  border:1px solid #d1d5db;
+}
+
+.notice{
+  border:1px dashed var(--border);
+  background:#f8fafc;
+  padding:18px;
+  color:#475569;
+  font-size:14px;
+  line-height:1.5;
+}
+
+.badge{
+  display:none;
+}
+
+
+.simple-content{
+  max-width:760px;
+}
+
+.simple-content h3{
+  margin:24px 0 6px;
+  font-size:18px;
+  color:#000;
+}
+
+.simple-content h3:first-child{
+  margin-top:0;
+}
+
+.simple-content p{
+  margin:0 0 12px;
+  color:#334155;
+  font-size:14px;
+  line-height:1.5;
+}
+
+.single-action-card{
+  max-width:340px;
+}
+
+
+.content-list-loader{
+  color:#334155;
+  font-size:14px;
+  line-height:1.5;
+}
+
+.learning-list{
+  display:grid;
+  gap:18px;
+  max-width:760px;
+}
+
+.learning-item{
+  padding:0;
+  background:#fff;
+}
+
+.learning-item h3{
+  margin:0 0 6px;
+  font-size:18px;
+  color:#000;
+}
+
+.learning-item p{
+  margin:0 0 10px;
+  color:#334155;
+  font-size:14px;
+  line-height:1.5;
+}
+
+.learning-meta{
+  margin:0 0 10px;
+  color:#64748b;
+  font-size:12px;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.empty-content{
+  color:#475569;
+  font-size:14px;
+  line-height:1.5;
+}
+
+@media(max-width:900px){
+  .learning-shell{
+    grid-template-columns:1fr;
+  }
+
+  .sidebar{
+    border-right:none;
+    border-bottom:none;
+  }
+
+  .item-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:640px){
+  .wrap{padding:14px}
+  .content-area{padding:16px}
+  .menuBtnText{display:none}
+  .menuDropdown{width:210px}
+}
+</style>
+
+<script>
+if(!localStorage.getItem("token")){
+  location.href="login.html";
+}
+</script>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+
+    <div class="accountLeft">
+      <img
+        class="accountIcon"
+        src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
+        alt="Account"
+      >
+
+      <div>
+        <div class="accountName" id="topAccountName">Loading...</div>
+        <div class="accountType" id="topAccountType">Account</div>
+      </div>
+    </div>
+
+    <div class="topbarRight">
+
+      <a href="announcements.html" class="iconBtn">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="">
+        <span class="navBadge" id="navAnnouncementBadge">0</span>
+      </a>
+
+      <button class="menuBtn" id="menuToggleBtn" type="button">
+        <span class="menuBtnText">Menu</span>
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt="">
+      </button>
+
+      <div class="menuDropdown" id="menuDropdown">
+
+        <a class="menuItem profileTextOnly" href="profile.html">
+          <span>Profile</span>
+        </a>
+
+        <a class="menuItem" href="learner-quizzes.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777660/practice_ubgfso.svg" alt="">
+          <span>Practice</span>
+        </a>
+
+        <a class="menuItem" href="learning-content.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="">
+          <span>Learning Content</span>
+        </a>
+
+        <a class="menuItem" href="enrollment.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1780375521/classicon_kqy2el.svg" alt="">
+          <span>Enrollment</span>
+        </a>
+
+        <a class="menuItem" href="results.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="">
+          <span>Results</span>
+        </a>
+
+        <a class="menuItem" href="progress-dashboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="">
+          <span>Dashboard</span>
+        </a>
+
+        <a class="menuItem" href="leaderboard.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777661/leaderboard_yfjgjf.svg" alt="">
+          <span>Leaderboard</span>
+        </a>
+
+        <a class="menuItem" href="support.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/support_bs175s.svg" alt="">
+          <span>Support</span>
+        </a>
+
+        <a class="menuItem" href="announcements.html">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="">
+          <span>Announcements</span>
+        </a>
+
+        <div class="menuDivider"></div>
+
+        <button class="menuItem logoutMenuBtn" id="logoutBtn" type="button">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773768418/logout_uay6y8.svg" alt="">
+          <span>Logout</span>
+        </button>
+
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="pageTitle">
+    <h1>Learning Content</h1>
+    <p>Access activities, homework, quizzes, challenges and learner achievements.</p>
+  </section>
+
+  <section class="learning-shell">
+
+    <aside class="sidebar">
+      <div class="sidebar-header">CONTENTS</div>
+
+      <button class="nav-btn active" data-tab="activities">Activities</button>
+      <button class="nav-btn" data-tab="homework">Homework</button>
+      <button class="nav-btn" data-tab="assignments">Assignments</button>
+      <button class="nav-btn" data-tab="quizzes">Quizzes</button>
+      <button class="nav-btn" data-tab="gradeChallenge">Grade Challenge</button>
+      <button class="nav-btn" data-tab="weeklyChallenge">Challenge of the Week</button>
+      <button class="nav-btn" data-tab="newspaper">Newspaper</button>
+    </aside>
+
+    <div class="content-area">
+
+      <div class="content-panel active" id="activities">
+        <h2 class="section-title">Activities</h2>
+        <p class="section-subtitle">Class activities and practice tasks will appear here.</p>
+
+        <div id="activitiesList" class="content-list-loader">Loading activities...</div>
+      </div>
+      <div class="content-panel" id="homework">
+        <h2 class="section-title">Homework</h2>
+        <p class="section-subtitle">Homework assigned by tutors will appear here.</p>
+
+        <div id="homeworkList" class="content-list-loader">Loading homework...</div>
+      </div>
+      <div class="content-panel" id="assignments">
+        <h2 class="section-title">Assignments</h2>
+        <p class="section-subtitle">Assignments assigned by tutors will appear here.</p>
+
+        <div id="assignmentsList" class="content-list-loader">Loading assignments...</div>
+      </div>
+      <div class="content-panel" id="quizzes">
+        <h2 class="section-title">Quizzes</h2>
+        <p class="section-subtitle">Open your available practice quizzes and assessments.</p>
+
+        <div id="quizzesList" class="content-list-loader">Loading quizzes...</div>
+      </div>
+      <div class="content-panel" id="gradeChallenge">
+        <h2 class="section-title" id="gradeChallengeTitle">Grade Challenge</h2>
+        <p class="section-subtitle" id="gradeChallengeText">
+          This challenge will be based on your registered grade.
+        </p>
+
+        <div id="gradeChallengeList" class="content-list-loader">Loading grade challenge...</div>
+      </div>
+      <div class="content-panel" id="weeklyChallenge">
+        <h2 class="section-title">Challenge of the Week</h2>
+        <p class="section-subtitle">Every learner can participate regardless of grade.</p>
+
+        <div id="weeklyChallengeList" class="content-list-loader">Loading challenge of the week...</div>
+      </div>
+      <div class="content-panel" id="newspaper">
+        <h2 class="section-title">Newspaper</h2>
+        <p class="section-subtitle">A space to celebrate outstanding learner performance.</p>
+
+        <div class="simple-content">
+          <h3>Outstanding Learners</h3>
+          <p>Top learners, improved learners and challenge winners will be recognised here.</p>
+
+          <h3>Latest Achievements</h3>
+          <p>Performance highlights and congratulation messages will appear here.</p>
+
+          <button class="action-btn secondary" type="button">Read Newspaper</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<script>
+const API = window.API || "https://practice-backend-msgn.onrender.com";
+const token = localStorage.getItem("token");
+
+const topAccountName = document.getElementById("topAccountName");
+const topAccountType = document.getElementById("topAccountType");
+const menuToggleBtn = document.getElementById("menuToggleBtn");
+const menuDropdown = document.getElementById("menuDropdown");
+const logoutBtn = document.getElementById("logoutBtn");
+
+let learnerProfile = null;
+let allLearningContent = [];
+
+logoutBtn.onclick = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  localStorage.removeItem("me_cache");
+  localStorage.removeItem("user");
+  localStorage.removeItem("role");
+  location.href = "login.html";
+};
+
+menuToggleBtn.addEventListener("click", function(e){
+  e.stopPropagation();
+  menuDropdown.classList.toggle("open");
+});
+
+document.addEventListener("click", function(e){
+  if(!menuDropdown.contains(e.target) && !menuToggleBtn.contains(e.target)){
+    menuDropdown.classList.remove("open");
+  }
+});
+
+document.querySelectorAll(".nav-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".content-panel").forEach(p => p.classList.remove("active"));
+
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.tab).classList.add("active");
+  });
+});
+
+function esc(value){
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function getId(item){
+  return item?._id || item?.id || item?.quizId || "";
+}
+
+function getContentType(item){
+  return item?.contentType || "quiz";
+}
+
+function getTitle(item){
+  return item?.title || "Untitled";
+}
+
+function getDescription(item){
+  return item?.instructions || item?.description || item?.topic || "";
+}
+
+function formatMeta(item){
+  const pieces = [];
+
+  if(item?.topic) pieces.push(item.topic);
+
+  if(item?.paper){
+    pieces.push(String(item.paper).replace("paper1","Paper 1").replace("paper2","Paper 2"));
+  }
+
+  if(item?.difficulty){
+    pieces.push(String(item.difficulty).charAt(0).toUpperCase() + String(item.difficulty).slice(1));
+  }
+
+  if(item?.timeLimitMinutes){
+    pieces.push(item.timeLimitMinutes + " min");
+  }
+
+  return pieces.join(" • ");
+}
+
+function isPublished(item){
+  if(item?.isPublished === false) return false;
+
+  const now = Date.now();
+
+  if(item?.publishAt && new Date(item.publishAt).getTime() > now) return false;
+  if(item?.availableFrom && new Date(item.availableFrom).getTime() > now) return false;
+  if(item?.availableUntil && new Date(item.availableUntil).getTime() < now) return false;
+
+  return true;
+}
+
+function matchesLearner(item){
+  const type = getContentType(item);
+  if(type === "weeklyChallenge") return true;
+
+  const learnerGrade = Number(learnerProfile?.grade || 0);
+  const itemGrade = Number(item?.grade || 0);
+
+  if(!itemGrade) return true;
+  if(!learnerGrade) return true;
+
+  return itemGrade === learnerGrade;
+}
+
+function filterContent(type){
+  return allLearningContent
+    .filter(item => getContentType(item) === type)
+    .filter(isPublished)
+    .filter(matchesLearner)
+    .sort((a,b) => {
+      const ad = new Date(a.availableFrom || a.publishedAt || a.createdAt || 0).getTime();
+      const bd = new Date(b.availableFrom || b.publishedAt || b.createdAt || 0).getTime();
+      return bd - ad;
+    });
+}
+
+function attemptUrl(item){
+  const id = getId(item);
+  return `attempt.html?quizId=${encodeURIComponent(id)}`;
+}
+
+function openSpecificContent(item){
+  const id = getId(item);
+
+  if(!id){
+    alert("This item could not be opened because it has no ID.");
+    return;
+  }
+
+  location.href = attemptUrl(item);
+}
+
+function renderList(containerId, items, emptyText, actionText){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+
+  if(!items.length){
+    el.innerHTML = `<div class="empty-content">${esc(emptyText)}</div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="learning-list">
+      ${items.map(item => `
+        <div class="learning-item">
+          <h3>${esc(getTitle(item))}</h3>
+          ${formatMeta(item) ? `<div class="learning-meta">${esc(formatMeta(item))}</div>` : ""}
+          ${getDescription(item) ? `<p>${esc(getDescription(item))}</p>` : ""}
+          <button class="action-btn secondary open-content-btn" type="button" data-id="${esc(getId(item))}">
+            ${esc(actionText)}
+          </button>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  el.querySelectorAll(".open-content-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      const item = allLearningContent.find(x => String(getId(x)) === String(id));
+      openSpecificContent(item);
+    });
+  });
+}
+
+function renderActionCard(containerId, items, emptyText, actionText){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+
+  if(!items.length){
+    el.innerHTML = `<div class="empty-content">${esc(emptyText)}</div>`;
+    return;
+  }
+
+  const item = items[0];
+
+  el.innerHTML = `
+    <div class="item-card single-action-card">
+      <h3>${esc(getTitle(item))}</h3>
+      ${formatMeta(item) ? `<div class="learning-meta">${esc(formatMeta(item))}</div>` : ""}
+      ${getDescription(item) ? `<p>${esc(getDescription(item))}</p>` : ""}
+      <button class="action-btn secondary open-content-btn" type="button" data-id="${esc(getId(item))}">
+        ${esc(actionText)}
+      </button>
+    </div>
+  `;
+
+  el.querySelector(".open-content-btn").addEventListener("click", () => openSpecificContent(item));
+}
+
+function renderLearningContent(){
+  const quizItems = filterContent("quiz");
+  const activityItems = filterContent("activity");
+  const homeworkItems = filterContent("homework");
+  const assignmentItems = filterContent("assignment");
+  const gradeChallengeItems = filterContent("gradeChallenge");
+  const weeklyChallengeItems = filterContent("weeklyChallenge");
+
+  renderList(
+    "activitiesList",
+    activityItems,
+    "No activities are available right now.",
+    "Open Activity"
+  );
+
+  renderList(
+    "homeworkList",
+    homeworkItems,
+    "No homework is available right now.",
+    "Open Homework"
+  );
+
+  renderList(
+    "assignmentsList",
+    assignmentItems,
+    "No assignments are available right now.",
+    "Open Assignment"
+  );
+
+  renderList(
+    "quizzesList",
+    quizItems,
+    "No quizzes are available right now.",
+    "Start Quiz"
+  );
+
+  renderActionCard(
+    "gradeChallengeList",
+    gradeChallengeItems,
+    "No grade challenge is available for your grade right now.",
+    "Start Challenge"
+  );
+
+  renderActionCard(
+    "weeklyChallengeList",
+    weeklyChallengeItems,
+    "No challenge of the week is available right now.",
+    "Open Challenge"
+  );
+}
+
+async function loadTopbarProfile(){
+  try{
+    let res = await fetch(`${API}/api/profile/me`, {
+      headers:{ Authorization:`Bearer ${token}` }
+    });
+
+    if(res.status === 401){
+      localStorage.removeItem("token");
+      location.href = "login.html";
+      return;
+    }
+
+    let data = await res.json().catch(() => null);
+
+    if(!data || !res.ok){
+      res = await fetch(`${API}/api/auth/me`, {
+        headers:{ Authorization:`Bearer ${token}` }
+      });
+
+      if(res.status === 401){
+        localStorage.removeItem("token");
+        location.href = "login.html";
+        return;
+      }
+
+      data = await res.json().catch(() => null);
+    }
+
+    if(!data) return;
+
+    learnerProfile = data;
+
+    topAccountName.textContent = data.fullName || data.username || "User";
+    topAccountType.textContent = data.accountType || data.role || "Account";
+
+    const grade = data.grade || "-";
+
+    document.getElementById("gradeChallengeTitle").textContent = grade !== "-"
+      ? "Grade " + grade + " Challenge"
+      : "Grade Challenge";
+
+  }catch(err){
+    topAccountName.textContent = "User";
+    topAccountType.textContent = "Account";
+  }
+}
+
+async function loadAnnouncementCount(){
+  try{
+    const res = await fetch(`${API}/api/announcements/profile-summary`, {
+      headers:{ Authorization:`Bearer ${token}` }
+    });
+
+    const data = await res.json().catch(() => ({}));
+    document.getElementById("navAnnouncementBadge").textContent = Number(data.count || 0);
+  }catch{
+    document.getElementById("navAnnouncementBadge").textContent = "0";
+  }
+}
+
+async function loadLearningContent(){
+  try{
+    const res = await fetch(`${API}/api/quizzes`, {
+      headers:{ Authorization:`Bearer ${token}` }
+    });
+
+    if(res.status === 401){
+      localStorage.removeItem("token");
+      location.href = "login.html";
+      return;
+    }
+
+    const data = await res.json().catch(() => []);
+    allLearningContent = Array.isArray(data)
+      ? data
+      : Array.isArray(data.quizzes)
+        ? data.quizzes
+        : Array.isArray(data.rows)
+          ? data.rows
+          : [];
+
+    renderLearningContent();
+  }catch(err){
+    ["activitiesList","homeworkList","assignmentsList","quizzesList","gradeChallengeList","weeklyChallengeList"].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.innerHTML = `<div class="empty-content">Could not load content. Please try again later.</div>`;
+    });
+  }
+}
+
+(async function init(){
+  await loadTopbarProfile();
+  await loadAnnouncementCount();
+  await loadLearningContent();
+})();
+</script>
+
+</body>
+</html>
