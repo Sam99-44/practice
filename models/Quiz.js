@@ -1,12 +1,4 @@
-// models/Quiz.js (UPDATED - COPY & PASTE)
-// ✅ Adds MCQ multi-select support
-// ✅ Allows NOTE blocks to store points=0 and correctIndex=-1 (matches server.js)
-// ✅ Validates correctIndex/correctIndexes are within options length
-// ✅ Adds quiz difficulty (easy/moderate/hard)
-// ✅ Adds quiz paper (paper1/paper2)
-// ✅ NEW: Adds draft / publish / scheduled publish support
-// ✅ NEW: Adds availableFrom / availableUntil
-// ✅ NEW: Adds sendPublishEmail flag
+// models/Quiz.js
 
 import mongoose from "mongoose";
 
@@ -24,10 +16,8 @@ const QuestionSchema = new mongoose.Schema(
     imageUrl: { type: String, default: "", trim: true },
     hint: { type: String, default: "", trim: true },
 
-    // ✅ Solution / workings (supports LaTeX)
     solution: { type: String, default: "", trim: true },
 
-    // ✅ Marks per question (only for mcq/text)
     points: {
       type: Number,
       default: 1,
@@ -41,7 +31,6 @@ const QuestionSchema = new mongoose.Schema(
       },
     },
 
-    // ✅ MCQ options
     options: {
       type: [String],
       default: [],
@@ -54,7 +43,6 @@ const QuestionSchema = new mongoose.Schema(
       },
     },
 
-    // ✅ Single-correct (compat)
     correctIndex: {
       type: Number,
       default: -1,
@@ -72,14 +60,14 @@ const QuestionSchema = new mongoose.Schema(
           }
 
           if (!Number.isInteger(v) || v < 0) return false;
+
           const len = Array.isArray(this.options) ? this.options.length : 0;
           return len >= 2 ? v < len : true;
         },
-        message: "MCQ correctIndex must be valid (within options) for single-correct questions.",
+        message: "MCQ correctIndex must be valid within options.",
       },
     },
 
-    // ✅ Multi-correct indexes
     correctIndexes: {
       type: [Number],
       default: [],
@@ -87,9 +75,7 @@ const QuestionSchema = new mongoose.Schema(
         validator: function (arr) {
           if (this.type !== "mcq") return true;
           if (!Array.isArray(arr)) return false;
-
           if (arr.length === 0) return true;
-
           if (!arr.every((n) => Number.isInteger(n) && n >= 0)) return false;
 
           const len = Array.isArray(this.options) ? this.options.length : 0;
@@ -97,17 +83,15 @@ const QuestionSchema = new mongoose.Schema(
 
           return new Set(arr).size === arr.length;
         },
-        message: "correctIndexes must be valid unique option indexes within options length.",
+        message: "correctIndexes must be valid unique option indexes.",
       },
     },
 
-    // ✅ flag to show checkboxes on learner UI
     isMultiSelect: {
       type: Boolean,
       default: false,
     },
 
-    // ✅ TEXT questions
     correctText: {
       type: String,
       default: "",
@@ -125,27 +109,12 @@ const QuestionSchema = new mongoose.Schema(
       type: String,
       enum: ["exact", "contains", "number_tolerance"],
       default: "exact",
-      validate: {
-        validator: function (v) {
-          if (this.type !== "text") return true;
-          return ["exact", "contains", "number_tolerance"].includes(v);
-        },
-        message: "Invalid textAnswerMode",
-      },
     },
 
     numberTolerance: {
       type: Number,
       default: 0,
       min: 0,
-      validate: {
-        validator: function (v) {
-          if (this.type !== "text") return true;
-          if (this.textAnswerMode !== "number_tolerance") return true;
-          return Number.isFinite(v) && v >= 0;
-        },
-        message: "numberTolerance must be 0 or more for number_tolerance mode",
-      },
     },
   },
   { _id: false }
@@ -153,12 +122,46 @@ const QuestionSchema = new mongoose.Schema(
 
 const QuizSchema = new mongoose.Schema(
   {
-    grade: { type: Number, required: true, min: 8, max: 12 },
+    grade: {
+      type: Number,
+      required: function () {
+        return this.contentType !== "weeklyChallenge";
+      },
+      min: 8,
+      max: 12,
+      default: null,
+    },
 
     title: { type: String, required: true, trim: true },
     topic: { type: String, default: "", trim: true },
 
-    // ✅ Paper
+    contentType: {
+      type: String,
+      enum: [
+        "quiz",
+        "activity",
+        "homework",
+        "assignment",
+        "gradeChallenge",
+        "weeklyChallenge",
+      ],
+      default: "quiz",
+      index: true,
+    },
+
+    audience: {
+      type: String,
+      enum: ["grade", "all"],
+      default: "grade",
+      index: true,
+    },
+
+    isForAllLearners: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
     paper: {
       type: String,
       enum: ["paper1", "paper2"],
@@ -166,7 +169,6 @@ const QuizSchema = new mongoose.Schema(
       trim: true,
     },
 
-    // ✅ Difficulty
     difficulty: {
       type: String,
       enum: ["easy", "moderate", "hard"],
@@ -181,24 +183,37 @@ const QuizSchema = new mongoose.Schema(
     isFrozen: { type: Boolean, default: false },
     frozenAt: { type: Date, default: null },
 
-    // ✅ Availability window
     availableFrom: { type: Date, default: null },
     availableUntil: { type: Date, default: null },
 
-    // ✅ Publish workflow
     isPublished: { type: Boolean, default: false },
     publishedAt: { type: Date, default: null },
     publishAt: { type: Date, default: null },
+
     publishedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,
     },
-    sendPublishEmail: { type: Boolean, default: true },
+
+    sendPublishEmail: { type: Boolean, default: false },
 
     questions: { type: [QuestionSchema], default: [] },
   },
   { timestamps: true }
 );
+
+QuizSchema.pre("validate", function (next) {
+  if (this.contentType === "weeklyChallenge") {
+    this.grade = null;
+    this.audience = "all";
+    this.isForAllLearners = true;
+  } else {
+    this.audience = "grade";
+    this.isForAllLearners = false;
+  }
+
+  next();
+});
 
 export default mongoose.model("Quiz", QuizSchema);
