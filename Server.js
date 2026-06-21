@@ -96,7 +96,7 @@ passport.use(
         let user = await User.findOne({ email });
 
         if (!user) {
-          const learnerNumber = await generateUniqueLearnerNumber("student");
+          const learnerNumber = await generateUniqueLearnerNumber("learner");
 
           user = await User.create({
             fullName: profile.displayName || email.split("@")[0],
@@ -104,7 +104,7 @@ passport.use(
             email,
             emailVerified: true,
             role: "learner",
-            accountType: "student",
+            accountType: "learner",
             learnerNumber,
             studentNumber: null,
             profilePhoto: profile.photos?.[0]?.value || "",
@@ -267,7 +267,7 @@ async function generateUniqueLearnerNumber(accountType) {
     const random = Math.floor(10000 + Math.random() * 90000);
 
     learnerNumber =
-      accountType === "student"
+      accountType === "learner"
         ? "PO" + year + random
         : "P" + year + random;
 
@@ -894,7 +894,7 @@ async function sendPublishedQuizEmails(quiz) {
   try {
     const learners = await User.find({
       role: "learner",
-      accountType: "student",
+      accountType: "learner",
       grade: quiz.grade,
       email: { $exists: true, $ne: "" },
       emailVerified: true,
@@ -1453,23 +1453,27 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 // REGISTER
 app.post("/api/register", registerLimiter, async (req, res) => {
   try {
-    const {
-      firstName,
-      surname,
-      fullName,
-      username,
-      email,
-      grade,
-      password,
-      accountType,
-      schoolName,
-      currentMarkRange,
-      province,
-      district,
-      gender,
-      cellphone,
-      guardianCellphone,
-    } = req.body;
+const {
+  firstName,
+  surname,
+  fullName,
+  username,
+  email,
+  grade,
+  curriculum,
+  password,
+  accountType,
+  province,
+  district,
+  cellphone,
+  guardianCellphone,
+  guestReasons,
+  otherReason,
+  guestMessage,
+  schoolName,
+  currentMarkRange,
+  gender
+} = req.body;
 
     if (!username || !email || !password || !accountType) {
       return res.status(400).json({
@@ -1477,12 +1481,14 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       });
     }
 
-    if (!["student", "materials"].includes(accountType)) {
-      return res.status(400).json({ message: "Invalid account type." });
-    }
+    if (!["learner", "practice", "guest"].includes(accountType)) {
+  return res.status(400).json({
+    message: "Invalid account type."
+  });
+}
 
     let gradeNum = null;
-    if (accountType === "student") {
+    if (accountType === "learner" || accountType === "practice") {
       if (grade === undefined || grade === null || grade === "") {
         return res.status(400).json({
           message: "Grade is required for Student accounts.",
@@ -1495,7 +1501,14 @@ app.post("/api/register", registerLimiter, async (req, res) => {
         });
       }
     }
-
+if (
+  (accountType === "learner" || accountType === "practice") &&
+  !curriculum
+) {
+  return res.status(400).json({
+    message: "Curriculum is required."
+  });
+}
 const strongPasswordRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
@@ -1505,7 +1518,28 @@ if (!strongPasswordRegex.test(String(password))) {
       "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
   });
 }
+if (accountType === "guest") {
+  if (!province || !district) {
+    return res.status(400).json({
+      message: "Province and district are required."
+    });
+  }
 
+  if (!Array.isArray(guestReasons) || !guestReasons.length) {
+    return res.status(400).json({
+      message: "Please select at least one reason."
+    });
+  }
+
+  if (
+    guestReasons.includes("other") &&
+    !String(otherReason || "").trim()
+  ) {
+    return res.status(400).json({
+      message: "Please specify the other reason."
+    });
+  }
+}
     const cleanUsername = cleanSpaces(username);
     const cleanEmail = String(email || "").toLowerCase().trim();
     const cleanFirstName = cleanSpaces(firstName || "");
@@ -1549,6 +1583,12 @@ if (!strongPasswordRegex.test(String(password))) {
       learnerNumber,
       studentNumber: null,
       grade: gradeNum,
+      curriculum: curriculum || "",
+      enrollmentStatus: accountType === "learner" ? "pending" : "not_required",
+      phoneVerified: false,
+      guestReasons: Array.isArray(guestReasons) ? guestReasons : [],
+      otherReason: cleanSpaces(otherReason || ""),
+      guestMessage: cleanSpaces(guestMessage || ""),
       schoolName: cleanSpaces(schoolName || ""),
       currentMarkRange: String(currentMarkRange || "").trim(),
       profileHeadline: "",
@@ -1571,7 +1611,7 @@ if (!strongPasswordRegex.test(String(password))) {
     )}&email=${encodeURIComponent(user.email)}`;
 
     try {
-      if (user.accountType === "student") {
+      if (user.accountType === "learner") {
         await sendEmail({
           to: user.email,
           subject: "Verify your Practice Online email",
@@ -1865,7 +1905,7 @@ app.patch("/api/profile/me", authRequired, async (req, res) => {
       user.profileHeadline = cleanSpaces(profileHeadline);
     }
 
-    if (grade !== undefined && user.accountType === "student") {
+    if (grade !== undefined && (user.accountType === "learner" ||user.accountType === "practice")){
       const parsedGrade = Number(grade);
       if (!Number.isInteger(parsedGrade) || parsedGrade < 8 || parsedGrade > 12) {
         return res.status(400).json({ message: "Grade must be between 8 and 12." });
@@ -1965,7 +2005,7 @@ app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
       User.aggregate([
         {
           $match: {
-            accountType: "student",
+            accountType: "learner",
             grade: { $gte: 8, $lte: 12 },
           },
         },
@@ -1976,7 +2016,7 @@ app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
         {
           $match: {
             grade: { $gte: 8, $lte: 12 },
-            accountType: { $in: ["student", "materials"] },
+            accountType: { $in: ["learner", "practice"] },
           },
         },
         {
@@ -1996,15 +2036,16 @@ app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
       const quizRow = quizzesByGradeRaw.find((x) => Number(x._id) === g);
       const learnerRow = learnersByGradeRaw.find((x) => Number(x._id) === g);
 
-      const studentRow = accountTypeByGradeRaw.find(
-        (x) => Number(x._id.grade) === g && x._id.accountType === "student"
-      );
-      const materialsRow = accountTypeByGradeRaw.find(
-        (x) => Number(x._id.grade) === g && x._id.accountType === "materials"
-      );
+const learnerRowType = accountTypeByGradeRaw.find(
+  (x) => Number(x._id.grade) === g && x._id.accountType === "learner"
+);
 
-      const studentCount = studentRow ? Number(studentRow.count) : 0;
-      const materialsCount = materialsRow ? Number(materialsRow.count) : 0;
+const practiceRowType = accountTypeByGradeRaw.find(
+  (x) => Number(x._id.grade) === g && x._id.accountType === "practice"
+);
+
+const learnerCount = learnerRowType ? Number(learnerRowType.count) : 0;
+const practiceCount = practiceRowType ? Number(practiceRowType.count) : 0;
 
       quizzesByGrade.push({
         grade: g,
@@ -2018,9 +2059,9 @@ app.get("/api/admin/stats", authRequired, adminOnly, async (req, res) => {
 
       accountTypeByGrade.push({
         grade: g,
-        student: studentCount,
-        materials: materialsCount,
-        total: studentCount + materialsCount,
+        learner: learnerCount,
+        practice: practiceCount,
+        total: learnerCount + practiceCount,
       });
     }
 
@@ -2046,18 +2087,18 @@ app.get("/api/admin/leaderboard/filters", authRequired, adminOnly, async (req, r
     const [gradesRaw, provincesRaw, districtRows] = await Promise.all([
       User.distinct("grade", {
         role: "learner",
-        accountType: "student",
+        accountType: "learner",
         grade: { $ne: null },
       }),
       User.distinct("province", {
         role: "learner",
-        accountType: "student",
+        accountType: "learner",
         province: { $exists: true, $ne: "" },
       }),
       User.find(
         {
           role: "learner",
-          accountType: "student",
+          accountType: "learner",
           district: { $exists: true, $ne: "" },
         },
         "district province"
@@ -2114,7 +2155,7 @@ app.get("/api/admin/leaderboard", authRequired, adminOnly, async (req, res) => {
 
     const userFieldMatch = {
       "user.role": "learner",
-      "user.accountType": "student",
+      "user.accountType": "learner",
     };
 
     if (grade) userFieldMatch["user.grade"] = Number(grade);
@@ -3519,7 +3560,7 @@ app.post("/api/announcements", authRequired, announcementManagerOnly, async (req
 
         const learners = await User.find({
           role: "learner",
-          accountType: "student",
+          accountType: "learner",
           grade: { $in: gradeNumbers },
           email: { $exists: true, $ne: "" },
           emailVerified: true,
@@ -3670,7 +3711,7 @@ app.get("/api/leaderboard", authRequired, async (req, res) => {
     const userFilter = {
       _id: { $in: userIds },
       role: "learner",
-      accountType: "student",
+      accountType: "learner",
     };
 
     if (gradeQuery) {
