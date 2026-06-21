@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const saPhoneRegex = /^\+27[6-8][0-9]{8}$/;
 
 const UserSchema = new mongoose.Schema(
   {
@@ -51,6 +52,13 @@ const UserSchema = new mongoose.Schema(
 
     guestReasons: { type: [String], default: [] },
 
+    otherReason: {
+      type: String,
+      default: "",
+      maxlength: 120,
+      trim: true,
+    },
+
     guestMessage: {
       type: String,
       default: "",
@@ -71,11 +79,36 @@ const UserSchema = new mongoose.Schema(
 
     gender: {
       type: String,
-      enum: ["female", "male", "nonbinary", "other", ""],
+      enum: ["female", "male", "prefer_not_to_say", "other", ""],
       default: "",
     },
 
-    cellphone: { type: String, default: "", trim: true },
+    cellphone: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    phoneVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    phoneOtpHash: {
+      type: String,
+      default: null,
+    },
+
+    phoneOtpExpiresAt: {
+      type: Date,
+      default: null,
+    },
+
+    phoneVerifiedAt: {
+      type: Date,
+      default: null,
+    },
+
     guardianCellphone: { type: String, default: "", trim: true },
 
     emailVerified: { type: Boolean, default: false },
@@ -140,7 +173,32 @@ UserSchema.pre("validate", function (next) {
   if (this.fullName) this.fullName = String(this.fullName).trim();
   if (this.profileHeadline) this.profileHeadline = String(this.profileHeadline).trim();
   if (this.profilePhoto) this.profilePhoto = String(this.profilePhoto).trim();
+  if (this.otherReason) this.otherReason = String(this.otherReason).trim();
   if (this.guestMessage) this.guestMessage = String(this.guestMessage).trim();
+
+  if (this.cellphone) {
+    this.cellphone = String(this.cellphone).replace(/\s+/g, "").trim();
+  }
+
+  if (this.guardianCellphone) {
+    this.guardianCellphone = String(this.guardianCellphone).replace(/\s+/g, "").trim();
+  }
+
+  if (!this.cellphone) {
+    return next(new Error("Cellphone number is required."));
+  }
+
+  if (!saPhoneRegex.test(this.cellphone)) {
+    return next(
+      new Error("Please enter a valid South African cellphone number. Example: +27821234567")
+    );
+  }
+
+  if (this.guardianCellphone && !saPhoneRegex.test(this.guardianCellphone)) {
+    return next(
+      new Error("Please enter a valid guardian cellphone number. Example: +27821234567")
+    );
+  }
 
   if (this.accountType === "learner" || this.accountType === "practice") {
     if (this.grade === null || this.grade === undefined || this.grade === "") {
@@ -158,13 +216,16 @@ UserSchema.pre("validate", function (next) {
 
   if (this.accountType === "practice") {
     this.enrollmentStatus = "not_required";
+    this.guardianCellphone = "";
   }
 
   if (this.accountType === "guest") {
     this.grade = null;
     this.curriculum = "";
+    this.gender = "";
     this.studentNumber = null;
     this.learnerNumber = undefined;
+    this.guardianCellphone = "";
     this.enrollmentStatus = "not_required";
 
     if (!this.province) {
@@ -177,6 +238,14 @@ UserSchema.pre("validate", function (next) {
 
     if (!Array.isArray(this.guestReasons) || this.guestReasons.length === 0) {
       return next(new Error("Please select at least one reason for visiting."));
+    }
+
+    if (this.guestReasons.includes("other") && !String(this.otherReason || "").trim()) {
+      return next(new Error("Please specify your reason for visiting."));
+    }
+
+    if (String(this.otherReason || "").length > 120) {
+      return next(new Error("Other reason cannot exceed 120 characters."));
     }
 
     if (String(this.guestMessage || "").length > 255) {
