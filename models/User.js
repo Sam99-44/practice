@@ -4,12 +4,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const UserSchema = new mongoose.Schema(
   {
-    username: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
+    username: { type: String, required: true, unique: true, trim: true },
 
     email: {
       type: String,
@@ -18,17 +13,14 @@ const UserSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
       validate: {
-        validator: function (value) {
+        validator(value) {
           return emailRegex.test(String(value || "").trim().toLowerCase());
         },
         message: "Please enter a valid email address.",
       },
     },
 
-    passwordHash: {
-      type: String,
-      required: true,
-    },
+    passwordHash: { type: String, required: true },
 
     role: {
       type: String,
@@ -38,59 +30,44 @@ const UserSchema = new mongoose.Schema(
 
     accountType: {
       type: String,
-      enum: ["student", "materials"],
+      enum: ["learner", "practice", "guest"],
       required: true,
     },
 
-    grade: {
-      type: Number,
-      default: null,
-      min: 8,
-      max: 12,
+    enrollmentStatus: {
+      type: String,
+      enum: ["not_required", "pending", "enrolled"],
+      default: "not_required",
     },
 
-    // 8-digit student number (legacy)
-    studentNumber: {
-      type: String,
-      default: null,
-    },
+    grade: { type: Number, default: null, min: 8, max: 12 },
 
-    // ✅ NEW: learner number (PO26xxxxx)
-    learnerNumber: {
+    curriculum: {
       type: String,
-      unique: true,
-      sparse: true,
-    },
-
-    // profile fields
-    fullName: {
-      type: String,
+      enum: ["NCS", "IEB", ""],
+      default: "",
       trim: true,
-      default: "",
     },
 
-    profileHeadline: {
+    guestReasons: { type: [String], default: [] },
+
+    guestMessage: {
       type: String,
+      default: "",
+      maxlength: 255,
       trim: true,
-      default: "",
     },
 
-    profilePhoto: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+    studentNumber: { type: String, default: null },
 
-    // location + profile fields
-    province: {
-      type: String,
-      default: "",
-    },
+    learnerNumber: { type: String, unique: true, sparse: true },
 
-    district: {
-      type: String,
-      default: "",
-    },
+    fullName: { type: String, trim: true, default: "" },
+    profileHeadline: { type: String, trim: true, default: "" },
+    profilePhoto: { type: String, trim: true, default: "" },
+
+    province: { type: String, default: "", trim: true },
+    district: { type: String, default: "", trim: true },
 
     gender: {
       type: String,
@@ -98,73 +75,21 @@ const UserSchema = new mongoose.Schema(
       default: "",
     },
 
-    cellphone: {
-      type: String,
-      default: "",
-    },
+    cellphone: { type: String, default: "", trim: true },
+    guardianCellphone: { type: String, default: "", trim: true },
 
-    guardianCellphone: {
-      type: String,
-      default: "",
-    },
+    emailVerified: { type: Boolean, default: false },
+    verifyTokenHash: { type: String, default: null },
+    verifyTokenExpiresAt: { type: Date, default: null },
 
-    // Email verification
-    emailVerified: {
-      type: Boolean,
-      default: false,
-    },
+    trialActive: { type: Boolean, default: true },
+    trialStartDate: { type: Date, default: null },
+    trialEndDate: { type: Date, default: null },
+    trialExpiredAt: { type: Date, default: null },
 
-    verifyTokenHash: {
-      type: String,
-      default: null,
-    },
-
-    verifyTokenExpiresAt: {
-      type: Date,
-      default: null,
-    },
-
-    // =========================
-    // FREE TRIAL FIELDS
-    // =========================
-    trialActive: {
-      type: Boolean,
-      default: true,
-    },
-
-    trialStartDate: {
-      type: Date,
-      default: null,
-    },
-
-    trialEndDate: {
-      type: Date,
-      default: null,
-    },
-
-    trialExpiredAt: {
-      type: Date,
-      default: null,
-    },
-
-    // =========================
-    // PAID ACCESS FIELDS
-    // =========================
-
-    premium: {
-      type: Boolean,
-      default: false,
-    },
-
-    premiumActivatedAt: {
-      type: Date,
-      default: null,
-    },
-
-    premiumExpiresAt: {
-      type: Date,
-      default: null,
-    },
+    premium: { type: Boolean, default: false },
+    premiumActivatedAt: { type: Date, default: null },
+    premiumExpiresAt: { type: Date, default: null },
 
     subscriptionStatus: {
       type: String,
@@ -172,33 +97,14 @@ const UserSchema = new mongoose.Schema(
       default: "none",
     },
 
-    paidUntil: {
-      type: Date,
-      default: null,
-    },
+    paidUntil: { type: Date, default: null },
+    lastPaymentId: { type: String, default: "" },
 
-    lastPaymentId: {
-      type: String,
-      default: "",
-    },
-
-    // Forgot password
-    resetPasswordTokenHash: {
-      type: String,
-      default: null,
-    },
-
-    resetPasswordExpires: {
-      type: Date,
-      default: null,
-    },
+    resetPasswordTokenHash: { type: String, default: null },
+    resetPasswordExpires: { type: Date, default: null },
   },
   { timestamps: true }
 );
-
-// =========================
-// VIRTUALS
-// =========================
 
 UserSchema.virtual("accessStatus").get(function () {
   const now = new Date();
@@ -222,47 +128,60 @@ UserSchema.virtual("accessStatus").get(function () {
 UserSchema.virtual("trialDaysLeft").get(function () {
   if (!this.trialEndDate) return 0;
 
-  const now = new Date();
-  const end = new Date(this.trialEndDate);
-  const diff = end.getTime() - now.getTime();
-
+  const diff = new Date(this.trialEndDate).getTime() - Date.now();
   if (diff <= 0) return 0;
 
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 });
 
-// =========================
-// PRE-VALIDATION
-// =========================
-
 UserSchema.pre("validate", function (next) {
-  if (this.email) {
-    this.email = String(this.email).trim().toLowerCase();
-  }
+  if (this.email) this.email = String(this.email).trim().toLowerCase();
+  if (this.username) this.username = String(this.username).trim();
+  if (this.fullName) this.fullName = String(this.fullName).trim();
+  if (this.profileHeadline) this.profileHeadline = String(this.profileHeadline).trim();
+  if (this.profilePhoto) this.profilePhoto = String(this.profilePhoto).trim();
+  if (this.guestMessage) this.guestMessage = String(this.guestMessage).trim();
 
-  if (this.username) {
-    this.username = String(this.username).trim();
-  }
-
-  if (this.fullName) {
-    this.fullName = String(this.fullName).trim();
-  }
-
-  if (this.profileHeadline) {
-    this.profileHeadline = String(this.profileHeadline).trim();
-  }
-
-  if (this.profilePhoto) {
-    this.profilePhoto = String(this.profilePhoto).trim();
-  }
-
-  if (this.accountType === "student") {
+  if (this.accountType === "learner" || this.accountType === "practice") {
     if (this.grade === null || this.grade === undefined || this.grade === "") {
-      return next(new Error("Grade is required for student accounts."));
+      return next(new Error("Grade is required for learner and practice accounts."));
     }
-  } else {
+
+    if (!this.curriculum) {
+      return next(new Error("Curriculum is required for learner and practice accounts."));
+    }
+  }
+
+  if (this.accountType === "learner") {
+    this.enrollmentStatus = this.enrollmentStatus || "pending";
+  }
+
+  if (this.accountType === "practice") {
+    this.enrollmentStatus = "not_required";
+  }
+
+  if (this.accountType === "guest") {
     this.grade = null;
+    this.curriculum = "";
     this.studentNumber = null;
+    this.learnerNumber = undefined;
+    this.enrollmentStatus = "not_required";
+
+    if (!this.province) {
+      return next(new Error("Province is required for guest accounts."));
+    }
+
+    if (!this.district) {
+      return next(new Error("District is required for guest accounts."));
+    }
+
+    if (!Array.isArray(this.guestReasons) || this.guestReasons.length === 0) {
+      return next(new Error("Please select at least one reason for visiting."));
+    }
+
+    if (String(this.guestMessage || "").length > 255) {
+      return next(new Error("Guest message cannot exceed 255 characters."));
+    }
   }
 
   next();
