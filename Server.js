@@ -1606,117 +1606,136 @@ if (accountType === "guest") {
       trialEndDate: addDays(now, trialDays),
     });
 
-    const verifyUrl = `${APP_URL}/verify-email.html?token=${encodeURIComponent(
-      rawVerifyToken
-    )}&email=${encodeURIComponent(user.email)}`;
+const verifyUrl = `${APP_URL}/verify-email.html?token=${encodeURIComponent(
+  rawVerifyToken
+)}&email=${encodeURIComponent(user.email)}`;
 
-    try {
-const displayName = user.fullName || user.username || "there";
+try {
+  const displayName = user.fullName || user.username || "there";
 
-let accountMessageHtml = "";
-let accountMessageText = "";
-
-if (user.accountType === "learner") {
-  accountMessageHtml = `
-    <p>Your learner number is: <strong>${user.learnerNumber}</strong></p>
-    <p>Your learner account has been created successfully.</p>
-    <p>We are excited to be part of your academic journey and are committed to helping you reach greater heights in your studies.</p>
-    <p>You may now enroll for classes and begin accessing the opportunities available on the platform.</p>
+  const verifyButtonHtml = `
+    <p style="margin:20px 0;">
+      <a
+        href="${verifyUrl}"
+        target="_blank"
+        style="
+          display:inline-block;
+          padding:12px 24px;
+          background:#1b1648;
+          color:#ffffff;
+          text-decoration:none;
+          border-radius:6px;
+          font-weight:bold;
+          font-size:14px;
+        "
+      >
+        Verify Email Address
+      </a>
+    </p>
   `;
 
-  accountMessageText = `
+  let accountMessageHtml = "";
+  let accountMessageText = "";
+
+  if (user.accountType === "learner") {
+    accountMessageHtml = `
+      <p>Your learner number is: <strong>${user.learnerNumber}</strong></p>
+      <p>Your Learner Account has been created successfully.</p>
+      <p>We are excited to be part of your academic journey and are committed to helping you achieve your goals and reach greater heights in your studies.</p>
+      <p>You may now enroll for classes and begin accessing the opportunities available through Practice Online.</p>
+    `;
+
+    accountMessageText = `
 Your learner number is: ${user.learnerNumber}
 
-Your learner account has been created successfully.
+Your Learner Account has been created successfully.
 
-We are excited to be part of your academic journey and are committed to helping you reach greater heights in your studies.
+We are excited to be part of your academic journey and are committed to helping you achieve your goals and reach greater heights in your studies.
 
-You may now enroll for classes and begin accessing the opportunities available on the platform.
-  `;
-}
+You may now enroll for classes and begin accessing the opportunities available through Practice Online.
+    `;
+  }
 
-else if (user.accountType === "practice") {
-  accountMessageHtml = `
-    <p>Your Practice Account has been created successfully.</p>
-    <p>You now have access to practice quizzes, assignments, challenges and learning content.</p>
-    <p>We are committed to helping you build confidence, strengthen your skills and reach greater heights through continuous learning and practice.</p>
-  `;
+  else if (user.accountType === "practice") {
+    accountMessageHtml = `
+      <p>Your practice number is: <strong>${user.learnerNumber}</strong></p>
+      <p>Your Practice Account has been created successfully.</p>
+      <p>You now have access to practice quizzes, assignments, challenges, announcements and learning content.</p>
+      <p>We are committed to helping you build confidence, strengthen your skills and reach greater heights through continuous learning and practice.</p>
+    `;
 
-  accountMessageText = `
+    accountMessageText = `
+Your practice number is: ${user.learnerNumber}
+
 Your Practice Account has been created successfully.
 
-You now have access to practice quizzes, assignments, challenges and learning content.
+You now have access to practice quizzes, assignments, challenges, announcements and learning content.
 
 We are committed to helping you build confidence, strengthen your skills and reach greater heights through continuous learning and practice.
-  `;
-}
+    `;
+  }
 
-else if (user.accountType === "guest") {
-  accountMessageHtml = `
-    <p>Thank you for visiting Practice Online.</p>
-    <p>Your guest account has been created successfully and your enquiry has been received.</p>
-    <p>Whether you are exploring opportunities, seeking information or looking for collaboration, we are delighted to have you with us.</p>
-    <p>Our team is committed to supporting you and helping you discover how Practice Online can assist you in reaching greater heights.</p>
-  `;
+  else if (user.accountType === "guest") {
+    accountMessageHtml = `
+      <p>Your Guest Account has been created successfully.</p>
+      <p>Thank you for choosing Practice Online.</p>
+      <p>Whether you are exploring opportunities, seeking information, looking for collaboration, or learning more about our services, we are delighted to have you with us.</p>
+      <p>Our team is committed to supporting you and helping you discover how Practice Online can assist you in reaching greater heights.</p>
+    `;
 
-  accountMessageText = `
-Thank you for visiting Practice Online.
+    accountMessageText = `
+Your Guest Account has been created successfully.
 
-Your guest account has been created successfully and your enquiry has been received.
+Thank you for choosing Practice Online.
 
-Whether you are exploring opportunities, seeking information or looking for collaboration, we are delighted to have you with us.
+Whether you are exploring opportunities, seeking information, looking for collaboration, or learning more about our services, we are delighted to have you with us.
 
 Our team is committed to supporting you and helping you discover how Practice Online can assist you in reaching greater heights.
-  `;
-}
+    `;
+  }
 
-await sendEmail({
-  to: user.email,
-  subject: "Welcome to Practice Online - Verify Your Email",
-  text: `Hi ${displayName},
+  await sendEmail({
+    to: user.email,
+    subject: "Welcome to Practice Online - Verify Your Email",
+    text: `Hi ${displayName},
 
 Welcome to Practice Online.
-
-${accountMessageText}
 
 Please verify your email address here:
 
 ${verifyUrl}
 
-This link expires in 24 hours.
+${accountMessageText}
+
+This verification link expires in 24 hours.
 
 Practice Online Team`,
-  html: `
-    <div style="font-family:Arial,sans-serif;line-height:1.7;">
-      <p>Hi ${displayName},</p>
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.7;">
+        <p>Hi ${displayName},</p>
 
-      <p>Welcome to <strong>Practice Online</strong>.</p>
+        <p>Welcome to <strong>Practice Online</strong>.</p>
 
-      ${accountMessageHtml}
+        ${verifyButtonHtml}
 
-      <p>Please verify your email address by clicking the link below:</p>
+        ${accountMessageHtml}
 
-      <p>
-        <a href="${verifyUrl}" target="_blank">
-          Verify Email
-        </a>
-      </p>
+        <p>Please verify your email address by clicking the button above.</p>
 
-      <p>This verification link expires in 24 hours.</p>
+        <p>This verification link expires in 24 hours.</p>
 
-      <p>
-        Kind Regards,<br>
-        <strong>Practice Online Team</strong>
-      </p>
-    </div>
-  `,
-});
-      
+        <p>
+          Kind Regards,<br>
+          <strong>Practice Online Team</strong>
+        </p>
+      </div>
+    `,
+  });
 
-      console.log("Verification email sent successfully to:", user.email);
-    } catch (emailErr) {
-      console.error("Verification email failed:", emailErr);
-    }
+  console.log("Verification email sent successfully to:", user.email);
+} catch (emailErr) {
+  console.error("Verification email failed:", emailErr);
+}
 
     return res.status(201).json({
       message: "Account created successfully.",
