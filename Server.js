@@ -1491,7 +1491,7 @@ const {
     if (accountType === "learner" || accountType === "practice") {
       if (grade === undefined || grade === null || grade === "") {
         return res.status(400).json({
-          message: "Grade is required for Student accounts.",
+          message: "Grade is required for learner and practice accounts.",
         });
       }
       gradeNum = Number(grade);
@@ -1611,42 +1611,107 @@ if (accountType === "guest") {
     )}&email=${encodeURIComponent(user.email)}`;
 
     try {
-      if (user.accountType === "learner") {
-        await sendEmail({
-          to: user.email,
-          subject: "Verify your Practice Online email",
-          text: `Hi ${user.username}, your learner number is ${user.learnerNumber}. Verify your email here: ${verifyUrl}`,
-          html: `
-            <div style="font-family:Arial,sans-serif; line-height:1.6;">
-              <p>Hi ${user.username},</p>
-              <p>Welcome to Practice Online.</p>
-              <p>Your learner number is: <b>${user.learnerNumber}</b></p>
-              <p>Please verify your email address by clicking the link below:</p>
-              <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
-              <p>This link expires in 24 hours.</p>
-              <p>Regards,<br/>Practice Online Team</p>
-            </div>
-          `,
-        });
-      } else {
-        await sendEmail({
-          to: user.email,
-          subject: "Verify your Practice Online email",
-          text: `Hi ${user.username}, your learner number is ${user.learnerNumber}. Verify your email here: ${verifyUrl}`,
-          html: `
-            <div style="font-family:Arial,sans-serif; line-height:1.6;">
-              <p>Hi ${user.username},</p>
-              <p>Welcome to Practice Online.</p>
-              <p>Your learner number is: <b>${user.learnerNumber}</b></p>
-              <p>Your account is ready and you have access to learning materials.</p>
-              <p>Please verify your email address by clicking the link below:</p>
-              <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
-              <p>This link expires in 24 hours.</p>
-              <p>Regards,<br/>Practice Online Team</p>
-            </div>
-          `,
-        });
-      }
+const displayName = user.fullName || user.username || "there";
+
+let accountMessageHtml = "";
+let accountMessageText = "";
+
+if (user.accountType === "learner") {
+  accountMessageHtml = `
+    <p>Your learner number is: <strong>${user.learnerNumber}</strong></p>
+    <p>Your learner account has been created successfully.</p>
+    <p>We are excited to be part of your academic journey and are committed to helping you reach greater heights in your studies.</p>
+    <p>You may now enroll for classes and begin accessing the opportunities available on the platform.</p>
+  `;
+
+  accountMessageText = `
+Your learner number is: ${user.learnerNumber}
+
+Your learner account has been created successfully.
+
+We are excited to be part of your academic journey and are committed to helping you reach greater heights in your studies.
+
+You may now enroll for classes and begin accessing the opportunities available on the platform.
+  `;
+}
+
+else if (user.accountType === "practice") {
+  accountMessageHtml = `
+    <p>Your Practice Account has been created successfully.</p>
+    <p>You now have access to practice quizzes, assignments, challenges and learning content.</p>
+    <p>We are committed to helping you build confidence, strengthen your skills and reach greater heights through continuous learning and practice.</p>
+  `;
+
+  accountMessageText = `
+Your Practice Account has been created successfully.
+
+You now have access to practice quizzes, assignments, challenges and learning content.
+
+We are committed to helping you build confidence, strengthen your skills and reach greater heights through continuous learning and practice.
+  `;
+}
+
+else if (user.accountType === "guest") {
+  accountMessageHtml = `
+    <p>Thank you for visiting Practice Online.</p>
+    <p>Your guest account has been created successfully and your enquiry has been received.</p>
+    <p>Whether you are exploring opportunities, seeking information or looking for collaboration, we are delighted to have you with us.</p>
+    <p>Our team is committed to supporting you and helping you discover how Practice Online can assist you in reaching greater heights.</p>
+  `;
+
+  accountMessageText = `
+Thank you for visiting Practice Online.
+
+Your guest account has been created successfully and your enquiry has been received.
+
+Whether you are exploring opportunities, seeking information or looking for collaboration, we are delighted to have you with us.
+
+Our team is committed to supporting you and helping you discover how Practice Online can assist you in reaching greater heights.
+  `;
+}
+
+await sendEmail({
+  to: user.email,
+  subject: "Welcome to Practice Online - Verify Your Email",
+  text: `Hi ${displayName},
+
+Welcome to Practice Online.
+
+${accountMessageText}
+
+Please verify your email address here:
+
+${verifyUrl}
+
+This link expires in 24 hours.
+
+Practice Online Team`,
+  html: `
+    <div style="font-family:Arial,sans-serif;line-height:1.7;">
+      <p>Hi ${displayName},</p>
+
+      <p>Welcome to <strong>Practice Online</strong>.</p>
+
+      ${accountMessageHtml}
+
+      <p>Please verify your email address by clicking the link below:</p>
+
+      <p>
+        <a href="${verifyUrl}" target="_blank">
+          Verify Email
+        </a>
+      </p>
+
+      <p>This verification link expires in 24 hours.</p>
+
+      <p>
+        Kind Regards,<br>
+        <strong>Practice Online Team</strong>
+      </p>
+    </div>
+  `,
+});
+      
 
       console.log("Verification email sent successfully to:", user.email);
     } catch (emailErr) {
