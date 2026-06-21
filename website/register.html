@@ -105,7 +105,7 @@
       font-size:14px;
     }
 
-input,select{
+input,select,textarea{
   width:100%;
   padding:12px;
   margin-top:6px;
@@ -118,9 +118,49 @@ input,select{
   font-weight:400;
     }
 
-    input:focus,select:focus{
+textarea{
+  resize:vertical;
+  min-height:90px;
+}
+
+    input:focus,select:focus,textarea:focus{
       border-color:#cfe9ff;
       box-shadow:0 0 0 4px rgba(11,60,93,.10);
+    }
+
+    .checkGroup{
+      display:grid;
+      gap:8px;
+      margin-top:8px;
+    }
+
+    .checkGroup label{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin:0;
+      font-weight:500;
+      color:#334155;
+      font-size:14px;
+    }
+
+    .checkGroup input{
+      width:auto;
+      margin:0;
+    }
+
+    .charCount{
+      margin-top:6px;
+      font-size:12px;
+      color:var(--muted);
+      text-align:right;
+    }
+
+    .fieldHelp{
+      margin-top:6px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.4;
     }
 
     .radioRow{
@@ -149,6 +189,10 @@ input,select{
       grid-template-columns:1fr 1fr;
       gap:10px;
       margin-top:12px;
+    }
+
+    .row.oneCol{
+      grid-template-columns:1fr;
     }
 
     @media(max-width:520px){
@@ -237,6 +281,11 @@ input,select{
   margin-bottom:4px;
   font-weight:600;
 }
+
+.noteBox span{
+  display:block;
+  line-height:1.45;
+}
   </style>
 </head>
 
@@ -258,14 +307,15 @@ input,select{
     <p>Create your Practice Online account</p>
 
     <div class="noteBox" id="acctNote">
-      <b id="acctNoteTitle">Student Account</b>
-      <span id="acctNoteText">Practice the Quizzes + Online Tutorials.</span>
+      <b id="acctNoteTitle">Choose Account Type</b>
+      <span id="acctNoteText">Please choose Learner, Practice or Guest Account to continue.</span>
     </div>
 
     <label>Account Type</label>
     <div class="radioRow">
-      <label><input type="radio" name="accountType" value="student" checked> Student</label>
-      <label><input type="radio" name="accountType" value="materials"> Practice Account</label>
+      <label><input type="radio" name="accountType" value="learner"> Learner Account</label>
+      <label><input type="radio" name="accountType" value="practice"> Practice Account</label>
+      <label><input type="radio" name="accountType" value="guest"> Guest Account</label>
     </div>
 
     <div class="row">
@@ -279,8 +329,10 @@ input,select{
       </div>
     </div>
 
-    <label for="username">Username</label>
-    <input id="username" autocomplete="username" />
+    <div id="usernameWrap">
+      <label for="username">Username</label>
+      <input id="username" autocomplete="username" />
+    </div>
 
     <label for="email">Email</label>
     <input id="email" type="email" autocomplete="email" />
@@ -312,21 +364,24 @@ input,select{
       </select>
     </div>
 
-    <label for="gender">Gender</label>
-    <select id="gender">
-      <option value="" selected>Select Gender</option>
-      <option value="female">Female</option>
-      <option value="male">Male</option>
-      <option value="prefer_not_to_say">Prefer not to say</option>
-      <option value="other">Other</option>
-    </select>
+    <div id="genderWrap">
+      <label for="gender">Gender</label>
+      <select id="gender">
+        <option value="" selected>Select Gender</option>
+        <option value="female">Female</option>
+        <option value="male">Male</option>
+        <option value="prefer_not_to_say">Prefer not to say</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
 
-    <div class="row">
+    <div class="row" id="phoneRow">
       <div>
         <label for="cellphone">Your Cellphone</label>
         <input id="cellphone" inputmode="tel" placeholder="+27" />
+   
       </div>
-      <div>
+      <div id="guardianCellphoneWrap">
         <label for="guardianCellphone">Guardian Cellphone</label>
         <input id="guardianCellphone" inputmode="tel" placeholder="+27" />
       </div>
@@ -344,10 +399,45 @@ input,select{
       </select>
     </div>
 
-    <label for="schoolName">School Name</label>
-    <input id="schoolName" />
+    <div id="curriculumWrap">
+      <label for="curriculum">Curriculum</label>
+      <select id="curriculum">
+        <option value="" selected>Select Curriculum</option>
+        <option value="NCS">NCS</option>
+        <option value="IEB">IEB</option>
+      </select>
+    </div>
 
-    <div id="CurrentWrap">
+    <div id="guestWrap" class="hide">
+      <label>Reason for Visiting</label>
+      <div class="checkGroup">
+        <label><input type="checkbox" name="guestReasons" value="parent_guardian"> Parent / Guardian</label>
+        <label><input type="checkbox" name="guestReasons" value="tutoring_service"> Another Tutoring Service</label>
+        <label><input type="checkbox" name="guestReasons" value="school_institution"> School / Institution</label>
+        <label><input type="checkbox" name="guestReasons" value="request_information"> Request Information</label>
+        <label><input type="checkbox" name="guestReasons" value="request_quote"> Request a Quote</label>
+        <label><input type="checkbox" name="guestReasons" value="partnership"> Partnership Opportunity</label>
+        <label><input type="checkbox" name="guestReasons" value="research"> Research Purposes</label>
+        <label><input type="checkbox" name="guestReasons" value="exploring"> Exploring the Platform</label>
+        <label><input type="checkbox" name="guestReasons" value="other" id="guestReasonOther"> Other</label>
+      </div>
+
+      <div id="otherReasonWrap" class="hide">
+        <label for="otherReason">Please Specify</label>
+        <input id="otherReason" placeholder="Please tell us your reason for visiting" />
+      </div>
+
+      <label for="guestMessage">Message</label>
+      <textarea id="guestMessage" maxlength="255" rows="4" placeholder="Tell us more about your visit..."></textarea>
+      <div class="charCount" id="guestMessageCount">255 characters remaining</div>
+    </div>
+
+    <div id="schoolNameWrap">
+      <label for="schoolName">School Name</label>
+      <input id="schoolName" />
+    </div>
+
+    <div id="currentWrap">
       <label for="currentMarkRange">Current Mark</label>
       <select id="currentMarkRange">
         <option value="" selected>Select Current Mark</option>
@@ -397,22 +487,41 @@ input,select{
 
   const firstNameEl = document.getElementById("firstName");
   const surnameEl = document.getElementById("surname");
+  const usernameWrap = document.getElementById("usernameWrap");
   const usernameEl = document.getElementById("username");
   const emailEl = document.getElementById("email");
+
+  const gradeWrap = document.getElementById("gradeWrap");
   const gradeEl = document.getElementById("grade");
+  const curriculumWrap = document.getElementById("curriculumWrap");
+  const curriculumEl = document.getElementById("curriculum");
+
+  const guestWrap = document.getElementById("guestWrap");
+  const guestReasonOtherEl = document.getElementById("guestReasonOther");
+  const otherReasonWrap = document.getElementById("otherReasonWrap");
+  const otherReasonEl = document.getElementById("otherReason");
+  const guestMessageEl = document.getElementById("guestMessage");
+  const guestMessageCountEl = document.getElementById("guestMessageCount");
+
+  const schoolNameWrap = document.getElementById("schoolNameWrap");
   const schoolNameEl = document.getElementById("schoolName");
+  const currentWrap = document.getElementById("currentWrap");
   const currentMarkRangeEl = document.getElementById("currentMarkRange");
+
   const passwordEl = document.getElementById("password");
   const confirmEl = document.getElementById("confirmPassword");
   const toggleBtn = document.getElementById("toggleBtn");
-  const gradeWrap = document.getElementById("gradeWrap");
 
   const saWrap = document.getElementById("saWrap");
   const provinceEl = document.getElementById("province");
   const districtEl = document.getElementById("district");
 
+  const genderWrap = document.getElementById("genderWrap");
   const genderEl = document.getElementById("gender");
+
+  const phoneRow = document.getElementById("phoneRow");
   const cellphoneEl = document.getElementById("cellphone");
+  const guardianCellphoneWrap = document.getElementById("guardianCellphoneWrap");
   const guardianCellEl = document.getElementById("guardianCellphone");
 
   function setMsg(text, type = "") {
@@ -425,7 +534,7 @@ input,select{
   }
 
   function accountType() {
-    return document.querySelector('input[name="accountType"]:checked').value;
+    return document.querySelector('input[name="accountType"]:checked')?.value || "";
   }
 
   function isSA() {
@@ -434,38 +543,147 @@ input,select{
 
   function updateAccountNote() {
     const t = accountType();
-    if (t === "student") {
-      acctNoteTitle.textContent = "Student Account";
-      acctNoteText.textContent = "Practice the Quizzes + Online Tutorials.";
-    } else {
+
+    if (!t) {
+      acctNoteTitle.textContent = "Choose Account Type";
+      acctNoteText.textContent =
+        "Select the account that best matches how you will use Practice Online.";
+      return;
+    }
+
+    if (t === "learner") {
+      acctNoteTitle.textContent = "Learner Account";
+      acctNoteText.textContent =
+        "Join classes, complete assignments, write quizzes and access all learning services.";
+      return;
+    }
+
+    if (t === "practice") {
       acctNoteTitle.textContent = "Practice Account";
-      acctNoteText.textContent = "Practice the Quizzes.";
+      acctNoteText.textContent =
+        "Practice Mathematics independently using quizzes, activities, homework and assignments.";
+      return;
+    }
+
+    if (t === "guest") {
+      acctNoteTitle.textContent = "Guest Account";
+      acctNoteText.textContent =
+        "Explore Practice Online, request information, request a quote or learn about our services.";
+      return;
     }
   }
 
-  function toggleGrade() {
-    const isStudent = accountType() === "student";
-    gradeWrap.style.display = isStudent ? "block" : "none";
-    if (!isStudent) gradeEl.value = "";
+  function updateGuestMessageCount() {
+    const remaining = 255 - String(guestMessageEl.value || "").length;
+    guestMessageCountEl.textContent = `${remaining} characters remaining`;
   }
 
-  document.querySelectorAll('input[name="accountType"]').forEach(r => {
-    r.addEventListener("change", () => {
-      toggleGrade();
+  function selectedGuestReasons() {
+    return [...document.querySelectorAll('input[name="guestReasons"]:checked')]
+      .map(cb => cb.value);
+  }
+
+  function updateOtherReasonField() {
+    const show = Boolean(guestReasonOtherEl?.checked);
+    otherReasonWrap.classList.toggle("hide", !show);
+
+    if (!show) {
+      otherReasonEl.value = "";
+    }
+  }
+
+  guestReasonOtherEl.addEventListener("change", updateOtherReasonField);
+
+  function normalizePhone(value) {
+    return String(value || "").replace(/\s+/g, "");
+  }
+
+  function isValidSouthAfricanPhone(value) {
+    const phone = normalizePhone(value);
+    return /^\+27[6-8][0-9]{8}$/.test(phone);
+  }
+
+  function makeGuestUsername(firstName, surname, email) {
+    const base = cleanSpaces(`${firstName} ${surname}`)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ".")
+      .replace(/^\.+|\.+$/g, "");
+
+    const emailBase = String(email || "")
+      .split("@")[0]
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ".")
+      .replace(/^\.+|\.+$/g, "");
+
+    const seed = base || emailBase || "guest";
+    return `${seed}.guest.${Date.now().toString().slice(-5)}`;
+  }
+
+  function toggleAccountFields() {
+    const t = accountType();
+    const isLearner = t === "learner";
+    const isPractice = t === "practice";
+    const isGuest = t === "guest";
+    const isLearnerOrPractice = isLearner || isPractice;
+
+    usernameWrap.style.display = isGuest ? "none" : "block";
+    genderWrap.style.display = isGuest ? "none" : "block";
+
+    gradeWrap.style.display = isLearnerOrPractice ? "block" : "none";
+    curriculumWrap.style.display = isLearnerOrPractice ? "block" : "none";
+
+    schoolNameWrap.style.display = isLearner ? "block" : "none";
+    currentWrap.style.display = isLearner ? "block" : "none";
+
+    guardianCellphoneWrap.style.display = isLearner ? "block" : "none";
+    phoneRow.classList.toggle("oneCol", !isLearner);
+
+    guestWrap.classList.toggle("hide", !isGuest);
+
+    if (!isLearnerOrPractice) {
+      gradeEl.value = "";
+      curriculumEl.value = "";
+    }
+
+    if (!isLearner) {
+      schoolNameEl.value = "";
+      currentMarkRangeEl.value = "";
+      guardianCellEl.value = "";
+    }
+
+    if (isGuest) {
+      usernameEl.value = "";
+      genderEl.value = "";
+    }
+
+    if (!isGuest) {
+      document.querySelectorAll('input[name="guestReasons"]').forEach(cb => cb.checked = false);
+      otherReasonEl.value = "";
+      updateOtherReasonField();
+      guestMessageEl.value = "";
+      updateGuestMessageCount();
+    }
+  }
+
+  document.querySelectorAll('input[name="accountType"]').forEach(radio => {
+    radio.addEventListener("change", () => {
       updateAccountNote();
+      toggleAccountFields();
     });
   });
-  toggleGrade();
-  updateAccountNote();
+
+  guestMessageEl.addEventListener("input", updateGuestMessageCount);
 
   function ensurePlus27(el) {
     el.addEventListener("focus", () => {
       if (!el.value.trim()) el.value = "+27";
     });
+
     el.addEventListener("blur", () => {
       if (el.value.trim() === "+27") el.value = "";
     });
   }
+
   ensurePlus27(cellphoneEl);
   ensurePlus27(guardianCellEl);
 
@@ -559,16 +777,20 @@ input,select{
   function populateDistricts() {
     const prov = provinceEl.value;
     const list = DISTRICTS_BY_PROVINCE[prov] || [];
+
     resetDistrict();
-    if (!prov || list.length === 0) return;
+
+    if (!prov || !list.length) return;
 
     const frag = document.createDocumentFragment();
+
     list.forEach(d => {
       const opt = document.createElement("option");
       opt.value = d;
       opt.textContent = d;
       frag.appendChild(opt);
     });
+
     districtEl.appendChild(frag);
     districtEl.disabled = false;
   }
@@ -577,6 +799,7 @@ input,select{
 
   function toggleSAFields() {
     const yes = isSA();
+
     saWrap.classList.toggle("hide", !yes);
 
     if (!yes) {
@@ -587,9 +810,14 @@ input,select{
     }
   }
 
-  document.querySelectorAll('input[name="isSA"]').forEach(r => {
-    r.addEventListener("change", toggleSAFields);
+  document.querySelectorAll('input[name="isSA"]').forEach(radio => {
+    radio.addEventListener("change", toggleSAFields);
   });
+
+  toggleAccountFields();
+  updateAccountNote();
+  updateGuestMessageCount();
+  updateOtherReasonField();
   toggleSAFields();
 
   btn.onclick = async () => {
@@ -598,10 +826,19 @@ input,select{
     const firstName = cleanSpaces(firstNameEl.value);
     const surname = cleanSpaces(surnameEl.value);
     const fullName = cleanSpaces(firstName + " " + surname);
-    const username = cleanSpaces(usernameEl.value);
     const email = emailEl.value.trim();
+
+    const usernameInput = cleanSpaces(usernameEl.value);
+    const username = type === "guest"
+      ? makeGuestUsername(firstName, surname, email)
+      : usernameInput;
+
     const schoolName = cleanSpaces(schoolNameEl.value);
     const currentMarkRange = currentMarkRangeEl.value;
+    const curriculum = curriculumEl.value.trim();
+    const guestReasons = selectedGuestReasons();
+    const otherReason = cleanSpaces(otherReasonEl.value);
+    const guestMessage = cleanSpaces(guestMessageEl.value);
 
     const gender = genderEl.value.trim();
     const cellphone = cellphoneEl.value.trim();
@@ -618,22 +855,49 @@ input,select{
       email,
       password: passwordEl.value,
       accountType: type,
-      ...(type === "student" ? { grade: Number(gradeEl.value) } : {}),
-      ...(schoolName ? { schoolName } : {}),
-      ...(currentMarkRange ? { currentMarkRange } : {}),
-      ...(gender ? { gender } : {}),
+      phoneVerified: false,
+      ...(type === "learner"
+        ? { enrollmentStatus: "pending" }
+        : { enrollmentStatus: "not_required" }),
+      ...(type === "learner" || type === "practice"
+        ? { grade: Number(gradeEl.value), curriculum }
+        : {}),
+      ...(type === "guest"
+        ? { guestReasons, otherReason, guestMessage }
+        : {}),
+      ...(type === "learner" && schoolName ? { schoolName } : {}),
+      ...(type === "learner" && currentMarkRange ? { currentMarkRange } : {}),
+      ...(type !== "guest" && gender ? { gender } : {}),
       ...(province ? { province } : {}),
       ...(district ? { district } : {}),
-      ...(cellphone ? { cellphone } : {}),
-      ...(guardianCellphone ? { guardianCellphone } : {})
+      ...(cellphone ? { cellphone: normalizePhone(cellphone) } : {}),
+      ...(type === "learner" && guardianCellphone
+        ? { guardianCellphone: normalizePhone(guardianCellphone) }
+        : {})
     };
+
+    if (!type) {
+      return setMsg("Please choose an account type.", "error");
+    }
 
     if (!firstName || !surname) {
       return setMsg("Please enter your first name and surname.", "error");
     }
 
-    if (!payload.username || !payload.email || !payload.password) {
-      return setMsg("Please complete username, email and password.", "error");
+    if (type !== "guest" && !payload.username) {
+      return setMsg("Please complete your username.", "error");
+    }
+
+    if (!payload.email || !payload.password) {
+      return setMsg("Please complete email and password.", "error");
+    }
+
+    if (!payload.cellphone) {
+      return setMsg("Please enter your cellphone number.", "error");
+    }
+
+    if (!isValidSouthAfricanPhone(payload.cellphone)) {
+      return setMsg("Please enter a valid South African cellphone number in this format: +27821234567.", "error");
     }
 
     const strongPasswordRegex =
@@ -650,12 +914,38 @@ input,select{
       return setMsg("Passwords do not match.", "error");
     }
 
-    if (type === "student" && !Number.isFinite(payload.grade)) {
+    if ((type === "learner" || type === "practice") && !Number.isFinite(payload.grade)) {
       return setMsg("Please select a grade.", "error");
+    }
+
+    if ((type === "learner" || type === "practice") && !payload.curriculum) {
+      return setMsg("Please select your curriculum: NCS or IEB.", "error");
     }
 
     if (isSA() && province && !district) {
       return setMsg("Please select your district.", "error");
+    }
+
+    if (type === "guest") {
+      if (!province) {
+        return setMsg("Please select your province.", "error");
+      }
+
+      if (!district) {
+        return setMsg("Please select your district.", "error");
+      }
+
+      if (!guestReasons.length) {
+        return setMsg("Please select at least one reason for visiting.", "error");
+      }
+
+      if (guestReasons.includes("other") && !otherReason) {
+        return setMsg("Please specify your reason for visiting.", "error");
+      }
+
+      if (guestMessage.length > 255) {
+        return setMsg("Guest message cannot exceed 255 characters.", "error");
+      }
     }
 
     try {
@@ -670,33 +960,32 @@ input,select{
 
       const data = await res.json().catch(() => ({}));
 
-if (!res.ok) {
-  btn.disabled = false;
-  return setMsg(data.message || "Registration failed.", "error");
-}
+      if (!res.ok) {
+        btn.disabled = false;
+        return setMsg(data.message || "Registration failed.", "error");
+      }
 
-setMsg(
-  "Registration successful! We have sent a verification email to your email address. Please verify your email before logging in.",
-  "ok"
-);
+      setMsg(
+        "Registration successful! Please verify your email and cellphone number before logging in.",
+        "ok"
+      );
 
-btn.disabled = false;
+      btn.disabled = false;
 
-document.querySelectorAll("input, select").forEach(el => {
-  el.disabled = true;
-});
+      document.querySelectorAll("input, select, textarea").forEach(el => {
+        el.disabled = true;
+      });
 
-setTimeout(() => {
-  location.href = "verify-email-notice.html";
-}, 2500);
+      setTimeout(() => {
+        location.href = "verify-email-notice.html";
+      }, 2500);
 
-} catch {
-  btn.disabled = false;
-  setMsg("Network error. Please try again.", "error");
-}
-};
+    } catch {
+      btn.disabled = false;
+      setMsg("Network error. Please try again.", "error");
+    }
+  };
 </script>
 
 </body>
 </html>
-
