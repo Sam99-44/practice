@@ -496,7 +496,7 @@
             </button>
             <button class="btn danger" id="removeSelectedBtn">
               <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654917/delete_suc2ec.svg" alt="">
-              Remove Selected
+              Remove from Table
             </button>
           </div>
         </div>
@@ -661,9 +661,12 @@
       try{
         const data = await fetchJson("/api/finance/potential-clients");
 
+        const hiddenIds = new Set(getHiddenPotentialClientIds());
+
         clients = asArray(data)
           .map(normaliseUser)
-          .filter(client => ["learner", "practice"].includes(client.accountType));
+          .filter(client => ["learner", "practice"].includes(client.accountType))
+          .filter(client => !hiddenIds.has(client.id));
 
         selectedIds.clear();
         pendingChanges = {};
@@ -986,36 +989,47 @@
       }
     }
 
+    function getHiddenPotentialClientIds(){
+      try{
+        return JSON.parse(localStorage.getItem("potential_clients_hidden_ids") || "[]");
+      }catch{
+        return [];
+      }
+    }
+
+    function saveHiddenPotentialClientIds(ids){
+      localStorage.setItem(
+        "potential_clients_hidden_ids",
+        JSON.stringify([...new Set(ids)])
+      );
+    }
+
     async function removeSelected(){
       if(!isAdmin) return;
 
       const ids = [...selectedIds];
 
       if(!ids.length){
-        return show("Select at least one record to delete.", "error");
+        return show("Select at least one record to remove from this table.", "error");
       }
 
-      const answer = await confirmDialog("Delete selected client records from MongoDB? This cannot be undone.");
+      const answer = await confirmDialog("Remove selected client records from this Potential Clients table? Their accounts will not be deleted.");
       if(answer !== true) return;
 
-      try{
-        let removed = 0;
+      const hiddenIds = getHiddenPotentialClientIds();
 
-        for(const id of ids){
-          await fetchJson(`/api/finance/potential-clients/${encodeURIComponent(id)}`, {
-            method:"DELETE"
-          });
-          removed++;
-        }
+      ids.forEach(id => hiddenIds.push(id));
 
-        selectedIds.clear();
-        pendingChanges = {};
-        show(removed + " selected record(s) deleted from MongoDB.");
-        await loadClients(false);
-      }catch(error){
-        console.error(error);
-        show("Could not remove selected records.", "error");
-      }
+      saveHiddenPotentialClientIds(hiddenIds);
+
+      clients = clients.filter(client => !selectedIds.has(client.id));
+
+      selectedIds.clear();
+      pendingChanges = {};
+
+      renderAll();
+
+      show("Selected record(s) removed from this table only. Their accounts still exist.");
     }
 
     function exportExcel(){
