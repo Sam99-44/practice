@@ -388,7 +388,7 @@
             <div>
               <div class="metricLabel">Total Leads</div>
               <div class="metricValue" id="totalCount">0</div>
-              <div class="metricNote">Registered learners</div>
+              <div class="metricNote">Registered accounts</div>
             </div>
           </div>
 
@@ -399,7 +399,7 @@
             <div>
               <div class="metricLabel">Students</div>
               <div class="metricValue" id="studentCount">0</div>
-              <div class="metricNote">Student accounts</div>
+              <div class="metricNote">Learner accounts</div>
             </div>
           </div>
 
@@ -451,8 +451,8 @@
             <label>Account Type</label>
             <select id="typeFilter">
               <option value="all">All types</option>
-              <option value="student">Student</option>
-              <option value="materials">Practice Account</option>
+              <option value="learner">Learner</option>
+              <option value="practice">Practice Account</option>
             </select>
           </div>
 
@@ -626,6 +626,15 @@
       }
     }
 
+    function normalizeAccountType(value){
+      const type = String(value || "").toLowerCase().trim();
+      if(type === "student") return "learner";
+      if(type === "materials") return "practice";
+      if(type === "learner") return "learner";
+      if(type === "practice") return "practice";
+      return "learner";
+    }
+
     function normaliseUser(user, index){
       return {
         id:String(user._id || user.id || "client-" + index),
@@ -639,7 +648,7 @@
         province:user.province || "",
         district:user.district || "",
         currentMarkRange:user.currentMarkRange || "",
-        accountType:String(user.accountType || "student").toLowerCase(),
+        accountType:normalizeAccountType(user.accountType || "learner"),
         learnerNumber:user.learnerNumber || user.studentNumber || "",
         createdAt:user.createdAt || user.date || user.registeredAt || ""
       };
@@ -654,7 +663,7 @@
 
         clients = asArray(data)
           .map(normaliseUser)
-          .filter(client => ["student", "materials"].includes(client.accountType));
+          .filter(client => ["learner", "practice"].includes(client.accountType));
 
         selectedIds.clear();
         pendingChanges = {};
@@ -761,8 +770,8 @@
       const now = new Date();
 
       $("totalCount").textContent = clients.length;
-      $("studentCount").textContent = clients.filter(client => client.accountType === "student").length;
-      $("practiceCount").textContent = clients.filter(client => client.accountType === "materials").length;
+      $("studentCount").textContent = clients.filter(client => client.accountType === "learner").length;
+      $("practiceCount").textContent = clients.filter(client => client.accountType === "practice").length;
 
       $("monthCount").textContent = clients.filter(client => {
         const date = new Date(client.createdAt);
@@ -822,13 +831,13 @@
 
     function accountTypeInput(client){
       if(!isAdmin){
-        return esc(client.accountType === "materials" ? "Practice Account" : "Student");
+        return esc(client.accountType === "practice" ? "Practice Account" : "Student");
       }
 
       return `
         <select class="editSelect" onchange="trackChange('${esc(client.id)}','accountType',this.value)">
-          <option value="student" ${client.accountType === "student" ? "selected" : ""}>Student</option>
-          <option value="materials" ${client.accountType === "materials" ? "selected" : ""}>Practice Account</option>
+          <option value="student" ${client.accountType === "learner" ? "selected" : ""}>Student</option>
+          <option value="materials" ${client.accountType === "practice" ? "selected" : ""}>Practice Account</option>
         </select>
       `;
     }
@@ -983,22 +992,25 @@
       const ids = [...selectedIds];
 
       if(!ids.length){
-        return show("Select at least one record to remove.", "error");
+        return show("Select at least one record to delete.", "error");
       }
 
-      const answer = await confirmDialog("Remove selected client records?");
+      const answer = await confirmDialog("Delete selected client records from MongoDB? This cannot be undone.");
       if(answer !== true) return;
 
       try{
+        let removed = 0;
+
         for(const id of ids){
           await fetchJson(`/api/finance/potential-clients/${encodeURIComponent(id)}`, {
             method:"DELETE"
           });
+          removed++;
         }
 
         selectedIds.clear();
         pendingChanges = {};
-        show("Selected records removed.");
+        show(removed + " selected record(s) deleted from MongoDB.");
         await loadClients(false);
       }catch(error){
         console.error(error);
@@ -1044,7 +1056,7 @@
         client.province,
         client.district,
         client.currentMarkRange,
-        client.accountType === "materials" ? "Practice Account" : "Student",
+        client.accountType === "practice" ? "Practice Account" : "Student",
         client.learnerNumber,
         formatDate(client.createdAt)
       ]);
