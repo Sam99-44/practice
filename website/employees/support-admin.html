@@ -795,28 +795,53 @@ async function saveSelected(){
   }
 }
 
-function removeSelected(){
-  const ids = [...selectedIds];
-  if(!ids.length) return show("Select at least one record to remove.","error");
+async function deleteBackend(ticket){
+  if(!ticket.backendId) return false;
 
-  const ok = confirm("Remove selected records from the Support Admin table?");
+  await fetchJson(`/api/support/${ticket.backendId}`,{
+    method:"DELETE"
+  });
+
+  return true;
+}
+
+async function removeSelected(){
+  const ids = [...selectedIds];
+  if(!ids.length) return show("Select at least one record to delete.","error");
+
+  const ok = confirm(`Delete ${ids.length} selected support record(s) from the database? This cannot be undone.`);
   if(!ok) return;
 
-  const removedKeys = getRemovedKeys();
+  $("removeSelectedBtn").disabled = true;
+  $("removeSelectedBtn").textContent = "Deleting...";
 
-  for(const id of ids){
-    const ticket = tickets.find(t=>t.id===id);
-    if(!ticket) continue;
-    if(ticket.source === "manual") saveManual(getManual().filter(t=>t.id!==id));
-    else removedKeys.push(recordKey(ticket));
+  try{
+    let deleted = 0;
+
+    for(const id of ids){
+      const ticket = tickets.find(t=>t.id===id);
+      if(!ticket) continue;
+
+      if(ticket.source === "manual"){
+        saveManual(getManual().filter(t=>t.id!==id));
+        deleted++;
+      }else{
+        await deleteBackend(ticket);
+        deleted++;
+      }
+    }
+
+    selectedIds.clear();
+    editingIds.clear();
+    await loadAllSupportTickets(false);
+    show(deleted + " selected record(s) deleted successfully.");
+  }catch(e){
+    console.error(e);
+    show("Could not delete selected records. Please check the admin DELETE route on the backend.","error");
+  }finally{
+    $("removeSelectedBtn").disabled = false;
+    $("removeSelectedBtn").innerHTML = `<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654917/delete_suc2ec.svg" alt=""> Remove Selected`;
   }
-
-  saveRemovedKeys(removedKeys);
-  tickets = tickets.filter(t=>!selectedIds.has(t.id));
-  selectedIds.clear();
-  editingIds.clear();
-  renderRows();
-  show("Selected records removed from this support table.");
 }
 
 function editSelected(){
