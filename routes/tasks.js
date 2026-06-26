@@ -20,14 +20,16 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
+    const employee = await Employee.findById(req.body.assignedTo);
+
     const task = await Task.create({
       title: req.body.title,
       description: req.body.description || "",
       assignedTo: req.body.assignedTo,
       assignedBy: req.body.assignedBy || req.body.createdBy || req.body.assignedTo,
-      department: req.body.department || "",
+      department: req.body.department || employee?.department || "General",
       priority: req.body.priority || "Medium",
-      status: req.body.status || "Pending",
+      status: req.body.status || "New",
       progress: Number(req.body.progress || 0),
       dueDate: req.body.dueDate || null,
       notes: req.body.notes || ""
@@ -65,7 +67,7 @@ router.patch("/:id", async (req, res) => {
       allowedUpdates.progress = Number(allowedUpdates.progress);
     }
 
-    if (allowedUpdates.progress >= 100) {
+    if (allowedUpdates.progress >= 100 || allowedUpdates.status === "Completed") {
       allowedUpdates.status = "Completed";
       allowedUpdates.completedAt = new Date();
     }
