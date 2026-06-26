@@ -1,212 +1,118 @@
 import express from "express";
 import Task from "../models/Task.js";
 import Employee from "../models/Employee.js";
-import authRequired from "../middleware/authRequired.js";
-import employeeAdminOnly from "../middleware/employeeAdminOnly.js";
 
 const router = express.Router();
 
+router.get("/", async (req, res) => {
+  try {
+    const tasks = await Task.find()
+      .populate("assignedTo", "fullName username email role department")
+      .populate("assignedBy", "fullName username email role department")
+      .sort({ createdAt: -1 });
 
-// =========================
-// GET ALL TASKS
-// =========================
+    res.json(tasks);
+  } catch (error) {
+    console.error("GET /api/tasks error:", error);
+    res.status(500).json({ message: "Could not load tasks." });
+  }
+});
 
-router.get(
-    "/",
-    authRequired,
-    async (req, res) => {
+router.post("/", async (req, res) => {
+  try {
+    const task = await Task.create({
+      title: req.body.title,
+      description: req.body.description || "",
+      assignedTo: req.body.assignedTo,
+      assignedBy: req.body.assignedBy || req.body.createdBy || req.body.assignedTo,
+      department: req.body.department || "",
+      priority: req.body.priority || "Medium",
+      status: req.body.status || "Pending",
+      progress: Number(req.body.progress || 0),
+      dueDate: req.body.dueDate || null,
+      notes: req.body.notes || ""
+    });
 
-        try {
+    res.status(201).json(task);
+  } catch (error) {
+    console.error("POST /api/tasks error:", error);
+    res.status(500).json({ message: "Could not create task." });
+  }
+});
 
-            const tasks = await Task.find()
-                .populate("assignedTo", "fullName username department")
-                .populate("assignedBy", "fullName username")
-                .sort({ createdAt: -1 });
+router.patch("/:id", async (req, res) => {
+  try {
+    const allowedUpdates = {};
 
-            res.json(tasks);
+    [
+      "title",
+      "description",
+      "assignedTo",
+      "assignedBy",
+      "department",
+      "priority",
+      "status",
+      "progress",
+      "dueDate",
+      "notes"
+    ].forEach(field => {
+      if (req.body[field] !== undefined) {
+        allowedUpdates[field] = req.body[field];
+      }
+    });
 
-        } catch (err) {
-
-            console.error(err);
-
-            res.status(500).json({
-                message: "Failed to load tasks."
-            });
-
-        }
-
+    if (allowedUpdates.progress !== undefined) {
+      allowedUpdates.progress = Number(allowedUpdates.progress);
     }
-);
 
-
-// =========================
-// CREATE TASK
-// =========================
-
-router.post(
-    "/",
-    authRequired,
-    employeeAdminOnly,
-    async (req, res) => {
-
-        try {
-
-            const task = await Task.create({
-
-                title: req.body.title,
-
-                description: req.body.description,
-
-                assignedTo: req.body.assignedTo,
-
-                assignedBy: req.user._id,
-
-                department: req.body.department,
-
-                priority: req.body.priority,
-
-                dueDate: req.body.dueDate,
-
-                notes: req.body.notes
-
-            });
-
-            res.status(201).json(task);
-
-        } catch (err) {
-
-            console.error(err);
-
-            res.status(500).json({
-                message: "Failed to create task."
-            });
-
-        }
-
+    if (allowedUpdates.progress >= 100) {
+      allowedUpdates.status = "Completed";
+      allowedUpdates.completedAt = new Date();
     }
-);
 
+    const task = await Task.findByIdAndUpdate(
+      req.params.id,
+      { $set: allowedUpdates },
+      { new: true, runValidators: true }
+    );
 
-// =========================
-// UPDATE TASK
-// =========================
-
-router.patch(
-    "/:id",
-    authRequired,
-    async (req, res) => {
-
-        try {
-
-            const task = await Task.findById(req.params.id);
-
-            if (!task) {
-
-                return res.status(404).json({
-                    message: "Task not found."
-                });
-
-            }
-
-            Object.assign(task, req.body);
-
-            if (task.progress >= 100) {
-
-                task.status = "Completed";
-
-                task.completedAt = new Date();
-
-            }
-
-            await task.save();
-
-            res.json(task);
-
-        } catch (err) {
-
-            console.error(err);
-
-            res.status(500).json({
-                message: "Failed to update task."
-            });
-
-        }
-
+    if (!task) {
+      return res.status(404).json({ message: "Task not found." });
     }
-);
 
+    res.json(task);
+  } catch (error) {
+    console.error("PATCH /api/tasks/:id error:", error);
+    res.status(500).json({ message: "Could not update task." });
+  }
+});
 
-// =========================
-// DELETE TASK
-// =========================
+router.delete("/:id", async (req, res) => {
+  try {
+    const task = await Task.findByIdAndDelete(req.params.id);
 
-router.delete(
-    "/:id",
-    authRequired,
-    employeeAdminOnly,
-    async (req, res) => {
-
-        try {
-
-            const deleted = await Task.findByIdAndDelete(req.params.id);
-
-            if (!deleted) {
-
-                return res.status(404).json({
-                    message: "Task not found."
-                });
-
-            }
-
-            res.json({
-                message: "Task deleted successfully."
-            });
-
-        } catch (err) {
-
-            console.error(err);
-
-            res.status(500).json({
-                message: "Failed to delete task."
-            });
-
-        }
-
+    if (!task) {
+      return res.status(404).json({ message: "Task not found." });
     }
-);
 
+    res.json({ message: "Task deleted successfully." });
+  } catch (error) {
+    console.error("DELETE /api/tasks/:id error:", error);
+    res.status(500).json({ message: "Could not delete task." });
+  }
+});
 
-// =========================
-// EMPLOYEE LIST
-// =========================
+router.get("/employees/list", async (req, res) => {
+  try {
+    const employees = await Employee.find({})
+      .select("_id fullName username email role department")
+      .sort({ fullName: 1, username: 1 });
 
-router.get(
-    "/employees",
-    authRequired,
-    async (req, res) => {
-
-        try {
-
-            const employees = await Employee.find(
-                {},
-                "fullName username department email role"
-            ).sort({
-                fullName: 1
-            });
-
-            res.json(employees);
-
-        } catch (err) {
-
-            console.error(err);
-
-            res.status(500).json({
-                message: "Failed to load employees."
-            });
-
-        }
-
-    }
-);
+    res.json(employees);
+  } catch (error) {
+    console.error("GET /api/tasks/employees/list error:", error);
+    res.status(500).json({ message: "Could not load employees." });
+  }
+});
 
 export default router;
