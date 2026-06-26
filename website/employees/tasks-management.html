@@ -2,37 +2,500 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>My Tasks | Practice Online</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tasks Admin | Practice Online</title>
+
 <style>
-:root{--nav:#1b1648;--blue:#0b3c5d;--blueDark:#082f49;--red:#c81e1e;--green:#166534;--orange:#b45309;--border:#d9dee7;--text:#0f172a;--muted:#475569;--soft:#f8fafc}
-*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:"Times New Roman",Times,serif;background:#fff;color:var(--text)}a{text-decoration:none;color:inherit}button,input,select,textarea{font-family:"Times New Roman",Times,serif}.topbar{background:var(--nav);color:#fff;position:sticky;top:0;z-index:1000}.topbar-inner{width:100%;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}.accountLeft{display:flex;align-items:center;gap:12px;min-width:0}.accountIcon{width:40px;height:40px;filter:brightness(0) invert(1) contrast(180%)}.accountName{font-size:14px;font-weight:700;color:#fff}.accountType{font-size:13px;color:#e0e7ff;margin-top:3px}.topbarRight{display:flex;align-items:center;gap:18px}.iconBtn{min-width:50px;height:50px;display:flex;align-items:center;justify-content:center}.iconBtn img{width:30px;height:30px;filter:brightness(0) invert(1) contrast(180%)}.menuLink{color:#fff;font-size:13px;font-weight:700;background:transparent;border:0;cursor:pointer}.wrap{width:100%;padding:14px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:0;box-shadow:none;overflow:hidden;margin:0 0 12px}.cardHead{padding:14px 18px;border-bottom:1px solid #ececec;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.cardHead h1,.cardHead h2,.cardHead h3{margin:0;font-size:14px;font-weight:700;text-transform:uppercase}.body{padding:16px}.summaryGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.summaryBox{border:1px solid #e5e7eb;background:#fff;padding:12px;display:flex;align-items:center;gap:12px;min-height:86px}.summaryIcon{width:38px;height:38px;border:1px solid #e5e7eb;background:#f8fafc;display:flex;align-items:center;justify-content:center;flex:0 0 auto}.summaryIcon img{width:22px;height:22px;object-fit:contain}.metricLabel{font-size:13px;color:var(--muted);margin-bottom:5px}.metricValue{font-size:24px;font-weight:700;line-height:1}.metricNote{font-size:13px;color:var(--muted);margin-top:5px}.toolbar{display:grid;grid-template-columns:170px 170px 170px 170px 1fr auto;gap:10px;align-items:end;margin-bottom:10px}label{display:block;font-size:14px;font-weight:400;margin-bottom:6px;color:#111827}input,select,textarea{width:100%;padding:9px 10px;border-radius:0;border:1px solid #d6d3d1;background:#fff;font-size:14px;outline:none}textarea{min-height:70px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:#cbd5e1;box-shadow:0 0 0 4px rgba(226,232,240,.7)}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:38px;padding:0 14px;min-width:96px;border:1px solid var(--blue);border-radius:4px;background:var(--blue);color:#fff;font-size:12px;font-weight:700;cursor:pointer}.btn:hover{background:var(--blueDark);border-color:var(--blueDark)}.btn:disabled{opacity:.6;cursor:not-allowed}.btn.secondary{background:#fff;color:#111827;border:1px solid #d1d5db}.btn.secondary:hover{background:#f8fafc}.btn.danger{background:var(--red);border-color:var(--red)}.btn.danger:hover{background:#a81818;border-color:#a81818}.btn.small{height:31px;min-width:auto;padding:0 10px}.msgBox{display:none;margin-bottom:12px;padding:12px;border:1px solid #e5e7eb;font-size:14px}.msgBox.ok{display:block;color:#065f46;background:#f0fdf4}.msgBox.error{display:block;color:#991b1b;background:#fff;border-color:#fecaca}.tableWrap{width:100%;overflow:auto;border:1px solid #e5e7eb;background:#fff}.tableWrap::-webkit-scrollbar{height:10px;width:10px}.tableWrap::-webkit-scrollbar-thumb{background:#9ca3af;border-radius:20px}table{width:100%;border-collapse:collapse;min-width:1500px}th,td{padding:9px 10px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:14px;vertical-align:middle;white-space:nowrap}th{background:#f8fafc;color:#111827;font-size:13px;font-weight:700;position:sticky;top:0;z-index:10}tr:hover td{background:#f8fafc}.badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:700;background:#f8fafc;color:#334155;border:1px solid #d9dee7}.badge.pending{background:#eef6fb;color:#0b3c5d;border-color:#b6d4e8}.badge.progress{background:#fff7ed;color:#b45309;border-color:#fed7aa}.badge.completed{background:#f0fdf4;color:#166534;border-color:#bbf7d0}.badge.overdue{background:#fef2f2;color:#c81e1e;border-color:#fecaca}.progressWrap{width:120px;background:#e5e7eb;height:10px}.progressBar{height:10px;background:#0b3c5d;width:0}.editInput,.editSelect{min-width:100px;padding:6px 8px;font-size:13px}.noteInput{min-width:240px}.loadingRow{color:#475569;font-weight:700}.modalOverlay{position:fixed;inset:0;background:rgba(0,0,0,.25);display:none;align-items:center;justify-content:center;z-index:99999;padding:14px}.modalOverlay.show{display:flex}.modalCard{width:760px;max-width:100%;background:#fff;border:1px solid var(--border);box-shadow:0 10px 30px rgba(0,0,0,.15)}.modalHead{padding:14px 18px;border-bottom:1px solid #ececec;display:flex;justify-content:space-between;align-items:center;gap:10px}.modalHead h3{margin:0;font-size:14px;text-transform:uppercase}.modalBody{padding:16px}.formGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.wide{grid-column:span 2}.full{grid-column:1/-1}@media(max-width:1150px){.toolbar{grid-template-columns:1fr 1fr 1fr}.summaryGrid{grid-template-columns:repeat(2,1fr)}.formGrid{grid-template-columns:1fr 1fr}.wide{grid-column:auto}}@media(max-width:640px){.wrap{padding:10px}.body{padding:12px}.cardHead{padding:12px}.summaryGrid,.toolbar,.formGrid{grid-template-columns:1fr}.accountName,.accountType{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+:root{
+  --nav:#1b1648;
+  --org:#0b3c5d;
+  --orgDark:#082f49;
+  --red:#c81e1e;
+  --redDark:#a81818;
+  --border:#d9dee7;
+  --text:#0f172a;
+  --muted:#475569;
+  --soft:#f8fafc;
+  --ok:#065f46;
+  --error:#991b1b;
+  --orange:#b45309;
+}
+
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  padding:0;
+  font-family:"Times New Roman", Times, serif;
+  background:#fff;
+  color:var(--text);
+}
+
+a{text-decoration:none;color:inherit}
+button,input,select,textarea{font-family:"Times New Roman", Times, serif}
+
+.topbar{
+  background:var(--nav);
+  color:#fff;
+  position:sticky;
+  top:0;
+  z-index:1000;
+}
+
+.topbar-inner{
+  width:100%;
+  padding:12px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.accountLeft{display:flex;align-items:center;gap:12px;min-width:0}
+.accountIcon{width:40px;height:40px;filter:brightness(0) invert(1) contrast(180%)}
+.accountName{font-size:14px;font-weight:700;color:#fff}
+.accountType{font-size:13px;color:#e0e7ff;margin-top:3px}
+.topbarRight{display:flex;align-items:center;gap:18px}
+.iconBtn{min-width:50px;height:50px;display:flex;align-items:center;justify-content:center}
+.iconBtn img{width:30px;height:30px;filter:brightness(0) invert(1) contrast(180%)}
+.menuLink{color:#fff;font-size:13px;font-weight:700;background:transparent;border:0;cursor:pointer}
+
+.wrap{width:100%;padding:14px}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:0;box-shadow:none;overflow:hidden;margin:0 0 12px}
+.cardHead{padding:14px 18px;border-bottom:1px solid #ececec;background:#fff}
+.cardHead h1,.cardHead h2,.cardHead h3{margin:0;font-size:14px;font-weight:700;text-transform:uppercase}
+.body{padding:16px}
+
+.summaryGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.summaryBox{border:1px solid #e5e7eb;background:#fff;padding:12px;display:flex;align-items:center;gap:12px;min-height:88px}
+.metricLabel{font-size:13px;color:var(--muted);margin-bottom:5px}
+.metricValue{font-size:24px;font-weight:700;line-height:1}
+.metricNote{font-size:13px;color:var(--muted);margin-top:5px}
+
+.toolbar{display:grid;grid-template-columns:160px 160px 170px 170px 1fr auto;gap:10px;align-items:end;margin-bottom:10px}
+.overviewLabel{font-size:14px;color:#334155;margin:2px 0 6px}
+.overviewTiles{display:grid;grid-template-columns:160px 160px 160px 160px;gap:4px;margin:0 0 10px}
+.overviewTile{height:40px;border:1px solid #e5e7eb;background:#eee;color:#475569;display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px}
+.overviewTile:first-child{background:#fff;border-color:#0070c0;color:#0070c0}
+.pill{min-width:32px;height:24px;border-radius:999px;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;padding:0 10px}
+.pill.blue{background:#0070c0}
+.pill.orange{background:#f28c22}
+.pill.green{background:#1f9d3a}
+.pill.red{background:#e3261f}
+.pill.navy{background:var(--org)}
+@media(max-width:760px){.overviewTiles{grid-template-columns:1fr 1fr}}
+@media(max-width:460px){.overviewTiles{grid-template-columns:1fr}}
+
+.adminBar{display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px;margin-bottom:10px;border:1px solid #e5e7eb;background:#f8fafc}
+.adminBar.show{display:flex}
+.selectedText{font-size:13px;color:var(--muted);font-weight:700}
+
+label{display:block;font-size:14px;font-weight:400;margin-bottom:6px;color:#111827}
+input,select,textarea{width:100%;padding:9px 10px;border-radius:0;border:1px solid #d6d3d1;background:#fff;font-size:14px;outline:none}
+textarea{min-height:86px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:#cbd5e1;box-shadow:0 0 0 4px rgba(226,232,240,.7)}
+
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:38px;padding:0 14px;min-width:96px;border:1px solid var(--org);border-radius:4px;background:var(--org);color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+.btn:hover{background:var(--orgDark);border-color:var(--orgDark)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn.secondary{background:#fff;color:#111827;border:1px solid #d1d5db}
+.btn.secondary:hover{background:#f8fafc}
+.btn.danger{background:var(--red);border-color:var(--red)}
+.btn.danger:hover{background:var(--redDark);border-color:var(--redDark)}
+.btn.small{height:31px;min-width:auto;padding:0 10px}
+.btn img{width:15px;height:15px;object-fit:contain;filter:brightness(0) invert(1)}
+.btn.secondary img{filter:none}
+
+.formGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.full{grid-column:1/-1}
+.wide{grid-column:span 2}
+.hidden{display:none!important}
+
+.tableWrap{width:100%;overflow:auto;border:1px solid #e5e7eb;background:#fff}
+.tableWrap::-webkit-scrollbar{height:10px;width:10px}
+.tableWrap::-webkit-scrollbar-thumb{background:#9ca3af;border-radius:20px}
+table{width:100%;border-collapse:collapse;min-width:1650px}
+th,td{padding:9px 10px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:14px;vertical-align:middle;white-space:nowrap}
+th{background:#f8fafc;color:#111827;font-size:13px;font-weight:700;position:sticky;top:0;z-index:10}
+tr:hover td{background:#f8fafc}
+tr.rowSelected td,tr.rowEditing td{background:#f8fafc}
+.checkboxCell{width:38px;text-align:center}.checkboxCell input{width:auto;box-shadow:none}
+.editInput,.editSelect{min-width:120px;padding:6px 8px;font-size:13px}.wideInput{min-width:190px}
+.badge{display:inline-flex;align-items:center;justify-content:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:700;border:1px solid transparent;white-space:nowrap}
+.badge.priority{background:#f8fafc;color:#334155;border-color:#d9dee7}
+.badge.priority.high{background:#ffedd5;color:#c2410c;border-color:#fed7aa}
+.badge.priority.urgent{background:#fee2e2;color:#b91c1c;border-color:#fecaca}
+.badge.status-new{background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe}
+.badge.status-progress{background:#fef3c7;color:#92400e;border-color:#fde68a}
+.badge.status-waiting{background:#ede9fe;color:#6d28d9;border-color:#ddd6fe}
+.badge.status-completed{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.badge.status-cancelled{background:#fee2e2;color:#b91c1c;border-color:#fecaca}
+.badge.status-overdue{background:#ffedd5;color:#c2410c;border-color:#fed7aa}
+.msgBox{display:none;margin-bottom:12px;padding:12px;border:1px solid #e5e7eb;font-size:14px}
+.msgBox.ok{display:block;color:var(--ok);background:#f0fdf4}.msgBox.error{display:block;color:var(--error);background:#fff;border-color:#fecaca}.loadingRow{color:var(--muted);font-weight:700}
+
+@media(max-width:1150px){.toolbar{grid-template-columns:1fr 1fr 1fr}.summaryGrid{grid-template-columns:repeat(2,1fr)}.formGrid{grid-template-columns:1fr 1fr}.wide{grid-column:auto}}
+@media(max-width:640px){.wrap{padding:10px}.body{padding:12px}.cardHead{padding:12px}.summaryGrid,.toolbar,.formGrid{grid-template-columns:1fr}.accountName,.accountType{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 </style>
 </head>
+
 <body>
-<header class="topbar"><div class="topbar-inner"><div class="accountLeft"><img class="accountIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt=""><div><div class="accountName">Practice Online</div><div class="accountType" id="userPill">My Tasks</div></div></div><div class="topbarRight"><a href="employee-dashboard.html" class="iconBtn" title="Dashboard"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt=""></a><button class="menuLink" onclick="logout()">Logout</button></div></div></header>
-<div class="wrap"><div id="msg" class="msgBox"></div>
-<section class="card"><div class="cardHead"><h1>Employee Tasks Management</h1><div class="actions"><button class="btn" id="openCreateBtn">Create Task</button><button class="btn secondary" id="refreshTopBtn">Refresh</button></div></div><div class="body"><div class="summaryGrid"><div class="summaryBox"><div class="summaryIcon"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781656873/edit-3_c1gjk0.svg" alt=""></div><div><div class="metricLabel">Total Tasks</div><div class="metricValue" id="totalCount">0</div><div class="metricNote">Assigned tasks</div></div></div><div class="summaryBox"><div><div class="metricLabel">New</div><div class="metricValue" id="pendingCount">0</div><div class="metricNote">Not started</div></div></div><div class="summaryBox"><div><div class="metricLabel">In Progress</div><div class="metricValue" id="progressCount">0</div><div class="metricNote">Being handled</div></div></div><div class="summaryBox"><div><div class="metricLabel">Completed</div><div class="metricValue" id="completedCount">0</div><div class="metricNote">Finished tasks</div></div></div><div class="summaryBox"><div><div class="metricLabel">Overdue</div><div class="metricValue" id="overdueCount">0</div><div class="metricNote">Needs attention</div></div></div></div></div></section>
-<section class="card"><div class="cardHead"><h2>Task Records</h2></div><div class="body"><div class="toolbar"><div><label>Department</label><select id="departmentFilter"><option value="all">All departments</option><option>Marketing</option><option>Finance</option><option>Support</option><option>Operations</option><option>Software Development</option><option>Survey123 & GIS</option><option>Content Development</option><option>Graphic Design</option><option>Video Production</option><option>Human Resources</option><option>Administration</option><option>Quality Assurance</option></select></div><div><label>Status</label><select id="statusFilter"><option value="all">All status</option><option>New</option><option>In Progress</option><option>Waiting</option><option>Completed</option><option>Cancelled</option></select></div><div><label>Priority</label><select id="priorityFilter"><option value="all">All priorities</option><option>Low</option><option>Medium</option><option>High</option><option>Urgent</option></select></div><div><label>Date Filter</label><select id="dateFilter"><option value="all">All tasks</option><option value="today">Due today</option><option value="thisWeek">Due this week</option><option value="overdue">Overdue</option><option value="completed">Completed</option></select></div><div><label>Search</label><input id="searchBox" type="search" placeholder="Search task, department, notes"></div><div class="actions"><button class="btn secondary" id="refreshBtn">Refresh</button><button class="btn" id="saveSelectedBtn">Save Changes</button></div></div><div class="tableWrap"><table><thead><tr><th>No.</th><th>Task</th><th>Assigned To</th><th>Department</th><th>Priority</th><th>Status</th><th>Progress</th><th>Due Date</th><th>Assigned By</th><th>Notes</th><th>Action</th></tr></thead><tbody id="taskRows"><tr><td colspan="11" class="loadingRow">Loading tasks...</td></tr></tbody></table></div></div></section></div>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="accountLeft">
+      <img class="accountIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="">
+      <div>
+        <div class="accountName">Practice Online</div>
+        <div class="accountType" id="userPill">Task Management</div>
+      </div>
+    </div>
 
-<div class="modalOverlay" id="createModal"><div class="modalCard"><div class="modalHead"><h3>Create New Task</h3><button class="btn secondary small" id="closeCreateBtn">Close</button></div><div class="modalBody"><div class="formGrid"><div class="wide"><label>Task Title</label><input id="taskTitle" placeholder="Example: Create 3 marketing posts"></div><div><label>Assign To</label><select id="taskAssignee"><option value="">Select employee</option></select></div><div><label>Department</label><select id="taskDepartment"><option>Marketing</option><option>Finance</option><option>Support</option><option>Operations</option><option>Software Development</option><option>Survey123 & GIS</option><option>Content Development</option><option>Graphic Design</option><option>Video Production</option><option>Human Resources</option><option>Administration</option><option>Quality Assurance</option></select></div><div><label>Priority</label><select id="taskPriority"><option>Low</option><option selected>Medium</option><option>High</option><option>Urgent</option></select></div><div><label>Status</label><select id="taskStatus"><option selected>New</option><option>In Progress</option><option>Waiting</option><option>Completed</option><option>Cancelled</option></select></div><div><label>Progress %</label><input id="taskProgress" type="number" min="0" max="100" value="0"></div><div><label>Due Date</label><input id="taskDueDate" type="date"></div><div class="full"><label>Description / Instructions</label><textarea id="taskDescription" placeholder="Write clear instructions for the employee..."></textarea></div><div class="full"><label>Notes</label><textarea id="taskNotes" placeholder="Optional notes..."></textarea></div><div class="full actions"><button class="btn" id="createTaskBtn">Create Task</button><button class="btn secondary" id="clearTaskBtn">Clear</button></div></div></div></div></div>
+    <div class="topbarRight">
+      <a href="employee-dashboard.html" class="iconBtn" title="Dashboard">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/dashboard_bstzjj.svg" alt="">
+      </a>
+      <button class="menuLink" onclick="logout()">Logout</button>
+    </div>
+  </div>
+</header>
 
-<div id="confirmModal" class="modalOverlay"><div class="modalCard"><div class="modalHead"><h3>Practice Online</h3></div><div class="modalBody"><p id="modalText">Confirm action</p><div class="actions" style="justify-content:flex-end"><button id="modalYes" class="btn">Yes</button><button id="modalNo" class="btn secondary">No</button></div></div></div></div>
+<main class="wrap">
+  <div id="msg" class="msgBox"></div>
+
+  <section class="card">
+    <div class="cardHead"><h1>Employee Tasks</h1></div>
+    <div class="body">
+      <div class="summaryGrid">
+        <div class="summaryBox"><div><div class="metricLabel">Total Tasks</div><div class="metricValue" id="totalCount">0</div><div class="metricNote">All assigned tasks</div></div></div>
+        <div class="summaryBox"><div><div class="metricLabel">New</div><div class="metricValue" id="newCount">0</div><div class="metricNote">Not started</div></div></div>
+        <div class="summaryBox"><div><div class="metricLabel">In Progress</div><div class="metricValue" id="progressCount">0</div><div class="metricNote">Being handled</div></div></div>
+        <div class="summaryBox"><div><div class="metricLabel">Overdue</div><div class="metricValue" id="overdueCount">0</div><div class="metricNote">Past due date</div></div></div>
+        <div class="summaryBox"><div><div class="metricLabel">Completed</div><div class="metricValue" id="completedCount">0</div><div class="metricNote">Done tasks</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="cardHead"><h2>Create New Task</h2></div>
+    <div class="body">
+      <div class="formGrid">
+        <div class="wide"><label>Task Title</label><input id="taskTitle" placeholder="Example: Call learner about enrollment"></div>
+        <div><label>Assign To</label><select id="taskAssignee"><option value="">Select employee</option></select></div>
+        <div><label>Department</label><select id="taskDepartment"><option>General</option><option>Finance</option><option>Support</option><option>Operations</option><option>Content</option><option>Tutoring</option></select></div>
+        <div><label>Priority</label><select id="taskPriority"><option>Low</option><option selected>Medium</option><option>High</option><option>Urgent</option></select></div>
+        <div><label>Due Date</label><input id="taskDueDate" type="date"></div>
+        <div><label>Status</label><select id="taskStatus"><option>New</option><option>In Progress</option><option>Waiting</option><option>Completed</option><option>Cancelled</option></select></div>
+        <div class="full"><label>Description / Instructions</label><textarea id="taskDescription" placeholder="Write clear instructions for the employee..."></textarea></div>
+        <div class="full actions">
+          <button class="btn" id="createTaskBtn">Create Task</button>
+          <button class="btn secondary" id="clearTaskBtn">Clear</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="cardHead"><h2>Task Records</h2></div>
+    <div class="body">
+      <div class="toolbar">
+        <div><label>Status</label><select id="statusFilter"><option value="all">All statuses</option><option value="new">New</option><option value="in progress">In Progress</option><option value="waiting">Waiting</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
+        <div><label>Priority</label><select id="priorityFilter"><option value="all">All priorities</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select></div>
+        <div><label>Department</label><select id="departmentFilter"><option value="all">All departments</option><option value="general">General</option><option value="finance">Finance</option><option value="support">Support</option><option value="operations">Operations</option><option value="content">Content</option><option value="tutoring">Tutoring</option></select></div>
+        <div><label>Employee</label><select id="employeeFilter"><option value="all">All employees</option></select></div>
+        <div><label>Search</label><input id="searchBox" type="search" placeholder="Search tasks"></div>
+        <div class="actions"><button class="btn secondary" id="refreshBtn">Refresh</button><button class="btn" id="exportBtn">Export Excel</button></div>
+      </div>
+
+      <div class="overviewLabel">Overview</div>
+      <div class="overviewTiles" id="overviewTiles">
+        <div class="overviewTile"><span class="pill blue" id="quickAllCount">0</span><span>All</span></div>
+        <div class="overviewTile"><span class="pill orange" id="quickHighCount">0</span><span>High Priority</span></div>
+        <div class="overviewTile"><span class="pill green" id="quickNewCount">0</span><span>New</span></div>
+        <div class="overviewTile"><span class="pill red" id="quickOverdueCount">0</span><span>Overdue</span></div>
+      </div>
+
+      <div class="adminBar" id="adminBar">
+        <span class="selectedText" id="selectedCount">0 selected</span>
+        <div class="actions">
+          <button class="btn" id="editSelectedBtn">Edit Selected</button>
+          <button class="btn" id="saveSelectedBtn">Save Changes</button>
+          <button class="btn danger" id="removeSelectedBtn">Remove Selected</button>
+        </div>
+      </div>
+
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="checkboxCell"><input type="checkbox" id="selectAllBox"></th>
+              <th>No.</th><th>Task No.</th><th>Title</th><th>Assigned To</th><th>Department</th><th>Priority</th><th>Status</th><th>Due Date</th><th>Description</th><th>Created By</th><th>Created Date</th>
+            </tr>
+          </thead>
+          <tbody id="taskRows"><tr><td colspan="12" class="loadingRow">Loading tasks...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
 <script>
-const API="https://api.practiceonline.co.za";let tasks=[];let employees=[];let pendingChanges={};let currentEmployee=null;const $=id=>document.getElementById(id);
-function token(){return localStorage.getItem("employeeToken")||localStorage.getItem("token")||""}function logout(){localStorage.clear();location.href="employee-login.html"}function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}function clean(v){return String(v||"").trim()}function show(text,type="ok"){const m=$("msg");m.textContent=text;m.className="msgBox "+type;setTimeout(()=>m.className="msgBox",4500)}async function safeJson(r){try{return await r.json()}catch{return {}}}async function fetchJson(path,options={}){const res=await fetch(API+path,{...options,headers:{"Content-Type":"application/json",Authorization:"Bearer "+token(),...(options.headers||{})}});const data=await safeJson(res);if(!res.ok)throw new Error(data.message||"Request failed");return data}function asArray(data){if(Array.isArray(data))return data;return data.tasks||data.items||data.data||data.employees||data.users||[]}
-function normalizeStatus(v){const s=String(v||"").toLowerCase().trim();if(s==="pending"||s==="new")return "New";if(s==="in_progress"||s==="in progress")return "In Progress";if(s==="waiting"||s==="on hold"||s==="hold")return "Waiting";if(s==="completed"||s==="done")return "Completed";if(s==="cancelled"||s==="canceled")return "Cancelled";return "New"}function normalizePriority(v){const s=String(v||"").toLowerCase().trim();if(s==="low")return "Low";if(s==="high")return "High";if(s==="urgent")return "Urgent";return "Medium"}function employeeName(e){return e.fullName||e.username||e.email||"Employee"}function employeeId(e){return String(e._id||e.id||e.employeeId||"")}function normalizeEmployee(e){return{id:employeeId(e),name:employeeName(e),email:e.email||"",role:e.role||"",department:e.department||""}}
-function normaliseTask(t,i){const assigned=t.assignedTo||t.assignee||t.employee||{};const assignedBy=t.assignedBy||t.createdBy||{};return{id:String(t._id||t.id||"task-"+i),title:t.title||t.taskTitle||"",description:t.description||"",assignedToId:String(assigned._id||assigned.id||t.assignedToId||t.employeeId||""),assignedToName:t.assignedToName||assigned.fullName||assigned.username||assigned.email||"",department:t.department||assigned.department||"Marketing",priority:normalizePriority(t.priority),status:normalizeStatus(t.status),progress:Number(t.progress||0),dueDate:t.dueDate||t.deadline||"",assignedBy:assignedBy.fullName||assignedBy.username||t.assignedByName||"Admin",notes:t.employeeNotes||t.notes||"",createdAt:t.createdAt||""}}
-async function requireEmployee(){if(!token()){location.href="employee-login.html";return null}try{const user=await fetchJson("/api/employees/me");currentEmployee=user;$("userPill").textContent=(user.fullName||user.username||"Employee")+" • Tasks";return user}catch(e){console.error(e);show("Please login again as an employee.","error");return null}}
-async function loadEmployees(){try{const data=await fetchJson("/api/employees");employees=asArray(data).map(normalizeEmployee).filter(e=>e.id)}catch(e){console.error(e);employees=[]}fillEmployeeOptions()}function fillEmployeeOptions(){const options=employees.map(e=>`<option value="${esc(e.id)}">${esc(e.name)}${e.department?" • "+esc(e.department):""}</option>`).join("");$("taskAssignee").innerHTML='<option value="">Select employee</option>'+options}
-async function loadTasks(showMessage=false){$("refreshBtn").disabled=true;$("refreshTopBtn").disabled=true;$("refreshBtn").textContent="Loading...";try{const data=await fetchJson("/api/tasks/my").catch(()=>fetchJson("/api/tasks"));tasks=asArray(data).map(normaliseTask);pendingChanges={};renderAll();if(showMessage)show("Tasks refreshed.")}catch(e){console.error(e);tasks=[];renderAll();show("Could not load tasks. Please check /api/tasks route.","error")}finally{$("refreshBtn").disabled=false;$("refreshTopBtn").disabled=false;$("refreshBtn").textContent="Refresh"}}
-function openCreate(){$("createModal").classList.add("show")}function closeCreate(){$("createModal").classList.remove("show")}function clearTaskForm(){["taskTitle","taskDueDate","taskDescription","taskNotes"].forEach(id=>$(id).value="");$("taskAssignee").value="";$("taskDepartment").value="Marketing";$("taskPriority").value="Medium";$("taskStatus").value="New";$("taskProgress").value="0"}
-async function createTask(){const title=clean($("taskTitle").value);const assignedTo=clean($("taskAssignee").value);if(!title)return show("Task title is required.","error");if(!assignedTo)return show("Please select an employee.","error");const body={title,assignedTo,assignedBy:currentEmployee?._id||currentEmployee?.id||assignedTo,department:$("taskDepartment").value,priority:$("taskPriority").value,status:$("taskStatus").value,progress:Number($("taskProgress").value||0),dueDate:$("taskDueDate").value||null,description:clean($("taskDescription").value),notes:clean($("taskNotes").value)};try{$("createTaskBtn").disabled=true;await fetchJson("/api/tasks",{method:"POST",body:JSON.stringify(body)});clearTaskForm();closeCreate();await loadTasks(false);show("Task created successfully.")}catch(e){console.error(e);show(e.message||"Could not create task.","error")}finally{$("createTaskBtn").disabled=false}}
-function isOverdue(t){if(!t.dueDate||t.status==="Completed"||t.status==="Cancelled")return false;const d=new Date(t.dueDate);if(isNaN(d.getTime()))return false;const today=new Date();today.setHours(0,0,0,0);d.setHours(0,0,0,0);return d<today}function dueThisWeek(t){if(!t.dueDate)return false;const d=new Date(t.dueDate);if(isNaN(d.getTime()))return false;const now=new Date();const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());const end=new Date(today);end.setDate(end.getDate()+7);return d>=today&&d<=end}function dueToday(t){if(!t.dueDate)return false;return new Date(t.dueDate).toDateString()===new Date().toDateString()}function filtered(){const dep=$("departmentFilter").value,status=$("statusFilter").value,pri=$("priorityFilter").value,date=$("dateFilter").value,q=$("searchBox").value.toLowerCase().trim();return tasks.filter(t=>{if(dep!=="all"&&t.department!==dep)return false;if(status!=="all"&&t.status!==status)return false;if(pri!=="all"&&t.priority!==pri)return false;if(date==="today"&&!dueToday(t))return false;if(date==="thisWeek"&&!dueThisWeek(t))return false;if(date==="overdue"&&!isOverdue(t))return false;if(date==="completed"&&t.status!=="Completed")return false;if(q&&![t.title,t.description,t.department,t.notes,t.assignedBy,t.assignedToName].join(" ").toLowerCase().includes(q))return false;return true})}
-function renderSummary(){const rows=tasks;$("totalCount").textContent=rows.length;$("pendingCount").textContent=rows.filter(t=>t.status==="New").length;$("progressCount").textContent=rows.filter(t=>t.status==="In Progress").length;$("completedCount").textContent=rows.filter(t=>t.status==="Completed").length;$("overdueCount").textContent=rows.filter(isOverdue).length}function badgeClass(t){if(isOverdue(t))return "overdue";if(t.status==="Completed")return "completed";if(t.status==="In Progress")return "progress";return "pending"}function fmtDate(v){if(!v)return "-";const d=new Date(v);if(isNaN(d.getTime()))return esc(v);return d.toLocaleDateString("en-ZA")}function trackChange(id,key,value){if(!pendingChanges[id])pendingChanges[id]={};pendingChanges[id][key]=value;const t=tasks.find(x=>x.id===id);if(t){t[key]=key==="progress"?Number(value):value;if(key==="progress"&&Number(value)>=100)t.status="Completed"}renderSummary()}
-function renderRows(){const rows=filtered();if(!rows.length){$("taskRows").innerHTML='<tr><td colspan="11">No tasks found.</td></tr>';return}$("taskRows").innerHTML=rows.map((t,i)=>{const p=Math.min(100,Math.max(0,Number(t.progress||0)));return `<tr><td>${i+1}</td><td><strong>${esc(t.title||"-")}</strong><br><span style="color:#475569;font-size:13px">${esc(t.description||"")}</span></td><td>${esc(t.assignedToName||"-")}</td><td>${esc(t.department)}</td><td><span class="badge">${esc(t.priority)}</span></td><td><select class="editSelect" onchange="trackChange('${esc(t.id)}','status',this.value)"><option ${t.status==="New"?"selected":""}>New</option><option ${t.status==="In Progress"?"selected":""}>In Progress</option><option ${t.status==="Waiting"?"selected":""}>Waiting</option><option ${t.status==="Completed"?"selected":""}>Completed</option><option ${t.status==="Cancelled"?"selected":""}>Cancelled</option></select> <span class="badge ${badgeClass(t)}">${isOverdue(t)?"Overdue":esc(t.status)}</span></td><td><input class="editInput" type="number" min="0" max="100" value="${esc(p)}" onchange="trackChange('${esc(t.id)}','progress',this.value)"><div class="progressWrap"><div class="progressBar" style="width:${p}%"></div></div> ${p}%</td><td>${fmtDate(t.dueDate)}</td><td>${esc(t.assignedBy||"-")}</td><td><input class="editInput noteInput" value="${esc(t.notes||"")}" onchange="trackChange('${esc(t.id)}','notes',this.value)" placeholder="Progress note"></td><td><button class="btn small" onclick="markDone('${esc(t.id)}')">Mark Done</button></td></tr>`}).join("")}
-function renderAll(){renderSummary();renderRows()}function markDone(id){trackChange(id,"progress",100);trackChange(id,"status","Completed");renderRows()}async function saveSelected(){const ids=Object.keys(pendingChanges);if(!ids.length)return show("No task changes to save.","error");try{let saved=0;for(const id of ids){const ch=pendingChanges[id];const body={};if(ch.status!==undefined)body.status=ch.status;if(ch.progress!==undefined)body.progress=Number(ch.progress);if(ch.notes!==undefined)body.notes=String(ch.notes||"").trim();await fetchJson(`/api/tasks/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify(body)});saved++}pendingChanges={};show(saved+" task update(s) saved.");await loadTasks(false)}catch(e){console.error(e);show(e.message||"Could not save task updates.","error")}}
-["departmentFilter","statusFilter","priorityFilter","dateFilter"].forEach(id=>$(id).onchange=renderRows);$("searchBox").oninput=renderRows;$("refreshBtn").onclick=()=>loadTasks(true);$("refreshTopBtn").onclick=()=>loadTasks(true);$("saveSelectedBtn").onclick=saveSelected;$("openCreateBtn").onclick=openCreate;$("closeCreateBtn").onclick=closeCreate;$("createModal").addEventListener("click",e=>{if(e.target.id==="createModal")closeCreate()});$("createTaskBtn").onclick=createTask;$("clearTaskBtn").onclick=clearTaskForm;document.addEventListener("DOMContentLoaded",()=>{renderAll();requireEmployee().then(u=>{if(u)loadEmployees().then(()=>loadTasks(false))})});
+const API = "https://api.practiceonline.co.za";
+let tasks = [];
+let employees = [];
+let isAdmin = false;
+let selectedIds = new Set();
+let editingIds = new Set();
+let pendingChanges = {};
+
+const $ = id => document.getElementById(id);
+
+function token(){return localStorage.getItem("employeeToken") || localStorage.getItem("token") || ""}
+function logout(){localStorage.clear();location.href="employee-login.html"}
+function esc(value){return String(value ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+function clean(v){return String(v || "").trim()}
+function show(message,type="ok"){const box=$("msg");box.textContent=message;box.className="msgBox "+type;setTimeout(()=>box.className="msgBox",4500)}
+async function safeJson(response){try{return await response.json()}catch{return {}}}
+async function fetchJson(path,options={}){const response=await fetch(API+path,{...options,headers:{"Content-Type":"application/json",Authorization:"Bearer "+token(),...(options.headers||{})}});const data=await safeJson(response);if(!response.ok) throw new Error(data.message||"Request failed");return data}
+function asArray(data){if(Array.isArray(data)) return data; return data.tasks || data.employees || data.items || data.data || data.users || []}
+
+function normalizeStatus(v){const s=String(v||"").toLowerCase().trim();if(s==="in_progress"||s==="in progress")return "In Progress";if(s==="waiting")return "Waiting";if(s==="completed"||s==="done")return "Completed";if(s==="cancelled"||s==="canceled")return "Cancelled";return "New"}
+function normalizePriority(v){const p=String(v||"").toLowerCase().trim();if(p==="low")return "Low";if(p==="high")return "High";if(p==="urgent")return "Urgent";return "Medium"}
+function normalizeDepartment(v){const d=String(v||"").toLowerCase().trim();if(d==="finance")return "Finance";if(d==="support")return "Support";if(d==="operations")return "Operations";if(d==="content")return "Content";if(d==="tutoring")return "Tutoring";return "General"}
+
+function employeeName(e){return e.fullName || e.username || e.email || "Employee"}
+function employeeId(e){return String(e._id || e.id || e.employeeId || e.email || "")}
+
+function normalizeEmployee(e){return {id:employeeId(e), name:employeeName(e), email:e.email||"", role:e.role||"", department:e.department||""}}
+function normalizeTask(t,i){
+  const assigned = t.assignedTo || t.assignee || t.employee || {};
+  return {
+    id:String(t._id || t.id || "task-"+i),
+    taskNo:t.taskNo || t.taskNumber || `TASK-${String(i+1).padStart(4,"0")}`,
+    title:t.title || t.taskTitle || "",
+    assignedToId:String(assigned._id || assigned.id || t.assignedToId || t.employeeId || ""),
+    assignedToName:t.assignedToName || assigned.fullName || assigned.username || assigned.email || "",
+    department:normalizeDepartment(t.department),
+    priority:normalizePriority(t.priority),
+    status:normalizeStatus(t.status),
+    dueDate:t.dueDate || "",
+    description:t.description || t.instructions || "",
+    createdBy:t.createdByName || t.createdBy?.fullName || t.createdBy?.username || "",
+    createdAt:t.createdAt || t.date || ""
+  };
+}
+
+async function requireEmployee(){
+  if(!token()){location.href="employee-login.html";return null}
+  try{
+    const user=await fetchJson("/api/employees/me");
+    const role=String(user.role||"").toLowerCase();
+    const department=String(user.department||"").toLowerCase();
+    const allowed=["admin","tester","finance","support","operations","content","tutor"];
+    if(!allowed.includes(role) && !allowed.includes(department)){location.href="employee-dashboard.html";return null}
+    isAdmin = role === "admin" || role === "tester";
+    $("userPill").textContent = `${user.fullName || user.username || "Employee"} • Tasks`;
+    $("adminBar").classList.toggle("show", isAdmin);
+    document.querySelectorAll(".checkboxCell").forEach(el=>el.style.display = isAdmin ? "table-cell" : "none");
+    return user;
+  }catch(e){console.error(e);show("Could not verify employee login.","error");return null}
+}
+
+async function loadEmployees(){
+  try{
+    const data=await fetchJson("/api/employees");
+    employees=asArray(data).map(normalizeEmployee).filter(e=>e.id);
+  }catch(e){
+    console.error("Could not load employees:",e);
+    employees=[];
+  }
+  fillEmployeeOptions();
+}
+
+function fillEmployeeOptions(){
+  const options = employees.map(e=>`<option value="${esc(e.id)}">${esc(e.name)}${e.department ? " • "+esc(e.department) : ""}</option>`).join("");
+  $("taskAssignee").innerHTML = '<option value="">Select employee</option>' + options;
+  $("employeeFilter").innerHTML = '<option value="all">All employees</option>' + options;
+}
+
+async function loadTasks(showMessage=false){
+  $("refreshBtn").disabled=true;$("refreshBtn").textContent="Loading...";
+  try{
+    const data=await fetchJson("/api/tasks");
+    tasks=asArray(data).map(normalizeTask);
+    selectedIds.clear();editingIds.clear();pendingChanges={};
+    renderAll();
+    if(showMessage) show("Tasks refreshed.");
+  }catch(e){
+    console.error(e);tasks=[];renderAll();show("Could not load tasks. Please check /api/tasks route.","error");
+  }finally{$("refreshBtn").disabled=false;$("refreshBtn").textContent="Refresh"}
+}
+
+async function createTask(){
+  if(!isAdmin) return show("Only admin can create tasks.","error");
+  const title=clean($("taskTitle").value);
+  const assignedTo=clean($("taskAssignee").value);
+  if(!title) return show("Task title is required.","error");
+  if(!assignedTo) return show("Please select an employee.","error");
+
+  const body={
+    title,
+    assignedTo,
+    department:$("taskDepartment").value,
+    priority:$("taskPriority").value,
+    status:$("taskStatus").value,
+    dueDate:$("taskDueDate").value || null,
+    description:clean($("taskDescription").value)
+  };
+
+  try{
+    await fetchJson("/api/tasks",{method:"POST",body:JSON.stringify(body)});
+    clearTaskForm();
+    await loadTasks(false);
+    show("Task created and assigned successfully.");
+  }catch(e){console.error(e);show(e.message || "Could not create task.","error")}
+}
+
+function clearTaskForm(){
+  ["taskTitle","taskDueDate","taskDescription"].forEach(id=>$(id).value="");
+  $("taskAssignee").value="";$("taskDepartment").value="General";$("taskPriority").value="Medium";$("taskStatus").value="New";
+}
+
+function filtered(){
+  const status=$("statusFilter").value;
+  const priority=$("priorityFilter").value;
+  const dept=$("departmentFilter").value;
+  const emp=$("employeeFilter").value;
+  const q=$("searchBox").value.toLowerCase().trim();
+  return tasks.filter(t=>{
+    if(status!=="all" && String(t.status).toLowerCase()!==status) return false;
+    if(priority!=="all" && String(t.priority).toLowerCase()!==priority) return false;
+    if(dept!=="all" && String(t.department).toLowerCase()!==dept) return false;
+    if(emp!=="all" && String(t.assignedToId)!==emp) return false;
+    if(q && !Object.values(t).join(" ").toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function isOverdue(t){
+  if(!t.dueDate || ["Completed","Cancelled"].includes(t.status)) return false;
+  const d=new Date(t.dueDate); if(isNaN(d.getTime())) return false;
+  const today=new Date(); today.setHours(0,0,0,0);
+  return d < today;
+}
+
+function renderSummary(){
+  const highCount = tasks.filter(t=>t.priority==="High" || t.priority==="Urgent").length;
+  const newTaskCount = tasks.filter(t=>t.status==="New").length;
+  const overdueTaskCount = tasks.filter(isOverdue).length;
+  $("totalCount").textContent=tasks.length;
+  $("newCount").textContent=newTaskCount;
+  $("progressCount").textContent=tasks.filter(t=>t.status==="In Progress").length;
+  $("overdueCount").textContent=overdueTaskCount;
+  $("completedCount").textContent=tasks.filter(t=>t.status==="Completed").length;
+  if($("quickAllCount")) $("quickAllCount").textContent=tasks.length;
+  if($("quickHighCount")) $("quickHighCount").textContent=highCount;
+  if($("quickNewCount")) $("quickNewCount").textContent=newTaskCount;
+  if($("quickOverdueCount")) $("quickOverdueCount").textContent=overdueTaskCount;
+}
+
+function formatDate(v){if(!v)return "-";const d=new Date(v);if(isNaN(d.getTime()))return esc(v);return d.toLocaleDateString("en-ZA")}
+function shortText(v){const s=clean(v);if(!s)return "-";return s.length>55?esc(s.slice(0,55))+"...":esc(s)}
+function statusBadgeClass(t){
+  if(isOverdue(t)) return "status-overdue";
+  const status = String(t.status || "New");
+  if(status === "In Progress") return "status-progress";
+  if(status === "Waiting") return "status-waiting";
+  if(status === "Completed") return "status-completed";
+  if(status === "Cancelled") return "status-cancelled";
+  return "status-new";
+}
+function badgeStatus(t){
+  const label = isOverdue(t) ? "Overdue" : (t.status || "New");
+  return `<span class="badge ${statusBadgeClass(t)}">${esc(label)}</span>`;
+}
+function badgePriority(p){
+  const priority = p || "Medium";
+  let cls = "priority";
+  if(priority === "High") cls = "priority high";
+  if(priority === "Urgent") cls = "priority urgent";
+  return `<span class="badge ${cls}">${esc(priority)}</span>`;
+}
+
+function employeeSelect(t){
+  return `<select class="editSelect" onchange="trackChange('${esc(t.id)}','assignedTo',this.value)">${employees.map(e=>`<option value="${esc(e.id)}" ${String(t.assignedToId)===String(e.id)?"selected":""}>${esc(e.name)}</option>`).join("")}</select>`;
+}
+function editInput(t,field,extra=""){return `<input class="editInput ${extra}" value="${esc(t[field]||"")}" onchange="trackChange('${esc(t.id)}','${field}',this.value)">`}
+function editSelect(t,field,values){return `<select class="editSelect" onchange="trackChange('${esc(t.id)}','${field}',this.value)">${values.map(v=>`<option ${t[field]===v?"selected":""}>${esc(v)}</option>`).join("")}</select>`}
+function editDate(t){const value=t.dueDate?String(t.dueDate).slice(0,10):"";return `<input class="editInput" type="date" value="${esc(value)}" onchange="trackChange('${esc(t.id)}','dueDate',this.value)">`}
+
+function renderRows(){
+  const rows=filtered();
+  if(!rows.length){$("taskRows").innerHTML='<tr><td colspan="12">No tasks found.</td></tr>';updateSelectedUI();return}
+  $("taskRows").innerHTML=rows.map((t,i)=>{
+    const edit=editingIds.has(t.id);
+    return `<tr class="${selectedIds.has(t.id)?"rowSelected":""} ${edit?"rowEditing":""}">
+      <td class="checkboxCell"><input type="checkbox" ${selectedIds.has(t.id)?"checked":""} onchange="toggleSelect('${esc(t.id)}',this.checked)"></td>
+      <td>${i+1}</td>
+      <td>${esc(t.taskNo)}</td>
+      <td>${edit?editInput(t,"title","wideInput"):esc(t.title||"-")}</td>
+      <td>${edit?employeeSelect(t):esc(t.assignedToName||"-")}</td>
+      <td>${edit?editSelect(t,"department",["General","Finance","Support","Operations","Content","Tutoring"]):esc(t.department)}</td>
+      <td>${edit?editSelect(t,"priority",["Low","Medium","High","Urgent"]):badgePriority(t.priority)}</td>
+      <td>${edit?editSelect(t,"status",["New","In Progress","Waiting","Completed","Cancelled"]):badgeStatus(t)}</td>
+      <td>${edit?editDate(t):formatDate(t.dueDate)}</td>
+      <td title="${esc(t.description)}">${edit?editInput(t,"description","wideInput"):shortText(t.description)}</td>
+      <td>${esc(t.createdBy||"-")}</td>
+      <td>${formatDate(t.createdAt)}</td>
+    </tr>`
+  }).join("");
+  document.querySelectorAll(".checkboxCell").forEach(el=>el.style.display = isAdmin ? "table-cell" : "none");
+  updateSelectedUI();
+}
+
+function renderAll(){renderSummary();renderRows()}
+function trackChange(id,key,value){if(!isAdmin)return;if(!pendingChanges[id])pendingChanges[id]={};pendingChanges[id][key]=value;const t=tasks.find(x=>x.id===id);if(t){if(key==="assignedTo"){const emp=employees.find(e=>String(e.id)===String(value));t.assignedToId=value;t.assignedToName=emp?emp.name:"";}else{t[key]=value}}selectedIds.add(id);renderSummary();updateSelectedUI()}
+function toggleSelect(id,checked){if(checked)selectedIds.add(id);else selectedIds.delete(id);updateSelectedUI()}
+function toggleSelectAll(checked){filtered().forEach(t=>{if(checked)selectedIds.add(t.id);else selectedIds.delete(t.id)});renderRows()}
+function updateSelectedUI(){if(!isAdmin)return;$("selectedCount").textContent=selectedIds.size+" selected";const rows=filtered();$("selectAllBox").checked=!!(rows.length&&rows.every(t=>selectedIds.has(t.id)))}
+function editSelected(){if(!isAdmin)return;if(!selectedIds.size)return show("Select at least one task to edit.","error");selectedIds.forEach(id=>editingIds.add(id));renderRows();show("Selected tasks are ready for editing.")}
+
+async function saveSelected(){
+  if(!isAdmin)return;const ids=[...selectedIds];if(!ids.length)return show("Select at least one task to save.","error");
+  let saved=0;
+  try{
+    for(const id of ids){const patch=pendingChanges[id];if(!patch)continue;await fetchJson(`/api/tasks/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify(patch)});saved++}
+    if(!saved)return show("No selected tasks have changes to save.","error");
+    selectedIds.clear();editingIds.clear();pendingChanges={};await loadTasks(false);show(saved+" task(s) saved successfully.");
+  }catch(e){console.error(e);show(e.message||"Could not save selected tasks.","error")}
+}
+
+async function removeSelected(){
+  if(!isAdmin)return;const ids=[...selectedIds];if(!ids.length)return show("Select at least one task to remove.","error");
+  if(!confirm("Delete selected task record(s)? This only deletes task records, not employee accounts."))return;
+  try{
+    for(const id of ids){await fetchJson(`/api/tasks/${encodeURIComponent(id)}`,{method:"DELETE"})}
+    selectedIds.clear();editingIds.clear();pendingChanges={};await loadTasks(false);show("Selected task record(s) removed.");
+  }catch(e){console.error(e);show(e.message||"Could not remove selected tasks.","error")}
+}
+
+function exportExcel(){
+  const rows=filtered();if(!rows.length)return show("No tasks to export.","error");
+  const headers=["No","Task No","Title","Assigned To","Department","Priority","Status","Due Date","Description","Created By","Created Date"];
+  const body=rows.map((t,i)=>[i+1,t.taskNo,t.title,t.assignedToName,t.department,t.priority,t.status,formatDate(t.dueDate),t.description,t.createdBy,formatDate(t.createdAt)]);
+  const table=`<table border="1"><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>${body.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table>`;
+  const blob=new Blob([`<html><head><meta charset="UTF-8"></head><body>${table}</body></html>`],{type:"application/vnd.ms-excel"});
+  const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="employee-tasks.xls";a.click();URL.revokeObjectURL(url);show("Excel file exported.")
+}
+
+$("createTaskBtn").onclick=createTask;$("clearTaskBtn").onclick=clearTaskForm;$("refreshBtn").onclick=()=>loadTasks(true);$("exportBtn").onclick=exportExcel;$("editSelectedBtn").onclick=editSelected;$("saveSelectedBtn").onclick=saveSelected;$("removeSelectedBtn").onclick=removeSelected;$("selectAllBox").onchange=e=>toggleSelectAll(e.target.checked);
+["statusFilter","priorityFilter","departmentFilter","employeeFilter"].forEach(id=>$(id).onchange=()=>{selectedIds.clear();renderAll()});
+$("searchBox").oninput=()=>{selectedIds.clear();renderAll()};
+
+document.addEventListener("DOMContentLoaded",()=>{
+  requireEmployee().then(user=>{
+    if(user){loadEmployees().then(()=>loadTasks(false))}
+  });
+});
 </script>
 </body>
 </html>
