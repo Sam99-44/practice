@@ -66,7 +66,7 @@ import tutorRoutes from "./routes/tutors.js";
 import supportRoutes from "./routes/support.js";
 import requestQuoteRoutes from "./routes/requestQuote.js";
 import Employee from "./models/Employee.js";
-
+import tasksRoutes from "./routes/tasks.js";
 
 import helmet from "helmet";
 import mongoSanitize from "express-mongo-sanitize";
@@ -4193,6 +4193,7 @@ app.use("/api/opportunities", opportunitiesRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/request-quote", requestQuoteRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/tasks", tasksRoutes);
 
 /* ------------------ SUPPORT MODEL ------------------ */
 const SupportRequestSchema = new mongoose.Schema(
