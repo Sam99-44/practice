@@ -12,7 +12,7 @@
 // ✅ Saves + returns quiz paper (paper1/paper2)
 // ✅ PayFast monthly payments
 // ✅ Returns subscription info on /api/auth/me
-// ✅ Strong email validation
+// ✅ Strong email validation.
 // ✅ Email verification routes
 // ✅ Login blocks unverified users
 // ✅ Register route protection with express-rate-limit
