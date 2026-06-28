@@ -2023,6 +2023,344 @@ body.submitted-state .solutionHolder .solutionBox{
   40%{transform:scale(1);opacity:1;}
 }
 
+
+/* ===== QUESTION PROGRESS CARD ===== */
+.questionProgressCard{
+  max-width:820px;
+  margin:0 auto 14px;
+  padding:12px;
+  border:1px solid #d9dee7;
+  background:#ffffff;
+  border-radius:8px;
+  font-family:"Times New Roman", Times, serif;
+}
+.questionProgressTitle{
+  font-size:14px;
+  font-weight:700;
+  color:#111827;
+  margin-bottom:8px;
+}
+.questionProgressList{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.qProgressItem{
+  width:54px;
+  height:34px;
+  padding:0 6px;
+  border:1px solid #d9dee7;
+  border-radius:0;
+  background:#f8fafc;
+  color:#475569;
+  font-size:13px;
+  font-weight:700;
+  text-align:center;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+}
+.qProgressItem:hover{
+  background:#eef2f7;
+}
+.qProgressItem.active{
+  border-color:#1b1648;
+  color:#1b1648;
+  background:#eef2ff;
+}
+.qProgressItem.correct{
+  background:#dcfce7;
+  color:#166534;
+  border-color:#bbf7d0;
+}
+.qProgressItem.wrong{
+  background:#fee2e2;
+  color:#b91c1c;
+  border-color:#fecaca;
+}
+.qProgressItem.correct.active{
+  box-shadow:0 0 0 2px rgba(22,101,52,.12);
+}
+.qProgressItem.wrong.active{
+  box-shadow:0 0 0 2px rgba(185,28,28,.12);
+}
+@media(max-width:640px){
+  .questionProgressCard{
+    margin-bottom:12px;
+  }
+  .qProgressItem{
+    width:48px;
+    height:32px;
+    font-size:12px;
+    padding:0 5px;
+  }
+}
+
+
+/* ===== NEXT / BACK QUESTION NAVIGATION ===== */
+.quizNavigation{
+  max-width:820px;
+  margin:18px auto 6px;
+  padding:12px 0 0;
+  display:none;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border-top:1px solid #e5e7eb;
+  font-family:"Times New Roman", Times, serif;
+}
+
+.quizNavigation.show{
+  display:flex;
+}
+
+.questionCounter{
+  font-size:14px;
+  font-weight:700;
+  color:#111827;
+  text-align:center;
+  min-width:130px;
+}
+
+.quizNavBtn{
+  min-width:110px;
+  height:38px;
+  border-radius:6px;
+  font-family:"Times New Roman", Times, serif;
+  font-size:14px;
+  font-weight:700;
+  gap:8px;
+}
+
+.quizNavBtn img{
+  width:18px;
+  height:18px;
+  display:block;
+}
+
+.quizNavBtn.prev img{
+  transform:rotate(180deg);
+}
+
+
+.qDiagramContext{
+  padding:6px 0 12px !important;
+}
+.q.quiz-page-hidden{
+  display:none !important;
+}
+
+@media(max-width:640px){
+  .quizNavigation{
+    flex-wrap:wrap;
+    gap:10px;
+  }
+
+  .questionCounter{
+    width:100%;
+    order:-1;
+  }
+
+  .quizNavBtn{
+    flex:1 1 0;
+    min-width:0;
+  }
+}
+
+
+/* ===== POST SUBMIT NEXT QUIZ ACTIONS ===== */
+.postSubmitActions{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin:12px 0 14px;
+}
+
+.postSubmitActions .btn,
+.postSubmitActions .btn2{
+  min-width:130px;
+  height:36px;
+  font-family:"Times New Roman", Times, serif;
+  font-size:14px;
+}
+
+.nextQuizInfo{
+  margin:-4px 0 14px;
+  text-align:center;
+  font-size:13px;
+  line-height:1.45;
+  color:#475569;
+  font-family:"Times New Roman", Times, serif;
+}
+
+.nextQuizInfo b{
+  color:#111827;
+}
+
+@media(max-width:640px){
+  .postSubmitActions .btn,
+  .postSubmitActions .btn2{
+    flex:1 1 100%;
+    width:100%;
+  }
+}
+
+/* ===== TOP QUIZ CONTROL BUTTONS ===== */
+.topQuizControls{
+  max-width:820px;
+  margin:0 auto 14px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  font-family:"Times New Roman", Times, serif;
+}
+
+.topQuizSquareBtn{
+  width:92px;
+  height:74px;
+  border:1px solid #d1d5db;
+  background:#ffffff;
+  color:#111827;
+  border-radius:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  cursor:pointer;
+  font-family:"Times New Roman", Times, serif;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.1;
+  text-align:center;
+}
+
+.topQuizSquareBtn:hover:not(:disabled){
+  background:#f8fafc;
+  border-color:#1b1648;
+}
+
+.topQuizSquareBtn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.topQuizSquareBtn.primary{
+  background:#1b1648;
+  color:#ffffff;
+  border-color:#1b1648;
+}
+
+.topQuizSquareBtn.primary.started{
+  background:#2563eb;
+  border-color:#2563eb;
+}
+
+.topQuizSquareBtn img{
+  width:22px;
+  height:22px;
+  display:block;
+}
+
+.topQuizSquareBtn.prev img{
+  transform:rotate(180deg);
+}
+
+.topQuizSquareBtn.primary img{
+  filter:brightness(0) invert(1);
+}
+
+.qProgressItem{
+  width:38px !important;
+  height:38px !important;
+  border-radius:0 !important;
+  padding:0 4px !important;
+  font-size:12px !important;
+}
+
+@media(max-width:640px){
+  .topQuizControls{
+    gap:8px;
+  }
+  .topQuizSquareBtn{
+    width:86px;
+    height:68px;
+    font-size:12px;
+  }
+  .qProgressItem{
+    width:34px !important;
+    height:34px !important;
+    font-size:11px !important;
+  }
+}
+
+
+/* ===== FINAL TOP QUIZ CONTROLS POSITION ===== */
+.statusArea{
+  display:none !important;
+}
+.sectionHead{
+  min-height:88px !important;
+  align-items:flex-start !important;
+  justify-content:flex-end !important;
+}
+.metaRight{
+  align-items:flex-end !important;
+  min-width:0 !important;
+  gap:6px !important;
+}
+.topQuizControls{
+  max-width:none !important;
+  margin:4px 0 0 0 !important;
+  display:flex !important;
+  justify-content:flex-end !important;
+  align-items:center !important;
+  gap:10px !important;
+  flex-wrap:nowrap !important;
+}
+.topQuizSquareBtn{
+  width:84px !important;
+  height:42px !important;
+  border-radius:0 !important;
+  padding:3px 5px !important;
+  gap:2px !important;
+  font-size:11px !important;
+  line-height:1 !important;
+}
+.topQuizSquareBtn img{
+  width:13px !important;
+  height:13px !important;
+}
+.topQuizSquareBtn.primary{
+  background:#2563eb !important;
+  border-color:#2563eb !important;
+  color:#ffffff !important;
+}
+.topQuizSquareBtn.primary.started{
+  background:#1b1648 !important;
+  border-color:#1b1648 !important;
+}
+@media(max-width:640px){
+  .sectionHead{
+    min-height:auto !important;
+    justify-content:flex-end !important;
+  }
+  .topQuizControls{
+    gap:6px !important;
+  }
+  .topQuizSquareBtn{
+    width:76px !important;
+    height:40px !important;
+    font-size:10px !important;
+  }
+}
+
 </style>
 </head>
 
@@ -2109,6 +2447,22 @@ body.submitted-state .solutionHolder .solutionBox{
       <div class="metaRight">
         <div class="statusText" id="statusText" style="display:none;">—</div>
         <div class="timeText" id="timeText" style="display:none;">Time: 00:00</div>
+
+        <div id="topQuizControls" class="topQuizControls" aria-label="Quiz controls">
+          <button id="previousQuizTopBtn" class="topQuizSquareBtn prev" type="button" disabled title="Previous quiz">
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">
+            <span>Previous Quiz</span>
+          </button>
+
+          <button id="startQuizBtn" class="topQuizSquareBtn primary" type="button" title="Start quiz">
+            <span>Start</span>
+          </button>
+
+          <button id="nextQuizTopBtn" class="topQuizSquareBtn next" type="button" disabled title="Next quiz">
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">
+            <span>Next Quiz</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -2117,9 +2471,21 @@ body.submitted-state .solutionHolder .solutionBox{
         <div id="statusBox" class="statusBox loading">Loading assessment status...</div>
       </div>
 
+      <div id="questionProgressCard" class="questionProgressCard hidden">
+        <div class="questionProgressTitle">Question Progress</div>
+        <div id="questionProgressList" class="questionProgressList"></div>
+      </div>
+
       <div id="questionsWrap" class="paperShell loading">
         <div id="questions" class="examPaper"><div class="muted">Loading assessment...</div></div>
       </div>
+
+      <div id="quizNavigation" class="quizNavigation" aria-label="Question navigation">
+        <button id="prevQuestionBtn" class="btn2 quizNavBtn prev" type="button"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">Back</button>
+        <span id="questionCounter" class="questionCounter">Question 1 of 1</span>
+        <button id="nextQuestionBtn" class="btn2 quizNavBtn next" type="button">Next<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt=""></button>
+      </div>
+
 
       <div class="btnRow">
         <button class="btn" id="submitBtn" type="button">Submit</button>
@@ -2149,6 +2515,13 @@ body.submitted-state .solutionHolder .solutionBox{
               <div class="postSubmitValue" id="postSubmitRank">—</div>
             </div>
           </div>
+
+          <div class="postSubmitActions">
+            <button class="btn2" id="postSubmitResultsBtn" type="button">View Results</button>
+            <button class="btn" id="postSubmitNextQuizBtn" type="button" style="display:none;" disabled>Next Quiz</button>
+          </div>
+
+          <div id="postSubmitNextQuizInfo" class="nextQuizInfo"></div>
 
           <div class="ratingBlock" id="ratingBlock">
             <h4 class="ratingHeading">Rate this assessment</h4>
@@ -2239,6 +2612,15 @@ body.submitted-state .solutionHolder .solutionBox{
   const msgEl = document.getElementById("msg");
   const statusBox = document.getElementById("statusBox");
   const questionsWrap = document.getElementById("questionsWrap");
+  const quizNavigation = document.getElementById("quizNavigation");
+  const prevQuestionBtn = document.getElementById("prevQuestionBtn");
+  const nextQuestionBtn = document.getElementById("nextQuestionBtn");
+  const questionCounter = document.getElementById("questionCounter");
+  const questionProgressCard = document.getElementById("questionProgressCard");
+  const questionProgressList = document.getElementById("questionProgressList");
+  const previousQuizTopBtn = document.getElementById("previousQuizTopBtn");
+  const startQuizBtn = document.getElementById("startQuizBtn");
+  const nextQuizTopBtn = document.getElementById("nextQuizTopBtn");
 
   /* ===== SAFE NO-BLOCK LOADER FUNCTIONS ===== */
   function showQuizLoader(){
@@ -2254,6 +2636,9 @@ const postSubmitOverlay = document.getElementById("postSubmitOverlay");
   const postSubmitScore = document.getElementById("postSubmitScore");
   const postSubmitPercent = document.getElementById("postSubmitPercent");
   const postSubmitRank = document.getElementById("postSubmitRank");
+  const postSubmitResultsBtn = document.getElementById("postSubmitResultsBtn");
+  const postSubmitNextQuizBtn = document.getElementById("postSubmitNextQuizBtn");
+  const postSubmitNextQuizInfo = document.getElementById("postSubmitNextQuizInfo");
   const ratingStarsInline = document.getElementById("ratingStarsInline");
   const ratingHintInline = document.getElementById("ratingHintInline");
   const ratingCommentInline = document.getElementById("ratingCommentInline");
@@ -2285,10 +2670,17 @@ const postSubmitOverlay = document.getElementById("postSubmitOverlay");
   let blocked = false;
   let autosaveTimer = null;
   let selectedInlineRating = 0;
+  let nextQuizData = null;
+  let previousQuizData = null;
+  let quizStarted = false;
   let localSubmittedQuestions = new Set();
+
+  let currentQuestionPage = 0;
+  let questionPageGroups = [];
 
   const END_KEY = `quiz_end_${quizId}_${localStorage.getItem("username") || "user"}`;
   const ANSWERS_KEY = `quiz_answers_${quizId}_${localStorage.getItem("username") || "user"}`;
+  const OPTION_ORDER_KEY = `quiz_option_order_${quizId}_${localStorage.getItem("username") || "user"}`;
 
   function typesetMath(root=document){
     if (window.MathJax?.typesetClear) {
@@ -2345,6 +2737,247 @@ function inlineQuizLoadingHtml(){
     hideQuizLoader();
   }
 
+  function getRowQuestionLabel(row, fallback = ""){
+    const label = row?.querySelector?.(".qNo")?.textContent?.trim();
+    return label || fallback || "Question";
+  }
+
+  function getSubQuestionSectionKey(label){
+    const text = String(label || "").trim();
+    const sub = text.match(/^(\d+\.\d+)\.\d+/);
+    if (sub) return sub[1];
+    const section = text.match(/^(\d+\.\d+)/);
+    if (section) return section[1];
+    const single = text.match(/^(\d+)\./);
+    if (single) return `${single[1]}.1`;
+    return "general";
+  }
+
+  function buildQuestionPageGroups(){
+    const rows = Array.from(questionsDiv.querySelectorAll(":scope > .q"));
+    const groups = [];
+
+    let currentMainRows = [];
+    let currentSectionStemRows = [];
+    let currentSectionKey = "general";
+    let currentTextContextRows = [];
+    let currentDiagramRows = [];
+    let hasBuiltQuestionForContext = false;
+
+    function currentContext(){
+      return [
+        ...currentMainRows,
+        ...currentSectionStemRows,
+        ...currentTextContextRows,
+        ...currentDiagramRows
+      ];
+    }
+
+    rows.forEach(row => {
+      const isScorable = row.dataset.scorable === "1";
+
+      if (!isScorable) {
+        if (row.querySelector(".qMainHeading")) {
+          currentMainRows = [row];
+          currentSectionStemRows = [];
+          currentTextContextRows = [];
+          currentDiagramRows = [];
+          hasBuiltQuestionForContext = false;
+          currentSectionKey = "general";
+          return;
+        }
+
+        const sectionLabel = row.querySelector(".qSectionNo")?.textContent?.trim();
+        if (sectionLabel) {
+          currentSectionKey = sectionLabel;
+          currentSectionStemRows = [row];
+          currentTextContextRows = [];
+          currentDiagramRows = [];
+          hasBuiltQuestionForContext = false;
+          return;
+        }
+
+        /* A diagram context row replaces the previous diagram for this section.
+           This fixes DBE-style papers where 1.1.1 and 1.1.2 use diagram A,
+           then 1.1.3 starts using diagram B. */
+        if (row.dataset.contextKind === "diagram" || row.querySelector(".qImageWrap, .qimg")) {
+          currentDiagramRows = [row];
+          hasBuiltQuestionForContext = false;
+          return;
+        }
+
+        /* Plain instruction/note rows remain visible for the current section.
+           If a new instruction appears after a question has already been shown,
+           it starts a new diagram/stem context, so the previous stem is removed. */
+        if (hasBuiltQuestionForContext) {
+          currentTextContextRows = [row];
+          currentDiagramRows = [];
+          hasBuiltQuestionForContext = false;
+        } else {
+          currentTextContextRows.push(row);
+        }
+        return;
+      }
+
+      const label = getRowQuestionLabel(row);
+      const questionSectionKey = getSubQuestionSectionKey(label);
+
+      if (questionSectionKey !== currentSectionKey && questionSectionKey !== "general") {
+        currentSectionKey = questionSectionKey;
+      }
+
+      groups.push([...currentContext(), row]);
+      hasBuiltQuestionForContext = true;
+    });
+
+    if (!groups.length) {
+      const fallback = currentContext().filter(Boolean);
+      if (fallback.length) groups.push(fallback);
+    }
+
+    questionPageGroups = applyRandomQuestionOrder(groups);
+  }
+
+  function showQuestionPage(index, shouldScroll = true){
+    buildQuestionPageGroups();
+
+    if (!questionPageGroups.length) {
+      if (quizNavigation) quizNavigation.classList.remove("show");
+      return;
+    }
+
+    currentQuestionPage = Math.max(0, Math.min(index, questionPageGroups.length - 1));
+
+    const visibleSet = new Set(questionPageGroups[currentQuestionPage]);
+    questionsDiv.querySelectorAll(":scope > .q").forEach(row => {
+      row.classList.toggle("quiz-page-hidden", !visibleSet.has(row));
+    });
+
+    if (questionCounter) {
+      const visibleQuestion = questionPageGroups[currentQuestionPage].find(row => row.dataset.scorable === "1");
+      const label = getRowQuestionLabel(visibleQuestion, `Question ${currentQuestionPage + 1}`);
+      questionCounter.textContent = `${label} (${currentQuestionPage + 1} of ${questionPageGroups.length})`;
+    }
+
+    updateQuestionProgressActive();
+
+    if (prevQuestionBtn) prevQuestionBtn.disabled = !quizStarted || currentQuestionPage === 0;
+
+    if (nextQuestionBtn) {
+      const isLast = currentQuestionPage === questionPageGroups.length - 1;
+      nextQuestionBtn.innerHTML = isLast
+        ? `Finish`
+        : `Next<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">`;
+      nextQuestionBtn.disabled = !quizStarted;
+    }
+
+    if (quizNavigation) {
+      quizNavigation.classList.toggle("show", !blocked && questionPageGroups.length > 0);
+    }
+
+    if (submitBtn && !submitted && !blocked) {
+      submitBtn.style.display = quizStarted && currentQuestionPage === questionPageGroups.length - 1 ? "" : "none";
+    }
+
+    typesetMathSoon(questionsDiv);
+
+    if (shouldScroll) {
+      const top = Math.max(0, questionsWrap.getBoundingClientRect().top + window.scrollY - 85);
+      window.scrollTo({ top, behavior:"smooth" });
+    }
+  }
+
+  function buildQuestionProgressCard(){
+    if (!questionProgressCard || !questionProgressList) return;
+
+    buildQuestionPageGroups();
+
+    if (!questionPageGroups.length || blocked) {
+      questionProgressCard.classList.add("hidden");
+      questionProgressList.innerHTML = "";
+      return;
+    }
+
+    questionProgressList.innerHTML = questionPageGroups.map((group, index) => {
+      const scorableRow = group.find(row => row.dataset.scorable === "1");
+      const label = getRowQuestionLabel(scorableRow, `${index + 1}`);
+      const qIndex = scorableRow?.dataset?.qindex || "";
+      return `<button type="button" class="qProgressItem" data-page-index="${index}" data-qindex="${escapeAttr(qIndex)}">${escapeHtml(label)}</button>`;
+    }).join("");
+
+    questionProgressList.querySelectorAll(".qProgressItem").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (!quizStarted) return;
+        const pageIndex = Number(btn.dataset.pageIndex);
+        if (Number.isInteger(pageIndex)) showQuestionPage(pageIndex);
+      });
+    });
+
+    questionProgressCard.classList.remove("hidden");
+    updateQuestionProgressActive();
+  }
+
+  function updateQuestionProgressActive(){
+    if (!questionProgressList) return;
+    questionProgressList.querySelectorAll(".qProgressItem").forEach(btn => {
+      btn.classList.toggle("active", Number(btn.dataset.pageIndex) === currentQuestionPage);
+    });
+  }
+
+  function updateQuestionProgress(qIndex, isCorrect){
+    if (!questionProgressList) return;
+    const item = questionProgressList.querySelector(`.qProgressItem[data-qindex="${String(qIndex)}"]`);
+    if (!item) return;
+    item.classList.remove("correct", "wrong");
+    item.classList.add(isCorrect ? "correct" : "wrong");
+  }
+
+  function resetQuestionProgressCard(){
+    if (!questionProgressList) return;
+    questionProgressList.querySelectorAll(".qProgressItem").forEach(item => {
+      item.classList.remove("correct", "wrong", "active");
+    });
+    updateQuestionProgressActive();
+  }
+
+  function initQuestionNavigation(){
+    buildQuestionPageGroups();
+    currentQuestionPage = 0;
+
+    if (prevQuestionBtn) {
+      prevQuestionBtn.onclick = () => {
+        if (!quizStarted) return;
+        if (currentQuestionPage > 0) {
+          saveAnswersToStorage();
+          showQuestionPage(currentQuestionPage - 1);
+        }
+      };
+    }
+
+    if (nextQuestionBtn) {
+      nextQuestionBtn.onclick = () => {
+        if (!quizStarted) return;
+        saveAnswersToStorage();
+        if (currentQuestionPage < questionPageGroups.length - 1) {
+          showQuestionPage(currentQuestionPage + 1);
+        } else if (submitBtn && !submitBtn.disabled) {
+          submitBtn.click();
+        }
+      };
+    }
+
+    buildQuestionProgressCard();
+    showQuestionPage(0, false);
+  }
+
+  function hideQuestionNavigation(){
+    if (quizNavigation) quizNavigation.classList.remove("show");
+    if (questionProgressCard) questionProgressCard.classList.add("hidden");
+    questionsDiv.querySelectorAll(":scope > .q").forEach(row => {
+      row.classList.remove("quiz-page-hidden");
+    });
+  }
+
   function saveAnswersToStorage(){
     if (!quizData || submitted) return;
     const payload = {
@@ -2393,6 +3026,7 @@ function inlineQuizLoadingHtml(){
 
   function clearSavedAnswers(){
     localStorage.removeItem(ANSWERS_KEY);
+    clearStoredOptionOrders();
   }
 
   function debouncedSaveAnswers(){
@@ -2473,6 +3107,26 @@ function inlineQuizLoadingHtml(){
     if (e.target === submitConfirmModal) hideSubmitConfirm();
   });
 
+  if (postSubmitResultsBtn) {
+    postSubmitResultsBtn.onclick = () => window.location.href = "results.html";
+  }
+
+  if (postSubmitNextQuizBtn) {
+    postSubmitNextQuizBtn.onclick = goToNextQuiz;
+  }
+
+  if (previousQuizTopBtn) {
+    previousQuizTopBtn.addEventListener("click", goToPreviousQuiz);
+  }
+
+  if (nextQuizTopBtn) {
+    nextQuizTopBtn.addEventListener("click", goToNextQuiz);
+  }
+
+  if (startQuizBtn) {
+    startQuizBtn.addEventListener("click", () => startQuizAttempt(true));
+  }
+
   postSubmitOverlay.addEventListener("click", function(e){
     if (e.target === postSubmitOverlay) return;
   });
@@ -2537,6 +3191,73 @@ function inlineQuizLoadingHtml(){
 
   function cleanSpaces(s){
     return String(s || "").trim().replace(/\s+/g, " ");
+  }
+
+  /* ===== RANDOMIZE MCQ OPTIONS ONLY =====
+     - Question order stays exactly as created by the teacher.
+     - Diagrams/stems stay attached to the correct section/question.
+     - MCQ option positions are randomized once for the attempt.
+     - Each input keeps its ORIGINAL option index as the value, so marking and
+       backend submission still work correctly.
+  */
+
+  function shuffleArrayCopy(arr){
+    const a = Array.isArray(arr) ? arr.slice() : [];
+    for (let i = a.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function loadStoredOptionOrders(){
+    try{
+      return JSON.parse(localStorage.getItem(OPTION_ORDER_KEY) || "{}") || {};
+    }catch{
+      return {};
+    }
+  }
+
+  function saveStoredOptionOrders(map){
+    try{
+      localStorage.setItem(OPTION_ORDER_KEY, JSON.stringify(map || {}));
+    }catch(_){}
+  }
+
+  function clearStoredOptionOrders(){
+    localStorage.removeItem(OPTION_ORDER_KEY);
+  }
+
+  function getOptionDisplayOrder(q, qIndex){
+    const opts = Array.isArray(q?.options) ? q.options : [];
+    if (!opts.length) return [];
+
+    const questionKey = String(q?._id || q?.id || qIndex);
+
+    if (Array.isArray(q.__optionDisplayOrder) && q.__optionDisplayOrder.length === opts.length) {
+      return q.__optionDisplayOrder;
+    }
+
+    const stored = loadStoredOptionOrders();
+
+    if (Array.isArray(stored[questionKey]) && stored[questionKey].length === opts.length) {
+      q.__optionDisplayOrder = stored[questionKey];
+      return q.__optionDisplayOrder;
+    }
+
+    q.__optionDisplayOrder = shuffleArrayCopy(opts.map((_, idx) => idx));
+    stored[questionKey] = q.__optionDisplayOrder;
+    saveStoredOptionOrders(stored);
+
+    return q.__optionDisplayOrder;
+  }
+
+  function resetQuestionRandomization(){
+    /* Question randomization removed intentionally. Keep teacher order. */
+  }
+
+  function applyRandomQuestionOrder(groups){
+    return Array.isArray(groups) ? groups : [];
   }
 
   function normalizeIndexArray(v){
@@ -2740,6 +3461,91 @@ function inlineQuizLoadingHtml(){
     return Math.max(5 * 60, Math.min(raw, 30 * 60));
   }
 
+
+  function getSavedQuizEndTime(){
+    const savedEnd = Number(localStorage.getItem(END_KEY));
+    return savedEnd && Number.isFinite(savedEnd) ? savedEnd : 0;
+  }
+
+  function updateStartQuizButton(){
+    if (!startQuizBtn) return;
+
+    if (submitted || blocked) {
+      startQuizBtn.disabled = true;
+      return;
+    }
+
+    startQuizBtn.disabled = quizStarted;
+    startQuizBtn.classList.toggle("started", quizStarted);
+    startQuizBtn.innerHTML = quizStarted
+      ? `<span>Started</span>`
+      : `<span>Start</span>`;
+  }
+
+  function lockQuizBeforeStart(){
+    quizStarted = false;
+
+    if (timeText) {
+      timeText.style.display = "block";
+      timeText.classList.remove("warn");
+      timeText.textContent = "Time: Not started";
+    }
+
+    disableAllInputs();
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.style.display = "none";
+    }
+
+    if (prevQuestionBtn) prevQuestionBtn.disabled = true;
+    if (nextQuestionBtn) nextQuestionBtn.disabled = true;
+
+    if (quizNavigation) quizNavigation.classList.add("show");
+
+    
+    updateStartQuizButton();
+  }
+
+  function startQuizAttempt(showMessage = true){
+    if (!quizData || blocked || submitted) return;
+
+    quizStarted = true;
+    enableAllInputs();
+
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit";
+    }
+
+    startTimerWithQuiz(quizData);
+    showQuestionPage(currentQuestionPage, false);
+
+    if (showMessage && msgEl) {
+      msgEl.className = "ok";
+      msgEl.textContent = "";
+    }
+
+    updateStartQuizButton();
+  }
+
+  function setupStartGateAfterLoad(){
+    const savedEnd = getSavedQuizEndTime();
+
+    if (savedEnd && savedEnd > Date.now()) {
+      quizStarted = true;
+      startQuizAttempt(false);
+      return;
+    }
+
+    if (savedEnd && savedEnd <= Date.now()) {
+      localStorage.removeItem(END_KEY);
+    }
+
+    lockQuizBeforeStart();
+    showQuestionPage(0, false);
+  }
+
   function startTimerWithQuiz(quiz){
     const now = Date.now();
     const savedEnd = Number(localStorage.getItem(END_KEY));
@@ -2868,6 +3674,234 @@ function inlineQuizLoadingHtml(){
   }
 
 
+
+  function getQuizObjectId(q){
+    return String(q?._id || q?.id || q?.quizId?._id || q?.quizId || "");
+  }
+
+  function getQuizTitle(q){
+    return cleanSpaces(q?.title || q?.name || q?.quizTitle || "Next assessment");
+  }
+
+  function normalizeQuizListPayload(data){
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.quizzes)) return data.quizzes;
+    if (Array.isArray(data?.items)) return data.items;
+    if (Array.isArray(data?.results)) return data.results;
+    if (Array.isArray(data?.data)) return data.data;
+    return [];
+  }
+
+  function sortQuizzesForNext(list){
+    return [...list].sort((a,b) => {
+      const ao = Number(a?.order ?? a?.sortOrder ?? a?.sequence ?? a?.quizNumber ?? 0);
+      const bo = Number(b?.order ?? b?.sortOrder ?? b?.sequence ?? b?.quizNumber ?? 0);
+      if (ao !== bo) return ao - bo;
+
+      const ad = Date.parse(a?.createdAt || a?.date || a?.updatedAt || "") || 0;
+      const bd = Date.parse(b?.createdAt || b?.date || b?.updatedAt || "") || 0;
+      if (ad !== bd) return ad - bd;
+
+      return getQuizTitle(a).localeCompare(getQuizTitle(b));
+    });
+  }
+
+  function isQuizVisibleToLearner(q){
+    const status = String(q?.status || q?.visibility || "").toLowerCase();
+    if (["draft", "archived", "deleted", "inactive", "hidden"].includes(status)) return false;
+    if (q?.isPublished === false) return false;
+    if (q?.published === false) return false;
+    if (q?.active === false) return false;
+    return true;
+  }
+
+  function findNextQuizFromList(list){
+    const currentId = String(quizId || getQuizObjectId(quizData));
+    const currentGrade = String(quizData?.grade ?? "").trim();
+    const currentSubject = String(quizData?.subject ?? "").trim().toLowerCase();
+
+    let ordered = sortQuizzesForNext(list.filter(isQuizVisibleToLearner));
+
+    /* Prefer quizzes from the same grade and subject when those fields exist. */
+    const sameGroup = ordered.filter(q => {
+      const qGrade = String(q?.grade ?? "").trim();
+      const qSubject = String(q?.subject ?? "").trim().toLowerCase();
+      const gradeOk = !currentGrade || !qGrade || qGrade === currentGrade;
+      const subjectOk = !currentSubject || !qSubject || qSubject === currentSubject;
+      return gradeOk && subjectOk;
+    });
+
+    if (sameGroup.some(q => getQuizObjectId(q) === currentId)) {
+      ordered = sameGroup;
+    }
+
+    const index = ordered.findIndex(q => getQuizObjectId(q) === currentId);
+    if (index >= 0 && index < ordered.length - 1) return ordered[index + 1];
+
+    return null;
+  }
+
+  function findPreviousQuizFromList(list){
+    const currentId = String(quizId || getQuizObjectId(quizData));
+    const currentGrade = String(quizData?.grade ?? "").trim();
+    const currentSubject = String(quizData?.subject ?? "").trim().toLowerCase();
+
+    let ordered = sortQuizzesForNext(list.filter(isQuizVisibleToLearner));
+
+    const sameGroup = ordered.filter(q => {
+      const qGrade = String(q?.grade ?? "").trim();
+      const qSubject = String(q?.subject ?? "").trim().toLowerCase();
+      const gradeOk = !currentGrade || !qGrade || qGrade === currentGrade;
+      const subjectOk = !currentSubject || !qSubject || qSubject === currentSubject;
+      return gradeOk && subjectOk;
+    });
+
+    if (sameGroup.some(q => getQuizObjectId(q) === currentId)) {
+      ordered = sameGroup;
+    }
+
+    const index = ordered.findIndex(q => getQuizObjectId(q) === currentId);
+    if (index > 0) return ordered[index - 1];
+
+    return null;
+  }
+
+  function setTopAdjacentButtons(previousQuiz, nextQuiz){
+    previousQuizData = previousQuiz || null;
+    nextQuizData = nextQuiz || nextQuizData || null;
+
+    if (previousQuizTopBtn) {
+      previousQuizTopBtn.disabled = !previousQuizData;
+      previousQuizTopBtn.title = previousQuizData ? getQuizTitle(previousQuizData) : "No previous quiz";
+    }
+
+    if (nextQuizTopBtn) {
+      nextQuizTopBtn.disabled = !nextQuizData;
+      nextQuizTopBtn.title = nextQuizData ? getQuizTitle(nextQuizData) : "No next quiz";
+    }
+  }
+
+  async function prepareTopAdjacentQuizButtons(){
+    setTopAdjacentButtons(null, nextQuizData);
+
+    try{
+      const res = await fetch(`${API}/api/quizzes`, {
+        headers: { Authorization: "Bearer " + token }
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json().catch(() => null);
+      const list = normalizeQuizListPayload(data);
+      if (!list.length) return;
+
+      const previousQuiz = findPreviousQuizFromList(list);
+      const nextQuiz = findNextQuizFromList(list);
+
+      setTopAdjacentButtons(previousQuiz, nextQuiz);
+    }catch(_){}
+  }
+
+
+  function buildCurrentAttemptUrl(targetQuizId, keepMode = true){
+    const safeId = encodeURIComponent(String(targetQuizId || ""));
+
+    /*
+      IMPORTANT:
+      Do not hard-code attempt-assessment.html here.
+      On the live site this page may be saved/deployed as attempt.html,
+      assessment.html, or another filename. Using the current pathname
+      prevents Netlify 404 errors when moving to Previous Quiz / Next Quiz.
+    */
+    const currentPath = window.location.pathname || "attempt.html";
+    const params = new URLSearchParams();
+    params.set("quizId", safeId);
+
+    if (keepMode && practiceMode) {
+      params.set("mode", "practice");
+    }
+
+    return `${currentPath}?${params.toString()}`;
+  }
+
+  function goToPreviousQuiz(){
+    if (!previousQuizData) return;
+    const previousId = getQuizObjectId(previousQuizData);
+    if (!previousId) return;
+    window.location.href = buildCurrentAttemptUrl(previousId, true);
+  }
+
+  function setNextQuizButtonState(quiz, message){
+    nextQuizData = quiz || null;
+
+    if (postSubmitNextQuizInfo) {
+      postSubmitNextQuizInfo.innerHTML = message || "";
+    }
+
+    if (!postSubmitNextQuizBtn) return;
+
+    if (nextQuizData) {
+      postSubmitNextQuizBtn.style.display = "inline-flex";
+      postSubmitNextQuizBtn.disabled = false;
+      postSubmitNextQuizBtn.textContent = "Next Quiz";
+      if (nextQuizTopBtn) {
+        nextQuizTopBtn.disabled = false;
+        nextQuizTopBtn.title = getQuizTitle(nextQuizData);
+      }
+    } else {
+      postSubmitNextQuizBtn.style.display = "none";
+      postSubmitNextQuizBtn.disabled = true;
+      if (nextQuizTopBtn && !nextQuizData) {
+        nextQuizTopBtn.disabled = true;
+      }
+    }
+  }
+
+  async function prepareNextQuizButton(){
+    setNextQuizButtonState(null, "Checking for the next quiz...");
+
+    const headers = { Authorization: "Bearer " + token };
+    const endpoints = [
+      `${API}/api/quizzes/${encodeURIComponent(quizId)}/next`,
+      `${API}/api/quizzes/next/${encodeURIComponent(quizId)}`,
+      `${API}/api/quizzes`
+    ];
+
+    for (const url of endpoints) {
+      try{
+        const res = await fetch(url, { headers });
+        if (!res.ok) continue;
+
+        const data = await res.json().catch(() => null);
+        let candidate = data?.nextQuiz || data?.quiz || data?.next || null;
+
+        if (!candidate) {
+          const list = normalizeQuizListPayload(data);
+          if (list.length) candidate = findNextQuizFromList(list);
+        }
+
+        if (candidate && getQuizObjectId(candidate)) {
+          const title = escapeHtml(getQuizTitle(candidate));
+          setNextQuizButtonState(candidate, `Up Next: <b>${title}</b>`);
+          return;
+        }
+      }catch(_){
+        /* Try the next possible endpoint. */
+      }
+    }
+
+    setNextQuizButtonState(null, "No next quiz is available right now.");
+  }
+
+  function goToNextQuiz(){
+    if (!nextQuizData) return;
+    const nextId = getQuizObjectId(nextQuizData);
+    if (!nextId) return;
+
+    window.location.href = buildCurrentAttemptUrl(nextId, true);
+  }
+
+
   function hidePostSubmitPanel(){
     if (!postSubmitPanel || !postSubmitOverlay) return;
     postSubmitOverlay.classList.add("hidden");
@@ -2876,6 +3910,7 @@ function inlineQuizLoadingHtml(){
     postSubmitScore.textContent = "—";
     postSubmitPercent.textContent = "—";
     postSubmitRank.textContent = "—";
+    setNextQuizButtonState(null, "");
     selectedInlineRating = 0;
     updateInlineStars();
     if (ratingCommentInline) ratingCommentInline.value = "";
@@ -2951,6 +3986,8 @@ function inlineQuizLoadingHtml(){
     if (ratingSkipBtnInline) ratingSkipBtnInline.disabled = false;
     document.querySelectorAll(".starBtnInline").forEach(btn => btn.disabled = false);
 
+    updateStartQuizButton();
+    prepareNextQuizButton();
     showPostSubmitPanel();
   }
 
@@ -3052,6 +4089,7 @@ function inlineQuizLoadingHtml(){
 
     retryBtn.disabled = false;
     retryBtn.style.display = "";
+    initQuestionNavigation();
     saveAnswersToStorage();
 
     hidePostSubmitPanel();
@@ -3238,6 +4276,8 @@ function inlineQuizLoadingHtml(){
     document.querySelectorAll(".solutionHolder").forEach(holder => {
       holder.classList.add("hidden");
     });
+
+    resetQuestionProgressCard();
   }
 
   function countLocalSubmittedScorableQuestions(){
@@ -3308,6 +4348,9 @@ function inlineQuizLoadingHtml(){
       }
     }
 
+    updateQuestionProgress(i, !!result.correct);
+    localSubmittedQuestions.add(i);
+
     markQuestionOptions(q, i);
 
     /* Do not open workings automatically. Learner can choose to show answer. */
@@ -3325,6 +4368,7 @@ function inlineQuizLoadingHtml(){
     }
 
     saveAnswersToStorage();
+    maybeFinishAfterAllLocalSubmits();
   }
 
 
@@ -3433,6 +4477,8 @@ function inlineQuizLoadingHtml(){
         }
       }
 
+      updateQuestionProgress(i, !!result.correct);
+
       markQuestionOptions(q, i);
 
       /* Do not open workings automatically. Learner can choose to show answer. */
@@ -3450,6 +4496,11 @@ function inlineQuizLoadingHtml(){
 
   async function submitQuiz(mode, options = {}){
     if (!quizData || submitted || blocked) return;
+    if (!quizStarted && mode !== "auto") {
+      msgEl.className = "error";
+      msgEl.textContent = "Please click Start Quiz before submitting.";
+      return;
+    }
 
     const total = countScorableQuestions();
     const answered = countAnswered();
@@ -3656,6 +4707,8 @@ function inlineQuizLoadingHtml(){
       return;
     }
 
+    resetQuestionRandomization();
+
     if (quizTitle) quizTitle.textContent = cleanSpaces(quizData.title || "Assessment");
     if (quizInfo) {
       quizInfo.innerHTML = cleanSpaces(quizData.topic || "") ? `<b>Topic:</b> ${escapeHtml(cleanSpaces(quizData.topic))}` : "";
@@ -3687,7 +4740,7 @@ function inlineQuizLoadingHtml(){
       const questionTotal = totals.mainTotals.get(mainNo) || points;
       const sectionTotal = totals.sectionTotals.get(sectionKey) || points;
 
-      const imageHtml = img ? `<img class="qimg" src="${escapeAttr(img)}" alt="Question image" loading="lazy" decoding="async">` : "";
+      const imageHtml = img ? `<div class="q qDiagramContext" data-context-kind="diagram"><div class="qImageWrap"><img class="qimg" src="${escapeAttr(img)}" alt="Question image" loading="lazy" decoding="async"></div></div>` : "";
 
       if (type === "note") {
         return renderNoteLike(rawText, imageHtml, sectionTotal);
@@ -3698,8 +4751,8 @@ function inlineQuizLoadingHtml(){
 
       if (type === "text") {
         return `
+          ${imageHtml}
           <div class="q" data-scorable="1" data-qindex="${i}">
-            ${imageHtml}
             ${headHtml}
             <input class="textAnswer" id="txt${i}" placeholder="Type your answer" autocomplete="off" />
             ${hint ? `<div class="hint">Hint: <span class="hintText">${renderMixedMath(hint)}</span></div>` : ``}
@@ -3714,19 +4767,22 @@ function inlineQuizLoadingHtml(){
       }
 
       const opts = Array.isArray(q.options) ? q.options : [];
+      const optionOrder = getOptionDisplayOrder(q, i);
       const multi = isMultiQuestion(q);
       const inputType = multi ? "checkbox" : "radio";
 
       return `
+        ${imageHtml}
         <div class="q" data-scorable="1" data-qindex="${i}">
-          ${imageHtml}
           ${headHtml}
-          ${opts.map((o, j) => `
+          ${optionOrder.map((originalIndex) => {
+            const o = opts[originalIndex];
+            return `
             <label class="opt">
-              <input class="mcqInput" data-qindex="${i}" type="${inputType}" name="q${i}" value="${j}">
+              <input class="mcqInput" data-qindex="${i}" type="${inputType}" name="q${i}" value="${originalIndex}">
               <span class="optText">${renderMixedMath(cleanSpaces(o))}</span>
-            </label>
-          `).join("")}
+            </label>`;
+          }).join("")}
           ${hint ? `<div class="hint">Hint: <span class="hintText">${renderMixedMath(hint)}</span></div>` : ``}
           <div class="qLocalActions">
             <button class="qCheckBtn" type="button" data-qindex="${i}">Submit the Answer</button>
@@ -3747,6 +4803,7 @@ function inlineQuizLoadingHtml(){
     attachSingleQuestionSubmit();
     attachShowAnswerButtons();
     const restoredAnswers = restoreAnswersFromStorage();
+    initQuestionNavigation();
     if (restoredAnswers && !alreadyAttempted && !wantsPracticeFromLink) {
       msgEl.className = "ok";
       msgEl.textContent = "Your previous answers were restored.";
@@ -3760,6 +4817,7 @@ function inlineQuizLoadingHtml(){
       retryBtn.disabled = true;
       viewResultsBtn.disabled = true;
       disableAllInputs();
+      hideQuestionNavigation();
       return;
     }
 
@@ -3776,22 +4834,19 @@ function inlineQuizLoadingHtml(){
 
     practiceMode = false;
     applyNormalUI();
-    setStatusMessage("Assessment ready. Choose your answers and submit when finished.", "loading");
+    
 
     document.body.classList.remove("submitted-state");
-    enableAllInputs();
-
-    submitBtn.style.display = "";
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Submit";
 
     retryBtn.style.display = "none";
     retryBtn.disabled = true;
 
     viewResultsBtn.disabled = true;
 
-    startTimerWithQuiz(quizData);
     submitBtn.onclick = () => submitQuiz("manual");
+
+    prepareTopAdjacentQuizButtons();
+    setupStartGateAfterLoad();
 
     if (wantsPracticeFromLink) {
       msgEl.className = "error";
@@ -4524,8 +5579,8 @@ function formatSolutionHtml(solutionText){
         <div class="q">
           <div class="qMainHeading">${escapeHtml(parsed.label)}</div>
           ${bodyHtml}
-          ${imageHtml}
         </div>
+        ${imageHtml}
       `;
     }
 
@@ -4538,16 +5593,16 @@ function formatSolutionHtml(solutionText){
               <div class="qSectionText">${renderMixedMath(parsed.body)}</div>
             </div>
           </div>
-          ${imageHtml}
         </div>
+        ${imageHtml}
       `;
     }
 
     return `
       <div class="q">
         <div class="noteBox">${renderMixedMath(String(rawText || "").trim())}</div>
-        ${imageHtml}
       </div>
+      ${imageHtml}
     `;
   }
 
