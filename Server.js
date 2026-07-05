@@ -2424,7 +2424,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
     const quizzes = await Quiz.find(filter)
       .sort({ createdAt: -1 })
       .select(
-        "grade title topic paper difficulty questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
+        "grade title topic contentType audience isForAllLearners paper difficulty questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
       );
 
     return res.json(quizzes);
@@ -2469,19 +2469,22 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
 app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
   try {
     const {
-      grade,
-      title,
-      topic,
-      paper,
-      timeLimitMinutes,
-      instructions,
-      questions,
-      difficulty,
-      publishNow,
-      publishAt,
-      availableFrom,
-      availableUntil,
-      sendPublishEmail,
+  grade,
+  title,
+  topic,
+  contentType,
+  audience,
+  isForAllLearners,
+  paper,
+  timeLimitMinutes,
+  instructions,
+  questions,
+  difficulty,
+  publishNow,
+  publishAt,
+  availableFrom,
+  availableUntil,
+  sendPublishEmail,
     } = req.body;
 
     if (!grade || !title || !topic || !Array.isArray(questions) || questions.length === 0) {
@@ -2613,7 +2616,15 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
       title: quizTitle,
       topic: quizTopic,
       paper: quizPaper,
+      
+      contentType: contentType || "quiz",
+      audience: audience || "grade",
+      isForAllLearners: !!isForAllLearners,
+      
+      contentType: contentType || "quiz",
+      audience: audience || "grade",
       difficulty: quizDifficulty,
+      isForAllLearners: !!isForAllLearners,
       timeLimitMinutes: Number(timeLimitMinutes) || 10,
       questions,
       instructions: quizInstructions,
