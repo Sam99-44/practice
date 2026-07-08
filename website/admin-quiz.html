@@ -3191,8 +3191,9 @@ function escapeHtml(str){
         publishBtn.disabled = true;
         setMsg("Saving assessment as draft...", "muted");
 
-        const res = await fetch(`${API}/api/quizzes`, {
+        const res = await fetch(`${API}/api/quizzes?_=${Date.now()}`, {
           method: "POST",
+          cache: "no-store",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
@@ -3203,6 +3204,7 @@ function escapeHtml(str){
         const data = await res.json().catch(()=>({}));
 
         if (res.ok) {
+          localStorage.setItem("practiceOnlineQuizChangedAt", String(Date.now()));
           setMsg("Assessment saved as draft. No learner email sent.", "ok");
           resetFormAfterSave();
         } else {
@@ -3240,8 +3242,9 @@ function escapeHtml(str){
           setMsg("Saving scheduled assessment...", "muted");
         }
 
-        const res = await fetch(`${API}/api/quizzes`, {
+        const res = await fetch(`${API}/api/quizzes?_=${Date.now()}`, {
           method: "POST",
+          cache: "no-store",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
@@ -3252,6 +3255,7 @@ function escapeHtml(str){
         const data = await res.json().catch(()=>({}));
 
         if (res.ok) {
+          localStorage.setItem("practiceOnlineQuizChangedAt", String(Date.now()));
           if (mode === "now") {
             if (payload.sendPublishEmail) {
               setMsg("Assessment published. Learner emails were triggered.", "ok");
