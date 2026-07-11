@@ -31,6 +31,8 @@
         TIME_LIMIT:
         DIFFICULTY:
         PAPER:
+        ACCESS_LEVEL:
+        ACCESS_FEE:
         SEND_EMAIL:
 -->
 <!DOCTYPE html>
@@ -311,7 +313,7 @@
         </select>
       </div>
       <div>
-        <label>Search by topic or title</label>
+        <label>Search by code, topic or title</label>
         <input id="searchBox" placeholder="Type to search..." />
       </div>
       <div>
@@ -377,6 +379,27 @@
           <option value="paper2">Paper 2</option>
         </select>
         <div class="muted tiny">Example: Financial Mathematics = Paper 1</div>
+      </div>
+
+      <div>
+        <label>Assessment Code</label>
+        <input id="assessmentCode" value="Generated automatically when saved" readonly />
+        <div class="muted tiny">Example: MAT11-P1-0001</div>
+      </div>
+
+      <div>
+        <label>Quiz Access</label>
+        <select id="accessLevel">
+          <option value="standard" selected>Standard (Free)</option>
+          <option value="premium">Premium (Paid)</option>
+        </select>
+        <div class="muted tiny">Standard is available to everyone. Premium requires paid access.</div>
+      </div>
+
+      <div id="accessFeeWrap" class="hide">
+        <label>Access Fee (R)</label>
+        <input id="accessFee" type="number" min="0" step="0.01" value="0" placeholder="e.g. 50" />
+        <div class="muted tiny">Use 0 when premium access is covered by a subscription.</div>
       </div>
 
       <div>
@@ -482,6 +505,10 @@
       DIFFICULTY: moderate
       <br />
       PAPER: paper1
+      <br />
+      ACCESS_LEVEL: standard
+      <br />
+      ACCESS_FEE: 0
       <br />
       SEND_EMAIL: false
       <br /><br />
@@ -591,6 +618,10 @@
     const titleEl = document.getElementById("title");
     const difficultyEl = document.getElementById("difficulty");
     const paperEl = document.getElementById("paper");
+    const assessmentCodeEl = document.getElementById("assessmentCode");
+    const accessLevelEl = document.getElementById("accessLevel");
+    const accessFeeEl = document.getElementById("accessFee");
+    const accessFeeWrap = document.getElementById("accessFeeWrap");
 
     const publishModeEl = document.getElementById("publishMode");
     const publishAtEl = document.getElementById("publishAt");
@@ -780,6 +811,19 @@
       if (p === "paper1" || p === "paper2") return p;
       return "paper1";
     }
+
+    function normalizeQuizAccessLevel(value){
+      return String(value || "").toLowerCase().trim() === "premium" ? "premium" : "standard";
+    }
+
+    function updateAccessUI(){
+      const isPremium = normalizeQuizAccessLevel(accessLevelEl.value) === "premium";
+      accessFeeWrap.classList.toggle("hide", !isPremium);
+      if (!isPremium) accessFeeEl.value = "0";
+    }
+
+    accessLevelEl.addEventListener("change", updateAccessUI);
+    updateAccessUI();
 
     function typesetMath(root=document){
       if (window.MathJax?.typesetPromise) {
@@ -2297,6 +2341,8 @@ function escapeHtml(str){
         timeLimitMinutes: 10,
         difficulty: "moderate",
         paper: "paper1",
+        accessLevel: "standard",
+        accessFee: 0,
         instructions: "",
         publishMode: "draft",
         publishAt: "",
@@ -2323,6 +2369,8 @@ function escapeHtml(str){
           case "TIME_LIMIT_MINUTES": meta.timeLimitMinutes = Number(value.trim() || 10); break;
           case "DIFFICULTY": meta.difficulty = value.trim(); break;
           case "PAPER": meta.paper = value.trim(); break;
+          case "ACCESS_LEVEL": meta.accessLevel = normalizeQuizAccessLevel(value); break;
+          case "ACCESS_FEE": meta.accessFee = Math.max(0, Number(value) || 0); break;
           case "INSTRUCTIONS": meta.instructions = value.trim(); break;
           case "PUBLISH_MODE": meta.publishMode = value.trim(); break;
           case "PUBLISH_AT": meta.publishAt = value.trim(); break;
@@ -2646,7 +2694,11 @@ function escapeHtml(str){
       timeLimitEl.value = Number.isFinite(Number(meta.timeLimitMinutes)) ? String(meta.timeLimitMinutes) : "10";
       difficultyEl.value = normalizeDifficulty(meta.difficulty);
       paperEl.value = normalizePaper(meta.paper);
+      assessmentCodeEl.value = meta.assessmentCode || "Generated automatically when saved";
+      accessLevelEl.value = normalizeQuizAccessLevel(meta.accessLevel);
+      accessFeeEl.value = String(Math.max(0, Number(meta.accessFee) || 0));
       instructionsEl.value = meta.instructions || "";
+      updateAccessUI();
       publishModeEl.value = normalizePublishMode(meta.publishMode);
       publishAtEl.value = meta.publishAt || "";
       availableFromEl.value = meta.availableFrom || "";
@@ -2696,6 +2748,8 @@ function escapeHtml(str){
       const instructions = cleanSpaces(meta.instructions || "");
       const difficulty = normalizeDifficulty(meta.difficulty);
       const paper = normalizePaper(meta.paper);
+      const accessLevel = normalizeQuizAccessLevel(meta.accessLevel);
+      const accessFee = accessLevel === "premium" ? Math.max(0, Number(meta.accessFee) || 0) : 0;
       const availableFrom = meta.availableFrom || null;
       const availableUntil = meta.availableUntil || null;
       const publishMode = normalizePublishMode(meta.publishMode);
@@ -2760,6 +2814,8 @@ function escapeHtml(str){
         title,
         topic,
         paper,
+        accessLevel,
+        accessFee,
         timeLimitMinutes,
         instructions,
         difficulty,
@@ -2791,6 +2847,8 @@ function escapeHtml(str){
       lines.push(`TIME_LIMIT: ${cleanSpaces(meta.timeLimitMinutes || "10")}`);
       lines.push(`DIFFICULTY: ${normalizeDifficulty(meta.difficulty)}`);
       lines.push(`PAPER: ${normalizePaper(meta.paper)}`);
+      lines.push(`ACCESS_LEVEL: ${normalizeQuizAccessLevel(meta.accessLevel)}`);
+      lines.push(`ACCESS_FEE: ${normalizeQuizAccessLevel(meta.accessLevel) === "premium" ? Math.max(0, Number(meta.accessFee) || 0) : 0}`);
       lines.push(`SEND_EMAIL: ${meta.sendPublishEmail ? "true" : "false"}`);
       if (cleanSpaces(meta.instructions || "")) lines.push(`INSTRUCTIONS: ${String(meta.instructions).trim()}`);
       lines.push("");
@@ -3097,6 +3155,8 @@ function escapeHtml(str){
       const instructions = cleanSpaces(instructionsEl.value || "");
       const difficulty = normalizeDifficulty(difficultyEl.value);
       const paper = normalizePaper(paperEl.value);
+      const accessLevel = normalizeQuizAccessLevel(accessLevelEl.value);
+      const accessFee = accessLevel === "premium" ? Math.max(0, Number(accessFeeEl.value) || 0) : 0;
 
       const availableFrom = availableFromEl.value ? availableFromEl.value : null;
       const availableUntil = availableUntilEl.value ? availableUntilEl.value : null;
@@ -3142,6 +3202,8 @@ function escapeHtml(str){
         title,
         topic,
         paper,
+        accessLevel,
+        accessFee,
         timeLimitMinutes,
         instructions,
         difficulty,
@@ -3187,6 +3249,10 @@ function escapeHtml(str){
       timeLimitEl.value = "10";
       difficultyEl.value = "moderate";
       paperEl.value = "paper1";
+      assessmentCodeEl.value = "Generated automatically when saved";
+      accessLevelEl.value = "standard";
+      accessFeeEl.value = "0";
+      updateAccessUI();
       instructionsEl.value = "";
       publishModeEl.value = "draft";
       publishAtEl.value = "";
@@ -3294,6 +3360,9 @@ function escapeHtml(str){
           timeLimitMinutes: Number(quiz?.timeLimitMinutes || 10),
           difficulty: normalizeDifficulty(quiz?.difficulty),
           paper: normalizePaper(quiz?.paper),
+          assessmentCode: quiz?.assessmentCode || "",
+          accessLevel: normalizeQuizAccessLevel(quiz?.accessLevel),
+          accessFee: Math.max(0, Number(quiz?.accessFee) || 0),
           instructions: quiz?.instructions || "",
           publishMode: quiz?.publishAt ? "schedule" : (quiz?.isPublished ? "now" : "draft"),
           publishAt: quiz?.publishAt ? isoToLocalInput(quiz.publishAt) : "",
@@ -3336,11 +3405,16 @@ function escapeHtml(str){
       const search = String(searchBoxEl.value || "").trim().toLowerCase();
       const filtered = allQuizzes.filter(q => {
         const gradeOk = !grade || String(q.grade) === grade;
-        const searchOk = !search || String(q.title || "").toLowerCase().includes(search) || String(q.topic || "").toLowerCase().includes(search);
+        const searchOk = !search ||
+          String(q.title || "").toLowerCase().includes(search) ||
+          String(q.topic || "").toLowerCase().includes(search) ||
+          String(q.assessmentCode || "").toLowerCase().includes(search);
         return gradeOk && searchOk;
       });
       assessmentSelectEl.innerHTML = '<option value="">Select assessment</option>' + filtered.map(q => {
-        const label = `Grade ${q.grade || ""} • ${escapeHtml(q.topic || "General")} • ${escapeHtml(q.title || "Assessment")}${q.isFrozen ? " • Unavailable" : ""}`;
+        const code = q.assessmentCode ? `${escapeHtml(q.assessmentCode)} • ` : "";
+        const access = normalizeQuizAccessLevel(q.accessLevel) === "premium" ? " • Premium" : " • Standard";
+        const label = `${code}Grade ${q.grade || ""} • ${escapeHtml(q.topic || "General")} • ${escapeHtml(q.title || "Assessment")}${access}${q.isFrozen ? " • Unavailable" : ""}`;
         return `<option value="${escapeAttr(q._id)}">${label}</option>`;
       }).join("");
       if (!filtered.length) assessmentSelectEl.innerHTML = '<option value="">No matching assessments</option>';
