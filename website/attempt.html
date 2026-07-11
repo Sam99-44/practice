@@ -5532,6 +5532,14 @@ function formatSolutionHtml(solutionText){
 
   const title = cleanSpaces(quiz?.title || "Assessment");
 
+  const assessmentCode = cleanSpaces(
+    quiz?.assessmentCode ||
+    quiz?.quizCode ||
+    quiz?.examCode ||
+    quiz?.code ||
+    ""
+  ).toUpperCase();
+
   const totalMarks = computeOverallTotalMarks(quiz?.questions || []);
 
   const questionCount = (quiz?.questions || []).filter(q => {
@@ -5540,6 +5548,7 @@ function formatSolutionHtml(solutionText){
 
   return `
     <div class="paperMeta">
+      ${assessmentCode ? `<div class="paperTitle"><b>Assessment Code:</b> ${escapeHtml(assessmentCode)}</div>` : ``}
       ${topic ? `<div class="paperTitle"><b>Topic:</b> ${escapeHtml(topic)}</div>` : ``}
       <div class="paperTitle"><b>Title:</b> ${escapeHtml(title)}</div>
 
