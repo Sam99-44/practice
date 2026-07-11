@@ -815,6 +815,12 @@
       </div>
 
       <div>
+        <label>Assessment Code</label>
+        <input id="assessmentCode" value="Assigned automatically when saved" readonly />
+        <div class="muted tiny">The server assigns a unique code. Codes cannot be typed or reused.</div>
+      </div>
+
+      <div>
         <label>Content Type</label>
         <select id="contentType">
           <option value="quiz" selected>Quiz</option>
@@ -1075,6 +1081,7 @@
     const topicEl = document.getElementById("topic");
     const timeLimitEl = document.getElementById("timeLimit");
     const titleEl = document.getElementById("title");
+    const assessmentCodeEl = document.getElementById("assessmentCode");
     const contentTypeEl = document.getElementById("contentType");
     const contentTypeHelp = document.getElementById("contentTypeHelp");
     const accessLevelEl = document.getElementById("accessLevel");
@@ -1992,8 +1999,9 @@ function escapeHtml(str){
         const text = await readUploadedTextFile(file);
         const parsed = parseAssessmentFile(text, file.name);
         fillAssessmentForm(parsed);
+        assessmentCodeEl.value = "Assigned automatically when saved";
 
-        setMsg("Assessment loaded successfully. Please review before saving.", "ok");
+        setMsg("Assessment loaded successfully. Save or publish it to receive its unique code.", "ok");
       } catch (err) {
         if (Array.isArray(err.parseErrors) && err.parseErrors.length) {
           showParseErrors(err.parseErrors, "Please fix these .txt file issues");
@@ -2030,34 +2038,19 @@ function escapeHtml(str){
         setMsg(`Batch uploading ${files.length} file(s)...`, "muted");
 
         const results = [];
-        const usedCodes = await loadExistingAssessmentCodes();
         for (const file of files) {
           try {
             const text = await readUploadedTextFile(file);
             const parsed = parseAssessmentFile(text, file.name);
-            const parsedGrade = normalizeContentType(parsed.meta?.contentType) === "weeklyChallenge"
-              ? null
-              : Number(parsed.meta?.grade);
-            const generatedCode = generateAssessmentCode(
-              parsedGrade,
-              parsed.meta?.paper,
-              usedCodes
-            );
-            const payload = buildPayloadFromParsedAssessment(parsed, generatedCode);
+            const payload = buildPayloadFromParsedAssessment(parsed);
 
-            const res = await fetch(`${API}/api/quizzes`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-              },
-              body: JSON.stringify(payload)
-            });
+            const { res, data } = await createQuizWithUniqueServerCode(payload, token);
+            if (!res?.ok) throw new Error(data?.message || "Could not save assessment");
 
-            const data = await res.json().catch(()=>({}));
-            if (!res.ok) throw new Error(data.message || "Could not save assessment");
+            const assignedCode = await resolveSavedAssessmentCode(data, token);
+            if (!assignedCode) throw new Error("Assessment saved, but the server did not return its code.");
 
-            results.push(`✓ ${file.name} (${generatedCode})`);
+            results.push(`✓ ${file.name} (${assignedCode})`);
           } catch (err) {
             const detail = Array.isArray(err.parseErrors) && err.parseErrors.length
               ? `${err.message || "Upload failed"} (${err.parseErrors[0].where}: ${err.parseErrors[0].message})`
@@ -2885,6 +2878,65 @@ function escapeHtml(str){
       ).toUpperCase();
     }
 
+    function savedAssessmentCode(data){
+      return readAssessmentCode(data?.quiz || data);
+    }
+
+    async function resolveSavedAssessmentCode(data, token){
+      const directCode = savedAssessmentCode(data);
+      if (directCode) return directCode;
+
+      const quizId = data?.quizId || data?._id || data?.quiz?._id || "";
+      if (!quizId) return "";
+
+      try {
+        const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}?_=${Date.now()}`, {
+          method: "GET",
+          cache: "no-store",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const quiz = await res.json().catch(() => ({}));
+        return res.ok ? readAssessmentCode(quiz) : "";
+      } catch {
+        return "";
+      }
+    }
+
+    function isDuplicateCodeResponse(res, data){
+      const message = String(data?.message || data?.error || "").toLowerCase();
+      return res?.status === 409 || message.includes("duplicate") || message.includes("assessment code already");
+    }
+
+    async function createQuizWithUniqueServerCode(payload, token){
+      const cleanPayload = { ...payload };
+      delete cleanPayload.assessmentCode;
+      delete cleanPayload.quizCode;
+      delete cleanPayload.examCode;
+      delete cleanPayload.code;
+
+      let lastResponse = null;
+      let lastData = {};
+
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        lastResponse = await fetch(`${API}/api/quizzes?_=${Date.now()}-${attempt}`, {
+          method: "POST",
+          cache: "no-store",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(cleanPayload)
+        });
+
+        lastData = await lastResponse.json().catch(() => ({}));
+
+        if (lastResponse.ok) return { res: lastResponse, data: lastData };
+        if (!isDuplicateCodeResponse(lastResponse, lastData)) break;
+      }
+
+      return { res: lastResponse, data: lastData };
+    }
+
     async function loadExistingAssessmentCodes(){
       const token = localStorage.getItem("token");
       const codes = new Set();
@@ -2935,7 +2987,7 @@ function escapeHtml(str){
       return code;
     }
 
-    function buildPayloadFromParsedAssessment(parsed, assessmentCode){
+    function buildPayloadFromParsedAssessment(parsed){
       const meta = parsed.meta || {};
       const grade = Number(meta.grade);
       const topic = toTitleCase(meta.topic || "");
@@ -2995,10 +3047,6 @@ function escapeHtml(str){
       return {
         grade: contentType === "weeklyChallenge" ? null : grade,
         title,
-        assessmentCode,
-        quizCode: assessmentCode,
-        examCode: assessmentCode,
-        code: assessmentCode,
         topic,
         paper,
         contentType,
@@ -3217,20 +3265,9 @@ function escapeHtml(str){
         publishAt = publishAtEl.value;
       }
 
-      const usedCodes = await loadExistingAssessmentCodes();
-      const assessmentCode = generateAssessmentCode(
-        contentType === "weeklyChallenge" ? null : grade,
-        paper,
-        usedCodes
-      );
-
       return {
         grade: contentType === "weeklyChallenge" ? null : grade,
         title,
-        assessmentCode,
-        quizCode: assessmentCode,
-        examCode: assessmentCode,
-        code: assessmentCode,
         topic,
         paper,
         contentType,
@@ -3306,6 +3343,7 @@ function escapeHtml(str){
       addMcq();
       setupDragAndDrop();
       renumberCards();
+      if (!assessmentCodeEl.value) assessmentCodeEl.value = "Assigned automatically when saved";
     }
 
     saveBtn.addEventListener("click", async () => {
@@ -3322,24 +3360,19 @@ function escapeHtml(str){
         publishBtn.disabled = true;
         setMsg("Saving assessment as draft...", "muted");
 
-        const res = await fetch(`${API}/api/quizzes?_=${Date.now()}`, {
-          method: "POST",
-          cache: "no-store",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
-        });
+        const { res, data } = await createQuizWithUniqueServerCode(payload, token);
 
-        const data = await res.json().catch(()=>({}));
+        if (res?.ok) {
+          const assignedCode = await resolveSavedAssessmentCode(data, token);
+          if (!assignedCode) throw new Error("Assessment saved, but the server did not return its unique code.");
 
-        if (res.ok) {
+          assessmentCodeEl.value = assignedCode;
           localStorage.setItem("practiceOnlineQuizChangedAt", String(Date.now()));
-          setMsg(`Assessment ${payload.assessmentCode} saved as draft. No learner email sent.`, "ok");
+          setMsg(`Assessment ${assignedCode} saved as draft. This code is unique and cannot be reused.`, "ok");
           resetFormAfterSave();
+          assessmentCodeEl.value = assignedCode;
         } else {
-          setMsg("Error: " + (data.message || "Could not save assessment"), "error");
+          setMsg("Error: " + (data?.message || "Could not save assessment"), "error");
         }
       } catch (err){
         setMsg(err.message || "Something went wrong.", "error");
@@ -3373,36 +3406,35 @@ function escapeHtml(str){
           setMsg("Saving scheduled assessment...", "muted");
         }
 
-        const res = await fetch(`${API}/api/quizzes?_=${Date.now()}`, {
-          method: "POST",
-          cache: "no-store",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
-        });
+        const { res, data } = await createQuizWithUniqueServerCode(payload, token);
 
-        const data = await res.json().catch(()=>({}));
+        if (res?.ok) {
+          const assignedCode = await resolveSavedAssessmentCode(data, token);
+          if (!assignedCode) throw new Error("Assessment published, but the server did not return its unique code.");
 
-        if (res.ok) {
+          assessmentCodeEl.value = assignedCode;
           localStorage.setItem("practiceOnlineQuizChangedAt", String(Date.now()));
+
           if (mode === "now") {
-            if (payload.sendPublishEmail) {
-              setMsg(`Assessment ${payload.assessmentCode} published. Learner emails were triggered.`, "ok");
-            } else {
-              setMsg(`Assessment ${payload.assessmentCode} published without sending learner emails.`, "ok");
-            }
+            setMsg(
+              payload.sendPublishEmail
+                ? `Assessment ${assignedCode} published. Learner emails were triggered.`
+                : `Assessment ${assignedCode} published without learner emails.`,
+              "ok"
+            );
           } else {
-            if (payload.sendPublishEmail) {
-              setMsg(`Assessment ${payload.assessmentCode} saved and scheduled for publishing. Learner emails will be sent on publish.`, "ok");
-            } else {
-              setMsg(`Assessment ${payload.assessmentCode} saved and scheduled for publishing without learner emails.`, "ok");
-            }
+            setMsg(
+              payload.sendPublishEmail
+                ? `Assessment ${assignedCode} scheduled. Learner emails will be sent on publish.`
+                : `Assessment ${assignedCode} scheduled without learner emails.`,
+              "ok"
+            );
           }
+
           resetFormAfterSave();
+          assessmentCodeEl.value = assignedCode;
         } else {
-          setMsg("Error: " + (data.message || "Could not publish assessment"), "error");
+          setMsg("Error: " + (data?.message || "Could not publish assessment"), "error");
         }
       } catch (err){
         setMsg(err.message || "Something went wrong.", "error");
