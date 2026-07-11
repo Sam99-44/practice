@@ -14,6 +14,7 @@
      ✅ Auto group total marks
      ✅ Difficulty per quiz (easy/moderate/hard)
      ✅ Paper selection (paper1/paper2)
+     ✅ Auto-generated assessment code for every uploaded/saved quiz (example MAT11-P1-0001)
      ✅ Publish mode (draft / publish now / schedule)
      ✅ Publish date & time
      ✅ Available From / Available Until
@@ -32,6 +33,7 @@
         DIFFICULTY:
         PAPER:
         CONTENT_TYPE: quiz | activity | homework | assignment | gradeChallenge | weeklyChallenge
+        ACCESS_LEVEL: standard | premium
         SEND_EMAIL:
 -->
 <!DOCTYPE html>
@@ -826,6 +828,15 @@
       </div>
 
       <div>
+        <label>Quiz Access</label>
+        <select id="accessLevel">
+          <option value="standard" selected>Standard (Free)</option>
+          <option value="premium">Premium (Paid)</option>
+        </select>
+        <div class="muted tiny">Standard quizzes are visible to everyone. Premium quizzes require an active paid subscription.</div>
+      </div>
+
+      <div>
         <label>Difficulty Level</label>
         <select id="difficulty">
           <option value="easy">Easy</option>
@@ -940,6 +951,8 @@
       PAPER: paper1
       <br />
       CONTENT_TYPE: quiz
+      <br />
+      ACCESS_LEVEL: standard
       <br />
       SEND_EMAIL: false
       <br /><br />
@@ -1064,6 +1077,7 @@
     const titleEl = document.getElementById("title");
     const contentTypeEl = document.getElementById("contentType");
     const contentTypeHelp = document.getElementById("contentTypeHelp");
+    const accessLevelEl = document.getElementById("accessLevel");
     const difficultyEl = document.getElementById("difficulty");
     const paperEl = document.getElementById("paper");
 
@@ -1248,6 +1262,16 @@
       const t = String(v || "").trim();
       const allowed = ["quiz","activity","homework","assignment","gradeChallenge","weeklyChallenge"];
       return allowed.includes(t) ? t : "quiz";
+    }
+
+    function normalizeAccessLevel(v){
+      const value = String(v || "").toLowerCase().trim();
+      if (["premium", "paid", "subscription", "subscriber"].includes(value)) return "premium";
+      return "standard";
+    }
+
+    function accessLevelLabel(level){
+      return normalizeAccessLevel(level) === "premium" ? "Premium" : "Standard";
     }
 
     function contentTypeLabel(type){
@@ -2006,11 +2030,20 @@ function escapeHtml(str){
         setMsg(`Batch uploading ${files.length} file(s)...`, "muted");
 
         const results = [];
+        const usedCodes = await loadExistingAssessmentCodes();
         for (const file of files) {
           try {
             const text = await readUploadedTextFile(file);
             const parsed = parseAssessmentFile(text, file.name);
-            const payload = buildPayloadFromParsedAssessment(parsed);
+            const parsedGrade = normalizeContentType(parsed.meta?.contentType) === "weeklyChallenge"
+              ? null
+              : Number(parsed.meta?.grade);
+            const generatedCode = generateAssessmentCode(
+              parsedGrade,
+              parsed.meta?.paper,
+              usedCodes
+            );
+            const payload = buildPayloadFromParsedAssessment(parsed, generatedCode);
 
             const res = await fetch(`${API}/api/quizzes`, {
               method: "POST",
@@ -2024,7 +2057,7 @@ function escapeHtml(str){
             const data = await res.json().catch(()=>({}));
             if (!res.ok) throw new Error(data.message || "Could not save assessment");
 
-            results.push(`✓ ${file.name}`);
+            results.push(`✓ ${file.name} (${generatedCode})`);
           } catch (err) {
             const detail = Array.isArray(err.parseErrors) && err.parseErrors.length
               ? `${err.message || "Upload failed"} (${err.parseErrors[0].where}: ${err.parseErrors[0].message})`
@@ -2437,6 +2470,7 @@ function escapeHtml(str){
         timeLimitMinutes: 10,
         difficulty: "moderate",
         paper: "paper1",
+        accessLevel: "standard",
         instructions: "",
         publishMode: "draft",
         publishAt: "",
@@ -2463,6 +2497,11 @@ function escapeHtml(str){
           case "TIME_LIMIT_MINUTES": meta.timeLimitMinutes = Number(value.trim() || 10); break;
           case "DIFFICULTY": meta.difficulty = value.trim(); break;
           case "PAPER": meta.paper = value.trim(); break;
+          case "ACCESS_LEVEL":
+          case "QUIZ_ACCESS":
+          case "PAYMENT_ACCESS":
+            meta.accessLevel = normalizeAccessLevel(value.trim());
+            break;
           case "CONTENT_TYPE":
           case "TYPE_OF_CONTENT":
           case "ASSESSMENT_TYPE":
@@ -2787,6 +2826,7 @@ function escapeHtml(str){
       difficultyEl.value = normalizeDifficulty(meta.difficulty);
       paperEl.value = normalizePaper(meta.paper);
       contentTypeEl.value = normalizeContentType(meta.contentType);
+      accessLevelEl.value = normalizeAccessLevel(meta.accessLevel);
       instructionsEl.value = meta.instructions || "";
       publishModeEl.value = normalizePublishMode(meta.publishMode);
       publishAtEl.value = meta.publishAt || "";
@@ -2829,7 +2869,73 @@ function escapeHtml(str){
       setupDragAndDrop();
     }
 
-    function buildPayloadFromParsedAssessment(parsed){
+    function assessmentCodePrefix(grade, paper){
+      const gradePart = Number(grade) ? String(Number(grade)) : "ALL";
+      const paperPart = normalizePaper(paper) === "paper2" ? "P2" : "P1";
+      return `MAT${gradePart}-${paperPart}`;
+    }
+
+    function readAssessmentCode(item){
+      return cleanSpaces(
+        item?.assessmentCode ||
+        item?.quizCode ||
+        item?.examCode ||
+        item?.code ||
+        ""
+      ).toUpperCase();
+    }
+
+    async function loadExistingAssessmentCodes(){
+      const token = localStorage.getItem("token");
+      const codes = new Set();
+
+      try {
+        const res = await fetch(`${API}/api/quizzes?_=${Date.now()}`, {
+          method: "GET",
+          cache: "no-store",
+          headers: token ? { "Authorization": `Bearer ${token}` } : {}
+        });
+        const data = await res.json().catch(() => []);
+        const quizzes = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.quizzes)
+            ? data.quizzes
+            : Array.isArray(data?.items)
+              ? data.items
+              : [];
+
+        quizzes.forEach(item => {
+          const code = readAssessmentCode(item);
+          if (code) codes.add(code);
+        });
+      } catch (err) {
+        console.warn("Could not load existing assessment codes.", err);
+      }
+
+      return codes;
+    }
+
+    function generateAssessmentCode(grade, paper, usedCodes){
+      const prefix = assessmentCodePrefix(grade, paper);
+      let highest = 0;
+      const pattern = new RegExp(`^${prefix.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}-(\\d{4,})$`, "i");
+
+      for (const existing of usedCodes || []) {
+        const match = String(existing || "").toUpperCase().match(pattern);
+        if (match) highest = Math.max(highest, Number(match[1]) || 0);
+      }
+
+      let next = highest + 1;
+      let code = `${prefix}-${String(next).padStart(4, "0")}`;
+      while (usedCodes?.has(code)) {
+        next += 1;
+        code = `${prefix}-${String(next).padStart(4, "0")}`;
+      }
+      usedCodes?.add(code);
+      return code;
+    }
+
+    function buildPayloadFromParsedAssessment(parsed, assessmentCode){
       const meta = parsed.meta || {};
       const grade = Number(meta.grade);
       const topic = toTitleCase(meta.topic || "");
@@ -2839,6 +2945,7 @@ function escapeHtml(str){
       const difficulty = normalizeDifficulty(meta.difficulty);
       const paper = normalizePaper(meta.paper);
       const contentType = normalizeContentType(meta.contentType);
+      const accessLevel = normalizeAccessLevel(meta.accessLevel);
       const availableFrom = meta.availableFrom || null;
       const availableUntil = meta.availableUntil || null;
       const publishMode = normalizePublishMode(meta.publishMode);
@@ -2888,6 +2995,10 @@ function escapeHtml(str){
       return {
         grade: contentType === "weeklyChallenge" ? null : grade,
         title,
+        assessmentCode,
+        quizCode: assessmentCode,
+        examCode: assessmentCode,
+        code: assessmentCode,
         topic,
         paper,
         contentType,
@@ -2900,6 +3011,10 @@ function escapeHtml(str){
         timeLimitMinutes,
         instructions,
         difficulty,
+        accessLevel,
+        accessLevelLabel: accessLevelLabel(accessLevel),
+        isPremium: accessLevel === "premium",
+        requiresPayment: accessLevel === "premium",
         questions,
         publishNow,
         publishAt: finalPublishAt,
@@ -3055,6 +3170,7 @@ function escapeHtml(str){
       const topic = toTitleCase(topicEl.value);
       const title = cleanSpaces(titleEl.value);
       const contentType = normalizeContentType(contentTypeEl.value);
+      const accessLevel = normalizeAccessLevel(accessLevelEl.value);
       const timeLimitMinutes = Number(timeLimitEl.value);
       const instructions = cleanSpaces(instructionsEl.value || "");
       const difficulty = normalizeDifficulty(difficultyEl.value);
@@ -3101,9 +3217,20 @@ function escapeHtml(str){
         publishAt = publishAtEl.value;
       }
 
+      const usedCodes = await loadExistingAssessmentCodes();
+      const assessmentCode = generateAssessmentCode(
+        contentType === "weeklyChallenge" ? null : grade,
+        paper,
+        usedCodes
+      );
+
       return {
         grade: contentType === "weeklyChallenge" ? null : grade,
         title,
+        assessmentCode,
+        quizCode: assessmentCode,
+        examCode: assessmentCode,
+        code: assessmentCode,
         topic,
         paper,
         contentType,
@@ -3116,6 +3243,10 @@ function escapeHtml(str){
         timeLimitMinutes,
         instructions,
         difficulty,
+        accessLevel,
+        accessLevelLabel: accessLevelLabel(accessLevel),
+        isPremium: accessLevel === "premium",
+        requiresPayment: accessLevel === "premium",
         questions,
         publishNow,
         publishAt,
@@ -3205,7 +3336,7 @@ function escapeHtml(str){
 
         if (res.ok) {
           localStorage.setItem("practiceOnlineQuizChangedAt", String(Date.now()));
-          setMsg("Assessment saved as draft. No learner email sent.", "ok");
+          setMsg(`Assessment ${payload.assessmentCode} saved as draft. No learner email sent.`, "ok");
           resetFormAfterSave();
         } else {
           setMsg("Error: " + (data.message || "Could not save assessment"), "error");
@@ -3258,15 +3389,15 @@ function escapeHtml(str){
           localStorage.setItem("practiceOnlineQuizChangedAt", String(Date.now()));
           if (mode === "now") {
             if (payload.sendPublishEmail) {
-              setMsg("Assessment published. Learner emails were triggered.", "ok");
+              setMsg(`Assessment ${payload.assessmentCode} published. Learner emails were triggered.`, "ok");
             } else {
-              setMsg("Assessment published without sending learner emails.", "ok");
+              setMsg(`Assessment ${payload.assessmentCode} published without sending learner emails.`, "ok");
             }
           } else {
             if (payload.sendPublishEmail) {
-              setMsg("Assessment saved and scheduled for publishing. Learner emails will be sent on publish.", "ok");
+              setMsg(`Assessment ${payload.assessmentCode} saved and scheduled for publishing. Learner emails will be sent on publish.`, "ok");
             } else {
-              setMsg("Assessment saved and scheduled for publishing without learner emails.", "ok");
+              setMsg(`Assessment ${payload.assessmentCode} saved and scheduled for publishing without learner emails.`, "ok");
             }
           }
           resetFormAfterSave();
