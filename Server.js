@@ -309,6 +309,38 @@ function normalizePaper(v) {
   if (p === "paper1" || p === "paper2") return p;
   return "paper1";
 }
+function normalizeQuizAccessLevel(value) {
+  return String(value || "").toLowerCase().trim() === "premium"
+    ? "premium"
+    : "standard";
+}
+
+async function generateAssessmentCode(grade, paper) {
+  const gradePart = grade ? String(grade) : "ALL";
+  const paperPart = normalizePaper(paper) === "paper2" ? "P2" : "P1";
+  const prefix = `MAT${gradePart}-${paperPart}`;
+
+  const latestQuiz = await Quiz.findOne({
+    assessmentCode: { $regex: `^${prefix}-` },
+  })
+    .sort({ assessmentCode: -1 })
+    .select("assessmentCode")
+    .lean();
+
+  let nextNumber = 1;
+
+  if (latestQuiz?.assessmentCode) {
+    const currentNumber = Number(
+      latestQuiz.assessmentCode.split("-").pop()
+    );
+
+    if (Number.isInteger(currentNumber)) {
+      nextNumber = currentNumber + 1;
+    }
+  }
+
+  return `${prefix}-${String(nextNumber).padStart(4, "0")}`;
+}
 
 function paperLabel(p) {
   const pp = normalizePaper(p);
@@ -2475,6 +2507,9 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
   contentType,
   audience,
   isForAllLearners,
+  accessLevel,
+  accessFee,
+      
   paper,
   timeLimitMinutes,
   instructions,
@@ -2611,44 +2646,67 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
       finalPublishAt = publishAtRaw;
     }
 
-    const quiz = await Quiz.create({
-      grade: g,
-      title: quizTitle,
-      topic: quizTopic,
-      paper: quizPaper,
-      
-      contentType: contentType || "quiz",
-      audience: audience || "grade",
-      isForAllLearners: !!isForAllLearners,
-      
-      contentType: contentType || "quiz",
-      audience: audience || "grade",
-      difficulty: quizDifficulty,
-      isForAllLearners: !!isForAllLearners,
-      timeLimitMinutes: Number(timeLimitMinutes) || 10,
-      questions,
-      instructions: quizInstructions,
-      isFrozen: false,
-      frozenAt: null,
-      availableFrom: availableFromRaw || null,
-      availableUntil: availableUntilRaw || null,
-      isPublished,
-      publishedAt,
-      publishAt: finalPublishAt,
-      publishedBy: isPublished ? req.user.userId : null,
-      sendPublishEmail: !!sendPublishEmail,
-    });
+const finalAccessLevel = normalizeQuizAccessLevel(accessLevel);
 
-    res.status(201).json({
-      message: Boolean(publishNow)
-        ? "Assessment published."
-        : finalPublishAt
-        ? "Assessment scheduled for publishing."
-        : "Assessment saved as draft.",
-      quizId: quiz._id,
-      isPublished: quiz.isPublished,
-      publishAt: quiz.publishAt,
-    });
+const assessmentCode = await generateAssessmentCode(
+  g,
+  quizPaper
+);
+
+const quiz = await Quiz.create({
+  assessmentCode,
+
+  grade: g,
+  title: quizTitle,
+  topic: quizTopic,
+  paper: quizPaper,
+
+  contentType: contentType || "quiz",
+  audience: audience || "grade",
+  isForAllLearners: !!isForAllLearners,
+
+  accessLevel: finalAccessLevel,
+  isPremium: finalAccessLevel === "premium",
+  requiresPayment: finalAccessLevel === "premium",
+
+  accessFee:
+    finalAccessLevel === "premium"
+      ? Math.max(0, Number(accessFee) || 0)
+      : 0,
+
+  difficulty: quizDifficulty,
+  timeLimitMinutes: Number(timeLimitMinutes) || 10,
+
+  questions,
+  instructions: quizInstructions,
+
+  isFrozen: false,
+  frozenAt: null,
+
+  availableFrom: availableFromRaw || null,
+  availableUntil: availableUntilRaw || null,
+
+  isPublished,
+  publishedAt,
+  publishAt: finalPublishAt,
+
+  publishedBy: isPublished ? req.user.userId : null,
+  sendPublishEmail: !!sendPublishEmail,
+});
+
+res.status(201).json({
+  message: Boolean(publishNow)
+    ? "Assessment published."
+    : finalPublishAt
+    ? "Assessment scheduled for publishing."
+    : "Assessment saved as draft.",
+
+  quizId: quiz._id,
+  assessmentCode: quiz.assessmentCode,
+  accessLevel: quiz.accessLevel,
+  isPublished: quiz.isPublished,
+  publishAt: quiz.publishAt,
+});
 
     if (Boolean(publishNow) && !!sendPublishEmail) {
       setImmediate(async () => {
@@ -2688,6 +2746,8 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
       "publishedAt",
       "publishAt",
       "sendPublishEmail",
+      "accessLevel",
+      
     ];
 
     for (const key of allowed) {
