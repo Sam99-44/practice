@@ -636,6 +636,15 @@ input,select{
 .assessment-btn.locked-btn{min-width:112px;background:var(--nav);}
 .assessment-btn.locked-btn:hover{background:#130f36;}
 .assessment-btn:disabled{opacity:.65;cursor:not-allowed;}
+.achievement-row{display:flex;align-items:center;gap:8px;min-height:24px;margin-top:2px;}
+.achievement-badge{display:inline-flex;align-items:center;gap:6px;min-height:26px;padding:5px 8px;border-radius:3px;font-size:10px;font-weight:800;border:1px solid transparent;}
+.achievement-badge.excellent{background:#fff8dc;color:#725c12;border-color:#e6cf7a;}
+.achievement-badge.very-good{background:#eff6ff;color:#0b5d84;border-color:#bfdbfe;}
+.achievement-badge.good{background:#ecfdf5;color:#166534;border-color:#bbf7d0;}
+.result-summary{display:grid;grid-template-columns:1fr;gap:4px;padding:9px 10px;border:1px solid #e5e7eb;border-radius:4px;background:#f8fafc;color:#334155;font-size:10px;line-height:1.45;}
+.result-summary strong{color:#111827;}
+.question-count{margin-top:-4px;font-size:10px;color:#64748b;font-weight:700;}
+.not-attempted{padding:9px 10px;border:1px solid #e5e7eb;border-radius:4px;background:#f8fafc;color:#64748b;font-size:10px;font-weight:700;}
 @media(max-width:640px){.assessment-grid{grid-template-columns:1fr}.assessment-card{min-height:0}}
 
 @media (max-width:900px){
@@ -839,7 +848,7 @@ let filterTimer = null;
 let lastRenderedGroups = [];
 let manualExpand = false;
 
-const QUIZ_CACHE_KEY = "learner_quizzes_v7_professional_cache";
+const QUIZ_CACHE_KEY = "learner_quizzes_v8_achievement_cards_cache";
 const QUIZ_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
 
 if(logoutBtn){
@@ -916,6 +925,47 @@ function getState(id){
     state: percent >= 50 ? "pass" : "fail",
     percent
   };
+}
+
+function getQuestionCount(quiz){
+  const questions = Array.isArray(quiz?.questions) ? quiz.questions : [];
+  return questions.filter(q => String(q?.type || "mcq").toLowerCase() !== "note").length;
+}
+
+function getBestScore(result){
+  if(!result) return 0;
+  const direct = Number(result.percent);
+  if(Number.isFinite(direct) && direct >= 0) return Math.round(direct);
+  const score = Number(result.score || 0);
+  const total = Number(result.total || 0);
+  return total > 0 ? Math.round((score / total) * 100) : 0;
+}
+
+function formatLastAttempt(result){
+  const value = result?.attemptedAt || result?.submittedAt || result?.completedAt || result?.updatedAt || result?.createdAt;
+  if(!value) return "Recently";
+
+  const date = new Date(value);
+  if(Number.isNaN(date.getTime())) return "Recently";
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const attempted = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const days = Math.floor((today.getTime() - attempted.getTime()) / 86400000);
+
+  if(days <= 0) return "Today";
+  if(days === 1) return "Yesterday";
+  if(days < 7) return `${days} days ago`;
+
+  return date.toLocaleDateString("en-ZA", { day:"2-digit", month:"short", year:"numeric" });
+}
+
+function getAchievement(percent){
+  const score = Number(percent || 0);
+  if(score >= 90) return { label:"Excellent", icon:"🥇", className:"excellent" };
+  if(score >= 80) return { label:"Very Good", icon:"🥈", className:"very-good" };
+  if(score >= 70) return { label:"Good", icon:"🥉", className:"good" };
+  return null;
 }
 
 function getQuizRating(id){
@@ -1121,8 +1171,6 @@ function getTopicStats(topicQuizzes){
 
 function buildTopicCard(topic, topicQuizzes){
   const stats = getTopicStats(topicQuizzes);
-  const standardCount = topicQuizzes.filter(q => q._accessLevel === "standard").length;
-  const premiumCount = topicQuizzes.filter(q => q._accessLevel === "premium").length;
 
   return `
     <div class="topic-card">
@@ -1137,13 +1185,19 @@ function buildTopicCard(topic, topicQuizzes){
       </div>
 
       <div class="progressWrap">
-        <div class="progressLabels"><span>Topic Progress</span><span>${stats.progress}%</span></div>
-        <div class="progressTrack"><div class="progressBar" style="width:${stats.progress}%"></div></div>
+        <div class="progressLabels">
+          <span>Topic Progress</span>
+          <span>${stats.progress}%</span>
+        </div>
+        <div class="progressTrack">
+          <div class="progressBar" style="width:${stats.progress}%"></div>
+        </div>
       </div>
 
       <div class="assessment-grid">
         ${topicQuizzes.map((q, i) => {
           const state = getState(q._id);
+          const result = resultsMap[q._id] || null;
           const ratingInfo = getQuizRating(q._id);
           const hasRatings = Number(ratingInfo.ratingsCount || 0) > 0;
           const accessLevel = q._accessLevel || "standard";
@@ -1152,7 +1206,10 @@ function buildTopicCard(topic, topicQuizzes){
           const code = q._assessmentCode || `QUIZ-${i + 1}`;
           const paper = q._paperLower === "paper2" ? "Paper 2" : "Paper 1";
           const difficulty = q.difficulty ? String(q.difficulty).charAt(0).toUpperCase() + String(q.difficulty).slice(1) : "Moderate";
-          const completion = state.type === "done" ? Number(state.percent || 0) : 0;
+          const questionCount = getQuestionCount(q);
+          const bestScore = getBestScore(result);
+          const achievement = getAchievement(bestScore);
+          const lastAttempt = formatLastAttempt(result);
 
           return `
             <article class="assessment-card ${isLocked ? "locked" : ""}">
@@ -1162,29 +1219,42 @@ function buildTopicCard(topic, topicQuizzes){
                   <img src="${isPremium ? "https://res.cloudinary.com/dopoxadlr/image/upload/v1783891654/padlock-outlined_ntfowd.svg" : "https://res.cloudinary.com/dopoxadlr/image/upload/v1783891658/padlock-unlocked-outlined_ueczyh.svg"}" alt="${isPremium ? "Locked" : "Unlocked"}">
                 </span>
               </div>
-              <h3 class="assessment-title"><span class="assessment-title-label">Difficulty Level</span>${escapeHtml(difficulty)}</h3>
+
+              <div class="question-count">${questionCount} ${questionCount === 1 ? "Question" : "Questions"}</div>
+
+              <h3 class="assessment-title">Difficulty: ${escapeHtml(difficulty)}</h3>
+
               <div class="assessment-meta">
                 <span class="meta-chip">${escapeHtml(paper)}</span>
-                <span class="meta-chip">${escapeHtml(String(q.timeLimitMinutes || 10))} min</span>
+                <span class="meta-chip">${escapeHtml(String(q.timeLimitMinutes || 10))} Minutes</span>
               </div>
+
               <div class="assessment-rating">
-                <div class="quiz-rating-top ${hasRatings ? "" : "empty"}">${hasRatings ? renderTopRatingStars(ratingInfo) : ""}</div>
+                <div class="quiz-rating-top ${hasRatings ? "" : "empty"}">
+                  ${hasRatings ? renderTopRatingStars(ratingInfo) : ""}
+                </div>
                 <span>${hasRatings ? `${Number(ratingInfo.averageRating || 0).toFixed(1)} (${Number(ratingInfo.ratingsCount || 0)})` : "No ratings yet"}</span>
               </div>
+
               ${isLocked ? `
                 <div class="lock-note">This assessment is locked. Subscribe to unlock access.</div>
-              ` : `
-                <div class="assessment-progress">
-                  <div class="assessment-progress-row"><span>${state.type === "done" ? "Completed" : "Not started"}</span><span>${completion}%</span></div>
-                  <div class="assessment-progress-track"><div class="assessment-progress-bar" style="width:${completion}%"></div></div>
+              ` : result ? `
+                ${achievement ? `<div class="achievement-row"><span class="achievement-badge ${achievement.className}"><span>${achievement.icon}</span><span>${achievement.label}</span></span></div>` : ""}
+                <div class="result-summary">
+                  <div><strong>Best Score:</strong> ${bestScore}%</div>
+                  <div><strong>Last Attempt:</strong> ${escapeHtml(lastAttempt)}</div>
                 </div>
+              ` : `
+                <div class="not-attempted">Not Attempted</div>
               `}
+
               <div class="assessment-actions">
-                ${isLocked
-                  ? `<button class="assessment-btn locked-btn" type="button" data-action="unlock" data-quiz-id="${encodeURIComponent(q._id || "")}">Subscribe to Unlock</button>`
-                  : state.type === "done"
-                    ? `<button class="assessment-btn retake" type="button" data-action="open" data-quiz-id="${encodeURIComponent(q._id || "")}">Open Again</button>`
-                    : `<button class="assessment-btn start" type="button" data-action="open" data-quiz-id="${encodeURIComponent(q._id || "")}">Start</button>`
+                ${
+                  isLocked
+                    ? `<button class="assessment-btn locked-btn" type="button" data-action="unlock" data-quiz-id="${encodeURIComponent(q._id || "")}">Subscribe to Unlock</button>`
+                    : state.type === "done"
+                      ? `<button class="assessment-btn retake" type="button" data-action="open" data-quiz-id="${encodeURIComponent(q._id || "")}">Open Again</button>`
+                      : `<button class="assessment-btn start" type="button" data-action="open" data-quiz-id="${encodeURIComponent(q._id || "")}">Start</button>`
                 }
               </div>
             </article>
