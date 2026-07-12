@@ -19,6 +19,9 @@
   --hard:#ef4444;
   --track:#e9eef5;
   --bar:#1b1648;
+  --gold:#c9a227;
+  --gold-dark:#b38e1f;
+  --gold-soft:#fff8dc;
 }
 
 *{box-sizing:border-box}
@@ -242,7 +245,7 @@ h1{
 .controls{
   padding:14px 18px;
   display:grid;
-  grid-template-columns:1fr 160px 140px 150px;
+  grid-template-columns:minmax(220px,1fr) 160px 140px 150px 150px;
   gap:10px;
 }
 .searchWrap{position:relative}
@@ -598,6 +601,43 @@ input,select{
   font-family:Arial, Helvetica, sans-serif;
 }
 
+
+/* ===== PROFESSIONAL ASSESSMENT CARDS ===== */
+.topic-card{min-height:0;padding:16px;background:#fff;border:1px solid #dfe4ec;border-radius:14px;}
+.topic-summary{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;}
+.topic-title{font-size:16px;font-weight:800;color:var(--nav);}
+.topic-stats{flex-direction:row;flex-wrap:wrap;gap:8px;font-size:11px;color:#475569;}
+.topic-stat-chip{border:1px solid #e2e8f0;background:#f8fafc;padding:5px 8px;border-radius:4px;}
+.assessment-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:16px;}
+.assessment-card{border:1px solid #dfe4ec;background:#fff;border-radius:10px;padding:14px;min-height:210px;display:flex;flex-direction:column;gap:10px;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;}
+.assessment-card:hover{transform:translateY(-2px);border-color:#c7ced9;box-shadow:0 8px 22px rgba(15,23,42,.07);}
+.assessment-card.locked{background:#fcfcfd;}
+.assessment-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.assessment-code{display:inline-flex;align-items:center;justify-content:center;min-height:26px;padding:5px 8px;border-radius:3px;background:var(--gold);color:#fff;font-size:10px;font-weight:800;letter-spacing:.04em;white-space:nowrap;}
+.access-lock{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 28px;}
+.access-lock img{width:22px;height:22px;display:block;object-fit:contain;}
+.assessment-title{margin:0;font-size:14px;line-height:1.4;font-weight:800;color:#0f172a;}
+.assessment-title-label{display:block;margin-bottom:3px;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.04em;}
+.assessment-meta{display:flex;flex-wrap:wrap;gap:6px;}
+.meta-chip{padding:4px 7px;border:1px solid #e2e8f0;background:#f8fafc;border-radius:3px;font-size:10px;color:#475569;}
+.assessment-rating{min-height:18px;display:flex;align-items:center;gap:6px;color:#64748b;font-size:10px;}
+.assessment-rating .quiz-rating-top{justify-content:flex-start;margin:0;min-height:0;height:auto;}
+.assessment-progress{margin-top:auto;}
+.assessment-progress-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;color:#64748b;font-size:10px;}
+.assessment-progress-track{height:6px;overflow:hidden;background:#edf1f6;border-radius:3px;}
+.assessment-progress-bar{height:100%;background:var(--gold);border-radius:3px;}
+.lock-note{margin-top:auto;padding:8px;border:1px dashed #d7bd63;background:var(--gold-soft);color:#725c12;border-radius:4px;font-size:10px;line-height:1.45;}
+.assessment-actions{display:flex;justify-content:flex-end;margin-top:2px;}
+.assessment-btn{min-width:92px;height:32px;padding:0 12px;border:none;border-radius:3px;color:#fff;font-size:10px;font-weight:800;cursor:pointer;}
+.assessment-btn.start{background:#16a34a;}
+.assessment-btn.start:hover{background:#15803d;}
+.assessment-btn.retake{background:#0b5d84;}
+.assessment-btn.retake:hover{background:#084c6b;}
+.assessment-btn.locked-btn{min-width:112px;background:var(--nav);}
+.assessment-btn.locked-btn:hover{background:#130f36;}
+.assessment-btn:disabled{opacity:.65;cursor:not-allowed;}
+@media(max-width:640px){.assessment-grid{grid-template-columns:1fr}.assessment-card{min-height:0}}
+
 @media (max-width:900px){
   .controls{grid-template-columns:1fr 1fr}
 }
@@ -707,7 +747,7 @@ if(!localStorage.getItem("token")){
           <circle cx="11" cy="11" r="7"></circle>
           <path d="M20 20l-3.5-3.5"></path>
         </svg>
-        <input id="search" placeholder="Search topic or assessment">
+        <input id="search" placeholder="Search topic, title or assessment code">
       </div>
 
       <select id="topicFilter">
@@ -725,6 +765,12 @@ if(!localStorage.getItem("token")){
         <option value="today">Today</option>
         <option value="week">This Week</option>
         <option value="month">This Month</option>
+      </select>
+
+      <select id="accessFilter">
+        <option value="all">All Access</option>
+        <option value="standard">Unlocked</option>
+        <option value="premium">Locked</option>
       </select>
     </div>
 
@@ -780,6 +826,7 @@ const searchEl = document.getElementById("search");
 const topicFilter = document.getElementById("topicFilter");
 const paperFilter = document.getElementById("paperFilter");
 const periodFilter = document.getElementById("periodFilter");
+const accessFilter = document.getElementById("accessFilter");
 const quizListEl = document.getElementById("quizList");
 
 let quizzes = [];
@@ -792,7 +839,7 @@ let filterTimer = null;
 let lastRenderedGroups = [];
 let manualExpand = false;
 
-const QUIZ_CACHE_KEY = "learner_quizzes_v6_cache";
+const QUIZ_CACHE_KEY = "learner_quizzes_v7_professional_cache";
 const QUIZ_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
 
 if(logoutBtn){
@@ -947,6 +994,10 @@ function preprocessQuizzes(rawQuizzes){
       _topicLower: String(q.topic || "").toLowerCase(),
       _paperLower: String(q.paper || "").toLowerCase(),
       _difficultyLower: String(q.difficulty || "").toLowerCase(),
+      _assessmentCode: String(q.assessmentCode || q.quizCode || q.examCode || q.code || "").trim().toUpperCase(),
+      _assessmentCodeLower: String(q.assessmentCode || q.quizCode || q.examCode || q.code || "").trim().toLowerCase(),
+      _accessLevel: String(q.accessLevel || (q.isPremium ? "premium" : "standard")).toLowerCase() === "premium" ? "premium" : "standard",
+      _locked: Boolean(q.locked),
       _timeValue: createdTime || updatedTime || 0
     };
   });
@@ -1022,17 +1073,19 @@ function apply(){
   const selectedTopic = topicFilter.value;
   const selectedPaper = paperFilter.value;
   const selectedPeriod = periodFilter.value;
+  const selectedAccess = accessFilter.value;
   const selectedDiff = diff;
 
   const filteredGroups = groupedByTopic
     .map(group => {
       const filteredQuizzes = group.quizzes.filter(x => {
-        const matchesSearch = !q || x._titleLower.includes(q) || x._topicLower.includes(q);
+        const matchesSearch = !q || x._titleLower.includes(q) || x._topicLower.includes(q) || x._assessmentCodeLower.includes(q);
         const matchesTopic = selectedTopic === "all" || x._topic === selectedTopic;
         const matchesPaper = selectedPaper === "all" || x._paperLower === selectedPaper;
         const matchesDiff = selectedDiff === "all" || x._difficultyLower === selectedDiff;
+        const matchesAccess = selectedAccess === "all" || x._accessLevel === selectedAccess;
         const matchesPeriod = isWithinPeriod(x._timeValue, selectedPeriod);
-        return matchesSearch && matchesTopic && matchesPaper && matchesDiff && matchesPeriod;
+        return matchesSearch && matchesTopic && matchesPaper && matchesDiff && matchesAccess && matchesPeriod;
       });
 
       if(!filteredQuizzes.length) return null;
@@ -1068,50 +1121,74 @@ function getTopicStats(topicQuizzes){
 
 function buildTopicCard(topic, topicQuizzes){
   const stats = getTopicStats(topicQuizzes);
+  const standardCount = topicQuizzes.filter(q => q._accessLevel === "standard").length;
+  const premiumCount = topicQuizzes.filter(q => q._accessLevel === "premium").length;
 
   return `
     <div class="topic-card">
-      <div class="topic-top">
-        <div class="topic-title">${escapeHtml(topic)}</div>
-        <div class="topic-stats">
-          <span>Average: ${stats.avg}%</span>
-          <span>Completed: ${stats.completed}/${stats.total}</span>
+      <div class="topic-summary">
+        <div class="topic-top">
+          <div class="topic-title">${escapeHtml(topic)}</div>
+          <div class="topic-stats">
+            <span class="topic-stat-chip">Average: ${stats.avg}%</span>
+            <span class="topic-stat-chip">Completed: ${stats.completed}/${stats.total}</span>
+          </div>
         </div>
       </div>
 
       <div class="progressWrap">
-        <div class="progressLabels">
-          <span>Progress</span>
-          <span>${stats.progress}%</span>
-        </div>
-        <div class="progressTrack">
-          <div class="progressBar" style="width:${stats.progress}%"></div>
-        </div>
+        <div class="progressLabels"><span>Topic Progress</span><span>${stats.progress}%</span></div>
+        <div class="progressTrack"><div class="progressBar" style="width:${stats.progress}%"></div></div>
       </div>
 
-      <div class="quiz-squares">
+      <div class="assessment-grid">
         ${topicQuizzes.map((q, i) => {
-          const s = getState(q._id);
+          const state = getState(q._id);
           const ratingInfo = getQuizRating(q._id);
           const hasRatings = Number(ratingInfo.ratingsCount || 0) > 0;
+          const accessLevel = q._accessLevel || "standard";
+          const isPremium = accessLevel === "premium";
+          const isLocked = Boolean(q._locked);
+          const code = q._assessmentCode || `QUIZ-${i + 1}`;
+          const paper = q._paperLower === "paper2" ? "Paper 2" : "Paper 1";
+          const difficulty = q.difficulty ? String(q.difficulty).charAt(0).toUpperCase() + String(q.difficulty).slice(1) : "Moderate";
+          const completion = state.type === "done" ? Number(state.percent || 0) : 0;
 
           return `
-          <div class="quiz-square ${s.state || ""}" data-quiz-id="${encodeURIComponent(q._id || "")}">
-            <div class="quiz-rating-top ${hasRatings ? "" : "empty"}">
-              ${hasRatings ? renderTopRatingStars(ratingInfo) : ""}
-            </div>
-
-            <div class="quiz-icon-wrap">
-              <div class="quiz-fill"></div>
-              <div class="quiz-square-base" aria-hidden="true"></div>
-              ${
-                s.type === "new"
-                  ? `<div class="quiz-q">?</div>`
-                  : `<div class="quiz-mark">${escapeHtml(s.score)}</div>`
-              }
-            </div>
-            <div class="quiz-number">${i + 1}</div>
-          </div>`;
+            <article class="assessment-card ${isLocked ? "locked" : ""}">
+              <div class="assessment-top">
+                <span class="assessment-code">${escapeHtml(code)}</span>
+                <span class="access-lock" title="${isPremium ? "Locked assessment" : "Unlocked assessment"}" aria-label="${isPremium ? "Locked assessment" : "Unlocked assessment"}">
+                  <img src="${isPremium ? "https://res.cloudinary.com/dopoxadlr/image/upload/v1783891654/padlock-outlined_ntfowd.svg" : "https://res.cloudinary.com/dopoxadlr/image/upload/v1783891658/padlock-unlocked-outlined_ueczyh.svg"}" alt="${isPremium ? "Locked" : "Unlocked"}">
+                </span>
+              </div>
+              <h3 class="assessment-title"><span class="assessment-title-label">Difficulty Level</span>${escapeHtml(difficulty)}</h3>
+              <div class="assessment-meta">
+                <span class="meta-chip">${escapeHtml(paper)}</span>
+                <span class="meta-chip">${escapeHtml(String(q.timeLimitMinutes || 10))} min</span>
+              </div>
+              <div class="assessment-rating">
+                <div class="quiz-rating-top ${hasRatings ? "" : "empty"}">${hasRatings ? renderTopRatingStars(ratingInfo) : ""}</div>
+                <span>${hasRatings ? `${Number(ratingInfo.averageRating || 0).toFixed(1)} (${Number(ratingInfo.ratingsCount || 0)})` : "No ratings yet"}</span>
+              </div>
+              ${isLocked ? `
+                <div class="lock-note">This assessment is locked. Subscribe to unlock access.</div>
+              ` : `
+                <div class="assessment-progress">
+                  <div class="assessment-progress-row"><span>${state.type === "done" ? "Completed" : "Not started"}</span><span>${completion}%</span></div>
+                  <div class="assessment-progress-track"><div class="assessment-progress-bar" style="width:${completion}%"></div></div>
+                </div>
+              `}
+              <div class="assessment-actions">
+                ${isLocked
+                  ? `<button class="assessment-btn locked-btn" type="button" data-action="unlock" data-quiz-id="${encodeURIComponent(q._id || "")}">Subscribe to Unlock</button>`
+                  : state.type === "done"
+                    ? `<button class="assessment-btn retake" type="button" data-action="open" data-quiz-id="${encodeURIComponent(q._id || "")}">Open Again</button>`
+                    : `<button class="assessment-btn start" type="button" data-action="open" data-quiz-id="${encodeURIComponent(q._id || "")}">Start</button>`
+                }
+              </div>
+            </article>
+          `;
         }).join("")}
       </div>
     </div>`;
@@ -1237,19 +1314,25 @@ searchEl.oninput = () => {
 topicFilter.onchange = apply;
 paperFilter.onchange = apply;
 periodFilter.onchange = apply;
+accessFilter.onchange = apply;
 
 quizListEl.addEventListener("click", function(e){
   const showMoreBtn = e.target.closest("#showMoreTopicsBtn");
-  if(showMoreBtn){
-    expandRemainingTopicsNow();
+  if(showMoreBtn){ expandRemainingTopicsNow(); return; }
+
+  const actionBtn = e.target.closest("[data-action][data-quiz-id]");
+  if(!actionBtn) return;
+
+  const quizId = actionBtn.dataset.quizId;
+  const action = actionBtn.dataset.action;
+  if(!quizId) return;
+
+  if(action === "unlock"){
+    location.href = `enrollment.html?reason=premium-quiz&quizId=${encodeURIComponent(quizId)}`;
     return;
   }
 
-  const square = e.target.closest(".quiz-square[data-quiz-id]");
-  if(!square) return;
-  const quizId = square.dataset.quizId;
-  if(!quizId) return;
-  location.href = `attempt.html?quizId=${quizId}`;
+  location.href = `attempt.html?quizId=${encodeURIComponent(quizId)}`;
 });
 
 async function loadPage(){
