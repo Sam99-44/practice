@@ -1,4 +1,4 @@
-// models/Quiz.js
+// models/Quiz.js.
 
 import mongoose from "mongoose";
 
