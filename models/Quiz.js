@@ -185,18 +185,19 @@ const QuizSchema = new mongoose.Schema(
     /*
      * Automatically generated assessment code.
      *
-     * Example:
+     * Examples:
      * MAT11-P1-0001
      * MAT11-P1-0002
      * MAT12-P2-0001
+     *
+     * Empty assessment codes are stored as undefined so that old quizzes
+     * do not conflict with the unique assessment-code index.
      */
     assessmentCode: {
       type: String,
-      default: "",
+      default: undefined,
       trim: true,
       uppercase: true,
-      unique: true,
-      sparse: true,
       index: true,
     },
 
@@ -380,11 +381,15 @@ const QuizSchema = new mongoose.Schema(
  * Normalise quiz values before validation.
  */
 QuizSchema.pre("validate", function (next) {
-  if (this.assessmentCode) {
-    this.assessmentCode = String(this.assessmentCode)
-      .trim()
-      .toUpperCase();
-  }
+  const code = String(this.assessmentCode || "")
+    .trim()
+    .toUpperCase();
+
+  /*
+   * Remove empty assessment codes completely.
+   * This prevents duplicate empty strings in MongoDB.
+   */
+  this.assessmentCode = code || undefined;
 
   if (this.contentType === "weeklyChallenge") {
     this.grade = null;
@@ -402,6 +407,7 @@ QuizSchema.pre("validate", function (next) {
   if (this.accessLevel === "premium") {
     this.isPremium = true;
     this.requiresPayment = true;
+    this.accessFee = Math.max(0, Number(this.accessFee) || 0);
   } else {
     this.accessLevel = "standard";
     this.isPremium = false;
@@ -451,6 +457,25 @@ QuizSchema.pre("validate", function (next) {
 
   next();
 });
+
+/*
+ * Only real, non-empty assessment codes must be unique.
+ *
+ * Old quizzes without a code are ignored by this index.
+ */
+QuizSchema.index(
+  { assessmentCode: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      assessmentCode: {
+        $exists: true,
+        $type: "string",
+        $ne: "",
+      },
+    },
+  }
+);
 
 /*
  * Useful indexes for displaying quizzes on learner pages.
