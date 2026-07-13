@@ -2435,7 +2435,12 @@ app.get("/api/admin/leaderboard", authRequired, adminOnly, async (req, res) => {
 app.get("/api/quizzes", authRequired, async (req, res) => {
   try {
     const u = await User.findById(req.user.userId).select("role grade");
-    if (!u) return res.status(401).json({ message: "User not found" });
+
+    if (!u) {
+      return res.status(401).json({
+        message: "User not found"
+      });
+    }
 
     const wantsAll = String(req.query.all || "") === "1";
 
@@ -2448,23 +2453,33 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
         filter.isPublished = true;
       }
     } else {
-      if (!u.grade) return res.json([]);
+      if (!u.grade) {
+        return res.json([]);
+      }
+
       const now = new Date();
+
       filter.grade = u.grade;
       filter.isPublished = true;
-      filter.$or = [{ publishAt: null }, { publishAt: { $lte: now } }];
+      filter.$or = [
+        { publishAt: null },
+        { publishAt: { $lte: now } }
+      ];
     }
 
     const quizzes = await Quiz.find(filter)
       .sort({ createdAt: -1 })
       .select(
-        "assessmentCode grade title topic contentType audience isForAllLearners paper difficulty questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
+        "assessmentCode grade title topic contentType audience isForAllLearners accessLevel isPremium requiresPayment accessFee paper difficulty questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
       );
 
     return res.json(quizzes);
   } catch (e) {
     console.error("GET /api/quizzes error:", e.message);
-    return res.status(500).json({ message: "Server error" });
+
+    return res.status(500).json({
+      message: "Server error"
+    });
   }
 });
 
