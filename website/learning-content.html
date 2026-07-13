@@ -15,6 +15,11 @@
   --text:#0f172a;
   --muted:#475569;
   --red:#e11d2e;
+  --gold:#c9a227;
+  --gold-dark:#b38e1f;
+  --gold-soft:#fff8dc;
+  --track:#e9eef5;
+  --bar:#1b1648;
 }
 
 *{box-sizing:border-box}
@@ -22,7 +27,7 @@
 html,body{
   margin:0;
   padding:0;
-  font-family:"Times New Roman", Times, serif;
+  font-family:Arial, Helvetica, sans-serif;
   background:var(--bg);
   color:var(--text);
 }
@@ -373,6 +378,7 @@ button{font:inherit}
 }
 
 
+
 .content-list-loader{
   color:#334155;
   font-size:14px;
@@ -381,37 +387,247 @@ button{font:inherit}
 
 .learning-list{
   display:grid;
-  gap:18px;
-  max-width:760px;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:14px;
+  max-width:none;
 }
 
-.learning-item{
-  padding:0;
+.assessment-card{
+  border:1px solid #dfe4ec;
   background:#fff;
+  border-radius:10px;
+  padding:14px;
+  min-height:230px;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;
 }
 
-.learning-item h3{
-  margin:0 0 6px;
-  font-size:18px;
-  color:#000;
+.assessment-card:hover{
+  transform:translateY(-2px);
+  border-color:#c7ced9;
+  box-shadow:0 8px 22px rgba(15,23,42,.07);
 }
 
-.learning-item p{
-  margin:0 0 10px;
+.assessment-card.locked{
+  background:#fcfcfd;
+}
+
+.assessment-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+}
+
+.assessment-code{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:26px;
+  padding:5px 8px;
+  border-radius:3px;
+  background:var(--gold);
+  color:#fff;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.04em;
+  white-space:nowrap;
+}
+
+.access-lock{
+  width:28px;
+  height:28px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 28px;
+}
+
+.access-lock img{
+  width:22px;
+  height:22px;
+  display:block;
+  object-fit:contain;
+}
+
+.assessment-card.locked .access-lock img{
+  filter:brightness(0) saturate(100%) invert(67%) sepia(96%) saturate(1800%) hue-rotate(3deg) brightness(101%) contrast(108%);
+}
+
+.assessment-title{
+  margin:0;
+  font-size:14px;
+  line-height:1.4;
+  font-weight:800;
+  color:#0f172a;
+}
+
+.assessment-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.meta-chip{
+  padding:4px 7px;
+  border:1px solid #e2e8f0;
+  background:#f8fafc;
+  border-radius:3px;
+  font-size:10px;
+  color:#475569;
+}
+
+.assessment-description{
+  margin:0;
+  color:#475569;
+  font-size:11px;
+  line-height:1.5;
+}
+
+.assessment-rating{
+  min-height:18px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:#64748b;
+  font-size:10px;
+}
+
+.quiz-rating-top{
+  display:flex;
+  align-items:center;
+  gap:2px;
+  min-height:12px;
+}
+
+.quiz-rating-top img{
+  width:12px;
+  height:12px;
+  display:block;
+  flex-shrink:0;
+  opacity:1;
+}
+
+.lock-note{
+  padding:8px;
+  border:1px dashed #d7bd63;
+  background:var(--gold-soft);
+  color:#725c12;
+  border-radius:4px;
+  font-size:10px;
+  line-height:1.45;
+}
+
+.achievement-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:24px;
+  margin-top:2px;
+}
+
+.achievement-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-height:26px;
+  padding:5px 8px;
+  border-radius:3px;
+  font-size:10px;
+  font-weight:800;
+  border:1px solid transparent;
+}
+
+.achievement-badge.excellent{background:#fff8dc;color:#725c12;border-color:#e6cf7a;}
+.achievement-badge.very-good{background:#eff6ff;color:#0b5d84;border-color:#bfdbfe;}
+.achievement-badge.good{background:#ecfdf5;color:#166534;border-color:#bbf7d0;}
+
+.result-summary{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:4px;
+  padding:9px 10px;
+  border:1px solid #e5e7eb;
+  border-radius:4px;
+  background:#f8fafc;
   color:#334155;
+  font-size:10px;
+  line-height:1.45;
+}
+
+.result-summary strong{color:#111827;}
+
+.not-attempted{
+  padding:9px 10px;
+  border:1px solid #e5e7eb;
+  border-radius:4px;
+  background:#f8fafc;
+  color:#64748b;
+  font-size:10px;
+  font-weight:700;
+}
+
+.assessment-actions{
+  display:flex;
+  justify-content:flex-end;
+  align-items:flex-end;
+  margin-top:auto;
+  padding-top:8px;
+}
+
+.assessment-btn{
+  min-width:92px;
+  height:32px;
+  padding:0 12px;
+  border:none;
+  border-radius:3px;
+  color:#fff;
+  font-size:10px;
+  font-weight:800;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.assessment-btn.start{background:#16a34a;}
+.assessment-btn.start:hover{background:#15803d;}
+.assessment-btn.retake{background:#0b5d84;}
+.assessment-btn.retake:hover{background:#084c6b;}
+.assessment-btn.locked-btn{
+  min-width:112px;
+  background:var(--gold);
+  color:#fff;
+  border:1px solid var(--gold-dark);
+}
+.assessment-btn.locked-btn:hover{background:var(--gold-dark);}
+
+.empty-content{
+  color:#475569;
   font-size:14px;
   line-height:1.5;
 }
 
-.learning-meta{
-  margin:0 0 10px;
-  color:#64748b;
-  font-size:12px;
-  font-family:Arial, Helvetica, sans-serif;
+.simple-content{
+  max-width:760px;
 }
 
-.empty-content{
-  color:#475569;
+.simple-content h3{
+  margin:24px 0 6px;
+  font-size:18px;
+  color:#000;
+}
+
+.simple-content h3:first-child{
+  margin-top:0;
+}
+
+.simple-content p{
+  margin:0 0 12px;
+  color:#334155;
   font-size:14px;
   line-height:1.5;
 }
@@ -427,6 +643,10 @@ button{font:inherit}
   }
 
   .item-grid{
+    grid-template-columns:1fr;
+  }
+
+  .learning-list{
     grid-template-columns:1fr;
   }
 }
@@ -627,6 +847,8 @@ const logoutBtn = document.getElementById("logoutBtn");
 
 let learnerProfile = null;
 let allLearningContent = [];
+let resultsMap = {};
+let ratingsMap = {};
 
 logoutBtn.onclick = () => {
   localStorage.removeItem("token");
@@ -683,24 +905,92 @@ function getDescription(item){
   return item?.instructions || item?.description || item?.topic || "";
 }
 
-function formatMeta(item){
-  const pieces = [];
 
-  if(item?.topic) pieces.push(item.topic);
+function getQuestionCount(item){
+  const questions = Array.isArray(item?.questions) ? item.questions : [];
+  return questions.filter(q => String(q?.type || "mcq").toLowerCase() !== "note").length;
+}
 
-  if(item?.paper){
-    pieces.push(String(item.paper).replace("paper1","Paper 1").replace("paper2","Paper 2"));
-  }
+function getAssessmentCode(item){
+  return String(item?.assessmentCode || item?.quizCode || item?.examCode || item?.code || "").trim().toUpperCase();
+}
 
-  if(item?.difficulty){
-    pieces.push(String(item.difficulty).charAt(0).toUpperCase() + String(item.difficulty).slice(1));
-  }
+function getDifficulty(item){
+  const value = String(item?.difficulty || "moderate");
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
 
-  if(item?.timeLimitMinutes){
-    pieces.push(item.timeLimitMinutes + " min");
-  }
+function getPaper(item){
+  return String(item?.paper || "").toLowerCase() === "paper2" ? "Paper 2" : "Paper 1";
+}
 
-  return pieces.join(" • ");
+function getAccessLevel(item){
+  return String(item?.accessLevel || (item?.isPremium ? "premium" : "standard")).toLowerCase() === "premium"
+    ? "premium"
+    : "standard";
+}
+
+function isLocked(item){
+  return Boolean(item?.locked) || getAccessLevel(item) === "premium";
+}
+
+function getResult(item){
+  return resultsMap[getId(item)] || null;
+}
+
+function getBestScore(result){
+  if(!result) return 0;
+  const direct = Number(result.percent);
+  if(Number.isFinite(direct) && direct >= 0) return Math.round(direct);
+  const score = Number(result.score || 0);
+  const total = Number(result.total || 0);
+  return total > 0 ? Math.round((score / total) * 100) : 0;
+}
+
+function formatLastAttempt(result){
+  const value = result?.attemptedAt || result?.submittedAt || result?.completedAt || result?.updatedAt || result?.createdAt;
+  if(!value) return "Recently";
+
+  const date = new Date(value);
+  if(Number.isNaN(date.getTime())) return "Recently";
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const attempted = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const days = Math.floor((today.getTime() - attempted.getTime()) / 86400000);
+
+  if(days <= 0) return "Today";
+  if(days === 1) return "Yesterday";
+  if(days < 7) return `${days} days ago`;
+
+  return date.toLocaleDateString("en-ZA", {
+    day:"2-digit",
+    month:"short",
+    year:"numeric"
+  });
+}
+
+function getAchievement(percent){
+  const score = Number(percent || 0);
+  if(score >= 90) return { label:"Excellent", icon:"🥇", className:"excellent" };
+  if(score >= 80) return { label:"Very Good", icon:"🥈", className:"very-good" };
+  if(score >= 70) return { label:"Good", icon:"🥉", className:"good" };
+  return null;
+}
+
+function getQuizRating(id){
+  return ratingsMap[id] || { averageRating:0, ratingsCount:0 };
+}
+
+function renderTopRatingStars(ratingInfo){
+  const count = Number(ratingInfo?.ratingsCount || 0);
+  if(count <= 0) return "";
+
+  return `
+    <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1783957984/star_g4g5kh.svg" alt="star">
+    <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1783957984/star_g4g5kh.svg" alt="star">
+    <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1783957984/star_g4g5kh.svg" alt="star">
+  `;
 }
 
 function isPublished(item){
@@ -722,9 +1012,7 @@ function matchesLearner(item){
   const learnerGrade = Number(learnerProfile?.grade || 0);
   const itemGrade = Number(item?.grade || 0);
 
-  if(!itemGrade) return true;
-  if(!learnerGrade) return true;
-
+  if(!itemGrade || !learnerGrade) return true;
   return itemGrade === learnerGrade;
 }
 
@@ -741,8 +1029,7 @@ function filterContent(type){
 }
 
 function attemptUrl(item){
-  const id = getId(item);
-  return `attempt.html?quizId=${encodeURIComponent(id)}`;
+  return `attempt.html?quizId=${encodeURIComponent(getId(item))}`;
 }
 
 function openSpecificContent(item){
@@ -756,7 +1043,7 @@ function openSpecificContent(item){
   location.href = attemptUrl(item);
 }
 
-function renderList(containerId, items, emptyText, actionText){
+function renderCards(containerId, items, emptyText, startText){
   const el = document.getElementById(containerId);
   if(!el) return;
 
@@ -767,101 +1054,142 @@ function renderList(containerId, items, emptyText, actionText){
 
   el.innerHTML = `
     <div class="learning-list">
-      ${items.map(item => `
-        <div class="learning-item">
-          <h3>${esc(getTitle(item))}</h3>
-          ${formatMeta(item) ? `<div class="learning-meta">${esc(formatMeta(item))}</div>` : ""}
-          ${getDescription(item) ? `<p>${esc(getDescription(item))}</p>` : ""}
-          <button class="action-btn secondary open-content-btn" type="button" data-id="${esc(getId(item))}">
-            ${esc(actionText)}
-          </button>
-        </div>
-      `).join("")}
+      ${items.map(item => {
+        const id = getId(item);
+        const code = getAssessmentCode(item);
+        const difficulty = getDifficulty(item);
+        const paper = getPaper(item);
+        const questionCount = getQuestionCount(item);
+        const result = getResult(item);
+        const bestScore = getBestScore(result);
+        const achievement = getAchievement(bestScore);
+        const lastAttempt = formatLastAttempt(result);
+        const ratingInfo = getQuizRating(id);
+        const hasRatings = Number(ratingInfo.ratingsCount || 0) > 0;
+        const locked = isLocked(item);
+        const description = getDescription(item);
+
+        return `
+          <article class="assessment-card ${locked ? "locked" : ""}">
+            <div class="assessment-top">
+              ${code ? `<span class="assessment-code">${esc(code)}</span>` : `<span></span>`}
+              <span class="access-lock" title="${locked ? "Locked assessment" : "Unlocked assessment"}">
+                <img
+                  src="${locked
+                    ? "https://res.cloudinary.com/dopoxadlr/image/upload/v1783891654/padlock-outlined_ntfowd.svg"
+                    : "https://res.cloudinary.com/dopoxadlr/image/upload/v1783891658/padlock-unlocked-outlined_ueczyh.svg"}"
+                  alt="${locked ? "Locked" : "Unlocked"}"
+                >
+              </span>
+            </div>
+
+            <h3 class="assessment-title">${esc(difficulty)}</h3>
+
+            <div class="assessment-meta">
+              <span class="meta-chip">${esc(paper)}</span>
+              <span class="meta-chip">${questionCount} ${questionCount === 1 ? "Question" : "Questions"}</span>
+              <span class="meta-chip">${esc(String(item?.timeLimitMinutes || 10))} Minutes</span>
+            </div>
+
+            ${description ? `<p class="assessment-description">${esc(description)}</p>` : ""}
+
+            <div class="assessment-rating">
+              <div class="quiz-rating-top">
+                ${hasRatings ? renderTopRatingStars(ratingInfo) : ""}
+              </div>
+              <span>${hasRatings
+                ? `${Number(ratingInfo.averageRating || 0).toFixed(1)} (${Number(ratingInfo.ratingsCount || 0)})`
+                : "No ratings yet"}</span>
+            </div>
+
+            ${locked ? `
+              <div class="lock-note">This assessment is locked. Subscribe to unlock access.</div>
+            ` : result ? `
+              ${achievement ? `
+                <div class="achievement-row">
+                  <span class="achievement-badge ${achievement.className}">
+                    <span>${achievement.icon}</span>
+                    <span>${achievement.label}</span>
+                  </span>
+                </div>
+              ` : ""}
+              <div class="result-summary">
+                <div><strong>Best Score:</strong> ${bestScore}%</div>
+                <div><strong>Last Attempt:</strong> ${esc(lastAttempt)}</div>
+              </div>
+            ` : `
+              <div class="not-attempted">Not Attempted</div>
+            `}
+
+            <div class="assessment-actions">
+              ${locked
+                ? `<button class="assessment-btn locked-btn open-content-btn" type="button" data-id="${esc(id)}" data-locked="true">Subscribe to Unlock</button>`
+                : result
+                  ? `<button class="assessment-btn retake open-content-btn" type="button" data-id="${esc(id)}">Retake</button>`
+                  : `<button class="assessment-btn start open-content-btn" type="button" data-id="${esc(id)}">${esc(startText)}</button>`
+              }
+            </div>
+          </article>
+        `;
+      }).join("")}
     </div>
   `;
 
   el.querySelectorAll(".open-content-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const id = btn.dataset.id;
+      if(btn.dataset.locked === "true"){
+        location.href = `enrollment.html?reason=premium-quiz&quizId=${encodeURIComponent(id)}`;
+        return;
+      }
+
       const item = allLearningContent.find(x => String(getId(x)) === String(id));
       openSpecificContent(item);
     });
   });
 }
 
-function renderActionCard(containerId, items, emptyText, actionText){
-  const el = document.getElementById(containerId);
-  if(!el) return;
-
-  if(!items.length){
-    el.innerHTML = `<div class="empty-content">${esc(emptyText)}</div>`;
-    return;
-  }
-
-  const item = items[0];
-
-  el.innerHTML = `
-    <div class="item-card single-action-card">
-      <h3>${esc(getTitle(item))}</h3>
-      ${formatMeta(item) ? `<div class="learning-meta">${esc(formatMeta(item))}</div>` : ""}
-      ${getDescription(item) ? `<p>${esc(getDescription(item))}</p>` : ""}
-      <button class="action-btn secondary open-content-btn" type="button" data-id="${esc(getId(item))}">
-        ${esc(actionText)}
-      </button>
-    </div>
-  `;
-
-  el.querySelector(".open-content-btn").addEventListener("click", () => openSpecificContent(item));
-}
-
 function renderLearningContent(){
-  const quizItems = filterContent("quiz");
-  const activityItems = filterContent("activity");
-  const homeworkItems = filterContent("homework");
-  const assignmentItems = filterContent("assignment");
-  const gradeChallengeItems = filterContent("gradeChallenge");
-  const weeklyChallengeItems = filterContent("weeklyChallenge");
-
-  renderList(
+  renderCards(
     "activitiesList",
-    activityItems,
+    filterContent("activity"),
     "No activities are available right now.",
-    "Open Activity"
+    "Start Activity"
   );
 
-  renderList(
+  renderCards(
     "homeworkList",
-    homeworkItems,
+    filterContent("homework"),
     "No homework is available right now.",
-    "Open Homework"
+    "Start Homework"
   );
 
-  renderList(
+  renderCards(
     "assignmentsList",
-    assignmentItems,
+    filterContent("assignment"),
     "No assignments are available right now.",
-    "Open Assignment"
+    "Start Assignment"
   );
 
-  renderList(
+  renderCards(
     "quizzesList",
-    quizItems,
+    filterContent("quiz"),
     "No quizzes are available right now.",
     "Start Quiz"
   );
 
-  renderActionCard(
+  renderCards(
     "gradeChallengeList",
-    gradeChallengeItems,
+    filterContent("gradeChallenge"),
     "No grade challenge is available for your grade right now.",
     "Start Challenge"
   );
 
-  renderActionCard(
+  renderCards(
     "weeklyChallengeList",
-    weeklyChallengeItems,
+    filterContent("weeklyChallenge"),
     "No challenge of the week is available right now.",
-    "Open Challenge"
+    "Start Challenge"
   );
 }
 
@@ -925,19 +1253,25 @@ async function loadAnnouncementCount(){
   }
 }
 
+
 async function loadLearningContent(){
   try{
-    const res = await fetch(`${API}/api/quizzes`, {
-      headers:{ Authorization:`Bearer ${token}` }
-    });
+    const headers = { Authorization:`Bearer ${token}` };
 
-    if(res.status === 401){
+    const [contentRes, resultsRes] = await Promise.all([
+      fetch(`${API}/api/quizzes`, { headers }),
+      fetch(`${API}/api/results/my`, { headers })
+    ]);
+
+    if(contentRes.status === 401){
       localStorage.removeItem("token");
       location.href = "login.html";
       return;
     }
 
-    const data = await res.json().catch(() => []);
+    const data = await contentRes.json().catch(() => []);
+    const results = await resultsRes.json().catch(() => []);
+
     allLearningContent = Array.isArray(data)
       ? data
       : Array.isArray(data.quizzes)
@@ -946,11 +1280,42 @@ async function loadLearningContent(){
           ? data.rows
           : [];
 
+    resultsMap = {};
+    if(Array.isArray(results)){
+      results.forEach(result => {
+        const id = result?.quizId?._id || result?.quizId;
+        if(id) resultsMap[id] = result;
+      });
+    }
+
+    const ids = allLearningContent.map(getId).filter(Boolean);
+
+    if(ids.length){
+      try{
+        const ratingsRes = await fetch(
+          `${API}/api/quizzes/ratings/summary?ids=${encodeURIComponent(ids.join(","))}`,
+          { headers }
+        );
+        ratingsMap = await ratingsRes.json().catch(() => ({}));
+      }catch{
+        ratingsMap = {};
+      }
+    }
+
     renderLearningContent();
   }catch(err){
-    ["activitiesList","homeworkList","assignmentsList","quizzesList","gradeChallengeList","weeklyChallengeList"].forEach(id => {
+    [
+      "activitiesList",
+      "homeworkList",
+      "assignmentsList",
+      "quizzesList",
+      "gradeChallengeList",
+      "weeklyChallengeList"
+    ].forEach(id => {
       const el = document.getElementById(id);
-      if(el) el.innerHTML = `<div class="empty-content">Could not load content. Please try again later.</div>`;
+      if(el){
+        el.innerHTML = `<div class="empty-content">Could not load content. Please try again later.</div>`;
+      }
     });
   }
 }
