@@ -165,7 +165,7 @@ const QuestionSchema = new mongoose.Schema(
 
     textAnswerMode: {
       type: String,
-      enum: ["exact", "contains", "number_tolerance"],
+      enum: ["exact", "contains", "number_tolerance", "unordered", "expression"],
       default: "exact",
     },
 
@@ -173,6 +173,50 @@ const QuestionSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: 0,
+    },
+
+    instruction: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    answerPrefix: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    answerSuffix: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    unit: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    answerFields: {
+      type: [
+        {
+          key: { type: String, required: true, trim: true },
+          prefix: { type: String, default: "", trim: true },
+          suffix: { type: String, default: "", trim: true },
+          correctAnswer: { type: String, default: "", trim: true },
+        }
+      ],
+      default: [],
+      validate: {
+        validator(fields) {
+          if (!Array.isArray(fields)) return false;
+          const keys = fields.map(f => String(f.key || "").trim()).filter(Boolean);
+          return new Set(keys).size === keys.length;
+        },
+        message: "Answer field keys must be unique."
+      }
     },
   },
   {
@@ -427,6 +471,11 @@ QuizSchema.pre("validate", function (next) {
         question.correctIndexes = [];
         question.isMultiSelect = false;
         question.correctText = "";
+        question.instruction = "";
+        question.answerPrefix = "";
+        question.answerSuffix = "";
+        question.unit = "";
+        question.answerFields = [];
       }
 
       if (question.type === "mcq") {
@@ -451,6 +500,13 @@ QuizSchema.pre("validate", function (next) {
         question.correctIndex = -1;
         question.correctIndexes = [];
         question.isMultiSelect = false;
+        question.instruction = String(question.instruction || "").trim();
+        question.answerPrefix = String(question.answerPrefix || "").trim();
+        question.answerSuffix = String(question.answerSuffix || "").trim();
+        question.unit = question.unit || question.answerSuffix || "";
+        question.answerFields = Array.isArray(question.answerFields)
+          ? question.answerFields.filter(f => String(f.key || "").trim())
+          : [];
       }
     });
   }
