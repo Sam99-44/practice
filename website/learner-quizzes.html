@@ -615,7 +615,7 @@ input,select{
 .assessment-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
 .assessment-code{display:inline-flex;align-items:center;justify-content:center;min-height:26px;padding:5px 8px;border-radius:3px;background:var(--gold);color:#fff;font-size:10px;font-weight:800;letter-spacing:.04em;white-space:nowrap;}
 .access-lock{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 28px;}
-.access-lock img{width:22px;height:22px;display:block;object-fit:contain;}
+.access-lock img{width:22px;height:22px;display:block;object-fit:contain;}.assessment-card.locked .access-lock{background:transparent;border:none;}
 .assessment-title{margin:0;font-size:14px;line-height:1.4;font-weight:800;color:#0f172a;}
 .assessment-title-label{display:block;margin-bottom:3px;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.04em;}
 .assessment-meta{display:flex;flex-wrap:wrap;gap:6px;}
@@ -633,8 +633,8 @@ input,select{
 .assessment-btn.start:hover{background:#15803d;}
 .assessment-btn.retake{background:#0b5d84;}
 .assessment-btn.retake:hover{background:#084c6b;}
-.assessment-btn.locked-btn{min-width:112px;background:var(--nav);}
-.assessment-btn.locked-btn:hover{background:#130f36;}
+.assessment-btn.locked-btn{min-width:112px;background:var(--gold);color:#fff;border:1px solid var(--gold-dark);}
+.assessment-btn.locked-btn:hover{background:var(--gold-dark);}
 .assessment-btn:disabled{opacity:.65;cursor:not-allowed;}
 .achievement-row{display:flex;align-items:center;gap:8px;min-height:24px;margin-top:2px;}
 .achievement-badge{display:inline-flex;align-items:center;gap:6px;min-height:26px;padding:5px 8px;border-radius:3px;font-size:10px;font-weight:800;border:1px solid transparent;}
@@ -1216,7 +1216,7 @@ function buildTopicCard(topic, topicQuizzes){
               <div class="assessment-top">
                 <span class="assessment-code">${escapeHtml(code)}</span>
                 <span class="access-lock" title="${isPremium ? "Locked assessment" : "Unlocked assessment"}" aria-label="${isPremium ? "Locked assessment" : "Unlocked assessment"}">
-                  <img src="${isPremium ? "https://res.cloudinary.com/dopoxadlr/image/upload/v1783891654/padlock-outlined_ntfowd.svg" : "https://res.cloudinary.com/dopoxadlr/image/upload/v1783891658/padlock-unlocked-outlined_ueczyh.svg"}" alt="${isPremium ? "Locked" : "Unlocked"}">
+                  <img src="${isPremium ? "https://res.cloudinary.com/dopoxadlr/image/upload/v1783891654/padlock-outlined_ntfowd.svg" : "https://res.cloudinary.com/dopoxadlr/image/upload/v1783891658/padlock-unlocked-outlined_ueczyh.svg"}" alt="${isPremium ? "Locked" : "Unlocked"}" style="${isPremium ? 'filter: brightness(0) saturate(100%) invert(67%) sepia(96%) saturate(1800%) hue-rotate(3deg) brightness(101%) contrast(108%);' : ''}">
                 </span>
               </div>
 
@@ -1253,7 +1253,7 @@ function buildTopicCard(topic, topicQuizzes){
                   isLocked
                     ? `<button class="assessment-btn locked-btn" type="button" data-action="unlock" data-quiz-id="${encodeURIComponent(q._id || "")}">Subscribe to Unlock</button>`
                     : state.type === "done"
-                      ? `<button class="assessment-btn retake" type="button" data-action="open" data-quiz-id="${encodeURIComponent(q._id || "")}">Open Again</button>`
+                      ? `<button class="assessment-btn retake" type="button" data-action="open" data-quiz-id="${encodeURIComponent(q._id || "")}">Retake</button>`
                       : `<button class="assessment-btn start" type="button" data-action="open" data-quiz-id="${encodeURIComponent(q._id || "")}">Start</button>`
                 }
               </div>
