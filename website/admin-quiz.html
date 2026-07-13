@@ -181,12 +181,135 @@
       margin:0;
     }
 
+
     .typedAnswerSettings{
-      margin-top:12px;
-      padding:12px;
-      border:1px solid #e5e7eb;
+      margin-top:14px;
+      padding:0;
+      border:1px solid #e3e7ee;
+      border-radius:12px;
+      background:#ffffff;
+      box-shadow:0 6px 18px rgba(15,23,42,.05);
+      overflow:hidden;
+    }
+
+    .typedAnswerHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 14px;
+      background:#ffffff;
+      border-bottom:3px solid var(--practiceGold);
+    }
+
+    .typedAnswerHeaderTitle{
+      font-size:15px;
+      font-weight:900;
+      color:var(--practiceBlue);
+      letter-spacing:.01em;
+    }
+
+    .typedAnswerHeaderHint{
+      font-size:11px;
+      color:#64748b;
+      line-height:1.4;
+      text-align:right;
+    }
+
+    .typedAnswerBody{
+      padding:14px;
+      background:#fbfcff;
+    }
+
+    .typedAnswerSettings label{
+      display:block;
+      color:var(--practiceBlue2);
+      font-size:12px;
+      font-weight:800;
+      margin-top:10px;
+    }
+
+    .typedAnswerSettings textarea,
+    .typedAnswerSettings input,
+    .typedAnswerSettings select{
+      background:#ffffff;
+      border:1px solid #d9dee7;
+      border-radius:8px;
+      transition:border-color .15s ease, box-shadow .15s ease;
+    }
+
+    .typedAnswerSettings textarea:focus,
+    .typedAnswerSettings input:focus,
+    .typedAnswerSettings select:focus{
+      border-color:var(--practiceGold);
+      box-shadow:0 0 0 3px rgba(201,162,39,.14);
+    }
+
+    .typedAnswerIntro{
+      margin:0 0 10px;
+      padding:10px 12px;
+      border:1px solid #e6eaf0;
+      background:#ffffff;
+      border-radius:8px;
+      color:#475569;
+      font-size:12px;
+      line-height:1.5;
+    }
+
+    .multipleAnswerPanel{
+      margin-top:14px;
+      border:1px solid #e3e7ee;
       border-radius:10px;
-      background:#fbfbff;
+      background:#ffffff;
+      overflow:hidden;
+    }
+
+    .multipleAnswerToggle{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:11px 12px;
+      border:none;
+      border-radius:0;
+      background:#f8fafc;
+      color:var(--practiceBlue);
+      font-size:12px;
+      font-weight:900;
+      cursor:pointer;
+      text-align:left;
+    }
+
+    .multipleAnswerToggle:hover{
+      background:#f3f6fa;
+    }
+
+    .multipleAnswerToggleIcon{
+      display:inline-flex;
+      width:20px;
+      height:20px;
+      align-items:center;
+      justify-content:center;
+      color:var(--practiceGoldDark);
+      font-size:14px;
+      transform:rotate(0deg);
+      transition:transform .16s ease;
+    }
+
+    .multipleAnswerPanel.open .multipleAnswerToggleIcon{
+      transform:rotate(90deg);
+    }
+
+    .multipleAnswerContent{
+      display:none;
+      padding:12px;
+      border-top:1px solid #e5e7eb;
+      background:#ffffff;
+    }
+
+    .multipleAnswerPanel.open .multipleAnswerContent{
+      display:block;
     }
 
     .answerFieldsWrap{
@@ -197,19 +320,39 @@
 
     .answerFieldRow{
       display:grid;
-      grid-template-columns:minmax(90px,.7fr) minmax(130px,1fr) minmax(90px,.8fr) minmax(120px,1fr) auto;
+      grid-template-columns:minmax(82px,.65fr) minmax(140px,1.1fr) minmax(100px,.8fr) minmax(120px,1fr) auto;
       gap:8px;
       align-items:end;
-      padding:10px;
-      border:1px solid #e5e7eb;
-      background:#fff;
-      border-radius:8px;
+      padding:11px;
+      border:1px solid #e3e7ee;
+      background:#fbfcff;
+      border-radius:9px;
+      position:relative;
+    }
+
+    .answerFieldRow::before{
+      content:attr(data-field-number);
+      position:absolute;
+      top:-8px;
+      left:10px;
+      min-width:22px;
+      height:22px;
+      padding:0 5px;
+      border-radius:999px;
+      background:var(--practiceGold);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:10px;
+      font-weight:900;
     }
 
     .answerFieldRow label{
       font-size:11px;
-      font-weight:700;
-      color:#475569;
+      font-weight:800;
+      color:var(--practiceBlue2);
+      margin-top:0;
     }
 
     .answerFieldRow input{
@@ -219,17 +362,45 @@
     .answerFieldRemove{
       height:40px;
       align-self:end;
+      background:#fff;
+      color:#b91c1c;
+      border:1px solid #fecaca;
+    }
+
+    .answerFieldRemove:hover{
+      background:#fff1f2;
+    }
+
+    .addAnswerFieldBtn{
+      background:var(--practiceGold);
+      border:1px solid var(--practiceGoldDark);
+      color:#fff;
+      border-radius:7px;
+    }
+
+    .addAnswerFieldBtn:hover{
+      background:var(--practiceGoldDark);
     }
 
     .answerPreviewInstruction{
       margin:8px 0 10px;
       padding:10px 12px;
-      border-left:6px solid #f97316;
-      background:#fff1e8;
+      border-left:6px solid var(--practiceGold);
+      background:var(--practiceGoldSoft);
       color:#111827;
       font-family:Arial, Helvetica, sans-serif;
       font-size:13px;
       line-height:1.5;
+    }
+
+    .answerPreviewTitle{
+      margin:0 0 8px;
+      color:var(--practiceBlue);
+      font-family:Arial, Helvetica, sans-serif;
+      font-size:12px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.04em;
     }
 
     .answerPreviewRow{
@@ -244,16 +415,34 @@
 
     .answerPreviewInput{
       display:inline-block;
-      width:88px;
+      width:96px;
       height:30px;
-      border:1px solid #d1d5db;
+      border:1px solid #cbd5e1;
       background:#fff;
+      border-radius:4px;
+    }
+
+    .prevAnswerDisplay{
+      border:1px solid #e5d58c;
+      background:#fffdf3;
+      border-radius:9px;
+      padding:12px;
     }
 
     @media(max-width:760px){
+      .typedAnswerHeader{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+
+      .typedAnswerHeaderHint{
+        text-align:left;
+      }
+
       .answerFieldRow{
         grid-template-columns:1fr;
       }
+
       .answerFieldRemove{
         width:100%;
       }
@@ -265,6 +454,11 @@
       --ink:#1f2937;
       --line:rgba(59,130,246,.14);
       --margin:rgba(239,68,68,.18);
+      --practiceBlue:#1b1648;
+      --practiceBlue2:#0b5d84;
+      --practiceGold:#c9a227;
+      --practiceGoldDark:#b38e1f;
+      --practiceGoldSoft:#fff8dc;
     }
 
     .previewBox.paperBox{
@@ -1100,7 +1294,7 @@
       <br />
       INSTRUCTION: Give your answer to the nearest millimetre.
       <br />
-      ANSWER_PREFIX: ∴ WX =
+      ANSWER_PREFIX: WX =
       <br />
       ANSWER_SUFFIX: mm
       <br />
@@ -1853,52 +2047,67 @@ function escapeHtml(str){
           <textarea class="qSolution" rows="4" placeholder="Example: Multiply both sides by 5: $2x=20$. Divide by 2: $x=10$."></textarea>
 
           <div class="typedAnswerSettings">
-            <b>Answer display and marking</b>
-            <div class="muted tiny" style="margin-top:5px;">
-              Use the single answer fields for one answer. Add Answer Fields when a question needs two or more separate values.
+            <div class="typedAnswerHeader">
+              <div class="typedAnswerHeaderTitle">Typed Answer Settings</div>
+              <div class="typedAnswerHeaderHint">Build exactly what the learner will see when answering.</div>
             </div>
 
-            <label style="margin-top:10px;">Question Instruction (optional)</label>
-            <textarea class="answerInstruction" rows="2" placeholder="Example: Give answers correct to TWO decimal places."></textarea>
-
-            <div class="grid2">
-              <div>
-                <label>Answer Prefix (optional)</label>
-                <input class="answerPrefix" placeholder="Example: ∴ WX = or θ =" />
+            <div class="typedAnswerBody">
+              <div class="typedAnswerIntro">
+                Use the single-answer fields for one answer. Open Multiple Answer Fields only when the question needs two or more separate values.
               </div>
-              <div>
-                <label>Answer Suffix / Unit (optional)</label>
-                <input class="answerSuffix" placeholder="Example: mm, cm², °, %" />
+
+              <label>Instruction (optional)</label>
+              <textarea class="answerInstruction" rows="2" placeholder="Example: Give your answer correct to TWO decimal places."></textarea>
+
+              <div class="grid2">
+                <div>
+                  <label>Display Before Answer (optional)</label>
+                  <input class="answerPrefix" placeholder="Example: WX =, θ =, Area =" />
+                </div>
+                <div>
+                  <label>Display After Answer / Unit (optional)</label>
+                  <input class="answerSuffix" placeholder="Example: mm, cm², °, %" />
+                </div>
+              </div>
+
+              <div class="grid2">
+                <div>
+                  <label>Correct Answer</label>
+                  <input class="correctText" placeholder="Example: 24" />
+                </div>
+                <div>
+                  <label>Check Mode</label>
+                  <select class="textMode">
+                    <option value="exact">Exact (case-insensitive)</option>
+                    <option value="contains">Contains</option>
+                    <option value="number_tolerance">Number (tolerance)</option>
+                    <option value="unordered">Unordered values</option>
+                    <option value="expression">Mathematical expression</option>
+                  </select>
+                  <div class="muted tiny">Number mode is recommended for calculations.</div>
+                </div>
+              </div>
+
+              <div class="multipleAnswerPanel">
+                <button type="button" class="multipleAnswerToggle">
+                  <span>
+                    Multiple Answer Fields (optional)
+                    <span class="muted tiny" style="display:block;margin-top:3px;font-weight:400;">
+                      For simultaneous equations, coordinates, matrices, tables and multi-part answers.
+                    </span>
+                  </span>
+                  <span class="multipleAnswerToggleIcon">▶</span>
+                </button>
+
+                <div class="multipleAnswerContent">
+                  <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+                    <button type="button" class="smallbtn addAnswerFieldBtn">+ Add Answer Field</button>
+                  </div>
+                  <div class="answerFieldsWrap"></div>
+                </div>
               </div>
             </div>
-
-            <div class="grid2">
-              <div>
-                <label>Correct Answer (single answer)</label>
-                <input class="correctText" placeholder="Example: 24" />
-              </div>
-              <div>
-                <label>Check Mode</label>
-                <select class="textMode">
-                  <option value="exact">Exact (case-insensitive)</option>
-                  <option value="contains">Contains</option>
-                  <option value="number_tolerance">Number (tolerance)</option>
-                  <option value="unordered">Unordered values</option>
-                  <option value="expression">Mathematical expression</option>
-                </select>
-                <div class="muted tiny">Number mode is recommended for calculations.</div>
-              </div>
-            </div>
-
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;">
-              <div>
-                <b>Multiple Answer Fields (optional)</b>
-                <div class="muted tiny">For simultaneous equations, coordinates, matrices, tables and multi-part answers.</div>
-              </div>
-              <button type="button" class="smallbtn addAnswerFieldBtn">+ Add Answer Field</button>
-            </div>
-
-            <div class="answerFieldsWrap"></div>
           </div>
 
           <div class="grid2 tolRow hide">
@@ -1975,6 +2184,7 @@ function escapeHtml(str){
 
       const row = document.createElement("div");
       row.className = "answerFieldRow";
+      row.dataset.fieldNumber = String(wrap.children.length + 1);
 
       row.innerHTML = `
         <div>
@@ -1982,11 +2192,11 @@ function escapeHtml(str){
           <input class="answerFieldKey" placeholder="x" />
         </div>
         <div>
-          <label>Prefix / Label</label>
+          <label>Display Before Answer</label>
           <input class="answerFieldPrefix" placeholder="x =" />
         </div>
         <div>
-          <label>Suffix / Unit</label>
+          <label>Display After Answer / Unit</label>
           <input class="answerFieldSuffix" placeholder="cm" />
         </div>
         <div>
@@ -2007,6 +2217,9 @@ function escapeHtml(str){
 
       row.querySelector(".answerFieldRemove").addEventListener("click", () => {
         row.remove();
+        [...wrap.querySelectorAll(".answerFieldRow")].forEach((item, index) => {
+          item.dataset.fieldNumber = String(index + 1);
+        });
         renderCardPreview(card);
       });
 
@@ -2034,9 +2247,11 @@ function escapeHtml(str){
       const suffix = cleanSpaces(card.querySelector(".answerSuffix")?.value || "");
       const fields = readAnswerFieldsFromCard(card);
 
-      let html = instruction
-        ? `<div class="answerPreviewInstruction"><b>INSTRUCTION:</b> ${renderMixedMathPreview(instruction)}</div>`
-        : "";
+      let html = `<div class="answerPreviewTitle">Answer</div>`;
+
+      if(instruction){
+        html += `<div class="answerPreviewInstruction"><b>INSTRUCTION:</b> ${renderMixedMathPreview(instruction)}</div>`;
+      }
 
       if(fields.length){
         html += fields.map(field => `
@@ -2113,7 +2328,18 @@ function escapeHtml(str){
 
       if (card.getAttribute("data-type") === "text") {
         wireTextModeCard(card);
-        card.querySelector(".addAnswerFieldBtn")?.addEventListener("click", () => addAnswerFieldRow(card));
+
+        const multiplePanel = card.querySelector(".multipleAnswerPanel");
+        const multipleToggle = card.querySelector(".multipleAnswerToggle");
+
+        multipleToggle?.addEventListener("click", () => {
+          multiplePanel?.classList.toggle("open");
+        });
+
+        card.querySelector(".addAnswerFieldBtn")?.addEventListener("click", () => {
+          multiplePanel?.classList.add("open");
+          addAnswerFieldRow(card);
+        });
       }
 
       renderCardPreview(card);
@@ -3168,9 +3394,14 @@ function escapeHtml(str){
 
       const answerFieldsWrap = card.querySelector(".answerFieldsWrap");
       if (answerFieldsWrap) answerFieldsWrap.innerHTML = "";
-      (Array.isArray(data.answerFields) ? data.answerFields : []).forEach(field => {
+      const loadedAnswerFields = Array.isArray(data.answerFields) ? data.answerFields : [];
+      loadedAnswerFields.forEach(field => {
         addAnswerFieldRow(card, field);
       });
+
+      if (loadedAnswerFields.length) {
+        card.querySelector(".multipleAnswerPanel")?.classList.add("open");
+      }
 
       const modeSel = card.querySelector(".textMode");
       const tolInput = card.querySelector(".tolerance");
