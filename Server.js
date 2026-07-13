@@ -821,6 +821,8 @@ app.get("/api/admin/learner-results", authRequired, async (req, res) => {
         isAdminAttempt: !!result.isAdminAttempt,
 
         submittedAt: result.attemptedAt || result.createdAt,
+        assessmentCode: quiz.assessmentCode || "",
+        accessLevel: quiz.accessLevel || "standard",
       };
     });
 
@@ -2456,7 +2458,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
     const quizzes = await Quiz.find(filter)
       .sort({ createdAt: -1 })
       .select(
-        "grade title topic contentType audience isForAllLearners paper difficulty questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
+        "assessmentCode grade title topic contentType audience isForAllLearners paper difficulty questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
       );
 
     return res.json(quizzes);
@@ -2747,6 +2749,7 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
       "publishAt",
       "sendPublishEmail",
       "accessLevel",
+      "accessFee",
       
     ];
 
@@ -2851,7 +2854,34 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
         quiz.sendPublishEmail = !!req.body.sendPublishEmail;
         continue;
       }
+      if (key === "accessLevel") {
+  quiz.accessLevel = normalizeQuizAccessLevel(req.body.accessLevel);
+  quiz.isPremium = quiz.accessLevel === "premium";
+  quiz.requiresPayment = quiz.accessLevel === "premium";
 
+  if (quiz.accessLevel === "standard") {
+    quiz.accessFee = 0;
+  }
+
+  continue;
+}
+
+if (key === "accessFee") {
+  const fee = Number(req.body.accessFee);
+
+  if (!Number.isFinite(fee) || fee < 0) {
+    return res.status(400).json({
+      message: "Access fee must be 0 or more."
+    });
+  }
+
+  quiz.accessFee =
+    quiz.accessLevel === "premium"
+      ? fee
+      : 0;
+
+  continue;
+}
       if (key === "questions") {
         if (!Array.isArray(req.body.questions) || req.body.questions.length === 0) {
           return res.status(400).json({ message: "Questions are required." });
