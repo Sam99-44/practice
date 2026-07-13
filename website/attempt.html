@@ -4372,6 +4372,21 @@ function inlineQuizLoadingHtml(){
   }
 
 
+  /*
+   * Review-style solution renderer.
+   * The page called this function during load, but it was missing.
+   * That ReferenceError stopped loadQuiz() before the submit handlers
+   * were attached to the question buttons.
+   */
+  function renderReviewStyleSolutionBox(rawSolution){
+    const solution = String(rawSolution || "").trim();
+    if (!solution) return "";
+
+    // Reuse the existing Attempt-page solution renderer so layout,
+    // MathJax and saved workings remain unchanged.
+    return formatSolutionHtml(solution);
+  }
+
   function applyReviewStyleWorkingsToAllQuestions(){
     if (!quizData || !Array.isArray(quizData.questions)) return;
 
@@ -4383,7 +4398,13 @@ function inlineQuizLoadingHtml(){
       if (!holder) return;
 
       const rawSolution = String(q?.solution || "");
-      holder.innerHTML = renderReviewStyleSolutionBox(rawSolution);
+
+      try{
+        holder.innerHTML = renderReviewStyleSolutionBox(rawSolution);
+      }catch(err){
+        console.error("Could not render solution for question", i, err);
+        holder.innerHTML = rawSolution ? formatSolutionHtml(rawSolution) : "";
+      }
     });
   }
 
