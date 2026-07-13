@@ -25,6 +25,12 @@
      ✅ Add buttons moved to bottom
      ✅ Page stays open while working
      ✅ No forced logout except manual logout
+     ✅ Universal Mathematics typed-answer fields:
+        INSTRUCTION:
+        ANSWER_PREFIX:
+        ANSWER_SUFFIX:
+        ANSWER_FIELD: key|prefix|suffix
+        ANSWER: key=value|key=value
      ✅ Upload .txt file can start with metadata:
         TITLE:
         GRADE:
@@ -173,6 +179,84 @@
     .checkline input{
       width:auto;
       margin:0;
+    }
+
+    .typedAnswerSettings{
+      margin-top:12px;
+      padding:12px;
+      border:1px solid #e5e7eb;
+      border-radius:10px;
+      background:#fbfbff;
+    }
+
+    .answerFieldsWrap{
+      display:grid;
+      gap:10px;
+      margin-top:10px;
+    }
+
+    .answerFieldRow{
+      display:grid;
+      grid-template-columns:minmax(90px,.7fr) minmax(130px,1fr) minmax(90px,.8fr) minmax(120px,1fr) auto;
+      gap:8px;
+      align-items:end;
+      padding:10px;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      border-radius:8px;
+    }
+
+    .answerFieldRow label{
+      font-size:11px;
+      font-weight:700;
+      color:#475569;
+    }
+
+    .answerFieldRow input{
+      margin:4px 0 0;
+    }
+
+    .answerFieldRemove{
+      height:40px;
+      align-self:end;
+    }
+
+    .answerPreviewInstruction{
+      margin:8px 0 10px;
+      padding:10px 12px;
+      border-left:6px solid #f97316;
+      background:#fff1e8;
+      color:#111827;
+      font-family:Arial, Helvetica, sans-serif;
+      font-size:13px;
+      line-height:1.5;
+    }
+
+    .answerPreviewRow{
+      display:flex;
+      align-items:center;
+      gap:7px;
+      flex-wrap:wrap;
+      margin:7px 0;
+      font-family:"Times New Roman", Times, serif;
+      font-size:15px;
+    }
+
+    .answerPreviewInput{
+      display:inline-block;
+      width:88px;
+      height:30px;
+      border:1px solid #d1d5db;
+      background:#fff;
+    }
+
+    @media(max-width:760px){
+      .answerFieldRow{
+        grid-template-columns:1fr;
+      }
+      .answerFieldRemove{
+        width:100%;
+      }
     }
 
     :root{
@@ -986,7 +1070,17 @@
       <br />
       TYPE: text
       <br />
-      ANSWER: 2|3
+      INSTRUCTION: Enter each value separately.
+      <br />
+      ANSWER_FIELD: x|x =|
+      <br />
+      ANSWER_FIELD: y|y =|
+      <br />
+      ANSWER: x=2|y=3
+      <br />
+      ANSWER_MODE: number_tolerance
+      <br />
+      TOLERANCE: 0.01
       <br />
       POINTS: 2
       <br />
@@ -1001,6 +1095,16 @@
       x = 2 or x = 3
       <br /><br />
       Final Answer: x = 2 or x = 3
+      <br /><br />
+      For a single answer with a unit:
+      <br />
+      INSTRUCTION: Give your answer to the nearest millimetre.
+      <br />
+      ANSWER_PREFIX: ∴ WX =
+      <br />
+      ANSWER_SUFFIX: mm
+      <br />
+      ANSWER: 24
       <br /><br />
       <b>Important numbering rule:</b>
       <br />
@@ -1422,7 +1526,30 @@ function escapeHtml(str){
         const points = cleanSpaces(card.querySelector(".qPoints")?.value || "1");
         const headHtml = renderQuestionHeadPreview(`${label} ${qText}`.trim(), points, ++displayNo);
         if (type === "text") {
-          parts.push(`<div class="q">${imageHtml}${headHtml}<input class="textAnswerPaper" placeholder="Type your answer" disabled>${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${currentFullPreviewMode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`);
+          const answerInstruction = cleanSpaces(card.querySelector(".answerInstruction")?.value || "");
+          const answerPrefix = cleanSpaces(card.querySelector(".answerPrefix")?.value || "");
+          const answerSuffix = cleanSpaces(card.querySelector(".answerSuffix")?.value || "");
+          const answerFields = readAnswerFieldsFromCard(card);
+
+          const instructionHtml = answerInstruction
+            ? `<div class="answerPreviewInstruction"><b>INSTRUCTION:</b> ${renderMixedMathPreview(answerInstruction)}</div>`
+            : "";
+
+          const answerHtml = answerFields.length
+            ? answerFields.map(field => `
+                <div class="answerPreviewRow" style="margin-left:68px;">
+                  <span>${renderMixedMathPreview(field.prefix || field.key)}</span>
+                  <input class="textAnswerPaper" style="margin:0;width:120px;" disabled>
+                  ${field.suffix ? `<span>${renderMixedMathPreview(field.suffix)}</span>` : ""}
+                </div>
+              `).join("")
+            : `<div class="answerPreviewRow" style="margin-left:68px;">
+                ${answerPrefix ? `<span>${renderMixedMathPreview(answerPrefix)}</span>` : ""}
+                <input class="textAnswerPaper" style="margin:0;width:160px;" placeholder="Type your answer" disabled>
+                ${answerSuffix ? `<span>${renderMixedMathPreview(answerSuffix)}</span>` : ""}
+              </div>`;
+
+          parts.push(`<div class="q">${imageHtml}${headHtml}${instructionHtml}${answerHtml}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${currentFullPreviewMode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`);
         } else if (type === "mcq") {
           const opts = [...card.querySelectorAll(".optRow")].map((row, index) => ({ idx:index, txt:cleanSpaces(row.querySelector(".optInput")?.value || "") })).filter(o => o.txt);
           parts.push(`<div class="q">${imageHtml}${headHtml}${opts.map((o, idx)=>`<div class="optPaper"><span class="optBullet">○</span><span class="optTextPaper">${renderMixedMathPreview(o.txt)}</span></div>`).join("")}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${currentFullPreviewMode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`);
@@ -1725,20 +1852,53 @@ function escapeHtml(str){
           <label>Solution / Workings (optional)</label>
           <textarea class="qSolution" rows="4" placeholder="Example: Multiply both sides by 5: $2x=20$. Divide by 2: $x=10$."></textarea>
 
-          <div class="grid2">
-            <div>
-              <label>Correct Answer (supports math)</label>
-              <input class="correctText" placeholder="Example: 10" />
+          <div class="typedAnswerSettings">
+            <b>Answer display and marking</b>
+            <div class="muted tiny" style="margin-top:5px;">
+              Use the single answer fields for one answer. Add Answer Fields when a question needs two or more separate values.
             </div>
-            <div>
-              <label>Check Mode</label>
-              <select class="textMode">
-                <option value="exact">Exact (case-insensitive)</option>
-                <option value="contains">Contains</option>
-                <option value="number_tolerance">Number (tolerance)</option>
-              </select>
-              <div class="muted tiny">Use “Number (tolerance)” for calculations.</div>
+
+            <label style="margin-top:10px;">Question Instruction (optional)</label>
+            <textarea class="answerInstruction" rows="2" placeholder="Example: Give answers correct to TWO decimal places."></textarea>
+
+            <div class="grid2">
+              <div>
+                <label>Answer Prefix (optional)</label>
+                <input class="answerPrefix" placeholder="Example: ∴ WX = or θ =" />
+              </div>
+              <div>
+                <label>Answer Suffix / Unit (optional)</label>
+                <input class="answerSuffix" placeholder="Example: mm, cm², °, %" />
+              </div>
             </div>
+
+            <div class="grid2">
+              <div>
+                <label>Correct Answer (single answer)</label>
+                <input class="correctText" placeholder="Example: 24" />
+              </div>
+              <div>
+                <label>Check Mode</label>
+                <select class="textMode">
+                  <option value="exact">Exact (case-insensitive)</option>
+                  <option value="contains">Contains</option>
+                  <option value="number_tolerance">Number (tolerance)</option>
+                  <option value="unordered">Unordered values</option>
+                  <option value="expression">Mathematical expression</option>
+                </select>
+                <div class="muted tiny">Number mode is recommended for calculations.</div>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;">
+              <div>
+                <b>Multiple Answer Fields (optional)</b>
+                <div class="muted tiny">For simultaneous equations, coordinates, matrices, tables and multi-part answers.</div>
+              </div>
+              <button type="button" class="smallbtn addAnswerFieldBtn">+ Add Answer Field</button>
+            </div>
+
+            <div class="answerFieldsWrap"></div>
           </div>
 
           <div class="grid2 tolRow hide">
@@ -1760,6 +1920,9 @@ function escapeHtml(str){
 
             <div class="muted tiny previewLabel">Hint:</div>
             <div class="previewBox prevHint paperBox"></div>
+
+            <div class="muted tiny previewLabel">Learner Answer Display:</div>
+            <div class="previewBox prevAnswerDisplay"></div>
 
             <div class="muted tiny previewLabel">Expected Answer:</div>
             <div class="previewBox prevAns paperBox"></div>
@@ -1796,6 +1959,107 @@ function escapeHtml(str){
       return cleanSpaces(card?.querySelector(".qImage")?.value || card?.querySelector(".qImage2")?.value || "");
     }
 
+
+    function normaliseAnswerFieldKey(value, fallbackIndex=1){
+      const key = String(value || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+      return key || `answer_${fallbackIndex}`;
+    }
+
+    function addAnswerFieldRow(card, data={}){
+      const wrap = card?.querySelector(".answerFieldsWrap");
+      if(!wrap) return;
+
+      const row = document.createElement("div");
+      row.className = "answerFieldRow";
+
+      row.innerHTML = `
+        <div>
+          <label>Field Key</label>
+          <input class="answerFieldKey" placeholder="x" />
+        </div>
+        <div>
+          <label>Prefix / Label</label>
+          <input class="answerFieldPrefix" placeholder="x =" />
+        </div>
+        <div>
+          <label>Suffix / Unit</label>
+          <input class="answerFieldSuffix" placeholder="cm" />
+        </div>
+        <div>
+          <label>Correct Value</label>
+          <input class="answerFieldCorrect" placeholder="2" />
+        </div>
+        <button type="button" class="smallbtn answerFieldRemove">Remove</button>
+      `;
+
+      row.querySelector(".answerFieldKey").value = data.key || "";
+      row.querySelector(".answerFieldPrefix").value = data.prefix || "";
+      row.querySelector(".answerFieldSuffix").value = data.suffix || data.unit || "";
+      row.querySelector(".answerFieldCorrect").value = data.correctAnswer ?? data.answer ?? "";
+
+      row.querySelectorAll("input").forEach(input => {
+        input.addEventListener("input", () => renderCardPreview(card));
+      });
+
+      row.querySelector(".answerFieldRemove").addEventListener("click", () => {
+        row.remove();
+        renderCardPreview(card);
+      });
+
+      wrap.appendChild(row);
+      renderCardPreview(card);
+    }
+
+    function readAnswerFieldsFromCard(card){
+      return [...(card?.querySelectorAll(".answerFieldRow") || [])]
+        .map((row, index) => ({
+          key: normaliseAnswerFieldKey(row.querySelector(".answerFieldKey")?.value, index + 1),
+          prefix: cleanSpaces(row.querySelector(".answerFieldPrefix")?.value || ""),
+          suffix: cleanSpaces(row.querySelector(".answerFieldSuffix")?.value || ""),
+          correctAnswer: cleanSpaces(row.querySelector(".answerFieldCorrect")?.value || "")
+        }))
+        .filter(field => field.prefix || field.suffix || field.correctAnswer);
+    }
+
+    function renderAnswerDisplayPreview(card){
+      const target = card?.querySelector(".prevAnswerDisplay");
+      if(!target) return;
+
+      const instruction = cleanSpaces(card.querySelector(".answerInstruction")?.value || "");
+      const prefix = cleanSpaces(card.querySelector(".answerPrefix")?.value || "");
+      const suffix = cleanSpaces(card.querySelector(".answerSuffix")?.value || "");
+      const fields = readAnswerFieldsFromCard(card);
+
+      let html = instruction
+        ? `<div class="answerPreviewInstruction"><b>INSTRUCTION:</b> ${renderMixedMathPreview(instruction)}</div>`
+        : "";
+
+      if(fields.length){
+        html += fields.map(field => `
+          <div class="answerPreviewRow">
+            <span>${renderMixedMathPreview(field.prefix || field.key)}</span>
+            <span class="answerPreviewInput"></span>
+            ${field.suffix ? `<span>${renderMixedMathPreview(field.suffix)}</span>` : ""}
+          </div>
+        `).join("");
+      }else{
+        html += `
+          <div class="answerPreviewRow">
+            ${prefix ? `<span>${renderMixedMathPreview(prefix)}</span>` : ""}
+            <span class="answerPreviewInput"></span>
+            ${suffix ? `<span>${renderMixedMathPreview(suffix)}</span>` : ""}
+          </div>
+        `;
+      }
+
+      target.innerHTML = html;
+      typesetMath(target);
+    }
+
     function wireCard(card){
       if (!card || card.dataset.wired === "1") return;
       card.dataset.wired = "1";
@@ -1829,7 +2093,7 @@ function escapeHtml(str){
         return;
       }
 
-      [".qText",".qHint",".correctText",".qSolution",".qImage",".qImage2"].forEach(sel=>{
+      [".qText",".qHint",".correctText",".qSolution",".qImage",".qImage2",".answerInstruction",".answerPrefix",".answerSuffix"].forEach(sel=>{
         const el = card.querySelector(sel);
         if (el) el.addEventListener("input", ()=>renderCardPreview(card));
       });
@@ -1849,6 +2113,7 @@ function escapeHtml(str){
 
       if (card.getAttribute("data-type") === "text") {
         wireTextModeCard(card);
+        card.querySelector(".addAnswerFieldBtn")?.addEventListener("click", () => addAnswerFieldRow(card));
       }
 
       renderCardPreview(card);
@@ -1882,7 +2147,11 @@ function escapeHtml(str){
         hint: cleanSpaces(card.querySelector(".qHint")?.value || ""),
         points: cleanSpaces(card.querySelector(".qPoints")?.value || "1"),
         solution: String(card.querySelector(".qSolution")?.value || "").trim(),
-        imageUrl: readCardImage(card)
+        imageUrl: readCardImage(card),
+        instruction: cleanSpaces(card.querySelector(".answerInstruction")?.value || ""),
+        answerPrefix: cleanSpaces(card.querySelector(".answerPrefix")?.value || ""),
+        answerSuffix: cleanSpaces(card.querySelector(".answerSuffix")?.value || ""),
+        answerFields: readAnswerFieldsFromCard(card)
       };
 
       let wrapper = document.createElement("div");
@@ -1918,7 +2187,11 @@ function escapeHtml(str){
                 return cleanSpaces(chosen?.querySelector(".optInput")?.value || "");
               })(),
           textAnswerMode: "exact",
-          numberTolerance: ""
+          numberTolerance: "",
+          instruction: base.instruction || "",
+          answerPrefix: base.answerPrefix || "",
+          answerSuffix: base.answerSuffix || "",
+          answerFields: base.answerFields || []
         });
       }
 
@@ -2210,8 +2483,13 @@ function escapeHtml(str){
         const optsText = included.map((x, idx) => `${letter(idx)}) ${x.v}`).join("\n");
         setPreviewText(card.querySelector(".prevOpts"), optsText || "(Options preview)");
       } else {
+        const fields = readAnswerFieldsFromCard(card);
         const ans = cleanSpaces(card.querySelector(".correctText")?.value || "");
-        setPreviewText(card.querySelector(".prevAns"), ans || "(Expected answer preview)");
+        const expected = fields.length
+          ? fields.map(field => `${field.key} = ${field.correctAnswer || "?"}`).join("\n")
+          : ans;
+        setPreviewText(card.querySelector(".prevAns"), expected || "(Expected answer preview)");
+        renderAnswerDisplayPreview(card);
       }
       refreshFullLearnerPreview();
     }
@@ -2479,7 +2757,7 @@ function escapeHtml(str){
         if (!m) continue;
         const key = m[1].toUpperCase();
         const value = m[2] || "";
-        if (/^(HEADING|NOTE|QUESTION|[A-Z]|ANSWER|SOLUTION|HINT|POINTS|MARKS|TYPE|OPTIONS|MEMO|IMAGE)$/i.test(key)) continue;
+        if (/^(HEADING|NOTE|QUESTION|[A-Z]|ANSWER|ANSWER_FIELD|ANSWER_PREFIX|ANSWER_SUFFIX|ANSWER_MODE|UNIT|TOLERANCE|NUMBER_TOLERANCE|INSTRUCTION|SOLUTION|HINT|POINTS|MARKS|TYPE|OPTIONS|MEMO|IMAGE)$/i.test(key)) continue;
 
         switch (key) {
           case "GRADE": meta.grade = value.trim(); break;
@@ -2525,6 +2803,12 @@ function escapeHtml(str){
       let points = 1;
       let explicitType = "";
       let typedAnswer = "";
+      let answerInstruction = "";
+      let answerPrefix = "";
+      let answerSuffix = "";
+      let textAnswerMode = "exact";
+      let numberTolerance = null;
+      const answerFieldDefinitions = [];
       const options = [];
       const correctLetters = [];
       let inSolution = false;
@@ -2560,6 +2844,47 @@ function escapeHtml(str){
 
         if (/^HINT\s*:/i.test(line) && !inSolution) {
           hint = line.replace(/^HINT\s*:/i, "").trim();
+          continue;
+        }
+
+        if (/^INSTRUCTION\s*:/i.test(line) && !inSolution) {
+          answerInstruction = line.replace(/^INSTRUCTION\s*:/i, "").trim();
+          continue;
+        }
+
+        if (/^ANSWER_PREFIX\s*:/i.test(line) && !inSolution) {
+          answerPrefix = line.replace(/^ANSWER_PREFIX\s*:/i, "").trim();
+          continue;
+        }
+
+        if (/^(ANSWER_SUFFIX|UNIT)\s*:/i.test(line) && !inSolution) {
+          answerSuffix = line.replace(/^(ANSWER_SUFFIX|UNIT)\s*:/i, "").trim();
+          continue;
+        }
+
+        if (/^ANSWER_FIELD\s*:/i.test(line) && !inSolution) {
+          const rawField = line.replace(/^ANSWER_FIELD\s*:/i, "").trim();
+          const parts = rawField.split("|");
+          const key = normaliseAnswerFieldKey(parts[0] || "", answerFieldDefinitions.length + 1);
+          const prefix = String(parts[1] || key).trim();
+          const suffix = String(parts[2] || "").trim();
+          answerFieldDefinitions.push({ key, prefix, suffix, correctAnswer:"" });
+          continue;
+        }
+
+        if (/^ANSWER_MODE\s*:/i.test(line) && !inSolution) {
+          const mode = line.replace(/^ANSWER_MODE\s*:/i, "").trim().toLowerCase();
+          if (["exact","contains","number_tolerance","unordered","expression"].includes(mode)) {
+            textAnswerMode = mode;
+          }
+          continue;
+        }
+
+        if (/^(TOLERANCE|NUMBER_TOLERANCE)\s*:/i.test(line) && !inSolution) {
+          const toleranceValue = Number(line.replace(/^(TOLERANCE|NUMBER_TOLERANCE)\s*:/i, "").trim());
+          if (Number.isFinite(toleranceValue) && toleranceValue >= 0) {
+            numberTolerance = toleranceValue;
+          }
           continue;
         }
 
@@ -2611,6 +2936,23 @@ function escapeHtml(str){
       hint = autoConvertMixedLatex(hint);
       solution = autoConvertMixedLatex(solution);
       typedAnswer = autoConvertMixedLatex(typedAnswer);
+      answerInstruction = autoConvertMixedLatex(answerInstruction);
+      answerPrefix = autoConvertMixedLatex(answerPrefix);
+      answerSuffix = autoConvertMixedLatex(answerSuffix);
+
+      if (answerFieldDefinitions.length && typedAnswer) {
+        const keyedValues = {};
+        typedAnswer.split("|").forEach(part => {
+          const eq = part.indexOf("=");
+          if(eq < 1) return;
+          const key = normaliseAnswerFieldKey(part.slice(0, eq));
+          keyedValues[key] = autoConvertMixedLatex(part.slice(eq + 1).trim());
+        });
+
+        answerFieldDefinitions.forEach(field => {
+          field.correctAnswer = keyedValues[field.key] ?? "";
+        });
+      }
 
       const where = `Block ${blockIndex + 1}${question ? ` (${String(question).replace(/\$/g, "").slice(0, 60)})` : ""}`;
 
@@ -2629,15 +2971,30 @@ function escapeHtml(str){
         if (!typedAnswer) {
           throw Object.assign(new Error("Typed question is missing ANSWER: value."), { where });
         }
+        if (answerFieldDefinitions.length) {
+          const missing = answerFieldDefinitions.filter(field => !field.correctAnswer);
+          if (missing.length) {
+            throw Object.assign(
+              new Error(`Missing ANSWER value for field(s): ${missing.map(field => field.key).join(", ")}.`),
+              { where }
+            );
+          }
+        }
+
         return {
           type: "text",
           question,
           hint,
           solution,
           points,
+          instruction: answerInstruction,
+          answerPrefix,
+          answerSuffix,
+          unit: answerSuffix,
+          answerFields: answerFieldDefinitions,
           correctText: typedAnswer,
-          textAnswerMode: "exact",
-          numberTolerance: null
+          textAnswerMode,
+          numberTolerance
         };
       }
 
@@ -2802,6 +3159,19 @@ function escapeHtml(str){
       const imgEl = card.querySelector(".qImage2");
       if (imgEl) imgEl.value = data.imageUrl || "";
       card.querySelector(".correctText").value = data.correctText || "";
+      const instructionEl = card.querySelector(".answerInstruction");
+      const prefixEl = card.querySelector(".answerPrefix");
+      const suffixEl = card.querySelector(".answerSuffix");
+      if (instructionEl) instructionEl.value = data.instruction || data.answerInstruction || "";
+      if (prefixEl) prefixEl.value = data.answerPrefix || "";
+      if (suffixEl) suffixEl.value = data.answerSuffix || data.unit || "";
+
+      const answerFieldsWrap = card.querySelector(".answerFieldsWrap");
+      if (answerFieldsWrap) answerFieldsWrap.innerHTML = "";
+      (Array.isArray(data.answerFields) ? data.answerFields : []).forEach(field => {
+        addAnswerFieldRow(card, field);
+      });
+
       const modeSel = card.querySelector(".textMode");
       const tolInput = card.querySelector(".tolerance");
       if (modeSel) modeSel.value = data.textAnswerMode || "exact";
@@ -3147,10 +3517,25 @@ function escapeHtml(str){
 
         if (type === "text") {
           const correctText = autoConvertMixedLatex(cleanSpaces(card.querySelector(".correctText")?.value));
+          const instruction = autoConvertMixedLatex(cleanSpaces(card.querySelector(".answerInstruction")?.value || ""));
+          const answerPrefix = autoConvertMixedLatex(cleanSpaces(card.querySelector(".answerPrefix")?.value || ""));
+          const answerSuffix = autoConvertMixedLatex(cleanSpaces(card.querySelector(".answerSuffix")?.value || ""));
+          const answerFields = readAnswerFieldsFromCard(card).map(field => ({
+            ...field,
+            prefix: autoConvertMixedLatex(field.prefix),
+            suffix: autoConvertMixedLatex(field.suffix),
+            correctAnswer: autoConvertMixedLatex(field.correctAnswer)
+          }));
           const textAnswerMode = card.querySelector(".textMode")?.value || "exact";
           const toleranceRaw = cleanSpaces(card.querySelector(".tolerance")?.value);
 
-          if (!correctText) throw new Error("Please enter the correct answer for every typed question.");
+          if (!correctText && !answerFields.length) {
+            throw new Error("Please enter a correct answer or add at least one completed Answer Field.");
+          }
+
+          if (answerFields.some(field => !field.correctAnswer)) {
+            throw new Error("Please enter the correct value for every Answer Field.");
+          }
 
           let numberTolerance = null;
           if (textAnswerMode === "number_tolerance") {
@@ -3167,7 +3552,16 @@ function escapeHtml(str){
             hint: hint || "",
             imageUrl: imageUrl || "",
             points,
-            correctText,
+            instruction: instruction || "",
+            answerPrefix: answerPrefix || "",
+            answerSuffix: answerSuffix || "",
+            unit: answerSuffix || "",
+            answerFields,
+            correctText: correctText || (
+              answerFields.length
+                ? answerFields.map(field => `${field.key}=${field.correctAnswer}`).join("|")
+                : ""
+            ),
             textAnswerMode,
             numberTolerance,
             solution: solution || ""
