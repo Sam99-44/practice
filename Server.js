@@ -2694,7 +2694,6 @@ if (type === "text") {
   q.isMultiSelect = false;
 }
       }
-    }
 
     const publishAtRaw = validDateOrNull(publishAt);
     const availableFromRaw = validDateOrNull(availableFrom);
