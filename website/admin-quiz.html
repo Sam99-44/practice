@@ -26,6 +26,7 @@
      ✅ Page stays open while working
      ✅ No forced logout except manual logout
      ✅ MathLive correct-answer editor with live maths preview
+     ✅ Canonical typed-answer mode normalization before every API request
      ✅ Universal Mathematics typed-answer fields:
         INSTRUCTION:
         ANSWER_PREFIX:
@@ -1677,6 +1678,46 @@
       return "standard";
     }
 
+
+    const VALID_TEXT_ANSWER_MODES = new Set([
+      "exact",
+      "contains",
+      "number_tolerance",
+      "unordered",
+      "expression"
+    ]);
+
+    function normalizeTextAnswerMode(value){
+      const raw = String(value || "")
+        .toLowerCase()
+        .trim()
+        .replace(/[\s-]+/g, "_");
+
+      const aliases = {
+        exact_case_insensitive: "exact",
+        case_insensitive: "exact",
+        exact_match: "exact",
+        contains_match: "contains",
+        number: "number_tolerance",
+        numeric: "number_tolerance",
+        number_with_tolerance: "number_tolerance",
+        numeric_tolerance: "number_tolerance",
+        tolerance: "number_tolerance",
+        unordered_values: "unordered",
+        unordered_value: "unordered",
+        any_order: "unordered",
+        mathematical_expression: "expression",
+        math_expression: "expression",
+        algebraic_expression: "expression"
+      };
+
+      const normalized = aliases[raw] || raw;
+
+      return VALID_TEXT_ANSWER_MODES.has(normalized)
+        ? normalized
+        : "exact";
+    }
+
     function accessLevelLabel(level){
       return normalizeAccessLevel(level) === "premium" ? "Premium" : "Standard";
     }
@@ -1727,7 +1768,7 @@ function escapeHtml(str){
     }
 
     function shouldUseMathLiveForAnswerMode(mode){
-      const value = String(mode || "exact").toLowerCase().trim();
+      const value = normalizeTextAnswerMode(mode);
       return [
         "expression",
         "number_tolerance",
@@ -3324,10 +3365,9 @@ function escapeHtml(str){
         }
 
         if (/^ANSWER_MODE\s*:/i.test(line) && !inSolution) {
-          const mode = line.replace(/^ANSWER_MODE\s*:/i, "").trim().toLowerCase();
-          if (["exact","contains","number_tolerance","unordered","expression"].includes(mode)) {
-            textAnswerMode = mode;
-          }
+          textAnswerMode = normalizeTextAnswerMode(
+            line.replace(/^ANSWER_MODE\s*:/i, "")
+          );
           continue;
         }
 
@@ -3630,7 +3670,11 @@ function escapeHtml(str){
 
       const modeSel = card.querySelector(".textMode");
       const tolInput = card.querySelector(".tolerance");
-      if (modeSel) modeSel.value = data.textAnswerMode || "exact";
+      if (modeSel) {
+        modeSel.value = normalizeTextAnswerMode(
+          data.textAnswerMode || "exact"
+        );
+      }
       if (tolInput) tolInput.value = data.numberTolerance ?? "";
       wireTextModeCard(card);
       renderCardPreview(card);
@@ -3735,6 +3779,24 @@ function escapeHtml(str){
 
     async function createQuizWithUniqueServerCode(payload, token){
       const cleanPayload = { ...payload };
+
+      cleanPayload.questions = (
+        Array.isArray(cleanPayload.questions)
+          ? cleanPayload.questions
+          : []
+      ).map(question => {
+        if (String(question?.type || "").toLowerCase() !== "text") {
+          return question;
+        }
+
+        return {
+          ...question,
+          textAnswerMode: normalizeTextAnswerMode(
+            question.textAnswerMode
+          )
+        };
+      });
+
       delete cleanPayload.assessmentCode;
       delete cleanPayload.quizCode;
       delete cleanPayload.examCode;
@@ -3982,7 +4044,9 @@ function escapeHtml(str){
             suffix: autoConvertMixedLatex(field.suffix),
             correctAnswer: autoConvertMixedLatex(field.correctAnswer)
           }));
-          const textAnswerMode = card.querySelector(".textMode")?.value || "exact";
+          const textAnswerMode = normalizeTextAnswerMode(
+            card.querySelector(".textMode")?.value
+          );
           const toleranceRaw = cleanSpaces(card.querySelector(".tolerance")?.value);
 
           if (!correctText && !answerFields.length) {
