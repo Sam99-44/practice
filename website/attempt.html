@@ -4,12 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Attempt Assessment | Practice Online</title>
-  <!--
-    Updated:
-    - MathLive fractions compare correctly with plain fraction answers
-    - Harmless ResizeObserver warnings are hidden
-    - Mobile typed-answer fields use the full available width
-  -->
 
   <!-- MathJax -->
   <script>
@@ -48,7 +42,11 @@ window.addEventListener("load", () => {
     };
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/mathlive@0.110.0/mathlive.min.js"></script>
+  <script type="module">
+    import { MathfieldElement } from "https://esm.run/mathlive@0.110.0";
+    MathfieldElement.fontsDirectory =
+      "https://unpkg.com/mathlive@0.110.0/fonts";
+  </script>
 
   <style>
     mjx-container[jax="SVG"]{
@@ -2413,7 +2411,7 @@ body.submitted-state .solutionHolder .solutionBox{
   display:block;
   width:100%;
   min-width:0;
-  min-height:50px;
+  min-height:42px;
   padding:6px 9px;
   border:1px solid #d6d3d1;
   border-radius:4px;
@@ -2500,53 +2498,82 @@ body.submitted-state .solutionHolder .solutionBox{
 
 @media(max-width:640px){
   .typedAnswerBlock{
-    margin-left:0 !important;
-    width:100% !important;
-    margin-top:12px !important;
-  }
-
-  .typedFields{
-    gap:14px !important;
+    margin-left:56px;
+    width:calc(100% - 56px);
   }
 
   .typedAnswerRow{
-    grid-template-columns:1fr !important;
-    gap:5px !important;
+    grid-template-columns:max-content minmax(105px, 1fr) max-content;
+    gap:6px;
+  }
+
+  .mathAnswerField{
+    font-size:17px;
+    min-height:40px;
+  }
+}
+
+
+
+/* ===== FINAL MOBILE TYPED ANSWER SPACE ===== */
+@media(max-width:640px){
+  .typedAnswerBlock{
     width:100% !important;
+    margin:12px 0 0 !important;
+  }
+
+  .typedFields,
+  .typedFieldItem{
+    width:100% !important;
+  }
+
+  .typedAnswerRow{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    width:100% !important;
+    gap:6px !important;
   }
 
   .typedAnswerPrefix,
   .typedAnswerSuffix{
+    display:block !important;
+    width:100% !important;
     white-space:normal !important;
-    font-size:14px !important;
+    font-size:15px !important;
   }
 
+  math-field.mathAnswerField,
   .mathAnswerField,
   .plainTypedInput{
+    display:block !important;
     width:100% !important;
     min-width:100% !important;
-    min-height:56px !important;
-    padding:10px 12px !important;
-    font-size:20px !important;
-    line-height:1.5 !important;
-    touch-action:manipulation;
+    max-width:100% !important;
+    min-height:64px !important;
+    padding:12px 14px !important;
+    font-size:22px !important;
+    line-height:1.55 !important;
+    box-sizing:border-box !important;
+    touch-action:manipulation !important;
   }
 
   .mathPreview{
     width:100% !important;
-    min-height:44px !important;
-    padding:9px 10px !important;
+    min-height:48px !important;
+    padding:10px 12px !important;
+    box-sizing:border-box !important;
   }
 
   .qLocalActions{
-    margin-left:0 !important;
     width:100% !important;
+    margin:10px 0 0 !important;
   }
 
   .qCheckBtn,
   .qShowAnswerBtn{
-    min-height:42px !important;
-    padding:0 14px !important;
+    min-height:44px !important;
+    padding:0 16px !important;
+    font-size:15px !important;
   }
 }
 
@@ -2787,20 +2814,17 @@ body.submitted-state .solutionHolder .solutionBox{
     }catch(_){}
   });
 
-  window.addEventListener(
-    "unhandledrejection",
-    function(event){
-      const message = String(
-        event?.reason?.message ||
-        event?.reason ||
-        ""
-      );
+  window.addEventListener("unhandledrejection", function(event){
+    const message = String(
+      event?.reason?.message ||
+      event?.reason ||
+      ""
+    );
 
-      if (message.includes("ResizeObserver loop")) {
-        event.preventDefault();
-      }
+    if (message.includes("ResizeObserver loop")) {
+      event.preventDefault();
     }
-  );
+  });
 
   const API = "https://api.practiceonline.co.za";
 
@@ -3907,11 +3931,11 @@ function inlineQuizLoadingHtml(){
   }
 
   function normalizeMathLiveAnswer(value) {
-    let s = String(value || "").trim();
+    let expression = String(value || "").trim();
 
-    if (!s) return "";
+    if (!expression) return "";
 
-    s = s
+    expression = expression
       .replace(/\u2212/g, "-")
       .replace(/[–—]/g, "-")
       .replace(/\\left/g, "")
@@ -3927,132 +3951,146 @@ function inlineQuizLoadingHtml(){
 
     let previous = "";
 
-    while (previous !== s) {
-      previous = s;
+    while (previous !== expression) {
+      previous = expression;
 
-      s = s.replace(
+      expression = expression.replace(
         /\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g,
         "(($1)/($2))"
       );
 
-      s = s.replace(
+      expression = expression.replace(
         /\\sqrt\s*\{([^{}]+)\}/g,
         "sqrt($1)"
       );
     }
 
-    s = s
+    return expression
       .replace(/\^\{([^{}]+)\}/g, "^($1)")
       .replace(/\{([^{}]+)\}/g, "($1)")
-      .replace(/\s+/g, "");
-
-    return s;
+      .replace(/\s+/g, "")
+      .trim();
   }
 
-  function evaluateSimpleNumericMath(value) {
-    const expression = normalizeMathLiveAnswer(value);
+  function evaluateNumericMathAnswer(value) {
+    const normalized = normalizeMathLiveAnswer(value);
 
-    if (!expression) return null;
+    if (!normalized) return null;
 
-    if (!/^[0-9+\-*/().^\s]+$/.test(expression)) {
+    /*
+     * This local browser checker handles numeric expressions only.
+     * Full symbolic expression equivalence is still checked securely
+     * by the server using Math.js.
+     */
+    const numericExpression = normalized
+      .replace(/\^/g, "**")
+      .replace(/sqrt\(/g, "Math.sqrt(");
+
+    if (
+      !/^[0-9+\-*/().\sA-Za-z]+$/.test(numericExpression) ||
+      /[A-Za-z]/.test(
+        numericExpression.replace(/Math\.sqrt/g, "")
+      )
+    ) {
       return null;
     }
 
     try {
-      const jsExpression = expression.replace(/\^/g, "**");
-
-      if (
-        /(?:\*\*\*|\/\/|\/\*|\*\/)/.test(jsExpression)
-      ) {
-        return null;
-      }
-
       const result = Function(
-        `"use strict"; return (${jsExpression});`
+        `"use strict"; return (${numericExpression});`
       )();
 
-      return Number.isFinite(result) ? result : null;
+      return Number.isFinite(result)
+        ? Number(result)
+        : null;
     } catch {
       return null;
     }
   }
 
   function parseNumberOrFraction(input) {
-    const s = normalizeMathLiveAnswer(input)
-      .replace(/,/g, ".");
-    if (!s) return null;
-
-    const simple = s
-      .replace(/^\(+/, "")
-      .replace(/\)+$/, "");
-
-    const m = simple.match(
-      /^\(?([+-]?\d+(?:\.\d+)?)\)?\/\(?([+-]?\d+(?:\.\d+)?)\)?$/
-    );
-
-    if (m) {
-      const a = Number(m[1]);
-      const b = Number(m[2]);
-
-      if (
-        !Number.isFinite(a) ||
-        !Number.isFinite(b) ||
-        b === 0
-      ) {
-        return null;
-      }
-
-      return a / b;
-    }
-
-    const direct = Number(simple);
-
-    if (Number.isFinite(direct)) {
-      return direct;
-    }
-
-    return evaluateSimpleNumericMath(simple);
+    return evaluateNumericMathAnswer(input);
   }
 
-  function normalizeTextAnswer(s) {
-    return normalizeMathLiveAnswer(s)
+  function normalizeTextAnswer(value) {
+    return normalizeMathLiveAnswer(value)
       .toLowerCase()
       .replace(/\s+/g, "")
       .replace(/−/g, "-");
   }
 
-  function compareTextAnswer(userAns, correctAns, mode, tolerance) {
+  function compareTextAnswer(
+    userAns,
+    correctAns,
+    mode,
+    tolerance
+  ) {
     const uaRaw = String(userAns || "");
     const caRaw = String(correctAns || "");
+
     if (!caRaw.trim()) return false;
 
-    const uNum = parseNumberOrFraction(uaRaw);
-    const cNum = parseNumberOrFraction(caRaw);
+    const normalizedMode = String(mode || "exact")
+      .toLowerCase()
+      .trim();
 
-    if (mode === "number_tolerance") {
+    const uNum = evaluateNumericMathAnswer(uaRaw);
+    const cNum = evaluateNumericMathAnswer(caRaw);
+
+    if (normalizedMode === "number_tolerance") {
       const tol = Number(tolerance);
-      if (uNum === null || cNum === null || !Number.isFinite(tol) || tol < 0) return false;
+
+      if (
+        uNum === null ||
+        cNum === null ||
+        !Number.isFinite(tol) ||
+        tol < 0
+      ) {
+        return false;
+      }
+
       return Math.abs(uNum - cNum) <= tol;
     }
 
-    if (uNum !== null && cNum !== null) return Math.abs(uNum - cNum) <= 1e-12;
+    /*
+     * This makes all equivalent numeric forms match locally:
+     * \frac{1}{2}, 1/2 and 0.5.
+     */
+    if (uNum !== null && cNum !== null) {
+      return Math.abs(uNum - cNum) <= 1e-12;
+    }
 
     const ua = normalizeTextAnswer(uaRaw);
     const ca = normalizeTextAnswer(caRaw);
 
-    if (mode === "contains") return ua.includes(ca);
-
-    if (mode === "expression") {
-      const uValue = evaluateSimpleNumericMath(uaRaw);
-      const cValue = evaluateSimpleNumericMath(caRaw);
-
-      if (uValue !== null && cValue !== null) {
-        return Math.abs(uValue - cValue) <= 1e-12;
-      }
-
-      return ua === ca;
+    if (normalizedMode === "contains") {
+      return ua.includes(ca);
     }
 
+    if (normalizedMode === "unordered") {
+      const left = ua
+        .split(/[;,|]+/)
+        .map(item => item.trim())
+        .filter(Boolean)
+        .sort();
+
+      const right = ca
+        .split(/[;,|]+/)
+        .map(item => item.trim())
+        .filter(Boolean)
+        .sort();
+
+      return (
+        left.length === right.length &&
+        left.every((item, index) => item === right[index])
+      );
+    }
+
+    /*
+     * Non-numeric symbolic expressions receive a lightweight local
+     * comparison. The server remains the source of truth and performs
+     * full Math.js equivalence checking.
+     */
     return ua === ca;
   }
 
