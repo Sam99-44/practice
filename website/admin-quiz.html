@@ -2270,19 +2270,16 @@ function escapeHtml(str){
               <div class="grid2">
                 <div>
                   <label>Correct Answer</label>
-                  ${shouldUseMathLiveForAnswerMode(q.textAnswerMode)
-          ? `<div class="singleCorrectMathWrap">
-              ${renderAdminMathField({
-                id: `correctText_${id}`,
-                value: q.correctText || "",
-                previewId: `correctTextPreview_${id}`,
-                className: "correctText",
-                placeholder: "Enter the correct mathematical answer",
-                ariaLabel: "Correct mathematical answer"
-              })}
-            </div>`
-          : `<input class="correctText" value="${escapeAttr(q.correctText || "")}" placeholder="Correct answer" />`
-        }
+                  <div class="singleCorrectMathWrap">
+                    ${renderAdminMathField({
+                      id: `correctText_${id}`,
+                      value: "",
+                      previewId: `correctTextPreview_${id}`,
+                      className: "correctText",
+                      placeholder: "Enter the correct mathematical answer",
+                      ariaLabel: "Correct mathematical answer"
+                    })}
+                  </div>
                 </div>
                 <div>
                   <label>Check Mode</label>
@@ -2386,9 +2383,22 @@ function escapeHtml(str){
       return key || `answer_${fallbackIndex}`;
     }
 
+    let answerFieldUid = 0;
+
     function addAnswerFieldRow(card, data={}){
       const wrap = card?.querySelector(".answerFieldsWrap");
       if(!wrap) return;
+
+      const fieldIndex = wrap.children.length;
+      answerFieldUid += 1;
+      const cardNumber = cleanSpaces(
+        card?.dataset?.fullNumber ||
+        card?.querySelector(".cardLabel")?.textContent ||
+        "question"
+      ).replace(/[^a-zA-Z0-9_-]+/g, "_");
+      const fieldId = `answerFieldCorrect_${cardNumber}_${answerFieldUid}`;
+      const previewId = `answerFieldPreview_${cardNumber}_${answerFieldUid}`;
+      const fieldKey = String(data?.key || `field ${fieldIndex + 1}`);
 
       const row = document.createElement("div");
       row.className = "answerFieldRow";
@@ -2409,7 +2419,14 @@ function escapeHtml(str){
         </div>
         <div>
           <label>Correct Value</label>
-          ${renderAdminMathField({ id: `answerFieldCorrect_${cardId}_${fieldIndex}`, value: field.correctAnswer || "", previewId: `answerFieldPreview_${cardId}_${fieldIndex}`, className: "answerFieldCorrect", placeholder: "Correct answer", ariaLabel: `Correct answer for ${field.key || `field ${fieldIndex + 1}`}` })}
+          ${renderAdminMathField({
+            id: fieldId,
+            value: data.correctAnswer ?? data.answer ?? "",
+            previewId,
+            className: "answerFieldCorrect",
+            placeholder: "Correct answer",
+            ariaLabel: `Correct answer for ${fieldKey}`
+          })}
         </div>
         <button type="button" class="smallbtn answerFieldRemove">Remove</button>
       `;
