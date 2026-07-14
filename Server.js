@@ -2594,52 +2594,118 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
       }
       q.points = pts;
 
-      if (type === "text") {
-        if (!cleanSpaces(q?.correctText)) {
-          return res.status(400).json({ message: "Typed questions must have correctText." });
-        }
-        const mode = q?.textAnswerMode || "exact";
-        if (!["exact", "contains", "number_tolerance"].includes(mode)) {
-          return res.status(400).json({ message: "Invalid textAnswerMode." });
-        }
-        if (mode === "number_tolerance") {
-          const tol = safeNum(q?.numberTolerance, null);
-          if (tol === null || tol < 0) {
-            return res.status(400).json({ message: "Invalid numberTolerance." });
-          }
-        }
+ if (type === "text") {
+  const answerFields = Array.isArray(q?.answerFields)
+    ? q.answerFields
+        .map((field, index) => ({
+          key: cleanSpaces(field?.key || `answer_${index + 1}`)
+            .toLowerCase()
+            .replace(/[^a-z0-9_]+/g, "_")
+            .replace(/^_+|_+$/g, ""),
 
-        q.correctIndex = -1;
-        q.correctIndexes = [];
-        q.isMultiSelect = false;
-      } else {
-        const opts = Array.isArray(q?.options) ? q.options : [];
-        if (opts.length < 2 || opts.some((o) => !cleanSpaces(o))) {
-          return res.status(400).json({ message: "MCQ must have at least 2 options." });
-        }
+          prefix: String(field?.prefix || "").trim(),
+          suffix: String(field?.suffix || "").trim(),
 
-        const idxs = normalizeIndexArray(q?.correctIndexes || []);
-        const hasMulti = idxs.length >= 2;
-        const wantsMulti = Boolean(q?.isMultiSelect) || hasMulti;
+          correctAnswer: String(
+            field?.correctAnswer ?? field?.answer ?? ""
+          ).trim(),
+        }))
+        .filter(
+          (field) =>
+            field.key ||
+            field.prefix ||
+            field.suffix ||
+            field.correctAnswer
+        )
+    : [];
 
-        if (wantsMulti) {
-          if (idxs.length < 1) {
-            return res.status(400).json({ message: "MCQ must have at least 1 correct option." });
-          }
-          if (idxs.some((i) => i < 0 || i >= opts.length)) {
-            return res.status(400).json({ message: "MCQ correctIndexes must be within options." });
-          }
-          q.isMultiSelect = true;
-          q.correctIndexes = idxs;
-          q.correctIndex = idxs.length === 1 ? idxs[0] : -1;
-        } else {
-          const ci = safeInt(q?.correctIndex, null);
-          if (ci === null || ci < 0 || ci >= opts.length) {
-            return res.status(400).json({ message: "MCQ correctIndex must be within options." });
-          }
-          q.correctIndexes = [ci];
-          q.correctIndex = ci;
-          q.isMultiSelect = false;
+  const correctText = String(q?.correctText || "").trim();
+
+  if (!correctText && answerFields.length === 0) {
+    return res.status(400).json({
+      message:
+        "Typed questions must have a correct answer or at least one Answer Field.",
+    });
+  }
+
+  if (answerFields.some((field) => !field.key)) {
+    return res.status(400).json({
+      message: "Every Answer Field must have a field key.",
+    });
+  }
+
+  if (answerFields.some((field) => !field.correctAnswer)) {
+    return res.status(400).json({
+      message: "Every Answer Field must have a correct answer.",
+    });
+  }
+
+  const fieldKeys = answerFields.map((field) => field.key);
+
+  if (new Set(fieldKeys).size !== fieldKeys.length) {
+    return res.status(400).json({
+      message: "Answer Field keys must be unique.",
+    });
+  }
+
+  const mode = String(q?.textAnswerMode || "exact")
+    .toLowerCase()
+    .trim();
+
+  const allowedModes = [
+    "exact",
+    "contains",
+    "number_tolerance",
+    "unordered",
+    "expression",
+  ];
+
+  if (!allowedModes.includes(mode)) {
+    return res.status(400).json({
+      message: `Invalid textAnswerMode: ${mode}`,
+    });
+  }
+
+  let numberTolerance = 0;
+
+  if (mode === "number_tolerance") {
+    numberTolerance = Number(q?.numberTolerance);
+
+    if (!Number.isFinite(numberTolerance) || numberTolerance < 0) {
+      return res.status(400).json({
+        message: "Invalid numberTolerance.",
+      });
+    }
+  }
+
+  q.instruction = String(q?.instruction || "").trim();
+  q.answerPrefix = String(q?.answerPrefix || "").trim();
+  q.answerSuffix = String(
+    q?.answerSuffix || q?.unit || ""
+  ).trim();
+
+  q.unit = String(
+    q?.unit || q?.answerSuffix || ""
+  ).trim();
+
+  q.answerFields = answerFields;
+
+  q.correctText =
+    correctText ||
+    answerFields
+      .map(
+        (field) =>
+          `${field.key}=${field.correctAnswer}`
+      )
+      .join("|");
+
+  q.textAnswerMode = mode;
+  q.numberTolerance = numberTolerance;
+
+  q.options = [];
+  q.correctIndex = -1;
+  q.correctIndexes = [];
+  q.isMultiSelect = false;
         }
       }
     }
