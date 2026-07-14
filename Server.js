@@ -7,6 +7,8 @@
 // ✅ Adds MCQ MULTI-SELECT support (chosenIndexes + correctIndexes)
 // ✅ Auto-detects multi-select when correctIndexes has 2+ items OR isMultiSelect true
 // ✅ Saves multi-select properly into Result for review/results
+// ✅ Saves and marks single + multiple typed-answer fields
+// ✅ Supports instructions, labels, units, x/y/z values and review snapshots
 // ✅ Backward compatible with old single-correct fields (chosenIndex/correctIndex)
 // ✅ Saves + returns quiz difficulty (easy/moderate/hard)
 // ✅ Saves + returns quiz paper (paper1/paper2)
@@ -3186,6 +3188,172 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
   return false;
 }
 
+
+function normalizeTypedFieldKey(value, fallback = "") {
+  return String(value || fallback || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function normalizeSubmittedTypedValues(answer) {
+  const values = [];
+
+  if (Array.isArray(answer?.typedValues)) {
+    answer.typedValues.forEach((item, index) => {
+      const key = normalizeTypedFieldKey(
+        item?.key,
+        `answer_${index + 1}`
+      );
+
+      if (!key) return;
+
+      values.push({
+        key,
+        value: String(item?.value ?? item?.answer ?? "").trim(),
+      });
+    });
+  } else if (
+    answer?.typedValues &&
+    typeof answer.typedValues === "object"
+  ) {
+    Object.entries(answer.typedValues).forEach(([rawKey, rawValue]) => {
+      const key = normalizeTypedFieldKey(rawKey);
+      if (!key) return;
+
+      values.push({
+        key,
+        value: String(rawValue ?? "").trim(),
+      });
+    });
+  }
+
+  if (Array.isArray(answer?.answerFields)) {
+    answer.answerFields.forEach((item, index) => {
+      const key = normalizeTypedFieldKey(
+        item?.key,
+        `answer_${index + 1}`
+      );
+
+      if (!key) return;
+
+      values.push({
+        key,
+        value: String(item?.value ?? item?.answer ?? "").trim(),
+      });
+    });
+  }
+
+  const unique = new Map();
+  values.forEach((item) => unique.set(item.key, item));
+
+  return [...unique.values()];
+}
+
+function normalizeCorrectTypedFields(question) {
+  const fields = Array.isArray(question?.answerFields)
+    ? question.answerFields
+    : [];
+
+  return fields
+    .map((field, index) => ({
+      key: normalizeTypedFieldKey(
+        field?.key,
+        `answer_${index + 1}`
+      ),
+      prefix: String(field?.prefix || "").trim(),
+      suffix: String(field?.suffix || field?.unit || "").trim(),
+      correctAnswer: String(
+        field?.correctAnswer ?? field?.answer ?? ""
+      ).trim(),
+    }))
+    .filter((field) => field.key);
+}
+
+function compareUnorderedTypedAnswer(
+  userAnswer,
+  correctAnswer,
+  tolerance
+) {
+  const learnerValues = splitLearnerAnswers(userAnswer);
+  const correctValues = splitPossibleAnswers(correctAnswer);
+
+  if (
+    learnerValues.length === 0 ||
+    learnerValues.length !== correctValues.length
+  ) {
+    return false;
+  }
+
+  const used = new Set();
+
+  for (const learnerValue of learnerValues) {
+    let matchingIndex = -1;
+
+    for (let index = 0; index < correctValues.length; index += 1) {
+      if (used.has(index)) continue;
+
+      if (
+        compareTextAnswer(
+          learnerValue,
+          correctValues[index],
+          "exact",
+          tolerance
+        )
+      ) {
+        matchingIndex = index;
+        break;
+      }
+    }
+
+    if (matchingIndex < 0) return false;
+    used.add(matchingIndex);
+  }
+
+  return true;
+}
+
+function compareTypedAnswerValue(
+  userAnswer,
+  correctAnswer,
+  mode,
+  tolerance
+) {
+  const normalizedMode = String(mode || "exact")
+    .toLowerCase()
+    .trim();
+
+  if (normalizedMode === "unordered") {
+    return compareUnorderedTypedAnswer(
+      userAnswer,
+      correctAnswer,
+      tolerance
+    );
+  }
+
+  if (normalizedMode === "expression") {
+    /*
+     * Safe expression comparison:
+     * use the existing normalised text/number comparison without
+     * evaluating arbitrary JavaScript from learner input.
+     */
+    return compareTextAnswer(
+      userAnswer,
+      correctAnswer,
+      "exact",
+      tolerance
+    );
+  }
+
+  return compareTextAnswer(
+    userAnswer,
+    correctAnswer,
+    normalizedMode,
+    tolerance
+  );
+}
+
 app.post("/api/results", authRequired, async (req, res) => {
   try {
     const { quizId, answers, timeTakenSeconds } = req.body;
@@ -3263,21 +3431,141 @@ app.post("/api/results", authRequired, async (req, res) => {
       }
 
       if (type === "text") {
-        const userText = cleanSpaces(ans.textAnswer || "");
-        const correctText = cleanSpaces(q.correctText || "");
-        const mode = q.textAnswerMode || "exact";
-        const tol = q.numberTolerance ?? 0;
+        const correctFields = normalizeCorrectTypedFields(q);
+        const submittedFields = normalizeSubmittedTypedValues(ans);
 
-        const isCorrect = compareTextAnswer(userText, correctText, mode, tol);
+        const mode = String(q.textAnswerMode || "exact")
+          .toLowerCase()
+          .trim();
+
+        const tol = Number(q.numberTolerance ?? 0);
+
+        /*
+         * Multiple typed-answer fields:
+         * simultaneous equations, coordinates, matrices,
+         * turning points and other multi-value questions.
+         */
+        if (correctFields.length > 0) {
+          const submittedMap = new Map(
+            submittedFields.map((field) => [
+              field.key,
+              field.value,
+            ])
+          );
+
+          const checkedFields = correctFields.map((field) => {
+            const learnerValue = String(
+              submittedMap.get(field.key) ?? ""
+            ).trim();
+
+            const fieldIsCorrect = compareTypedAnswerValue(
+              learnerValue,
+              field.correctAnswer,
+              mode,
+              tol
+            );
+
+            return {
+              key: field.key,
+              prefix: field.prefix,
+              suffix: field.suffix,
+              value: learnerValue,
+              correctAnswer: field.correctAnswer,
+              isCorrect: fieldIsCorrect,
+            };
+          });
+
+          const isCorrect =
+            checkedFields.length > 0 &&
+            checkedFields.every((field) => field.isCorrect);
+
+          const earned = isCorrect ? qPoints : 0;
+          scorePoints += earned;
+
+          const textAnswer = checkedFields
+            .map((field) => `${field.key}=${field.value}`)
+            .join("|");
+
+          const correctText = checkedFields
+            .map(
+              (field) =>
+                `${field.key}=${field.correctAnswer}`
+            )
+            .join("|");
+
+          return {
+            questionIndex: i,
+            type: "text",
+            points: qPoints,
+            earnedPoints: earned,
+            chosenIndex: -1,
+            correctIndex: -1,
+            isMultiSelect: false,
+            chosenIndexes: [],
+            correctIndexes: [],
+
+            // Backward compatibility
+            textAnswer,
+            correctText,
+
+            // Universal typed-answer values
+            typedValues: checkedFields.map((field) => ({
+              key: field.key,
+              value: field.value,
+            })),
+
+            correctTypedValues: checkedFields.map((field) => ({
+              key: field.key,
+              value: field.correctAnswer,
+            })),
+
+            answerFields: checkedFields,
+
+            instruction: String(q.instruction || "").trim(),
+            answerPrefix: String(q.answerPrefix || "").trim(),
+            answerSuffix: String(
+              q.answerSuffix || q.unit || ""
+            ).trim(),
+            unit: String(
+              q.unit || q.answerSuffix || ""
+            ).trim(),
+
+            hint,
+            solution,
+            answerMode: mode,
+            tolerance:
+              mode === "number_tolerance" &&
+              Number.isFinite(tol)
+                ? tol
+                : null,
+            roundTo: null,
+            isCorrect,
+            questionText,
+            options: [],
+          };
+        }
+
+        /*
+         * Normal single typed answer.
+         */
+        const userText = cleanSpaces(
+          ans.textAnswer ??
+          ans.value ??
+          ans.answer ??
+          ""
+        );
+
+        const correctText = cleanSpaces(q.correctText || "");
+
+        const isCorrect = compareTypedAnswerValue(
+          userText,
+          correctText,
+          mode,
+          tol
+        );
+
         const earned = isCorrect ? qPoints : 0;
         scorePoints += earned;
-
-        const answerMode =
-          mode === "number_tolerance"
-            ? "number"
-            : mode === "exact"
-            ? "exact"
-            : "case-insensitive";
 
         return {
           questionIndex: i,
@@ -3291,10 +3579,28 @@ app.post("/api/results", authRequired, async (req, res) => {
           correctIndexes: [],
           textAnswer: userText,
           correctText,
+
+          typedValues: [],
+          correctTypedValues: [],
+          answerFields: [],
+
+          instruction: String(q.instruction || "").trim(),
+          answerPrefix: String(q.answerPrefix || "").trim(),
+          answerSuffix: String(
+            q.answerSuffix || q.unit || ""
+          ).trim(),
+          unit: String(
+            q.unit || q.answerSuffix || ""
+          ).trim(),
+
           hint,
           solution,
-          answerMode,
-          tolerance: mode === "number_tolerance" ? Number(tol) : null,
+          answerMode: mode,
+          tolerance:
+            mode === "number_tolerance" &&
+            Number.isFinite(tol)
+              ? tol
+              : null,
           roundTo: null,
           isCorrect,
           questionText,
