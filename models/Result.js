@@ -10,7 +10,7 @@
 //    - instruction / prefix / suffix / unit
 // ✅ Supports exact, contains, number_tolerance, unordered and expression modes
 // ✅ Learners: 1 attempt per quiz (unique index)
-// ✅ Admin: unlimited retries (partial unique index excludes admin attempts)
+// ✅ Admin: unlimited retries (partial unique index excludes admin attempts).
 
 import mongoose from "mongoose";
 
