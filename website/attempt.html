@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Attempt Assessment | Practice Online</title>
+  <!--
+    Updated:
+    - MathLive fractions compare correctly with plain fraction answers
+    - Harmless ResizeObserver warnings are hidden
+    - Mobile typed-answer fields use the full available width
+  -->
 
   <!-- MathJax -->
   <script>
@@ -2407,7 +2413,7 @@ body.submitted-state .solutionHolder .solutionBox{
   display:block;
   width:100%;
   min-width:0;
-  min-height:42px;
+  min-height:50px;
   padding:6px 9px;
   border:1px solid #d6d3d1;
   border-radius:4px;
@@ -2494,18 +2500,53 @@ body.submitted-state .solutionHolder .solutionBox{
 
 @media(max-width:640px){
   .typedAnswerBlock{
-    margin-left:56px;
-    width:calc(100% - 56px);
+    margin-left:0 !important;
+    width:100% !important;
+    margin-top:12px !important;
+  }
+
+  .typedFields{
+    gap:14px !important;
   }
 
   .typedAnswerRow{
-    grid-template-columns:max-content minmax(105px, 1fr) max-content;
-    gap:6px;
+    grid-template-columns:1fr !important;
+    gap:5px !important;
+    width:100% !important;
   }
 
-  .mathAnswerField{
-    font-size:17px;
-    min-height:40px;
+  .typedAnswerPrefix,
+  .typedAnswerSuffix{
+    white-space:normal !important;
+    font-size:14px !important;
+  }
+
+  .mathAnswerField,
+  .plainTypedInput{
+    width:100% !important;
+    min-width:100% !important;
+    min-height:56px !important;
+    padding:10px 12px !important;
+    font-size:20px !important;
+    line-height:1.5 !important;
+    touch-action:manipulation;
+  }
+
+  .mathPreview{
+    width:100% !important;
+    min-height:44px !important;
+    padding:9px 10px !important;
+  }
+
+  .qLocalActions{
+    margin-left:0 !important;
+    width:100% !important;
+  }
+
+  .qCheckBtn,
+  .qShowAnswerBtn{
+    min-height:42px !important;
+    padding:0 14px !important;
   }
 }
 
@@ -2727,14 +2768,39 @@ body.submitted-state .solutionHolder .solutionBox{
 <script>
 
   window.addEventListener("error", function(e){
+    const message = String(e?.message || "");
+
+    if (message.includes("ResizeObserver loop")) {
+      e.preventDefault();
+      return;
+    }
+
     try{
-      const msg = document.getElementById("msg");
-      if (msg) {
-        msg.className = "error";
-        msg.textContent = "Page script error: " + (e.message || "Unknown error");
+      const m = document.getElementById("msg");
+
+      if (m) {
+        m.className = "error";
+        m.textContent =
+          "Page script error: " +
+          (message || "Unknown error");
       }
     }catch(_){}
   });
+
+  window.addEventListener(
+    "unhandledrejection",
+    function(event){
+      const message = String(
+        event?.reason?.message ||
+        event?.reason ||
+        ""
+      );
+
+      if (message.includes("ResizeObserver loop")) {
+        event.preventDefault();
+      }
+    }
+  );
 
   const API = "https://api.practiceonline.co.za";
 
@@ -3840,24 +3906,116 @@ function inlineQuizLoadingHtml(){
     }
   }
 
+  function normalizeMathLiveAnswer(value) {
+    let s = String(value || "").trim();
+
+    if (!s) return "";
+
+    s = s
+      .replace(/\u2212/g, "-")
+      .replace(/[–—]/g, "-")
+      .replace(/\\left/g, "")
+      .replace(/\\right/g, "")
+      .replace(/\\,/g, "")
+      .replace(/\\!/g, "")
+      .replace(/\\cdot|\\times/g, "*")
+      .replace(/\\div/g, "/")
+      .replace(/\\pi\b/g, "pi")
+      .replace(/π/g, "pi")
+      .replace(/×/g, "*")
+      .replace(/÷/g, "/");
+
+    let previous = "";
+
+    while (previous !== s) {
+      previous = s;
+
+      s = s.replace(
+        /\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g,
+        "(($1)/($2))"
+      );
+
+      s = s.replace(
+        /\\sqrt\s*\{([^{}]+)\}/g,
+        "sqrt($1)"
+      );
+    }
+
+    s = s
+      .replace(/\^\{([^{}]+)\}/g, "^($1)")
+      .replace(/\{([^{}]+)\}/g, "($1)")
+      .replace(/\s+/g, "");
+
+    return s;
+  }
+
+  function evaluateSimpleNumericMath(value) {
+    const expression = normalizeMathLiveAnswer(value);
+
+    if (!expression) return null;
+
+    if (!/^[0-9+\-*/().^\s]+$/.test(expression)) {
+      return null;
+    }
+
+    try {
+      const jsExpression = expression.replace(/\^/g, "**");
+
+      if (
+        /(?:\*\*\*|\/\/|\/\*|\*\/)/.test(jsExpression)
+      ) {
+        return null;
+      }
+
+      const result = Function(
+        `"use strict"; return (${jsExpression});`
+      )();
+
+      return Number.isFinite(result) ? result : null;
+    } catch {
+      return null;
+    }
+  }
+
   function parseNumberOrFraction(input) {
-    const s = String(input || "").trim().replace(/,/g, ".").replace(/−/g, "-");
+    const s = normalizeMathLiveAnswer(input)
+      .replace(/,/g, ".");
     if (!s) return null;
 
-    const m = s.match(/^([+-]?\d+(?:\.\d+)?)\s*\/\s*([+-]?\d+(?:\.\d+)?)$/);
+    const simple = s
+      .replace(/^\(+/, "")
+      .replace(/\)+$/, "");
+
+    const m = simple.match(
+      /^\(?([+-]?\d+(?:\.\d+)?)\)?\/\(?([+-]?\d+(?:\.\d+)?)\)?$/
+    );
+
     if (m) {
       const a = Number(m[1]);
       const b = Number(m[2]);
-      if (!Number.isFinite(a) || !Number.isFinite(b) || b === 0) return null;
+
+      if (
+        !Number.isFinite(a) ||
+        !Number.isFinite(b) ||
+        b === 0
+      ) {
+        return null;
+      }
+
       return a / b;
     }
-    const n = Number(s);
-    return Number.isFinite(n) ? n : null;
+
+    const direct = Number(simple);
+
+    if (Number.isFinite(direct)) {
+      return direct;
+    }
+
+    return evaluateSimpleNumericMath(simple);
   }
 
   function normalizeTextAnswer(s) {
-    return String(s || "")
-      .trim()
+    return normalizeMathLiveAnswer(s)
       .toLowerCase()
       .replace(/\s+/g, "")
       .replace(/−/g, "-");
@@ -3883,6 +4041,18 @@ function inlineQuizLoadingHtml(){
     const ca = normalizeTextAnswer(caRaw);
 
     if (mode === "contains") return ua.includes(ca);
+
+    if (mode === "expression") {
+      const uValue = evaluateSimpleNumericMath(uaRaw);
+      const cValue = evaluateSimpleNumericMath(caRaw);
+
+      if (uValue !== null && cValue !== null) {
+        return Math.abs(uValue - cValue) <= 1e-12;
+      }
+
+      return ua === ca;
+    }
+
     return ua === ca;
   }
 
@@ -3920,7 +4090,7 @@ function inlineQuizLoadingHtml(){
           return compareTextAnswer(
             item.value,
             item.correctAnswer,
-            mode === "expression" ? "exact" : mode,
+            mode,
             tol
           );
         });
@@ -4665,7 +4835,7 @@ function inlineQuizLoadingHtml(){
         compareTextAnswer(
           item.value,
           item.correctAnswer,
-          mode === "expression" ? "exact" : mode,
+          mode,
           tol
         )
       );
