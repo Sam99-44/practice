@@ -24,6 +24,9 @@
      ✅ Add buttons moved to bottom
      ✅ Page stays open while working
      ✅ No forced logout except manual logout
+     ✅ Instant save/publish updates across open pages
+     ✅ Learner attempt synchronization and cache invalidation
+     ✅ Cross-tab BroadcastChannel + localStorage update events
      ✅ Upload .txt file can start with metadata:
         TITLE:
         GRADE:
@@ -660,6 +663,307 @@
     let currentQuiz = null;
     let allQuizzes = [];
 
+    const assessmentSyncChannel = (() => {
+      try {
+        return ("BroadcastChannel" in window)
+          ? new BroadcastChannel("practiceonline-assessments")
+          : null;
+      } catch {
+        return null;
+      }
+    })();
+
+    function safeQuizId(value){
+      return String(
+        value?._id ||
+        value?.id ||
+        value ||
+        ""
+      ).trim();
+    }
+
+    function removeQuizCacheEntries(quizId){
+      const id = safeQuizId(quizId);
+      if (!id) return;
+
+      const directKeys = [
+        `quiz_${id}`,
+        `quiz:${id}`,
+        `practiceonline:quiz:${id}`,
+        `practiceOnlineQuiz:${id}`,
+        `assessment_${id}`,
+        `assessment:${id}`,
+        `attemptQuiz:${id}`,
+        `attempt_quiz_${id}`,
+        `quizData:${id}`,
+        `quiz-data-${id}`
+      ];
+
+      directKeys.forEach(key => {
+        try { localStorage.removeItem(key); } catch {}
+        try { sessionStorage.removeItem(key); } catch {}
+      });
+
+      /*
+       * Remove only cached quiz/assessment entries that clearly contain
+       * this quiz id. Learner answers are not removed.
+       */
+      [localStorage, sessionStorage].forEach(storage => {
+        try {
+          const keys = [];
+
+          for (let index = 0; index < storage.length; index += 1) {
+            const key = storage.key(index);
+            if (key) keys.push(key);
+          }
+
+          keys.forEach(key => {
+            const lowerKey = key.toLowerCase();
+
+            if (
+              !lowerKey.includes("quiz") &&
+              !lowerKey.includes("assessment")
+            ) {
+              return;
+            }
+
+            if (
+              lowerKey.includes("answer") ||
+              lowerKey.includes("attempt_answers") ||
+              lowerKey.includes("quizanswers")
+            ) {
+              return;
+            }
+
+            const raw = storage.getItem(key) || "";
+
+            if (
+              key.includes(id) ||
+              raw.includes(`"${id}"`) ||
+              raw.includes(`"_id":"${id}"`) ||
+              raw.includes(`"quizId":"${id}"`)
+            ) {
+              storage.removeItem(key);
+            }
+          });
+        } catch {}
+      });
+    }
+
+    function updateQuizInMemory(savedQuiz){
+      const id = safeQuizId(savedQuiz);
+      if (!id || !savedQuiz) return;
+
+      const index = allQuizzes.findIndex(
+        quiz => safeQuizId(quiz) === id
+      );
+
+      if (index >= 0) {
+        allQuizzes[index] = {
+          ...allQuizzes[index],
+          ...savedQuiz
+        };
+      } else {
+        allQuizzes.unshift(savedQuiz);
+      }
+
+      if (safeQuizId(currentQuiz) === id) {
+        currentQuiz = {
+          ...currentQuiz,
+          ...savedQuiz
+        };
+      }
+    }
+
+    function makeAssessmentSyncPayload(
+      action,
+      quiz,
+      extra = {}
+    ){
+      const id = safeQuizId(quiz);
+
+      return {
+        type: "assessment-updated",
+        action: String(action || "updated"),
+        id,
+        quizId: id,
+        assessmentCode: String(
+          quiz?.assessmentCode ||
+          currentQuiz?.assessmentCode ||
+          ""
+        ),
+        title: String(
+          quiz?.title ||
+          currentQuiz?.title ||
+          ""
+        ),
+        grade:
+          quiz?.grade ??
+          currentQuiz?.grade ??
+          null,
+        topic: String(
+          quiz?.topic ||
+          currentQuiz?.topic ||
+          ""
+        ),
+        updatedAt:
+          quiz?.updatedAt ||
+          new Date().toISOString(),
+        version: Date.now(),
+        source: "edit-assessment",
+        ...extra
+      };
+    }
+
+    function broadcastAssessmentUpdate(
+      action,
+      quiz,
+      extra = {}
+    ){
+      const payload = makeAssessmentSyncPayload(
+        action,
+        quiz,
+        extra
+      );
+
+      if (!payload.id) return payload;
+
+      removeQuizCacheEntries(payload.id);
+
+      /*
+       * These keys support old and new learner pages.
+       */
+      try {
+        localStorage.setItem(
+          "practiceOnlineQuizChangedAt",
+          String(payload.version)
+        );
+
+        localStorage.setItem(
+          "practiceonline:quizUpdated",
+          JSON.stringify(payload)
+        );
+
+        localStorage.setItem(
+          "practiceonline:assessmentUpdated",
+          JSON.stringify(payload)
+        );
+
+        localStorage.setItem(
+          `practiceonline:quizVersion:${payload.id}`,
+          String(payload.version)
+        );
+
+        localStorage.setItem(
+          `practiceonline:quizSnapshot:${payload.id}`,
+          JSON.stringify(quiz || currentQuiz || {})
+        );
+      } catch {}
+
+      try {
+        assessmentSyncChannel?.postMessage(payload);
+      } catch {}
+
+      try {
+        window.dispatchEvent(
+          new CustomEvent(
+            "practiceonline:assessment-updated",
+            { detail: payload }
+          )
+        );
+      } catch {}
+
+      return payload;
+    }
+
+    function synchroniseSavedAssessment(
+      action,
+      savedQuiz,
+      extra = {}
+    ){
+      if (!savedQuiz) return;
+
+      updateQuizInMemory(savedQuiz);
+
+      const id = safeQuizId(savedQuiz);
+
+      if (id) {
+        currentQuiz = {
+          ...(currentQuiz || {}),
+          ...savedQuiz
+        };
+
+        assessmentSelectEl.value = id;
+      }
+
+      updateAvailabilityUi();
+      renderAssessmentDropdown();
+
+      if (id) {
+        assessmentSelectEl.value = id;
+      }
+
+      broadcastAssessmentUpdate(
+        action,
+        currentQuiz,
+        extra
+      );
+    }
+
+    /*
+     * Keep this editor current when another admin tab updates or deletes
+     * the same assessment.
+     */
+    function handleExternalAssessmentEvent(payload){
+      if (!payload || payload.source === "edit-assessment") return;
+
+      const id = safeQuizId(payload.id || payload.quizId);
+      if (!id) return;
+
+      if (payload.type === "assessment-deleted") {
+        purgeDeletedAssessmentFromCaches(id);
+        return;
+      }
+
+      if (
+        payload.type === "assessment-updated" &&
+        safeQuizId(currentQuiz) === id
+      ) {
+        removeQuizCacheEntries(id);
+
+        /*
+         * Reload from the server rather than trusting a possibly partial
+         * cross-tab payload.
+         */
+        loadAssessmentIntoEditor(id).catch(() => {});
+      }
+    }
+
+    try {
+      assessmentSyncChannel?.addEventListener(
+        "message",
+        event => handleExternalAssessmentEvent(event?.data)
+      );
+    } catch {}
+
+    window.addEventListener("storage", event => {
+      if (
+        ![
+          "practiceonline:quizUpdated",
+          "practiceonline:assessmentUpdated"
+        ].includes(event.key) ||
+        !event.newValue
+      ) {
+        return;
+      }
+
+      try {
+        handleExternalAssessmentEvent(
+          JSON.parse(event.newValue)
+        );
+      } catch {}
+    });
+
     function setMsg(text, type="muted"){
       msg.className = "msg " + type;
       msg.textContent = text;
@@ -1271,12 +1575,43 @@ function escapeHtml(str){
     }
 
     function broadcastAssessmentDeleted(quizId){
-      if (!quizId) return;
+      const id = safeQuizId(quizId);
+      if (!id) return;
+
+      removeQuizCacheEntries(id);
+
+      const payload = {
+        type: "assessment-deleted",
+        action: "deleted",
+        id,
+        quizId: id,
+        at: Date.now(),
+        version: Date.now(),
+        source: "edit-assessment"
+      };
+
       try {
-        localStorage.setItem('practiceonline:assessmentDeleted', JSON.stringify({ id: String(quizId), at: Date.now() }));
+        localStorage.setItem(
+          "practiceonline:assessmentDeleted",
+          JSON.stringify(payload)
+        );
+
+        localStorage.setItem(
+          "practiceOnlineQuizChangedAt",
+          String(payload.version)
+        );
+
+        localStorage.removeItem(
+          `practiceonline:quizSnapshot:${id}`
+        );
       } catch {}
+
       try {
-        deleteBroadcast?.postMessage({ type: 'assessment-deleted', id: String(quizId) });
+        deleteBroadcast?.postMessage(payload);
+      } catch {}
+
+      try {
+        assessmentSyncChannel?.postMessage(payload);
       } catch {}
     }
 
@@ -1320,11 +1655,26 @@ function escapeHtml(str){
       if (!res) return setMsg("Network error while updating availability.", "error");
       if (res.status === 401) return logout();
       if (!res.ok) return setMsg("Could not update availability.", "error");
-      currentQuiz = await res.json().catch(() => currentQuiz);
-      updateAvailabilityUi();
+      const savedQuiz = await res.json().catch(() => currentQuiz);
+      synchroniseSavedAssessment(
+        nextFrozen ? "frozen" : "unfrozen",
+        savedQuiz,
+        {
+          isFrozen: nextFrozen,
+          frozenAt: nextFrozen
+            ? new Date().toISOString()
+            : null
+        }
+      );
+
       await loadAssessmentList();
       assessmentSelectEl.value = currentQuiz._id;
-      setMsg(nextFrozen ? "Assessment made unavailable." : "Assessment made available.", "ok");
+      setMsg(
+        nextFrozen
+          ? "Assessment made unavailable. Open learner pages were notified immediately."
+          : "Assessment made available. Open learner pages were notified immediately.",
+        "ok"
+      );
     });
 
     deleteAssessmentBtn?.addEventListener("click", async ()=>{
@@ -3447,6 +3797,14 @@ function escapeHtml(str){
       if (!currentQuiz) return setMsg("Could not read assessment data.", "error");
       fillAssessmentForm(quizToParsedAssessment(currentQuiz));
       updateAvailabilityUi();
+
+      try {
+        localStorage.setItem(
+          `practiceonline:quizSnapshot:${currentQuiz._id}`,
+          JSON.stringify(currentQuiz)
+        );
+      } catch {}
+
       setMsg("Assessment loaded. You can now edit it with the full editor.", "ok");
     }
 
@@ -3482,11 +3840,26 @@ function escapeHtml(str){
 
         const data = await res.json().catch(()=>({}));
         if (res.ok) {
-          currentQuiz = data;
-          updateAvailabilityUi();
+          synchroniseSavedAssessment(
+            "saved",
+            data,
+            {
+              publishMode: "draft",
+              isPublished: Boolean(data?.isPublished)
+            }
+          );
+
+          /*
+           * The in-memory list and learner pages update immediately.
+           * The list refresh below confirms the saved server state.
+           */
           await loadAssessmentList();
           assessmentSelectEl.value = currentQuiz._id;
-          setMsg("Changes saved to the selected assessment.", "ok");
+
+          setMsg(
+            "Changes saved. Learner quiz and attempt pages were synchronized immediately.",
+            "ok"
+          );
         } else {
           setMsg("Error: " + (data.message || "Could not save assessment"), "error");
         }
@@ -3496,6 +3869,67 @@ function escapeHtml(str){
         saveBtn.disabled = false;
         publishBtn.disabled = !canPublish;
       }
+    });
+
+
+    let lastVisibilityRefreshAt = 0;
+
+    document.addEventListener("visibilitychange", async () => {
+      if (
+        document.visibilityState !== "visible" ||
+        !currentQuiz?._id
+      ) {
+        return;
+      }
+
+      const now = Date.now();
+
+      if (now - lastVisibilityRefreshAt < 3000) {
+        return;
+      }
+
+      lastVisibilityRefreshAt = now;
+
+      try {
+        const id = currentQuiz._id;
+        const token = localStorage.getItem("token");
+
+        if (!token) return;
+
+        const response = await fetch(
+          `${API}/api/quizzes/${encodeURIComponent(id)}?t=${now}`,
+          {
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Cache-Control": "no-cache"
+            },
+            cache: "no-store"
+          }
+        );
+
+        if (!response.ok) return;
+
+        const latestQuiz = await response.json();
+
+        if (
+          latestQuiz?.updatedAt &&
+          currentQuiz?.updatedAt &&
+          new Date(latestQuiz.updatedAt).getTime() >
+            new Date(currentQuiz.updatedAt).getTime()
+        ) {
+          currentQuiz = latestQuiz;
+          fillAssessmentForm(
+            quizToParsedAssessment(latestQuiz)
+          );
+          updateQuizInMemory(latestQuiz);
+          updateAvailabilityUi();
+
+          setMsg(
+            "This assessment was refreshed with newer saved changes.",
+            "ok"
+          );
+        }
+      } catch {}
     });
 
     publishBtn.addEventListener("click", async () => {
@@ -3540,22 +3974,30 @@ function escapeHtml(str){
         const data = await res.json().catch(()=>({}));
 
         if (res.ok) {
-          currentQuiz = data;
-          updateAvailabilityUi();
+          synchroniseSavedAssessment(
+            mode === "now" ? "published" : "scheduled",
+            data,
+            {
+              publishMode: mode,
+              isPublished: Boolean(data?.isPublished),
+              publishAt: data?.publishAt || payload.publishAt || null
+            }
+          );
+
           await loadAssessmentList();
           assessmentSelectEl.value = currentQuiz._id;
 
           if (mode === "now") {
             if (payload.sendPublishEmail) {
-              setMsg("Assessment changes published. Learner emails were triggered.", "ok");
+              setMsg("Assessment changes published and learner pages synchronized. Learner emails were triggered.", "ok");
             } else {
-              setMsg("Assessment changes published without sending learner emails.", "ok");
+              setMsg("Assessment changes published and learner pages synchronized without sending learner emails.", "ok");
             }
           } else {
             if (payload.sendPublishEmail) {
-              setMsg("Assessment updated and scheduled for publishing. Learner emails will be sent on publish.", "ok");
+              setMsg("Assessment updated, synchronized, and scheduled for publishing. Learner emails will be sent on publish.", "ok");
             } else {
-              setMsg("Assessment updated and scheduled without learner emails.", "ok");
+              setMsg("Assessment updated, synchronized, and scheduled without learner emails.", "ok");
             }
           }
         } else {
