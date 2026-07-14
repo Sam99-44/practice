@@ -3380,29 +3380,74 @@ function inlineQuizLoadingHtml(){
       ? q.answerFields
       : [];
 
+    /*
+     * Some quiz responses contain the field labels/keys in answerFields,
+     * while the actual correct values are stored in correctText as:
+     * a=63|b=99
+     *
+     * Build a key/value map so local "Check Answer" can still mark
+     * multi-field typed questions correctly.
+     */
+    const combinedCorrectText = String(
+      q?.correctText ??
+      q?.answer ??
+      q?.correctAnswer ??
+      ""
+    ).trim();
+
+    const correctValueMap = new Map();
+
+    combinedCorrectText
+      .split("|")
+      .map(part => String(part || "").trim())
+      .filter(Boolean)
+      .forEach((part, index) => {
+        const equalsAt = part.indexOf("=");
+
+        if (equalsAt > 0) {
+          const rawKey = part.slice(0, equalsAt).trim();
+          const rawValue = part.slice(equalsAt + 1).trim();
+          const key = normalizeTypedFieldKey(
+            rawKey,
+            `answer_${index + 1}`
+          );
+
+          if (key) correctValueMap.set(key, rawValue);
+        }
+      });
+
     if (configured.length){
       return configured
-        .map((field, index) => ({
-          key: normalizeTypedFieldKey(
+        .map((field, index) => {
+          const key = normalizeTypedFieldKey(
             field?.key,
             `answer_${index + 1}`
-          ),
-          prefix: String(
-            field?.prefix ??
-            field?.label ??
-            ""
-          ).trim(),
-          suffix: String(
-            field?.suffix ??
-            field?.unit ??
-            ""
-          ).trim(),
-          correctAnswer: String(
+          );
+
+          const directCorrectAnswer = String(
             field?.correctAnswer ??
             field?.answer ??
             ""
-          ).trim()
-        }))
+          ).trim();
+
+          return {
+            key,
+            prefix: String(
+              field?.prefix ??
+              field?.label ??
+              ""
+            ).trim(),
+            suffix: String(
+              field?.suffix ??
+              field?.unit ??
+              ""
+            ).trim(),
+            correctAnswer:
+              directCorrectAnswer ||
+              correctValueMap.get(key) ||
+              ""
+          };
+        })
         .filter(field => field.key);
     }
 
@@ -3414,12 +3459,7 @@ function inlineQuizLoadingHtml(){
         q?.unit ||
         ""
       ).trim(),
-      correctAnswer: String(
-        q?.correctText ??
-        q?.answer ??
-        q?.correctAnswer ??
-        ""
-      ).trim()
+      correctAnswer: combinedCorrectText
     }];
   }
 
