@@ -42,6 +42,7 @@ window.addEventListener("load", () => {
     };
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathlive@0.110.0/mathlive.min.js"></script>
 
   <style>
     mjx-container[jax="SVG"]{
@@ -2361,6 +2362,153 @@ body.submitted-state .solutionHolder .solutionBox{
   }
 }
 
+
+
+/* ===== MATHLIVE TYPED ANSWERS + LIVE PREVIEW ===== */
+.typedAnswerBlock{
+  margin:10px 0 0 68px;
+  width:calc(100% - 68px);
+  font-family:"Times New Roman", Times, serif;
+}
+
+.typedInstruction{
+  margin:0 0 10px;
+  padding:8px 10px;
+  border-left:3px solid #1b1648;
+  background:#f8fafc;
+  color:#334155;
+  font-size:13px;
+  line-height:1.55;
+}
+
+.typedFields{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.typedAnswerRow{
+  display:grid;
+  grid-template-columns:max-content minmax(140px, 1fr) max-content;
+  align-items:center;
+  gap:8px;
+  width:100%;
+}
+
+.typedAnswerPrefix,
+.typedAnswerSuffix{
+  color:#111827;
+  font-size:14px;
+  line-height:1.3;
+  white-space:nowrap;
+}
+
+.mathAnswerField{
+  display:block;
+  width:100%;
+  min-width:0;
+  min-height:42px;
+  padding:6px 9px;
+  border:1px solid #d6d3d1;
+  border-radius:4px;
+  background:#ffffff;
+  color:#111827;
+  font-size:18px;
+  line-height:1.35;
+  outline:none;
+  font-family:"Times New Roman", Times, serif;
+  --caret-color:#1b1648;
+  --selection-background-color:#e0e7ff;
+  --contains-highlight-background-color:#fef3c7;
+}
+
+.mathAnswerField:focus-within{
+  border-color:#94a3b8;
+  box-shadow:var(--focus);
+}
+
+.mathAnswerField[disabled],
+.mathAnswerField[read-only]{
+  opacity:.72;
+  background:#f8fafc;
+  cursor:not-allowed;
+}
+
+.plainTypedInput{
+  width:100%;
+  min-width:0;
+  min-height:40px;
+  padding:8px 10px;
+  border:1px solid #d6d3d1;
+  border-radius:4px;
+  background:#fff;
+  color:#111827;
+  font-family:"Times New Roman", Times, serif;
+  font-size:14px;
+  outline:none;
+}
+
+.plainTypedInput:focus{
+  border-color:#94a3b8;
+  box-shadow:var(--focus);
+}
+
+.mathPreview{
+  margin:7px 0 0;
+  padding:7px 10px;
+  min-height:36px;
+  border:1px solid #e5e7eb;
+  background:#fbfdff;
+  color:#334155;
+  font-size:13px;
+  line-height:1.5;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  overflow-x:auto;
+}
+
+.mathPreview.empty{
+  display:none;
+}
+
+.mathPreviewLabel{
+  flex:0 0 auto;
+  font-family:Arial, Helvetica, sans-serif;
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+  color:#64748b;
+}
+
+.mathPreviewValue{
+  min-width:0;
+  color:#111827;
+  font-size:16px;
+}
+
+.mathPreviewValue mjx-container{
+  margin:0 !important;
+}
+
+@media(max-width:640px){
+  .typedAnswerBlock{
+    margin-left:56px;
+    width:calc(100% - 56px);
+  }
+
+  .typedAnswerRow{
+    grid-template-columns:max-content minmax(105px, 1fr) max-content;
+    gap:6px;
+  }
+
+  .mathAnswerField{
+    font-size:17px;
+    min-height:40px;
+  }
+}
+
 </style>
 </head>
 
@@ -2978,6 +3126,307 @@ function inlineQuizLoadingHtml(){
     });
   }
 
+
+  function normalizeTypedFieldKey(value, fallback = ""){
+    return String(value || fallback || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+  }
+
+  function getQuestionAnswerFields(q){
+    const configured = Array.isArray(q?.answerFields)
+      ? q.answerFields
+      : [];
+
+    if (configured.length){
+      return configured
+        .map((field, index) => ({
+          key: normalizeTypedFieldKey(
+            field?.key,
+            `answer_${index + 1}`
+          ),
+          prefix: String(
+            field?.prefix ??
+            field?.label ??
+            ""
+          ).trim(),
+          suffix: String(
+            field?.suffix ??
+            field?.unit ??
+            ""
+          ).trim(),
+          correctAnswer: String(
+            field?.correctAnswer ??
+            field?.answer ??
+            ""
+          ).trim()
+        }))
+        .filter(field => field.key);
+    }
+
+    return [{
+      key: "answer",
+      prefix: String(q?.answerPrefix || "").trim(),
+      suffix: String(
+        q?.answerSuffix ||
+        q?.unit ||
+        ""
+      ).trim(),
+      correctAnswer: String(q?.correctText || "").trim()
+    }];
+  }
+
+  function questionUsesSeveralTypedFields(q){
+    return Array.isArray(q?.answerFields) &&
+      q.answerFields.length > 0;
+  }
+
+  function shouldUseMathLive(q){
+    const mode = String(q?.textAnswerMode || "exact")
+      .toLowerCase()
+      .trim();
+
+    return (
+      mode === "expression" ||
+      mode === "number_tolerance" ||
+      mode === "unordered" ||
+      questionUsesSeveralTypedFields(q)
+    );
+  }
+
+  function getTypedInputId(qIndex, key, fieldIndex, multiple){
+    if (!multiple) return `txt${qIndex}`;
+
+    return `txt${qIndex}_${normalizeTypedFieldKey(
+      key,
+      `answer_${fieldIndex + 1}`
+    )}`;
+  }
+
+  function getTypedInputValue(input){
+    if (!input) return "";
+
+    return String(input.value || "").trim();
+  }
+
+  function setTypedInputValue(input, value){
+    if (!input) return;
+
+    input.value = String(value ?? "");
+
+    if (input.matches("math-field")){
+      input.setAttribute("value", String(value ?? ""));
+    }
+
+    updateMathPreviewForInput(input);
+  }
+
+  function getTypedInputsForQuestion(qIndex){
+    return [
+      ...document.querySelectorAll(
+        `.typedAnswerInput[data-qindex="${qIndex}"]`
+      )
+    ];
+  }
+
+  function getTypedValuesForQuestion(q, qIndex){
+    const fields = getQuestionAnswerFields(q);
+    const multiple = questionUsesSeveralTypedFields(q);
+
+    return fields.map((field, fieldIndex) => {
+      const inputId = getTypedInputId(
+        qIndex,
+        field.key,
+        fieldIndex,
+        multiple
+      );
+
+      const input = document.getElementById(inputId);
+
+      return {
+        key: field.key,
+        value: getTypedInputValue(input),
+        correctAnswer: field.correctAnswer
+      };
+    });
+  }
+
+  function getSingleTypedAnswerValue(q, qIndex){
+    const values = getTypedValuesForQuestion(q, qIndex);
+    return values.length ? values[0].value : "";
+  }
+
+  function typedQuestionIsAnswered(q, qIndex){
+    const values = getTypedValuesForQuestion(q, qIndex);
+
+    if (!values.length) return false;
+
+    if (questionUsesSeveralTypedFields(q)){
+      return values.every(item => Boolean(cleanSpaces(item.value)));
+    }
+
+    return Boolean(cleanSpaces(values[0].value));
+  }
+
+  function escapeLatexForPreview(value){
+    return String(value || "")
+      .replace(/\\/g, "\\\\")
+      .replace(/\$/g, "\\$");
+  }
+
+  function updateMathPreviewForInput(input){
+    if (!input) return;
+
+    const previewId = input.dataset.previewId || "";
+    const preview = previewId
+      ? document.getElementById(previewId)
+      : null;
+
+    if (!preview) return;
+
+    const value = getTypedInputValue(input);
+    const valueBox = preview.querySelector(".mathPreviewValue");
+
+    if (!value){
+      preview.classList.add("empty");
+      if (valueBox) valueBox.textContent = "";
+      return;
+    }
+
+    preview.classList.remove("empty");
+
+    if (valueBox){
+      /*
+       * MathLive gives LaTeX. Use textContent so learner input is never
+       * interpreted as HTML, then ask MathJax to format the preview.
+       */
+      valueBox.textContent = `\\(${value}\\)`;
+
+      if (window.MathJax?.typesetClear){
+        try{
+          window.MathJax.typesetClear([valueBox]);
+        }catch{}
+      }
+
+      typesetMathSoon(valueBox);
+    }
+  }
+
+  function attachMathInputBehaviour(){
+    document.querySelectorAll(".typedAnswerInput").forEach(input => {
+      if (input.dataset.mathBound === "1") return;
+      input.dataset.mathBound = "1";
+
+      input.addEventListener("input", () => {
+        updateMathPreviewForInput(input);
+        debouncedSaveAnswers();
+      });
+
+      input.addEventListener("change", () => {
+        updateMathPreviewForInput(input);
+        saveAnswersToStorage();
+      });
+
+      updateMathPreviewForInput(input);
+    });
+  }
+
+  function renderTypedAnswerArea(q, qIndex){
+    const fields = getQuestionAnswerFields(q);
+    const multiple = questionUsesSeveralTypedFields(q);
+    const useMathLive = shouldUseMathLive(q);
+    const instruction = String(q?.instruction || "").trim();
+
+    const rows = fields.map((field, fieldIndex) => {
+      const inputId = getTypedInputId(
+        qIndex,
+        field.key,
+        fieldIndex,
+        multiple
+      );
+
+      const previewId = `mathPreview_${qIndex}_${fieldIndex}`;
+      const prefix = field.prefix || (
+        multiple ? `${field.key} =` : ""
+      );
+      const suffix = field.suffix || "";
+      const placeholder = multiple
+        ? `Enter ${field.key}`
+        : "Type your answer";
+
+      const inputHtml = useMathLive
+        ? `
+          <math-field
+            class="typedAnswerInput textAnswer mathAnswerField"
+            id="${escapeAttr(inputId)}"
+            data-qindex="${qIndex}"
+            data-field-key="${escapeAttr(field.key)}"
+            data-preview-id="${escapeAttr(previewId)}"
+            virtual-keyboard-mode="onfocus"
+            smart-mode="true"
+            smart-fence="true"
+            placeholder="${escapeAttr(placeholder)}"
+            aria-label="${escapeAttr(prefix || placeholder)}"
+          ></math-field>
+        `
+        : `
+          <input
+            class="typedAnswerInput textAnswer plainTypedInput"
+            id="${escapeAttr(inputId)}"
+            data-qindex="${qIndex}"
+            data-field-key="${escapeAttr(field.key)}"
+            data-preview-id=""
+            placeholder="${escapeAttr(placeholder)}"
+            autocomplete="off"
+          />
+        `;
+
+      return `
+        <div class="typedFieldItem">
+          <div class="typedAnswerRow">
+            <span class="typedAnswerPrefix">${escapeHtml(prefix)}</span>
+            ${inputHtml}
+            <span class="typedAnswerSuffix">${escapeHtml(suffix)}</span>
+          </div>
+
+          ${useMathLive ? `
+            <div class="mathPreview empty" id="${escapeAttr(previewId)}">
+              <span class="mathPreviewLabel">Preview</span>
+              <span class="mathPreviewValue"></span>
+            </div>
+          ` : ""}
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <div class="typedAnswerBlock">
+        ${instruction
+          ? `<div class="typedInstruction">${renderMixedMath(instruction)}</div>`
+          : ""}
+        <div class="typedFields">${rows}</div>
+      </div>
+    `;
+  }
+
+  function setTypedQuestionDisabled(qIndex, disabled){
+    getTypedInputsForQuestion(qIndex).forEach(input => {
+      input.disabled = Boolean(disabled);
+
+      if (input.matches("math-field")){
+        input.readOnly = Boolean(disabled);
+
+        if (disabled){
+          input.setAttribute("read-only", "");
+        }else{
+          input.removeAttribute("read-only");
+        }
+      }
+    });
+  }
+
   function saveAnswersToStorage(){
     if (!quizData || submitted) return;
     const payload = {
@@ -3015,9 +3464,28 @@ function inlineQuizLoadingHtml(){
         return;
       }
 
+      if (Array.isArray(item?.typedValues)) {
+        item.typedValues.forEach((typedItem, fieldIndex) => {
+          const key = normalizeTypedFieldKey(
+            typedItem?.key,
+            `answer_${fieldIndex + 1}`
+          );
+
+          const input =
+            document.querySelector(
+              `.typedAnswerInput[data-qindex="${qIndex}"][data-field-key="${CSS.escape(key)}"]`
+            ) ||
+            document.getElementById(`txt${qIndex}`);
+
+          setTypedInputValue(input, typedItem?.value ?? "");
+        });
+
+        return;
+      }
+
       if (typeof item?.textAnswer === "string") {
         const input = document.getElementById(`txt${qIndex}`);
-        if (input) input.value = item.textAnswer;
+        setTypedInputValue(input, item.textAnswer);
       }
     });
 
@@ -3038,10 +3506,7 @@ function inlineQuizLoadingHtml(){
     document.querySelectorAll(".mcqInput").forEach(el => {
       el.addEventListener("change", saveAnswersToStorage);
     });
-    document.querySelectorAll(".textAnswer").forEach(el => {
-      el.addEventListener("input", debouncedSaveAnswers);
-      el.addEventListener("change", saveAnswersToStorage);
-    });
+    attachMathInputBehaviour();
   }
 
   function showSubmitConfirm(message, title="Ready to submit?"){
@@ -3287,15 +3752,27 @@ function inlineQuizLoadingHtml(){
   }
 
   function disableAllInputs(){
-    document.querySelectorAll("input[type=radio], input[type=checkbox], input[type=text], input[type=number], textarea").forEach(el => {
+    document.querySelectorAll("input[type=radio], input[type=checkbox], input[type=text], input[type=number], textarea, math-field").forEach(el => {
       if (el.id === "ratingCommentInline") return;
       el.disabled = true;
+
+      if (el.matches("math-field")){
+        el.readOnly = true;
+        el.setAttribute("read-only", "");
+      }
     });
     document.querySelectorAll(".opt").forEach(el => el.classList.add("disabled"));
   }
 
   function enableAllInputs(){
-    document.querySelectorAll("input[type=radio], input[type=checkbox], input[type=text], input[type=number], textarea").forEach(el => el.disabled = false);
+    document.querySelectorAll("input[type=radio], input[type=checkbox], input[type=text], input[type=number], textarea, math-field").forEach(el => {
+      el.disabled = false;
+
+      if (el.matches("math-field")){
+        el.readOnly = false;
+        el.removeAttribute("read-only");
+      }
+    });
     document.querySelectorAll(".opt").forEach(el => el.classList.remove("disabled"));
   }
 
@@ -3309,7 +3786,9 @@ function inlineQuizLoadingHtml(){
 
   function clearAllAnswers(){
     document.querySelectorAll(".mcqInput").forEach(inp => { inp.checked = false; });
-    document.querySelectorAll(".textAnswer").forEach(inp => { inp.value = ""; });
+    document.querySelectorAll(".typedAnswerInput").forEach(inp => {
+      setTypedInputValue(inp, "");
+    });
     clearSavedAnswers();
   }
   function hideAllSolutions(){
@@ -3429,12 +3908,24 @@ function inlineQuizLoadingHtml(){
       totalPoints += pts;
 
       if (type === "text") {
-        const inp = document.getElementById(`txt${i}`);
-        const userText = inp ? cleanSpaces(inp.value) : "";
-        const correctText = cleanSpaces(q.correctText || "");
         const mode = q.textAnswerMode || "exact";
         const tol = q.numberTolerance ?? 0;
-        if (compareTextAnswer(userText, correctText, mode, tol)) scorePoints += pts;
+        const values = getTypedValuesForQuestion(q, i);
+
+        const allCorrect = values.length > 0 && values.every(item => {
+          /*
+           * The server performs full Math.js equivalence checking.
+           * The browser keeps a lightweight check for instant feedback.
+           */
+          return compareTextAnswer(
+            item.value,
+            item.correctAnswer,
+            mode === "expression" ? "exact" : mode,
+            tol
+          );
+        });
+
+        if (allCorrect) scorePoints += pts;
         return;
       }
 
@@ -3625,8 +4116,28 @@ function inlineQuizLoadingHtml(){
       if (type === "note") return;
 
       if (type === "text") {
-        const inp = document.getElementById(`txt${i}`);
-        answers.push({ questionIndex: i, textAnswer: inp ? cleanSpaces(inp.value) : "" });
+        const typedValues = getTypedValuesForQuestion(q, i)
+          .map(item => ({
+            key: item.key,
+            value: String(item.value || "").trim()
+          }));
+
+        if (questionUsesSeveralTypedFields(q)) {
+          answers.push({
+            questionIndex: i,
+            typedValues,
+            textAnswer: typedValues
+              .map(item => `${item.key}=${item.value}`)
+              .join("|")
+          });
+        } else {
+          answers.push({
+            questionIndex: i,
+            textAnswer: typedValues[0]?.value || "",
+            typedValues
+          });
+        }
+
         return;
       }
 
@@ -3650,8 +4161,7 @@ function inlineQuizLoadingHtml(){
       if (type === "note") return;
 
       if (type === "text") {
-        const inp = document.getElementById(`txt${i}`);
-        if (inp && cleanSpaces(inp.value)) answered++;
+        if (typedQuestionIsAnswered(q, i)) answered++;
         return;
       }
 
@@ -4071,7 +4581,7 @@ function inlineQuizLoadingHtml(){
     resetLocalQuestionChecks();
 
     document.body.classList.remove("submitted-state");
-    document.querySelectorAll(".mcqInput, .textAnswer").forEach(el => {
+    document.querySelectorAll(".mcqInput, .typedAnswerInput").forEach(el => {
       el.disabled = false;
     });
     document.querySelectorAll(".opt").forEach(opt => {
@@ -4146,13 +4656,20 @@ function inlineQuizLoadingHtml(){
     const pts = Math.max(1, Math.round(Number(q?.points || 1)));
 
     if (type === "text") {
-      const inp = document.getElementById(`txt${i}`);
-      const userText = inp ? cleanSpaces(inp.value) : "";
-      const correctText = cleanSpaces(q.correctText || "");
+      const values = getTypedValuesForQuestion(q, i);
       const mode = q.textAnswerMode || "exact";
       const tol = q.numberTolerance ?? 0;
-      const answered = Boolean(userText);
-      const correct = answered && compareTextAnswer(userText, correctText, mode, tol);
+      const answered = typedQuestionIsAnswered(q, i);
+
+      const correct = answered && values.every(item =>
+        compareTextAnswer(
+          item.value,
+          item.correctAnswer,
+          mode === "expression" ? "exact" : mode,
+          tol
+        )
+      );
+
       return { answered, correct, points: pts };
     }
 
@@ -4204,7 +4721,7 @@ function inlineQuizLoadingHtml(){
 
     document.body.classList.remove("submitted-state");
 
-    document.querySelectorAll(".mcqInput, .textAnswer").forEach(el => {
+    document.querySelectorAll(".mcqInput, .typedAnswerInput").forEach(el => {
       el.disabled = false;
     });
 
@@ -4356,7 +4873,7 @@ function inlineQuizLoadingHtml(){
     /* Do not open workings automatically. Learner can choose to show answer. */
     showAnswerButtonForQuestion(i);
 
-    box.querySelectorAll("input, textarea").forEach(el => {
+    box.querySelectorAll("input, textarea, math-field").forEach(el => {
       if (el.id === "ratingCommentInline") return;
       el.disabled = true;
     });
@@ -4775,7 +5292,7 @@ function inlineQuizLoadingHtml(){
           ${imageHtml}
           <div class="q" data-scorable="1" data-qindex="${i}">
             ${headHtml}
-            <input class="textAnswer" id="txt${i}" placeholder="Type your answer" autocomplete="off" />
+            ${renderTypedAnswerArea(q, i)}
             ${hint ? `<div class="hint">Hint: <span class="hintText">${renderMixedMath(hint)}</span></div>` : ``}
             <div class="qLocalActions">
               <button class="qCheckBtn" type="button" data-qindex="${i}">Submit the Answer</button>
@@ -4821,6 +5338,7 @@ function inlineQuizLoadingHtml(){
     resetLocalQuestionChecks();
     prepareFirstAttemptButtons();
     attachAnswerAutosave();
+    attachMathInputBehaviour();
     attachSingleQuestionSubmit();
     attachShowAnswerButtons();
     const restoredAnswers = restoreAnswersFromStorage();
