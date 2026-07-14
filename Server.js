@@ -3005,22 +3005,171 @@ if (key === "accessFee") {
           q.points = pts;
 
           if (type === "text") {
-            if (!cleanSpaces(q?.correctText)) {
-              return res.status(400).json({ message: "Typed questions must have correctText." });
+            /*
+             * Universal typed-answer support.
+             * There is no fixed field limit: 1, 2, 4, or more required
+             * answers are all validated and saved in their original order.
+             */
+            const rawCorrectText = String(
+              q?.correctText ??
+              q?.answer ??
+              q?.correctAnswer ??
+              ""
+            ).trim();
+
+            const keyedCorrectValues = new Map();
+            const positionalCorrectValues = [];
+
+            rawCorrectText
+              .split("|")
+              .map((part) => String(part || "").trim())
+              .filter(Boolean)
+              .forEach((part, index) => {
+                const equalsAt = part.indexOf("=");
+
+                if (equalsAt > 0) {
+                  const rawKey = part.slice(0, equalsAt).trim();
+                  const rawValue = part.slice(equalsAt + 1).trim();
+                  const normalizedKey = normalizeTypedFieldKey(
+                    rawKey,
+                    `answer_${index + 1}`
+                  );
+
+                  if (normalizedKey) {
+                    keyedCorrectValues.set(normalizedKey, rawValue);
+                  }
+
+                  positionalCorrectValues.push(rawValue);
+                } else {
+                  positionalCorrectValues.push(part);
+                }
+              });
+
+            const answerFields = Array.isArray(q?.answerFields)
+              ? q.answerFields
+                  .map((field, index) => {
+                    const key = normalizeTypedFieldKey(
+                      field?.key,
+                      `answer_${index + 1}`
+                    );
+
+                    let correctAnswer = String(
+                      field?.correctAnswer ??
+                      field?.answer ??
+                      ""
+                    ).trim();
+
+                    /*
+                     * Do not store a complete combined string such as
+                     * "a=63|b=99" as the answer for one individual field.
+                     */
+                    if (
+                      correctAnswer.includes("|") ||
+                      /^[^=|]+\s*=/.test(correctAnswer)
+                    ) {
+                      correctAnswer = "";
+                    }
+
+                    return {
+                      key,
+                      prefix: String(
+                        field?.prefix ??
+                        field?.label ??
+                        ""
+                      ).trim(),
+                      suffix: String(
+                        field?.suffix ??
+                        field?.unit ??
+                        ""
+                      ).trim(),
+                      correctAnswer:
+                        correctAnswer ||
+                        keyedCorrectValues.get(key) ||
+                        positionalCorrectValues[index] ||
+                        "",
+                    };
+                  })
+                  .filter((field) => field.key)
+              : [];
+
+            if (!rawCorrectText && answerFields.length === 0) {
+              return res.status(400).json({
+                message:
+                  "Typed questions must have a correct answer or at least one Answer Field.",
+              });
             }
 
-            const mode = q?.textAnswerMode || "exact";
-            if (!["exact", "contains", "number_tolerance"].includes(mode)) {
-              return res.status(400).json({ message: "Invalid textAnswerMode." });
+            if (answerFields.some((field) => !field.correctAnswer)) {
+              return res.status(400).json({
+                message:
+                  "Every Answer Field must have a correct answer.",
+              });
             }
+
+            const fieldKeys = answerFields.map((field) => field.key);
+
+            if (new Set(fieldKeys).size !== fieldKeys.length) {
+              return res.status(400).json({
+                message: "Answer Field keys must be unique.",
+              });
+            }
+
+            const mode = String(q?.textAnswerMode || "exact")
+              .toLowerCase()
+              .trim();
+
+            const allowedModes = [
+              "exact",
+              "contains",
+              "number_tolerance",
+              "unordered",
+              "expression",
+            ];
+
+            if (!allowedModes.includes(mode)) {
+              return res.status(400).json({
+                message: `Invalid textAnswerMode: ${mode}`,
+              });
+            }
+
+            let numberTolerance = 0;
 
             if (mode === "number_tolerance") {
-              const tol = Number(q?.numberTolerance);
-              if (!Number.isFinite(tol) || tol < 0) {
-                return res.status(400).json({ message: "Invalid numberTolerance." });
+              numberTolerance = Number(q?.numberTolerance ?? 0);
+
+              if (
+                !Number.isFinite(numberTolerance) ||
+                numberTolerance < 0
+              ) {
+                return res.status(400).json({
+                  message: "Invalid numberTolerance.",
+                });
               }
             }
 
+            q.instruction = String(q?.instruction || "").trim();
+            q.answerPrefix = String(q?.answerPrefix || "").trim();
+            q.answerSuffix = String(
+              q?.answerSuffix || q?.unit || ""
+            ).trim();
+            q.unit = String(
+              q?.unit || q?.answerSuffix || ""
+            ).trim();
+
+            q.answerFields = answerFields;
+            q.correctText =
+              answerFields.length > 0
+                ? answerFields
+                    .map(
+                      (field) =>
+                        `${field.key}=${field.correctAnswer}`
+                    )
+                    .join("|")
+                : rawCorrectText;
+
+            q.textAnswerMode = mode;
+            q.numberTolerance = numberTolerance;
+            q.options = [];
             q.correctIndex = -1;
             q.correctIndexes = [];
             q.isMultiSelect = false;
@@ -3325,23 +3474,86 @@ function normalizeSubmittedTypedValues(answer) {
 }
 
 function normalizeCorrectTypedFields(question) {
-  const fields = Array.isArray(question?.answerFields)
+  const configuredFields = Array.isArray(question?.answerFields)
     ? question.answerFields
     : [];
 
-  return fields
-    .map((field, index) => ({
-      key: normalizeTypedFieldKey(
+  const combinedCorrectText = String(
+    question?.correctText ??
+    question?.answer ??
+    question?.correctAnswer ??
+    ""
+  ).trim();
+
+  const keyedCorrectValues = new Map();
+  const positionalCorrectValues = [];
+
+  combinedCorrectText
+    .split("|")
+    .map((part) => String(part || "").trim())
+    .filter(Boolean)
+    .forEach((part, index) => {
+      const equalsAt = part.indexOf("=");
+
+      if (equalsAt > 0) {
+        const rawKey = part.slice(0, equalsAt).trim();
+        const rawValue = part.slice(equalsAt + 1).trim();
+        const key = normalizeTypedFieldKey(
+          rawKey,
+          `answer_${index + 1}`
+        );
+
+        if (key) keyedCorrectValues.set(key, rawValue);
+        positionalCorrectValues.push(rawValue);
+      } else {
+        positionalCorrectValues.push(part);
+      }
+    });
+
+  return configuredFields
+    .map((field, index) => {
+      const key = normalizeTypedFieldKey(
         field?.key,
         `answer_${index + 1}`
-      ),
-      prefix: String(field?.prefix || "").trim(),
-      suffix: String(field?.suffix || field?.unit || "").trim(),
-      correctAnswer: String(
-        field?.correctAnswer ?? field?.answer ?? ""
-      ).trim(),
-    }))
-    .filter((field) => field.key);
+      );
+
+      let directCorrectAnswer = String(
+        field?.correctAnswer ??
+        field?.answer ??
+        ""
+      ).trim();
+
+      if (
+        directCorrectAnswer.includes("|") ||
+        /^[^=|]+\s*=/.test(directCorrectAnswer)
+      ) {
+        directCorrectAnswer = "";
+      }
+
+      return {
+        key,
+        prefix: String(
+          field?.prefix ??
+          field?.label ??
+          ""
+        ).trim(),
+        suffix: String(
+          field?.suffix ??
+          field?.unit ??
+          ""
+        ).trim(),
+        correctAnswer:
+          directCorrectAnswer ||
+          keyedCorrectValues.get(key) ||
+          positionalCorrectValues[index] ||
+          "",
+      };
+    })
+    .filter(
+      (field) =>
+        field.key &&
+        String(field.correctAnswer || "").trim()
+    );
 }
 
 function compareUnorderedTypedAnswer(
@@ -3831,7 +4043,9 @@ function compareDecimalWithTolerance(
     return learner
       .minus(correct)
       .abs()
-      .lessThanOrEqualTo(allowedDifference);
+      .lessThanOrEqualTo(
+        Decimal.max(allowedDifference, new Decimal("1e-12"))
+      );
   } catch {
     return false;
   }
@@ -3977,9 +4191,27 @@ app.post("/api/results", authRequired, async (req, res) => {
             ])
           );
 
-          const checkedFields = correctFields.map((field) => {
+          /*
+           * Exact key matching is preferred. Positional fallback keeps
+           * older quizzes working when their saved keys are answer_1,
+           * answer_2, etc. but the current quiz fields use custom keys.
+           *
+           * This works for any number of required fields, including four
+           * or more answers. Every required field must be correct before
+           * the question receives its marks.
+           */
+          const checkedFields = correctFields.map((field, index) => {
+            const exactValue = submittedMap.has(field.key)
+              ? submittedMap.get(field.key)
+              : undefined;
+
+            const positionalValue =
+              submittedFields[index]?.value;
+
             const learnerValue = String(
-              submittedMap.get(field.key) ?? ""
+              exactValue ??
+              positionalValue ??
+              ""
             ).trim();
 
             const fieldIsCorrect = compareTypedAnswerValue(
