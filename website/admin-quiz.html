@@ -3295,6 +3295,7 @@ function escapeHtml(str){
       let points = 1;
       let explicitType = "";
       let typedAnswer = "";
+      let rawTypedAnswer = "";
       let answerInstruction = "";
       let answerPrefix = "";
       let answerSuffix = "";
@@ -3408,6 +3409,7 @@ function escapeHtml(str){
 
         if (/^ANSWER\s*:/i.test(line) && !inSolution) {
           const ansRaw = line.replace(/^ANSWER\s*:/i, "").trim();
+          rawTypedAnswer = ansRaw;
           typedAnswer = ansRaw;
           const availableLabels = options.map(o => o.label);
           const answerParts = ansRaw.toUpperCase().split(/[,;\s|]+/).map(x => x.trim()).filter(Boolean);
@@ -3431,18 +3433,57 @@ function escapeHtml(str){
       answerPrefix = autoConvertMixedLatex(answerPrefix);
       answerSuffix = autoConvertMixedLatex(answerSuffix);
 
-      if (answerFieldDefinitions.length && typedAnswer) {
+      if (answerFieldDefinitions.length && rawTypedAnswer) {
         const keyedValues = {};
-        typedAnswer.split("|").forEach(part => {
-          const eq = part.indexOf("=");
-          if(eq < 1) return;
-          const key = normaliseAnswerFieldKey(part.slice(0, eq));
-          keyedValues[key] = autoConvertMixedLatex(part.slice(eq + 1).trim());
+        const orderedValues = [];
+
+        /*
+         * Parse the original ANSWER line before mixed-LaTeX conversion.
+         * This prevents keys such as alpha, beta, a, b, etc. from being
+         * altered by the maths formatter.
+         *
+         * Exact key matching is used first. Position is a safe fallback
+         * for older files or internally normalised keys.
+         *
+         * This supports any number of required fields: 1, 2, 4, or more.
+         */
+        rawTypedAnswer
+          .split("|")
+          .map(part => String(part || "").trim())
+          .filter(Boolean)
+          .forEach((part, index) => {
+            const eq = part.indexOf("=");
+
+            if (eq < 1) {
+              orderedValues.push(
+                autoConvertMixedLatex(part)
+              );
+              return;
+            }
+
+            const rawKey = part.slice(0, eq).trim();
+            const rawValue = part.slice(eq + 1).trim();
+            const key = normaliseAnswerFieldKey(rawKey);
+            const value = autoConvertMixedLatex(rawValue);
+
+            if (key) keyedValues[key] = value;
+            orderedValues.push(value);
+          });
+
+        answerFieldDefinitions.forEach((field, index) => {
+          field.correctAnswer =
+            keyedValues[field.key] ??
+            orderedValues[index] ??
+            "";
         });
 
-        answerFieldDefinitions.forEach(field => {
-          field.correctAnswer = keyedValues[field.key] ?? "";
-        });
+        /*
+         * Store one clean canonical value so attempt.html and server.js
+         * receive the same field keys and correct answers.
+         */
+        typedAnswer = answerFieldDefinitions
+          .map(field => `${field.key}=${field.correctAnswer}`)
+          .join("|");
       }
 
       const where = `Block ${blockIndex + 1}${question ? ` (${String(question).replace(/\$/g, "").slice(0, 60)})` : ""}`;
