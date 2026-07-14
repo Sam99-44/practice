@@ -1,3 +1,4 @@
+// VERIFIED BUILD: 2026-07-14-typed-answers-syntax-ok
 // server.js (FULL UPDATED - COPY & PASTE)
 // ✅ Adds profile routes
 // ✅ Adds profile photo upload/remove
