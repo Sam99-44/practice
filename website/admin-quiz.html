@@ -1769,8 +1769,7 @@ function escapeHtml(str){
 
         field.addEventListener("input", () => {
           updateAdminMathPreview(field);
-          bindAdminMathFields();
-    refreshFullLearnerPreview();
+          refreshFullLearnerPreview();
         });
 
         field.addEventListener("change", () => {
@@ -2260,19 +2259,16 @@ function escapeHtml(str){
               <div class="grid2">
                 <div>
                   <label>Correct Answer</label>
-                  ${shouldUseMathLiveForAnswerMode(q.textAnswerMode)
-          ? `<div class="singleCorrectMathWrap">
-              ${renderAdminMathField({
-                id: `correctText_${id}`,
-                value: q.correctText || "",
-                previewId: `correctTextPreview_${id}`,
-                className: "correctText",
-                placeholder: "Enter the correct mathematical answer",
-                ariaLabel: "Correct mathematical answer"
-              })}
-            </div>`
-          : `<input class="correctText" value="${escapeAttr(q.correctText || "")}" placeholder="Correct answer" />`
-        }
+                  <div class="singleCorrectMathWrap">
+                    ${renderAdminMathField({
+                      id: `correctText_${id}`,
+                      value: "",
+                      previewId: `correctTextPreview_${id}`,
+                      className: "correctText",
+                      placeholder: "Enter the correct mathematical answer",
+                      ariaLabel: "Correct mathematical answer"
+                    })}
+                  </div>
                 </div>
                 <div>
                   <label>Check Mode</label>
@@ -2380,9 +2376,16 @@ function escapeHtml(str){
       const wrap = card?.querySelector(".answerFieldsWrap");
       if(!wrap) return;
 
+      const fieldIndex = wrap.children.length;
+      const cardId = card?.dataset?.uid || card?.id || `card_${Date.now()}`;
+      const fieldKey = normaliseAnswerFieldKey(data.key, fieldIndex + 1);
+      const correctValue = data.correctAnswer ?? data.answer ?? "";
+      const inputId = `answerFieldCorrect_${cardId}_${fieldIndex}`;
+      const previewId = `answerFieldPreview_${cardId}_${fieldIndex}`;
+
       const row = document.createElement("div");
       row.className = "answerFieldRow";
-      row.dataset.fieldNumber = String(wrap.children.length + 1);
+      row.dataset.fieldNumber = String(fieldIndex + 1);
 
       row.innerHTML = `
         <div>
@@ -2397,9 +2400,16 @@ function escapeHtml(str){
           <label>Display After Answer / Unit</label>
           <input class="answerFieldSuffix" placeholder="cm" />
         </div>
-        <div>
+        <div class="answerFieldCorrectWrap">
           <label>Correct Value</label>
-          ${renderAdminMathField({ id: `answerFieldCorrect_${cardId}_${fieldIndex}`, value: field.correctAnswer || "", previewId: `answerFieldPreview_${cardId}_${fieldIndex}`, className: "answerFieldCorrect", placeholder: "Correct answer", ariaLabel: `Correct answer for ${field.key || `field ${fieldIndex + 1}`}` })}
+          ${renderAdminMathField({
+            id: inputId,
+            value: correctValue,
+            previewId,
+            className: "answerFieldCorrect",
+            placeholder: "Correct answer",
+            ariaLabel: `Correct answer for ${fieldKey}`
+          })}
         </div>
         <button type="button" class="smallbtn answerFieldRemove">Remove</button>
       `;
@@ -2407,10 +2417,10 @@ function escapeHtml(str){
       row.querySelector(".answerFieldKey").value = data.key || "";
       row.querySelector(".answerFieldPrefix").value = data.prefix || "";
       row.querySelector(".answerFieldSuffix").value = data.suffix || data.unit || "";
-      rowgetMathFieldValue(.querySelector(".answerFieldCorrect")) = data.correctAnswer ?? data.answer ?? "";
 
-      row.querySelectorAll("input").forEach(input => {
+      row.querySelectorAll("input, math-field").forEach(input => {
         input.addEventListener("input", () => renderCardPreview(card));
+        input.addEventListener("change", () => renderCardPreview(card));
       });
 
       row.querySelector(".answerFieldRemove").addEventListener("click", () => {
@@ -2422,6 +2432,7 @@ function escapeHtml(str){
       });
 
       wrap.appendChild(row);
+      bindAdminMathFields(row);
       renderCardPreview(card);
     }
 
@@ -2431,7 +2442,7 @@ function escapeHtml(str){
           key: normaliseAnswerFieldKey(row.querySelector(".answerFieldKey")?.value, index + 1),
           prefix: cleanSpaces(row.querySelector(".answerFieldPrefix")?.value || ""),
           suffix: cleanSpaces(row.querySelector(".answerFieldSuffix")?.value || ""),
-          correctAnswer: cleanSpaces(row.querySelector(".answerFieldCorrect")?.value || "")
+          correctAnswer: cleanSpaces(getMathFieldValue(row.querySelector(".answerFieldCorrect")))
         }))
         .filter(field => field.prefix || field.suffix || field.correctAnswer);
     }
@@ -2592,7 +2603,7 @@ function escapeHtml(str){
               const opts = [...card.querySelectorAll(".optRow .optInput")].map(el => cleanSpaces(el.value || "")).filter(Boolean);
               return opts.length ? opts : ["Option A", "Option B"];
             }
-            const correctText = cleanSpaces(card.querySelector(".correctText")?.value || "");
+            const correctText = cleanSpaces(getMathFieldValue(card.querySelector(".correctText")));
             return [correctText || "Correct answer", "Option 2"];
           })(),
           correctIndexes: currentType === "mcq"
@@ -2603,7 +2614,7 @@ function escapeHtml(str){
         fillTextCard(newCard, {
           ...base,
           correctText: currentType === "text"
-            ? cleanSpaces(card.querySelector(".correctText")?.value || "")
+            ? cleanSpaces(getMathFieldValue(card.querySelector(".correctText")))
             : (() => {
                 const rows = [...card.querySelectorAll(".optRow")];
                 const idx = rows.findIndex(row => row.querySelector(".optCorrect")?.checked);
@@ -2908,7 +2919,7 @@ function escapeHtml(str){
         setPreviewText(card.querySelector(".prevOpts"), optsText || "(Options preview)");
       } else {
         const fields = readAnswerFieldsFromCard(card);
-        const ans = cleanSpaces(card.querySelector(".correctText")?.value || "");
+        const ans = cleanSpaces(getMathFieldValue(card.querySelector(".correctText")));
         const expected = fields.length
           ? fields.map(field => `${field.key} = ${field.correctAnswer || "?"}`).join("\n")
           : ans;
@@ -3582,7 +3593,7 @@ function escapeHtml(str){
       card.querySelector(".qSolution").value = data.solution || "";
       const imgEl = card.querySelector(".qImage2");
       if (imgEl) imgEl.value = data.imageUrl || "";
-      cardgetMathFieldValue(.querySelector(".correctText")) = data.correctText || "";
+      setMathFieldValue(card.querySelector(".correctText"), data.correctText || "");
       const instructionEl = card.querySelector(".answerInstruction");
       const prefixEl = card.querySelector(".answerPrefix");
       const suffixEl = card.querySelector(".answerSuffix");
@@ -3945,7 +3956,7 @@ function escapeHtml(str){
         const solution = autoConvertMixedLatex(String(card.querySelector(".qSolution")?.value || "").replace(/\r/g, "").trim());
 
         if (type === "text") {
-          const correctText = autoConvertMixedLatex(cleanSpaces(card.querySelector(".correctText")?.value));
+          const correctText = autoConvertMixedLatex(cleanSpaces(getMathFieldValue(card.querySelector(".correctText"))));
           const instruction = autoConvertMixedLatex(cleanSpaces(card.querySelector(".answerInstruction")?.value || ""));
           const answerPrefix = autoConvertMixedLatex(cleanSpaces(card.querySelector(".answerPrefix")?.value || ""));
           const answerSuffix = autoConvertMixedLatex(cleanSpaces(card.querySelector(".answerSuffix")?.value || ""));
