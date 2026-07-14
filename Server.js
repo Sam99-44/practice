@@ -2708,7 +2708,6 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
   q.isMultiSelect = false;
         }
       }
-    }
 
     const publishAtRaw = validDateOrNull(publishAt);
     const availableFromRaw = validDateOrNull(availableFrom);
