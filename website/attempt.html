@@ -2577,6 +2577,89 @@ body.submitted-state .solutionHolder .solutionBox{
   }
 }
 
+
+
+/* ===== FINAL WIDE, LOW TYPED ANSWER FIELD ===== */
+.typedAnswerBlock{
+  width:100% !important;
+  max-width:none !important;
+  margin:10px 0 0 !important;
+}
+
+.typedFields,
+.typedFieldItem,
+.typedAnswerRow{
+  width:100% !important;
+  max-width:none !important;
+}
+
+.typedAnswerRow{
+  grid-template-columns:max-content minmax(0,1fr) max-content !important;
+}
+
+math-field.mathAnswerField,
+.mathAnswerField,
+.plainTypedInput{
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+  min-height:42px !important;
+  height:42px !important;
+  padding:5px 10px !important;
+  font-size:18px !important;
+  line-height:1.2 !important;
+  box-sizing:border-box !important;
+}
+
+.mathPreview{
+  width:100% !important;
+  max-width:none !important;
+  min-height:34px !important;
+  padding:5px 9px !important;
+}
+
+@media(max-width:640px){
+  .typedAnswerBlock{
+    width:100% !important;
+    margin:10px 0 0 !important;
+  }
+
+  .typedAnswerRow{
+    grid-template-columns:1fr !important;
+    gap:4px !important;
+  }
+
+  .typedAnswerPrefix,
+  .typedAnswerSuffix{
+    width:100% !important;
+    white-space:normal !important;
+  }
+
+  math-field.mathAnswerField,
+  .mathAnswerField,
+  .plainTypedInput{
+    width:100% !important;
+    min-width:100% !important;
+    max-width:100% !important;
+    min-height:44px !important;
+    height:44px !important;
+    padding:6px 10px !important;
+    font-size:18px !important;
+    line-height:1.2 !important;
+  }
+
+  .mathPreview{
+    min-height:34px !important;
+    padding:5px 9px !important;
+  }
+
+  .qLocalActions{
+    width:100% !important;
+    margin-left:0 !important;
+  }
+}
+
 </style>
 </head>
 
@@ -3706,6 +3789,27 @@ function inlineQuizLoadingHtml(){
 
   ratingSaveBtnInline.addEventListener("click", saveInlineRating);
 
+  function preserveAttemptBeforeSessionMessage(){
+    try{
+      persistAttemptState();
+    }catch(_){
+      try{
+        saveAnswersToStorage();
+      }catch(__){}
+    }
+  }
+
+  function showSessionWarning(
+    message = "Your login session needs attention. Your answers are saved on this device."
+  ){
+    preserveAttemptBeforeSessionMessage();
+
+    if (msgEl) {
+      msgEl.className = "error";
+      msgEl.textContent = message;
+    }
+  }
+
   async function loadTopbarProfile(){
     try{
       const res = await fetch(`${API}/api/profile/me`, {
@@ -3713,10 +3817,15 @@ function inlineQuizLoadingHtml(){
       });
 
       if(res.status === 401){
-        localStorage.removeItem("token");
-        localStorage.removeItem("username");
-        localStorage.removeItem("me_cache");
-        location.href = "login.html";
+        /*
+         * This profile request only fills the top navigation.
+         * It must never end an active quiz or delete the learner's token.
+         */
+        topAccountName.textContent =
+          localStorage.getItem("username") ||
+          "Learner";
+
+        topAccountType.textContent = "Account";
         return;
       }
 
@@ -5430,7 +5539,29 @@ function inlineQuizLoadingHtml(){
     }
 
     if (res.status === 401) {
-      localStorage.removeItem("token");
+      let hasSavedWork = false;
+
+      try{
+        const saved = JSON.parse(
+          localStorage.getItem(ANSWERS_KEY) || "null"
+        );
+
+        hasSavedWork = Boolean(
+          saved &&
+          Array.isArray(saved.answers) &&
+          saved.answers.length
+        );
+      }catch(_){}
+
+      if (quizStarted || hasSavedWork) {
+        showSessionWarning(
+          "Your session could not be confirmed, but you have not been logged out. Your answers remain saved on this device."
+        );
+
+        hideQuizLoader();
+        return;
+      }
+
       const next = encodeURIComponent(window.location.href);
       window.location.href = `login.html?next=${next}`;
       return;
@@ -6372,6 +6503,7 @@ function formatSolutionHtml(solutionText){
   }
 
   window.addEventListener("beforeunload", persistAttemptState);
+  window.addEventListener("pagehide", persistAttemptState);
 
   document.addEventListener("visibilitychange", function(){
     if (document.hidden) persistAttemptState();
