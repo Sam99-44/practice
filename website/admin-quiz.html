@@ -66,7 +66,10 @@
     };
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/mathlive@0.110.0/mathlive.min.js"></script>
+  <script type="module">
+    import { MathfieldElement } from "https://esm.run/mathlive";
+    MathfieldElement.fontsDirectory = "https://cdn.jsdelivr.net/npm/mathlive@0.110.0/fonts";
+  </script>
 
   <style>
     mjx-container[jax="SVG"]{
@@ -1506,6 +1509,14 @@
       msg.className = "msg " + type;
       msg.textContent = text;
     }
+    function getApiErrorMessage(data, fallback="Request failed"){
+      if (!data) return fallback;
+      if (typeof data === "string") return data || fallback;
+      if (Array.isArray(data.errors) && data.errors.length) {
+        return data.errors.map(item => item?.message || item?.msg || String(item)).join(" | ");
+      }
+      return data.message || data.error || data.details || fallback;
+    }
     function clearParseErrors(){
       parseErrorsBox.classList.add("hide");
       parseErrorsBox.innerHTML = "";
@@ -2259,16 +2270,19 @@ function escapeHtml(str){
               <div class="grid2">
                 <div>
                   <label>Correct Answer</label>
-                  <div class="singleCorrectMathWrap">
-                    ${renderAdminMathField({
-                      id: `correctText_${id}`,
-                      value: "",
-                      previewId: `correctTextPreview_${id}`,
-                      className: "correctText",
-                      placeholder: "Enter the correct mathematical answer",
-                      ariaLabel: "Correct mathematical answer"
-                    })}
-                  </div>
+                  ${shouldUseMathLiveForAnswerMode(q.textAnswerMode)
+          ? `<div class="singleCorrectMathWrap">
+              ${renderAdminMathField({
+                id: `correctText_${id}`,
+                value: q.correctText || "",
+                previewId: `correctTextPreview_${id}`,
+                className: "correctText",
+                placeholder: "Enter the correct mathematical answer",
+                ariaLabel: "Correct mathematical answer"
+              })}
+            </div>`
+          : `<input class="correctText" value="${escapeAttr(q.correctText || "")}" placeholder="Correct answer" />`
+        }
                 </div>
                 <div>
                   <label>Check Mode</label>
@@ -2376,16 +2390,9 @@ function escapeHtml(str){
       const wrap = card?.querySelector(".answerFieldsWrap");
       if(!wrap) return;
 
-      const fieldIndex = wrap.children.length;
-      const cardId = card?.dataset?.uid || card?.id || `card_${Date.now()}`;
-      const fieldKey = normaliseAnswerFieldKey(data.key, fieldIndex + 1);
-      const correctValue = data.correctAnswer ?? data.answer ?? "";
-      const inputId = `answerFieldCorrect_${cardId}_${fieldIndex}`;
-      const previewId = `answerFieldPreview_${cardId}_${fieldIndex}`;
-
       const row = document.createElement("div");
       row.className = "answerFieldRow";
-      row.dataset.fieldNumber = String(fieldIndex + 1);
+      row.dataset.fieldNumber = String(wrap.children.length + 1);
 
       row.innerHTML = `
         <div>
@@ -2400,16 +2407,9 @@ function escapeHtml(str){
           <label>Display After Answer / Unit</label>
           <input class="answerFieldSuffix" placeholder="cm" />
         </div>
-        <div class="answerFieldCorrectWrap">
+        <div>
           <label>Correct Value</label>
-          ${renderAdminMathField({
-            id: inputId,
-            value: correctValue,
-            previewId,
-            className: "answerFieldCorrect",
-            placeholder: "Correct answer",
-            ariaLabel: `Correct answer for ${fieldKey}`
-          })}
+          ${renderAdminMathField({ id: `answerFieldCorrect_${cardId}_${fieldIndex}`, value: field.correctAnswer || "", previewId: `answerFieldPreview_${cardId}_${fieldIndex}`, className: "answerFieldCorrect", placeholder: "Correct answer", ariaLabel: `Correct answer for ${field.key || `field ${fieldIndex + 1}`}` })}
         </div>
         <button type="button" class="smallbtn answerFieldRemove">Remove</button>
       `;
@@ -2417,10 +2417,10 @@ function escapeHtml(str){
       row.querySelector(".answerFieldKey").value = data.key || "";
       row.querySelector(".answerFieldPrefix").value = data.prefix || "";
       row.querySelector(".answerFieldSuffix").value = data.suffix || data.unit || "";
+      setMathFieldValue(row.querySelector(".answerFieldCorrect"), data.correctAnswer ?? data.answer ?? "");
 
       row.querySelectorAll("input, math-field").forEach(input => {
         input.addEventListener("input", () => renderCardPreview(card));
-        input.addEventListener("change", () => renderCardPreview(card));
       });
 
       row.querySelector(".answerFieldRemove").addEventListener("click", () => {
@@ -2432,7 +2432,6 @@ function escapeHtml(str){
       });
 
       wrap.appendChild(row);
-      bindAdminMathFields(row);
       renderCardPreview(card);
     }
 
