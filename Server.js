@@ -3540,11 +3540,11 @@ app.get("/api/results/my", authRequired, async (req, res) => {
         prevScore = all[i].percent;
       }
 
-return {
-  ...r.toObject(),
-  rank: actualRank,
-  totalStudents: all.length
-};
+      return {
+        ...r.toObject(),
+        rank: actualRank,
+        totalStudents: all.length
+      };
     }));
 
     return res.json(resultsWithRank);
