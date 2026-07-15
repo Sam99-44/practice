@@ -1,4 +1,4 @@
-<!-- admin-quiz.html (UPDATED - COPY & PASTE)
+<!-- Edit Assessment.html (UPDATED - COPY & PASTE)
      ✅ MathJax enabled (SVG)
      ✅ Instructions box
      ✅ Note/Heading blocks (type:"note")
@@ -2008,11 +2008,22 @@ function escapeHtml(str){
       refreshFullLearnerPreview();
     }
 
+    function getCardImageFirst(card){
+      const wrap = card?.querySelector(".primaryFields");
+      const firstField = wrap?.firstElementChild;
+      return !!firstField?.classList.contains("fieldImage");
+    }
+
     function swapPrimaryFields(card){
       const wrap = card?.querySelector(".primaryFields");
       if (!wrap || wrap.children.length < 2) return;
       wrap.insertBefore(wrap.children[1], wrap.children[0]);
+      card.dataset.imageFirst = getCardImageFirst(card) ? "1" : "0";
       renderCardPreview(card);
+      refreshFullLearnerPreview(fullLearnerPreview, currentFullPreviewMode);
+      if (paperPreviewModal?.style.display==="flex" && paperPreviewContent){
+        refreshFullLearnerPreview(paperPreviewContent,currentFullPreviewMode);
+      }
     }
 
     function readCardImage(card){
@@ -2022,6 +2033,9 @@ function escapeHtml(str){
     function wireCard(card){
       if (!card || card.dataset.wired === "1") return;
       card.dataset.wired = "1";
+      if(card.getAttribute("data-type")==="mcq"||card.getAttribute("data-type")==="text"){
+        card.dataset.imageFirst=getCardImageFirst(card)?"1":"0";
+      }
 
       card.querySelector(".moveUpBtn")?.addEventListener("click", ()=>moveCard(card, -1));
       card.querySelector(".moveDownBtn")?.addEventListener("click", ()=>moveCard(card, 1));
