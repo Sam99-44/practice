@@ -1953,9 +1953,28 @@ function escapeHtml(str){
         const hint = cleanSpaces(card.querySelector(".qHint")?.value || "");
         const solution = String(card.querySelector(".qSolution")?.value || "").trim();
         const img = readCardImage(card);
-        const imageHtml = img ? `<img class="qimg" src="${escapeAttr(img)}" alt="Question image">` : "";
+        const imageHtml = img
+          ? `<div class="qImageWrap"><img class="qimg" src="${escapeAttr(img)}" alt="Question image"></div>`
+          : "";
+
+        /*
+         * Read the actual editor field order. This also works for cards
+         * created before data-image-first was introduced.
+         */
+        const imageFirst =
+          card.dataset.imageFirst === "1" ||
+          (
+            card.dataset.imageFirst !== "0" &&
+            getCardImageFirst(card)
+          );
+
+        card.dataset.imageFirst = imageFirst ? "1" : "0";
+
         const points = cleanSpaces(card.querySelector(".qPoints")?.value || "1");
         const headHtml = renderQuestionHeadPreview(`${label} ${qText}`.trim(), points, ++displayNo);
+        const questionAndImageHtml = imageFirst
+          ? `${imageHtml}${headHtml}`
+          : `${headHtml}${imageHtml}`;
         if (type === "text") {
           const answerInstruction = cleanSpaces(card.querySelector(".answerInstruction")?.value || "");
           const answerPrefix = cleanSpaces(card.querySelector(".answerPrefix")?.value || "");
@@ -1980,10 +1999,10 @@ function escapeHtml(str){
                 ${answerSuffix ? `<span>${renderMixedMathPreview(answerSuffix)}</span>` : ""}
               </div>`;
 
-          parts.push(`<div class="q">${imageHtml}${headHtml}${instructionHtml}${answerHtml}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${currentFullPreviewMode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`);
+          parts.push(`<div class="q">${questionAndImageHtml}${instructionHtml}${answerHtml}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${currentFullPreviewMode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`);
         } else if (type === "mcq") {
           const opts = [...card.querySelectorAll(".optRow")].map((row, index) => ({ idx:index, txt:cleanSpaces(row.querySelector(".optInput")?.value || "") })).filter(o => o.txt);
-          parts.push(`<div class="q">${imageHtml}${headHtml}${opts.map((o, idx)=>`<div class="optPaper"><span class="optBullet">○</span><span class="optTextPaper">${renderMixedMathPreview(o.txt)}</span></div>`).join("")}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${currentFullPreviewMode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`);
+          parts.push(`<div class="q">${questionAndImageHtml}${opts.map((o, idx)=>`<div class="optPaper"><span class="optBullet">○</span><span class="optTextPaper">${renderMixedMathPreview(o.txt)}</span></div>`).join("")}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${currentFullPreviewMode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`);
         }
       }
       parts.push(`</div>`);
@@ -2403,11 +2422,42 @@ function escapeHtml(str){
       refreshFullLearnerPreview();
     }
 
+    function getCardImageFirst(card){
+      const wrap = card?.querySelector(".primaryFields");
+      const firstField = wrap?.firstElementChild;
+      return !!firstField?.classList.contains("fieldImage");
+    }
+
     function swapPrimaryFields(card){
       const wrap = card?.querySelector(".primaryFields");
       if (!wrap || wrap.children.length < 2) return;
+
       wrap.insertBefore(wrap.children[1], wrap.children[0]);
+
+      /*
+       * Save the selected order on the question card so every preview
+       * renderer can use the same Image/Question arrangement.
+       */
+      card.dataset.imageFirst = getCardImageFirst(card) ? "1" : "0";
+
       renderCardPreview(card);
+
+      /*
+       * renderCardPreview refreshes the normal learner preview, but call
+       * both preview targets explicitly so an open Exam Paper Preview also
+       * changes immediately.
+       */
+      refreshFullLearnerPreview(fullLearnerPreview, currentFullPreviewMode);
+
+      if (
+        paperPreviewModal?.style.display === "flex" &&
+        paperPreviewContent
+      ) {
+        refreshFullLearnerPreview(
+          paperPreviewContent,
+          currentFullPreviewMode
+        );
+      }
     }
 
     function readCardImage(card){
@@ -2544,6 +2594,13 @@ function escapeHtml(str){
     function wireCard(card){
       if (!card || card.dataset.wired === "1") return;
       card.dataset.wired = "1";
+
+      if (
+        card.getAttribute("data-type") === "mcq" ||
+        card.getAttribute("data-type") === "text"
+      ) {
+        card.dataset.imageFirst = getCardImageFirst(card) ? "1" : "0";
+      }
 
       card.querySelector(".moveUpBtn")?.addEventListener("click", ()=>moveCard(card, -1));
       card.querySelector(".moveDownBtn")?.addEventListener("click", ()=>moveCard(card, 1));
