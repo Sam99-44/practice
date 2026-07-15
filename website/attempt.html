@@ -2949,6 +2949,91 @@ math-field.mathAnswerField,
   }
 }
 
+
+
+/* ===== FINAL TYPED-ANSWER BOX ALIGNMENT FIX ===== */
+/*
+ * Keep every prefix, answer box and suffix inside the exam-paper border.
+ * The middle answer box is allowed to shrink instead of overflowing.
+ */
+.typedAnswerBlock,
+.typedFields,
+.typedFieldItem{
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+}
+
+.typedAnswerRow{
+  display:grid !important;
+  grid-template-columns:82px minmax(0,1fr) 22px !important;
+  column-gap:8px !important;
+  align-items:center !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+
+.typedAnswerPrefix{
+  width:82px !important;
+  min-width:0 !important;
+  max-width:82px !important;
+  white-space:normal !important;
+  overflow-wrap:break-word !important;
+}
+
+.typedAnswerSuffix{
+  width:22px !important;
+  min-width:0 !important;
+  max-width:22px !important;
+  white-space:nowrap !important;
+  text-align:left !important;
+  overflow:hidden !important;
+}
+
+math-field.mathAnswerField,
+.mathAnswerField,
+.plainTypedInput{
+  display:block !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+  margin:0 !important;
+  overflow:hidden !important;
+}
+
+.mathPreview{
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+  overflow-x:auto !important;
+}
+
+@media(max-width:640px){
+  .typedAnswerRow{
+    grid-template-columns:1fr !important;
+    row-gap:6px !important;
+    overflow:visible !important;
+  }
+
+  .typedAnswerPrefix,
+  .typedAnswerSuffix{
+    width:100% !important;
+    max-width:100% !important;
+  }
+
+  .typedAnswerSuffix{
+    text-align:left !important;
+  }
+}
+
 </style>
 </head>
 
