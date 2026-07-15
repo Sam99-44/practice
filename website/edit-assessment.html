@@ -1436,12 +1436,25 @@ function escapeHtml(str){
         const solution = String(card.querySelector('.qSolution')?.value || '').trim();
         const img = readCardImage(card);
         const points = cleanSpaces(card.querySelector('.qPoints')?.value || '1');
+        const imageFirst =
+          card.dataset.imageFirst === "1" ||
+          (
+            card.dataset.imageFirst !== "0" &&
+            getCardImageFirst(card)
+          );
+
+        card.dataset.imageFirst = imageFirst ? "1" : "0";
+
         const base = {
           type,
           text: `${label} ${qText}`.trim(),
           hint,
           solution,
           imageUrl: img,
+          imageFirst,
+          contentOrder: imageFirst
+            ? "image-question"
+            : "question-image",
           points
         };
         if (type === 'text') {
@@ -1489,20 +1502,35 @@ function escapeHtml(str){
         const questionTotal = totals.mainTotals.get(mainNo) || points;
         const sectionTotal = totals.sectionTotals.get(sectionKey) || points;
 
-        const imageHtml = img ? `<img class="qimg" src="${escapeAttr(img)}" alt="Question image" loading="lazy" decoding="async">` : '';
+        const imageHtml = img
+          ? `<img class="qimg" src="${escapeAttr(img)}" alt="Question image" loading="lazy" decoding="async">`
+          : '';
 
         if (type === 'note') {
           return renderNoteLike(rawText, imageHtml, sectionTotal);
         }
 
         displayNo += 1;
-        const headHtml = renderQuestionHead(rawText, points, displayNo, questionTotal);
+        const headHtml = renderQuestionHead(
+          rawText,
+          points,
+          displayNo,
+          questionTotal
+        );
+
+        const imageFirst =
+          q?.imageFirst === true ||
+          String(q?.contentOrder || "").toLowerCase() ===
+            "image-question";
+
+        const questionAndImageHtml = imageFirst
+          ? `${imageHtml}${headHtml}`
+          : `${headHtml}${imageHtml}`;
 
         if (type === 'text') {
           return `
             <div class="q" data-scorable="1">
-              ${imageHtml}
-              ${headHtml}
+              ${questionAndImageHtml}
               <input class="textAnswer" id="previewTxt${i}" placeholder="Type your answer" autocomplete="off" disabled />
               ${hint ? `<div class="hint">Hint: <span class="hintText">${escapeHtml(hint)}</span></div>` : ``}
               ${currentFullPreviewMode === 'review' ? formatSolutionHtml(solution) : `<div class="solutionHolder hidden">${formatSolutionHtml(solution)}</div>`}
@@ -2012,6 +2040,49 @@ function escapeHtml(str){
       const wrap = card?.querySelector(".primaryFields");
       const firstField = wrap?.firstElementChild;
       return !!firstField?.classList.contains("fieldImage");
+    }
+
+    function resolveStoredImageFirst(data){
+      if (typeof data?.imageFirst === "boolean") {
+        return data.imageFirst;
+      }
+
+      const order = String(
+        data?.contentOrder ||
+        data?.imageQuestionOrder ||
+        ""
+      ).toLowerCase().trim();
+
+      if (order === "image-question" || order === "image_first") {
+        return true;
+      }
+
+      if (order === "question-image" || order === "question_first") {
+        return false;
+      }
+
+      return null;
+    }
+
+    function applyStoredImageQuestionOrder(card, data){
+      const wrap = card?.querySelector(".primaryFields");
+      if (!wrap || wrap.children.length < 2) return;
+
+      const storedImageFirst = resolveStoredImageFirst(data);
+
+      if (storedImageFirst === null) {
+        card.dataset.imageFirst =
+          getCardImageFirst(card) ? "1" : "0";
+        return;
+      }
+
+      const currentlyImageFirst = getCardImageFirst(card);
+
+      if (currentlyImageFirst !== storedImageFirst) {
+        wrap.insertBefore(wrap.children[1], wrap.children[0]);
+      }
+
+      card.dataset.imageFirst = storedImageFirst ? "1" : "0";
     }
 
     function swapPrimaryFields(card){
@@ -3023,6 +3094,8 @@ function escapeHtml(str){
       const imgEl = card.querySelector(".qImage");
       if (imgEl) imgEl.value = data.imageUrl || "";
 
+      applyStoredImageQuestionOrder(card, data);
+
       const wrap = card.querySelector(".optsWrap");
       wrap.innerHTML = "";
 
@@ -3041,6 +3114,9 @@ function escapeHtml(str){
       card.querySelector(".qSolution").value = data.solution || "";
       const imgEl = card.querySelector(".qImage2");
       if (imgEl) imgEl.value = data.imageUrl || "";
+
+      applyStoredImageQuestionOrder(card, data);
+
       card.querySelector(".correctText").value = data.correctText || "";
       const modeSel = card.querySelector(".textMode");
       const tolInput = card.querySelector(".tolerance");
@@ -3459,11 +3535,22 @@ function escapeHtml(str){
             numberTolerance = tol;
           }
 
+          const imageFirst =
+            card.dataset.imageFirst === "1" ||
+            (
+              card.dataset.imageFirst !== "0" &&
+              getCardImageFirst(card)
+            );
+
           questions.push({
             type: "text",
             text,
             hint: hint || "",
             imageUrl: imageUrl || "",
+            imageFirst,
+            contentOrder: imageFirst
+              ? "image-question"
+              : "question-image",
             points,
             correctText,
             textAnswerMode,
@@ -3490,11 +3577,22 @@ function escapeHtml(str){
           if (options.length < 2) throw new Error("MCQ must have at least 2 options.");
           if (correctedIndexes.length < 1) throw new Error("Please tick at least ONE correct option for every MCQ.");
 
+          const imageFirst =
+            card.dataset.imageFirst === "1" ||
+            (
+              card.dataset.imageFirst !== "0" &&
+              getCardImageFirst(card)
+            );
+
           const payload = {
             type: "mcq",
             text,
             hint: hint || "",
             imageUrl: imageUrl || "",
+            imageFirst,
+            contentOrder: imageFirst
+              ? "image-question"
+              : "question-image",
             points,
             options,
             correctIndexes: correctedIndexes,
@@ -3871,7 +3969,7 @@ function escapeHtml(str){
           assessmentSelectEl.value = currentQuiz._id;
 
           setMsg(
-            "Changes saved. Learner quiz and attempt pages were synchronized immediately.",
+            "Changes saved, including the Image / Question order. Learner quiz and attempt pages were synchronized immediately.",
             "ok"
           );
         } else {
@@ -4003,9 +4101,9 @@ function escapeHtml(str){
 
           if (mode === "now") {
             if (payload.sendPublishEmail) {
-              setMsg("Assessment changes published and learner pages synchronized. Learner emails were triggered.", "ok");
+              setMsg("Assessment changes published, including the Image / Question order, and learner pages synchronized. Learner emails were triggered.", "ok");
             } else {
-              setMsg("Assessment changes published and learner pages synchronized without sending learner emails.", "ok");
+              setMsg("Assessment changes published, including the Image / Question order, and learner pages synchronized without sending learner emails.", "ok");
             }
           } else {
             if (payload.sendPublishEmail) {
