@@ -6131,6 +6131,10 @@ function inlineQuizLoadingHtml(){
 
       const imageHtml = img ? `<div class="q qDiagramContext" data-context-kind="diagram"><div class="qImageWrap"><img class="qimg" src="${escapeAttr(img)}" alt="Question image" loading="lazy" decoding="async"></div></div>` : "";
 
+      const imageFirst =
+        q?.imageFirst === true ||
+        String(q?.contentOrder || "").toLowerCase() === "image-question";
+
       if (type === "note") {
         return renderNoteLike(rawText, imageHtml, sectionTotal);
       }
@@ -6140,9 +6144,10 @@ function inlineQuizLoadingHtml(){
 
       if (type === "text") {
         return `
-          ${imageHtml}
+          ${imageFirst ? imageHtml : ""}
           <div class="q" data-scorable="1" data-qindex="${i}">
             ${headHtml}
+            ${imageFirst ? "" : imageHtml}
             ${renderTypedAnswerArea(q, i)}
             ${hint ? `<div class="hint">Hint: <span class="hintText">${renderMixedMath(hint)}</span></div>` : ``}
             <div class="qLocalActions">
@@ -6161,9 +6166,10 @@ function inlineQuizLoadingHtml(){
       const inputType = multi ? "checkbox" : "radio";
 
       return `
-        ${imageHtml}
+        ${imageFirst ? imageHtml : ""}
         <div class="q" data-scorable="1" data-qindex="${i}">
           ${headHtml}
+          ${imageFirst ? "" : imageHtml}
           ${optionOrder.map((originalIndex) => {
             const o = opts[originalIndex];
             return `
