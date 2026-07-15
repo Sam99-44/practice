@@ -5441,11 +5441,13 @@ function inlineQuizLoadingHtml(){
     return converted;
   }
 
-  function renderReviewStyleSolutionBox(solutionText){
-    const solRaw = String(solutionText || "");
-    if (!solRaw.trim()) return "";
+  function renderReviewStyleSolutionBox(a){
+    const solRaw = String(a?.solution || "");
+    if (!solRaw.trim()){
+      return "";
+    }
 
-    const sol = escapeHtml(reviewAutoConvertMixedLatex(solRaw));
+    const sol = escapeHtml(solRaw);
 
     return `
       <div class="solutionBox" role="note" aria-label="Solution">
@@ -5699,36 +5701,59 @@ function inlineQuizLoadingHtml(){
    * That ReferenceError stopped loadQuiz() before the submit handlers
    * were attached to the question buttons.
    */
-  function renderReviewStyleSolutionBox(rawSolution){
-    const solution = String(rawSolution || "").trim();
-    if (!solution) return "";
+  function renderReviewStyleSolutionBox(a){
+    const solRaw = String(a?.solution || "");
+    if (!solRaw.trim()){
+      return "";
+    }
 
-    // Reuse the existing Attempt-page solution renderer so layout,
-    // MathJax and saved workings remain unchanged.
-    return formatSolutionHtml(solution);
+    const sol = escapeHtml(solRaw);
+
+    return `
+      <div class="solutionBox" role="note" aria-label="Solution">
+        <div class="solutionTop">Solution:</div>
+        <div class="solutionBody">${sol}</div>
+      </div>
+    `;
   }
 
   function applyReviewStyleWorkingsToAllQuestions(){
     if (!quizData || !Array.isArray(quizData.questions)) return;
 
-    quizData.questions.forEach((q, i) => {
+    quizData.questions.forEach((a, i) => {
       const box = document.querySelector(`.q[data-qindex="${i}"]`);
       if (!box) return;
 
-      const holder = box.querySelector(".solutionHolder");
-      if (!holder) return;
+      const solutionWrap = box.querySelector(".solutionHolder");
+      if (!solutionWrap) return;
 
-      const rawSolution = String(q?.solution || "");
+      const solRaw = String(a?.solution || "");
 
-      try{
-        holder.innerHTML = renderReviewStyleSolutionBox(rawSolution);
-      }catch(err){
-        console.error("Could not render solution for question", i, err);
-        holder.innerHTML = rawSolution ? formatSolutionHtml(rawSolution) : "";
+      if (!solRaw.trim()){
+        solutionWrap.classList.add("hidden");
+        solutionWrap.innerHTML = "";
+        return;
+      }
+
+      const sol = escapeHtml(solRaw);
+
+      solutionWrap.innerHTML = `
+        <div class="solutionBox" role="note" aria-label="Solution">
+          <div class="solutionTop">Solution:</div>
+          <div class="solutionBody">${sol}</div>
+        </div>
+      `;
+
+      /*
+       * Same MathJax sequence as review.html. The holder remains hidden
+       * until Show Answer is clicked; revealQuestionAnswer typesets it
+       * again immediately after making it visible.
+       */
+      if (!solutionWrap.classList.contains("hidden")) {
+        typesetMath(solutionWrap);
       }
     });
   }
-
 
   function revealQuestionAnswer(i){
     const box = document.querySelector(`.q[data-qindex="${i}"]`);
@@ -5739,7 +5764,7 @@ function inlineQuizLoadingHtml(){
 
     if (solution && solution.innerHTML.trim()) {
       solution.classList.remove("hidden");
-      typesetMathSoon(solution);
+      typesetMath(solution);
     }
 
     if (btn) {
@@ -6125,7 +6150,7 @@ function inlineQuizLoadingHtml(){
               <button class="qShowAnswerBtn" type="button" data-qindex="${i}">Show Answer</button>
               <span class="qFeedback"></span>
             </div>
-            <div class="solutionHolder hidden">${formatSolutionHtml(solution)}</div>
+            <div class="solutionHolder hidden">${renderReviewStyleSolutionBox(q)}</div>
           </div>
         `;
       }
@@ -6153,7 +6178,7 @@ function inlineQuizLoadingHtml(){
             <button class="qShowAnswerBtn" type="button" data-qindex="${i}">Show Answer</button>
             <span class="qFeedback"></span>
           </div>
-          <div class="solutionHolder hidden">${formatSolutionHtml(solution)}</div>
+          <div class="solutionHolder hidden">${renderReviewStyleSolutionBox(q)}</div>
         </div>
       `;
     }).join("");
