@@ -325,31 +325,132 @@ function normalizeQuizAccessLevel(value) {
     : "standard";
 }
 
-async function generateAssessmentCode(grade, paper) {
-  const gradePart = grade ? String(grade) : "ALL";
-  const paperPart = normalizePaper(paper) === "paper2" ? "P2" : "P1";
-  const prefix = `MAT${gradePart}-${paperPart}`;
+const AssessmentCodeCounterSchema = new mongoose.Schema(
+  {
+    _id: { type: String, required: true },
+    value: { type: Number, default: 0, min: 0 }
+  },
+  { versionKey: false, timestamps: true }
+);
 
-  const latestQuiz = await Quiz.findOne({
-    assessmentCode: { $regex: `^${prefix}-` },
+const AssessmentCodeCounter =
+  mongoose.models.AssessmentCodeCounter ||
+  mongoose.model("AssessmentCodeCounter", AssessmentCodeCounterSchema);
+
+function normalizeAssessmentContentType(value) {
+  const raw = String(value || "")
+    .trim()
+    .replace(/[\s_-]+/g, "")
+    .toLowerCase();
+
+  const aliases = {
+    quiz: "quiz",
+    quizzes: "quiz",
+    activity: "activity",
+    activities: "activity",
+    homework: "homework",
+    homeworks: "homework",
+    assignment: "assignment",
+    assignments: "assignment",
+    gradechallenge: "gradeChallenge",
+    challenge: "gradeChallenge",
+    weeklychallenge: "weeklyChallenge",
+    challengeoftheweek: "weeklyChallenge",
+    weekchallenge: "weeklyChallenge"
+  };
+
+  return aliases[raw] || "quiz";
+}
+
+function assessmentCodePrefix(contentType) {
+  return {
+    quiz: "QZ",
+    activity: "AC",
+    homework: "HW",
+    assignment: "AS",
+    gradeChallenge: "GC",
+    weeklyChallenge: "WC"
+  }[normalizeAssessmentContentType(contentType)] || "QZ";
+}
+
+function assessmentCodeGradePart(grade, contentType) {
+  const type = normalizeAssessmentContentType(contentType);
+
+  if (type === "weeklyChallenge") return "00";
+
+  const gradeNumber = Number(grade);
+
+  if (!Number.isInteger(gradeNumber) || gradeNumber < 8 || gradeNumber > 12) {
+    throw new Error("Grade must be between 8 and 12 for this assessment type.");
+  }
+
+  return String(gradeNumber).padStart(2, "0");
+}
+
+function assessmentCounterKey(grade, contentType) {
+  return assessmentCodePrefix(contentType) +
+    assessmentCodeGradePart(grade, contentType);
+}
+
+function buildAssessmentCode(prefixAndGrade, sequence) {
+  return `${prefixAndGrade}${String(sequence).padStart(4, "0")}`;
+}
+
+async function findHighestExistingAssessmentSequence(grade, contentType) {
+  const key = assessmentCounterKey(grade, contentType);
+  const pattern = new RegExp(`^${key}(\\d{4})$`, "i");
+
+  const existing = await Quiz.find({
+    assessmentCode: { $regex: pattern }
   })
-    .sort({ assessmentCode: -1 })
     .select("assessmentCode")
     .lean();
 
-  let nextNumber = 1;
+  let highest = 0;
 
-  if (latestQuiz?.assessmentCode) {
-    const currentNumber = Number(
-      latestQuiz.assessmentCode.split("-").pop()
-    );
-
-    if (Number.isInteger(currentNumber)) {
-      nextNumber = currentNumber + 1;
-    }
+  for (const quiz of existing) {
+    const match = String(quiz.assessmentCode || "").match(pattern);
+    if (match) highest = Math.max(highest, Number(match[1]) || 0);
   }
 
-  return `${prefix}-${String(nextNumber).padStart(4, "0")}`;
+  return highest;
+}
+
+async function generateAssessmentCode(grade, contentType) {
+  const key = assessmentCounterKey(grade, contentType);
+  const highestExisting =
+    await findHighestExistingAssessmentSequence(grade, contentType);
+
+  try {
+    await AssessmentCodeCounter.updateOne(
+      { _id: key },
+      {
+        $max: { value: highestExisting },
+        $setOnInsert: { _id: key }
+      },
+      { upsert: true }
+    );
+  } catch (error) {
+    if (error?.code !== 11000) throw error;
+  }
+
+  const counter = await AssessmentCodeCounter.findOneAndUpdate(
+    { _id: key },
+    { $inc: { value: 1 } },
+    {
+      new: true,
+      upsert: true,
+      setDefaultsOnInsert: true
+    }
+  );
+
+  const sequence = Number(counter?.value || 1);
+
+  return {
+    assessmentCode: buildAssessmentCode(key, sequence),
+    assessmentSequence: sequence,
+    assessmentCounterKey: key
+  };
 }
 
 function paperLabel(p) {
@@ -1003,6 +1104,93 @@ async function autoPublishScheduledQuizzes() {
     console.error("autoPublishScheduledQuizzes error:", e.message);
   }
 }
+
+/* ------------------ ASSESSMENT CODE MIGRATION ------------------ */
+/*
+ * Run once after deployment:
+ * POST /api/admin/migrate-assessment-codes
+ */
+app.post(
+  "/api/admin/migrate-assessment-codes",
+  authRequired,
+  adminOnly,
+  async (req, res) => {
+    try {
+      const quizzes = await Quiz.find({})
+        .sort({ createdAt: 1, _id: 1 });
+
+      const nextByKey = new Map();
+      const updates = [];
+      let skipped = 0;
+
+      for (const quiz of quizzes) {
+        const type =
+          normalizeAssessmentContentType(quiz.contentType);
+
+        const grade =
+          type === "weeklyChallenge"
+            ? null
+            : quiz.grade;
+
+        let key;
+
+        try {
+          key = assessmentCounterKey(grade, type);
+        } catch {
+          skipped += 1;
+          continue;
+        }
+
+        const sequence = (nextByKey.get(key) || 0) + 1;
+        nextByKey.set(key, sequence);
+
+        const newCode = buildAssessmentCode(key, sequence);
+
+        if (quiz.assessmentCode !== newCode) {
+          quiz.assessmentCode = newCode;
+          await quiz.save();
+        }
+
+        updates.push({
+          quizId: quiz._id,
+          assessmentCode: newCode,
+          contentType: type,
+          grade: grade ?? null,
+          sequence
+        });
+      }
+
+      for (const [key, value] of nextByKey.entries()) {
+        await AssessmentCodeCounter.findOneAndUpdate(
+          { _id: key },
+          { $set: { value } },
+          {
+            upsert: true,
+            new: true,
+            setDefaultsOnInsert: true
+          }
+        );
+      }
+
+      return res.json({
+        message: "Assessment code migration completed.",
+        updated: updates.length,
+        skipped,
+        counters: Object.fromEntries(nextByKey),
+        assessments: updates
+      });
+    } catch (error) {
+      console.error(
+        "POST /api/admin/migrate-assessment-codes error:",
+        error
+      );
+
+      return res.status(500).json({
+        message: "Could not migrate assessment codes."
+      });
+    }
+  }
+);
 
 /* ------------------ ANNOUNCEMENT MODEL ------------------ */
 const AnnouncementResponseSchema = new mongoose.Schema(
@@ -2549,15 +2737,30 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
   sendPublishEmail,
     } = req.body;
 
-    if (!grade || !title || !topic || !Array.isArray(questions) || questions.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "Grade, topic, title, and questions are required." });
+    const finalContentType =
+      normalizeAssessmentContentType(contentType);
+
+    if (
+      !title ||
+      !topic ||
+      !Array.isArray(questions) ||
+      questions.length === 0
+    ) {
+      return res.status(400).json({
+        message: "Topic, title, and questions are required."
+      });
     }
 
-    const g = Number(grade);
-    if (!Number.isInteger(g) || g < 8 || g > 12) {
-      return res.status(400).json({ message: "Grade must be between 8 and 12." });
+    let g = null;
+
+    if (finalContentType !== "weeklyChallenge") {
+      g = Number(grade);
+
+      if (!Number.isInteger(g) || g < 8 || g > 12) {
+        return res.status(400).json({
+          message: "Grade must be between 8 and 12."
+        });
+      }
     }
 
     const quizTitle = cleanSpaces(title);
@@ -2740,20 +2943,20 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
 
 const finalAccessLevel = normalizeQuizAccessLevel(accessLevel);
 
-const assessmentCode = await generateAssessmentCode(
+const generatedCode = await generateAssessmentCode(
   g,
-  quizPaper
+  finalContentType
 );
 
 const quiz = await Quiz.create({
-  assessmentCode,
+  assessmentCode: generatedCode.assessmentCode,
 
   grade: g,
   title: quizTitle,
   topic: quizTopic,
   paper: quizPaper,
 
-  contentType: contentType || "quiz",
+  contentType: finalContentType,
   audience: audience || "grade",
   isForAllLearners: !!isForAllLearners,
 
@@ -2795,6 +2998,8 @@ res.status(201).json({
 
   quizId: quiz._id,
   assessmentCode: quiz.assessmentCode,
+  assessmentSequence: generatedCode.assessmentSequence,
+  assessmentCounterKey: generatedCode.assessmentCounterKey,
   accessLevel: quiz.accessLevel,
   isPublished: quiz.isPublished,
   publishAt: quiz.publishAt,
@@ -2821,10 +3026,15 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
     const quiz = await Quiz.findById(id);
     if (!quiz) return res.status(404).json({ message: "Assessment not found." });
 
+    const originalGrade = quiz.grade;
+    const originalContentType =
+      normalizeAssessmentContentType(quiz.contentType);
+
     const allowed = [
       "grade",
       "title",
       "topic",
+      "contentType",
       "paper",
       "difficulty",
       "instructions",
@@ -2852,6 +3062,22 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
           return res.status(400).json({ message: "Grade must be between 8 and 12." });
         }
         quiz.grade = g;
+        continue;
+      }
+
+      if (key === "contentType") {
+        quiz.contentType =
+          normalizeAssessmentContentType(req.body.contentType);
+
+        if (quiz.contentType === "weeklyChallenge") {
+          quiz.grade = null;
+          quiz.audience = "all";
+          quiz.isForAllLearners = true;
+        } else {
+          quiz.audience = "grade";
+          quiz.isForAllLearners = false;
+        }
+
         continue;
       }
 
@@ -3225,6 +3451,22 @@ if (key === "accessFee") {
 
     if (quiz.publishedAt && isNaN(new Date(quiz.publishedAt).getTime())) {
       return res.status(400).json({ message: "Invalid publishedAt date/time." });
+    }
+
+    const finalPutContentType =
+      normalizeAssessmentContentType(quiz.contentType);
+
+    const gradeOrTypeChanged =
+      Number(originalGrade) !== Number(quiz.grade) ||
+      originalContentType !== finalPutContentType;
+
+    if (gradeOrTypeChanged) {
+      const regeneratedCode = await generateAssessmentCode(
+        quiz.grade,
+        finalPutContentType
+      );
+
+      quiz.assessmentCode = regeneratedCode.assessmentCode;
     }
 
     await quiz.save();
