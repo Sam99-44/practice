@@ -274,7 +274,15 @@
       .optRow{flex-wrap:wrap;}
       .optCorrectWrap{height:auto; padding:8px 10px;}
     }
-  </style>
+  
+    .answerFieldsEditor{display:grid;gap:8px;margin-top:10px;}
+    .editAnswerFieldRow{display:grid;grid-template-columns:minmax(90px,.7fr) minmax(120px,1fr) minmax(90px,.8fr) minmax(120px,1fr) auto;gap:8px;align-items:end;padding:10px;border:1px solid #e5e7eb;border-radius:8px;background:#f8fafc;}
+    .editAnswerFieldRow label{font-size:11px;font-weight:700;color:#334155;}
+    .editAnswerFieldRow input{margin:4px 0 0;}
+    .removeAnswerFieldBtn{height:40px;background:#fff;color:#b91c1c;border:1px solid #fecaca;}
+    @media(max-width:760px){.editAnswerFieldRow{grid-template-columns:1fr}.removeAnswerFieldBtn{width:100%;}}
+
+</style>
 </head>
 
 <body>
@@ -1977,7 +1985,7 @@ function escapeHtml(str){
           <textarea class="qSolution" rows="4" placeholder="Example: Multiply both sides by 5: $2x=20$. Divide by 2: $x=10$."></textarea>
 
           <div class="grid2">
-            <div>
+            <div class="singleCorrectAnswerWrap">
               <label>Correct Answer (supports math)</label>
               <input class="correctText" placeholder="Example: 10" />
             </div>
@@ -1987,9 +1995,22 @@ function escapeHtml(str){
                 <option value="exact">Exact (case-insensitive)</option>
                 <option value="contains">Contains</option>
                 <option value="number_tolerance">Number (tolerance)</option>
+                <option value="unordered">Unordered values</option>
+                <option value="expression">Mathematical expression</option>
               </select>
               <div class="muted tiny">Use “Number (tolerance)” for calculations.</div>
             </div>
+          </div>
+
+          <div class="multiAnswerEditor" style="margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+              <div>
+                <b>Separate answer boxes</b>
+                <div class="muted tiny">Restore or add two, three, four, or more learner answer boxes.</div>
+              </div>
+              <button type="button" class="smallbtn addAnswerFieldBtn">+ Add Answer Box</button>
+            </div>
+            <div class="answerFieldsEditor"></div>
           </div>
 
           <div class="grid2 tolRow hide">
@@ -2022,6 +2043,93 @@ function escapeHtml(str){
       `;
     }
 
+
+    function normaliseAnswerFieldKey(value, fallback="answer"){
+      const key = String(value || "").trim().toLowerCase()
+        .replace(/[^a-z0-9_]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+      return key || fallback;
+    }
+
+    function addEditorAnswerField(card, field = {}){
+      const wrap = card?.querySelector(".answerFieldsEditor");
+      if (!wrap) return;
+      const index = wrap.querySelectorAll(".editAnswerFieldRow").length;
+      const row = document.createElement("div");
+      row.className = "editAnswerFieldRow";
+      row.innerHTML = `
+        <div><label>Key</label><input class="answerFieldKey" value="${escapeAttr(field.key || `answer_${index + 1}`)}"></div>
+        <div><label>Prefix</label><input class="answerFieldPrefix" value="${escapeAttr(field.prefix || field.label || "")}"></div>
+        <div><label>Suffix</label><input class="answerFieldSuffix" value="${escapeAttr(field.suffix || field.unit || "")}"></div>
+        <div><label>Correct Answer</label><input class="answerFieldCorrect" value="${escapeAttr(field.correctAnswer || field.answer || "")}"></div>
+        <button type="button" class="smallbtn removeAnswerFieldBtn">Remove</button>
+      `;
+      wrap.appendChild(row);
+      row.querySelectorAll("input").forEach(input => input.addEventListener("input", () => renderCardPreview(card)));
+      row.querySelector(".removeAnswerFieldBtn")?.addEventListener("click", () => {
+        row.remove();
+        const hasRows = wrap.querySelectorAll(".editAnswerFieldRow").length > 0;
+        card.querySelector(".singleCorrectAnswerWrap")?.classList.toggle("hide", hasRows);
+        renderCardPreview(card);
+      });
+    }
+
+    function getEditorAnswerFields(card){
+      return [...(card?.querySelectorAll(".editAnswerFieldRow") || [])].map((row, index) => ({
+        key: normaliseAnswerFieldKey(row.querySelector(".answerFieldKey")?.value, `answer_${index + 1}`),
+        prefix: String(row.querySelector(".answerFieldPrefix")?.value || "").trim(),
+        suffix: String(row.querySelector(".answerFieldSuffix")?.value || "").trim(),
+        correctAnswer: String(row.querySelector(".answerFieldCorrect")?.value || "").trim()
+      }));
+    }
+
+    function parseCombinedCorrectText(correctText){
+      const keyed = new Map();
+      const ordered = [];
+      String(correctText || "").split("|").map(x => x.trim()).filter(Boolean).forEach((part, index) => {
+        const eq = part.indexOf("=");
+        if (eq > 0) {
+          const key = normaliseAnswerFieldKey(part.slice(0, eq), `answer_${index + 1}`);
+          const value = part.slice(eq + 1).trim();
+          keyed.set(key, value);
+          ordered.push(value);
+        } else {
+          ordered.push(part);
+        }
+      });
+      return { keyed, ordered };
+    }
+
+    function restoreEditorAnswerFields(card, data){
+      const wrap = card?.querySelector(".answerFieldsEditor");
+      if (!wrap) return;
+      wrap.innerHTML = "";
+
+      const configured = Array.isArray(data?.answerFields) ? data.answerFields : [];
+      const parsed = parseCombinedCorrectText(data?.correctText || "");
+
+      const fields = configured.map((field, index) => {
+        const key = normaliseAnswerFieldKey(field?.key, `answer_${index + 1}`);
+        return {
+          key,
+          prefix: field?.prefix || field?.label || "",
+          suffix: field?.suffix || field?.unit || "",
+          correctAnswer: field?.correctAnswer || field?.answer || parsed.keyed.get(key) || parsed.ordered[index] || ""
+        };
+      });
+
+      fields.forEach(field => addEditorAnswerField(card, field));
+
+      const hasFields = fields.length > 0;
+      card.querySelector(".singleCorrectAnswerWrap")?.classList.toggle("hide", hasFields);
+
+      const correctInput = card.querySelector(".correctText");
+      if (correctInput) {
+        correctInput.value = hasFields
+          ? fields.map(field => `${field.key}=${field.correctAnswer}`).join("|")
+          : String(data?.correctText || "");
+      }
+    }
 
     function moveCard(card, direction){
       if (!card) return;
@@ -2157,6 +2265,15 @@ function escapeHtml(str){
 
       if (card.getAttribute("data-type") === "text") {
         wireTextModeCard(card);
+        const addFieldBtn = card.querySelector(".addAnswerFieldBtn");
+        if (addFieldBtn && addFieldBtn.dataset.wired !== "1") {
+          addFieldBtn.addEventListener("click", () => {
+            addEditorAnswerField(card);
+            card.querySelector(".singleCorrectAnswerWrap")?.classList.add("hide");
+            renderCardPreview(card);
+          });
+          addFieldBtn.dataset.wired = "1";
+        }
       }
 
       renderCardPreview(card);
@@ -3117,7 +3234,7 @@ function escapeHtml(str){
 
       applyStoredImageQuestionOrder(card, data);
 
-      card.querySelector(".correctText").value = data.correctText || "";
+      restoreEditorAnswerFields(card, data);
       const modeSel = card.querySelector(".textMode");
       const tolInput = card.querySelector(".tolerance");
       if (modeSel) modeSel.value = data.textAnswerMode || "exact";
@@ -3221,6 +3338,7 @@ function escapeHtml(str){
             hint: cleanSpaces(item.hint || ""),
             imageUrl: cleanSpaces(item.imageUrl || ""),
             points: Number(item.points || 1),
+            answerFields: Array.isArray(item.answerFields) ? item.answerFields : [],
             correctText: cleanSpaces(item.correctText || ""),
             textAnswerMode: item.textAnswerMode || "exact",
             numberTolerance: item.numberTolerance ?? null,
@@ -3520,7 +3638,15 @@ function escapeHtml(str){
         const solution = autoConvertMixedLatex(String(card.querySelector(".qSolution")?.value || "").replace(/\r/g, "").trim());
 
         if (type === "text") {
-          const correctText = autoConvertMixedLatex(cleanSpaces(card.querySelector(".correctText")?.value));
+          const editorAnswerFields = getEditorAnswerFields(card);
+          if (editorAnswerFields.some(field => !field.correctAnswer)) {
+            throw new Error("Please enter the correct answer for every separate answer box.");
+          }
+
+          const correctText = editorAnswerFields.length
+            ? editorAnswerFields.map(field => `${field.key}=${autoConvertMixedLatex(field.correctAnswer)}`).join("|")
+            : autoConvertMixedLatex(cleanSpaces(card.querySelector(".correctText")?.value));
+
           const textAnswerMode = card.querySelector(".textMode")?.value || "exact";
           const toleranceRaw = cleanSpaces(card.querySelector(".tolerance")?.value);
 
@@ -3552,6 +3678,12 @@ function escapeHtml(str){
               ? "image-question"
               : "question-image",
             points,
+            answerFields: editorAnswerFields.map(field => ({
+              key: field.key,
+              prefix: field.prefix,
+              suffix: field.suffix,
+              correctAnswer: autoConvertMixedLatex(field.correctAnswer)
+            })),
             correctText,
             textAnswerMode,
             numberTolerance,
@@ -3789,7 +3921,10 @@ function escapeHtml(str){
             question: questionBody,
             hint: q.hint || "",
             imageUrl: q.imageUrl || "",
+            imageFirst: q?.imageFirst === true || String(q?.contentOrder || "").toLowerCase() === "image-question",
+            contentOrder: String(q?.contentOrder || "").trim() || (q?.imageFirst === true ? "image-question" : "question-image"),
             points: q.points || 1,
+            answerFields: Array.isArray(q.answerFields) ? q.answerFields : [],
             correctText: q.correctText || "",
             textAnswerMode: q.textAnswerMode || "exact",
             numberTolerance: q.numberTolerance ?? "",
@@ -3805,6 +3940,8 @@ function escapeHtml(str){
             question: questionBody,
             hint: q.hint || "",
             imageUrl: q.imageUrl || "",
+            imageFirst: q?.imageFirst === true || String(q?.contentOrder || "").toLowerCase() === "image-question",
+            contentOrder: String(q?.contentOrder || "").trim() || (q?.imageFirst === true ? "image-question" : "question-image"),
             points: q.points || 1,
             options: Array.isArray(q.options) ? q.options : [],
             correctIndexes,
