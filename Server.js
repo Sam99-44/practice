@@ -416,41 +416,58 @@ async function findHighestExistingAssessmentSequence(grade, contentType) {
   return highest;
 }
 
-async function generateAssessmentCode(grade, contentType) {
+async function generateAssessmentCode(grade, contentType, excludeQuizId = null) {
   const key = assessmentCounterKey(grade, contentType);
-  const highestExisting =
-    await findHighestExistingAssessmentSequence(grade, contentType);
+  const pattern = new RegExp(`^${key}(\\d{4})$`, "i");
 
-  try {
-    await AssessmentCodeCounter.updateOne(
-      { _id: key },
-      {
-        $max: { value: highestExisting },
-        $setOnInsert: { _id: key }
-      },
-      { upsert: true }
-    );
-  } catch (error) {
-    if (error?.code !== 11000) throw error;
+  const query = {
+    assessmentCode: { $regex: pattern }
+  };
+
+  if (excludeQuizId && mongoose.Types.ObjectId.isValid(String(excludeQuizId))) {
+    query._id = { $ne: excludeQuizId };
   }
 
-  const counter = await AssessmentCodeCounter.findOneAndUpdate(
-    { _id: key },
-    { $inc: { value: 1 } },
-    {
-      new: true,
-      upsert: true,
-      setDefaultsOnInsert: true
-    }
-  );
+  const existing = await Quiz.find(query)
+    .select("assessmentCode")
+    .lean();
 
-  const sequence = Number(counter?.value || 1);
+  const usedSequences = new Set();
+
+  for (const quiz of existing) {
+    const match = String(quiz.assessmentCode || "").match(pattern);
+    if (!match) continue;
+
+    const sequence = Number(match[1]);
+    if (Number.isInteger(sequence) && sequence >= 1) {
+      usedSequences.add(sequence);
+    }
+  }
+
+  let sequence = 1;
+  while (usedSequences.has(sequence)) {
+    sequence += 1;
+  }
 
   return {
     assessmentCode: buildAssessmentCode(key, sequence),
     assessmentSequence: sequence,
     assessmentCounterKey: key
   };
+}
+
+function isAssessmentCodeDuplicateError(error) {
+  if (error?.code !== 11000) return false;
+
+  const keyPattern = error?.keyPattern || {};
+  const keyValue = error?.keyValue || {};
+  const message = String(error?.message || "");
+
+  return Boolean(
+    keyPattern.assessmentCode ||
+    keyValue.assessmentCode ||
+    message.includes("assessmentCode")
+  );
 }
 
 function paperLabel(p) {
@@ -3141,13 +3158,11 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
     }
 
     const finalAccessLevel = normalizeQuizAccessLevel(accessLevel);
-    const generatedCode = await generateAssessmentCode(g, finalContentType);
     const finalAssessmentInstructions = String(
       assessmentInstructions || instructions || ""
     ).trim();
 
-    const quiz = await Quiz.create({
-      assessmentCode: generatedCode.assessmentCode,
+    const quizPayload = {
       grade: g,
       subject: cleanSpaces(subject || "Mathematics") || "Mathematics",
       curriculum: cleanSpaces(curriculum || "CAPS") || "CAPS",
@@ -3185,7 +3200,34 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
       publishAt: finalPublishAt,
       publishedBy: isPublished ? req.user.userId : null,
       sendPublishEmail: !!sendPublishEmail,
-    });
+    };
+
+    let generatedCode = null;
+    let quiz = null;
+    const maximumCodeAttempts = 8;
+
+    for (let attempt = 1; attempt <= maximumCodeAttempts; attempt += 1) {
+      generatedCode = await generateAssessmentCode(g, finalContentType);
+
+      try {
+        quiz = await Quiz.create({
+          ...quizPayload,
+          assessmentCode: generatedCode.assessmentCode,
+        });
+        break;
+      } catch (error) {
+        if (
+          !isAssessmentCodeDuplicateError(error) ||
+          attempt === maximumCodeAttempts
+        ) {
+          throw error;
+        }
+      }
+    }
+
+    if (!quiz || !generatedCode) {
+      throw new Error("Could not allocate a unique assessment code.");
+    }
 
     res.status(201).json({
       message: Boolean(publishNow)
@@ -3434,14 +3476,38 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
       originalContentType !== finalContentType;
 
     if (gradeOrTypeChanged) {
-      const regeneratedCode = await generateAssessmentCode(
-        quiz.grade,
-        finalContentType
-      );
-      quiz.assessmentCode = regeneratedCode.assessmentCode;
-    }
+      const maximumCodeAttempts = 8;
+      let saved = false;
 
-    await quiz.save();
+      for (let attempt = 1; attempt <= maximumCodeAttempts; attempt += 1) {
+        const regeneratedCode = await generateAssessmentCode(
+          quiz.grade,
+          finalContentType,
+          quiz._id
+        );
+
+        quiz.assessmentCode = regeneratedCode.assessmentCode;
+
+        try {
+          await quiz.save();
+          saved = true;
+          break;
+        } catch (error) {
+          if (
+            !isAssessmentCodeDuplicateError(error) ||
+            attempt === maximumCodeAttempts
+          ) {
+            throw error;
+          }
+        }
+      }
+
+      if (!saved) {
+        throw new Error("Could not allocate a unique assessment code.");
+      }
+    } else {
+      await quiz.save();
+    }
     return res.json(quiz);
   } catch (e) {
     console.error("PUT /api/quizzes/:id error:", e.message);
