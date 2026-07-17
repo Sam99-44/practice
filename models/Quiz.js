@@ -1,4 +1,4 @@
-// models/Quiz.js.
+// models/Quiz.js
 
 import mongoose from "mongoose";
 
@@ -6,7 +6,7 @@ const QuestionSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ["mcq", "text", "note"],
+      enum: ["mcq", "text", "dropdown", "fill", "note"],
       default: "mcq",
       required: true,
     },
@@ -18,6 +18,18 @@ const QuestionSchema = new mongoose.Schema(
     },
 
     imageUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    imageAlt: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    imageSource: {
       type: String,
       default: "",
       trim: true,
@@ -40,11 +52,8 @@ const QuestionSchema = new mongoose.Schema(
       default: 1,
       min: 0,
       validate: {
-        validator: function (value) {
-          if (this.type === "note") {
-            return value === 0;
-          }
-
+        validator(value) {
+          if (this.type === "note") return value === 0;
           return Number.isInteger(value) && value >= 1;
         },
         message:
@@ -56,14 +65,18 @@ const QuestionSchema = new mongoose.Schema(
       type: [String],
       default: [],
       validate: {
-        validator: function (options) {
-          if (this.type === "mcq") {
-            return Array.isArray(options) && options.length >= 2;
+        validator(options) {
+          if (this.type === "mcq" || this.type === "dropdown") {
+            return (
+              Array.isArray(options) &&
+              options.length >= 2 &&
+              options.every((option) => String(option || "").trim().length > 0)
+            );
           }
-
           return true;
         },
-        message: "An MCQ question must have at least 2 options.",
+        message:
+          "MCQ and dropdown questions must have at least 2 non-empty options.",
       },
     },
 
@@ -72,23 +85,18 @@ const QuestionSchema = new mongoose.Schema(
       default: -1,
       min: -1,
       validate: {
-        validator: function (value) {
-          if (this.type !== "mcq") {
-            return true;
-          }
+        validator(value) {
+          if (this.type !== "mcq") return true;
 
           const usesMultiSelect =
             Boolean(this.isMultiSelect) ||
-            (Array.isArray(this.correctIndexes) &&
-              this.correctIndexes.length > 0);
+            (Array.isArray(this.correctIndexes) && this.correctIndexes.length > 0);
 
           if (usesMultiSelect) {
             return Number.isInteger(value) && value >= -1;
           }
 
-          if (!Number.isInteger(value) || value < 0) {
-            return false;
-          }
+          if (!Number.isInteger(value) || value < 0) return false;
 
           const optionsLength = Array.isArray(this.options)
             ? this.options.length
@@ -104,26 +112,16 @@ const QuestionSchema = new mongoose.Schema(
       type: [Number],
       default: [],
       validate: {
-        validator: function (indexes) {
-          if (this.type !== "mcq") {
-            return true;
-          }
-
-          if (!Array.isArray(indexes)) {
-            return false;
-          }
-
-          if (indexes.length === 0) {
-            return true;
-          }
+        validator(indexes) {
+          if (this.type !== "mcq") return true;
+          if (!Array.isArray(indexes)) return false;
+          if (indexes.length === 0) return true;
 
           const allIndexesAreValid = indexes.every(
             (index) => Number.isInteger(index) && index >= 0
           );
 
-          if (!allIndexesAreValid) {
-            return false;
-          }
+          if (!allIndexesAreValid) return false;
 
           const optionsLength = Array.isArray(this.options)
             ? this.options.length
@@ -152,20 +150,42 @@ const QuestionSchema = new mongoose.Schema(
       default: "",
       trim: true,
       validate: {
-        validator: function (value) {
+        validator(value) {
+          const normalizedValue = String(value || "").trim();
+
           if (this.type === "text") {
-            return String(value || "").trim().length > 0;
+            const fields = Array.isArray(this.answerFields)
+              ? this.answerFields
+              : [];
+            return normalizedValue.length > 0 || fields.length > 0;
+          }
+
+          if (this.type === "dropdown") {
+            if (!normalizedValue) return false;
+
+            const normalizedOptions = Array.isArray(this.options)
+              ? this.options.map((option) => String(option || "").trim())
+              : [];
+
+            return normalizedOptions.includes(normalizedValue);
           }
 
           return true;
         },
-        message: "Typed-answer questions must have a correctText value.",
+        message:
+          "Text questions need a correct answer, and dropdown answers must match one of the options.",
       },
     },
 
     textAnswerMode: {
       type: String,
-      enum: ["exact", "contains", "number_tolerance", "unordered", "expression"],
+      enum: [
+        "exact",
+        "contains",
+        "number_tolerance",
+        "unordered",
+        "expression",
+      ],
       default: "exact",
     },
 
@@ -206,17 +226,61 @@ const QuestionSchema = new mongoose.Schema(
           prefix: { type: String, default: "", trim: true },
           suffix: { type: String, default: "", trim: true },
           correctAnswer: { type: String, default: "", trim: true },
-        }
+        },
       ],
       default: [],
       validate: {
         validator(fields) {
           if (!Array.isArray(fields)) return false;
-          const keys = fields.map(f => String(f.key || "").trim()).filter(Boolean);
-          return new Set(keys).size === keys.length;
+
+          const keys = fields
+            .map((field) => String(field.key || "").trim())
+            .filter(Boolean);
+
+          if (new Set(keys).size !== keys.length) return false;
+
+          if (this.type === "text") {
+            return fields.every(
+              (field) =>
+                String(field.key || "").trim().length > 0 &&
+                String(field.correctAnswer || "").trim().length > 0
+            );
+          }
+
+          return true;
         },
-        message: "Answer field keys must be unique."
-      }
+        message:
+          "Answer field keys must be unique and every text answer field must have a correct answer.",
+      },
+    },
+
+    dropdownPlaceholder: {
+      type: String,
+      default: "Select an answer",
+      trim: true,
+    },
+
+    fillAnswers: {
+      type: [String],
+      default: [],
+      validate: {
+        validator(answers) {
+          if (this.type !== "fill") return true;
+
+          return (
+            Array.isArray(answers) &&
+            answers.length > 0 &&
+            answers.every((answer) => String(answer ?? "").trim().length > 0)
+          );
+        },
+        message:
+          "Fill-in-the-blank questions must have at least one non-empty answer.",
+      },
+    },
+
+    allowPartialMarks: {
+      type: Boolean,
+      default: true,
     },
   },
   {
@@ -226,17 +290,6 @@ const QuestionSchema = new mongoose.Schema(
 
 const QuizSchema = new mongoose.Schema(
   {
-    /*
-     * Automatically generated assessment code.
-     *
-     * Examples:
-     * MAT11-P1-0001
-     * MAT11-P1-0002
-     * MAT12-P2-0001
-     *
-     * Empty assessment codes are stored as undefined so that old quizzes
-     * do not conflict with the unique assessment-code index.
-     */
     assessmentCode: {
       type: String,
       default: undefined,
@@ -247,12 +300,48 @@ const QuizSchema = new mongoose.Schema(
 
     grade: {
       type: Number,
-      required: function () {
+      required() {
         return this.contentType !== "weeklyChallenge";
       },
       min: 8,
       max: 12,
       default: null,
+      index: true,
+    },
+
+    subject: {
+      type: String,
+      default: "Mathematics",
+      trim: true,
+      index: true,
+    },
+
+    curriculum: {
+      type: String,
+      default: "CAPS",
+      trim: true,
+      index: true,
+    },
+
+    language: {
+      type: String,
+      default: "English",
+      trim: true,
+      index: true,
+    },
+
+    term: {
+      type: Number,
+      min: 1,
+      max: 4,
+      default: 1,
+      index: true,
+    },
+
+    chapter: {
+      type: Number,
+      min: 1,
+      default: 1,
       index: true,
     },
 
@@ -267,6 +356,24 @@ const QuizSchema = new mongoose.Schema(
       default: "",
       trim: true,
       index: true,
+    },
+
+    subtopic: {
+      type: String,
+      default: "",
+      trim: true,
+      index: true,
+    },
+
+    version: {
+      type: String,
+      default: "1.0",
+      trim: true,
+    },
+
+    keywords: {
+      type: [String],
+      default: [],
     },
 
     contentType: {
@@ -296,12 +403,6 @@ const QuizSchema = new mongoose.Schema(
       index: true,
     },
 
-    /*
-     * Quiz access:
-     *
-     * standard = all permitted learners can access the quiz
-     * premium  = only learners with paid access can open the quiz
-     */
     accessLevel: {
       type: String,
       enum: ["standard", "premium"],
@@ -322,12 +423,6 @@ const QuizSchema = new mongoose.Schema(
       index: true,
     },
 
-    /*
-     * Optional price for a premium quiz.
-     *
-     * Use 0 when access is controlled by a general subscription.
-     * Store the value as a normal number, for example 50.
-     */
     accessFee: {
       type: Number,
       default: 0,
@@ -361,6 +456,17 @@ const QuizSchema = new mongoose.Schema(
       type: String,
       default: "",
       trim: true,
+    },
+
+    assessmentInstructions: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    learningObjectives: {
+      type: [String],
+      default: [],
     },
 
     isFrozen: {
@@ -418,22 +524,78 @@ const QuizSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 
-/*
- * Normalise quiz values before validation.
- */
-QuizSchema.pre("validate", function (next) {
-  const code = String(this.assessmentCode || "")
-    .trim()
-    .toUpperCase();
+QuizSchema.virtual("questionCount").get(function () {
+  return Array.isArray(this.questions)
+    ? this.questions.filter((question) => question.type !== "note").length
+    : 0;
+});
 
-  /*
-   * Remove empty assessment codes completely.
-   * This prevents duplicate empty strings in MongoDB.
-   */
+QuizSchema.virtual("totalMarks").get(function () {
+  if (!Array.isArray(this.questions)) return 0;
+
+  return this.questions.reduce((total, question) => {
+    if (question.type === "note") return total;
+    return total + (Number(question.points) || 0);
+  }, 0);
+});
+
+QuizSchema.virtual("mcqCount").get(function () {
+  return Array.isArray(this.questions)
+    ? this.questions.filter((question) => question.type === "mcq").length
+    : 0;
+});
+
+QuizSchema.virtual("textCount").get(function () {
+  return Array.isArray(this.questions)
+    ? this.questions.filter((question) => question.type === "text").length
+    : 0;
+});
+
+QuizSchema.virtual("dropdownCount").get(function () {
+  return Array.isArray(this.questions)
+    ? this.questions.filter((question) => question.type === "dropdown").length
+    : 0;
+});
+
+QuizSchema.virtual("fillCount").get(function () {
+  return Array.isArray(this.questions)
+    ? this.questions.filter((question) => question.type === "fill").length
+    : 0;
+});
+
+QuizSchema.pre("validate", function (next) {
+  const code = String(this.assessmentCode || "").trim().toUpperCase();
   this.assessmentCode = code || undefined;
+
+  this.subject = String(this.subject || "Mathematics").trim() || "Mathematics";
+  this.curriculum = String(this.curriculum || "CAPS").trim() || "CAPS";
+  this.language = String(this.language || "English").trim() || "English";
+  this.topic = String(this.topic || "").trim();
+  this.subtopic = String(this.subtopic || "").trim();
+  this.version = String(this.version || "1.0").trim() || "1.0";
+
+  this.keywords = Array.isArray(this.keywords)
+    ? [...new Set(this.keywords.map((k) => String(k || "").trim()).filter(Boolean))]
+    : [];
+
+  this.learningObjectives = Array.isArray(this.learningObjectives)
+    ? this.learningObjectives
+        .map((objective) => String(objective || "").trim())
+        .filter(Boolean)
+    : [];
+
+  this.assessmentInstructions = String(
+    this.assessmentInstructions || this.instructions || ""
+  ).trim();
+
+  this.instructions = String(
+    this.instructions || this.assessmentInstructions || ""
+  ).trim();
 
   if (this.contentType === "weeklyChallenge") {
     this.grade = null;
@@ -444,10 +606,6 @@ QuizSchema.pre("validate", function (next) {
     this.isForAllLearners = false;
   }
 
-  /*
-   * Keep the premium fields consistent.
-   * accessLevel is the main field used to control quiz access.
-   */
   if (this.accessLevel === "premium") {
     this.isPremium = true;
     this.requiresPayment = true;
@@ -459,11 +617,19 @@ QuizSchema.pre("validate", function (next) {
     this.accessFee = 0;
   }
 
-  /*
-   * Notes do not carry marks or answers.
-   */
   if (Array.isArray(this.questions)) {
     this.questions.forEach((question) => {
+      question.text = String(question.text || "").trim();
+      question.imageUrl = String(question.imageUrl || "").trim();
+      question.imageAlt = String(question.imageAlt || "").trim();
+      question.imageSource = String(question.imageSource || "").trim();
+      question.hint = String(question.hint || "").trim();
+      question.solution = String(question.solution || "").trim();
+      question.instruction = String(question.instruction || "").trim();
+      question.answerPrefix = String(question.answerPrefix || "").trim();
+      question.answerSuffix = String(question.answerSuffix || "").trim();
+      question.unit = String(question.unit || question.answerSuffix || "").trim();
+
       if (question.type === "note") {
         question.points = 0;
         question.options = [];
@@ -471,28 +637,57 @@ QuizSchema.pre("validate", function (next) {
         question.correctIndexes = [];
         question.isMultiSelect = false;
         question.correctText = "";
-        question.instruction = "";
-        question.answerPrefix = "";
-        question.answerSuffix = "";
-        question.unit = "";
         question.answerFields = [];
+        question.fillAnswers = [];
+        question.dropdownPlaceholder = "";
+        question.allowPartialMarks = false;
+        return;
       }
 
       if (question.type === "mcq") {
+        question.options = Array.isArray(question.options)
+          ? question.options.map((option) => String(option || "").trim()).filter(Boolean)
+          : [];
+
         const validIndexes = Array.isArray(question.correctIndexes)
-          ? [...new Set(question.correctIndexes)]
+          ? [
+              ...new Set(
+                question.correctIndexes.filter(
+                  (index) => Number.isInteger(index) && index >= 0
+                )
+              ),
+            ]
           : [];
 
         question.correctIndexes = validIndexes;
         question.isMultiSelect = validIndexes.length > 1;
 
-        if (validIndexes.length === 1) {
-          question.correctIndex = validIndexes[0];
-        }
+        if (validIndexes.length === 1) question.correctIndex = validIndexes[0];
+        if (validIndexes.length > 1) question.correctIndex = -1;
 
-        if (validIndexes.length > 1) {
-          question.correctIndex = -1;
-        }
+        question.correctText = "";
+        question.answerFields = [];
+        question.fillAnswers = [];
+        question.dropdownPlaceholder = "";
+        question.allowPartialMarks = false;
+      }
+
+      if (question.type === "dropdown") {
+        question.options = Array.isArray(question.options)
+          ? question.options.map((option) => String(option || "").trim()).filter(Boolean)
+          : [];
+
+        question.correctText = String(question.correctText || "").trim();
+        question.dropdownPlaceholder =
+          String(question.dropdownPlaceholder || "Select an answer").trim() ||
+          "Select an answer";
+
+        question.correctIndex = -1;
+        question.correctIndexes = [];
+        question.isMultiSelect = false;
+        question.answerFields = [];
+        question.fillAnswers = [];
+        question.allowPartialMarks = false;
       }
 
       if (question.type === "text") {
@@ -500,13 +695,41 @@ QuizSchema.pre("validate", function (next) {
         question.correctIndex = -1;
         question.correctIndexes = [];
         question.isMultiSelect = false;
-        question.instruction = String(question.instruction || "").trim();
-        question.answerPrefix = String(question.answerPrefix || "").trim();
-        question.answerSuffix = String(question.answerSuffix || "").trim();
-        question.unit = question.unit || question.answerSuffix || "";
+        question.fillAnswers = [];
+        question.dropdownPlaceholder = "";
+        question.allowPartialMarks = false;
+        question.correctText = String(question.correctText || "").trim();
+
         question.answerFields = Array.isArray(question.answerFields)
-          ? question.answerFields.filter(f => String(f.key || "").trim())
+          ? question.answerFields
+              .map((field) => ({
+                key: String(field.key || "").trim(),
+                prefix: String(field.prefix || "").trim(),
+                suffix: String(field.suffix || "").trim(),
+                correctAnswer: String(field.correctAnswer || "").trim(),
+              }))
+              .filter(
+                (field) => field.key.length > 0 && field.correctAnswer.length > 0
+              )
           : [];
+      }
+
+      if (question.type === "fill") {
+        question.options = [];
+        question.correctIndex = -1;
+        question.correctIndexes = [];
+        question.isMultiSelect = false;
+        question.correctText = "";
+        question.answerFields = [];
+        question.dropdownPlaceholder = "";
+
+        question.fillAnswers = Array.isArray(question.fillAnswers)
+          ? question.fillAnswers
+              .map((answer) => String(answer ?? "").trim())
+              .filter(Boolean)
+          : [];
+
+        question.allowPartialMarks = question.allowPartialMarks !== false;
       }
     });
   }
@@ -514,11 +737,6 @@ QuizSchema.pre("validate", function (next) {
   next();
 });
 
-/*
- * Only real, non-empty assessment codes must be unique.
- *
- * Old quizzes without a code are ignored by this index.
- */
 QuizSchema.index(
   { assessmentCode: 1 },
   {
@@ -533,9 +751,6 @@ QuizSchema.index(
   }
 );
 
-/*
- * Useful indexes for displaying quizzes on learner pages.
- */
 QuizSchema.index({
   contentType: 1,
   grade: 1,
@@ -549,6 +764,18 @@ QuizSchema.index({
   isPublished: 1,
   accessLevel: 1,
   createdAt: -1,
+});
+
+QuizSchema.index({
+  subject: 1,
+  curriculum: 1,
+  grade: 1,
+  term: 1,
+  chapter: 1,
+  topic: 1,
+  subtopic: 1,
+  contentType: 1,
+  difficulty: 1,
 });
 
 export default mongoose.model("Quiz", QuizSchema);
