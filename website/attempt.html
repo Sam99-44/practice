@@ -3146,22 +3146,167 @@ math-field.mathAnswerField,
 
 
 
-/* ===== DROPDOWN PLACEHOLDER SPACING ===== */
-.dropdown-placeholder{
+/* ===== FINAL DROPDOWN + FILL LAYOUT FIX ===== */
+
+/* Show comparison placeholders with clear space on both sides. */
+.dropdownQuestionPlaceholder{
   display:inline-block !important;
   margin:0 14px !important;
-  font-weight:700 !important;
+  padding:0 !important;
+  white-space:nowrap !important;
+  font-weight:400 !important;
+  vertical-align:baseline !important;
 }
 
-/* ===== PERFECT MARK ALIGNMENT ===== */
-.marksMeta,
-.qSectionMarks{
+/* Square fill-in boxes with a solid black outline. */
+.fillInlineWrap{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  margin:0 10px !important;
+  vertical-align:middle !important;
+}
+
+.fillAnswerInput{
+  display:inline-block !important;
+  width:46px !important;
+  height:46px !important;
+  min-width:46px !important;
+  min-height:46px !important;
+  max-width:46px !important;
+  max-height:46px !important;
+  margin:0 !important;
+  padding:2px !important;
+  border:2px solid #000 !important;
+  border-radius:0 !important;
+  box-sizing:border-box !important;
+  background:#fff !important;
+  color:#000 !important;
+  text-align:center !important;
+  font-family:"Times New Roman", Times, serif !important;
+  font-size:16px !important;
+  line-height:42px !important;
+  vertical-align:middle !important;
+}
+
+/* Keep the allocated marks centred against the complete question row. */
+.qHead{
+  align-items:center !important;
+}
+
+.qHead .marksMeta{
   align-self:center !important;
+  justify-self:end !important;
+  padding-top:0 !important;
+  min-height:46px !important;
   display:flex !important;
   align-items:center !important;
   justify-content:flex-end !important;
-  min-height:28px !important;
-  padding-top:2px !important;
+}
+
+/* Keep question text and inline controls vertically balanced. */
+.fillQuestionText,
+.qText{
+  line-height:1.8 !important;
+}
+
+@media(max-width:640px){
+  .dropdownQuestionPlaceholder{
+    margin:0 10px !important;
+  }
+
+  .fillInlineWrap{
+    margin:0 7px !important;
+  }
+
+  .fillAnswerInput{
+    width:42px !important;
+    height:42px !important;
+    min-width:42px !important;
+    min-height:42px !important;
+    max-width:42px !important;
+    max-height:42px !important;
+    line-height:38px !important;
+    font-size:15px !important;
+  }
+
+  .qHead .marksMeta{
+    min-height:42px !important;
+  }
+}
+
+
+
+/* ===== FINAL INLINE DROPDOWN LAYOUT ===== */
+.dropdownQuestionText{
+  display:inline-flex !important;
+  flex-wrap:wrap !important;
+  align-items:center !important;
+  gap:0 !important;
+  min-height:48px !important;
+}
+
+.dropdownInlineWrap{
+  display:inline-flex !important;
+  align-items:center !important;
+  margin:0 16px !important;
+  vertical-align:middle !important;
+}
+
+.dropdownInlineSelect{
+  display:inline-block !important;
+  width:230px !important;
+  min-width:230px !important;
+  max-width:230px !important;
+  height:46px !important;
+  min-height:46px !important;
+  margin:0 !important;
+  padding:8px 38px 8px 14px !important;
+  border:1px solid #9ca3af !important;
+  border-radius:6px !important;
+  background:#fff !important;
+  color:#111827 !important;
+  font-family:"Times New Roman", Times, serif !important;
+  font-size:16px !important;
+  line-height:1.2 !important;
+  box-sizing:border-box !important;
+  vertical-align:middle !important;
+}
+
+.dropdownQuestionHead{
+  align-items:center !important;
+}
+
+.dropdownQuestionHead .marksMeta{
+  align-self:center !important;
+  min-height:46px !important;
+  padding-top:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+}
+
+@media(max-width:640px){
+  .dropdownQuestionText{
+    min-height:44px !important;
+  }
+
+  .dropdownInlineWrap{
+    margin:6px 10px !important;
+  }
+
+  .dropdownInlineSelect{
+    width:190px !important;
+    min-width:190px !important;
+    max-width:190px !important;
+    height:44px !important;
+    min-height:44px !important;
+    font-size:15px !important;
+  }
+
+  .dropdownQuestionHead .marksMeta{
+    min-height:44px !important;
+  }
 }
 
 </style>
@@ -4212,6 +4357,45 @@ function inlineQuizLoadingHtml(){
           <option value="">${escapeHtml(placeholder)}</option>
           ${options.map(option => `<option value="${escapeAttr(String(option ?? ""))}">${escapeHtml(String(option ?? ""))}</option>`).join("")}
         </select>
+      </div>
+    `;
+  }
+
+  function renderDropdownQuestionHead(q, rawText, points, fallbackNo, qIndex){
+    const parsed = parseExamTextParts(rawText);
+    const label = parsed.label || `${fallbackNo}.`;
+    const body = parsed.body || (parsed.kind === "plain" ? cleanSpaces(rawText || "") : "");
+    const options = Array.isArray(q?.options) ? q.options : [];
+    const placeholder = String(q?.dropdownPlaceholder || "Select an answer").trim();
+
+    const selectHtml = `
+      <span class="dropdownInlineWrap">
+        <select class="dropdownAnswer dropdownInlineSelect" data-qindex="${qIndex}" aria-label="Select an answer">
+          <option value="">${escapeHtml(placeholder)}</option>
+          ${options.map(option => `<option value="${escapeAttr(String(option ?? ""))}">${escapeHtml(String(option ?? ""))}</option>`).join("")}
+        </select>
+      </span>
+    `;
+
+    const source = String(body || rawText || "");
+    let bodyHtml = renderMixedMath(source);
+
+    if (/\[\s*\?\s*\]/.test(source)) {
+      bodyHtml = bodyHtml.replace(/\[\s*\?\s*\]/, selectHtml);
+    } else {
+      bodyHtml = `${bodyHtml}${selectHtml}`;
+    }
+
+    return `
+      <div class="qHead dropdownQuestionHead">
+        <div class="qTitle">
+          <span class="qNo">${escapeHtml(label)}</span>
+          <span class="qText dropdownQuestionText">${bodyHtml}</span>
+        </div>
+        <div class="marksMeta" title="Question marks">
+          <div class="marksLbl">Marks</div>
+          <div class="marksBox">${String(points).trim()}</div>
+        </div>
       </div>
     `;
   }
@@ -6448,7 +6632,9 @@ function inlineQuizLoadingHtml(){
       displayNo += 1;
       const headHtml = type === "fill"
         ? renderFillQuestionHead(rawText, points, displayNo, i)
-        : renderQuestionHead(rawText, points, displayNo, questionTotal);
+        : type === "dropdown"
+          ? renderDropdownQuestionHead(q, rawText, points, displayNo, i)
+          : renderQuestionHead(rawText, points, displayNo, questionTotal);
 
       if (type === "text") {
         return `
@@ -6474,7 +6660,6 @@ function inlineQuizLoadingHtml(){
           <div class="q" data-scorable="1" data-qindex="${i}">
             ${headHtml}
             ${imageFirst ? "" : imageHtml}
-            ${renderDropdownAnswerArea(q, i)}
             ${hint ? `<div class="hint">Hint: <span class="hintText">${renderMixedMath(hint)}</span></div>` : ``}
             <div class="qLocalActions">
               <button class="qCheckBtn" type="button" data-qindex="${i}">Check Answer</button>
@@ -7322,7 +7507,7 @@ function formatSolutionHtml(solutionText){
       <div class="qHead">
         <div class="qTitle">
           <span class="qNo">${escapeHtml(label)}</span>
-          <span class="qText">${renderMixedMath(body || cleanSpaces(rawText || ""))}</span>
+          <span class="qText">${renderMixedMath(body || cleanSpaces(rawText || "")).replace(/\[\s*\?\s*\]/g, '<span class="dropdownQuestionPlaceholder">[ ? ]</span>')}</span>
         </div>
         <div class="marksMeta" title="Question marks">
           <div class="marksLbl">Marks</div>
