@@ -3720,6 +3720,16 @@ function escapeHtml(str){
           difficulty: normalizeDifficulty(meta.difficulty),
           paper: normalizePaper(meta.paper),
           contentType: normalizeContentType(meta.contentType),
+          accessLevel: normalizeAccessLevel(meta.accessLevel),
+          subject: String(meta.subject || "Mathematics").trim() || "Mathematics",
+          term: Number(meta.term || 1),
+          chapter: Number(meta.chapter || 1),
+          subtopic: String(meta.subtopic || "").trim(),
+          curriculum: String(meta.curriculum || "CAPS").trim() || "CAPS",
+          language: String(meta.language || "English").trim() || "English",
+          version: String(meta.version || "1.0").trim() || "1.0",
+          keywords: Array.isArray(meta.keywords) ? meta.keywords : [],
+          learningObjectives: Array.isArray(meta.learningObjectives) ? meta.learningObjectives : [],
           instructions: String(meta.instructions || "").trim(),
           publishMode: normalizePublishMode(meta.publishMode),
           publishAt: String(meta.publishAt || "").trim(),
@@ -3807,6 +3817,50 @@ function escapeHtml(str){
       renderCardPreview(card);
     }
 
+    function fillDropdownCard(card, data){
+      card.querySelector(".qText").value = stripLeadingQuestionNumber(data.question || data.text || "");
+      card.querySelector(".qHint").value = data.hint || "";
+      card.querySelector(".qPoints").value = Number(data.points || 1);
+      card.querySelector(".qSolution").value = data.solution || "";
+
+      const imageEl = card.querySelector(".qImage");
+      if (imageEl) imageEl.value = data.imageUrl || "";
+
+      const options = Array.isArray(data.options) ? data.options : [];
+      card.querySelector(".dropdownOptions").value = options.join("\n");
+      card.querySelector(".dropdownAnswer").value = data.correctText || data.answer || "";
+      card.querySelector(".dropdownPlaceholder").value =
+        data.dropdownPlaceholder || "Select an answer";
+
+      renderCardPreview(card);
+    }
+
+    function fillFillCard(card, data){
+      card.querySelector(".qText").value = stripLeadingQuestionNumber(data.question || data.text || "");
+      card.querySelector(".qHint").value = data.hint || "";
+      card.querySelector(".qPoints").value = Number(data.points || 1);
+      card.querySelector(".qSolution").value = data.solution || "";
+
+      const imageEl = card.querySelector(".qImage");
+      if (imageEl) imageEl.value = data.imageUrl || "";
+
+      const instructionEl = card.querySelector(".fillInstruction");
+      if (instructionEl) instructionEl.value = data.instruction || "";
+
+      const answers = Array.isArray(data.fillAnswers)
+        ? data.fillAnswers
+        : String(data.answer || data.correctText || "")
+            .split("|")
+            .map(value => value.trim())
+            .filter(Boolean);
+
+      card.querySelector(".fillAnswers").value = answers.join("\n");
+      card.querySelector(".allowPartialMarks").checked =
+        data.allowPartialMarks !== false;
+
+      renderCardPreview(card);
+    }
+
     function fillAssessmentForm(parsed){
       const meta = parsed.meta || {};
       if (meta.grade) gradeEl.value = String(meta.grade);
@@ -3852,6 +3906,14 @@ function escapeHtml(str){
           addMcq();
           const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='mcq']")];
           fillMcqCard(cards[cards.length - 1], item);
+        } else if (item.type === "dropdown") {
+          addDropdown();
+          const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='dropdown']")];
+          fillDropdownCard(cards[cards.length - 1], item);
+        } else if (item.type === "fill") {
+          addFill();
+          const cards = [...questionsWrap.querySelectorAll(".qcard[data-type='fill']")];
+          fillFillCard(cards[cards.length - 1], item);
         }
       }
 
@@ -4013,6 +4075,17 @@ function escapeHtml(str){
       const paper = normalizePaper(meta.paper);
       const contentType = normalizeContentType(meta.contentType);
       const accessLevel = normalizeAccessLevel(meta.accessLevel);
+      const subject = cleanSpaces(meta.subject || "Mathematics") || "Mathematics";
+      const term = Number(meta.term || 1);
+      const chapter = Number(meta.chapter || 1);
+      const subtopic = cleanSpaces(meta.subtopic || "");
+      const curriculum = cleanSpaces(meta.curriculum || "CAPS") || "CAPS";
+      const language = cleanSpaces(meta.language || "English") || "English";
+      const version = cleanSpaces(meta.version || "1.0") || "1.0";
+      const keywords = Array.isArray(meta.keywords) ? meta.keywords : [];
+      const learningObjectives = Array.isArray(meta.learningObjectives)
+        ? meta.learningObjectives
+        : [];
       const availableFrom = meta.availableFrom || null;
       const availableUntil = meta.availableUntil || null;
       const publishMode = normalizePublishMode(meta.publishMode);
@@ -4036,14 +4109,61 @@ function escapeHtml(str){
           const num = cleanSpaces(item.number || "");
           return { type: "note", text: `${num} ${cleanSpaces(item.text || "")}` };
         }
-        if (item.type === "note") return { type: "note", text: cleanSpaces(item.text || "") };
+        if (item.type === "note") {
+          return { type: "note", text: cleanSpaces(item.text || "") };
+        }
+        if (item.type === "text") {
+          return {
+            type: "text",
+            text: cleanSpaces(item.question || ""),
+            hint: cleanSpaces(item.hint || ""),
+            imageUrl: item.imageUrl || "",
+            points: Number(item.points || 1),
+            instruction: item.instruction || "",
+            answerPrefix: item.answerPrefix || "",
+            answerSuffix: item.answerSuffix || "",
+            unit: item.answerSuffix || "",
+            answerFields: Array.isArray(item.answerFields) ? item.answerFields : [],
+            correctText: item.correctText || "",
+            textAnswerMode: normalizeTextAnswerMode(item.textAnswerMode),
+            numberTolerance: item.numberTolerance ?? null,
+            solution: String(item.solution || "").trim()
+          };
+        }
+        if (item.type === "dropdown") {
+          return {
+            type: "dropdown",
+            text: cleanSpaces(item.question || ""),
+            hint: cleanSpaces(item.hint || ""),
+            imageUrl: item.imageUrl || "",
+            points: Number(item.points || 1),
+            options: Array.isArray(item.options) ? item.options : [],
+            correctText: item.correctText || "",
+            dropdownPlaceholder: item.dropdownPlaceholder || "Select an answer",
+            solution: String(item.solution || "").trim()
+          };
+        }
+        if (item.type === "fill") {
+          return {
+            type: "fill",
+            text: cleanSpaces(item.question || ""),
+            hint: cleanSpaces(item.hint || ""),
+            imageUrl: item.imageUrl || "",
+            points: Number(item.points || 1),
+            instruction: item.instruction || "",
+            fillAnswers: Array.isArray(item.fillAnswers) ? item.fillAnswers : [],
+            allowPartialMarks: item.allowPartialMarks !== false,
+            solution: String(item.solution || "").trim()
+          };
+        }
+
         const options = [...(item.options || [])];
         const correctIndexes = [...(item.correctIndexes || [])];
         const payload = {
           type: "mcq",
           text: cleanSpaces(item.question || ""),
           hint: cleanSpaces(item.hint || ""),
-          imageUrl: "",
+          imageUrl: item.imageUrl || "",
           points: Number(item.points || 1),
           options,
           correctIndexes,
@@ -4159,10 +4279,79 @@ function escapeHtml(str){
 
         const solution = autoConvertMixedLatex(String(card.querySelector(".qSolution")?.value || "").replace(/\r/g, "").trim());
 
-        if(type==="dropdown"){const o=String(card.querySelector(".dropdownOptions")?.value||"").split(/\n|\|/).map(x=>x.trim()).filter(Boolean);setPreviewText(card.querySelector(".prevQ"),card.querySelector(".qText")?.value||"");setPreviewText(card.querySelector(".prevOpts"),`${o.join("\n")}\n\nCorrect: ${card.querySelector(".dropdownAnswer")?.value||"(not set)"}`);setPreviewText(card.querySelector(".prevSol"),card.querySelector(".qSolution")?.value||"");refreshFullLearnerPreview();return}
-      if(type==="fill"){const q=String(card.querySelector(".qText")?.value||"").replace(/\[\[\s*\]\]/g,"[________]");const a=String(card.querySelector(".fillAnswers")?.value||"").split(/\n|\|/).map(x=>x.trim()).filter(Boolean);setPreviewText(card.querySelector(".prevQ"),q);setPreviewText(card.querySelector(".prevOpts"),`Answers: ${a.join(" | ")||"(not set)"}`);setPreviewText(card.querySelector(".prevSol"),card.querySelector(".qSolution")?.value||"");refreshFullLearnerPreview();return}
+        if (type === "dropdown") {
+          const options = String(card.querySelector(".dropdownOptions")?.value || "")
+            .split(/\n|\|/)
+            .map(value => autoConvertMixedLatex(value.trim()))
+            .filter(Boolean);
 
-      if (type === "text") {
+          const correctText = autoConvertMixedLatex(
+            cleanSpaces(card.querySelector(".dropdownAnswer")?.value || "")
+          );
+
+          const dropdownPlaceholder = cleanSpaces(
+            card.querySelector(".dropdownPlaceholder")?.value || "Select an answer"
+          ) || "Select an answer";
+
+          if (options.length < 2) {
+            throw new Error("Dropdown questions must have at least 2 options.");
+          }
+
+          if (!correctText || !options.includes(correctText)) {
+            throw new Error("The dropdown correct answer must exactly match one option.");
+          }
+
+          questions.push({
+            type: "dropdown",
+            text,
+            hint: hint || "",
+            imageUrl: imageUrl || "",
+            points,
+            options,
+            correctText,
+            dropdownPlaceholder,
+            solution: solution || ""
+          });
+          continue;
+        }
+
+        if (type === "fill") {
+          const fillAnswers = String(card.querySelector(".fillAnswers")?.value || "")
+            .split(/\n|\|/)
+            .map(value => autoConvertMixedLatex(value.trim()))
+            .filter(Boolean);
+
+          const instruction = autoConvertMixedLatex(
+            cleanSpaces(card.querySelector(".fillInstruction")?.value || "")
+          );
+
+          const blankCount = (rawText.match(/\[\[\s*\]\]/g) || []).length;
+
+          if (!fillAnswers.length) {
+            throw new Error("Fill questions must have at least one correct answer.");
+          }
+
+          if (blankCount && blankCount !== fillAnswers.length) {
+            throw new Error(
+              `This fill question has ${blankCount} blank(s), but ${fillAnswers.length} answer(s).`
+            );
+          }
+
+          questions.push({
+            type: "fill",
+            text,
+            hint: hint || "",
+            imageUrl: imageUrl || "",
+            points,
+            instruction: instruction || "",
+            fillAnswers,
+            allowPartialMarks: !!card.querySelector(".allowPartialMarks")?.checked,
+            solution: solution || ""
+          });
+          continue;
+        }
+
+        if (type === "text") {
           const correctText = autoConvertMixedLatex(cleanSpaces(getMathFieldValue(card.querySelector(".correctText"))));
           const instruction = autoConvertMixedLatex(cleanSpaces(card.querySelector(".answerInstruction")?.value || ""));
           const answerPrefix = autoConvertMixedLatex(cleanSpaces(card.querySelector(".answerPrefix")?.value || ""));
@@ -4311,7 +4500,18 @@ function escapeHtml(str){
       return {
         grade: contentType === "weeklyChallenge" ? null : grade,
         title,
+        subject,
+        term,
+        chapter,
         topic,
+        subtopic,
+        curriculum,
+        language,
+        version,
+        keywords,
+        learningObjectives,
+        assessmentInstructions: instructions,
+
         paper,
         contentType,
         contentTypeLabel: contentTypeLabel(contentType),
