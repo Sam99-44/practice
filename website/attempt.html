@@ -4057,20 +4057,47 @@ function inlineQuizLoadingHtml(){
       q.answerFields.length > 0;
   }
 
-  function shouldUseMathLive(q){
-    const mode = String(q?.textAnswerMode || "exact")
-      .toLowerCase()
-      .trim();
+function shouldUseMathLive(q){
+  const mode = String(q?.textAnswerMode || "exact")
+    .toLowerCase()
+    .trim();
 
-    return (
-      mode === "expression" ||
-      mode === "number_tolerance" ||
-      mode === "unordered" ||
-      questionUsesSeveralTypedFields(q)
-    );
+  const answer = String(
+    q?.correctText ??
+    q?.answer ??
+    q?.correctAnswer ??
+    ""
+  ).trim();
+
+  // Multi-field typed answers always use MathLive.
+  if (questionUsesSeveralTypedFields(q)) return true;
+
+  // Existing maths modes.
+  if (
+    mode === "expression" ||
+    mode === "number_tolerance" ||
+    mode === "unordered"
+  ) {
+    return true;
   }
 
-  function getTypedInputId(qIndex, key, fieldIndex, multiple){
+  // Pure numbers: 5, -8, 3.14, 1,000, etc.
+  if (/^-?[\d\s,]+(\.\d+)?$/.test(answer)) {
+    return true;
+  }
+
+  // LaTeX / MathJax.
+  if (
+    /\\frac|\\sqrt|\\sin|\\cos|\\tan|\\log|\\ln|\\pi|\\theta|\\alpha|\\beta|\$|\^|_/.test(answer)
+  ) {
+    return true;
+  }
+
+  // Everything else uses a normal HTML textbox.
+  return false;
+}
+
+function getTypedInputId(qIndex, key, fieldIndex, multiple){
     if (!multiple) return `txt${qIndex}`;
 
     return `txt${qIndex}_${normalizeTypedFieldKey(
