@@ -1140,6 +1140,8 @@
   }
 }
 
+
+.fillSettings,.dropdownSettings{margin-top:14px;padding:14px;border:1px solid #e3e7ee;border-radius:12px;background:#fbfcff}.fillAnswersHelp,.dropdownHelp{font-size:12px;color:#64748b;line-height:1.45;margin-top:5px}
 </style>
 </head>
 
@@ -1186,6 +1188,14 @@
         <label>Assessment Title</label>
         <input id="title" placeholder="e.g. Moderate : Quiz 1" />
       </div>
+      <div><label>Subject</label><input id="subject" value="Mathematics" /></div>
+      <div><label>Term</label><select id="term"><option value="1" selected>Term 1</option><option value="2">Term 2</option><option value="3">Term 3</option><option value="4">Term 4</option></select></div>
+      <div><label>Chapter</label><input id="chapter" type="number" min="1" value="1" /></div>
+      <div><label>Subtopic</label><input id="subtopic" placeholder="e.g. Introduction to Whole Numbers" /></div>
+      <div><label>Curriculum</label><input id="curriculum" value="CAPS" /></div>
+      <div><label>Language</label><input id="language" value="English" /></div>
+      <div><label>Version</label><input id="version" value="1.0" /></div>
+      <div><label>Keywords</label><input id="keywords" placeholder="whole numbers, place value" /></div>
 
       <div>
         <label>Assessment Code</label>
@@ -1277,10 +1287,10 @@
         Type math using LaTeX: <b>$x^2$</b>, <b>$\frac{a}{b}$</b>, <b>$\sqrt{x}$</b>, <b>$(x+1)^2$</b>
       </div>
 
-      <div class="previewRow" style="margin-top:10px;">
-        <div class="prevTitle">Instructions Preview</div>
-        <div class="previewBox" id="prevInstructions">(Instructions preview)</div>
-      </div>
+      <div class="previewRow" style="margin-top:10px;"><div class="prevTitle">Instructions Preview</div><div class="previewBox" id="prevInstructions">(Instructions preview)</div></div>
+      <b style="margin-top:14px;">Learning Objectives (one per line)</b>
+      <textarea id="learningObjectives" rows="5" placeholder="Read and write whole numbers.&#10;Identify place value and face value."></textarea>
+      <div class="previewRow" style="margin-top:10px;"><div class="prevTitle">Learning Objectives Preview</div><div class="previewBox" id="prevLearningObjectives">(Learning objectives preview)</div></div>
     </div>
 
     <hr>
@@ -1300,6 +1310,8 @@
       <button class="smallbtn" id="addNoteBtn" type="button">+ Add Note / Heading</button>
       <button class="smallbtn" id="addMcqBtn" type="button">+ Add MCQ</button>
       <button class="smallbtn" id="addTextBtn" type="button">+ Add Typed Answer</button>
+      <button class="smallbtn" id="addDropdownBtn" type="button">+ Add Dropdown</button>
+      <button class="smallbtn" id="addFillBtn" type="button">+ Add Fill Blank</button>
       <button class="smallbtn" id="newGroupBtn" type="button">+ New Main Question</button>
       <button class="smallbtn" id="addSectionBtn" type="button">+ Add Section / Stem</button>
     </div>
@@ -1474,6 +1486,7 @@
     const topicEl = document.getElementById("topic");
     const timeLimitEl = document.getElementById("timeLimit");
     const titleEl = document.getElementById("title");
+    const subjectEl=document.getElementById("subject"),termEl=document.getElementById("term"),chapterEl=document.getElementById("chapter"),subtopicEl=document.getElementById("subtopic"),curriculumEl=document.getElementById("curriculum"),languageEl=document.getElementById("language"),versionEl=document.getElementById("version"),keywordsEl=document.getElementById("keywords");
     const assessmentCodeEl = document.getElementById("assessmentCode");
     const contentTypeEl = document.getElementById("contentType");
     const contentTypeHelp = document.getElementById("contentTypeHelp");
@@ -1491,10 +1504,12 @@
 
     const instructionsEl = document.getElementById("instructions");
     const prevInstructions = document.getElementById("prevInstructions");
+    const learningObjectivesEl=document.getElementById("learningObjectives"),prevLearningObjectives=document.getElementById("prevLearningObjectives");
 
     const addNoteBtn = document.getElementById("addNoteBtn");
     const addMcqBtn = document.getElementById("addMcqBtn");
     const addTextBtn = document.getElementById("addTextBtn");
+    const addDropdownBtn=document.getElementById("addDropdownBtn"),addFillBtn=document.getElementById("addFillBtn");
     const newGroupBtn = document.getElementById("newGroupBtn");
     const addSectionBtn = document.getElementById("addSectionBtn");
     const uploadFileEl = document.getElementById("uploadFile");
@@ -2016,6 +2031,11 @@ function escapeHtml(str){
       refreshFullLearnerPreview();
     }
     instructionsEl.addEventListener("input", renderInstructionsPreview);
+    learningObjectivesEl.addEventListener("input", ()=>{
+      const values=String(learningObjectivesEl.value||"").split(/\n|\|/).map(x=>x.trim()).filter(Boolean);
+      prevLearningObjectives.innerHTML=values.length?values.map(x=>`• ${escapeHtml(x.replace(/^[•*-]\s*/,""))}`).join("<br>"):"(Learning objectives preview)";
+      refreshFullLearnerPreview();
+    });
     renderInstructionsPreview();
 
     function updatePublishUI(){
@@ -2210,6 +2230,9 @@ function escapeHtml(str){
         </div>
       `;
     }
+
+    function dropdownCardHtml(id){return `<div class="qcard" data-type="dropdown" draggable="false"><div class="qhead"><div class="headMeta"><b class="cardLabel">Question ${id}</b><div class="marksMeta">Auto marks</div><span class="pill">Dropdown</span></div><button type="button" class="smallbtn removeBtn">Remove</button></div><label>Question Text (use [ ? ] where dropdown belongs)</label><textarea class="qText" rows="3"></textarea><label>Image URL (optional)</label><input class="qImage"/><label>Hint</label><input class="qHint"/><label>Marks</label><input class="qPoints" type="number" min="1" value="1"/><div class="dropdownSettings"><label>Options (one per line)</label><textarea class="dropdownOptions" rows="4" placeholder=">&#10;<&#10;="></textarea><label>Correct Answer</label><input class="dropdownAnswer"/><label>Placeholder</label><input class="dropdownPlaceholder" value="Select an answer"/><div class="dropdownHelp">Correct answer must exactly match one option.</div></div><label>Solution / Workings</label><textarea class="qSolution" rows="4"></textarea><div class="previewRow"><div class="prevTitle">Live Preview</div><div class="previewBox prevQ paperBox"></div><div class="previewBox prevOpts paperBox"></div><div class="previewBox prevSol solBox"></div></div></div>`}
+    function fillCardHtml(id){return `<div class="qcard" data-type="fill" draggable="false"><div class="qhead"><div class="headMeta"><b class="cardLabel">Question ${id}</b><div class="marksMeta">Auto marks</div><span class="pill">Fill Blank</span></div><button type="button" class="smallbtn removeBtn">Remove</button></div><label>Question Text</label><textarea class="qText" rows="3" placeholder="12, [[ ]], 16, [[ ]], 20"></textarea><label>Image URL (optional)</label><input class="qImage"/><label>Instruction</label><input class="fillInstruction"/><label>Hint</label><input class="qHint"/><label>Marks</label><input class="qPoints" type="number" min="1" value="2"/><div class="fillSettings"><label>Correct Answers (one per line)</label><textarea class="fillAnswers" rows="4" placeholder="14&#10;18"></textarea><div class="checkline"><input class="allowPartialMarks" type="checkbox" checked/><label style="margin:0;width:auto">Award partial marks</label></div><div class="fillAnswersHelp">Use [[ ]] for each blank.</div></div><label>Solution / Workings</label><textarea class="qSolution" rows="4"></textarea><div class="previewRow"><div class="prevTitle">Live Preview</div><div class="previewBox prevQ paperBox"></div><div class="previewBox prevOpts paperBox"></div><div class="previewBox prevSol solBox"></div></div></div>`}
 
     function groupCardHtml(id){
       return `
@@ -2614,6 +2637,7 @@ function escapeHtml(str){
         });
       }
 
+      if (["dropdown","fill"].includes(card.getAttribute("data-type"))) card.querySelectorAll("input,textarea,select").forEach(el=>{el.addEventListener("input",()=>renderCardPreview(card));el.addEventListener("change",()=>renderCardPreview(card))});
       if (card.getAttribute("data-type") === "note") {
         card.querySelector(".noteText")?.addEventListener("input", ()=>renderCardPreview(card));
         renderCardPreview(card);
@@ -2771,6 +2795,8 @@ function escapeHtml(str){
       renumberCards();
       setupDragAndDrop();
     }
+    function addDropdown(){qCount+=1;questionsWrap.insertAdjacentHTML("beforeend",dropdownCardHtml(qCount));wireLastCard();renumberCards();setupDragAndDrop()}
+    function addFill(){qCount+=1;questionsWrap.insertAdjacentHTML("beforeend",fillCardHtml(qCount));wireLastCard();renumberCards();setupDragAndDrop()}
     function addGroup(){
       qCount += 1;
       questionsWrap.insertAdjacentHTML("beforeend", groupCardHtml(qCount));
@@ -2795,6 +2821,7 @@ function escapeHtml(str){
     addNoteBtn.addEventListener("click", addNote);
     addMcqBtn.addEventListener("click", addMcq);
     addTextBtn.addEventListener("click", addText);
+    addDropdownBtn.addEventListener("click",addDropdown); addFillBtn.addEventListener("click",addFill);
     newGroupBtn.addEventListener("click", addGroup);
     addSectionBtn.addEventListener("click", addSection);
 
@@ -3284,8 +3311,7 @@ function escapeHtml(str){
     function parseAssessmentMetadata(raw, fallbackName=""){
       const lines = String(raw || "").replace(/\r/g, "").split("\n");
       const meta = {
-        grade: "",
-        topic: "",
+        grade: "", subject:"Mathematics", term:1, chapter:1, topic:"", subtopic:"", curriculum:"CAPS", language:"English", version:"1.0", keywords:[], learningObjectives:[],
         title: "",
         timeLimitMinutes: 10,
         difficulty: "moderate",
@@ -3309,8 +3335,7 @@ function escapeHtml(str){
         if (/^(HEADING|NOTE|QUESTION|[A-Z]|ANSWER|ANSWER_FIELD|ANSWER_PREFIX|ANSWER_SUFFIX|ANSWER_MODE|UNIT|TOLERANCE|NUMBER_TOLERANCE|INSTRUCTION|SOLUTION|HINT|POINTS|MARKS|TYPE|OPTIONS|MEMO|IMAGE)$/i.test(key)) continue;
 
         switch (key) {
-          case "GRADE": meta.grade = value.trim(); break;
-          case "TOPIC": meta.topic = value.trim(); break;
+          case "GRADE": meta.grade=value.trim(); break; case "SUBJECT": meta.subject=value.trim()||"Mathematics"; break; case "TERM": meta.term=Number(value||1); break; case "CHAPTER": meta.chapter=Number(value||1); break; case "TOPIC": meta.topic=value.trim(); break; case "SUBTOPIC": meta.subtopic=value.trim(); break; case "CURRICULUM": meta.curriculum=value.trim()||"CAPS"; break; case "LANGUAGE": meta.language=value.trim()||"English"; break; case "VERSION": meta.version=value.trim()||"1.0"; break; case "KEYWORDS": meta.keywords=value.split(",").map(x=>x.trim()).filter(Boolean); break;
           case "TITLE": meta.title = value.trim(); break;
           case "TIME_LIMIT":
           case "TIME":
@@ -3327,7 +3352,7 @@ function escapeHtml(str){
           case "ASSESSMENT_TYPE":
             meta.contentType = normalizeContentType(value.trim());
             break;
-          case "INSTRUCTIONS": meta.instructions = value.trim(); break;
+          case "INSTRUCTIONS": case "ASSESSMENT_INSTRUCTIONS": meta.instructions=value.trim(); break; case "LEARNING_OBJECTIVES": meta.learningObjectives=value.split("|").map(x=>x.trim()).filter(Boolean); break;
           case "PUBLISH_MODE": meta.publishMode = value.trim(); break;
           case "PUBLISH_AT": meta.publishAt = value.trim(); break;
           case "AVAILABLE_FROM": meta.availableFrom = value.trim(); break;
@@ -3360,7 +3385,7 @@ function escapeHtml(str){
       let numberTolerance = null;
       const answerFieldDefinitions = [];
       const options = [];
-      const correctLetters = [];
+      const correctLetters = []; let dropdownPlaceholder="Select an answer"; let allowPartialMarks=true;
       let inSolution = false;
       const solutionLines = [];
 
@@ -3443,6 +3468,9 @@ function escapeHtml(str){
           continue;
         }
 
+        if(/^DROPDOWN_PLACEHOLDER\s*:/i.test(line)&&!inSolution){dropdownPlaceholder=line.replace(/^DROPDOWN_PLACEHOLDER\s*:/i,"").trim()||"Select an answer";continue}
+        if(/^PARTIAL_MARKS\s*:/i.test(line)&&!inSolution){allowPartialMarks=parseBooleanLike(line.replace(/^PARTIAL_MARKS\s*:/i,""),true);continue}
+        if(/^OPTIONS\s*:\s*.+/i.test(line)&&!inSolution){line.replace(/^OPTIONS\s*:/i,"").split("|").map(x=>x.trim()).filter(Boolean).forEach((value,idx)=>options.push({label:String.fromCharCode(65+idx),value}));continue}
         if (/^SOLUTION\s*:/i.test(line) || /^MEMO\s*:/i.test(line)) {
           inSolution = true;
           const rest = line.replace(/^(SOLUTION|MEMO)\s*:/i, "").trim();
@@ -3552,9 +3580,10 @@ function escapeHtml(str){
       const hasOptions = options.length > 0;
       const autoType = explicitType || (hasOptions ? "mcq" : "text");
 
-      if (!["mcq", "text"].includes(autoType)) {
-        throw Object.assign(new Error(`Unsupported TYPE "${explicitType}". Use TYPE: mcq or TYPE: text.`), { where });
-      }
+      if (!["mcq","text","dropdown","fill"].includes(autoType)) throw Object.assign(new Error(`Unsupported TYPE "${explicitType}".`),{where});
+
+      if(autoType==="dropdown"){const dropdownOptions=options.map(o=>autoConvertMixedLatex(o.value)),correctText=autoConvertMixedLatex(rawTypedAnswer||typedAnswer);if(dropdownOptions.length<2)throw Object.assign(new Error("Dropdown must have at least 2 options."),{where});if(!correctText||!dropdownOptions.includes(correctText))throw Object.assign(new Error("Dropdown ANSWER must match an option."),{where});return{type:"dropdown",question,hint,solution,points,options:dropdownOptions,correctText,dropdownPlaceholder}}
+      if(autoType==="fill"){const fillAnswers=String(rawTypedAnswer||"").split("|").map(x=>autoConvertMixedLatex(x.trim())).filter(Boolean),blankCount=(question.match(/\[\[\s*\]\]/g)||[]).length;if(!fillAnswers.length)throw Object.assign(new Error("Fill question is missing ANSWER values."),{where});if(blankCount&&blankCount!==fillAnswers.length)throw Object.assign(new Error(`Fill question has ${blankCount} blank(s) but ${fillAnswers.length} answer(s).`),{where});return{type:"fill",question,hint,solution,points,instruction:answerInstruction,fillAnswers,allowPartialMarks}}
 
       if (autoType === "text") {
         if (!typedAnswer) {
@@ -3782,7 +3811,7 @@ function escapeHtml(str){
       const meta = parsed.meta || {};
       if (meta.grade) gradeEl.value = String(meta.grade);
       if (meta.topic) topicEl.value = meta.topic || "";
-      if (meta.title) titleEl.value = meta.title || "";
+      if (meta.title) titleEl.value=meta.title||""; subjectEl.value=meta.subject||"Mathematics";termEl.value=String(meta.term||1);chapterEl.value=String(meta.chapter||1);subtopicEl.value=meta.subtopic||"";curriculumEl.value=meta.curriculum||"CAPS";languageEl.value=meta.language||"English";versionEl.value=meta.version||"1.0";keywordsEl.value=(meta.keywords||[]).join(", ");learningObjectivesEl.value=(meta.learningObjectives||[]).join("\n");
       timeLimitEl.value = Number.isFinite(Number(meta.timeLimitMinutes)) ? String(meta.timeLimitMinutes) : "10";
       difficultyEl.value = normalizeDifficulty(meta.difficulty);
       paperEl.value = normalizePaper(meta.paper);
@@ -4032,8 +4061,7 @@ function escapeHtml(str){
 
       return {
         grade: contentType === "weeklyChallenge" ? null : grade,
-        title,
-        topic,
+        title,subject,term,chapter,topic,subtopic,curriculum,language,version,keywords,learningObjectives,
         paper,
         contentType,
         contentTypeLabel: contentTypeLabel(contentType),
@@ -4043,7 +4071,7 @@ function escapeHtml(str){
         audience: contentType === "weeklyChallenge" ? "all" : "grade",
         isForAllLearners: contentType === "weeklyChallenge",
         timeLimitMinutes,
-        instructions,
+        instructions,assessmentInstructions:instructions,
         difficulty,
         accessLevel,
         accessLevelLabel: accessLevelLabel(accessLevel),
@@ -4131,7 +4159,10 @@ function escapeHtml(str){
 
         const solution = autoConvertMixedLatex(String(card.querySelector(".qSolution")?.value || "").replace(/\r/g, "").trim());
 
-        if (type === "text") {
+        if(type==="dropdown"){const o=String(card.querySelector(".dropdownOptions")?.value||"").split(/\n|\|/).map(x=>x.trim()).filter(Boolean);setPreviewText(card.querySelector(".prevQ"),card.querySelector(".qText")?.value||"");setPreviewText(card.querySelector(".prevOpts"),`${o.join("\n")}\n\nCorrect: ${card.querySelector(".dropdownAnswer")?.value||"(not set)"}`);setPreviewText(card.querySelector(".prevSol"),card.querySelector(".qSolution")?.value||"");refreshFullLearnerPreview();return}
+      if(type==="fill"){const q=String(card.querySelector(".qText")?.value||"").replace(/\[\[\s*\]\]/g,"[________]");const a=String(card.querySelector(".fillAnswers")?.value||"").split(/\n|\|/).map(x=>x.trim()).filter(Boolean);setPreviewText(card.querySelector(".prevQ"),q);setPreviewText(card.querySelector(".prevOpts"),`Answers: ${a.join(" | ")||"(not set)"}`);setPreviewText(card.querySelector(".prevSol"),card.querySelector(".qSolution")?.value||"");refreshFullLearnerPreview();return}
+
+      if (type === "text") {
           const correctText = autoConvertMixedLatex(cleanSpaces(getMathFieldValue(card.querySelector(".correctText"))));
           const instruction = autoConvertMixedLatex(cleanSpaces(card.querySelector(".answerInstruction")?.value || ""));
           const answerPrefix = autoConvertMixedLatex(cleanSpaces(card.querySelector(".answerPrefix")?.value || ""));
@@ -4228,7 +4259,7 @@ function escapeHtml(str){
     async function buildPayload(modeOverride = null){
       const grade = Number(gradeEl.value);
       const topic = toTitleCase(topicEl.value);
-      const title = cleanSpaces(titleEl.value);
+      const title=cleanSpaces(titleEl.value);const subject=cleanSpaces(subjectEl.value||"Mathematics")||"Mathematics",term=Number(termEl.value||1),chapter=Number(chapterEl.value||1),subtopic=cleanSpaces(subtopicEl.value||""),curriculum=cleanSpaces(curriculumEl.value||"CAPS")||"CAPS",language=cleanSpaces(languageEl.value||"English")||"English",version=cleanSpaces(versionEl.value||"1.0")||"1.0",keywords=String(keywordsEl.value||"").split(",").map(x=>cleanSpaces(x)).filter(Boolean),learningObjectives=String(learningObjectivesEl.value||"").split(/\n|\|/).map(x=>cleanSpaces(x.replace(/^[•*-]\s*/,""))).filter(Boolean);
       const contentType = normalizeContentType(contentTypeEl.value);
       const accessLevel = normalizeAccessLevel(accessLevelEl.value);
       const timeLimitMinutes = Number(timeLimitEl.value);
