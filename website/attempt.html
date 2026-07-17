@@ -3034,6 +3034,116 @@ math-field.mathAnswerField,
   }
 }
 
+
+
+/* ===== DROPDOWN + FILL-IN QUESTION SUPPORT ===== */
+.dropdownAnswerBlock,
+.fillAnswerBlock{
+  margin:10px 0 0 68px;
+  width:calc(100% - 68px);
+  max-width:100%;
+  font-family:"Times New Roman", Times, serif;
+}
+
+.dropdownAnswer{
+  width:min(100%, 420px);
+  min-height:42px;
+  padding:7px 38px 7px 10px;
+  border:1px solid #d6d3d1;
+  border-radius:4px;
+  background:#fff;
+  color:#111827;
+  font-family:"Times New Roman", Times, serif;
+  font-size:15px;
+  box-sizing:border-box;
+}
+.dropdownAnswer:focus,
+.fillAnswerInput:focus{
+  border-color:#94a3b8;
+  box-shadow:var(--focus);
+  outline:none;
+}
+.dropdownAnswer:disabled,
+.fillAnswerInput:disabled{
+  opacity:.72;
+  background:#f8fafc;
+  cursor:not-allowed;
+}
+
+.fillQuestionText{
+  min-width:0;
+  font-family:"Times New Roman", Times, serif;
+  font-size:14px;
+  line-height:1.8;
+  color:#111827;
+  overflow-wrap:break-word;
+}
+.fillInlineWrap{
+  display:inline-flex;
+  align-items:center;
+  vertical-align:middle;
+  margin:0 4px;
+}
+.fillAnswerInput{
+  display:inline-block;
+  width:112px;
+  min-width:82px;
+  height:36px;
+  padding:5px 8px;
+  border:1px solid #d6d3d1;
+  border-radius:4px;
+  background:#fff;
+  color:#111827;
+  font-family:"Times New Roman", Times, serif;
+  font-size:15px;
+  text-align:center;
+  box-sizing:border-box;
+}
+.fillAnswerInput.correctBlank{
+  border-color:#16a34a;
+  background:#f0fdf4;
+}
+.fillAnswerInput.wrongBlank{
+  border-color:#dc2626;
+  background:#fff1f2;
+}
+.fillPartialFeedback{
+  margin-top:8px;
+  color:#475569;
+  font-size:13px;
+  line-height:1.4;
+}
+
+/* Keep marks in their own column and stop answer controls from running underneath. */
+.qHead{
+  grid-template-columns:56px minmax(0,1fr) 42px !important;
+  column-gap:12px !important;
+  width:100% !important;
+}
+.qHead .marksMeta{
+  grid-column:3 !important;
+  align-self:start !important;
+  justify-self:end !important;
+  padding-top:1px !important;
+  min-width:42px !important;
+  position:static !important;
+}
+.qHead .qTitle{
+  grid-column:1 / span 2 !important;
+}
+
+@media(max-width:640px){
+  .dropdownAnswerBlock,
+  .fillAnswerBlock{
+    margin-left:0;
+    width:100%;
+  }
+  .dropdownAnswer{width:100%; min-height:44px; font-size:16px;}
+  .fillAnswerInput{width:96px; min-width:72px; height:40px; font-size:16px;}
+  .qHead{grid-template-columns:46px minmax(0,1fr) 36px !important; column-gap:8px !important;}
+  .qHead .marksMeta{min-width:36px !important;}
+}
+
 </style>
 </head>
 
@@ -4047,6 +4157,103 @@ function inlineQuizLoadingHtml(){
     });
   }
 
+
+  function getDropdownInput(qIndex){
+    return document.querySelector(`.dropdownAnswer[data-qindex="${qIndex}"]`);
+  }
+
+  function getFillInputs(qIndex){
+    return [...document.querySelectorAll(`.fillAnswerInput[data-qindex="${qIndex}"]`)];
+  }
+
+  function getFillCorrectAnswers(q){
+    if (Array.isArray(q?.fillAnswers) && q.fillAnswers.length) {
+      return q.fillAnswers.map(value => String(value ?? "").trim());
+    }
+    const fallback = String(q?.correctText ?? q?.answer ?? "").trim();
+    return fallback ? fallback.split("|").map(value => value.trim()) : [];
+  }
+
+  function dropdownQuestionIsAnswered(qIndex){
+    return Boolean(String(getDropdownInput(qIndex)?.value || "").trim());
+  }
+
+  function fillQuestionIsAnswered(qIndex){
+    const inputs = getFillInputs(qIndex);
+    return inputs.length > 0 && inputs.every(input => Boolean(String(input.value || "").trim()));
+  }
+
+  function renderDropdownAnswerArea(q, qIndex){
+    const options = Array.isArray(q?.options) ? q.options : [];
+    const placeholder = String(q?.dropdownPlaceholder || "Select an answer").trim();
+    return `
+      <div class="dropdownAnswerBlock">
+        <select class="dropdownAnswer" data-qindex="${qIndex}" aria-label="Select an answer">
+          <option value="">${escapeHtml(placeholder)}</option>
+          ${options.map(option => `<option value="${escapeAttr(String(option ?? ""))}">${escapeHtml(String(option ?? ""))}</option>`).join("")}
+        </select>
+      </div>
+    `;
+  }
+
+  function renderFillQuestionHead(rawText, points, fallbackNo, qIndex){
+    const parsed = parseExamTextParts(rawText);
+    const label = parsed.label || `${fallbackNo}.`;
+    const body = parsed.body || (parsed.kind === "plain" ? cleanSpaces(rawText || "") : "");
+    const blankPattern = /\[\[\s*[^\]]*?\s*\]\]/g;
+    let blankIndex = 0;
+    let lastIndex = 0;
+    let bodyHtml = "";
+    const source = String(body || rawText || "");
+    let match;
+
+    while ((match = blankPattern.exec(source)) !== null) {
+      const before = source.slice(lastIndex, match.index);
+      if (before) bodyHtml += renderMixedMath(before);
+      bodyHtml += `<span class="fillInlineWrap"><input class="fillAnswerInput" type="text" inputmode="text" autocomplete="off" data-qindex="${qIndex}" data-blank-index="${blankIndex}" aria-label="Blank ${blankIndex + 1}"></span>`;
+      blankIndex += 1;
+      lastIndex = match.index + match[0].length;
+    }
+
+    const after = source.slice(lastIndex);
+    if (after) bodyHtml += renderMixedMath(after);
+
+    if (!blankIndex) {
+      bodyHtml = `${renderMixedMath(source)} <span class="fillInlineWrap"><input class="fillAnswerInput" type="text" inputmode="text" autocomplete="off" data-qindex="${qIndex}" data-blank-index="0" aria-label="Blank 1"></span>`;
+    }
+
+    return `
+      <div class="qHead">
+        <div class="qTitle">
+          <span class="qNo">${escapeHtml(label)}</span>
+          <span class="fillQuestionText">${bodyHtml}</span>
+        </div>
+        <div class="marksMeta" title="Question marks"><div class="marksLbl">Marks</div><div class="marksBox">${String(points).trim()}</div></div>
+      </div>
+    `;
+  }
+
+  function markFillInputs(q, qIndex){
+    const inputs = getFillInputs(qIndex);
+    const answers = getFillCorrectAnswers(q);
+    const mode = q?.textAnswerMode || "exact";
+    const tolerance = q?.numberTolerance ?? 0;
+    let correctCount = 0;
+
+    inputs.forEach((input, index) => {
+      input.classList.remove("correctBlank", "wrongBlank");
+      const correct = compareTextAnswer(input.value, answers[index] ?? "", mode, tolerance);
+      if (correct) {
+        correctCount += 1;
+        input.classList.add("correctBlank");
+      } else if (String(input.value || "").trim()) {
+        input.classList.add("wrongBlank");
+      }
+    });
+
+    return { correctCount, totalBlanks: inputs.length };
+  }
+
   function saveAnswersToStorage(){
     if (!quizData || submitted) return;
     const payload = {
@@ -4081,6 +4288,20 @@ function inlineQuizLoadingHtml(){
       if (Number.isInteger(Number(item?.chosenIndex))) {
         const el = document.querySelector(`.mcqInput[data-qindex="${qIndex}"][value="${Number(item.chosenIndex)}"]`);
         if (el) el.checked = true;
+        return;
+      }
+
+      if (typeof item?.dropdownAnswer === "string") {
+        const select = getDropdownInput(qIndex);
+        if (select) select.value = item.dropdownAnswer;
+        return;
+      }
+
+      if (Array.isArray(item?.fillAnswers)) {
+        const inputs = getFillInputs(qIndex);
+        item.fillAnswers.forEach((value, index) => {
+          if (inputs[index]) inputs[index].value = String(value ?? "");
+        });
         return;
       }
 
@@ -4123,8 +4344,9 @@ function inlineQuizLoadingHtml(){
   }
 
   function attachAnswerAutosave(){
-    document.querySelectorAll(".mcqInput").forEach(el => {
+    document.querySelectorAll(".mcqInput, .dropdownAnswer, .fillAnswerInput").forEach(el => {
       el.addEventListener("change", saveAnswersToStorage);
+      if (el.classList.contains("fillAnswerInput")) el.addEventListener("input", debouncedSaveAnswers);
     });
     attachMathInputBehaviour();
   }
@@ -4398,7 +4620,7 @@ function inlineQuizLoadingHtml(){
   }
 
   function disableAllInputs(){
-    document.querySelectorAll("input[type=radio], input[type=checkbox], input[type=text], input[type=number], textarea, math-field").forEach(el => {
+    document.querySelectorAll("input[type=radio], input[type=checkbox], input[type=text], input[type=number], textarea, select.dropdownAnswer, math-field").forEach(el => {
       if (el.id === "ratingCommentInline") return;
       el.disabled = true;
 
@@ -4411,7 +4633,7 @@ function inlineQuizLoadingHtml(){
   }
 
   function enableAllInputs(){
-    document.querySelectorAll("input[type=radio], input[type=checkbox], input[type=text], input[type=number], textarea, math-field").forEach(el => {
+    document.querySelectorAll("input[type=radio], input[type=checkbox], input[type=text], input[type=number], textarea, select.dropdownAnswer, math-field").forEach(el => {
       el.disabled = false;
 
       if (el.matches("math-field")){
@@ -4432,6 +4654,11 @@ function inlineQuizLoadingHtml(){
 
   function clearAllAnswers(){
     document.querySelectorAll(".mcqInput").forEach(inp => { inp.checked = false; });
+    document.querySelectorAll(".dropdownAnswer").forEach(inp => { inp.value = ""; });
+    document.querySelectorAll(".fillAnswerInput").forEach(inp => {
+      inp.value = "";
+      inp.classList.remove("correctBlank", "wrongBlank");
+    });
     document.querySelectorAll(".typedAnswerInput").forEach(inp => {
       setTypedInputValue(inp, "");
     });
@@ -4919,6 +5146,25 @@ function inlineQuizLoadingHtml(){
       const type = String(q.type || "mcq").toLowerCase();
       if (type === "note") return;
 
+      if (type === "dropdown") {
+        answers.push({
+          questionIndex: i,
+          dropdownAnswer: String(getDropdownInput(i)?.value || "").trim(),
+          textAnswer: String(getDropdownInput(i)?.value || "").trim()
+        });
+        return;
+      }
+
+      if (type === "fill") {
+        const fillAnswers = getFillInputs(i).map(input => String(input.value || "").trim());
+        answers.push({
+          questionIndex: i,
+          fillAnswers,
+          textAnswer: fillAnswers.join("|")
+        });
+        return;
+      }
+
       if (type === "text") {
         const typedValues = getTypedValuesForQuestion(q, i)
           .map(item => ({
@@ -4963,6 +5209,16 @@ function inlineQuizLoadingHtml(){
     (quizData.questions || []).forEach((q, i) => {
       const type = String(q.type || "mcq").toLowerCase();
       if (type === "note") return;
+
+      if (type === "dropdown") {
+        if (dropdownQuestionIsAnswered(i)) answered++;
+        return;
+      }
+
+      if (type === "fill") {
+        if (fillQuestionIsAnswered(i)) answered++;
+        return;
+      }
 
       if (type === "text") {
         if (typedQuestionIsAnswered(q, i)) answered++;
@@ -5385,7 +5641,7 @@ function inlineQuizLoadingHtml(){
     resetLocalQuestionChecks();
 
     document.body.classList.remove("submitted-state");
-    document.querySelectorAll(".mcqInput, .typedAnswerInput").forEach(el => {
+    document.querySelectorAll(".mcqInput, .typedAnswerInput, .dropdownAnswer, .fillAnswerInput").forEach(el => {
       el.disabled = false;
     });
     document.querySelectorAll(".opt").forEach(opt => {
@@ -5461,6 +5717,29 @@ function inlineQuizLoadingHtml(){
     const type = String(q?.type || "mcq").toLowerCase();
     const pts = Math.max(1, Math.round(Number(q?.points || 1)));
 
+    if (type === "dropdown") {
+      const value = String(getDropdownInput(i)?.value || "").trim();
+      const correctAnswer = String(q?.correctText ?? q?.answer ?? "").trim();
+      const answered = Boolean(value);
+      return {
+        answered,
+        correct: answered && compareTextAnswer(value, correctAnswer, "exact", 0),
+        points: pts
+      };
+    }
+
+    if (type === "fill") {
+      const values = getFillInputs(i).map(input => String(input.value || "").trim());
+      const answers = getFillCorrectAnswers(q);
+      const answered = values.length > 0 && values.every(Boolean);
+      const correctCount = values.reduce((count, value, index) => count + (compareTextAnswer(value, answers[index] ?? "", q?.textAnswerMode || "exact", q?.numberTolerance ?? 0) ? 1 : 0), 0);
+      const allCorrect = answered && values.length === answers.length && correctCount === values.length;
+      const earnedPoints = q?.allowPartialMarks !== false && values.length
+        ? Math.min(pts, (correctCount / values.length) * pts)
+        : (allCorrect ? pts : 0);
+      return { answered, correct: allCorrect, points: pts, earnedPoints, correctCount, totalBlanks: values.length };
+    }
+
     if (type === "text") {
       const values = getTypedValuesForQuestion(q, i);
       const mode = q.textAnswerMode || "exact";
@@ -5527,7 +5806,7 @@ function inlineQuizLoadingHtml(){
 
     document.body.classList.remove("submitted-state");
 
-    document.querySelectorAll(".mcqInput, .typedAnswerInput").forEach(el => {
+    document.querySelectorAll(".mcqInput, .typedAnswerInput, .dropdownAnswer, .fillAnswerInput").forEach(el => {
       el.disabled = false;
     });
 
@@ -5847,6 +6126,13 @@ function inlineQuizLoadingHtml(){
       updateQuestionProgress(i, !!result.correct);
 
       markQuestionOptions(q, i);
+      if (String(q?.type || "").toLowerCase() === "fill") {
+        const fillResult = markFillInputs(q, i);
+        if (feedback && !result.correct && fillResult.correctCount > 0) {
+          feedback.textContent = `${fillResult.correctCount} of ${fillResult.totalBlanks} blanks correct.`;
+          feedback.className = "qFeedback neutral";
+        }
+      }
 
       /* Do not open workings automatically. Learner can choose to show answer. */
       showAnswerButtonForQuestion(i);
@@ -6140,7 +6426,9 @@ function inlineQuizLoadingHtml(){
       }
 
       displayNo += 1;
-      const headHtml = renderQuestionHead(rawText, points, displayNo, questionTotal);
+      const headHtml = type === "fill"
+        ? renderFillQuestionHead(rawText, points, displayNo, i)
+        : renderQuestionHead(rawText, points, displayNo, questionTotal);
 
       if (type === "text") {
         return `
@@ -6149,6 +6437,41 @@ function inlineQuizLoadingHtml(){
             ${headHtml}
             ${imageFirst ? "" : imageHtml}
             ${renderTypedAnswerArea(q, i)}
+            ${hint ? `<div class="hint">Hint: <span class="hintText">${renderMixedMath(hint)}</span></div>` : ``}
+            <div class="qLocalActions">
+              <button class="qCheckBtn" type="button" data-qindex="${i}">Check Answer</button>
+              <button class="qShowAnswerBtn" type="button" data-qindex="${i}">Show Answer</button>
+              <span class="qFeedback"></span>
+            </div>
+            <div class="solutionHolder hidden">${renderReviewStyleSolutionBox(q)}</div>
+          </div>
+        `;
+      }
+
+      if (type === "dropdown") {
+        return `
+          ${imageFirst ? imageHtml : ""}
+          <div class="q" data-scorable="1" data-qindex="${i}">
+            ${headHtml}
+            ${imageFirst ? "" : imageHtml}
+            ${renderDropdownAnswerArea(q, i)}
+            ${hint ? `<div class="hint">Hint: <span class="hintText">${renderMixedMath(hint)}</span></div>` : ``}
+            <div class="qLocalActions">
+              <button class="qCheckBtn" type="button" data-qindex="${i}">Check Answer</button>
+              <button class="qShowAnswerBtn" type="button" data-qindex="${i}">Show Answer</button>
+              <span class="qFeedback"></span>
+            </div>
+            <div class="solutionHolder hidden">${renderReviewStyleSolutionBox(q)}</div>
+          </div>
+        `;
+      }
+
+      if (type === "fill") {
+        return `
+          ${imageFirst ? imageHtml : ""}
+          <div class="q" data-scorable="1" data-qindex="${i}">
+            ${headHtml}
+            ${imageFirst ? "" : imageHtml}
             ${hint ? `<div class="hint">Hint: <span class="hintText">${renderMixedMath(hint)}</span></div>` : ``}
             <div class="qLocalActions">
               <button class="qCheckBtn" type="button" data-qindex="${i}">Check Answer</button>
@@ -6195,6 +6518,20 @@ function inlineQuizLoadingHtml(){
     resetLocalQuestionChecks();
     prepareFirstAttemptButtons();
     attachAnswerAutosave();
+    document.querySelectorAll(".dropdownAnswer, .fillAnswerInput").forEach(input => {
+      input.addEventListener("input", () => {
+        const qIndex = Number(input.dataset.qindex);
+        const box = Number.isInteger(qIndex) ? document.querySelector(`.q[data-qindex="${qIndex}"]`) : null;
+        if (!box || submitted) return;
+        box.classList.remove("is-local-correct", "is-local-wrong");
+        input.classList.remove("correctBlank", "wrongBlank");
+        const feedback = box.querySelector(".qFeedback");
+        const button = box.querySelector(".qCheckBtn");
+        if (feedback) { feedback.textContent = ""; feedback.className = "qFeedback neutral"; }
+        if (button) { button.disabled = false; button.textContent = "Check Answer"; }
+        localSubmittedQuestions.delete(qIndex);
+      });
+    });
     attachMathInputBehaviour();
     attachSingleQuestionSubmit();
     attachShowAnswerButtons();
