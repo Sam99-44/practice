@@ -477,6 +477,328 @@ function isMultiMcqCorrect(chosenIdxs, correctIdxs) {
   return true;
 }
 
+
+function normalizeStringArray(value, separator = "|") {
+  const values = Array.isArray(value)
+    ? value
+    : String(value ?? "")
+        .split(separator);
+
+  return values
+    .map((item) => String(item ?? "").trim())
+    .filter((item) => item.length > 0);
+}
+
+function normalizeLearningObjectives(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
+  }
+
+  return String(value || "")
+    .split(/\r?\n|\|/)
+    .map((item) => item.replace(/^[•\-*]\s*/, "").trim())
+    .filter(Boolean);
+}
+
+function normalizeKeywords(value) {
+  const values = Array.isArray(value)
+    ? value
+    : String(value || "").split(/[,|]/);
+
+  return [
+    ...new Set(
+      values
+        .map((item) => String(item || "").trim())
+        .filter(Boolean)
+    ),
+  ];
+}
+
+function normalizeFillAnswers(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item ?? "").trim())
+      .filter(Boolean);
+  }
+
+  return String(value ?? "")
+    .split("|")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function normalizeSubmittedFillValues(answer) {
+  if (Array.isArray(answer?.fillAnswers)) {
+    return answer.fillAnswers.map((value) => String(value ?? "").trim());
+  }
+
+  if (Array.isArray(answer?.values)) {
+    return answer.values.map((value) => String(value ?? "").trim());
+  }
+
+  if (Array.isArray(answer?.typedValues)) {
+    return answer.typedValues.map((field) =>
+      String(field?.value ?? field?.answer ?? "").trim()
+    );
+  }
+
+  const combined =
+    answer?.textAnswer ??
+    answer?.value ??
+    answer?.answer ??
+    "";
+
+  return String(combined)
+    .split("|")
+    .map((value) => value.trim());
+}
+
+function normalizeQuestionForSave(q) {
+  const type = String(q?.type || "mcq").toLowerCase().trim();
+  const supportedTypes = ["mcq", "text", "dropdown", "fill", "note"];
+
+  if (!supportedTypes.includes(type)) {
+    throw new Error(`Unsupported question type: ${type}`);
+  }
+
+  q.type = type;
+  q.text = String(q?.text || "").trim();
+  q.imageUrl = String(q?.imageUrl || "").trim();
+  q.imageAlt = String(q?.imageAlt || "").trim();
+  q.imageSource = String(q?.imageSource || "").trim();
+  q.hint = String(q?.hint || "").trim();
+  q.solution = String(q?.solution || "").trim();
+  q.instruction = String(q?.instruction || "").trim();
+
+  if (!q.text) {
+    throw new Error("Each block must have text.");
+  }
+
+  if (type === "note") {
+    q.points = 0;
+    q.options = [];
+    q.correctIndex = -1;
+    q.correctIndexes = [];
+    q.isMultiSelect = false;
+    q.correctText = "";
+    q.answerFields = [];
+    q.fillAnswers = [];
+    q.dropdownPlaceholder = "";
+    q.allowPartialMarks = false;
+    return q;
+  }
+
+  const points = safeInt(q?.points, 1);
+  if (!Number.isInteger(points) || points < 1) {
+    throw new Error("Each question must have marks (points) of 1 or more.");
+  }
+  q.points = points;
+
+  if (type === "text") {
+    const rawCorrectText = String(
+      q?.correctText ?? q?.answer ?? q?.correctAnswer ?? ""
+    ).trim();
+
+    const keyedCorrectValues = new Map();
+    const positionalCorrectValues = [];
+
+    rawCorrectText
+      .split("|")
+      .map((part) => String(part || "").trim())
+      .filter(Boolean)
+      .forEach((part, index) => {
+        const equalsAt = part.indexOf("=");
+        if (equalsAt > 0) {
+          const rawKey = part.slice(0, equalsAt).trim();
+          const rawValue = part.slice(equalsAt + 1).trim();
+          const normalizedKey = normalizeTypedFieldKey(
+            rawKey,
+            `answer_${index + 1}`
+          );
+          if (normalizedKey) keyedCorrectValues.set(normalizedKey, rawValue);
+          positionalCorrectValues.push(rawValue);
+        } else {
+          positionalCorrectValues.push(part);
+        }
+      });
+
+    const answerFields = Array.isArray(q?.answerFields)
+      ? q.answerFields
+          .map((field, index) => {
+            const key = normalizeTypedFieldKey(
+              field?.key,
+              `answer_${index + 1}`
+            );
+
+            let correctAnswer = String(
+              field?.correctAnswer ?? field?.answer ?? ""
+            ).trim();
+
+            if (correctAnswer.includes("|") || /^[^=|]+\s*=/.test(correctAnswer)) {
+              correctAnswer = "";
+            }
+
+            return {
+              key,
+              prefix: String(field?.prefix ?? field?.label ?? "").trim(),
+              suffix: String(field?.suffix ?? field?.unit ?? "").trim(),
+              correctAnswer:
+                correctAnswer ||
+                keyedCorrectValues.get(key) ||
+                positionalCorrectValues[index] ||
+                "",
+            };
+          })
+          .filter((field) => field.key)
+      : [];
+
+    if (!rawCorrectText && answerFields.length === 0) {
+      throw new Error(
+        "Typed questions must have a correct answer or at least one Answer Field."
+      );
+    }
+
+    if (answerFields.some((field) => !field.correctAnswer)) {
+      throw new Error("Every Answer Field must have a correct answer.");
+    }
+
+    const fieldKeys = answerFields.map((field) => field.key);
+    if (new Set(fieldKeys).size !== fieldKeys.length) {
+      throw new Error("Answer Field keys must be unique.");
+    }
+
+    const mode = String(q?.textAnswerMode || "exact").toLowerCase().trim();
+    const allowedModes = [
+      "exact",
+      "contains",
+      "number_tolerance",
+      "unordered",
+      "expression",
+    ];
+
+    if (!allowedModes.includes(mode)) {
+      throw new Error(`Invalid textAnswerMode: ${mode}`);
+    }
+
+    let numberTolerance = 0;
+    if (mode === "number_tolerance") {
+      numberTolerance = Number(q?.numberTolerance ?? 0);
+      if (!Number.isFinite(numberTolerance) || numberTolerance < 0) {
+        throw new Error("Invalid numberTolerance.");
+      }
+    }
+
+    q.answerPrefix = String(q?.answerPrefix || "").trim();
+    q.answerSuffix = String(q?.answerSuffix || q?.unit || "").trim();
+    q.unit = String(q?.unit || q?.answerSuffix || "").trim();
+    q.answerFields = answerFields;
+    q.correctText =
+      answerFields.length > 0
+        ? answerFields
+            .map((field) => `${field.key}=${field.correctAnswer}`)
+            .join("|")
+        : rawCorrectText;
+    q.textAnswerMode = mode;
+    q.numberTolerance = numberTolerance;
+    q.options = [];
+    q.correctIndex = -1;
+    q.correctIndexes = [];
+    q.isMultiSelect = false;
+    q.fillAnswers = [];
+    q.dropdownPlaceholder = "";
+    q.allowPartialMarks = false;
+    return q;
+  }
+
+  if (type === "dropdown") {
+    const options = normalizeStringArray(q?.options ?? q?.dropdownOptions ?? "");
+    if (options.length < 2) {
+      throw new Error("Dropdown questions must have at least 2 options.");
+    }
+
+    const correctText = String(
+      q?.correctText ?? q?.answer ?? q?.correctAnswer ?? ""
+    ).trim();
+
+    if (!correctText || !options.includes(correctText)) {
+      throw new Error("Dropdown answer must match one of the dropdown options.");
+    }
+
+    q.options = options;
+    q.correctText = correctText;
+    q.dropdownPlaceholder =
+      String(q?.dropdownPlaceholder || "Select an answer").trim() ||
+      "Select an answer";
+    q.correctIndex = -1;
+    q.correctIndexes = [];
+    q.isMultiSelect = false;
+    q.answerFields = [];
+    q.fillAnswers = [];
+    q.allowPartialMarks = false;
+    return q;
+  }
+
+  if (type === "fill") {
+    const fillAnswers = normalizeFillAnswers(
+      q?.fillAnswers ?? q?.answer ?? q?.correctText ?? ""
+    );
+
+    if (!fillAnswers.length) {
+      throw new Error("Fill questions must have at least one correct answer.");
+    }
+
+    q.fillAnswers = fillAnswers;
+    q.allowPartialMarks = q?.allowPartialMarks !== false;
+    q.options = [];
+    q.correctIndex = -1;
+    q.correctIndexes = [];
+    q.isMultiSelect = false;
+    q.correctText = "";
+    q.answerFields = [];
+    q.dropdownPlaceholder = "";
+    return q;
+  }
+
+  const options = normalizeStringArray(q?.options ?? "");
+  if (options.length < 2) {
+    throw new Error("MCQ must have at least 2 options.");
+  }
+
+  q.options = options;
+  const indexes = normalizeIndexArray(q?.correctIndexes || []);
+  const wantsMulti = Boolean(q?.isMultiSelect) || indexes.length >= 2;
+
+  if (wantsMulti) {
+    if (!indexes.length || indexes.some((index) => index >= options.length)) {
+      throw new Error("MCQ correctIndexes must be within options.");
+    }
+    q.isMultiSelect = indexes.length > 1;
+    q.correctIndexes = indexes;
+    q.correctIndex = indexes.length === 1 ? indexes[0] : -1;
+  } else {
+    const correctIndex = Number(q?.correctIndex);
+    if (
+      !Number.isInteger(correctIndex) ||
+      correctIndex < 0 ||
+      correctIndex >= options.length
+    ) {
+      throw new Error("MCQ correctIndex must be within options.");
+    }
+    q.correctIndex = correctIndex;
+    q.correctIndexes = [correctIndex];
+    q.isMultiSelect = false;
+  }
+
+  q.correctText = "";
+  q.answerFields = [];
+  q.fillAnswers = [];
+  q.dropdownPlaceholder = "";
+  q.allowPartialMarks = false;
+  return q;
+}
+
 function toPublicProfile(user) {
   return {
     _id: user._id,
@@ -2668,7 +2990,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
     const quizzes = await Quiz.find(filter)
       .sort({ createdAt: -1 })
       .select(
-        "assessmentCode grade title topic contentType audience isForAllLearners accessLevel isPremium requiresPayment accessFee paper difficulty questions timeLimitMinutes instructions isFrozen availableFrom availableUntil createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
+        "assessmentCode grade subject curriculum language term chapter title topic subtopic version keywords contentType audience isForAllLearners accessLevel isPremium requiresPayment accessFee paper difficulty questions timeLimitMinutes instructions assessmentInstructions learningObjectives isFrozen availableFrom availableUntil createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
       );
 
     return res.json(quizzes);
@@ -2716,201 +3038,72 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
 app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
   try {
     const {
-  grade,
-  title,
-  topic,
-  contentType,
-  audience,
-  isForAllLearners,
-  accessLevel,
-  accessFee,
-      
-  paper,
-  timeLimitMinutes,
-  instructions,
-  questions,
-  difficulty,
-  publishNow,
-  publishAt,
-  availableFrom,
-  availableUntil,
-  sendPublishEmail,
+      grade,
+      subject,
+      curriculum,
+      language,
+      term,
+      chapter,
+      title,
+      topic,
+      subtopic,
+      version,
+      keywords,
+      contentType,
+      audience,
+      isForAllLearners,
+      accessLevel,
+      accessFee,
+      paper,
+      timeLimitMinutes,
+      instructions,
+      assessmentInstructions,
+      learningObjectives,
+      questions,
+      difficulty,
+      publishNow,
+      publishAt,
+      availableFrom,
+      availableUntil,
+      sendPublishEmail,
     } = req.body;
 
-    const finalContentType =
-      normalizeAssessmentContentType(contentType);
+    const finalContentType = normalizeAssessmentContentType(contentType);
 
-    if (
-      !title ||
-      !topic ||
-      !Array.isArray(questions) ||
-      questions.length === 0
-    ) {
+    if (!title || !topic || !Array.isArray(questions) || questions.length === 0) {
       return res.status(400).json({
-        message: "Topic, title, and questions are required."
+        message: "Topic, title, and questions are required.",
       });
     }
 
     let g = null;
-
     if (finalContentType !== "weeklyChallenge") {
       g = Number(grade);
-
       if (!Number.isInteger(g) || g < 8 || g > 12) {
         return res.status(400).json({
-          message: "Grade must be between 8 and 12."
+          message: "Grade must be between 8 and 12.",
         });
       }
     }
 
-    const quizTitle = cleanSpaces(title);
-    const quizTopic = cleanSpaces(topic);
-    const quizInstructions = String(instructions || "").trim();
-
-    const quizDifficulty = normalizeDifficulty(difficulty);
-    const quizPaper = normalizePaper(paper);
-
-    for (const q of questions) {
-      const type = String(q?.type || "mcq").toLowerCase();
-
-      if (!cleanSpaces(q?.text)) {
-        return res.status(400).json({ message: "Each block must have text." });
-      }
-
-      if ("solution" in q && q.solution !== undefined && q.solution !== null) {
-        q.solution = String(q.solution);
-      }
-
-      if (type === "note") {
-        q.points = 0;
-        q.correctIndex = -1;
-        q.correctIndexes = [];
-        q.isMultiSelect = false;
-        continue;
-      }
-
-      const pts = safeInt(q?.points, 1);
-      if (!Number.isInteger(pts) || pts < 1) {
-        return res.status(400).json({
-          message: "Each question must have marks (points) of 1 or more.",
-        });
-      }
-      q.points = pts;
-
- if (type === "text") {
-  const answerFields = Array.isArray(q?.answerFields)
-    ? q.answerFields
-        .map((field, index) => ({
-          key: cleanSpaces(field?.key || `answer_${index + 1}`)
-            .toLowerCase()
-            .replace(/[^a-z0-9_]+/g, "_")
-            .replace(/^_+|_+$/g, ""),
-
-          prefix: String(field?.prefix || "").trim(),
-          suffix: String(field?.suffix || "").trim(),
-
-          correctAnswer: String(
-            field?.correctAnswer ?? field?.answer ?? ""
-          ).trim(),
-        }))
-        .filter(
-          (field) =>
-            field.key ||
-            field.prefix ||
-            field.suffix ||
-            field.correctAnswer
-        )
-    : [];
-
-  const correctText = String(q?.correctText || "").trim();
-
-  if (!correctText && answerFields.length === 0) {
-    return res.status(400).json({
-      message:
-        "Typed questions must have a correct answer or at least one Answer Field.",
-    });
-  }
-
-  if (answerFields.some((field) => !field.key)) {
-    return res.status(400).json({
-      message: "Every Answer Field must have a field key.",
-    });
-  }
-
-  if (answerFields.some((field) => !field.correctAnswer)) {
-    return res.status(400).json({
-      message: "Every Answer Field must have a correct answer.",
-    });
-  }
-
-  const fieldKeys = answerFields.map((field) => field.key);
-
-  if (new Set(fieldKeys).size !== fieldKeys.length) {
-    return res.status(400).json({
-      message: "Answer Field keys must be unique.",
-    });
-  }
-
-  const mode = String(q?.textAnswerMode || "exact")
-    .toLowerCase()
-    .trim();
-
-  const allowedModes = [
-    "exact",
-    "contains",
-    "number_tolerance",
-    "unordered",
-    "expression",
-  ];
-
-  if (!allowedModes.includes(mode)) {
-    return res.status(400).json({
-      message: `Invalid textAnswerMode: ${mode}`,
-    });
-  }
-
-  let numberTolerance = 0;
-
-  if (mode === "number_tolerance") {
-    numberTolerance = Number(q?.numberTolerance);
-
-    if (!Number.isFinite(numberTolerance) || numberTolerance < 0) {
-      return res.status(400).json({
-        message: "Invalid numberTolerance.",
-      });
+    const parsedTerm = Number(term ?? 1);
+    if (!Number.isInteger(parsedTerm) || parsedTerm < 1 || parsedTerm > 4) {
+      return res.status(400).json({ message: "Term must be between 1 and 4." });
     }
-  }
 
-  q.instruction = String(q?.instruction || "").trim();
-  q.answerPrefix = String(q?.answerPrefix || "").trim();
-  q.answerSuffix = String(
-    q?.answerSuffix || q?.unit || ""
-  ).trim();
+    const parsedChapter = Number(chapter ?? 1);
+    if (!Number.isInteger(parsedChapter) || parsedChapter < 1) {
+      return res.status(400).json({ message: "Chapter must be 1 or more." });
+    }
 
-  q.unit = String(
-    q?.unit || q?.answerSuffix || ""
-  ).trim();
-
-  q.answerFields = answerFields;
-
-  q.correctText =
-    correctText ||
-    answerFields
-      .map(
-        (field) =>
-          `${field.key}=${field.correctAnswer}`
-      )
-      .join("|");
-
-  q.textAnswerMode = mode;
-  q.numberTolerance = numberTolerance;
-
-  q.options = [];
-  q.correctIndex = -1;
-  q.correctIndexes = [];
-  q.isMultiSelect = false;
-        }
+    const normalizedQuestions = [];
+    try {
+      for (const question of questions) {
+        normalizedQuestions.push(normalizeQuestionForSave({ ...question }));
       }
+    } catch (error) {
+      return res.status(400).json({ message: error.message });
+    }
 
     const publishAtRaw = validDateOrNull(publishAt);
     const availableFromRaw = validDateOrNull(availableFrom);
@@ -2925,8 +3118,14 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
     if (availableUntilRaw === "INVALID") {
       return res.status(400).json({ message: "Invalid Available Until date/time." });
     }
-    if (availableFromRaw && availableUntilRaw && availableUntilRaw <= availableFromRaw) {
-      return res.status(400).json({ message: "Available Until must be after Available From." });
+    if (
+      availableFromRaw &&
+      availableUntilRaw &&
+      availableUntilRaw <= availableFromRaw
+    ) {
+      return res.status(400).json({
+        message: "Available Until must be after Available From.",
+      });
     }
 
     let isPublished = false;
@@ -2941,69 +3140,67 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
       finalPublishAt = publishAtRaw;
     }
 
-const finalAccessLevel = normalizeQuizAccessLevel(accessLevel);
+    const finalAccessLevel = normalizeQuizAccessLevel(accessLevel);
+    const generatedCode = await generateAssessmentCode(g, finalContentType);
+    const finalAssessmentInstructions = String(
+      assessmentInstructions || instructions || ""
+    ).trim();
 
-const generatedCode = await generateAssessmentCode(
-  g,
-  finalContentType
-);
+    const quiz = await Quiz.create({
+      assessmentCode: generatedCode.assessmentCode,
+      grade: g,
+      subject: cleanSpaces(subject || "Mathematics") || "Mathematics",
+      curriculum: cleanSpaces(curriculum || "CAPS") || "CAPS",
+      language: cleanSpaces(language || "English") || "English",
+      term: parsedTerm,
+      chapter: parsedChapter,
+      title: cleanSpaces(title),
+      topic: cleanSpaces(topic),
+      subtopic: cleanSpaces(subtopic || ""),
+      version: cleanSpaces(version || "1.0") || "1.0",
+      keywords: normalizeKeywords(keywords),
+      paper: normalizePaper(paper),
+      contentType: finalContentType,
+      audience: audience || "grade",
+      isForAllLearners: !!isForAllLearners,
+      accessLevel: finalAccessLevel,
+      isPremium: finalAccessLevel === "premium",
+      requiresPayment: finalAccessLevel === "premium",
+      accessFee:
+        finalAccessLevel === "premium"
+          ? Math.max(0, Number(accessFee) || 0)
+          : 0,
+      difficulty: normalizeDifficulty(difficulty),
+      timeLimitMinutes: Number(timeLimitMinutes) || 10,
+      questions: normalizedQuestions,
+      instructions: finalAssessmentInstructions,
+      assessmentInstructions: finalAssessmentInstructions,
+      learningObjectives: normalizeLearningObjectives(learningObjectives),
+      isFrozen: false,
+      frozenAt: null,
+      availableFrom: availableFromRaw || null,
+      availableUntil: availableUntilRaw || null,
+      isPublished,
+      publishedAt,
+      publishAt: finalPublishAt,
+      publishedBy: isPublished ? req.user.userId : null,
+      sendPublishEmail: !!sendPublishEmail,
+    });
 
-const quiz = await Quiz.create({
-  assessmentCode: generatedCode.assessmentCode,
-
-  grade: g,
-  title: quizTitle,
-  topic: quizTopic,
-  paper: quizPaper,
-
-  contentType: finalContentType,
-  audience: audience || "grade",
-  isForAllLearners: !!isForAllLearners,
-
-  accessLevel: finalAccessLevel,
-  isPremium: finalAccessLevel === "premium",
-  requiresPayment: finalAccessLevel === "premium",
-
-  accessFee:
-    finalAccessLevel === "premium"
-      ? Math.max(0, Number(accessFee) || 0)
-      : 0,
-
-  difficulty: quizDifficulty,
-  timeLimitMinutes: Number(timeLimitMinutes) || 10,
-
-  questions,
-  instructions: quizInstructions,
-
-  isFrozen: false,
-  frozenAt: null,
-
-  availableFrom: availableFromRaw || null,
-  availableUntil: availableUntilRaw || null,
-
-  isPublished,
-  publishedAt,
-  publishAt: finalPublishAt,
-
-  publishedBy: isPublished ? req.user.userId : null,
-  sendPublishEmail: !!sendPublishEmail,
-});
-
-res.status(201).json({
-  message: Boolean(publishNow)
-    ? "Assessment published."
-    : finalPublishAt
-    ? "Assessment scheduled for publishing."
-    : "Assessment saved as draft.",
-
-  quizId: quiz._id,
-  assessmentCode: quiz.assessmentCode,
-  assessmentSequence: generatedCode.assessmentSequence,
-  assessmentCounterKey: generatedCode.assessmentCounterKey,
-  accessLevel: quiz.accessLevel,
-  isPublished: quiz.isPublished,
-  publishAt: quiz.publishAt,
-});
+    res.status(201).json({
+      message: Boolean(publishNow)
+        ? "Assessment published."
+        : finalPublishAt
+        ? "Assessment scheduled for publishing."
+        : "Assessment saved as draft.",
+      quizId: quiz._id,
+      assessmentCode: quiz.assessmentCode,
+      assessmentSequence: generatedCode.assessmentSequence,
+      assessmentCounterKey: generatedCode.assessmentCounterKey,
+      accessLevel: quiz.accessLevel,
+      isPublished: quiz.isPublished,
+      publishAt: quiz.publishAt,
+    });
 
     if (Boolean(publishNow) && !!sendPublishEmail) {
       setImmediate(async () => {
@@ -3021,23 +3218,32 @@ res.status(201).json({
 /* ------------------ FINAL FIXED PUT ROUTE ------------------ */
 app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
   try {
-    const id = req.params.id;
-
-    const quiz = await Quiz.findById(id);
-    if (!quiz) return res.status(404).json({ message: "Assessment not found." });
+    const quiz = await Quiz.findById(req.params.id);
+    if (!quiz) {
+      return res.status(404).json({ message: "Assessment not found." });
+    }
 
     const originalGrade = quiz.grade;
-    const originalContentType =
-      normalizeAssessmentContentType(quiz.contentType);
+    const originalContentType = normalizeAssessmentContentType(quiz.contentType);
 
     const allowed = [
       "grade",
+      "subject",
+      "curriculum",
+      "language",
+      "term",
+      "chapter",
       "title",
       "topic",
+      "subtopic",
+      "version",
+      "keywords",
       "contentType",
       "paper",
       "difficulty",
       "instructions",
+      "assessmentInstructions",
+      "learningObjectives",
       "timeLimitMinutes",
       "availableFrom",
       "availableUntil",
@@ -3050,25 +3256,25 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
       "sendPublishEmail",
       "accessLevel",
       "accessFee",
-      
     ];
 
     for (const key of allowed) {
       if (!(key in req.body)) continue;
 
       if (key === "grade") {
-        const g = Number(req.body.grade);
-        if (!Number.isInteger(g) || g < 8 || g > 12) {
-          return res.status(400).json({ message: "Grade must be between 8 and 12." });
+        if (quiz.contentType === "weeklyChallenge") continue;
+        const grade = Number(req.body.grade);
+        if (!Number.isInteger(grade) || grade < 8 || grade > 12) {
+          return res.status(400).json({
+            message: "Grade must be between 8 and 12.",
+          });
         }
-        quiz.grade = g;
+        quiz.grade = grade;
         continue;
       }
 
       if (key === "contentType") {
-        quiz.contentType =
-          normalizeAssessmentContentType(req.body.contentType);
-
+        quiz.contentType = normalizeAssessmentContentType(req.body.contentType);
         if (quiz.contentType === "weeklyChallenge") {
           quiz.grade = null;
           quiz.audience = "all";
@@ -3077,17 +3283,34 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
           quiz.audience = "grade";
           quiz.isForAllLearners = false;
         }
-
         continue;
       }
 
-      if (key === "title") {
-        quiz.title = cleanSpaces(req.body.title);
+      if (["subject", "curriculum", "language", "title", "topic", "subtopic", "version"].includes(key)) {
+        quiz[key] = cleanSpaces(req.body[key] || "");
         continue;
       }
 
-      if (key === "topic") {
-        quiz.topic = cleanSpaces(req.body.topic);
+      if (key === "keywords") {
+        quiz.keywords = normalizeKeywords(req.body.keywords);
+        continue;
+      }
+
+      if (key === "term") {
+        const term = Number(req.body.term);
+        if (!Number.isInteger(term) || term < 1 || term > 4) {
+          return res.status(400).json({ message: "Term must be between 1 and 4." });
+        }
+        quiz.term = term;
+        continue;
+      }
+
+      if (key === "chapter") {
+        const chapter = Number(req.body.chapter);
+        if (!Number.isInteger(chapter) || chapter < 1) {
+          return res.status(400).json({ message: "Chapter must be 1 or more." });
+        }
+        quiz.chapter = chapter;
         continue;
       }
 
@@ -3101,376 +3324,124 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
         continue;
       }
 
-      if (key === "instructions") {
-        quiz.instructions = String(req.body.instructions || "").trim();
+      if (key === "instructions" || key === "assessmentInstructions") {
+        const value = String(req.body[key] || "").trim();
+        quiz.instructions = value;
+        quiz.assessmentInstructions = value;
+        continue;
+      }
+
+      if (key === "learningObjectives") {
+        quiz.learningObjectives = normalizeLearningObjectives(
+          req.body.learningObjectives
+        );
         continue;
       }
 
       if (key === "timeLimitMinutes") {
-        const t = Number(req.body.timeLimitMinutes);
-        if (!Number.isFinite(t) || t < 1 || t > 180) {
-          return res.status(400).json({ message: "Time limit must be 1–180 minutes." });
+        const timeLimit = Number(req.body.timeLimitMinutes);
+        if (!Number.isFinite(timeLimit) || timeLimit < 1 || timeLimit > 180) {
+          return res.status(400).json({
+            message: "Time limit must be 1–180 minutes.",
+          });
         }
-        quiz.timeLimitMinutes = t;
+        quiz.timeLimitMinutes = timeLimit;
         continue;
       }
 
-      if (key === "availableFrom") {
-        if (!req.body.availableFrom) {
-          quiz.availableFrom = null;
+      if (key === "availableFrom" || key === "availableUntil") {
+        if (!req.body[key]) {
+          quiz[key] = null;
         } else {
-          const d = new Date(req.body.availableFrom);
-          if (isNaN(d.getTime())) {
-            return res.status(400).json({ message: "Invalid Available From date/time." });
+          const date = new Date(req.body[key]);
+          if (isNaN(date.getTime())) {
+            return res.status(400).json({
+              message:
+                key === "availableFrom"
+                  ? "Invalid Available From date/time."
+                  : "Invalid Available Until date/time.",
+            });
           }
-          quiz.availableFrom = d;
+          quiz[key] = date;
         }
         continue;
       }
 
-      if (key === "availableUntil") {
-        if (!req.body.availableUntil) {
-          quiz.availableUntil = null;
-        } else {
-          const d = new Date(req.body.availableUntil);
-          if (isNaN(d.getTime())) {
-            return res.status(400).json({ message: "Invalid Available Until date/time." });
-          }
-          quiz.availableUntil = d;
-        }
+      if (["isFrozen", "isPublished", "sendPublishEmail"].includes(key)) {
+        quiz[key] = !!req.body[key];
         continue;
       }
 
-      if (key === "isFrozen") {
-        quiz.isFrozen = !!req.body.isFrozen;
+      if (["frozenAt", "publishedAt", "publishAt"].includes(key)) {
+        quiz[key] = req.body[key] ? new Date(req.body[key]) : null;
         continue;
       }
 
-      if (key === "frozenAt") {
-        quiz.frozenAt = req.body.frozenAt ? new Date(req.body.frozenAt) : null;
-        continue;
-      }
-
-      if (key === "isPublished") {
-        quiz.isPublished = !!req.body.isPublished;
-        continue;
-      }
-
-      if (key === "publishedAt") {
-        quiz.publishedAt = req.body.publishedAt ? new Date(req.body.publishedAt) : null;
-        continue;
-      }
-
-      if (key === "publishAt") {
-        quiz.publishAt = req.body.publishAt ? new Date(req.body.publishAt) : null;
-        continue;
-      }
-
-      if (key === "sendPublishEmail") {
-        quiz.sendPublishEmail = !!req.body.sendPublishEmail;
-        continue;
-      }
       if (key === "accessLevel") {
-  quiz.accessLevel = normalizeQuizAccessLevel(req.body.accessLevel);
-  quiz.isPremium = quiz.accessLevel === "premium";
-  quiz.requiresPayment = quiz.accessLevel === "premium";
+        quiz.accessLevel = normalizeQuizAccessLevel(req.body.accessLevel);
+        quiz.isPremium = quiz.accessLevel === "premium";
+        quiz.requiresPayment = quiz.accessLevel === "premium";
+        if (quiz.accessLevel === "standard") quiz.accessFee = 0;
+        continue;
+      }
 
-  if (quiz.accessLevel === "standard") {
-    quiz.accessFee = 0;
-  }
+      if (key === "accessFee") {
+        const fee = Number(req.body.accessFee);
+        if (!Number.isFinite(fee) || fee < 0) {
+          return res.status(400).json({
+            message: "Access fee must be 0 or more.",
+          });
+        }
+        quiz.accessFee = quiz.accessLevel === "premium" ? fee : 0;
+        continue;
+      }
 
-  continue;
-}
-
-if (key === "accessFee") {
-  const fee = Number(req.body.accessFee);
-
-  if (!Number.isFinite(fee) || fee < 0) {
-    return res.status(400).json({
-      message: "Access fee must be 0 or more."
-    });
-  }
-
-  quiz.accessFee =
-    quiz.accessLevel === "premium"
-      ? fee
-      : 0;
-
-  continue;
-}
       if (key === "questions") {
         if (!Array.isArray(req.body.questions) || req.body.questions.length === 0) {
           return res.status(400).json({ message: "Questions are required." });
         }
 
-        for (const q of req.body.questions) {
-          const type = String(q?.type || "mcq").toLowerCase();
-
-          if (!cleanSpaces(q?.text)) {
-            return res.status(400).json({ message: "Each block must have text." });
-          }
-
-          if ("solution" in q && q.solution !== undefined && q.solution !== null) {
-            q.solution = String(q.solution);
-          }
-
-          if (type === "note") {
-            q.points = 0;
-            q.correctIndex = -1;
-            q.correctIndexes = [];
-            q.isMultiSelect = false;
-            continue;
-          }
-
-          const pts = safeInt(q?.points, 1);
-          if (!Number.isInteger(pts) || pts < 1) {
-            return res.status(400).json({
-              message: "Each question must have marks (points) of 1 or more.",
-            });
-          }
-          q.points = pts;
-
-          if (type === "text") {
-            /*
-             * Universal typed-answer support.
-             * There is no fixed field limit: 1, 2, 4, or more required
-             * answers are all validated and saved in their original order.
-             */
-            const rawCorrectText = String(
-              q?.correctText ??
-              q?.answer ??
-              q?.correctAnswer ??
-              ""
-            ).trim();
-
-            const keyedCorrectValues = new Map();
-            const positionalCorrectValues = [];
-
-            rawCorrectText
-              .split("|")
-              .map((part) => String(part || "").trim())
-              .filter(Boolean)
-              .forEach((part, index) => {
-                const equalsAt = part.indexOf("=");
-
-                if (equalsAt > 0) {
-                  const rawKey = part.slice(0, equalsAt).trim();
-                  const rawValue = part.slice(equalsAt + 1).trim();
-                  const normalizedKey = normalizeTypedFieldKey(
-                    rawKey,
-                    `answer_${index + 1}`
-                  );
-
-                  if (normalizedKey) {
-                    keyedCorrectValues.set(normalizedKey, rawValue);
-                  }
-
-                  positionalCorrectValues.push(rawValue);
-                } else {
-                  positionalCorrectValues.push(part);
-                }
-              });
-
-            const answerFields = Array.isArray(q?.answerFields)
-              ? q.answerFields
-                  .map((field, index) => {
-                    const key = normalizeTypedFieldKey(
-                      field?.key,
-                      `answer_${index + 1}`
-                    );
-
-                    let correctAnswer = String(
-                      field?.correctAnswer ??
-                      field?.answer ??
-                      ""
-                    ).trim();
-
-                    /*
-                     * Do not store a complete combined string such as
-                     * "a=63|b=99" as the answer for one individual field.
-                     */
-                    if (
-                      correctAnswer.includes("|") ||
-                      /^[^=|]+\s*=/.test(correctAnswer)
-                    ) {
-                      correctAnswer = "";
-                    }
-
-                    return {
-                      key,
-                      prefix: String(
-                        field?.prefix ??
-                        field?.label ??
-                        ""
-                      ).trim(),
-                      suffix: String(
-                        field?.suffix ??
-                        field?.unit ??
-                        ""
-                      ).trim(),
-                      correctAnswer:
-                        correctAnswer ||
-                        keyedCorrectValues.get(key) ||
-                        positionalCorrectValues[index] ||
-                        "",
-                    };
-                  })
-                  .filter((field) => field.key)
-              : [];
-
-            if (!rawCorrectText && answerFields.length === 0) {
-              return res.status(400).json({
-                message:
-                  "Typed questions must have a correct answer or at least one Answer Field.",
-              });
-            }
-
-            if (answerFields.some((field) => !field.correctAnswer)) {
-              return res.status(400).json({
-                message:
-                  "Every Answer Field must have a correct answer.",
-              });
-            }
-
-            const fieldKeys = answerFields.map((field) => field.key);
-
-            if (new Set(fieldKeys).size !== fieldKeys.length) {
-              return res.status(400).json({
-                message: "Answer Field keys must be unique.",
-              });
-            }
-
-            const mode = String(q?.textAnswerMode || "exact")
-              .toLowerCase()
-              .trim();
-
-            const allowedModes = [
-              "exact",
-              "contains",
-              "number_tolerance",
-              "unordered",
-              "expression",
-            ];
-
-            if (!allowedModes.includes(mode)) {
-              return res.status(400).json({
-                message: `Invalid textAnswerMode: ${mode}`,
-              });
-            }
-
-            let numberTolerance = 0;
-
-            if (mode === "number_tolerance") {
-              numberTolerance = Number(q?.numberTolerance ?? 0);
-
-              if (
-                !Number.isFinite(numberTolerance) ||
-                numberTolerance < 0
-              ) {
-                return res.status(400).json({
-                  message: "Invalid numberTolerance.",
-                });
-              }
-            }
-
-            q.instruction = String(q?.instruction || "").trim();
-            q.answerPrefix = String(q?.answerPrefix || "").trim();
-            q.answerSuffix = String(
-              q?.answerSuffix || q?.unit || ""
-            ).trim();
-            q.unit = String(
-              q?.unit || q?.answerSuffix || ""
-            ).trim();
-
-            q.answerFields = answerFields;
-            q.correctText =
-              answerFields.length > 0
-                ? answerFields
-                    .map(
-                      (field) =>
-                        `${field.key}=${field.correctAnswer}`
-                    )
-                    .join("|")
-                : rawCorrectText;
-
-            q.textAnswerMode = mode;
-            q.numberTolerance = numberTolerance;
-            q.options = [];
-            q.correctIndex = -1;
-            q.correctIndexes = [];
-            q.isMultiSelect = false;
-          } else {
-            const opts = Array.isArray(q?.options) ? q.options : [];
-            if (opts.length < 2 || opts.some((o) => !cleanSpaces(o))) {
-              return res.status(400).json({ message: "MCQ must have at least 2 options." });
-            }
-
-            const idxs = normalizeIndexArray(q?.correctIndexes || []);
-            const hasMulti = idxs.length >= 2;
-            const wantsMulti = Boolean(q?.isMultiSelect) || hasMulti;
-
-            if (wantsMulti) {
-              if (idxs.length < 1) {
-                return res.status(400).json({ message: "MCQ must have at least 1 correct option." });
-              }
-              if (idxs.some((i) => i < 0 || i >= opts.length)) {
-                return res.status(400).json({ message: "MCQ correctIndexes must be within options." });
-              }
-
-              q.isMultiSelect = true;
-              q.correctIndexes = idxs;
-              q.correctIndex = idxs.length === 1 ? idxs[0] : -1;
-            } else {
-              const ci = Number(q?.correctIndex);
-              if (!Number.isInteger(ci) || ci < 0 || ci >= opts.length) {
-                return res.status(400).json({ message: "MCQ correctIndex must be within options." });
-              }
-
-              q.correctIndex = ci;
-              q.correctIndexes = [ci];
-              q.isMultiSelect = false;
-            }
-          }
+        try {
+          quiz.questions = req.body.questions.map((question) =>
+            normalizeQuestionForSave({ ...question })
+          );
+        } catch (error) {
+          return res.status(400).json({ message: error.message });
         }
-
-        quiz.questions = req.body.questions;
       }
     }
 
     if (
       quiz.availableFrom &&
       quiz.availableUntil &&
-      new Date(quiz.availableUntil).getTime() <= new Date(quiz.availableFrom).getTime()
+      new Date(quiz.availableUntil).getTime() <=
+        new Date(quiz.availableFrom).getTime()
     ) {
-      return res.status(400).json({ message: "Available Until must be after Available From." });
+      return res.status(400).json({
+        message: "Available Until must be after Available From.",
+      });
     }
 
-    if (quiz.publishAt && isNaN(new Date(quiz.publishAt).getTime())) {
-      return res.status(400).json({ message: "Invalid publish date/time." });
+    for (const field of ["publishAt", "publishedAt", "frozenAt"]) {
+      if (quiz[field] && isNaN(new Date(quiz[field]).getTime())) {
+        return res.status(400).json({ message: `Invalid ${field} date/time.` });
+      }
     }
 
-    if (quiz.publishedAt && isNaN(new Date(quiz.publishedAt).getTime())) {
-      return res.status(400).json({ message: "Invalid publishedAt date/time." });
-    }
-
-    const finalPutContentType =
-      normalizeAssessmentContentType(quiz.contentType);
-
+    const finalContentType = normalizeAssessmentContentType(quiz.contentType);
     const gradeOrTypeChanged =
       Number(originalGrade) !== Number(quiz.grade) ||
-      originalContentType !== finalPutContentType;
+      originalContentType !== finalContentType;
 
     if (gradeOrTypeChanged) {
       const regeneratedCode = await generateAssessmentCode(
         quiz.grade,
-        finalPutContentType
+        finalContentType
       );
-
       quiz.assessmentCode = regeneratedCode.assessmentCode;
     }
 
     await quiz.save();
-
     return res.json(quiz);
   } catch (e) {
     console.error("PUT /api/quizzes/:id error:", e.message);
@@ -4410,6 +4381,129 @@ app.post("/api/results", authRequired, async (req, res) => {
         };
       }
 
+      if (type === "dropdown") {
+        const selectedValue = cleanSpaces(
+          ans.dropdownAnswer ??
+          ans.selectedValue ??
+          ans.textAnswer ??
+          ans.value ??
+          ans.answer ??
+          ""
+        );
+        const correctText = cleanSpaces(q.correctText || "");
+        const isCorrect = selectedValue === correctText && correctText.length > 0;
+        const earned = isCorrect ? qPoints : 0;
+        scorePoints += earned;
+
+        return {
+          questionIndex: i,
+          type: "dropdown",
+          points: qPoints,
+          earnedPoints: earned,
+          chosenIndex: -1,
+          correctIndex: -1,
+          isMultiSelect: false,
+          chosenIndexes: [],
+          correctIndexes: [],
+          textAnswer: selectedValue,
+          correctText,
+          typedValues: [],
+          correctTypedValues: [],
+          answerFields: [],
+          instruction: String(q.instruction || "").trim(),
+          answerPrefix: "",
+          answerSuffix: "",
+          unit: "",
+          hint,
+          solution,
+          answerMode: "exact",
+          tolerance: null,
+          roundTo: null,
+          isCorrect,
+          questionText,
+          options,
+        };
+      }
+
+      if (type === "fill") {
+        const correctValues = normalizeFillAnswers(q.fillAnswers || []);
+        const submittedValues = normalizeSubmittedFillValues(ans);
+        const mode = String(q.textAnswerMode || "exact").toLowerCase().trim();
+        const tolerance = Number(q.numberTolerance ?? 0);
+
+        const checkedFields = correctValues.map((correctAnswer, index) => {
+          const learnerValue = String(submittedValues[index] ?? "").trim();
+          const fieldIsCorrect = compareTypedAnswerValue(
+            learnerValue,
+            correctAnswer,
+            mode,
+            tolerance
+          );
+
+          return {
+            key: `blank_${index + 1}`,
+            prefix: "",
+            suffix: "",
+            value: learnerValue,
+            correctAnswer,
+            isCorrect: fieldIsCorrect,
+          };
+        });
+
+        const correctCount = checkedFields.filter((field) => field.isCorrect).length;
+        const isCorrect =
+          checkedFields.length > 0 && correctCount === checkedFields.length;
+
+        let earned = 0;
+        if (isCorrect) {
+          earned = qPoints;
+        } else if (q.allowPartialMarks !== false && checkedFields.length > 0) {
+          earned = Number(
+            ((qPoints * correctCount) / checkedFields.length).toFixed(2)
+          );
+        }
+
+        scorePoints += earned;
+
+        return {
+          questionIndex: i,
+          type: "fill",
+          points: qPoints,
+          earnedPoints: earned,
+          chosenIndex: -1,
+          correctIndex: -1,
+          isMultiSelect: false,
+          chosenIndexes: [],
+          correctIndexes: [],
+          textAnswer: submittedValues.join("|"),
+          correctText: correctValues.join("|"),
+          typedValues: checkedFields.map((field) => ({
+            key: field.key,
+            value: field.value,
+          })),
+          correctTypedValues: checkedFields.map((field) => ({
+            key: field.key,
+            value: field.correctAnswer,
+          })),
+          answerFields: checkedFields,
+          instruction: String(q.instruction || "").trim(),
+          answerPrefix: "",
+          answerSuffix: "",
+          unit: "",
+          hint,
+          solution,
+          answerMode: mode,
+          tolerance:
+            mode === "number_tolerance" && Number.isFinite(tolerance)
+              ? tolerance
+              : null,
+          roundTo: null,
+          isCorrect,
+          questionText,
+          options: [],
+        };
+      }
+
       if (type === "text") {
         const correctFields = normalizeCorrectTypedFields(q);
         const submittedFields = normalizeSubmittedTypedValues(ans);
@@ -4664,7 +4758,7 @@ app.post("/api/results", authRequired, async (req, res) => {
       grade: quiz.grade,
       topic: quiz.topic || "General",
       title: quiz.title || "Assessment",
-      instructions: String(quiz.instructions || "").trim(),
+      instructions: String(quiz.assessmentInstructions || quiz.instructions || "").trim(),
       paper: quiz.paper || "paper1",
       score: scorePoints,
       total: totalPoints,
