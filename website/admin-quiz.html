@@ -2018,6 +2018,28 @@ function escapeHtml(str){
         } else if (type === "mcq") {
           const opts = [...card.querySelectorAll(".optRow")].map((row, index) => ({ idx:index, txt:cleanSpaces(row.querySelector(".optInput")?.value || "") })).filter(o => o.txt);
           parts.push(`<div class="q">${questionAndImageHtml}${opts.map((o, idx)=>`<div class="optPaper"><span class="optBullet">○</span><span class="optTextPaper">${renderMixedMathPreview(o.txt)}</span></div>`).join("")}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${currentFullPreviewMode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`);
+        } else if (type === "dropdown") {
+          const options = String(card.querySelector(".dropdownOptions")?.value || "")
+            .split(/\n|\|/)
+            .map(value => cleanSpaces(value))
+            .filter(Boolean);
+          const placeholder = cleanSpaces(card.querySelector(".dropdownPlaceholder")?.value || "Select an answer");
+          const selectHtml = `<div style="margin:10px 0 4px 68px;max-width:320px;"><select disabled style="width:100%;padding:9px 10px;border:1px solid #cbd5e1;background:#fff;font-family:'Times New Roman',Times,serif;font-size:14px;"><option value="">${escapeHtml(placeholder)}</option>${options.map(option => `<option>${escapeHtml(option)}</option>`).join("")}</select></div>`;
+          parts.push(`<div class="q">${questionAndImageHtml}${selectHtml}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${currentFullPreviewMode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`);
+        } else if (type === "fill") {
+          const instruction = cleanSpaces(card.querySelector(".fillInstruction")?.value || "");
+          const rawQuestion = stripLeadingQuestionNumber(card.querySelector(".qText")?.value || "");
+          let blankIndex = 0;
+          const blankHtml = rawQuestion.split(/(\[\[\s*\]\])/g).map(part => {
+            if (/^\[\[\s*\]\]$/.test(part)) {
+              blankIndex += 1;
+              return `<input disabled aria-label="Blank ${blankIndex}" style="display:inline-block;width:92px;height:30px;margin:0 5px;padding:3px 7px;border:1px solid #cbd5e1;background:#fff;font-family:'Times New Roman',Times,serif;font-size:14px;vertical-align:middle;">`;
+            }
+            return renderMixedMathPreview(part);
+          }).join("");
+          const fillBody = `<div style="margin:10px 0 4px 68px;font-family:'Times New Roman',Times,serif;font-size:14px;line-height:2;">${blankHtml}</div>`;
+          const instructionHtml = instruction ? `<div class="answerPreviewInstruction" style="margin-left:68px;"><b>INSTRUCTION:</b> ${renderMixedMathPreview(instruction)}</div>` : "";
+          parts.push(`<div class="q">${questionAndImageHtml}${instructionHtml}${fillBody}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${currentFullPreviewMode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`);
         }
       }
       parts.push(`</div>`);
@@ -3058,6 +3080,15 @@ function escapeHtml(str){
 
         const optsText = included.map((x, idx) => `${letter(idx)}) ${x.v}`).join("\n");
         setPreviewText(card.querySelector(".prevOpts"), optsText || "(Options preview)");
+      } else if (type === "dropdown") {
+        const options = String(card.querySelector(".dropdownOptions")?.value || "")
+          .split(/\n|\|/).map(v => cleanSpaces(v)).filter(Boolean);
+        const placeholder = cleanSpaces(card.querySelector(".dropdownPlaceholder")?.value || "Select an answer");
+        setPreviewText(card.querySelector(".prevOpts"), [placeholder, ...options].join("\n") || "(Dropdown preview)");
+      } else if (type === "fill") {
+        const answers = String(card.querySelector(".fillAnswers")?.value || "")
+          .split(/\n|\|/).map(v => cleanSpaces(v)).filter(Boolean);
+        setPreviewText(card.querySelector(".prevOpts"), answers.length ? `Blank answers: ${answers.join(" | ")}` : "(Fill-blank preview)");
       } else {
         const fields = readAnswerFieldsFromCard(card);
         const ans = cleanSpaces(getMathFieldValue(card.querySelector(".correctText")));
@@ -3151,7 +3182,7 @@ function escapeHtml(str){
 
       function getPoints(card){
         const type = (card.getAttribute("data-type") || "").toLowerCase();
-        if (type !== "mcq" && type !== "text") return 0;
+        if (!["mcq", "text", "dropdown", "fill"].includes(type)) return 0;
         const raw = Number(card.querySelector(".qPoints")?.value || 0);
         return Number.isFinite(raw) && raw > 0 ? raw : 0;
       }
@@ -3182,7 +3213,7 @@ function escapeHtml(str){
           continue;
         }
 
-        if (type === "mcq" || type === "text") {
+        if (["mcq", "text", "dropdown", "fill"].includes(type)) {
           if (sectionNum < 1) sectionNum = 1;
           const key = `${mainNum}.${sectionNum}`;
           const points = getPoints(card);
@@ -4185,9 +4216,6 @@ function escapeHtml(str){
         paper,
         contentType,
         contentTypeLabel: contentTypeLabel(contentType),
-        audience: contentType === "weeklyChallenge" ? "all" : "grade",
-        isForAllLearners: contentType === "weeklyChallenge",
-        contentType,
         audience: contentType === "weeklyChallenge" ? "all" : "grade",
         isForAllLearners: contentType === "weeklyChallenge",
         timeLimitMinutes,
