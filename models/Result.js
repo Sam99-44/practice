@@ -3,6 +3,12 @@
 //    - chosenIndexes: [Number] (what learner ticked)
 //    - correctIndexes: [Number] (the right ticks)
 // ✅ Still keeps chosenIndex/correctIndex for backwards compatibility
+// ✅ Stores dropdown answers:
+//    - dropdownAnswer
+//    - correctDropdownAnswer
+// ✅ Stores fill-in answers:
+//    - fillAnswers
+//    - correctFillAnswers
 // ✅ Stores universal typed answers:
 //    - typedValues: learner values
 //    - correctTypedValues: correct values
@@ -81,7 +87,7 @@ const AnswerSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["mcq", "text", "note"],
+      enum: ["mcq", "text", "dropdown", "fill", "note"],
       default: "mcq",
     },
 
@@ -124,6 +130,30 @@ const AnswerSchema = new mongoose.Schema(
 
     correctIndexes: {
       type: [Number],
+      default: [],
+    },
+
+    // Dropdown answer snapshot
+    dropdownAnswer: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    correctDropdownAnswer: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    // Fill-in answer snapshot
+    fillAnswers: {
+      type: [String],
+      default: [],
+    },
+
+    correctFillAnswers: {
+      type: [String],
       default: [],
     },
 
@@ -288,6 +318,12 @@ const ResultSchema = new mongoose.Schema(
     instructions: {
       type: String,
       default: "",
+    },
+
+    paper: {
+      type: String,
+      enum: ["paper1", "paper2"],
+      default: "paper1",
     },
 
     score: {
