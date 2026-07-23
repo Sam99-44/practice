@@ -2021,123 +2021,211 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 });
 
 // REGISTER
-// REGISTER
 app.post("/api/register", registerLimiter, async (req, res) => {
   try {
-const {
-  firstName,
-  surname,
-  fullName,
-  username,
-  email,
-  grade,
-  curriculum,
-  password,
-  accountType,
-  province,
-  district,
-  cellphone,
-  guardianCellphone,
-  guestReasons,
-  otherReason,
-  guestMessage,
-  schoolName,
-  currentMarkRange,
-  gender
-} = req.body;
+    const {
+      firstName,
+      surname,
+      fullName,
+      username,
+      email,
+      grade,
+      curriculum,
+      password,
+      accountType,
+      province,
+      district,
+      cellphone,
+      guardianCellphone,
+      guestReasons,
+      otherReason,
+      guestMessage,
+      schoolName,
+      currentMarkRange,
+      gender,
+    } = req.body;
 
-    if (!username || !email || !password || !accountType) {
+    const cleanAccountType = String(accountType || "")
+      .trim()
+      .toLowerCase();
+
+    const cleanUsername = cleanSpaces(username || "");
+    const cleanEmail = String(email || "")
+      .trim()
+      .toLowerCase();
+    const cleanFirstName = cleanSpaces(firstName || "");
+    const cleanSurname = cleanSpaces(surname || "");
+    const cleanFullName =
+      cleanSpaces(fullName || "") ||
+      cleanSpaces(`${cleanFirstName} ${cleanSurname}`);
+    const cleanCurriculum = String(curriculum || "")
+      .trim()
+      .toUpperCase();
+    const cleanCellphone = String(cellphone || "")
+      .replace(/\s+/g, "")
+      .trim();
+    const cleanGuardianCellphone = String(guardianCellphone || "")
+      .replace(/\s+/g, "")
+      .trim();
+
+    if (!cleanUsername || !cleanEmail || !password || !cleanAccountType) {
       return res.status(400).json({
         message: "Username, email, password, and account type are required.",
       });
     }
 
-    if (!["learner", "practice", "guest"].includes(accountType)) {
-  return res.status(400).json({
-    message: "Invalid account type."
-  });
-}
+    if (!["learner", "practice", "guest"].includes(cleanAccountType)) {
+      return res.status(400).json({
+        message: "Invalid account type.",
+      });
+    }
+
+    if (!cleanFirstName || !cleanSurname) {
+      return res.status(400).json({
+        message: "First name and surname are required.",
+      });
+    }
+
+    if (!isValidEmail(cleanEmail)) {
+      return res.status(400).json({
+        message: "Please enter a valid email address.",
+      });
+    }
+
+    const strongPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+
+    if (!strongPasswordRegex.test(String(password))) {
+      return res.status(400).json({
+        message:
+          "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
+      });
+    }
+
+    if (!/^\+27[6-8][0-9]{8}$/.test(cleanCellphone)) {
+      return res.status(400).json({
+        message:
+          "Please enter a valid South African cellphone number. Example: +27821234567",
+      });
+    }
 
     let gradeNum = null;
-    if (accountType === "learner" || accountType === "practice") {
+
+    if (
+      cleanAccountType === "learner" ||
+      cleanAccountType === "practice"
+    ) {
       if (grade === undefined || grade === null || grade === "") {
         return res.status(400).json({
           message: "Grade is required for learner and practice accounts.",
         });
       }
+
       gradeNum = Number(grade);
-      if (!Number.isInteger(gradeNum) || gradeNum < 8 || gradeNum > 12) {
+
+      if (
+        !Number.isInteger(gradeNum) ||
+        gradeNum < 8 ||
+        gradeNum > 12
+      ) {
         return res.status(400).json({
           message: "Grade must be between 8 and 12.",
         });
       }
-    }
-if (
-  (accountType === "learner" || accountType === "practice") &&
-  !curriculum
-) {
-  return res.status(400).json({
-    message: "Curriculum is required."
-  });
-}
-const strongPasswordRegex =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
-if (!strongPasswordRegex.test(String(password))) {
-  return res.status(400).json({
-    message:
-      "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
-  });
-}
-if (accountType === "guest") {
-  if (!province || !district) {
-    return res.status(400).json({
-      message: "Province and district are required."
-    });
-  }
-
-  if (!Array.isArray(guestReasons) || !guestReasons.length) {
-    return res.status(400).json({
-      message: "Please select at least one reason."
-    });
-  }
-
-  if (
-    guestReasons.includes("other") &&
-    !String(otherReason || "").trim()
-  ) {
-    return res.status(400).json({
-      message: "Please specify the other reason."
-    });
-  }
-}
-    const cleanUsername = cleanSpaces(username);
-    const cleanEmail = String(email || "").toLowerCase().trim();
-    const cleanFirstName = cleanSpaces(firstName || "");
-    const cleanSurname = cleanSpaces(surname || "");
-    const cleanFullName =
-      cleanSpaces(fullName || "") || cleanSpaces(`${cleanFirstName} ${cleanSurname}`);
-
-    if (!isValidEmail(cleanEmail)) {
-      return res.status(400).json({ message: "Please enter a valid email address." });
+      if (!["CAPS", "IEB"].includes(cleanCurriculum)) {
+        return res.status(400).json({
+          message: "Curriculum must be CAPS or IEB.",
+        });
+      }
     }
 
-    const existingEmail = await User.findOne({ email: cleanEmail }).select("_id");
-    if (existingEmail) {
-      return res.status(409).json({ message: "Email already registered." });
+    if (
+      cleanAccountType === "learner" &&
+      cleanGuardianCellphone &&
+      !/^\+27[6-8][0-9]{8}$/.test(cleanGuardianCellphone)
+    ) {
+      return res.status(400).json({
+        message:
+          "Please enter a valid guardian cellphone number. Example: +27821234567",
+      });
     }
 
-    const existingUsername = await User.findOne({ username: cleanUsername }).select("_id");
-    if (existingUsername) {
-      return res.status(409).json({ message: "Username already taken." });
+    const cleanGuestReasons = Array.isArray(guestReasons)
+      ? [...new Set(guestReasons.map((value) => String(value || "").trim()).filter(Boolean))]
+      : [];
+
+    const cleanProvince = cleanSpaces(province || "");
+    const cleanDistrict = cleanSpaces(district || "");
+    const cleanOtherReason = cleanSpaces(otherReason || "");
+    const cleanGuestMessage = cleanSpaces(guestMessage || "");
+
+    if (cleanAccountType === "guest") {
+      if (!cleanProvince || !cleanDistrict) {
+        return res.status(400).json({
+          message: "Province and district are required.",
+        });
+      }
+
+      if (!cleanGuestReasons.length) {
+        return res.status(400).json({
+          message: "Please select at least one reason.",
+        });
+      }
+
+      if (
+        cleanGuestReasons.includes("other") &&
+        !cleanOtherReason
+      ) {
+        return res.status(400).json({
+          message: "Please specify the other reason.",
+        });
+      }
+
+      if (cleanOtherReason.length > 120) {
+        return res.status(400).json({
+          message: "Other reason cannot exceed 120 characters.",
+        });
+      }
+
+      if (cleanGuestMessage.length > 255) {
+        return res.status(400).json({
+          message: "Guest message cannot exceed 255 characters.",
+        });
+      }
+    }
+
+    const existingUser = await User.findOne({
+      $or: [
+        { email: cleanEmail },
+        { username: cleanUsername },
+      ],
+    }).select("email username");
+
+    if (existingUser) {
+      if (existingUser.email === cleanEmail) {
+        return res.status(409).json({
+          message: "Email already registered.",
+        });
+      }
+
+      return res.status(409).json({
+        message: "Username already taken.",
+      });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const learnerNumber = await generateUniqueLearnerNumber(accountType);
+
+    const learnerNumber =
+      cleanAccountType === "learner" || cleanAccountType === "practice"
+        ? await generateUniqueLearnerNumber(cleanAccountType)
+        : undefined;
 
     const rawVerifyToken = makeVerifyToken();
     const verifyTokenHash = hashToken(rawVerifyToken);
-    const verifyTokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const verifyTokenExpiresAt = new Date(
+      Date.now() + 24 * 60 * 60 * 1000
+    );
 
     const now = new Date();
     const trialDays = 7;
@@ -2150,25 +2238,59 @@ if (accountType === "guest") {
       email: cleanEmail,
       passwordHash,
       role: "learner",
-      accountType,
+
+      // Save exactly the account type selected on register.html.
+      accountType: cleanAccountType,
+
       learnerNumber,
       studentNumber: null,
       grade: gradeNum,
-      curriculum: curriculum || "",
-      enrollmentStatus: accountType === "learner" ? "pending" : "not_required",
-      phoneVerified: false,
-      guestReasons: Array.isArray(guestReasons) ? guestReasons : [],
-      otherReason: cleanSpaces(otherReason || ""),
-      guestMessage: cleanSpaces(guestMessage || ""),
-      schoolName: cleanSpaces(schoolName || ""),
-      currentMarkRange: String(currentMarkRange || "").trim(),
+      curriculum:
+        cleanAccountType === "learner" || cleanAccountType === "practice"
+          ? cleanCurriculum
+          : "",
+      enrollmentStatus:
+        cleanAccountType === "learner"
+          ? "pending"
+          : "not_required",
+
+      guestReasons:
+        cleanAccountType === "guest"
+          ? cleanGuestReasons
+          : [],
+      otherReason:
+        cleanAccountType === "guest"
+          ? cleanOtherReason
+          : "",
+      guestMessage:
+        cleanAccountType === "guest"
+          ? cleanGuestMessage
+          : "",
+
+      schoolName:
+        cleanAccountType === "learner"
+          ? cleanSpaces(schoolName || "")
+          : "",
+      currentMarkRange:
+        cleanAccountType === "learner"
+          ? String(currentMarkRange || "").trim()
+          : "",
+
       profileHeadline: "",
       profilePhoto: "",
-      province: cleanSpaces(province || ""),
-      district: cleanSpaces(district || ""),
-      gender: String(gender || "").trim(),
-      cellphone: cleanSpaces(cellphone || ""),
-      guardianCellphone: cleanSpaces(guardianCellphone || ""),
+      province: cleanProvince,
+      district: cleanDistrict,
+      gender:
+        cleanAccountType === "guest"
+          ? ""
+          : String(gender || "").trim(),
+      cellphone: cleanCellphone,
+      guardianCellphone:
+        cleanAccountType === "learner"
+          ? cleanGuardianCellphone
+          : "",
+
+      phoneVerified: false,
       emailVerified: false,
       verifyTokenHash,
       verifyTokenExpiresAt,
@@ -2177,46 +2299,46 @@ if (accountType === "guest") {
       trialEndDate: addDays(now, trialDays),
     });
 
-const verifyUrl = `${APP_URL}/verify-email.html?token=${encodeURIComponent(
-  rawVerifyToken
-)}&email=${encodeURIComponent(user.email)}`;
+    const verifyUrl = `${APP_URL}/verify-email.html?token=${encodeURIComponent(
+      rawVerifyToken
+    )}&email=${encodeURIComponent(user.email)}`;
 
-try {
-  const displayName = user.fullName || user.username || "there";
+    try {
+      const displayName = user.fullName || user.username || "there";
 
-  const verifyButtonHtml = `
-    <p style="margin:20px 0;">
-      <a
-        href="${verifyUrl}"
-        target="_blank"
-        style="
-          display:inline-block;
-          padding:12px 24px;
-          background:#1b1648;
-          color:#ffffff;
-          text-decoration:none;
-          border-radius:6px;
-          font-weight:bold;
-          font-size:14px;
-        "
-      >
-        Verify Email Address
-      </a>
-    </p>
-  `;
+      const verifyButtonHtml = `
+        <p style="margin:20px 0;">
+          <a
+            href="${verifyUrl}"
+            target="_blank"
+            style="
+              display:inline-block;
+              padding:12px 24px;
+              background:#1b1648;
+              color:#ffffff;
+              text-decoration:none;
+              border-radius:6px;
+              font-weight:bold;
+              font-size:14px;
+            "
+          >
+            Verify Email Address
+          </a>
+        </p>
+      `;
 
-  let accountMessageHtml = "";
-  let accountMessageText = "";
+      let accountMessageHtml = "";
+      let accountMessageText = "";
 
-  if (user.accountType === "learner") {
-    accountMessageHtml = `
-      <p>Your learner number is: <strong>${user.learnerNumber}</strong></p>
-      <p>Your Learner Account has been created successfully.</p>
-      <p>We are excited to be part of your academic journey and are committed to helping you achieve your goals and reach greater heights in your studies.</p>
-      <p>You may now enroll for classes and begin accessing the opportunities available through Practice Online.</p>
-    `;
+      if (user.accountType === "learner") {
+        accountMessageHtml = `
+          <p>Your learner number is: <strong>${user.learnerNumber}</strong></p>
+          <p>Your Learner Account has been created successfully.</p>
+          <p>We are excited to be part of your academic journey and are committed to helping you achieve your goals and reach greater heights in your studies.</p>
+          <p>You may now enroll for classes and begin accessing the opportunities available through Practice Online.</p>
+        `;
 
-    accountMessageText = `
+        accountMessageText = `
 Your learner number is: ${user.learnerNumber}
 
 Your Learner Account has been created successfully.
@@ -2224,18 +2346,16 @@ Your Learner Account has been created successfully.
 We are excited to be part of your academic journey and are committed to helping you achieve your goals and reach greater heights in your studies.
 
 You may now enroll for classes and begin accessing the opportunities available through Practice Online.
-    `;
-  }
+        `;
+      } else if (user.accountType === "practice") {
+        accountMessageHtml = `
+          <p>Your practice number is: <strong>${user.learnerNumber}</strong></p>
+          <p>Your Practice Account has been created successfully.</p>
+          <p>You now have access to practice quizzes, assignments, challenges, announcements and learning content.</p>
+          <p>We are committed to helping you build confidence, strengthen your skills and reach greater heights through continuous learning and practice.</p>
+        `;
 
-  else if (user.accountType === "practice") {
-    accountMessageHtml = `
-      <p>Your practice number is: <strong>${user.learnerNumber}</strong></p>
-      <p>Your Practice Account has been created successfully.</p>
-      <p>You now have access to practice quizzes, assignments, challenges, announcements and learning content.</p>
-      <p>We are committed to helping you build confidence, strengthen your skills and reach greater heights through continuous learning and practice.</p>
-    `;
-
-    accountMessageText = `
+        accountMessageText = `
 Your practice number is: ${user.learnerNumber}
 
 Your Practice Account has been created successfully.
@@ -2243,18 +2363,16 @@ Your Practice Account has been created successfully.
 You now have access to practice quizzes, assignments, challenges, announcements and learning content.
 
 We are committed to helping you build confidence, strengthen your skills and reach greater heights through continuous learning and practice.
-    `;
-  }
+        `;
+      } else if (user.accountType === "guest") {
+        accountMessageHtml = `
+          <p>Your Guest Account has been created successfully.</p>
+          <p>Thank you for choosing Practice Online.</p>
+          <p>Whether you are exploring opportunities, seeking information, looking for collaboration, or learning more about our services, we are delighted to have you with us.</p>
+          <p>Our team is committed to supporting you and helping you discover how Practice Online can assist you in reaching greater heights.</p>
+        `;
 
-  else if (user.accountType === "guest") {
-    accountMessageHtml = `
-      <p>Your Guest Account has been created successfully.</p>
-      <p>Thank you for choosing Practice Online.</p>
-      <p>Whether you are exploring opportunities, seeking information, looking for collaboration, or learning more about our services, we are delighted to have you with us.</p>
-      <p>Our team is committed to supporting you and helping you discover how Practice Online can assist you in reaching greater heights.</p>
-    `;
-
-    accountMessageText = `
+        accountMessageText = `
 Your Guest Account has been created successfully.
 
 Thank you for choosing Practice Online.
@@ -2262,13 +2380,13 @@ Thank you for choosing Practice Online.
 Whether you are exploring opportunities, seeking information, looking for collaboration, or learning more about our services, we are delighted to have you with us.
 
 Our team is committed to supporting you and helping you discover how Practice Online can assist you in reaching greater heights.
-    `;
-  }
+        `;
+      }
 
-  await sendEmail({
-    to: user.email,
-    subject: "Welcome to Practice Online - Verify Your Email",
-    text: `Hi ${displayName},
+      await sendEmail({
+        to: user.email,
+        subject: "Welcome to Practice Online - Verify Your Email",
+        text: `Hi ${displayName},
 
 Welcome to Practice Online.
 
@@ -2281,42 +2399,74 @@ ${accountMessageText}
 This verification link expires in 24 hours.
 
 Practice Online Team`,
-    html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.7;">
-        <p>Hi ${displayName},</p>
+        html: `
+          <div style="font-family:Arial,sans-serif;line-height:1.7;">
+            <p>Hi ${displayName},</p>
+            <p>Welcome to <strong>Practice Online</strong>.</p>
+            ${verifyButtonHtml}
+            ${accountMessageHtml}
+            <p>Please verify your email address by clicking the button above.</p>
+            <p>This verification link expires in 24 hours.</p>
+            <p>
+              Kind Regards,<br>
+              <strong>Practice Online Team</strong>
+            </p>
+          </div>
+        `,
+      });
 
-        <p>Welcome to <strong>Practice Online</strong>.</p>
-
-        ${verifyButtonHtml}
-
-        ${accountMessageHtml}
-
-        <p>Please verify your email address by clicking the button above.</p>
-
-        <p>This verification link expires in 24 hours.</p>
-
-        <p>
-          Kind Regards,<br>
-          <strong>Practice Online Team</strong>
-        </p>
-      </div>
-    `,
-  });
-
-  console.log("Verification email sent successfully to:", user.email);
-} catch (emailErr) {
-  console.error("Verification email failed:", emailErr);
-}
+      console.log(
+        "Verification email sent successfully to:",
+        user.email
+      );
+    } catch (emailErr) {
+      // The account remains created even if the email provider is temporarily unavailable.
+      console.error("Verification email failed:", emailErr);
+    }
 
     return res.status(201).json({
       message: "Account created successfully.",
       accountType: user.accountType,
-      learnerNumber: user.learnerNumber,
+      learnerNumber: user.learnerNumber || null,
     });
-
   } catch (err) {
     console.error("Register error:", err);
-    return res.status(500).json({ message: "Server error. Please try again." });
+
+    if (err?.code === 11000) {
+      const duplicateField = Object.keys(err.keyPattern || {})[0];
+
+      if (duplicateField === "email") {
+        return res.status(409).json({
+          message: "Email already registered.",
+        });
+      }
+
+      if (duplicateField === "username") {
+        return res.status(409).json({
+          message: "Username already taken.",
+        });
+      }
+
+      if (duplicateField === "learnerNumber") {
+        return res.status(409).json({
+          message: "Could not create a unique account number. Please try again.",
+        });
+      }
+    }
+
+    if (err?.name === "ValidationError") {
+      const firstValidationError = Object.values(err.errors || {})[0];
+      return res.status(400).json({
+        message:
+          firstValidationError?.message ||
+          err.message ||
+          "Invalid registration information.",
+      });
+    }
+
+    return res.status(500).json({
+      message: "Server error. Please try again.",
+    });
   }
 });
 
