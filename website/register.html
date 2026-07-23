@@ -534,7 +534,11 @@ textarea{
   }
 
   function accountType() {
-    return document.querySelector('input[name="accountType"]:checked')?.value || "";
+    return String(
+      document.querySelector('input[name="accountType"]:checked')?.value || ""
+    )
+      .trim()
+      .toLowerCase();
   }
 
   function isSA() {
@@ -826,7 +830,7 @@ textarea{
     const firstName = cleanSpaces(firstNameEl.value);
     const surname = cleanSpaces(surnameEl.value);
     const fullName = cleanSpaces(firstName + " " + surname);
-    const email = emailEl.value.trim();
+    const email = emailEl.value.trim().toLowerCase();
 
     const usernameInput = cleanSpaces(usernameEl.value);
     const username = type === "guest"
@@ -855,25 +859,60 @@ textarea{
       email,
       password: passwordEl.value,
       accountType: type,
+      enrollmentStatus: type === "learner" ? "pending" : "not_required",
       phoneVerified: false,
-      ...(type === "learner"
-        ? { enrollmentStatus: "pending" }
-        : { enrollmentStatus: "not_required" }),
-      ...(type === "learner" || type === "practice"
-        ? { grade: Number(gradeEl.value), curriculum }
-        : {}),
-      ...(type === "guest"
-        ? { guestReasons, otherReason, guestMessage }
-        : {}),
-      ...(type === "learner" && schoolName ? { schoolName } : {}),
-      ...(type === "learner" && currentMarkRange ? { currentMarkRange } : {}),
-      ...(type !== "guest" && gender ? { gender } : {}),
-      ...(province ? { province } : {}),
-      ...(district ? { district } : {}),
-      ...(cellphone ? { cellphone: normalizePhone(cellphone) } : {}),
-      ...(type === "learner" && guardianCellphone
-        ? { guardianCellphone: normalizePhone(guardianCellphone) }
-        : {})
+
+      grade:
+        type === "learner" || type === "practice"
+          ? gradeEl.value === ""
+            ? null
+            : Number(gradeEl.value)
+          : null,
+
+      curriculum:
+        type === "learner" || type === "practice"
+          ? curriculum
+          : "",
+
+      guestReasons:
+        type === "guest"
+          ? guestReasons
+          : [],
+
+      otherReason:
+        type === "guest"
+          ? otherReason
+          : "",
+
+      guestMessage:
+        type === "guest"
+          ? guestMessage
+          : "",
+
+      schoolName:
+        type === "learner"
+          ? schoolName
+          : "",
+
+      currentMarkRange:
+        type === "learner"
+          ? currentMarkRange
+          : "",
+
+      gender:
+        type === "guest"
+          ? ""
+          : gender,
+
+      province,
+      district,
+
+      cellphone: normalizePhone(cellphone),
+
+      guardianCellphone:
+        type === "learner"
+          ? normalizePhone(guardianCellphone)
+          : ""
     };
 
     if (!type) {
@@ -914,12 +953,17 @@ textarea{
       return setMsg("Passwords do not match.", "error");
     }
 
-    if ((type === "learner" || type === "practice") && !Number.isFinite(payload.grade)) {
-      return setMsg("Please select a grade.", "error");
+    if (
+      (type === "learner" || type === "practice") &&
+      (!Number.isInteger(payload.grade) ||
+        payload.grade < 8 ||
+        payload.grade > 12)
+    ) {
+      return setMsg("Please select a grade from Grade 8 to Grade 12.", "error");
     }
 
     if ((type === "learner" || type === "practice") && !payload.curriculum) {
-      return setMsg("Please select your curriculum: NCS or IEB.", "error");
+      return setMsg("Please select your curriculum: CAPS or IEB.", "error");
     }
 
     if (isSA() && province && !district) {
