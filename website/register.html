@@ -360,7 +360,84 @@ textarea{
       background-image:url("https://res.cloudinary.com/dopoxadlr/image/upload/v1773875245/tick_sklwla.svg");
     }
 
-  </style>
+  
+/* ===== MULTI-STEP REGISTRATION ===== */
+.registrationProgress{display:flex;justify-content:center;gap:8px;margin:4px 0 18px}
+.registrationProgressDot{width:10px;height:10px;border-radius:50%;border:1px solid #94a3b8;background:#fff}
+.registrationProgressDot.active{background:var(--accent);border-color:var(--accent);transform:scale(1.12)}
+.registrationProgressDot.done{background:#16a34a;border-color:#16a34a}
+.registrationStep{display:none}
+.registrationStep.active{display:block}
+.stepHeading{margin:0 0 4px;font-size:17px;font-weight:600}
+.stepSubheading{margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.45}
+.accountTypeStep .radioRow{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px}
+.accountTypeStep .radioRow label{min-height:52px;padding:12px 14px;border:1px solid #d7dce3;background:#fff;cursor:pointer}
+.accountTypeStep .radioRow label.selectedAccount{background:var(--accent-soft);border-color:var(--accent);box-shadow:0 0 0 2px rgba(11,60,93,.08)}
+.accountTypeStep .radioRow input{width:18px;height:18px;accent-color:var(--accent)}
+.accountTypeStep .noteBox{margin:14px 0 0}
+.hideAccountDescription{display:none!important}
+.wizardNavigation{display:flex;justify-content:space-between;gap:12px;margin-top:18px;padding-top:14px;border-top:1px solid #eef2f7}
+.wizardBackBtn,
+.wizardNextBtn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-width:92px;
+  height:38px;
+  padding:0 14px;
+  font-family:Arial, Helvetica, sans-serif;
+  font-size:14px;
+  font-weight:600;
+  border:1px solid #d1d5db;
+  border-radius:0;
+  transition:.2s ease;
+}
+.wizardBackBtn{background:#fff;color:var(--text);border:1px solid #d1d5db}
+.wizardNextBtn{margin-left:auto;background:var(--accent);color:#fff;border:1px solid var(--accent)}
+.wizardNextBtn:disabled{opacity:.5;cursor:not-allowed}
+.wizardArrow{font-size:20px;line-height:1;position:relative;top:-1px}
+.wizardBackBtn .wizardArrow{transform:rotate(180deg)}
+
+.wizardNextBtn img,
+.wizardBackBtn img{
+  width:18px;
+  height:18px;
+}
+.wizardBackBtn img{
+  transform:rotate(180deg);
+}
+
+
+.wizardBackBtn{
+  background:#fff;
+  color:#0b3c5d;
+  border-color:#d1d5db;
+}
+
+.wizardNextBtn{
+  background:#0b3c5d;
+  color:#fff;
+  border-color:#0b3c5d;
+}
+
+.wizardNextBtn img,
+.wizardBackBtn img{
+  width:16px;
+  height:16px;
+}
+
+.wizardNextBtn img{
+  filter:brightness(0) invert(1);
+}
+
+.wizardBackBtn img{
+  transform:rotate(180deg);
+}
+
+.stepMessage{min-height:18px;margin-top:10px;color:var(--error);font-size:13px;line-height:1.4}
+
+</style>
 </head>
 
 <body>
@@ -1236,6 +1313,108 @@ textarea{
       setMsg("Network error. Please try again.", "error");
     }
   };
+</script>
+
+
+<script>
+(function(){
+  const card=document.querySelector(".card"); if(!card) return;
+  const intro=card.querySelector("h2")?.nextElementSibling;
+  const accountLabel=[...card.querySelectorAll("label")].find(x=>x.textContent.trim()==="Account Type");
+  const accountRow=accountLabel?.nextElementSibling;
+  const accountNote=document.getElementById("acctNote");
+  const firstNameRow=document.getElementById("firstName")?.closest(".row");
+  const usernameWrap=document.getElementById("usernameWrap");
+  const email=document.getElementById("email");
+  const emailLabel=email?.previousElementSibling;
+  const saRow=document.querySelector('input[name="isSA"]')?.closest(".radioRow");
+  const saLabel=saRow?.previousElementSibling;
+  const passwordRow=document.getElementById("password")?.closest(".row");
+  const registerRow=document.getElementById("registerBtn")?.closest(".row");
+  const msg=document.getElementById("msg");
+  const links=card.querySelector(".links");
+
+  const progress=document.createElement("div");
+  progress.className="registrationProgress";
+  progress.innerHTML=[1,2,3,4].map(n=>`<span class="registrationProgressDot" data-progress="${n}"></span>`).join("");
+  intro?.insertAdjacentElement("afterend",progress);
+
+  function makeStep(n,title,sub,cls=""){
+    const el=document.createElement("section");
+    el.className=`registrationStep ${cls}`.trim();
+    el.dataset.step=n;
+    el.innerHTML=`<h3 class="stepHeading">${title}</h3><p class="stepSubheading">${sub}</p><div class="stepContent"></div><p class="stepMessage"></p><div class="wizardNavigation">${n>1?'<button class="wizardBackBtn" type="button"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">Back</button>':""}${n<4?'<button class="wizardNextBtn" type="button">Next<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt=""></button>':""}</div>`;
+    card.appendChild(el); return el;
+  }
+
+  const steps=[
+    makeStep(1,"Choose Account Type","Select the account that best matches how you will use Practice Online.","accountTypeStep"),
+    makeStep(2,"Personal Details","Enter your personal and contact information."),
+    makeStep(3,"Account Details","Complete the details required for your selected account."),
+    makeStep(4,"Secure Your Account","Create a strong password, confirm it, and submit your registration.")
+  ];
+
+  function move(step,nodes){const c=step.querySelector(".stepContent");nodes.filter(Boolean).forEach(x=>c.appendChild(x));}
+  move(steps[0],[accountLabel,accountRow,accountNote]);
+  move(steps[1],[firstNameRow,usernameWrap,emailLabel,email,saLabel,saRow,document.getElementById("saWrap"),document.getElementById("genderWrap"),document.getElementById("phoneRow")]);
+  move(steps[2],[document.getElementById("gradeWrap"),document.getElementById("curriculumWrap"),document.getElementById("guestWrap"),document.getElementById("schoolNameWrap"),document.getElementById("currentWrap")]);
+  move(steps[3],[passwordRow,registerRow,msg,links]);
+
+  accountNote?.classList.add("hideAccountDescription");
+  let current=1;
+  const radios=[...document.querySelectorAll('input[name="accountType"]')];
+  const val=id=>String(document.getElementById(id)?.value||"").trim();
+  const type=()=>String(document.querySelector('input[name="accountType"]:checked')?.value||"").trim().toLowerCase();
+  const setErr=(n,t)=>{const e=card.querySelector(`.registrationStep[data-step="${n}"] .stepMessage`);if(e)e.textContent=t||""};
+
+  function refreshAccount(){
+    const t=type();
+    radios.forEach(r=>r.closest("label")?.classList.toggle("selectedAccount",r.checked));
+    accountNote?.classList.toggle("hideAccountDescription",!t);
+    const b=steps[0].querySelector(".wizardNextBtn"); if(b)b.disabled=!t;
+  }
+
+  function validate(n){
+    const t=type();
+    if(n===1){if(!t){setErr(1,"Please choose an account type before continuing.");return false}}
+    if(n===2){
+      if(!val("firstName")||!val("surname")){setErr(2,"Please enter your first name and surname.");return false}
+      if(t!=="guest"&&!val("username")){setErr(2,"Please enter a username.");return false}
+      if(!val("email")){setErr(2,"Please enter your email address.");return false}
+      if(!val("cellphone")||val("cellphone")==="+27"){setErr(2,"Please enter your cellphone number.");return false}
+      if(t!=="guest"&&!val("gender")){setErr(2,"Please select your gender.");return false}
+      const inSA=document.querySelector('input[name="isSA"]:checked')?.value==="yes";
+      if(inSA&&(!val("province")||!val("district"))){setErr(2,"Please select your province and district.");return false}
+    }
+    if(n===3){
+      if((t==="learner"||t==="practice")&&(!val("grade")||!val("curriculum"))){setErr(3,"Please select your grade and curriculum.");return false}
+      if(t==="learner"&&(!val("schoolName")||!val("currentMarkRange")||!val("guardianCellphone")||val("guardianCellphone")==="+27")){setErr(3,"Please complete the learner account details.");return false}
+      if(t==="guest"&&!document.querySelectorAll('input[name="guestReasons"]:checked').length){setErr(3,"Please select at least one reason for visiting.");return false}
+      if(t==="guest"&&document.getElementById("guestReasonOther")?.checked&&!val("otherReason")){setErr(3,"Please specify the other reason for visiting.");return false}
+    }
+    setErr(n,""); return true;
+  }
+
+  function show(n){
+    current=Math.max(1,Math.min(4,n));
+    steps.forEach(s=>s.classList.toggle("active",Number(s.dataset.step)===current));
+    card.querySelectorAll(".registrationProgressDot").forEach(d=>{const x=Number(d.dataset.progress);d.classList.toggle("active",x===current);d.classList.toggle("done",x<current)});
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  card.querySelectorAll(".wizardNextBtn").forEach(b=>b.addEventListener("click",()=>{if(validate(current))show(current+1)}));
+  card.querySelectorAll(".wizardBackBtn").forEach(b=>b.addEventListener("click",()=>show(current-1)));
+  radios.forEach(r=>r.addEventListener("change",refreshAccount));
+
+  document.addEventListener("keydown",e=>{
+    if(e.key!=="Enter"||String(e.target?.tagName||"").toLowerCase()==="textarea")return;
+    e.preventDefault();e.stopImmediatePropagation();
+    if(current<4)card.querySelector(`.registrationStep[data-step="${current}"] .wizardNextBtn`)?.click();
+    else document.getElementById("registerBtn")?.click();
+  },true);
+
+  refreshAccount();show(1);
+})();
 </script>
 
 </body>
