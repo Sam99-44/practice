@@ -286,6 +286,80 @@ textarea{
   display:block;
   line-height:1.45;
 }
+
+    .passwordStrength{
+      margin-top:8px;
+    }
+
+    .passwordStrengthTrack{
+      width:100%;
+      height:8px;
+      background:#e5e7eb;
+      border:1px solid #d1d5db;
+      overflow:hidden;
+    }
+
+    .passwordStrengthBar{
+      width:0%;
+      height:100%;
+      background:#cbd5e1;
+      transition:width .25s ease, background-color .25s ease;
+    }
+
+    .passwordStrengthMeta{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-top:6px;
+      font-size:12px;
+    }
+
+    .passwordStrengthLabel{
+      font-weight:600;
+      color:var(--muted);
+    }
+
+    .passwordStrengthHint{
+      color:var(--muted);
+      text-align:right;
+    }
+
+    .passwordRules{
+      display:grid;
+      gap:5px;
+      margin-top:8px;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .passwordRule{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:var(--muted);
+    }
+
+    .passwordRule::before{
+      content:"";
+      width:18px;
+      height:18px;
+      flex-shrink:0;
+      display:inline-block;
+      border:1px solid #bfc6cf;
+      background:#fff center center/11px 11px no-repeat;
+      transition:all .2s ease;
+    }
+
+    .passwordRule.valid{
+      color:var(--ok);
+    }
+
+    .passwordRule.valid::before{
+      border-color:#16a34a;
+      background-image:url("https://res.cloudinary.com/dopoxadlr/image/upload/v1773875245/tick_sklwla.svg");
+    }
+
   </style>
 </head>
 
@@ -454,7 +528,43 @@ textarea{
     <div class="row">
       <div>
         <label for="password">Password</label>
-        <input id="password" type="password" autocomplete="new-password" />
+        <input
+          id="password"
+          type="password"
+          autocomplete="new-password"
+          aria-describedby="passwordStrengthLabel passwordStrengthHint"
+        />
+
+        <div class="passwordStrength" aria-live="polite">
+          <div
+            class="passwordStrengthTrack"
+            role="progressbar"
+            aria-label="Password strength"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            id="passwordStrengthTrack"
+          >
+            <div class="passwordStrengthBar" id="passwordStrengthBar"></div>
+          </div>
+
+          <div class="passwordStrengthMeta">
+            <span class="passwordStrengthLabel" id="passwordStrengthLabel">
+              Password strength
+            </span>
+            <span class="passwordStrengthHint" id="passwordStrengthHint">
+              Start typing a password
+            </span>
+          </div>
+
+          <div class="passwordRules">
+            <div class="passwordRule" id="ruleLength">At least 8 characters</div>
+            <div class="passwordRule" id="ruleUpper">One uppercase letter</div>
+            <div class="passwordRule" id="ruleLower">One lowercase letter</div>
+            <div class="passwordRule" id="ruleNumber">One number</div>
+            <div class="passwordRule" id="ruleSymbol">One special character</div>
+          </div>
+        </div>
       </div>
       <div>
         <label for="confirmPassword">Confirm Password</label>
@@ -511,6 +621,19 @@ textarea{
   const passwordEl = document.getElementById("password");
   const confirmEl = document.getElementById("confirmPassword");
   const toggleBtn = document.getElementById("toggleBtn");
+
+  const passwordStrengthTrack = document.getElementById("passwordStrengthTrack");
+  const passwordStrengthBar = document.getElementById("passwordStrengthBar");
+  const passwordStrengthLabel = document.getElementById("passwordStrengthLabel");
+  const passwordStrengthHint = document.getElementById("passwordStrengthHint");
+
+  const passwordRuleEls = {
+    length: document.getElementById("ruleLength"),
+    upper: document.getElementById("ruleUpper"),
+    lower: document.getElementById("ruleLower"),
+    number: document.getElementById("ruleNumber"),
+    symbol: document.getElementById("ruleSymbol")
+  };
 
   const saWrap = document.getElementById("saWrap");
   const provinceEl = document.getElementById("province");
@@ -690,6 +813,90 @@ textarea{
 
   ensurePlus27(cellphoneEl);
   ensurePlus27(guardianCellEl);
+
+
+  function getPasswordStrength(password) {
+    const value = String(password || "");
+
+    const checks = {
+      length: value.length >= 8,
+      upper: /[A-Z]/.test(value),
+      lower: /[a-z]/.test(value),
+      number: /\d/.test(value),
+      symbol: /[^A-Za-z0-9]/.test(value)
+    };
+
+    let score = Object.values(checks).filter(Boolean).length;
+
+    if (value.length >= 12) score += 1;
+    if (value.length >= 16) score += 1;
+    if (/(.)\1{2,}/.test(value)) score -= 1;
+    if (/^(password|qwerty|12345678|admin|letmein)$/i.test(value)) score = 0;
+
+    score = Math.max(0, Math.min(score, 7));
+
+    if (!value) {
+      return {
+        checks,
+        percent: 0,
+        label: "Password strength",
+        color: "#cbd5e1"
+      };
+    }
+
+    if (score <= 2) {
+      return {
+        checks,
+        percent: 25,
+        label: "Weak",
+        color: "#dc2626"
+      };
+    }
+
+    if (score <= 4) {
+      return {
+        checks,
+        percent: 50,
+        label: "Fair",
+        color: "#f59e0b"
+      };
+    }
+
+    if (score <= 5) {
+      return {
+        checks,
+        percent: 75,
+        label: "Good",
+        color: "#0284c7"
+      };
+    }
+
+    return {
+      checks,
+      percent: 100,
+      label: "Strong",
+      hint: "Strong password",
+      color: "#059669"
+    };
+  }
+
+  function updatePasswordStrength() {
+    const result = getPasswordStrength(passwordEl.value);
+
+    passwordStrengthBar.style.width = `${result.percent}%`;
+    passwordStrengthBar.style.backgroundColor = result.color;
+    passwordStrengthLabel.textContent = result.label;
+    passwordStrengthLabel.style.color = result.color;
+    passwordStrengthHint.textContent = result.hint;
+    passwordStrengthTrack.setAttribute("aria-valuenow", String(result.percent));
+
+    Object.entries(result.checks).forEach(([key, isValid]) => {
+      passwordRuleEls[key]?.classList.toggle("valid", isValid);
+    });
+  }
+
+  passwordEl.addEventListener("input", updatePasswordStrength);
+  updatePasswordStrength();
 
   toggleBtn.onclick = () => {
     const show = passwordEl.type === "password";
