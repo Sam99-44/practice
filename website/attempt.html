@@ -5619,6 +5619,36 @@ function inlineQuizLoadingHtml(){
       .replace(/^_+|_+$/g, "");
   }
 
+
+  /*
+   * Extract the mathematical value from stored keyed answers such as:
+   * answer=6x^2+11x, answer_1=6x^2+11x or x=5.
+   *
+   * This prevents the local Check Answer button from comparing the
+   * learner's expression against the complete storage string.
+   */
+  function extractStoredTypedAnswerValue(value, expectedKey = ""){
+    const raw = String(value ?? "").trim();
+    if (!raw) return "";
+
+    const equalsAt = raw.indexOf("=");
+    if (equalsAt <= 0) return raw;
+
+    const left = normalizeTypedFieldKey(raw.slice(0, equalsAt));
+    const right = raw.slice(equalsAt + 1).trim();
+    const key = normalizeTypedFieldKey(expectedKey);
+
+    const storageKeys = new Set([
+      "answer",
+      "answer_1",
+      "value",
+      "response",
+      key
+    ].filter(Boolean));
+
+    return storageKeys.has(left) && right ? right : raw;
+  }
+
   function getQuestionAnswerFields(q){
     const configured = Array.isArray(q?.answerFields)
       ? q.answerFields
@@ -5668,11 +5698,12 @@ function inlineQuizLoadingHtml(){
             `answer_${index + 1}`
           );
 
-          const directCorrectAnswer = String(
+          const directCorrectAnswer = extractStoredTypedAnswerValue(
             field?.correctAnswer ??
             field?.answer ??
-            ""
-          ).trim();
+            "",
+            key
+          );
 
           return {
             key,
@@ -5703,7 +5734,10 @@ function inlineQuizLoadingHtml(){
         q?.unit ||
         ""
       ).trim(),
-      correctAnswer: combinedCorrectText
+      correctAnswer: extractStoredTypedAnswerValue(
+        combinedCorrectText,
+        "answer"
+      )
     }];
   }
 
@@ -6735,10 +6769,33 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     userAns,
     correctAns,
     mode,
-    tolerance
+    tolerance,
+    unitCandidates = []
   ) {
-    const uaRaw = String(userAns || "");
-    const caRaw = String(correctAns || "");
+    const stripConfiguredUnitLocally = (value, candidates = []) => {
+      let result = String(value ?? "").trim();
+      const units = (Array.isArray(candidates) ? candidates : [candidates])
+        .flatMap(item => String(item || "").split("|"))
+        .map(item => item.trim())
+        .filter(Boolean)
+        .sort((a, b) => b.length - a.length);
+
+      for (const unit of units) {
+        const escaped = unit.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        result = result.replace(
+          new RegExp(`\\s*(?:\\\\(?:mathrm|text)\\s*\\{)?${escaped}(?:\\})?\\s*$`, "i"),
+          ""
+        );
+      }
+
+      return result.trim();
+    };
+
+    const uaRaw = stripConfiguredUnitLocally(userAns, unitCandidates);
+    const caRaw = stripConfiguredUnitLocally(
+      extractStoredTypedAnswerValue(correctAns),
+      unitCandidates
+    );
 
     if (!caRaw.trim()) return false;
 
@@ -6764,10 +6821,6 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       return Math.abs(uNum - cNum) <= tol;
     }
 
-    /*
-     * This makes all equivalent numeric forms match locally:
-     * \frac{1}{2}, 1/2 and 0.5.
-     */
     if (uNum !== null && cNum !== null) {
       return Math.abs(uNum - cNum) <= 1e-12;
     }
@@ -6803,19 +6856,18 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       );
     }
 
-    /*
-     * Canonicalise equivalent MathLive/LaTeX forms before comparing.
-     * Examples treated as the same:
-     *   6x^{2}y, 6x^(2)y, 6*x^2*y and 6x^2y
-     */
     const canonicalSymbolic = (value) => {
       let result = String(value || "")
+        .replace(/[²]/g, "^2")
+        .replace(/[³]/g, "^3")
+        .replace(/[⁴]/g, "^4")
         .replace(/\^\(([^()]+)\)/g, "^$1")
         .replace(/\*+/g, "")
         .replace(/\(([-+]?\d+(?:\.\d+)?)\)/g, "$1")
         .replace(/\(([a-z])\)/gi, "$1")
         .replace(/\+\-/g, "-")
-        .replace(/--/g, "+");
+        .replace(/--/g, "+")
+        .replace(/^\+/, "");
 
       let previous = "";
       while (previous !== result) {
@@ -7665,7 +7717,12 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
           item.value,
           item.correctAnswer,
           mode,
-          tol
+          tol,
+          [
+            q?.unit,
+            q?.answerSuffix,
+            getQuestionAnswerFields(q).find(field => field.key === item.key)?.suffix
+          ]
         )
       );
 
