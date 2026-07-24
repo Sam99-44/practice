@@ -3316,6 +3316,128 @@ math-field.mathAnswerField,
   }
 }
 
+
+/* ===== NOTE LISTS, ANSWER BOXES AND FRIENDLY FEEDBACK ===== */
+.noteBox{
+  white-space:normal !important;
+}
+
+.noteParagraph{
+  margin:0 0 10px;
+  line-height:1.7;
+}
+
+.noteParagraph:last-child{
+  margin-bottom:0;
+}
+
+.noteList{
+  margin:6px 0 12px 24px;
+  padding-left:18px;
+  line-height:1.7;
+}
+
+.noteList li{
+  margin:4px 0;
+  padding-left:3px;
+}
+
+.noteList.numbered{
+  list-style-type:decimal;
+}
+
+.noteList.bulleted{
+  list-style-type:disc;
+}
+
+.noteLine{
+  display:block;
+  margin:3px 0;
+  line-height:1.7;
+}
+
+/* Thin square outline for fill-in and typed fields */
+.fillAnswerInput,
+.plainTypedInput,
+math-field.mathAnswerField,
+.mathAnswerField{
+  border:1px solid #111827 !important;
+  border-radius:0 !important;
+  background-color:#fff !important;
+  box-shadow:none !important;
+}
+
+.fillAnswerInput:focus,
+.plainTypedInput:focus,
+math-field.mathAnswerField:focus-within,
+.mathAnswerField:focus-within{
+  border-color:#111827 !important;
+  box-shadow:0 0 0 2px rgba(15,23,42,.08) !important;
+}
+
+/* Tick/cross inside question progress buttons */
+.qProgressItem{
+  position:relative;
+  overflow:visible;
+}
+
+.qProgressItem.correct::after,
+.qProgressItem.wrong::after{
+  content:"";
+  position:absolute;
+  top:-7px;
+  right:-7px;
+  width:16px;
+  height:16px;
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:contain;
+  border-radius:50%;
+  background-color:#fff;
+}
+
+.qProgressItem.correct::after{
+  background-image:url("https://res.cloudinary.com/dopoxadlr/image/upload/v1773875245/tick_sklwla.svg");
+}
+
+.qProgressItem.wrong::after{
+  background-image:url("https://res.cloudinary.com/dopoxadlr/image/upload/v1773875245/cross_hznn67.svg");
+}
+
+/* Friendly feedback with icon */
+.qFeedback{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+}
+
+.qFeedback.correct::before,
+.qFeedback.wrong::before{
+  content:"";
+  width:17px;
+  height:17px;
+  flex:0 0 17px;
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:contain;
+}
+
+.qFeedback.correct::before{
+  background-image:url("https://res.cloudinary.com/dopoxadlr/image/upload/v1773875245/tick_sklwla.svg");
+}
+
+.qFeedback.wrong::before{
+  background-image:url("https://res.cloudinary.com/dopoxadlr/image/upload/v1773875245/cross_hznn67.svg");
+}
+
+.qFeedback.correct{
+  color:#15803d !important;
+}
+
+.qFeedback.wrong{
+  color:#b91c1c !important;
+}
+
 </style>
 </head>
 
@@ -6177,13 +6299,13 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     if (result.correct) {
       box.classList.add("is-local-correct");
       if (feedback) {
-        feedback.textContent = "Correct";
+        feedback.textContent = "Correct — well done!";
         feedback.className = "qFeedback correct";
       }
     } else {
       box.classList.add("is-local-wrong");
       if (feedback) {
-        feedback.textContent = "Incorrect";
+        feedback.textContent = "Not quite — keep practising!";
         feedback.className = "qFeedback wrong";
       }
     }
@@ -6350,13 +6472,13 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       if (result.correct) {
         box.classList.add("is-local-correct");
         if (feedback) {
-          feedback.textContent = "Correct";
+          feedback.textContent = "Correct — well done!";
           feedback.className = "qFeedback correct";
         }
       } else {
         box.classList.add("is-local-wrong");
         if (feedback) {
-          feedback.textContent = "Incorrect : Check the workings below.";
+          feedback.textContent = "Not quite — keep practising. You can check the workings below.";
           feedback.className = "qFeedback wrong";
         }
       }
@@ -7076,8 +7198,86 @@ function hasInlineLatexMathOnly(text){
   }
 
 
+
     function renderMixedMath(text){
     return sharedRenderMixedMath(text);
+  }
+
+  function renderStructuredNote(text){
+    const raw = String(text || "").replace(/\r/g, "").trim();
+    if (!raw) return "";
+
+    const lines = raw.split("\n");
+    const html = [];
+    let listType = "";
+    let listItems = [];
+    let paragraphLines = [];
+
+    function flushParagraph(){
+      if (!paragraphLines.length) return;
+      const value = paragraphLines.join(" ").trim();
+      if (value) html.push(`<p class="noteParagraph">${renderMixedMath(value)}</p>`);
+      paragraphLines = [];
+    }
+
+    function flushList(){
+      if (!listItems.length) return;
+      const className = listType === "ol" ? "numbered" : "bulleted";
+      html.push(
+        `<${listType} class="noteList ${className}">` +
+        listItems.map(item => `<li>${renderMixedMath(item)}</li>`).join("") +
+        `</${listType}>`
+      );
+      listItems = [];
+      listType = "";
+    }
+
+    for (const sourceLine of lines){
+      const line = String(sourceLine || "").trim();
+
+      if (!line){
+        flushParagraph();
+        flushList();
+        continue;
+      }
+
+      const bullet = line.match(/^(?:•|-|\*)\s+(.+)$/);
+      const numbered = line.match(/^\d+[.)]\s+(.+)$/);
+
+      if (bullet){
+        flushParagraph();
+        if (listType && listType !== "ul") flushList();
+        listType = "ul";
+        listItems.push(bullet[1].trim());
+        continue;
+      }
+
+      if (numbered){
+        flushParagraph();
+        if (listType && listType !== "ol") flushList();
+        listType = "ol";
+        listItems.push(numbered[1].trim());
+        continue;
+      }
+
+      flushList();
+
+      /*
+       * Preserve intentional short lines going downward.
+       * Longer prose lines continue as normal paragraphs.
+       */
+      if (line.length <= 70 && !/[.!?]$/.test(line)){
+        flushParagraph();
+        html.push(`<span class="noteLine">${renderMixedMath(line)}</span>`);
+      } else {
+        paragraphLines.push(line);
+      }
+    }
+
+    flushParagraph();
+    flushList();
+
+    return html.join("");
   }
 
 
@@ -7555,7 +7755,7 @@ function formatSolutionHtml(solutionText){
     const parsed = parseExamTextParts(rawText);
 
     if (parsed.kind === "main") {
-      const bodyHtml = parsed.body ? `<div class="noteBox" style="margin-top:8px;">${renderMixedMath(parsed.body)}</div>` : "";
+      const bodyHtml = parsed.body ? `<div class="noteBox" style="margin-top:8px;">${renderStructuredNote(parsed.body)}</div>` : "";
       return `
         <div class="q">
           <div class="qMainHeading">${escapeHtml(parsed.label)}</div>
@@ -7571,7 +7771,7 @@ function formatSolutionHtml(solutionText){
           <div class="qSectionStem">
             <div class="qSectionLeft">
               <div class="qSectionNo">${escapeHtml(parsed.label)}</div>
-              <div class="qSectionText">${renderMixedMath(parsed.body)}</div>
+              <div class="qSectionText">${renderStructuredNote(parsed.body)}</div>
             </div>
           </div>
         </div>
@@ -7581,7 +7781,7 @@ function formatSolutionHtml(solutionText){
 
     return `
       <div class="q">
-        <div class="noteBox">${renderMixedMath(String(rawText || "").trim())}</div>
+        <div class="noteBox">${renderStructuredNote(String(rawText || "").trim())}</div>
       </div>
       ${imageHtml}
     `;
