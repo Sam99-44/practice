@@ -27,6 +27,7 @@
      ✅ No forced logout except manual logout
      ✅ MathLive correct-answer editor with live maths preview
      ✅ Canonical typed-answer mode normalization before every API request
+     ✅ Correct answers are preserved for marking and algebra is auto-detected as expression mode
      ✅ Universal Mathematics typed-answer fields:
         INSTRUCTION:
         ANSWER_PREFIX:
@@ -1754,6 +1755,52 @@
       return VALID_TEXT_ANSWER_MODES.has(normalized)
         ? normalized
         : "exact";
+    }
+
+
+    /*
+     * Keep uploaded correct answers in a stable marking format.
+     * Question text and solutions may be converted for display, but correct
+     * answers must not be wrapped in extra $...$ delimiters or altered as prose.
+     */
+    function canonicalizeTypedAnswerForStorage(value){
+      let answer = String(value || "").trim();
+      if (!answer) return "";
+
+      answer = answer
+        .replace(/^\\\[\s*([\s\S]*?)\s*\\\]$/, "$1")
+        .replace(/^\\\(\s*([\s\S]*?)\s*\\\)$/, "$1")
+        .replace(/^\$\s*([\s\S]*?)\s*\$$/, "$1")
+        .trim();
+
+      return answer;
+    }
+
+    function looksLikeAlgebraicAnswer(value){
+      const answer = canonicalizeTypedAnswerForStorage(value);
+      if (!answer) return false;
+
+      return (
+        /[A-Za-z]/.test(answer) &&
+        /[=+\-*/^()[\]{}]|\\frac|\\sqrt|[²³⁴]/.test(answer)
+      );
+    }
+
+    function resolveUploadedTextAnswerMode(mode, correctAnswer){
+      const normalized = normalizeTextAnswerMode(mode);
+
+      /*
+       * A typed algebraic answer should use Math.js equivalence even when
+       * ANSWER_MODE was accidentally omitted from an older upload file.
+       */
+      if (
+        normalized === "exact" &&
+        looksLikeAlgebraicAnswer(correctAnswer)
+      ) {
+        return "expression";
+      }
+
+      return normalized;
     }
 
     function accessLevelLabel(level){
@@ -3577,7 +3624,9 @@ function escapeHtml(str){
       question = autoConvertMixedLatex(question);
       hint = autoConvertMixedLatex(hint);
       solution = autoConvertMixedLatex(solution);
-      typedAnswer = autoConvertMixedLatex(typedAnswer);
+      typedAnswer = canonicalizeTypedAnswerForStorage(
+        rawTypedAnswer || typedAnswer
+      );
       answerInstruction = autoConvertMixedLatex(answerInstruction);
       answerPrefix = autoConvertMixedLatex(answerPrefix);
       answerSuffix = autoConvertMixedLatex(answerSuffix);
@@ -3605,7 +3654,7 @@ function escapeHtml(str){
 
             if (eq < 1) {
               orderedValues.push(
-                autoConvertMixedLatex(part)
+                canonicalizeTypedAnswerForStorage(part)
               );
               return;
             }
@@ -3613,7 +3662,7 @@ function escapeHtml(str){
             const rawKey = part.slice(0, eq).trim();
             const rawValue = part.slice(eq + 1).trim();
             const key = normaliseAnswerFieldKey(rawKey);
-            const value = autoConvertMixedLatex(rawValue);
+            const value = canonicalizeTypedAnswerForStorage(rawValue);
 
             if (key) keyedValues[key] = value;
             orderedValues.push(value);
@@ -3674,8 +3723,11 @@ function escapeHtml(str){
           answerSuffix,
           unit: answerSuffix,
           answerFields: answerFieldDefinitions,
-          correctText: typedAnswer,
-          textAnswerMode,
+          correctText: canonicalizeTypedAnswerForStorage(typedAnswer),
+          textAnswerMode: resolveUploadedTextAnswerMode(
+            textAnswerMode,
+            typedAnswer
+          ),
           numberTolerance
         };
       }
@@ -4413,7 +4465,9 @@ function escapeHtml(str){
         }
 
         if (type === "text") {
-          const correctText = autoConvertMixedLatex(cleanSpaces(getMathFieldValue(card.querySelector(".correctText"))));
+          const correctText = canonicalizeTypedAnswerForStorage(
+            getMathFieldValue(card.querySelector(".correctText"))
+          );
           const instruction = autoConvertMixedLatex(cleanSpaces(card.querySelector(".answerInstruction")?.value || ""));
           const answerPrefix = autoConvertMixedLatex(cleanSpaces(card.querySelector(".answerPrefix")?.value || ""));
           const answerSuffix = autoConvertMixedLatex(cleanSpaces(card.querySelector(".answerSuffix")?.value || ""));
@@ -4421,10 +4475,13 @@ function escapeHtml(str){
             ...field,
             prefix: autoConvertMixedLatex(field.prefix),
             suffix: autoConvertMixedLatex(field.suffix),
-            correctAnswer: autoConvertMixedLatex(field.correctAnswer)
+            correctAnswer: canonicalizeTypedAnswerForStorage(
+              field.correctAnswer
+            )
           }));
-          const textAnswerMode = normalizeTextAnswerMode(
-            card.querySelector(".textMode")?.value
+          const textAnswerMode = resolveUploadedTextAnswerMode(
+            card.querySelector(".textMode")?.value,
+            correctText || answerFields.map(field => field.correctAnswer).join("|")
           );
           const toleranceRaw = cleanSpaces(card.querySelector(".tolerance")?.value);
 
