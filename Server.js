@@ -10,6 +10,7 @@
 // ✅ Saves and marks single + multiple typed-answer fields
 // ✅ Supports instructions, labels, units, x/y/z values and review snapshots
 // ✅ Adds safe Math.js expression equivalence checking
+// ✅ Accepts equivalent MathLive/LaTeX forms and ignores configured units during marking
 // ✅ Uses Decimal.js for reliable number-tolerance comparisons
 // ✅ Backward compatible with old single-correct fields (chosenIndex/correctIndex)
 // ✅ Saves + returns quiz difficulty (easy/moderate/hard)
@@ -4073,6 +4074,113 @@ const BLOCKED_EXPRESSION_SYMBOLS = new Set([
   "derivative",
 ]);
 
+
+/*
+ * Typed-answer unit handling
+ * --------------------------
+ * Units are display metadata and must not make an otherwise correct
+ * mathematical answer wrong. The learner may type the configured unit,
+ * leave it out, or use common spacing/LaTeX variations.
+ */
+function normalizeUnitToken(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\\(?:mathrm|text|operatorname|mathit)\s*\{([^{}]*)\}/g, "$1")
+    .replace(/\\,/g, "")
+    .replace(/[·∙⋅×]/g, "*")
+    .replace(/\^\{([^{}]+)\}/g, "^$1")
+    .replace(/[²]/g, "^2")
+    .replace(/[³]/g, "^3")
+    .replace(/[⁴]/g, "^4")
+    .replace(/\s+/g, "");
+}
+
+function escapeRegExp(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function stripConfiguredUnit(value, unitCandidates = []) {
+  let answer = String(value ?? "").trim();
+  if (!answer) return "";
+
+  const candidates = Array.isArray(unitCandidates)
+    ? unitCandidates
+    : [unitCandidates];
+
+  const normalizedCandidates = [
+    ...new Set(
+      candidates
+        .flatMap((item) => String(item || "").split("|"))
+        .map(normalizeUnitToken)
+        .filter(Boolean)
+    ),
+  ].sort((a, b) => b.length - a.length);
+
+  if (!normalizedCandidates.length) return answer;
+
+  /*
+   * Normalise only a temporary copy used for suffix detection. Return the
+   * original mathematical part so Math.js still receives the learner's
+   * expression rather than a lower-cased display string.
+   */
+  let compactAnswer = normalizeUnitToken(answer);
+
+  for (const unit of normalizedCandidates) {
+    const escaped = escapeRegExp(unit);
+
+    /*
+     * Accept:
+     *   12 cm, 12cm, 12 \mathrm{cm}, 12 cm^2, 12 cm²
+     * but remove the unit only when it is at the end of the answer.
+     */
+    const endPattern = new RegExp(`${escaped}$`, "i");
+
+    if (!endPattern.test(compactAnswer)) continue;
+
+    compactAnswer = compactAnswer.replace(endPattern, "");
+
+    /*
+     * Remove the same suffix from a normalised representation of the
+     * original answer. This avoids accidentally removing variables from
+     * algebraic expressions unless they exactly match the configured unit.
+     */
+    let displayNormalised = String(answer)
+      .trim()
+      .replace(/\\(?:mathrm|text|operatorname|mathit)\s*\{([^{}]*)\}/g, "$1")
+      .replace(/\\,/g, "")
+      .replace(/\^\{([^{}]+)\}/g, "^$1")
+      .replace(/[²]/g, "^2")
+      .replace(/[³]/g, "^3")
+      .replace(/[⁴]/g, "^4")
+      .trim();
+
+    const flexibleUnit = unit
+      .split("")
+      .map((char) => {
+        if (char === "*") return String.raw`(?:\s*[·∙⋅×*]\s*)`;
+        if (char === "^") return String.raw`\s*\^\s*`;
+        return escapeRegExp(char);
+      })
+      .join("");
+
+    displayNormalised = displayNormalised.replace(
+      new RegExp(String.raw`\s*${flexibleUnit}\s*$`, "i"),
+      ""
+    );
+
+    return displayNormalised.trim();
+  }
+
+  return answer;
+}
+
+function prepareTypedAnswerForComparison(value, unitCandidates = []) {
+  return stripConfiguredUnit(value, unitCandidates)
+    .replace(/\s+$/g, "")
+    .trim();
+}
+
 function normalizeMathExpression(value) {
   let expression = String(value || "").trim();
 
@@ -4100,8 +4208,12 @@ function normalizeMathExpression(value) {
     .replace(/\\div/g, "/")
     .replace(/\\pi\b/g, "pi")
     .replace(/\\theta\b/g, "theta")
+    .replace(/\\(?:mathrm|text|operatorname|mathit)\s*\{([^{}]*)\}/g, "$1")
     .replace(/\\,/g, "")
-    .replace(/\\!/g, "");
+    .replace(/\\!/g, "")
+    .replace(/[²]/g, "^(2)")
+    .replace(/[³]/g, "^(3)")
+    .replace(/[⁴]/g, "^(4)");
 
   let previous = "";
 
@@ -4484,41 +4596,76 @@ function compareTypedAnswerValue(
   userAnswer,
   correctAnswer,
   mode,
-  tolerance
+  tolerance,
+  unitCandidates = []
 ) {
+  const learnerValue = prepareTypedAnswerForComparison(
+    userAnswer,
+    unitCandidates
+  );
+
+  const correctValue = prepareTypedAnswerForComparison(
+    correctAnswer,
+    unitCandidates
+  );
+
   const normalizedMode = String(mode || "exact")
     .toLowerCase()
     .trim();
 
   if (normalizedMode === "unordered") {
     return compareUnorderedTypedAnswer(
-      userAnswer,
-      correctAnswer,
+      learnerValue,
+      correctValue,
       tolerance
     );
   }
 
   if (normalizedMode === "expression") {
+    /*
+     * Math.js compares meaning rather than formatting. This accepts, for
+     * example, 6x²y, 6x^2y, 6*x^2*y and the simplified form of an
+     * equivalent expression.
+     */
     return areExpressionsEquivalent(
-      userAnswer,
-      correctAnswer
+      learnerValue,
+      correctValue
     );
   }
 
   if (normalizedMode === "number_tolerance") {
     return compareDecimalWithTolerance(
-      userAnswer,
-      correctAnswer,
+      learnerValue,
+      correctValue,
       tolerance
     );
   }
 
-  return compareTextAnswer(
-    userAnswer,
-    correctAnswer,
-    normalizedMode,
-    tolerance
-  );
+  /*
+   * Even an old quiz saved as "exact" may contain mathematical notation.
+   * Try the normal exact/text comparison first, then safely fall back to
+   * expression equivalence. This prevents formatting-only false negatives
+   * without weakening ordinary word-answer marking.
+   */
+  if (
+    compareTextAnswer(
+      learnerValue,
+      correctValue,
+      normalizedMode,
+      tolerance
+    )
+  ) {
+    return true;
+  }
+
+  const looksMathematical =
+    /[0-9+\-*/^=()[\]{}\\]|[A-Za-z]\d|\d[A-Za-z]|[²³⁴√π×÷]/.test(
+      `${learnerValue}${correctValue}`
+    );
+
+  return looksMathematical
+    ? areExpressionsEquivalent(learnerValue, correctValue)
+    : false;
 }
 
 app.post("/api/results", authRequired, async (req, res) => {
@@ -4770,7 +4917,12 @@ app.post("/api/results", authRequired, async (req, res) => {
               learnerValue,
               field.correctAnswer,
               mode,
-              tol
+              tol,
+              [
+                field.suffix,
+                q.unit,
+                q.answerSuffix,
+              ]
             );
 
             return {
@@ -4869,7 +5021,11 @@ app.post("/api/results", authRequired, async (req, res) => {
           userText,
           correctText,
           mode,
-          tol
+          tol,
+          [
+            q.unit,
+            q.answerSuffix,
+          ]
         );
 
         const earned = isCorrect ? qPoints : 0;
