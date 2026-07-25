@@ -50,7 +50,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin | Add Learning Content</title>
+  <title>Practice Online | Add Learning Content</title>
 
   <script>
     window.MathJax = {
@@ -1166,15 +1166,889 @@
   vertical-align:middle !important;
 }
 
+
+/* ===== PRACTICE ONLINE CLEAN COMPANY THEME ===== */
+:root{
+  --po-navy:#1b1648;
+  --po-navy-2:#27205f;
+  --po-blue:#0b5d84;
+  --po-gold:#c9a227;
+  --po-gold-dark:#a98518;
+  --po-gold-soft:#fff9e6;
+  --po-bg:#f5f7fb;
+  --po-card:#ffffff;
+  --po-text:#172033;
+  --po-muted:#64748b;
+  --po-border:#dde3ec;
+}
+*{box-sizing:border-box}
+html{background:var(--po-bg)}
+body{
+  max-width:1180px!important;
+  margin:0 auto!important;
+  padding:24px!important;
+  background:var(--po-bg)!important;
+  color:var(--po-text)!important;
+  font-family:Arial,Helvetica,sans-serif!important;
+}
+.topbar{
+  padding:18px 20px!important;
+  margin-bottom:18px!important;
+  border:1px solid rgba(27,22,72,.12)!important;
+  border-top:4px solid var(--po-gold)!important;
+  border-radius:12px!important;
+  background:linear-gradient(135deg,#fff 0%,#fafbff 100%)!important;
+  box-shadow:0 8px 24px rgba(27,22,72,.07)!important;
+}
+.topbar h2{
+  color:var(--po-navy)!important;
+  font-size:22px!important;
+  font-weight:800!important;
+}
+#who{margin-top:5px!important;color:var(--po-muted)!important;font-size:13px!important}
+.card{
+  border:1px solid var(--po-border)!important;
+  border-radius:12px!important;
+  padding:20px!important;
+  background:var(--po-card)!important;
+  box-shadow:0 8px 24px rgba(15,23,42,.05)!important;
+}
+.card+.card{margin-top:18px!important}
+.row{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:16px 18px!important}
+label,.infoBox b{
+  color:var(--po-navy)!important;
+  font-size:12px!important;
+  font-weight:800!important;
+}
+input,textarea,select,math-field{
+  width:100%!important;
+  min-height:42px!important;
+  margin:6px 0 0!important;
+  padding:10px 12px!important;
+  border:1px solid var(--po-border)!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  color:var(--po-text)!important;
+  font-size:14px!important;
+  box-shadow:none!important;
+}
+textarea{min-height:96px!important;resize:vertical!important}
+input:focus,textarea:focus,select:focus,math-field:focus-within{
+  border-color:var(--po-gold)!important;
+  box-shadow:0 0 0 3px rgba(201,162,39,.14)!important;
+  outline:none!important;
+}
+input[readonly]{background:#f8fafc!important;color:#475569!important}
+.infoBox,.checkline,.typedAnswerSettings,.fillSettings,.dropdownSettings{
+  border:1px solid var(--po-border)!important;
+  border-radius:10px!important;
+  background:#fbfcff!important;
+  box-shadow:none!important;
+}
+.infoBox{margin-top:18px!important;padding:16px!important}
+.checkline{padding:12px 14px!important;margin-top:18px!important}
+.checkline input{
+  width:18px!important;
+  min-height:18px!important;
+  height:18px!important;
+  margin:0!important;
+  accent-color:var(--po-navy)!important;
+}
+button,.btn,.btn2,.smallbtn{
+  min-height:40px!important;
+  padding:9px 14px!important;
+  border-radius:7px!important;
+  font-size:12px!important;
+  font-weight:800!important;
+  box-shadow:none!important;
+}
+.btn{
+  background:var(--po-navy)!important;
+  border:1px solid var(--po-navy)!important;
+  color:#fff!important;
+}
+.btn:hover:not(:disabled){background:var(--po-navy-2)!important}
+.btn2,.smallbtn,a.btn2{
+  background:#fff!important;
+  border:1px solid var(--po-border)!important;
+  color:var(--po-navy)!important;
+  text-decoration:none!important;
+}
+.btn2:hover,.smallbtn:hover,a.btn2:hover{
+  border-color:var(--po-gold)!important;
+  background:var(--po-gold-soft)!important;
+}
+#publishBtn{
+  background:var(--po-gold)!important;
+  border-color:var(--po-gold-dark)!important;
+  color:#fff!important;
+}
+.qcard{
+  margin-top:14px!important;
+  padding:16px!important;
+  border:1px solid var(--po-border)!important;
+  border-left:4px solid var(--po-navy)!important;
+  border-radius:10px!important;
+  background:#fff!important;
+  box-shadow:0 4px 14px rgba(15,23,42,.04)!important;
+}
+.qcard[data-type="group"]{border-left-color:var(--po-gold)!important;background:#fffdf7!important}
+.qcard[data-type="section"]{border-left-color:var(--po-blue)!important;background:#f8fbff!important}
+.qhead h3,.examMainLabel,.sectionNumberLabel{color:var(--po-navy)!important}
+.typedAnswerHeader{
+  background:var(--po-navy)!important;
+  border-bottom:3px solid var(--po-gold)!important;
+}
+.typedAnswerHeaderTitle,.typedAnswerHeaderHint{color:#fff!important}
+.typedAnswerBody{background:#fbfcff!important}
+.answerFieldRow{border-color:var(--po-border)!important;background:#fff!important}
+.answerFieldRow::before{background:var(--po-gold)!important}
+.multipleAnswerToggle{background:#f8fafc!important;color:var(--po-navy)!important}
+.multipleAnswerToggle:hover{background:var(--po-gold-soft)!important}
+.addAnswerFieldBtn{background:var(--po-gold)!important;border-color:var(--po-gold-dark)!important}
+#uploadFile,#batchFiles{max-width:320px!important;background:#fff!important}
+#uploadBtn,#batchUploadBtn{
+  background:var(--po-navy)!important;
+  border-color:var(--po-navy)!important;
+  color:#fff!important;
+}
+.previewBox{
+  border:1px solid var(--po-border)!important;
+  border-radius:7px!important;
+  background:#f8fafc!important;
+}
+.prevTitle{color:var(--po-navy)!important}
+.attemptPaperPreview{
+  border:1px solid var(--po-border)!important;
+  border-radius:10px!important;
+  background:#f8fafc!important;
+}
+hr{margin:22px 0!important;border-top:1px solid var(--po-border)!important}
+.muted{color:var(--po-muted)!important}
+@media(max-width:820px){
+  body{padding:14px!important}
+  .row{grid-template-columns:1fr!important}
+  .card{padding:16px!important}
+}
+@media(max-width:560px){
+  body{padding:10px!important}
+  .topbar,.card{border-radius:9px!important}
+  .topbar>div:last-child{width:100%!important}
+  .topbar a,.topbar button{
+    flex:1 1 calc(50% - 8px)!important;
+    text-align:center!important;
+  }
+  #uploadFile,#batchFiles{max-width:100%!important}
+}
+
+
+/* =====================================================================
+   FINAL PRACTICE ONLINE ADMIN THEME
+   Gold header + attempt-page styling
+   CSS only: all content, IDs, upload logic and JavaScript remain unchanged.
+   ===================================================================== */
+
+:root{
+  --admin-gold:#c9a227;
+  --admin-gold-dark:#a98518;
+  --admin-gold-soft:#fff8dc;
+  --admin-navy:#1b1648;
+  --admin-navy-2:#27205f;
+  --admin-green:#159447;
+  --admin-green-dark:#117c3b;
+  --admin-bg:#f5f7fa;
+  --admin-card:#ffffff;
+  --admin-text:#111827;
+  --admin-muted:#64748b;
+  --admin-border:#dfe5ec;
+}
+
+html{
+  background:var(--admin-bg) !important;
+}
+
+body{
+  max-width:1180px !important;
+  margin:0 auto !important;
+  padding:20px !important;
+  background:var(--admin-bg) !important;
+  color:var(--admin-text) !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+}
+
+/* GOLD ADMIN HEADER */
+.topbar{
+  min-height:76px !important;
+  padding:16px 20px !important;
+  margin:0 0 18px !important;
+  border:1px solid var(--admin-gold-dark) !important;
+  border-radius:10px !important;
+  background:linear-gradient(135deg,#d2b240 0%,var(--admin-gold) 70%,#b9911d 100%) !important;
+  box-shadow:0 8px 20px rgba(105,82,9,.16) !important;
+}
+
+.topbar h2{
+  margin:0 !important;
+  color:#ffffff !important;
+  font-size:22px !important;
+  line-height:1.25 !important;
+  font-weight:800 !important;
+  letter-spacing:-.01em !important;
+}
+
+.topbar #who,
+.topbar .muted{
+  margin-top:5px !important;
+  color:rgba(255,255,255,.9) !important;
+  font-size:13px !important;
+}
+
+.topbar .btn,
+.topbar .btn2,
+.topbar a.btn2{
+  min-height:38px !important;
+  padding:9px 13px !important;
+  border-radius:6px !important;
+  font-size:12px !important;
+  font-weight:700 !important;
+}
+
+.topbar .btn2,
+.topbar a.btn2{
+  border:1px solid rgba(255,255,255,.7) !important;
+  background:#ffffff !important;
+  color:var(--admin-navy) !important;
+}
+
+.topbar .btn{
+  border:1px solid var(--admin-navy) !important;
+  background:var(--admin-navy) !important;
+  color:#ffffff !important;
+}
+
+/* ATTEMPT-PAGE WHITE CARDS */
+.card{
+  padding:20px !important;
+  border:1px solid var(--admin-border) !important;
+  border-radius:8px !important;
+  background:var(--admin-card) !important;
+  box-shadow:none !important;
+}
+
+.card + .card{
+  margin-top:18px !important;
+}
+
+.row{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:16px 18px !important;
+}
+
+/* LABELS AND INPUTS */
+label,
+.infoBox b{
+  color:var(--admin-navy) !important;
+  font-size:12px !important;
+  line-height:1.35 !important;
+  font-weight:700 !important;
+}
+
+input,
+textarea,
+select,
+math-field{
+  width:100% !important;
+  min-height:42px !important;
+  margin:6px 0 0 !important;
+  padding:10px 12px !important;
+  border:1px solid #cfd7e3 !important;
+  border-radius:4px !important;
+  background:#ffffff !important;
+  color:var(--admin-text) !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:14px !important;
+  box-shadow:none !important;
+  outline:none !important;
+}
+
+textarea{
+  min-height:96px !important;
+  resize:vertical !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+math-field:focus-within{
+  border-color:var(--admin-navy) !important;
+  box-shadow:0 0 0 3px rgba(27,22,72,.10) !important;
+}
+
+input[readonly]{
+  background:#f8fafc !important;
+  color:#475569 !important;
+}
+
+/* CLEAN SECTION BOXES */
+.infoBox,
+.checkline,
+.typedAnswerSettings,
+.fillSettings,
+.dropdownSettings{
+  border:1px solid var(--admin-border) !important;
+  border-radius:6px !important;
+  background:#ffffff !important;
+  box-shadow:none !important;
+}
+
+.infoBox{
+  margin-top:18px !important;
+  padding:16px !important;
+}
+
+.checkline{
+  margin-top:18px !important;
+  padding:12px 14px !important;
+}
+
+.checkline input{
+  width:18px !important;
+  height:18px !important;
+  min-height:18px !important;
+  margin:0 !important;
+  accent-color:var(--admin-navy) !important;
+}
+
+/* QUESTION BUILDER CARDS */
+.qcard{
+  margin-top:14px !important;
+  padding:16px !important;
+  border:1px solid var(--admin-border) !important;
+  border-radius:6px !important;
+  background:#ffffff !important;
+  box-shadow:none !important;
+}
+
+.qcard[data-type="group"]{
+  border-left:4px solid var(--admin-gold) !important;
+  background:#fffdf7 !important;
+}
+
+.qcard[data-type="section"]{
+  border-left:4px solid var(--admin-navy) !important;
+  background:#f8faff !important;
+}
+
+.qhead h3,
+.examMainLabel,
+.sectionNumberLabel,
+.prevTitle{
+  color:var(--admin-navy) !important;
+}
+
+/* BUTTONS MATCH ATTEMPT PAGE */
+button,
+.btn,
+.btn2,
+.smallbtn{
+  min-height:40px !important;
+  padding:9px 14px !important;
+  border-radius:4px !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:12px !important;
+  font-weight:700 !important;
+  box-shadow:none !important;
+}
+
+.btn{
+  border:1px solid var(--admin-navy) !important;
+  background:var(--admin-navy) !important;
+  color:#ffffff !important;
+}
+
+.btn2,
+.smallbtn,
+a.btn2{
+  border:1px solid var(--admin-border) !important;
+  background:#ffffff !important;
+  color:var(--admin-navy) !important;
+  text-decoration:none !important;
+}
+
+.btn2:hover,
+.smallbtn:hover,
+a.btn2:hover{
+  border-color:var(--admin-navy) !important;
+  background:#f8faff !important;
+}
+
+#saveBtn{
+  border-color:var(--admin-green) !important;
+  background:var(--admin-green) !important;
+  color:#ffffff !important;
+}
+
+#saveBtn:hover:not(:disabled){
+  border-color:var(--admin-green-dark) !important;
+  background:var(--admin-green-dark) !important;
+}
+
+#publishBtn{
+  border-color:var(--admin-gold-dark) !important;
+  background:var(--admin-gold) !important;
+  color:#ffffff !important;
+}
+
+#previewPaperBtn{
+  border-color:var(--admin-navy) !important;
+  background:#ffffff !important;
+  color:var(--admin-navy) !important;
+}
+
+/* TYPED ANSWER SETTINGS */
+.typedAnswerHeader{
+  padding:12px 14px !important;
+  border-bottom:3px solid var(--admin-gold) !important;
+  background:var(--admin-navy) !important;
+}
+
+.typedAnswerHeaderTitle,
+.typedAnswerHeaderHint{
+  color:#ffffff !important;
+}
+
+.typedAnswerBody{
+  background:#ffffff !important;
+}
+
+.answerFieldRow{
+  border-color:var(--admin-border) !important;
+  background:#ffffff !important;
+}
+
+.answerFieldRow::before{
+  background:var(--admin-gold) !important;
+}
+
+.multipleAnswerToggle{
+  background:#f8fafc !important;
+  color:var(--admin-navy) !important;
+}
+
+.addAnswerFieldBtn{
+  border-color:var(--admin-gold-dark) !important;
+  background:var(--admin-gold) !important;
+  color:#ffffff !important;
+}
+
+/* UPLOAD AREA */
+#uploadFile,
+#batchFiles{
+  max-width:320px !important;
+  background:#ffffff !important;
+}
+
+#uploadBtn,
+#batchUploadBtn{
+  border-color:var(--admin-navy) !important;
+  background:var(--admin-navy) !important;
+  color:#ffffff !important;
+}
+
+/* PREVIEW */
+.previewBox{
+  border:1px solid var(--admin-border) !important;
+  border-radius:4px !important;
+  background:#f8fafc !important;
+}
+
+.attemptPaperPreview{
+  border:1px solid var(--admin-border) !important;
+  border-radius:8px !important;
+  background:#ffffff !important;
+}
+
+hr{
+  margin:22px 0 !important;
+  border-top:1px solid var(--admin-border) !important;
+}
+
+.muted{
+  color:var(--admin-muted) !important;
+}
+
+@media(max-width:820px){
+  body{
+    padding:14px !important;
+  }
+
+  .row{
+    grid-template-columns:1fr !important;
+  }
+
+  .card{
+    padding:16px !important;
+  }
+}
+
+@media(max-width:560px){
+  body{
+    padding:10px !important;
+  }
+
+  .topbar{
+    align-items:flex-start !important;
+  }
+
+  .topbar > div:last-child{
+    width:100% !important;
+  }
+
+  .topbar a,
+  .topbar button{
+    flex:1 1 calc(50% - 8px) !important;
+    text-align:center !important;
+  }
+
+  #uploadFile,
+  #batchFiles{
+    max-width:100% !important;
+  }
+}
+
+
+/* =====================================================================
+   FINAL HEADER — MATCH PRACTICE ONLINE LOGIN PAGE
+   Full-width navy bar with centered content.
+   ===================================================================== */
+.topbar{
+  width:100vw !important;
+  min-height:68px !important;
+  margin:0 0 18px calc(50% - 50vw) !important;
+  padding:0 calc((100vw - min(1180px, calc(100vw - 40px))) / 2) !important;
+  border:none !important;
+  border-radius:0 !important;
+  background:linear-gradient(135deg,#d7b84a 0%,#c9a227 55%,#b48b18 100%) !important;
+  box-shadow:none !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:18px !important;
+}
+
+.topbar > div:first-child{
+  position:relative !important;
+  min-height:68px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:center !important;
+  padding-left:50px !important;
+}
+
+.topbar > div:first-child::before{
+  content:"" !important;
+  position:absolute !important;
+  left:0 !important;
+  top:50% !important;
+  width:34px !important;
+  height:34px !important;
+  transform:translateY(-50%) !important;
+  border:2px solid #ffffff !important;
+  border-radius:50% !important;
+  box-sizing:border-box !important;
+}
+
+.topbar > div:first-child::after{
+  content:"" !important;
+  position:absolute !important;
+  left:-4px !important;
+  top:42px !important;
+  width:42px !important;
+  height:20px !important;
+  border:2px solid #ffffff !important;
+  border-bottom:none !important;
+  border-radius:22px 22px 0 0 !important;
+  box-sizing:border-box !important;
+}
+
+.topbar h2{
+  margin:0 !important;
+  color:#ffffff !important;
+  font-size:14px !important;
+  line-height:1.2 !important;
+  font-weight:700 !important;
+  letter-spacing:0 !important;
+}
+
+.topbar #who,
+.topbar .muted{
+  margin-top:2px !important;
+  color:#ffffff !important;
+  font-size:12px !important;
+  line-height:1.2 !important;
+}
+
+.topbar > div:last-child{
+  display:flex !important;
+  align-items:center !important;
+  gap:18px !important;
+  flex-wrap:wrap !important;
+}
+
+.topbar .btn,
+.topbar .btn2,
+.topbar a.btn2{
+  min-height:auto !important;
+  padding:0 !important;
+  border:none !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  color:#ffffff !important;
+  font-size:12px !important;
+  font-weight:700 !important;
+  box-shadow:none !important;
+}
+
+.topbar .btn:hover,
+.topbar .btn2:hover,
+.topbar a.btn2:hover{
+  background:transparent !important;
+  color:#c9a227 !important;
+  transform:none !important;
+}
+
+@media(max-width:820px){
+  .topbar{
+    padding:0 18px !important;
+  }
+}
+
+@media(max-width:560px){
+  .topbar{
+    min-height:auto !important;
+    padding:12px 14px !important;
+    align-items:flex-start !important;
+    flex-direction:column !important;
+  }
+
+  .topbar > div:first-child{
+    min-height:50px !important;
+  }
+
+  .topbar > div:last-child{
+    width:100% !important;
+    gap:14px !important;
+    padding-left:50px !important;
+  }
+
+  .topbar a,
+  .topbar button{
+    flex:0 0 auto !important;
+    text-align:left !important;
+  }
+}
+
+
+/* =====================================================================
+   FINAL SOLID GOLD HEADER WITH OFFICIAL ACCOUNT ICON
+   ===================================================================== */
+.topbar{
+  width:100vw !important;
+  min-height:68px !important;
+  margin:0 0 18px calc(50% - 50vw) !important;
+  padding:0 calc((100vw - min(1180px, calc(100vw - 40px))) / 2) !important;
+  border:none !important;
+  border-radius:0 !important;
+  background:#c9a227 !important;
+  box-shadow:none !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:18px !important;
+}
+
+.topbarBrand{
+  min-height:68px !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:12px !important;
+  padding-left:0 !important;
+  position:static !important;
+}
+
+.topbarBrand::before,
+.topbarBrand::after,
+.topbar > div:first-child::before,
+.topbar > div:first-child::after{
+  content:none !important;
+  display:none !important;
+}
+
+.topbarAccountIcon{
+  width:38px !important;
+  height:38px !important;
+  display:block !important;
+  flex:0 0 38px !important;
+  object-fit:contain !important;
+  filter:none !important;
+  opacity:1 !important;
+}
+
+.topbarBrandText{
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:center !important;
+  min-width:0 !important;
+}
+
+.topbar h2{
+  margin:0 !important;
+  color:#ffffff !important;
+  font-size:14px !important;
+  line-height:1.2 !important;
+  font-weight:700 !important;
+  letter-spacing:0 !important;
+}
+
+.topbar #who,
+.topbar .muted{
+  margin-top:2px !important;
+  color:#ffffff !important;
+  font-size:12px !important;
+  line-height:1.2 !important;
+}
+
+.topbar > div:last-child{
+  display:flex !important;
+  align-items:center !important;
+  gap:18px !important;
+  flex-wrap:wrap !important;
+}
+
+.topbar .btn,
+.topbar .btn2,
+.topbar a.btn2{
+  min-height:auto !important;
+  padding:0 !important;
+  border:none !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  color:#ffffff !important;
+  font-size:12px !important;
+  font-weight:700 !important;
+  box-shadow:none !important;
+}
+
+.topbar .btn:hover,
+.topbar .btn2:hover,
+.topbar a.btn2:hover{
+  background:transparent !important;
+  color:#1b1648 !important;
+  transform:none !important;
+}
+
+@media(max-width:820px){
+  .topbar{
+    padding:0 18px !important;
+  }
+}
+
+@media(max-width:560px){
+  .topbar{
+    min-height:auto !important;
+    padding:12px 14px !important;
+    align-items:flex-start !important;
+    flex-direction:column !important;
+  }
+
+  .topbarBrand{
+    min-height:46px !important;
+  }
+
+  .topbar > div:last-child{
+    width:100% !important;
+    gap:14px !important;
+    padding-left:50px !important;
+  }
+
+  .topbar a,
+  .topbar button{
+    flex:0 0 auto !important;
+    text-align:left !important;
+  }
+}
+
+
+/* ===== UPLOAD ICONS ===== */
+.filePickerShell{
+  display:flex !important;
+  align-items:center !important;
+  gap:10px !important;
+  min-width:0 !important;
+}
+
+.filePickerIcon{
+  width:28px !important;
+  height:28px !important;
+  display:block !important;
+  flex:0 0 28px !important;
+  object-fit:contain !important;
+}
+
+.filePickerShell input[type="file"]{
+  margin:0 !important;
+}
+
+.uploadActionBtn{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:8px !important;
+}
+
+.uploadActionBtn img{
+  width:18px !important;
+  height:18px !important;
+  display:block !important;
+  flex:0 0 18px !important;
+  object-fit:contain !important;
+  filter:none !important;
+}
+
+.uploadActionBtn span{
+  display:inline-block !important;
+}
+
+@media(max-width:560px){
+  .filePickerShell{
+    width:100% !important;
+  }
+
+  .filePickerShell input[type="file"]{
+    max-width:100% !important;
+  }
+
+  .uploadActionBtn{
+    width:100% !important;
+  }
+}
+
 </style>
 </head>
 
 <body>
 
   <div class="topbar">
-    <div>
-      <h2 style="margin:0;">Practice Online – Add Learning Content</h2>
-      <div class="muted" id="who">Checking login...</div>
+    <div class="topbarBrand">
+      <img
+        class="topbarAccountIcon"
+        src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg"
+        alt="Account"
+      />
+      <div class="topbarBrandText">
+        <h2 style="margin:0;">Practice Online</h2>
+        <div class="muted" id="who">Checking login...</div>
+      </div>
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <a class="btn2" href="admin-dashboard.html">Dashboard</a>
@@ -1200,31 +2074,31 @@
 
       <div>
         <label>Topic (type it)</label>
-        <input id="topic" placeholder="e.g. Algebra" />
+        <input id="topic" />
       </div>
 
       <div>
         <label>Time Limit (minutes)</label>
-        <input id="timeLimit" type="number" min="1" max="180" value="10" placeholder="e.g. 10" />
+        <input id="timeLimit" type="number" min="1" max="180" value="10" />
       </div>
 
       <div>
         <label>Assessment Title</label>
-        <input id="title" placeholder="e.g. Moderate : Quiz 1" />
+        <input id="title" />
       </div>
       <div><label>Subject</label><input id="subject" value="Mathematics" /></div>
       <div><label>Term</label><select id="term"><option value="1" selected>Term 1</option><option value="2">Term 2</option><option value="3">Term 3</option><option value="4">Term 4</option></select></div>
       <div><label>Chapter</label><input id="chapter" type="number" min="1" value="1" /></div>
-      <div><label>Subtopic</label><input id="subtopic" placeholder="e.g. Introduction to Whole Numbers" /></div>
+      <div><label>Subtopic</label><input id="subtopic" /></div>
       <div><label>Curriculum</label><input id="curriculum" value="CAPS" /></div>
       <div><label>Language</label><input id="language" value="English" /></div>
       <div><label>Version</label><input id="version" value="1.0" /></div>
-      <div><label>Keywords</label><input id="keywords" placeholder="whole numbers, place value" /></div>
+      <div><label>Keywords</label><input id="keywords" /></div>
 
       <div>
         <label>Assessment Code</label>
         <input id="assessmentCode" value="Assigned automatically when saved" readonly />
-        <div class="muted tiny">The server assigns a unique code. Codes cannot be typed or reused.</div>
+        
       </div>
 
       <div>
@@ -1237,7 +2111,7 @@
           <option value="gradeChallenge">Grade Challenge</option>
           <option value="weeklyChallenge">Challenge of the Week</option>
         </select>
-        <div class="muted tiny" id="contentTypeHelp">Quiz appears under the Quizzes tab.</div>
+        
       </div>
 
       <div>
@@ -1246,7 +2120,7 @@
           <option value="standard" selected>Standard (Free)</option>
           <option value="premium">Premium (Paid)</option>
         </select>
-        <div class="muted tiny">Standard quizzes are visible to everyone. Premium quizzes require an active paid subscription.</div>
+       
       </div>
 
       <div>
@@ -1256,7 +2130,7 @@
           <option value="moderate" selected>Moderate</option>
           <option value="hard">Hard</option>
         </select>
-        <div class="muted tiny">Labels the whole assessment: Easy / Moderate / Hard.</div>
+        
       </div>
 
       <div>
@@ -1265,7 +2139,7 @@
           <option value="paper1" selected>Paper 1</option>
           <option value="paper2">Paper 2</option>
         </select>
-        <div class="muted tiny">Example: Financial Mathematics = Paper 1</div>
+        
       </div>
 
       <div>
@@ -1275,25 +2149,25 @@
           <option value="now">Publish Now</option>
           <option value="schedule">Schedule Publish</option>
         </select>
-        <div class="muted tiny">Draft is visible only to admin/editor/tester. Publish makes it visible to learners.</div>
+        
       </div>
 
       <div id="publishAtWrap" class="hide">
         <label>Publish Date & Time</label>
         <input id="publishAt" type="datetime-local" />
-        <div class="muted tiny">When this date/time arrives, the assessment will go live automatically.</div>
+        
       </div>
 
       <div>
         <label>Available From (optional)</label>
         <input id="availableFrom" type="datetime-local" />
-        <div class="muted tiny">Learners can only open the assessment from this date/time.</div>
+        
       </div>
 
       <div>
         <label>Available Until (optional)</label>
         <input id="availableUntil" type="datetime-local" />
-        <div class="muted tiny">After this date/time, learners can no longer open the assessment.</div>
+        
       </div>
     </div>
 
@@ -1301,20 +2175,22 @@
       <input id="sendPublishEmail" type="checkbox" />
       <label for="sendPublishEmail" style="margin:0; width:auto; font-weight:700;">Send email to students when published</label>
     </div>
-    <div class="muted tiny" style="margin-top:6px;">Untick means no learner email will be sent unless you choose it.</div>
+    <div class="muted tiny" style="margin-top:6px;">
+    
+    </div>
 
     <div class="infoBox">
       <b>Assessment Instructions (optional)</b>
-      <textarea id="instructions" rows="3" placeholder="Example: Answer all questions. Use $x^2$ form for algebra answers. No calculators."></textarea>
+      <textarea id="instructions" rows="3"></textarea>
 
       <div class="helpLine muted tiny">
         Type math using LaTeX: <b>$x^2$</b>, <b>$\frac{a}{b}$</b>, <b>$\sqrt{x}$</b>, <b>$(x+1)^2$</b>
       </div>
 
-      <div class="previewRow" style="margin-top:10px;"><div class="prevTitle">Instructions Preview</div><div class="previewBox" id="prevInstructions">(Instructions preview)</div></div>
+      <div class="previewRow" style="margin-top:10px;"><div class="prevTitle">Instructions Preview</div><div class="previewBox" id="prevInstructions"></div></div>
       <b style="margin-top:14px;">Learning Objectives (one per line)</b>
-      <textarea id="learningObjectives" rows="5" placeholder="Read and write whole numbers.&#10;Identify place value and face value."></textarea>
-      <div class="previewRow" style="margin-top:10px;"><div class="prevTitle">Learning Objectives Preview</div><div class="previewBox" id="prevLearningObjectives">(Learning objectives preview)</div></div>
+      <textarea id="learningObjectives" rows="5"></textarea>
+      <div class="previewRow" style="margin-top:10px;"><div class="prevTitle">Learning Objectives Preview</div><div class="previewBox" id="prevLearningObjectives"></div></div>
     </div>
 
     <hr>
@@ -1323,7 +2199,7 @@
       <div>
         <h3 style="margin:0;">Blocks</h3>
         <div class="muted tiny" style="margin-top:6px;">
-          Drag cards to reorder. Use “New Question Group” to start Question 2, Question 3, etc. Use $...$ for inline math.
+          Drag cards to reorder.
         </div>
       </div>
     </div>
@@ -1341,104 +2217,28 @@
     </div>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; align-items:center;">
-      <input id="uploadFile" type="file" accept=".txt" style="max-width:260px;" />
-      <button class="smallbtn" id="uploadBtn" type="button">Upload & Auto Fill</button>
+      <div class="filePickerShell">
+        <img class="filePickerIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939097/upload_c8eg6o.svg" alt="" aria-hidden="true" />
+        <input id="uploadFile" type="file" accept=".txt" style="max-width:260px;" />
+      </div>
+      <button class="smallbtn uploadActionBtn" id="uploadBtn" type="button">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939345/open-open-a-file_yhdyq4.svg" alt="" aria-hidden="true" />
+        <span>Upload & Auto Fill</span>
+      </button>
     </div>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center;">
-      <input id="batchFiles" type="file" accept=".txt" multiple style="max-width:260px;" />
-      <button class="smallbtn" id="batchUploadBtn" type="button">Batch Upload .txt Files</button>
+      <div class="filePickerShell">
+        <img class="filePickerIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939097/upload_c8eg6o.svg" alt="" aria-hidden="true" />
+        <input id="batchFiles" type="file" accept=".txt" multiple style="max-width:260px;" />
+      </div>
+      <button class="smallbtn uploadActionBtn" id="batchUploadBtn" type="button">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939345/open-open-a-file_yhdyq4.svg" alt="" aria-hidden="true" />
+        <span>Batch Upload .txt Files</span>
+      </button>
     </div>
 
-    <div class="muted tiny" style="margin-top:6px;">
-      Upload a <b>.txt</b> file in this format:
-      <br />
-      TITLE: Moderate : Quiz 1
-      <br />
-      GRADE: 11
-      <br />
-      TOPIC: Sequences
-      <br />
-      TIME_LIMIT: 20
-      <br />
-      DIFFICULTY: moderate
-      <br />
-      PAPER: paper1
-      <br />
-      CONTENT_TYPE: quiz
-      <br />
-      ACCESS_LEVEL: standard
-      <br />
-      SEND_EMAIL: false
-      <br /><br />
-      NOTE: Consider the sequence...
-      <br />
-      QUESTION: What is 2+2?
-      <br />
-      A: 3
-      <br />
-      B: 4
-      <br />
-      C: 5
-      <br />
-      D: 6
-      <br />
-      E: 7 (optional)
-      <br />
-      F: 8 (optional)
-      <br />
-      ANSWER: B
-      <br /><br />
-      Or for typed answers:
-      <br />
-      QUESTION: x^2 - 5x + 6 = 0
-      <br />
-      TYPE: text
-      <br />
-      INSTRUCTION: Enter each value separately.
-      <br />
-      ANSWER_FIELD: x|x =|
-      <br />
-      ANSWER_FIELD: y|y =|
-      <br />
-      ANSWER: x=2|y=3
-      <br />
-      ANSWER_MODE: number_tolerance
-      <br />
-      TOLERANCE: 0.01
-      <br />
-      POINTS: 2
-      <br />
-      SOLUTION:
-      <br />
-      Step 1: Factorise the quadratic
-      <br />
-      (x - 2)(x - 3) = 0
-      <br /><br />
-      Step 2: Solve each factor
-      <br />
-      x = 2 or x = 3
-      <br /><br />
-      Final Answer: x = 2 or x = 3
-      <br /><br />
-      For a single answer with a unit:
-      <br />
-      INSTRUCTION: Give your answer to the nearest millimetre.
-      <br />
-      ANSWER_PREFIX: WX =
-      <br />
-      ANSWER_SUFFIX: mm
-      <br />
-      ANSWER: 24
-      <br /><br />
-      <b>Important numbering rule:</b>
-      <br />
-      Use numbering in <b>NOTE:</b> lines like <b>NOTE: 1.1 Consider the sequence...</b>
-      <br />
-      Do <b>not</b> type numbering inside <b>QUESTION:</b> lines.
-      <br />
-      Example: <b>QUESTION: Write down the next TWO terms...</b>
-    </div>
+    <div class="muted tiny" style="margin-top:6px;">Upload a <b>.txt</b> assessment file.</div>
 
     <hr>
 
@@ -1455,7 +2255,7 @@
     <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
       <div>
         <h3 style="margin:0;">Full Learner Preview</h3>
-        <div class="muted tiny">This preview uses the same exam-style layout for the whole quiz so you can check everything before publishing.</div>
+        
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="smallbtn" id="previewAttemptModeBtn" type="button">Attempt Preview</button>
@@ -1934,7 +2734,7 @@ function escapeHtml(str){
           virtual-keyboard-mode="onfocus"
           smart-mode="true"
           smart-fence="true"
-          placeholder="${escapeAttr(placeholder)}"
+         
           aria-label="${escapeAttr(ariaLabel)}"
         >${escapeHtml(value)}</math-field>
 
@@ -2080,7 +2880,7 @@ function escapeHtml(str){
               `).join("")
             : `<div class="answerPreviewRow" style="margin-left:68px;">
                 ${answerPrefix ? `<span>${renderMixedMathPreview(answerPrefix)}</span>` : ""}
-                <input class="textAnswerPaper" style="margin:0;width:160px;" placeholder="Type your answer" disabled>
+                <input class="textAnswerPaper" style="margin:0;width:160px;" disabled>
                 ${answerSuffix ? `<span>${renderMixedMathPreview(answerSuffix)}</span>` : ""}
               </div>`;
 
@@ -2129,13 +2929,13 @@ function escapeHtml(str){
 
     function renderInstructionsPreview(){
       const t = cleanSpaces(instructionsEl.value || "");
-      setPreviewText(prevInstructions, t || "(Instructions preview)");
+      setPreviewText(prevInstructions, t || "");
       refreshFullLearnerPreview();
     }
     instructionsEl.addEventListener("input", renderInstructionsPreview);
     learningObjectivesEl.addEventListener("input", ()=>{
       const values=String(learningObjectivesEl.value||"").split(/\n|\|/).map(x=>x.trim()).filter(Boolean);
-      prevLearningObjectives.innerHTML=values.length?values.map(x=>`• ${escapeHtml(x.replace(/^[•*-]\s*/,""))}`).join("<br>"):"(Learning objectives preview)";
+      prevLearningObjectives.innerHTML=values.length?values.map(x=>`• ${escapeHtml(x.replace(/^[•*-]\s*/,""))}`).join("<br>"):"";
       refreshFullLearnerPreview();
     });
     renderInstructionsPreview();
@@ -2159,7 +2959,9 @@ function escapeHtml(str){
         weeklyChallenge:"Challenge of the Week appears for every learner, regardless of grade."
       };
 
-      contentTypeHelp.textContent = helpText[type] || helpText.quiz;
+      if (contentTypeHelp) {
+        contentTypeHelp.textContent = helpText[type] || helpText.quiz;
+      }
 
       if(type === "weeklyChallenge"){
         gradeEl.disabled = true;
@@ -2250,7 +3052,7 @@ function escapeHtml(str){
           </div>
 
           <label>Text (supports math)</label>
-          <textarea class="noteText" rows="3" placeholder="Example: Given below is the number set $\\{2,4,6,8\\}$..."></textarea>
+          <textarea class="noteText" rows="3"></textarea>
 
           <div class="previewRow">
             <div class="prevTitle">Live Preview</div>
@@ -2291,18 +3093,18 @@ function escapeHtml(str){
 
             <div class="fieldQuestion">
               <label>Question Text (supports math)</label>
-              <textarea class="qText" rows="3" placeholder="Example: Simplify $x^2 + 2x + 1$"></textarea>
+              <textarea class="qText" rows="3"></textarea>
             </div>
           </div>
 
           <label>Hint (supports math)</label>
-          <input class="qHint" placeholder="Example: Use $(a+b)^2$ identity" />
+          <input class="qHint" />
 
           <label>Marks (points)</label>
           <input class="qPoints" type="number" min="1" step="1" value="1" />
 
           <label>Solution / Workings (optional)</label>
-          <textarea class="qSolution" rows="4" placeholder="Example: Expand $(x+1)^2 = x^2 + 2x + 1$, so the simplified form is $x^2 + 2x + 1$."></textarea>
+          <textarea class="qSolution" rows="4"></textarea>
 
           <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px;">
             <b style="font-size:13px;">Options</b>
@@ -2333,8 +3135,8 @@ function escapeHtml(str){
       `;
     }
 
-    function dropdownCardHtml(id){return `<div class="qcard" data-type="dropdown" draggable="false"><div class="qhead"><div class="headMeta"><b class="cardLabel">Question ${id}</b><div class="marksMeta">Auto marks</div><span class="pill">Dropdown</span></div><button type="button" class="smallbtn removeBtn">Remove</button></div><label>Question Text (use [ ? ] where dropdown belongs)</label><textarea class="qText" rows="3"></textarea><label>Image URL (optional)</label><input class="qImage"/><label>Hint</label><input class="qHint"/><label>Marks</label><input class="qPoints" type="number" min="1" value="1"/><div class="dropdownSettings"><label>Options (one per line)</label><textarea class="dropdownOptions" rows="4" placeholder=">&#10;<&#10;="></textarea><label>Correct Answer</label><input class="dropdownAnswer"/><label>Placeholder</label><input class="dropdownPlaceholder" value="Select an answer"/><div class="dropdownHelp">Correct answer must exactly match one option.</div></div><label>Solution / Workings</label><textarea class="qSolution" rows="4"></textarea><div class="previewRow"><div class="prevTitle">Live Preview</div><div class="previewBox prevQ paperBox"></div><div class="previewBox prevOpts paperBox"></div><div class="previewBox prevSol solBox"></div></div></div>`}
-    function fillCardHtml(id){return `<div class="qcard" data-type="fill" draggable="false"><div class="qhead"><div class="headMeta"><b class="cardLabel">Question ${id}</b><div class="marksMeta">Auto marks</div><span class="pill">Fill Blank</span></div><button type="button" class="smallbtn removeBtn">Remove</button></div><label>Question Text</label><textarea class="qText" rows="3" placeholder="12, [[ ]], 16, [[ ]], 20"></textarea><label>Image URL (optional)</label><input class="qImage"/><label>Instruction</label><input class="fillInstruction"/><label>Hint</label><input class="qHint"/><label>Marks</label><input class="qPoints" type="number" min="1" value="2"/><div class="fillSettings"><label>Correct Answers (one per line)</label><textarea class="fillAnswers" rows="4" placeholder="14&#10;18"></textarea><div class="checkline"><input class="allowPartialMarks" type="checkbox" checked/><label style="margin:0;width:auto">Award partial marks</label></div><div class="fillAnswersHelp">Use [[ ]] for each blank.</div></div><label>Solution / Workings</label><textarea class="qSolution" rows="4"></textarea><div class="previewRow"><div class="prevTitle">Live Preview</div><div class="previewBox prevQ paperBox"></div><div class="previewBox prevOpts paperBox"></div><div class="previewBox prevSol solBox"></div></div></div>`}
+    function dropdownCardHtml(id){return `<div class="qcard" data-type="dropdown" draggable="false"><div class="qhead"><div class="headMeta"><b class="cardLabel">Question ${id}</b><div class="marksMeta">Auto marks</div><span class="pill">Dropdown</span></div><button type="button" class="smallbtn removeBtn">Remove</button></div><label>Question Text (use [ ? ] where dropdown belongs)</label><textarea class="qText" rows="3"></textarea><label>Image URL (optional)</label><input class="qImage"/><label>Hint</label><input class="qHint"/><label>Marks</label><input class="qPoints" type="number" min="1" value="1"/><div class="dropdownSettings"><label>Options (one per line)</label><textarea class="dropdownOptions" rows="4"></textarea><label>Correct Answer</label><input class="dropdownAnswer"/><label>Placeholder</label><input class="dropdownPlaceholder" value="Select an answer"/><div class="dropdownHelp">Correct answer must exactly match one option.</div></div><label>Solution / Workings</label><textarea class="qSolution" rows="4"></textarea><div class="previewRow"><div class="prevTitle">Live Preview</div><div class="previewBox prevQ paperBox"></div><div class="previewBox prevOpts paperBox"></div><div class="previewBox prevSol solBox"></div></div></div>`}
+    function fillCardHtml(id){return `<div class="qcard" data-type="fill" draggable="false"><div class="qhead"><div class="headMeta"><b class="cardLabel">Question ${id}</b><div class="marksMeta">Auto marks</div><span class="pill">Fill Blank</span></div><button type="button" class="smallbtn removeBtn">Remove</button></div><label>Question Text</label><textarea class="qText" rows="3"></textarea><label>Image URL (optional)</label><input class="qImage"/><label>Instruction</label><input class="fillInstruction"/><label>Hint</label><input class="qHint"/><label>Marks</label><input class="qPoints" type="number" min="1" value="2"/><div class="fillSettings"><label>Correct Answers (one per line)</label><textarea class="fillAnswers" rows="4"></textarea><div class="checkline"><input class="allowPartialMarks" type="checkbox" checked/><label style="margin:0;width:auto">Award partial marks</label></div><div class="fillAnswersHelp">Use [[ ]] for each blank.</div></div><label>Solution / Workings</label><textarea class="qSolution" rows="4"></textarea><div class="previewRow"><div class="prevTitle">Live Preview</div><div class="previewBox prevQ paperBox"></div><div class="previewBox prevOpts paperBox"></div><div class="previewBox prevSol solBox"></div></div></div>`}
 
     function groupCardHtml(id){
       return `
@@ -2373,7 +3175,7 @@ function escapeHtml(str){
           </div>
 
           <label>Section / Stem Text (supports math)</label>
-          <textarea class="sectionText" rows="3" placeholder="Example: Given the arithmetic series: $5+7+9+\dots+93$"></textarea>
+          <textarea class="sectionText" rows="3"></textarea>
 
           <div class="previewRow">
             <div class="prevTitle">Live Preview</div>
@@ -2409,7 +3211,7 @@ function escapeHtml(str){
           <div class="primaryFields">
             <div class="fieldQuestion">
               <label>Question Text (supports math)</label>
-              <textarea class="qText" rows="3" placeholder="Example: Solve $\\frac{2x}{5}=4$"></textarea>
+              <textarea class="qText" rows="3"></textarea>
             </div>
 
             <div class="fieldImage">
@@ -2419,13 +3221,13 @@ function escapeHtml(str){
           </div>
 
           <label>Hint (supports math)</label>
-          <input class="qHint" placeholder="Example: Multiply both sides by 5" />
+          <input class="qHint" />
 
           <label>Marks (points)</label>
           <input class="qPoints" type="number" min="1" step="1" value="1" />
 
           <label>Solution / Workings (optional)</label>
-          <textarea class="qSolution" rows="4" placeholder="Example: Multiply both sides by 5: $2x=20$. Divide by 2: $x=10$."></textarea>
+          <textarea class="qSolution" rows="4"></textarea>
 
           <div class="typedAnswerSettings">
             <div class="typedAnswerHeader">
@@ -2439,16 +3241,16 @@ function escapeHtml(str){
               </div>
 
               <label>Instruction (optional)</label>
-              <textarea class="answerInstruction" rows="2" placeholder="Example: Give your answer correct to TWO decimal places."></textarea>
+              <textarea class="answerInstruction" rows="2"></textarea>
 
               <div class="grid2">
                 <div>
                   <label>Display Before Answer (optional)</label>
-                  <input class="answerPrefix" placeholder="Example: WX =, θ =, Area =" />
+                  <input class="answerPrefix" />
                 </div>
                 <div>
                   <label>Display After Answer / Unit (optional)</label>
-                  <input class="answerSuffix" placeholder="Example: mm, cm², °, %" />
+                  <input class="answerSuffix" />
                 </div>
               </div>
 
@@ -2623,15 +3425,15 @@ function escapeHtml(str){
       row.innerHTML = `
         <div>
           <label>Field Key</label>
-          <input class="answerFieldKey" placeholder="x" />
+          <input class="answerFieldKey" />
         </div>
         <div>
           <label>Display Before Answer</label>
-          <input class="answerFieldPrefix" placeholder="x =" />
+          <input class="answerFieldPrefix" />
         </div>
         <div>
           <label>Display After Answer / Unit</label>
-          <input class="answerFieldSuffix" placeholder="cm" />
+          <input class="answerFieldSuffix" />
         </div>
         <div>
           <label>Correct Value</label>
@@ -3208,7 +4010,7 @@ function escapeHtml(str){
           <span class="optCorrectText">Correct</span>
         </div>
 
-        <input class="optInput" placeholder="Option" />
+        <input class="optInput" />
         <button type="button" class="smallbtn removeOptBtn">Remove</button>
       `;
 
