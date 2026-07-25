@@ -78,6 +78,7 @@ import supportRoutes from "./routes/support.js";
 import requestQuoteRoutes from "./routes/requestQuote.js";
 import Employee from "./models/Employee.js";
 import tasksRoutes from "./routes/tasks.js";
+import createInternalReviewRoutes from "./routes/internalReviews.js";
 
 import helmet from "helmet";
 import mongoSanitize from "express-mongo-sanitize";
@@ -3117,6 +3118,20 @@ app.get("/api/admin/leaderboard", authRequired, adminOnly, async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 });
+
+/* ------------------ INTERNAL REVIEW ROUTES ------------------ */
+/*
+ * This must be registered before the existing GET /api/quizzes route.
+ * The internal review router intercepts only requests that include
+ * includeInternalReviews=true or includeRatings=true.
+ */
+app.use(
+  createInternalReviewRoutes({
+    authRequired,
+    Quiz,
+    User,
+  })
+);
 
 /* ------------------ QUIZZES ------------------ */
 
