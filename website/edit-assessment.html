@@ -46,6 +46,10 @@
   <title>Edit Assessment | Practice Online</title>
 
   <script>
+function canManageAssessmentsRole(role){
+  return ["admin","editor"].includes(String(role||"").toLowerCase());
+}
+
     window.MathJax = {
       tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
       svg: { fontCache: 'global' }
@@ -282,15 +286,276 @@
     .removeAnswerFieldBtn{height:40px;background:#fff;color:#b91c1c;border:1px solid #fecaca;}
     @media(max-width:760px){.editAnswerFieldRow{grid-template-columns:1fr}.removeAnswerFieldBtn{width:100%;}}
 
+
+/* =====================================================================
+   PRACTICE ONLINE EDIT ASSESSMENT — FINAL SEARCH & ICON THEME
+   ===================================================================== */
+:root{
+  --edit-gold:#c9a227;
+  --edit-navy:#1b1648;
+  --edit-green:#159447;
+  --edit-bg:#f5f7fa;
+  --edit-border:#dfe5ec;
+  --edit-muted:#64748b;
+}
+
+*{box-sizing:border-box}
+
+html{background:var(--edit-bg)!important}
+
+body{max-width:none!important;
+  margin:0!important;
+  padding:0!important;
+  background:var(--edit-bg)!important;
+  color:#111827!important;
+  font-family:Arial,Helvetica,sans-serif!important;
+}
+
+.topbar{
+  width:100vw!important;
+  min-height:68px!important;
+  margin:0 0 18px calc(50% - 50vw)!important;
+  padding:0 calc((100vw - min(1180px,calc(100vw - 40px)))/2)!important;
+  border:none!important;
+  border-radius:0!important;
+  background:var(--edit-gold)!important;
+  box-shadow:none!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+}
+
+.topbarBrand{
+  display:flex!important;
+  align-items:center!important;
+  gap:12px!important;
+  min-height:68px!important;
+}
+
+.topbarAccountIcon{
+  width:38px!important;
+  height:38px!important;
+  display:block!important;
+  object-fit:contain!important;
+}
+
+.topbarBrandText{
+  display:flex!important;
+  flex-direction:column!important;
+}
+
+.topbar h2,
+.topbar #who,
+.topbar .muted{
+  color:#fff!important;
+}
+
+.topbar h2{
+  font-size:14px!important;
+  font-weight:700!important;
+}
+
+.topbar #who{
+  margin-top:2px!important;
+  font-size:12px!important;
+}
+
+.topbar .btn,
+.topbar .btn2,
+.topbar a.btn2{
+  min-height:auto!important;
+  padding:0!important;
+  border:none!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#fff!important;
+  font-size:12px!important;
+  box-shadow:none!important;
+}
+
+.card{
+  border:1px solid var(--edit-border)!important;
+  border-radius:8px!important;
+  box-shadow:none!important;
+}
+
+.assessmentFilterGrid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:14px;
+  margin-top:16px;
+}
+
+.assessmentSelectRow{
+  display:grid;
+  grid-template-columns:minmax(0,2fr) minmax(240px,1fr);
+  gap:14px;
+  align-items:end;
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid var(--edit-border);
+}
+
+.filterActions{
+  display:flex;
+  flex-direction:column;
+}
+
+.filterButtonRow,
+.manageAssessmentButtons{
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.filterCount{
+  color:var(--edit-navy);
+  font-size:12px;
+  font-weight:800;
+}
+
+.dangerBtn{
+  color:#b91c1c!important;
+  border-color:#fecaca!important;
+}
+
+.filePickerShell{
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+  min-width:0!important;
+}
+
+.filePickerIcon{
+  width:28px!important;
+  height:28px!important;
+  display:block!important;
+  object-fit:contain!important;
+}
+
+.filePickerShell input[type="file"]{
+  margin:0!important;
+}
+
+.iconButton{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+}
+
+.iconButton img{
+  width:18px!important;
+  height:18px!important;
+  display:block!important;
+  object-fit:contain!important;
+}
+
+.downloadButton{
+  border-color:var(--edit-navy)!important;
+  background:var(--edit-navy)!important;
+  color:#fff!important;
+}
+
+input,textarea,select{
+  border-radius:4px!important;
+  border-color:#cfd7e3!important;
+}
+
+input:focus,textarea:focus,select:focus{
+  border-color:var(--edit-navy)!important;
+  box-shadow:0 0 0 3px rgba(27,22,72,.10)!important;
+}
+
+@media(max-width:980px){
+  .assessmentFilterGrid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:700px){
+  body{padding:12px!important}
+
+  .assessmentFilterGrid,
+  .assessmentSelectRow{
+    grid-template-columns:1fr;
+  }
+
+  .topbar{
+    padding:12px 16px!important;
+    flex-direction:column!important;
+    align-items:flex-start!important;
+  }
+
+  .topbar>div:last-child{
+    width:100%!important;
+    gap:14px!important;
+  }
+
+  .filePickerShell{
+    width:100%!important;
+  }
+
+  .iconButton{
+    width:100%!important;
+  }
+}
+
+
+/* ===== FINAL DELETE ICON BUTTON ===== */
+#deleteAssessmentBtn{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:8px !important;
+  border:1px solid #fecaca !important;
+  background:#ffffff !important;
+  color:#b91c1c !important;
+}
+
+#deleteAssessmentBtn img{
+  width:18px !important;
+  height:18px !important;
+  display:block !important;
+  flex:0 0 18px !important;
+  object-fit:contain !important;
+}
+
+#deleteAssessmentBtn:hover:not(:disabled){
+  background:#fff1f2 !important;
+  border-color:#fca5a5 !important;
+}
+
+#deleteAssessmentBtn:disabled{
+  opacity:.55 !important;
+  cursor:not-allowed !important;
+}
+
+
+.pageContainer .noteBox,
+.pageContainer .infoBox,
+.pageContainer .previewBox{
+ white-space:pre-wrap!important;
+}
+.pageContainer .noteBox ul,
+.pageContainer .noteBox ol{
+ margin:8px 0 8px 22px!important;
+}
+
 </style>
 </head>
 
 <body>
 
   <div class="topbar">
-    <div>
-      <h2 style="margin:0;">Practice Online – Edit Assessment</h2>
-      <div class="muted" id="who">Checking login...</div>
+    <div class="topbarBrand">
+      <img class="topbarAccountIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="Account" />
+      <div class="topbarBrandText">
+        <h2 style="margin:0;">Practice Online</h2>
+        <div class="muted" id="who">Edit Assessment</div>
+      </div>
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <a class="btn2" href="admin-dashboard.html">Dashboard</a>
@@ -306,14 +571,37 @@
     <div class="qhead">
       <div>
         <h3 style="margin:0;">Find an assessment to edit</h3>
-        <div class="muted tiny" style="margin-top:6px;">Load an existing assessment, then edit it with the same tools used on the add page.</div>
+        
       </div>
       <div id="availabilityPill" class="pill">No assessment loaded</div>
     </div>
 
-    <div class="row">
+    <div class="assessmentFilterGrid">
       <div>
-        <label>Filter by grade</label>
+        <label>Search title or topic</label>
+        <input id="searchBox" />
+      </div>
+
+      <div>
+        <label>Assessment code</label>
+        <input id="assessmentCodeFilter" />
+      </div>
+
+      <div>
+        <label>Content type</label>
+        <select id="contentTypeFilter">
+          <option value="">All content types</option>
+          <option value="quiz">Quiz</option>
+          <option value="activity">Activity</option>
+          <option value="homework">Homework</option>
+          <option value="assignment">Assignment</option>
+          <option value="gradeChallenge">Grade Challenge</option>
+          <option value="weeklyChallenge">Challenge of the Week</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Grade</label>
         <select id="gradeFilter">
           <option value="">All grades</option>
           <option value="8">Grade 8</option>
@@ -323,25 +611,63 @@
           <option value="12">Grade 12</option>
         </select>
       </div>
+
       <div>
-        <label>Search by code, topic or title</label>
-        <input id="searchBox" placeholder="Type to search..." />
+        <label>Difficulty</label>
+        <select id="difficultyFilter">
+          <option value="">All difficulty levels</option>
+          <option value="easy">Easy</option>
+          <option value="moderate">Moderate</option>
+          <option value="hard">Hard</option>
+        </select>
       </div>
+
+      <div>
+        <label>Created date</label>
+        <select id="createdDateFilter">
+          <option value="">Any date</option>
+          <option value="today">Today</option>
+          <option value="thisWeek">This week</option>
+          <option value="lastWeek">Last week</option>
+          <option value="lastMonth">Last month</option>
+          <option value="month">Choose a month</option>
+        </select>
+      </div>
+
+      <div id="createdMonthWrap" class="hide">
+        <label>Month</label>
+        <input id="createdMonthFilter" type="month" />
+      </div>
+
+      <div class="filterActions">
+        <label>&nbsp;</label>
+        <div class="filterButtonRow">
+          <button class="smallbtn" id="clearAssessmentFiltersBtn" type="button">Clear Filters</button>
+          <span class="filterCount" id="assessmentFilterCount">0 assessments</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="assessmentSelectRow">
       <div>
         <label>Select assessment</label>
         <select id="assessmentSelect">
           <option value="">Loading...</option>
         </select>
       </div>
+
       <div>
         <label>Manage</label>
-        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+        <div class="manageAssessmentButtons">
           <button class="smallbtn" id="toggleFreezeBtn" type="button" disabled>Make Unavailable</button>
-          <button class="smallbtn" id="deleteAssessmentBtn" type="button" disabled>Delete</button>
+          <button class="smallbtn dangerBtn iconButton" id="deleteAssessmentBtn" type="button" disabled>
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781654917/delete_suc2ec.svg" alt="" aria-hidden="true" />
+            <span>Delete Assessment</span>
+          </button>
         </div>
       </div>
     </div>
-    <div class="muted tiny" id="availabilityNote" style="margin-top:8px;">Select an assessment to edit.</div>
+  
   </div>
 
   <div class="card">
@@ -360,17 +686,17 @@
 
       <div>
         <label>Topic (type it)</label>
-        <input id="topic" placeholder="e.g. Algebra" />
+        <input id="topic" />
       </div>
 
       <div>
         <label>Time Limit (minutes)</label>
-        <input id="timeLimit" type="number" min="1" max="180" value="10" placeholder="e.g. 10" />
+        <input id="timeLimit" type="number" min="1" max="180" value="10" />
       </div>
 
       <div>
         <label>Assessment Title</label>
-        <input id="title" placeholder="e.g. Moderate : Quiz 1" />
+        <input id="title" />
       </div>
 
       <div>
@@ -380,7 +706,7 @@
           <option value="moderate" selected>Moderate</option>
           <option value="hard">Hard</option>
         </select>
-        <div class="muted tiny">Labels the whole assessment: Easy / Moderate / Hard.</div>
+
       </div>
 
       <div>
@@ -389,13 +715,13 @@
           <option value="paper1" selected>Paper 1</option>
           <option value="paper2">Paper 2</option>
         </select>
-        <div class="muted tiny">Example: Financial Mathematics = Paper 1</div>
+
       </div>
 
       <div>
         <label>Assessment Code</label>
         <input id="assessmentCode" value="Generated automatically when saved" readonly />
-        <div class="muted tiny">Example: MAT11-P1-0001</div>
+       
       </div>
 
       <div>
@@ -404,13 +730,13 @@
           <option value="standard" selected>Standard (Free)</option>
           <option value="premium">Premium (Paid)</option>
         </select>
-        <div class="muted tiny">Standard is available to everyone. Premium requires paid access.</div>
+  
       </div>
 
       <div id="accessFeeWrap" class="hide">
         <label>Access Fee (R)</label>
-        <input id="accessFee" type="number" min="0" step="0.01" value="0" placeholder="e.g. 50" />
-        <div class="muted tiny">Use 0 when premium access is covered by a subscription.</div>
+        <input id="accessFee" type="number" min="0" step="0.01" value="0" />
+
       </div>
 
       <div>
@@ -420,25 +746,25 @@
           <option value="now">Publish Now</option>
           <option value="schedule">Schedule Publish</option>
         </select>
-        <div class="muted tiny">Draft is visible only to admin/editor/tester. Publish makes it visible to learners.</div>
+ 
       </div>
 
       <div id="publishAtWrap" class="hide">
         <label>Publish Date & Time</label>
         <input id="publishAt" type="datetime-local" />
-        <div class="muted tiny">When this date/time arrives, the assessment will go live automatically.</div>
+
       </div>
 
       <div>
         <label>Available From (optional)</label>
         <input id="availableFrom" type="datetime-local" />
-        <div class="muted tiny">Learners can only open the assessment from this date/time.</div>
+      
       </div>
 
       <div>
         <label>Available Until (optional)</label>
         <input id="availableUntil" type="datetime-local" />
-        <div class="muted tiny">After this date/time, learners can no longer open the assessment.</div>
+       
       </div>
     </div>
 
@@ -446,11 +772,11 @@
       <input id="sendPublishEmail" type="checkbox" />
       <label for="sendPublishEmail" style="margin:0; width:auto; font-weight:700;">Send email to students when published</label>
     </div>
-    <div class="muted tiny" style="margin-top:6px;">Untick means no learner email will be sent unless you choose it.</div>
+  
 
     <div class="infoBox">
       <b>Assessment Instructions (optional)</b>
-      <textarea id="instructions" rows="3" placeholder="Example: Answer all questions. Use $x^2$ form for algebra answers. No calculators."></textarea>
+      <textarea id="instructions" rows="3"></textarea>
 
       <div class="helpLine muted tiny">
         Type math using LaTeX: <b>$x^2$</b>, <b>$\frac{a}{b}$</b>, <b>$\sqrt{x}$</b>, <b>$(x+1)^2$</b>
@@ -467,8 +793,7 @@
     <div class="qhead">
       <div>
         <h3 style="margin:0;">Blocks</h3>
-        <div class="muted tiny" style="margin-top:6px;">
-          Drag cards to reorder. Use “New Question Group” to start Question 2, Question 3, etc. Use $...$ for inline math.
+        
         </div>
       </div>
     </div>
@@ -484,88 +809,47 @@
     </div>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; align-items:center;">
-      <input id="uploadFile" type="file" accept=".txt" style="max-width:260px;" />
-      <button class="smallbtn" id="uploadBtn" type="button">Upload & Auto Fill</button>
+      <div class="filePickerShell">
+        <img class="filePickerIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939097/upload_c8eg6o.svg" alt="" aria-hidden="true" />
+        <input id="uploadFile" type="file" accept=".txt" style="max-width:260px;" />
+      </div>
+      <button class="smallbtn iconButton" id="uploadBtn" type="button">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939345/open-open-a-file_yhdyq4.svg" alt="" aria-hidden="true" />
+        <span>Upload & Auto Fill</span>
+      </button>
     </div>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center;">
-      <input id="batchFiles" type="file" accept=".txt" multiple style="max-width:260px;" />
-      <button class="smallbtn" id="batchUploadBtn" type="button">Batch Upload .txt Files</button>
+      <div class="filePickerShell">
+        <img class="filePickerIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939097/upload_c8eg6o.svg" alt="" aria-hidden="true" />
+        <input id="batchFiles" type="file" accept=".txt" multiple style="max-width:260px;" />
+      </div>
+      <button class="smallbtn iconButton" id="batchUploadBtn" type="button">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939345/open-open-a-file_yhdyq4.svg" alt="" aria-hidden="true" />
+        <span>Batch Upload .txt Files</span>
+      </button>
     </div>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center;">
-      <button class="smallbtn" id="downloadTxtBtn" type="button">Download TXT</button>
-      <input id="overrideFile" type="file" accept=".txt" style="max-width:260px;" />
-      <button class="smallbtn" id="overrideTxtBtn" type="button">Override From TXT</button>
+      <button class="smallbtn iconButton downloadButton" id="downloadTxtBtn" type="button">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784940092/file-download_h2gyqh.svg" alt="" aria-hidden="true" />
+        <span>Download TXT</span>
+      </button>
+      <div class="filePickerShell">
+        <img class="filePickerIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939097/upload_c8eg6o.svg" alt="" aria-hidden="true" />
+        <input id="overrideFile" type="file" accept=".txt" style="max-width:260px;" />
+      </div>
+      <button class="smallbtn iconButton" id="overrideTxtBtn" type="button">
+        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939345/open-open-a-file_yhdyq4.svg" alt="" aria-hidden="true" />
+        <span>Override From TXT</span>
+      </button>
     </div>
-    <div class="muted tiny" style="margin-top:6px;">
-      Download exports the selected assessment to the modern TXT format. Override replaces the quiz content but keeps the same assessment record, created date, and list order.
+    
     </div>
 
-    <div class="muted tiny" style="margin-top:6px;">
-      Upload a <b>.txt</b> file in this format:
+    
       <br />
-      TITLE: Moderate : Quiz 1
-      <br />
-      GRADE: 11
-      <br />
-      TOPIC: Sequences
-      <br />
-      TIME_LIMIT: 20
-      <br />
-      DIFFICULTY: moderate
-      <br />
-      PAPER: paper1
-      <br />
-      ACCESS_LEVEL: standard
-      <br />
-      ACCESS_FEE: 0
-      <br />
-      SEND_EMAIL: false
-      <br /><br />
-      NOTE: Consider the sequence...
-      <br />
-      QUESTION: What is 2+2?
-      <br />
-      A: 3
-      <br />
-      B: 4
-      <br />
-      C: 5
-      <br />
-      D: 6
-      <br />
-      ANSWER: B
-      <br /><br />
-      Or for typed answers:
-      <br />
-      QUESTION: x^2 - 5x + 6 = 0
-      <br />
-      TYPE: text
-      <br />
-      ANSWER: 2|3
-      <br />
-      POINTS: 2
-      <br />
-      SOLUTION:
-      <br />
-      Step 1: Factorise the quadratic
-      <br />
-      (x - 2)(x - 3) = 0
-      <br /><br />
-      Step 2: Solve each factor
-      <br />
-      x = 2 or x = 3
-      <br /><br />
-      Final Answer: x = 2 or x = 3
-      <br /><br />
-      <b>Important numbering rule:</b>
-      <br />
-      Use numbering in <b>NOTE:</b> lines like <b>NOTE: 1.1 Consider the sequence...</b>
-      <br />
-      Do <b>not</b> type numbering inside <b>QUESTION:</b> lines.
-      <br />
-      Example: <b>QUESTION: Write down the next TWO terms...</b>
+      
     </div>
 
     <hr>
@@ -583,7 +867,7 @@
     <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
       <div>
         <h3 style="margin:0;">Full Learner Preview</h3>
-        <div class="muted tiny">This preview now mirrors the attempt layout as closely as possible so you can catch errors before saving.</div>
+        
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="smallbtn" id="previewAttemptModeBtn" type="button">Attempt Preview</button>
@@ -660,6 +944,14 @@
     const questionsWrap = document.getElementById("questionsWrap");
     const gradeFilterEl = document.getElementById("gradeFilter");
     const searchBoxEl = document.getElementById("searchBox");
+    const assessmentCodeFilterEl = document.getElementById("assessmentCodeFilter");
+    const contentTypeFilterEl = document.getElementById("contentTypeFilter");
+    const difficultyFilterEl = document.getElementById("difficultyFilter");
+    const createdDateFilterEl = document.getElementById("createdDateFilter");
+    const createdMonthFilterEl = document.getElementById("createdMonthFilter");
+    const createdMonthWrap = document.getElementById("createdMonthWrap");
+    const clearAssessmentFiltersBtn = document.getElementById("clearAssessmentFiltersBtn");
+    const assessmentFilterCount = document.getElementById("assessmentFilterCount");
     const assessmentSelectEl = document.getElementById("assessmentSelect");
     const toggleFreezeBtn = document.getElementById("toggleFreezeBtn");
     const deleteAssessmentBtn = document.getElementById("deleteAssessmentBtn");
@@ -1539,7 +1831,7 @@ function escapeHtml(str){
           return `
             <div class="q" data-scorable="1">
               ${questionAndImageHtml}
-              <input class="textAnswer" id="previewTxt${i}" placeholder="Type your answer" autocomplete="off" disabled />
+              <input class="textAnswer" id="previewTxt${i}" autocomplete="off" disabled />
               ${hint ? `<div class="hint">Hint: <span class="hintText">${escapeHtml(hint)}</span></div>` : ``}
               ${currentFullPreviewMode === 'review' ? formatSolutionHtml(solution) : `<div class="solutionHolder hidden">${formatSolutionHtml(solution)}</div>`}
             </div>
@@ -1675,8 +1967,34 @@ function escapeHtml(str){
       }
       loadAssessmentIntoEditor(id);
     });
-    gradeFilterEl?.addEventListener("change", renderAssessmentDropdown);
-    searchBoxEl?.addEventListener("input", renderAssessmentDropdown);
+    [
+      gradeFilterEl,
+      contentTypeFilterEl,
+      difficultyFilterEl,
+      createdDateFilterEl,
+      createdMonthFilterEl
+    ].forEach(element => {
+      element?.addEventListener("change", renderAssessmentDropdown);
+    });
+
+    [
+      searchBoxEl,
+      assessmentCodeFilterEl
+    ].forEach(element => {
+      element?.addEventListener("input", renderAssessmentDropdown);
+    });
+
+    clearAssessmentFiltersBtn?.addEventListener("click", () => {
+      gradeFilterEl.value = "";
+      searchBoxEl.value = "";
+      assessmentCodeFilterEl.value = "";
+      contentTypeFilterEl.value = "";
+      difficultyFilterEl.value = "";
+      createdDateFilterEl.value = "";
+      createdMonthFilterEl.value = "";
+      createdMonthWrap.classList.add("hide");
+      renderAssessmentDropdown();
+    });
 
     toggleFreezeBtn?.addEventListener("click", async ()=>{
       if (!currentQuiz?._id) return;
@@ -1810,7 +2128,7 @@ function escapeHtml(str){
           </div>
 
           <label>Text (supports math)</label>
-          <textarea class="noteText" rows="3" placeholder="Example: Given below is the number set $\\{2,4,6,8\\}$..."></textarea>
+          <textarea class="noteText" rows="3"></textarea>
 
           <div class="previewRow">
             <div class="prevTitle">Live Preview</div>
@@ -1851,18 +2169,18 @@ function escapeHtml(str){
 
             <div class="fieldQuestion">
               <label>Question Text (supports math)</label>
-              <textarea class="qText" rows="3" placeholder="Example: Simplify $x^2 + 2x + 1$"></textarea>
+              <textarea class="qText" rows="3"></textarea>
             </div>
           </div>
 
           <label>Hint (supports math)</label>
-          <input class="qHint" placeholder="Example: Use $(a+b)^2$ identity" />
+          <input class="qHint" />
 
           <label>Marks (points)</label>
           <input class="qPoints" type="number" min="1" step="1" value="1" />
 
           <label>Solution / Workings (optional)</label>
-          <textarea class="qSolution" rows="4" placeholder="Example: Expand $(x+1)^2 = x^2 + 2x + 1$, so the simplified form is $x^2 + 2x + 1$."></textarea>
+          <textarea class="qSolution" rows="4"></textarea>
 
           <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px;">
             <b style="font-size:13px;">Options</b>
@@ -1871,8 +2189,7 @@ function escapeHtml(str){
 
           <div class="optsWrap"></div>
 
-          <div class="muted tiny" style="margin-top:8px;">
-             Tick <b>Correct</b> for one or more options (multi-select).
+          
           </div>
 
           <div class="previewRow">
@@ -1901,7 +2218,7 @@ function escapeHtml(str){
               <span class="moveBtns"><button type="button" class="smallbtn moveUpBtn">↑</button><button type="button" class="smallbtn moveDownBtn">↓</button></span>
               <div class="headMeta">
                 <b class="cardLabel examMainLabel">QUESTION ${id}</b>
-                <div class="muted tiny">Starts a new main question heading such as QUESTION 2.</div>
+               
               </div>
             </div>
             <button type="button" class="smallbtn removeBtn">Remove</button>
@@ -1923,14 +2240,14 @@ function escapeHtml(str){
               <span class="moveBtns"><button type="button" class="smallbtn moveUpBtn">↑</button><button type="button" class="smallbtn moveDownBtn">↓</button></span>
               <div class="headMeta">
                 <b class="cardLabel sectionNumberLabel">1.1</b>
-                <div class="muted tiny">Section / stem line such as 2.1 or 2.2</div>
+               
               </div>
             </div>
             <button type="button" class="smallbtn removeBtn">Remove</button>
           </div>
 
           <label>Section / Stem Text (supports math)</label>
-          <textarea class="sectionText" rows="3" placeholder="Example: Given the arithmetic series: $5+7+9+\dots+93$"></textarea>
+          <textarea class="sectionText" rows="3"></textarea>
 
           <div class="previewRow">
             <div class="prevTitle">Live Preview</div>
@@ -1966,7 +2283,7 @@ function escapeHtml(str){
           <div class="primaryFields">
             <div class="fieldQuestion">
               <label>Question Text (supports math)</label>
-              <textarea class="qText" rows="3" placeholder="Example: Solve $\\frac{2x}{5}=4$"></textarea>
+              <textarea class="qText" rows="3"></textarea>
             </div>
 
             <div class="fieldImage">
@@ -1976,18 +2293,18 @@ function escapeHtml(str){
           </div>
 
           <label>Hint (supports math)</label>
-          <input class="qHint" placeholder="Example: Multiply both sides by 5" />
+          <input class="qHint" />
 
           <label>Marks (points)</label>
           <input class="qPoints" type="number" min="1" step="1" value="1" />
 
           <label>Solution / Workings (optional)</label>
-          <textarea class="qSolution" rows="4" placeholder="Example: Multiply both sides by 5: $2x=20$. Divide by 2: $x=10$."></textarea>
+          <textarea class="qSolution" rows="4"></textarea>
 
           <div class="grid2">
             <div class="singleCorrectAnswerWrap">
               <label>Correct Answer (supports math)</label>
-              <input class="correctText" placeholder="Example: 10" />
+              <input class="correctText" />
             </div>
             <div>
               <label>Check Mode</label>
@@ -2673,7 +2990,7 @@ function escapeHtml(str){
           <span class="optCorrectText">Correct</span>
         </div>
 
-        <input class="optInput" placeholder="Option" />
+        <input class="optInput" />
         <button type="button" class="smallbtn removeOptBtn">Remove</button>
       `;
 
@@ -3999,24 +4316,190 @@ function escapeHtml(str){
       toggleFreezeBtn.textContent = currentQuiz.isFrozen ? "Make Available" : "Make Unavailable";
     }
 
+    function startOfDay(date){
+      const value = new Date(date);
+      value.setHours(0, 0, 0, 0);
+      return value;
+    }
+
+    function startOfWeek(date){
+      const value = startOfDay(date);
+      const day = value.getDay();
+      const mondayOffset = day === 0 ? -6 : 1 - day;
+      value.setDate(value.getDate() + mondayOffset);
+      return value;
+    }
+
+    function getQuizCreatedDate(quiz){
+      const raw =
+        quiz?.createdAt ||
+        quiz?.created_at ||
+        quiz?.publishedAt ||
+        quiz?.updatedAt ||
+        "";
+
+      const parsed = raw ? new Date(raw) : null;
+      return parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
+    }
+
+    function matchesCreatedDateFilter(quiz, filterValue, monthValue){
+      if (!filterValue) return true;
+
+      const created = getQuizCreatedDate(quiz);
+      if (!created) return false;
+
+      const now = new Date();
+
+      if (filterValue === "today") {
+        return created >= startOfDay(now);
+      }
+
+      if (filterValue === "thisWeek") {
+        return created >= startOfWeek(now);
+      }
+
+      if (filterValue === "lastWeek") {
+        const thisWeekStart = startOfWeek(now);
+        const lastWeekStart = new Date(thisWeekStart);
+        lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+        return created >= lastWeekStart && created < thisWeekStart;
+      }
+
+      if (filterValue === "lastMonth") {
+        const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        return created >= lastMonthStart && created < thisMonthStart;
+      }
+
+      if (filterValue === "month") {
+        const match = String(monthValue || "").match(/^(\d{4})-(\d{2})$/);
+        if (!match) return true;
+
+        const year = Number(match[1]);
+        const month = Number(match[2]) - 1;
+
+        return (
+          created.getFullYear() === year &&
+          created.getMonth() === month
+        );
+      }
+
+      return true;
+    }
+
+    function formatAssessmentCreatedDate(quiz){
+      const created = getQuizCreatedDate(quiz);
+      if (!created) return "";
+
+      return created.toLocaleDateString("en-ZA", {
+        year: "numeric",
+        month: "short",
+        day: "2-digit"
+      });
+    }
+
+    function contentTypeLabel(value){
+      const labels = {
+        quiz: "Quiz",
+        activity: "Activity",
+        homework: "Homework",
+        assignment: "Assignment",
+        gradeChallenge: "Grade Challenge",
+        weeklyChallenge: "Challenge of the Week"
+      };
+
+      return labels[String(value || "").trim()] || "Quiz";
+    }
+
     function renderAssessmentDropdown(){
+      const selectedId = assessmentSelectEl.value || currentQuiz?._id || "";
       const grade = String(gradeFilterEl.value || "").trim();
       const search = String(searchBoxEl.value || "").trim().toLowerCase();
-      const filtered = allQuizzes.filter(q => {
-        const gradeOk = !grade || String(q.grade) === grade;
-        const searchOk = !search ||
-          String(q.title || "").toLowerCase().includes(search) ||
-          String(q.topic || "").toLowerCase().includes(search) ||
-          String(q.assessmentCode || "").toLowerCase().includes(search);
-        return gradeOk && searchOk;
-      });
-      assessmentSelectEl.innerHTML = '<option value="">Select assessment</option>' + filtered.map(q => {
-        const code = q.assessmentCode ? `${escapeHtml(q.assessmentCode)} • ` : "";
-        const access = normalizeQuizAccessLevel(q.accessLevel) === "premium" ? " • Premium" : " • Standard";
-        const label = `${code}Grade ${q.grade || ""} • ${escapeHtml(q.topic || "General")} • ${escapeHtml(q.title || "Assessment")}${access}${q.isFrozen ? " • Unavailable" : ""}`;
-        return `<option value="${escapeAttr(q._id)}">${label}</option>`;
-      }).join("");
-      if (!filtered.length) assessmentSelectEl.innerHTML = '<option value="">No matching assessments</option>';
+      const code = String(assessmentCodeFilterEl.value || "").trim().toLowerCase();
+      const contentType = String(contentTypeFilterEl.value || "").trim();
+      const difficulty = String(difficultyFilterEl.value || "").trim().toLowerCase();
+      const createdDate = String(createdDateFilterEl.value || "").trim();
+      const createdMonth = String(createdMonthFilterEl.value || "").trim();
+
+      createdMonthWrap.classList.toggle("hide", createdDate !== "month");
+
+      const filtered = allQuizzes
+        .filter(q => {
+          const gradeOk = !grade || String(q.grade) === grade;
+          const contentTypeOk =
+            !contentType ||
+            String(q.contentType || "quiz") === contentType;
+          const difficultyOk =
+            !difficulty ||
+            String(q.difficulty || "").toLowerCase() === difficulty;
+          const codeOk =
+            !code ||
+            String(q.assessmentCode || "").toLowerCase().includes(code);
+          const searchOk =
+            !search ||
+            String(q.title || "").toLowerCase().includes(search) ||
+            String(q.topic || "").toLowerCase().includes(search);
+          const createdOk = matchesCreatedDateFilter(
+            q,
+            createdDate,
+            createdMonth
+          );
+
+          return (
+            gradeOk &&
+            contentTypeOk &&
+            difficultyOk &&
+            codeOk &&
+            searchOk &&
+            createdOk
+          );
+        })
+        .sort((a, b) => {
+          const aDate = getQuizCreatedDate(a)?.getTime() || 0;
+          const bDate = getQuizCreatedDate(b)?.getTime() || 0;
+          return bDate - aDate;
+        });
+
+      assessmentFilterCount.textContent =
+        `${filtered.length} assessment${filtered.length === 1 ? "" : "s"}`;
+
+      assessmentSelectEl.innerHTML =
+        '<option value="">Select assessment</option>' +
+        filtered.map(q => {
+          const assessmentCode = q.assessmentCode
+            ? `${escapeHtml(q.assessmentCode)} • `
+            : "";
+          const access =
+            normalizeQuizAccessLevel(q.accessLevel) === "premium"
+              ? "Premium"
+              : "Standard";
+          const createdLabel = formatAssessmentCreatedDate(q);
+          const label = [
+            `${assessmentCode}${contentTypeLabel(q.contentType)}`,
+            `Grade ${q.grade || ""}`,
+            escapeHtml(q.difficulty || "Moderate"),
+            escapeHtml(q.topic || "General"),
+            escapeHtml(q.title || "Assessment"),
+            access,
+            createdLabel ? `Created ${createdLabel}` : "",
+            q.isFrozen ? "Unavailable" : ""
+          ].filter(Boolean).join(" • ");
+
+          return `<option value="${escapeAttr(q._id)}">${label}</option>`;
+        })
+        .join("");
+
+      if (!filtered.length) {
+        assessmentSelectEl.innerHTML =
+          '<option value="">No matching assessments</option>';
+      }
+
+      if (
+        selectedId &&
+        filtered.some(q => String(q._id) === String(selectedId))
+      ) {
+        assessmentSelectEl.value = selectedId;
+      }
     }
 
     async function loadAssessmentList(){
@@ -4261,5 +4744,6 @@ function escapeHtml(str){
     });
   </script>
 
+</div>
 </body>
 </html>
