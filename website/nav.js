@@ -31,207 +31,54 @@
     const style = document.createElement("style");
     style.id = "navInjectedStyles";
     style.textContent = `
-      .top-shell{
-        width:100%;
-        background:#fff;
-        border-bottom:1px solid #e5e7eb;
-        box-shadow:0 2px 10px rgba(0,0,0,.04);
+      .top-shell,
+      .nav-profile-left,
+      .nav-actions-right,
+      .nav-round-btn,
+      .nav-menu-dropdown,
+      .nav-account-icon-wrap,
+      .nav-account-icon,
+      .nav-icon,
+      .nav-menu-link img,
+      .nav-menu-logout img{
+        display:none !important;
       }
 
-      .top-shell-inner{
-        min-height:70px;
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:16px;
-        padding:10px 18px;
-      }
-
-      .nav-profile-left{
-        display:flex;
-        align-items:center;
-        gap:12px;
-        min-width:0;
-        text-decoration:none;
-      }
-
-      .nav-account-icon-wrap{
-        width:44px;
-        height:44px;
-        border-radius:999px;
-        border:2px solid #dbeafe;
-        background:#f8fafc;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        flex:0 0 auto;
-      }
-
-      .nav-account-icon{
-        width:26px;
-        height:26px;
-        object-fit:contain;
-        filter: invert(37%) sepia(86%) saturate(1498%) hue-rotate(190deg) brightness(96%) contrast(95%);
-      }
-
-      .nav-profile-meta{
-        min-width:0;
-        display:flex;
-        flex-direction:column;
-        line-height:1.15;
-      }
-
-      .nav-profile-name{
-        font-family:Inter,Arial,sans-serif;
-        font-size:15px;
-        font-weight:700;
-        color:#111827;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        max-width:240px;
-      }
-
-      .nav-profile-sub{
-        font-family:Inter,Arial,sans-serif;
-        font-size:12px;
-        color:#64748b;
-        margin-top:4px;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        max-width:240px;
-        text-transform:capitalize;
-      }
-
-      .nav-actions-right{
-        display:flex;
+      .nav-links,
+      .mobile-menu{
         align-items:center;
         gap:10px;
-        position:relative;
       }
 
-      .nav-round-btn{
-        width:42px;
-        height:42px;
-        border:none;
-        border-radius:12px;
-        background:#fff;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        cursor:pointer;
-        transition:.2s ease;
-      }
-
-      .nav-round-btn:hover{
-        background:#f8fafc;
-      }
-
-      .nav-round-btn img{
-        width:22px;
-        height:22px;
-        object-fit:contain;
-        filter: invert(37%) sepia(86%) saturate(1498%) hue-rotate(190deg) brightness(96%) contrast(95%);
-      }
-
-      .nav-menu-dropdown{
-        position:absolute;
-        top:54px;
-        right:0;
-        width:270px;
-        background:#fff;
-        border:1px solid #e5e7eb;
-        border-radius:14px;
-        box-shadow:0 18px 40px rgba(0,0,0,.14);
-        padding:8px;
-        display:none;
-        z-index:1200;
-      }
-
-      .nav-menu-dropdown.open{
-        display:block;
-      }
-
+      .nav-link,
       .nav-menu-link,
       .nav-menu-logout{
-        width:100%;
-        display:flex;
+        display:inline-flex;
         align-items:center;
-        gap:10px;
-        border:none;
-        background:#fff;
+        justify-content:center;
+        gap:0;
         text-decoration:none;
-        color:#0f172a;
-        font-family:Inter,Arial,sans-serif;
-        font-size:14px;
-        font-weight:500;
-        padding:11px 12px;
-        border-radius:10px;
+        border:none;
+        background:transparent;
+        color:inherit;
+        font-family:Arial,Helvetica,sans-serif;
+        font-size:12px;
+        font-weight:700;
+        padding:0;
         cursor:pointer;
-      }
-
-      .nav-menu-link:hover,
-      .nav-menu-logout:hover{
-        background:#f8fafc;
       }
 
       .nav-menu-link.active{
-        background:#eef4ff;
-        color:#1d4ed8;
-        font-weight:700;
+        text-decoration:underline;
+        text-underline-offset:4px;
       }
 
-      .nav-menu-link img,
-      .nav-menu-logout img{
-        width:18px;
-        height:18px;
-        object-fit:contain;
-      }
-
-      .nav-menu-divider{
-        height:1px;
-        background:#e5e7eb;
-        margin:8px 0;
-      }
-
-      .nav-mobile-link{
-        display:flex;
-        align-items:center;
-        gap:10px;
-      }
-
-      .nav-link{
-        display:flex;
-        align-items:center;
-        gap:10px;
-        text-decoration:none;
-      }
-
-      .nav-icon{
-        width:18px;
-        height:18px;
-        object-fit:contain;
-      }
-
-      .btnTop{
-        display:flex;
-        align-items:center;
-        gap:10px;
-      }
-
-      @media (max-width: 768px){
-        .top-shell-inner{
-          padding:10px 12px;
-        }
-
-        .nav-profile-name{
-          max-width:140px;
-        }
-
-        .nav-profile-sub{
-          max-width:140px;
-        }
+      .mobile-menu .nav-link,
+      .mobile-menu .nav-menu-link,
+      .mobile-menu .nav-menu-logout{
+        width:100%;
+        justify-content:flex-start;
+        padding:10px 0;
       }
     `;
     document.head.appendChild(style);
@@ -285,17 +132,16 @@
     });
   }
 
-  function createNavLink({ href, text, icon, active }) {
+  function createNavLink({ href, text, active }) {
     const link = document.createElement("a");
     link.href = href;
     link.className = "nav-link nav-menu-link";
 
     if (active) link.classList.add("active");
 
-    link.innerHTML = `
-      <img src="${icon}" alt="" class="nav-icon">
-      <span>${text}</span>
-    `;
+    const label = document.createElement("span");
+    label.textContent = text;
+    link.appendChild(label);
 
     return link;
   }
@@ -304,12 +150,7 @@
     const btn = document.createElement("button");
     btn.className = "nav-menu-logout";
     btn.type = "button";
-
-    btn.innerHTML = `
-      <img src="${ICONS.logout}" alt="" class="nav-icon">
-      <span>Logout</span>
-    `;
-
+    btn.textContent = "Logout";
     btn.addEventListener("click", logout);
     return btn;
   }
@@ -360,119 +201,35 @@
     clearNavLinks(navRoot);
 
     if (navRoot.id === "desktopNav") {
-      const shell = document.createElement("div");
-      shell.className = "top-shell";
+      links.forEach((item) => {
+        const hrefFile = item.href.toLowerCase().split("/").pop();
 
-      const announcementLink =
-        user.role === "learner" ? "announcements.html" : "admin-announcements.html";
+        let active = hrefFile === currentFile;
 
-      shell.innerHTML = `
-        <div class="top-shell-inner">
-          <a href="profile.html" class="nav-profile-left">
-            <div class="nav-account-icon-wrap">
-              <img src="${ICONS.account}" alt="Account" class="nav-account-icon">
-            </div>
+        if (
+          hrefFile === "admin-announcements.html" &&
+          adminAnnouncementAliases.includes(currentFile)
+        ) {
+          active = true;
+        }
 
-            <div class="nav-profile-meta">
-              <div class="nav-profile-name">${user.username}</div>
-              <div class="nav-profile-sub">${user.accountType}</div>
-            </div>
-          </a>
+        if (
+          hrefFile === "announcements.html" &&
+          learnerAnnouncementAliases.includes(currentFile)
+        ) {
+          active = true;
+        }
 
-          <div class="nav-actions-right">
-            <a href="${announcementLink}" class="nav-round-btn" aria-label="Announcements" title="Announcements">
-              <img src="${ICONS.announcements}" alt="Announcements">
-            </a>
+        navRoot.appendChild(
+          createNavLink({
+            href: item.href,
+            text: item.text,
+            active,
+          })
+        );
+      });
 
-            <button id="topMenuBtn" class="nav-round-btn" type="button" aria-label="Menu" title="Menu">
-              <img src="${ICONS.menu}" alt="Menu">
-            </button>
-
-            <div id="topMenuDropdown" class="nav-menu-dropdown"></div>
-          </div>
-        </div>
-      `;
-
-      navRoot.appendChild(shell);
-
-      const dropdown = shell.querySelector("#topMenuDropdown");
-      const topMenuBtn = shell.querySelector("#topMenuBtn");
-
-      if (dropdown) {
-        const quickProfile = createNavLink({
-          href: "profile.html",
-          text: "My Profile",
-          icon: ICONS.profile,
-          active: currentFile === "profile.html",
-        });
-
-        const quickHelp = createNavLink({
-          href: "support.html",
-          text: "Help",
-          icon: ICONS.support,
-          active: currentFile === "support.html",
-        });
-
-        dropdown.appendChild(quickProfile);
-        dropdown.appendChild(quickHelp);
-
-        const divider = document.createElement("div");
-        divider.className = "nav-menu-divider";
-        dropdown.appendChild(divider);
-
-        links.forEach((item) => {
-          const hrefFile = item.href.toLowerCase().split("/").pop();
-
-          let active = hrefFile === currentFile;
-
-          if (
-            hrefFile === "admin-announcements.html" &&
-            adminAnnouncementAliases.includes(currentFile)
-          ) {
-            active = true;
-          }
-
-          if (
-            hrefFile === "announcements.html" &&
-            learnerAnnouncementAliases.includes(currentFile)
-          ) {
-            active = true;
-          }
-
-          const alreadyAdded =
-            item.href === "profile.html" || item.href === "support.html";
-
-          if (!alreadyAdded) {
-            const link = createNavLink({
-              href: item.href,
-              text: item.text,
-              icon: item.icon,
-              active,
-            });
-            dropdown.appendChild(link);
-          }
-        });
-
-        const divider2 = document.createElement("div");
-        divider2.className = "nav-menu-divider";
-        dropdown.appendChild(divider2);
-
-        dropdown.appendChild(createLogoutButton());
-      }
-
-      if (topMenuBtn && dropdown) {
-        topMenuBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          dropdown.classList.toggle("open");
-        });
-
-        document.addEventListener("click", (e) => {
-          if (!dropdown.contains(e.target) && !topMenuBtn.contains(e.target)) {
-            dropdown.classList.remove("open");
-          }
-        });
-      }
-
+      navRoot.appendChild(createLogoutButton());
       return;
     }
 
@@ -499,7 +256,6 @@
         const link = createNavLink({
           href: item.href,
           text: item.text,
-          icon: item.icon,
           active,
         });
 
@@ -532,36 +288,36 @@
 
     if (role === "learner") {
       links = [
-        { href: "profile.html", text: "Profile", icon: ICONS.profile },
-        { href: "learner-quizzes.html", text: "Practice", icon: ICONS.practice },
-        { href: "results.html", text: "Results", icon: ICONS.results },
-        { href: "progress-dashboard.html", text: "Dashboard", icon: ICONS.dashboard },
-        { href: "announcements.html", text: "Announcements", icon: ICONS.announcements },
-        { href: "support.html", text: "Support", icon: ICONS.support },
+        { href: "profile.html", text: "Profile"},
+        { href: "learner-quizzes.html", text: "Practice"},
+        { href: "results.html", text: "Results"},
+        { href: "progress-dashboard.html", text: "Dashboard"},
+        { href: "announcements.html", text: "Announcements"},
+        { href: "support.html", text: "Support"},
       ];
     } else if (role === "editor") {
       links = [
-        { href: "profile.html", text: "Profile", icon: ICONS.profile },
-        { href: "learner-quizzes.html", text: "Practice", icon: ICONS.practice },
-        { href: "results.html", text: "Results", icon: ICONS.results },
-        { href: "progress-dashboard.html", text: "Dashboard", icon: ICONS.dashboard },
-        { href: "admin.html", text: "Admin", icon: ICONS.admin },
-        { href: "admin-announcements.html", text: "Announcements", icon: ICONS.announcements },
+        { href: "profile.html", text: "Profile"},
+        { href: "learner-quizzes.html", text: "Practice"},
+        { href: "results.html", text: "Results"},
+        { href: "progress-dashboard.html", text: "Dashboard"},
+        { href: "admin.html", text: "Admin"},
+        { href: "admin-announcements.html", text: "Announcements"},
       ];
     } else {
       links = [
-        { href: "profile.html", text: "Profile", icon: ICONS.profile },
-        { href: "learner-quizzes.html", text: "Practice", icon: ICONS.practice },
-        { href: "results.html", text: "Results", icon: ICONS.results },
-        { href: "progress-dashboard.html", text: "Dashboard", icon: ICONS.dashboard },
-        { href: "leaderboard.html", text: "Leaderboard", icon: ICONS.leaderboard },
-        { href: "admin.html", text: "Admin", icon: ICONS.admin },
-        { href: "admin-dashboard.html", text: "Admin Dashboard", icon: ICONS.dashboard },
-        { href: "admin-leaderboard.html", text: "Admin Stats", icon: ICONS.leaderboard },
-        { href: "admin-payments.html", text: "Payments", icon: ICONS.payments },
-        { href: "admin-announcements.html", text: "Announcements", icon: ICONS.announcements },
-        { href: "subscription.html", text: "Subscription", icon: ICONS.subscription },
-        { href: "support.html", text: "Support", icon: ICONS.support },
+        { href: "profile.html", text: "Profile"},
+        { href: "learner-quizzes.html", text: "Practice"},
+        { href: "results.html", text: "Results"},
+        { href: "progress-dashboard.html", text: "Dashboard"},
+        { href: "leaderboard.html", text: "Leaderboard"},
+        { href: "admin.html", text: "Admin"},
+        { href: "admin-dashboard.html", text: "Admin Dashboard"},
+        { href: "admin-leaderboard.html", text: "Admin Stats"},
+        { href: "admin-payments.html", text: "Payments"},
+        { href: "admin-announcements.html", text: "Announcements"},
+        { href: "subscription.html", text: "Subscription"},
+        { href: "support.html", text: "Support"},
       ];
     }
 
