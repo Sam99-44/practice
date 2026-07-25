@@ -20,8 +20,8 @@
      ✅ Available From / Available Until
      ✅ Send email to students checkbox (UNTICKED by default)
      ✅ Save draft sends NO learner email
-     ✅ Admin + editor + tester can publish
-     ✅ Admin + editor + tester can access this page
+     ✅ Admin + editor can publish
+     ✅ Admin + editor can access this page
      ✅ Add buttons moved to bottom
      ✅ Page stays open while working
      ✅ No forced logout except manual logout
@@ -2033,6 +2033,106 @@ hr{
   }
 }
 
+
+/* =====================================================================
+   FINAL FULL-WIDTH ADMIN LAYOUT + ADMIN/EDITOR ACCESS VISUALS
+   ===================================================================== */
+html,
+body{
+  width:100% !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  background:#f5f7fa !important;
+}
+
+body{
+  overflow-x:hidden !important;
+}
+
+/* Header starts at the very top and spans the full browser width. */
+.topbar{
+  width:100% !important;
+  max-width:none !important;
+  min-height:68px !important;
+  margin:0 0 18px 0 !important;
+  padding-left:max(20px, calc((100vw - 1500px) / 2)) !important;
+  padding-right:max(20px, calc((100vw - 1500px) / 2)) !important;
+  border-radius:0 !important;
+  background:#c9a227 !important;
+}
+
+/* Use more of the available screen width without touching page content. */
+body > .card{
+  width:calc(100% - 40px) !important;
+  max-width:1500px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+
+body > .card:first-of-type{
+  margin-top:0 !important;
+}
+
+body > .card:last-of-type{
+  margin-bottom:24px !important;
+}
+
+/* Notes, instructions and objectives keep their line-by-line structure. */
+.noteBox,
+.previewBox,
+.answerPreviewInstruction{
+  white-space:pre-wrap !important;
+}
+
+/* When note content contains real HTML bullet lists, display them vertically. */
+.noteBox ul,
+.noteBox ol,
+.previewBox ul,
+.previewBox ol{
+  display:block !important;
+  margin:8px 0 8px 24px !important;
+  padding-left:18px !important;
+}
+
+.noteBox li,
+.previewBox li{
+  display:list-item !important;
+  margin:5px 0 !important;
+  line-height:1.55 !important;
+}
+
+/* Keep long note and question content inside the full-width cards. */
+.noteBox,
+.qTextPaper,
+.qSectionText,
+.previewBox{
+  max-width:100% !important;
+  overflow-wrap:break-word !important;
+  word-break:normal !important;
+}
+
+@media(max-width:820px){
+  .topbar{
+    padding-left:16px !important;
+    padding-right:16px !important;
+  }
+
+  body > .card{
+    width:calc(100% - 24px) !important;
+  }
+}
+
+@media(max-width:560px){
+  .topbar{
+    margin-top:0 !important;
+  }
+
+  body > .card{
+    width:calc(100% - 20px) !important;
+  }
+}
+
 </style>
 </head>
 
@@ -3013,7 +3113,7 @@ function escapeHtml(str){
       }
 
       const role = String(me.role || "").toLowerCase();
-      if (!["admin", "editor", "tester"].includes(role)) {
+      if (!["admin", "editor"].includes(role)) {
         who.textContent = `Logged in as: ${me.username || "User"} (${me.role || "unknown"})`;
         saveBtn.disabled = true;
         publishBtn.disabled = true;
@@ -3022,14 +3122,14 @@ function escapeHtml(str){
       }
 
       currentRole = role;
-      canPublish = ["admin", "tester", "editor"].includes(role);
+      canPublish = ["admin", "editor"].includes(role);
 
       who.textContent = `Logged in as: ${me.username} (${me.role})`;
       saveBtn.disabled = false;
       publishBtn.disabled = !canPublish;
 
       if (!canPublish) {
-        publishBtn.title = "Admin, tester, and editor can publish assessments.";
+        publishBtn.title = "Admin and editor can publish assessments.";
       }
 
       setMsg("Ready to add learning content.", "ok");
@@ -5553,7 +5653,7 @@ function escapeHtml(str){
       }
 
       if (!canPublish) {
-        return setMsg("Only admin, tester, and editor can publish assessments.", "error");
+        return setMsg("Only admin and editor can publish assessments.", "error");
       }
 
       try{
