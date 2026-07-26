@@ -4966,6 +4966,126 @@ math-field.mathAnswerField,
     padding:7px 10px !important;
   }
 }
+
+
+/* ===== Inline Math Alignment Fix =====
+   Keeps question/note layout unchanged.
+   Only raises inline mathematics to align with surrounding text. */
+mjx-container[jax="SVG"]{
+  display:inline-block !important;
+  vertical-align:baseline !important;
+  position:relative !important;
+  top:-0.10em !important;
+  margin:0 .05em !important;
+  padding:0 !important;
+  line-height:1 !important;
+  font-size:1em !important;
+}
+mjx-container[jax="SVG"] svg{
+  vertical-align:0 !important;
+}
+
+
+
+
+/* ===== PERFECT INLINE MATH BASELINE =====
+   Applies only to inline maths inside question text, notes and options.
+   Question construction and layout remain unchanged. */
+.qText mjx-container[jax="SVG"],
+.qSectionText mjx-container[jax="SVG"],
+.noteBox mjx-container[jax="SVG"],
+.optText mjx-container[jax="SVG"],
+.hintText mjx-container[jax="SVG"]{
+  display:inline-block !important;
+  position:relative !important;
+  top:-0.07em !important;
+  margin:0 0.03em !important;
+  padding:0 !important;
+  vertical-align:baseline !important;
+  line-height:1 !important;
+  font-size:1em !important;
+  font-weight:400 !important;
+}
+
+.qText mjx-container[jax="SVG"] svg,
+.qSectionText mjx-container[jax="SVG"] svg,
+.noteBox mjx-container[jax="SVG"] svg,
+.optText mjx-container[jax="SVG"] svg,
+.hintText mjx-container[jax="SVG"] svg{
+  display:inline-block !important;
+  vertical-align:-0.08em !important;
+  overflow:visible !important;
+}
+
+/* Keep display equations unaffected */
+.qText mjx-container[display="true"],
+.qSectionText mjx-container[display="true"],
+.noteBox mjx-container[display="true"],
+.optText mjx-container[display="true"],
+.hintText mjx-container[display="true"]{
+  top:0 !important;
+  margin:.35rem 0 !important;
+  vertical-align:middle !important;
+}
+
+
+
+
+/* ===== NORMAL MATH WEIGHT FIX =====
+   Prevents older loaded quizzes from rendering letters too bold or oversized.
+   Keeps the approved inline alignment unchanged. */
+
+/* Normalise MathJax weight inside learner-facing text */
+.qText mjx-container[jax="SVG"],
+.qSectionText mjx-container[jax="SVG"],
+.noteBox mjx-container[jax="SVG"],
+.optText mjx-container[jax="SVG"],
+.hintText mjx-container[jax="SVG"],
+.paperMeta mjx-container[jax="SVG"]{
+  font-size:1em !important;
+  font-weight:400 !important;
+  color:#111827 !important;
+  opacity:1 !important;
+}
+
+/* Do not force thick strokes on ordinary mathematical letters */
+.qText mjx-container[jax="SVG"] svg *,
+.qSectionText mjx-container[jax="SVG"] svg *,
+.noteBox mjx-container[jax="SVG"] svg *,
+.optText mjx-container[jax="SVG"] svg *,
+.hintText mjx-container[jax="SVG"] svg *,
+.paperMeta mjx-container[jax="SVG"] svg *{
+  stroke-width:0 !important;
+}
+
+/* Keep the fraction bar visible without thickening variables */
+.qText mjx-container[jax="SVG"] line,
+.qSectionText mjx-container[jax="SVG"] line,
+.noteBox mjx-container[jax="SVG"] line,
+.optText mjx-container[jax="SVG"] line,
+.hintText mjx-container[jax="SVG"] line,
+.paperMeta mjx-container[jax="SVG"] line,
+.qText mjx-container[jax="SVG"] mjx-line,
+.qSectionText mjx-container[jax="SVG"] mjx-line,
+.noteBox mjx-container[jax="SVG"] mjx-line,
+.optText mjx-container[jax="SVG"] mjx-line,
+.hintText mjx-container[jax="SVG"] mjx-line,
+.paperMeta mjx-container[jax="SVG"] mjx-line{
+  stroke:#111827 !important;
+  stroke-width:1.2 !important;
+}
+
+/* Display equations may be slightly larger, but not bold */
+.qText mjx-container[display="true"],
+.qSectionText mjx-container[display="true"],
+.noteBox mjx-container[display="true"],
+.optText mjx-container[display="true"],
+.hintText mjx-container[display="true"],
+.paperMeta mjx-container[display="true"]{
+  font-size:1.05em !important;
+  font-weight:400 !important;
+}
+
 </style>
 </head>
 
