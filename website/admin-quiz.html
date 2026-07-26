@@ -2133,6 +2133,50 @@ body > .card:last-of-type{
   }
 }
 
+
+
+
+/* ===== DYNAMIC PREVIEW + NORMAL MATH RENDERING ===== */
+#fullLearnerPreview{
+  min-height:180px;
+  transition:opacity .12s ease;
+}
+#fullLearnerPreview.previewRefreshing{
+  opacity:.72;
+}
+
+.attemptPaperPreview .qTextPaper mjx-container[jax="SVG"],
+.attemptPaperPreview .qSectionText mjx-container[jax="SVG"],
+.attemptPaperPreview .noteBox mjx-container[jax="SVG"],
+.attemptPaperPreview .optTextPaper mjx-container[jax="SVG"],
+#paperPreviewContent .qTextPaper mjx-container[jax="SVG"],
+#paperPreviewContent .qSectionText mjx-container[jax="SVG"],
+#paperPreviewContent .noteBox mjx-container[jax="SVG"],
+#paperPreviewContent .optTextPaper mjx-container[jax="SVG"]{
+  display:inline-block !important;
+  position:relative !important;
+  top:-0.07em !important;
+  margin:0 .03em !important;
+  padding:0 !important;
+  vertical-align:baseline !important;
+  line-height:1 !important;
+  font-size:1em !important;
+  font-weight:400 !important;
+}
+
+.attemptPaperPreview mjx-container[jax="SVG"] svg *,
+#paperPreviewContent mjx-container[jax="SVG"] svg *{
+  stroke-width:0 !important;
+}
+
+.attemptPaperPreview mjx-container[jax="SVG"] line,
+.attemptPaperPreview mjx-container[jax="SVG"] mjx-line,
+#paperPreviewContent mjx-container[jax="SVG"] line,
+#paperPreviewContent mjx-container[jax="SVG"] mjx-line{
+  stroke:#111827 !important;
+  stroke-width:1.2 !important;
+}
+
 </style>
 </head>
 
@@ -2211,6 +2255,9 @@ body > .card:last-of-type{
           <option value="gradeChallenge">Grade Challenge</option>
           <option value="weeklyChallenge">Challenge of the Week</option>
         </select>
+        <div id="contentTypeHelp" class="muted tiny" style="margin-top:6px;">
+          Quiz appears under the Quizzes tab.
+        </div>
         
       </div>
 
@@ -2446,8 +2493,9 @@ body > .card:last-of-type{
     let canPublish = false;
 
     function setMsg(text, type="muted"){
+      if (!msg) return;
       msg.className = "msg " + type;
-      msg.textContent = text;
+      msg.textContent = String(text || "");
     }
     function getApiErrorMessage(data, fallback="Request failed"){
       if (!data) return fallback;
@@ -3082,7 +3130,7 @@ function escapeHtml(str){
       const token = localStorage.getItem("token");
 
       if (!token) {
-        who.textContent = "Not logged in";
+        if (who) who.textContent = "Not logged in";
         saveBtn.disabled = false;
         publishBtn.disabled = true;
         setMsg("You are not logged in. The page will stay open, but saving and publishing may not work until you log in again.", "error");
@@ -3095,7 +3143,7 @@ function escapeHtml(str){
           headers: { "Authorization": `Bearer ${token}` }
         });
       } catch {
-        who.textContent = "Session check unavailable";
+        if (who) who.textContent = "Session check unavailable";
         saveBtn.disabled = false;
         publishBtn.disabled = true;
         setMsg("Network error during session check. The page will stay open. You can continue working.", "error");
@@ -3105,7 +3153,7 @@ function escapeHtml(str){
       const me = await meRes.json().catch(() => null);
 
       if (!meRes.ok || !me) {
-        who.textContent = "Session could not be confirmed";
+        if (who) who.textContent = "Session could not be confirmed";
         saveBtn.disabled = false;
         publishBtn.disabled = true;
         setMsg("Session check failed, but the page will stay open. You can continue loading quizzes. Save/publish may need a fresh login later.", "error");
@@ -3114,7 +3162,7 @@ function escapeHtml(str){
 
       const role = String(me.role || "").toLowerCase();
       if (!["admin", "editor"].includes(role)) {
-        who.textContent = `Logged in as: ${me.username || "User"} (${me.role || "unknown"})`;
+        if (who) who.textContent = `Logged in as: ${me.username || "User"} (${me.role || "unknown"})`;
         saveBtn.disabled = true;
         publishBtn.disabled = true;
         setMsg("This account does not have permission for this page.", "error");
@@ -3124,7 +3172,7 @@ function escapeHtml(str){
       currentRole = role;
       canPublish = ["admin", "editor"].includes(role);
 
-      who.textContent = `Logged in as: ${me.username} (${me.role})`;
+      if (who) who.textContent = `Logged in as: ${me.username} (${me.role})`;
       saveBtn.disabled = false;
       publishBtn.disabled = !canPublish;
 
@@ -3783,6 +3831,7 @@ function escapeHtml(str){
       wireLastCard();
       renumberCards();
       setupDragAndDrop();
+      scheduleLiveLearnerPreview({ delay: 10 });
     }
     function addMcq(){
       qCount += 1;
@@ -3790,6 +3839,7 @@ function escapeHtml(str){
       wireLastCard();
       renumberCards();
       setupDragAndDrop();
+      scheduleLiveLearnerPreview({ delay: 10 });
     }
     function addText(){
       qCount += 1;
@@ -3798,9 +3848,10 @@ function escapeHtml(str){
       wireLastCard();
       renumberCards();
       setupDragAndDrop();
+      scheduleLiveLearnerPreview({ delay: 10 });
     }
-    function addDropdown(){qCount+=1;questionsWrap.insertAdjacentHTML("beforeend",dropdownCardHtml(qCount));wireLastCard();renumberCards();setupDragAndDrop()}
-    function addFill(){qCount+=1;questionsWrap.insertAdjacentHTML("beforeend",fillCardHtml(qCount));wireLastCard();renumberCards();setupDragAndDrop()}
+    function addDropdown(){qCount+=1;questionsWrap.insertAdjacentHTML("beforeend",dropdownCardHtml(qCount));wireLastCard();renumberCards();setupDragAndDrop();scheduleLiveLearnerPreview({delay:10})}
+    function addFill(){qCount+=1;questionsWrap.insertAdjacentHTML("beforeend",fillCardHtml(qCount));wireLastCard();renumberCards();setupDragAndDrop();scheduleLiveLearnerPreview({delay:10})}
     function addGroup(){
       qCount += 1;
       questionsWrap.insertAdjacentHTML("beforeend", groupCardHtml(qCount));
@@ -3810,6 +3861,7 @@ function escapeHtml(str){
       wireLastCard();
       renumberCards();
       setupDragAndDrop();
+      scheduleLiveLearnerPreview({ delay: 10 });
     }
     function addSection(){
       qCount += 1;
@@ -3820,6 +3872,7 @@ function escapeHtml(str){
       wireLastCard();
       renumberCards();
       setupDragAndDrop();
+      scheduleLiveLearnerPreview({ delay: 10 });
     }
 
     addNoteBtn.addEventListener("click", addNote);
@@ -3852,7 +3905,7 @@ function escapeHtml(str){
         const text = await readUploadedTextFile(file);
         const parsed = parseAssessmentFile(text, file.name);
         fillAssessmentForm(parsed);
-        assessmentCodeEl.value = "Assigned automatically when saved";
+        if (assessmentCodeEl) assessmentCodeEl.value = "Assigned automatically when saved";
 
         setMsg("Assessment loaded successfully. Save or publish it to receive its unique code.", "ok");
       } catch (err) {
@@ -3935,6 +3988,104 @@ function escapeHtml(str){
         renumberCards();
         refreshFullLearnerPreview();
       }
+    });
+
+
+    /* ===== LIVE DYNAMIC FULL LEARNER PREVIEW ===== */
+    let livePreviewTimer = null;
+    let livePreviewMutationTimer = null;
+
+    function scheduleLiveLearnerPreview({
+      renderCard = null,
+      delay = 60
+    } = {}){
+      if (renderCard && typeof renderCardPreview === "function") {
+        try { renderCardPreview(renderCard); } catch {}
+      }
+
+      clearTimeout(livePreviewTimer);
+      fullLearnerPreview?.classList.add("previewRefreshing");
+
+      livePreviewTimer = setTimeout(() => {
+        try {
+          refreshFullLearnerPreview(
+            fullLearnerPreview,
+            currentFullPreviewMode
+          );
+        } catch (error) {
+          console.error("Live preview refresh failed:", error);
+        } finally {
+          requestAnimationFrame(() => {
+            fullLearnerPreview?.classList.remove("previewRefreshing");
+          });
+        }
+      }, delay);
+    }
+
+    questionsWrap?.addEventListener("input", event => {
+      scheduleLiveLearnerPreview({
+        renderCard: event.target.closest(".qcard"),
+        delay: 40
+      });
+    });
+
+    questionsWrap?.addEventListener("change", event => {
+      scheduleLiveLearnerPreview({
+        renderCard: event.target.closest(".qcard"),
+        delay: 15
+      });
+    });
+
+    questionsWrap?.addEventListener("click", event => {
+      if (!event.target.closest("button")) return;
+      setTimeout(() => {
+        scheduleLiveLearnerPreview({
+          renderCard: event.target.closest(".qcard"),
+          delay: 10
+        });
+      }, 0);
+    });
+
+    const learnerPreviewWidgetObserver = new MutationObserver(mutations => {
+      const widgetChanged = mutations.some(mutation =>
+        mutation.type === "childList" &&
+        mutation.target === questionsWrap
+      );
+
+      if (!widgetChanged) return;
+
+      clearTimeout(livePreviewMutationTimer);
+      livePreviewMutationTimer = setTimeout(() => {
+        scheduleLiveLearnerPreview({ delay: 10 });
+      }, 10);
+    });
+
+    if (questionsWrap) {
+      learnerPreviewWidgetObserver.observe(questionsWrap, {
+        childList: true,
+        subtree: false
+      });
+    }
+
+    [
+      titleEl,
+      gradeEl,
+      topicEl,
+      timeLimitEl,
+      contentTypeEl,
+      difficultyEl,
+      paperEl,
+      instructionsEl,
+      learningObjectivesEl,
+      accessLevelEl
+    ].filter(Boolean).forEach(control => {
+      control.addEventListener("input", () => {
+        scheduleLiveLearnerPreview({ delay: 45 });
+      });
+
+      control.addEventListener("change", () => {
+        scheduleLiveLearnerPreview({ delay: 15 });
+      });
     });
 
     function wireTextModeForLastCard(){
@@ -5596,8 +5747,13 @@ function escapeHtml(str){
       availableUntilEl.value = "";
       sendPublishEmailEl.checked = false;
 
-      renderInstructionsPreview();
-      updatePublishUI();
+      try { renderInstructionsPreview(); } catch (error) {
+        console.error("Instructions preview reset failed:", error);
+      }
+
+      try { updatePublishUI(); } catch (error) {
+        console.error("Publish UI reset failed:", error);
+      }
 
       questionsWrap.innerHTML = "";
       qCount = 0;
@@ -5605,8 +5761,17 @@ function escapeHtml(str){
       addSection();
       addMcq();
       setupDragAndDrop();
-      renumberCards();
-      if (!assessmentCodeEl.value) assessmentCodeEl.value = "Assigned automatically when saved";
+
+      try {
+        renumberCards();
+        scheduleLiveLearnerPreview({ delay: 10 });
+      } catch (error) {
+        console.error("Post-save preview reset failed:", error);
+      }
+
+      if (assessmentCodeEl && !assessmentCodeEl.value) {
+        if (assessmentCodeEl) assessmentCodeEl.value = "Assigned automatically when saved";
+      }
     }
 
     saveBtn.addEventListener("click", async () => {
@@ -5629,11 +5794,11 @@ function escapeHtml(str){
           const assignedCode = await resolveSavedAssessmentCode(data, token);
           if (!assignedCode) throw new Error("Assessment saved, but the server did not return its unique code.");
 
-          assessmentCodeEl.value = assignedCode;
+          if (assessmentCodeEl) assessmentCodeEl.value = assignedCode;
           localStorage.setItem("practiceOnlineQuizChangedAt", String(Date.now()));
           setMsg(`Assessment ${assignedCode} saved as draft. This code is unique and cannot be reused.`, "ok");
           resetFormAfterSave();
-          assessmentCodeEl.value = assignedCode;
+          if (assessmentCodeEl) assessmentCodeEl.value = assignedCode;
         } else {
           setMsg("Error: " + (data?.message || "Could not save assessment"), "error");
         }
@@ -5675,7 +5840,7 @@ function escapeHtml(str){
           const assignedCode = await resolveSavedAssessmentCode(data, token);
           if (!assignedCode) throw new Error("Assessment published, but the server did not return its unique code.");
 
-          assessmentCodeEl.value = assignedCode;
+          if (assessmentCodeEl) assessmentCodeEl.value = assignedCode;
           localStorage.setItem("practiceOnlineQuizChangedAt", String(Date.now()));
 
           if (mode === "now") {
@@ -5695,7 +5860,7 @@ function escapeHtml(str){
           }
 
           resetFormAfterSave();
-          assessmentCodeEl.value = assignedCode;
+          if (assessmentCodeEl) assessmentCodeEl.value = assignedCode;
         } else {
           setMsg("Error: " + (data?.message || "Could not publish assessment"), "error");
         }
