@@ -5765,6 +5765,26 @@ mjx-container[jax="SVG"] svg{
   vertical-align:middle !important;
 }
 
+
+
+/* ===== NOTE DIAGRAM PREVIEW =====
+   Shows a note's shared diagram inside the note card and learner preview. */
+.noteDiagramPreview{
+  width:100%;
+  margin:16px 0 0;
+  padding-top:14px;
+  border-top:1px solid #dbe7f5;
+}
+.noteDiagramPreview .qImageWrap{
+  margin:0 auto !important;
+}
+.noteDiagramPreview .qimg{
+  display:block !important;
+  max-width:min(100%, 720px) !important;
+  width:auto !important;
+  height:auto !important;
+  margin:0 auto !important;
+}
 </style>
 </head>
 
@@ -9223,14 +9243,15 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       const questionTotal = totals.mainTotals.get(mainNo) || points;
       const sectionTotal = totals.sectionTotals.get(sectionKey) || points;
 
-      const imageHtml = img ? `<div class="q qDiagramContext" data-context-kind="diagram"><div class="qImageWrap"><img class="qimg" src="${escapeAttr(img)}" alt="Question image" loading="lazy" decoding="async"></div></div>` : "";
+      const imageInnerHtml = img ? `<div class="qImageWrap"><img class="qimg" src="${escapeAttr(img)}" alt="Question image" loading="lazy" decoding="async"></div>` : "";
+      const imageHtml = imageInnerHtml ? `<div class="q qDiagramContext" data-context-kind="diagram">${imageInnerHtml}</div>` : "";
 
       const imageFirst =
         q?.imageFirst === true ||
         String(q?.contentOrder || "").toLowerCase() === "image-question";
 
       if (type === "note") {
-        return renderNoteLike(rawText, imageHtml, sectionTotal);
+        return renderNoteLike(rawText, imageInnerHtml, sectionTotal);
       }
 
       displayNo += 1;
@@ -10299,15 +10320,19 @@ function formatSolutionHtml(solutionText){
 
   function renderNoteLike(rawText, imageHtml, sectionTotal){
     const parsed = parseExamTextParts(rawText);
+    const noteImageHtml = imageHtml
+      ? `<div class="noteDiagramPreview" data-context-kind="diagram">${imageHtml}</div>`
+      : "";
 
     if (parsed.kind === "main") {
-      const bodyHtml = parsed.body ? `<div class="noteBox" style="margin-top:8px;">${renderStructuredNote(parsed.body)}</div>` : "";
+      const bodyHtml = (parsed.body || noteImageHtml)
+        ? `<div class="noteBox" style="margin-top:8px;">${renderStructuredNote(parsed.body)}${noteImageHtml}</div>`
+        : "";
       return `
         <div class="q">
           <div class="qMainHeading">${escapeHtml(parsed.label)}</div>
           ${bodyHtml}
         </div>
-        ${imageHtml}
       `;
     }
 
@@ -10317,19 +10342,17 @@ function formatSolutionHtml(solutionText){
           <div class="qSectionStem">
             <div class="qSectionLeft">
               <div class="qSectionNo">${escapeHtml(parsed.label)}</div>
-              <div class="qSectionText">${renderStructuredNote(parsed.body)}</div>
+              <div class="qSectionText">${renderStructuredNote(parsed.body)}${noteImageHtml}</div>
             </div>
           </div>
         </div>
-        ${imageHtml}
       `;
     }
 
     return `
       <div class="q">
-        <div class="noteBox">${renderStructuredNote(String(rawText || "").trim())}</div>
+        <div class="noteBox">${renderStructuredNote(String(rawText || "").trim())}${noteImageHtml}</div>
       </div>
-      ${imageHtml}
     `;
   }
 
