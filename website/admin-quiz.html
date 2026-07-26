@@ -135,6 +135,33 @@
       border-top:1px solid #f0f0f0;
       padding-top:10px;
     }
+    .noteImagePreviewWrap{
+      margin-top:10px;
+      width:100%;
+      text-align:center;
+    }
+    .noteImagePreview{
+      display:block;
+      width:auto;
+      max-width:min(100%,720px);
+      height:auto;
+      margin:0 auto;
+      border:none;
+      outline:none;
+      box-shadow:none;
+      object-fit:contain;
+      background:transparent;
+    }
+    .noteImagePreviewError{
+      padding:10px 12px;
+      border:1px solid #fecaca;
+      background:#fff1f2;
+      color:#991b1b;
+      border-radius:6px;
+      font-size:12px;
+      line-height:1.4;
+      text-align:left;
+    }
     .prevTitle{
       font-weight:900;
       font-size:12px;
@@ -2102,6 +2129,52 @@ body > .card:last-of-type{
   line-height:1.55 !important;
 }
 
+/* Structured bullets and numbering in assessment instructions and objectives. */
+.noteBox .noteLine,
+.qSectionText .noteLine{
+  display:block !important;
+  margin:2px 0 !important;
+  line-height:1.6 !important;
+}
+
+.noteBox .noteLineSpacer,
+.qSectionText .noteLineSpacer{
+  display:block !important;
+  height:7px !important;
+}
+
+.noteBox ul,
+.noteBox ol,
+.qSectionText ul,
+.qSectionText ol,
+.previewBox ul,
+.previewBox ol{
+  margin:6px 0 8px 24px !important;
+  padding-left:18px !important;
+  list-style-position:outside !important;
+}
+
+.noteBox ul,
+.qSectionText ul,
+.previewBox ul{
+  list-style-type:disc !important;
+}
+
+.noteBox ol,
+.qSectionText ol,
+.previewBox ol{
+  list-style-type:decimal !important;
+}
+
+.noteBox li,
+.qSectionText li,
+.previewBox li{
+  display:list-item !important;
+  margin:4px 0 !important;
+  padding-left:2px !important;
+  line-height:1.6 !important;
+}
+
 /* Keep long note and question content inside the full-width cards. */
 .noteBox,
 .qTextPaper,
@@ -2175,6 +2248,199 @@ body > .card:last-of-type{
 #paperPreviewContent mjx-container[jax="SVG"] mjx-line{
   stroke:#111827 !important;
   stroke-width:1.2 !important;
+}
+
+
+/* =====================================================================
+   FULL LEARNER PREVIEW — 100% ATTEMPT NOTE STYLE
+   ===================================================================== */
+.attemptPaperPreview .previewNoteRow,
+#paperPreviewContent .previewNoteRow,
+.attemptPaperPreview .previewHeadingRow,
+#paperPreviewContent .previewHeadingRow,
+.attemptPaperPreview .previewSectionRow,
+#paperPreviewContent .previewSectionRow{
+  border:none !important;
+  border-top:none !important;
+  border-bottom:none !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  background:transparent !important;
+  padding:8px 0 !important;
+  margin:0 0 12px !important;
+}
+
+.attemptPaperPreview .noteBox,
+#paperPreviewContent .noteBox{
+  display:block !important;
+  width:100% !important;
+  min-width:0 !important;
+  margin:12px 0 18px !important;
+  padding:0 !important;
+  border:1px solid #dbe4ee !important;
+  border-radius:10px !important;
+  background:#f8fbff !important;
+  color:#111827 !important;
+  overflow:hidden !important;
+  box-shadow:none !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+}
+
+.attemptPaperPreview .noteSection,
+#paperPreviewContent .noteSection{
+  display:grid !important;
+  grid-template-columns:38px minmax(0,1fr) !important;
+  gap:12px !important;
+  align-items:start !important;
+  padding:26px 30px !important;
+  border-bottom:1px solid #dbe4ee !important;
+  background:#f7faff !important;
+}
+
+.attemptPaperPreview .noteSection:last-child,
+#paperPreviewContent .noteSection:last-child{
+  border-bottom:none !important;
+}
+
+.attemptPaperPreview .noteSectionIcon,
+#paperPreviewContent .noteSectionIcon{
+  width:30px !important;
+  height:30px !important;
+  min-width:30px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:transparent !important;
+  border:none !important;
+  border-radius:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+
+.attemptPaperPreview .noteSectionIcon img,
+#paperPreviewContent .noteSectionIcon img{
+  display:block !important;
+  width:24px !important;
+  height:24px !important;
+  min-width:24px !important;
+  max-width:24px !important;
+  object-fit:contain !important;
+  filter:none !important;
+}
+
+.attemptPaperPreview .noteSectionContent,
+#paperPreviewContent .noteSectionContent{
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+
+.attemptPaperPreview .noteSectionTitle,
+#paperPreviewContent .noteSectionTitle{
+  margin:0 0 8px !important;
+  color:#111827 !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:14px !important;
+  font-weight:700 !important;
+  line-height:1.4 !important;
+}
+
+.attemptPaperPreview .noteSectionBody,
+#paperPreviewContent .noteSectionBody{
+  min-width:0 !important;
+  color:#111827 !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:14px !important;
+  font-weight:400 !important;
+  line-height:1.65 !important;
+}
+
+.attemptPaperPreview .noteParagraph,
+#paperPreviewContent .noteParagraph{
+  margin:0 0 8px !important;
+}
+
+.attemptPaperPreview .noteList,
+#paperPreviewContent .noteList{
+  display:block !important;
+  margin:4px 0 0 20px !important;
+  padding-left:14px !important;
+  list-style-position:outside !important;
+}
+
+.attemptPaperPreview .noteList.bulleted,
+#paperPreviewContent .noteList.bulleted{
+  list-style-type:disc !important;
+}
+
+.attemptPaperPreview .noteList.numbered,
+#paperPreviewContent .noteList.numbered{
+  list-style-type:decimal !important;
+}
+
+.attemptPaperPreview .noteList li,
+#paperPreviewContent .noteList li{
+  display:list-item !important;
+  margin:3px 0 !important;
+  padding-left:3px !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:14px !important;
+  line-height:1.65 !important;
+}
+
+.attemptPaperPreview .noteLine,
+#paperPreviewContent .noteLine{
+  display:block !important;
+  margin:2px 0 !important;
+  line-height:1.65 !important;
+}
+
+/* Diagram remains directly below its shared note, matching attempt.html. */
+.attemptPaperPreview .qImageWrap,
+#paperPreviewContent .qImageWrap{
+  width:100% !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:center !important;
+  margin:14px auto 20px !important;
+  padding:0 !important;
+  overflow-x:auto !important;
+}
+
+.attemptPaperPreview .qImageWrap .qimg,
+#paperPreviewContent .qImageWrap .qimg{
+  display:block !important;
+  width:auto !important;
+  max-width:min(100%,720px) !important;
+  height:auto !important;
+  margin:0 auto !important;
+  border:none !important;
+  outline:none !important;
+  box-shadow:none !important;
+  background:transparent !important;
+}
+
+@media(max-width:640px){
+  .attemptPaperPreview .noteSection,
+  #paperPreviewContent .noteSection{
+    grid-template-columns:30px minmax(0,1fr) !important;
+    gap:10px !important;
+    padding:18px 16px !important;
+  }
+
+  .attemptPaperPreview .noteSectionIcon,
+  #paperPreviewContent .noteSectionIcon{
+    width:26px !important;
+    height:26px !important;
+    min-width:26px !important;
+  }
+
+  .attemptPaperPreview .noteSectionIcon img,
+  #paperPreviewContent .noteSectionIcon img{
+    width:22px !important;
+    height:22px !important;
+    min-width:22px !important;
+  }
 }
 
 </style>
@@ -2536,6 +2802,16 @@ body > .card:last-of-type{
 
     function cleanSpaces(s){
       return String(s || "").trim().replace(/\s+/g, " ");
+    }
+
+    function cleanMultiline(s){
+      return String(s || "")
+        .replace(/\r/g, "")
+        .split("\n")
+        .map(line => line.replace(/[\t ]+/g, " ").trim())
+        .join("\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
     }
 
     function looksLikeMathContent(value){
@@ -2934,8 +3210,31 @@ function escapeHtml(str){
         </div>
       `;
     }
+    function stripStandardNoteMarker(rawText){
+      return String(rawText || "")
+        .replace(/^\s*\[\[NOTE_ROLE:(?:instruction|main|information|subquestion)\]\]\s*/i, "")
+        .trim();
+    }
+
+    function getStandardNoteRole(rawText){
+      const raw = String(rawText || "").trim();
+      const explicit = raw.match(/^\s*\[\[NOTE_ROLE:(instruction|main|information|subquestion)\]\]/i);
+      return explicit ? explicit[1].toLowerCase() : "legacy";
+    }
+
+    function inferNewNoteRole(rawText){
+      const clean = stripStandardNoteMarker(rawText);
+      const firstLine = clean.split(/\r?\n/)[0].trim();
+
+      if (/^QUESTION\s+\d+\b/i.test(firstLine)) return "main";
+      if (/^(assessment instructions|activity instructions|challenge instructions|assignment instructions|homework instructions|instructions|learning objective|learning objectives|objective|objectives)\b/i.test(firstLine)) {
+        return "instruction";
+      }
+      return "information";
+    }
+
     function parseExamTextPartsPreview(rawText){
-      const text = cleanSpaces(rawText || "");
+      const text = cleanMultiline(rawText || "");
       if (!text) return { kind: "plain", label: "", body: "" };
       let m = text.match(/^(QUESTION\s+\d+)(?:\s*[:.-]?\s*(.*))?$/i);
       if (m) return { kind: "main", label: m[1].toUpperCase(), body: cleanSpaces(m[2] || "") };
@@ -2951,11 +3250,196 @@ function escapeHtml(str){
       const body = parsed.body || (parsed.kind === "plain" ? cleanSpaces(rawText || "") : "");
       return `<div class="qHead"><div class="qTitle"><span class="qNo">${escapeHtml(label)}</span><span class="qTextPaper">${renderMixedMathPreview(body || cleanSpaces(rawText || ""))}</span></div><div class="marksMetaPaper"><div class="marksBox">${String(points).trim()}</div></div></div>`;
     }
+    function renderStructuredNotePreview(rawText){
+      const raw = String(rawText || "").replace(/\r/g, "").trim();
+      if (!raw) return "";
+
+      const lines = raw.split("\n");
+      const sections = [];
+      let currentTitle = "";
+      let currentLines = [];
+
+      function flushSection(){
+        if (!currentTitle && !currentLines.length) return;
+        sections.push({
+          title: currentTitle || "",
+          lines: [...currentLines]
+        });
+        currentTitle = "";
+        currentLines = [];
+      }
+
+      for (const sourceLine of lines){
+        const line = String(sourceLine || "").trim();
+
+        if (!line){
+          if (currentLines.length) currentLines.push("");
+          continue;
+        }
+
+        const looksLikeHeading =
+          /^(activity instructions|assessment instructions|instructions|learning objective|learning objectives|objective|objectives|note|notes)\s*:?\s*$/i.test(line);
+
+        if (looksLikeHeading){
+          flushSection();
+          currentTitle = line.replace(/:\s*$/, "");
+          continue;
+        }
+
+        const inlineHeading = line.match(
+          /^(Activity Instructions|Assessment Instructions|Instructions|Learning Objective|Learning Objectives|Objective|Objectives)\s*(.*)$/i
+        );
+
+        if (inlineHeading && !currentTitle){
+          flushSection();
+          currentTitle = inlineHeading[1];
+          const remainder = String(inlineHeading[2] || "").trim();
+          if (remainder) currentLines.push(remainder);
+          continue;
+        }
+
+        currentLines.push(line);
+      }
+
+      flushSection();
+
+      function renderLines(sectionLines){
+        const html = [];
+        let listType = "";
+        let listItems = [];
+        let paragraphLines = [];
+
+        function flushParagraph(){
+          if (!paragraphLines.length) return;
+          const value = paragraphLines.join(" ").trim();
+          if (value) html.push(`<p class="noteParagraph">${renderMixedMathPreview(value)}</p>`);
+          paragraphLines = [];
+        }
+
+        function flushList(){
+          if (!listItems.length) return;
+          const className = listType === "ol" ? "numbered" : "bulleted";
+          html.push(
+            `<${listType} class="noteList ${className}">` +
+            listItems.map(item => `<li>${renderMixedMathPreview(item)}</li>`).join("") +
+            `</${listType}>`
+          );
+          listItems = [];
+          listType = "";
+        }
+
+        for (const sourceLine of sectionLines){
+          const line = String(sourceLine || "").trim();
+
+          if (!line){
+            flushParagraph();
+            flushList();
+            continue;
+          }
+
+          const bulletParts = line
+            .split(/\s*•\s*/)
+            .map(part => part.trim())
+            .filter(Boolean);
+
+          if (bulletParts.length > 1){
+            flushParagraph();
+            if (listType && listType !== "ul") flushList();
+            listType = "ul";
+            listItems.push(...bulletParts);
+            continue;
+          }
+
+          const bullet = line.match(/^(?:•|-|\*)\s+(.+)$/);
+          const numbered = line.match(/^\d+[.)]\s+(.+)$/);
+          const lettered = line.match(/^[A-Za-z][.)]\s+(.+)$/);
+
+          if (bullet){
+            flushParagraph();
+            if (listType && listType !== "ul") flushList();
+            listType = "ul";
+            listItems.push(bullet[1].trim());
+            continue;
+          }
+
+          if (numbered || lettered){
+            flushParagraph();
+            if (listType && listType !== "ol") flushList();
+            listType = "ol";
+            listItems.push((numbered || lettered)[1].trim());
+            continue;
+          }
+
+          flushList();
+
+          if (line.length <= 70 && !/[.!?]$/.test(line)){
+            flushParagraph();
+            html.push(`<span class="noteLine">${renderMixedMathPreview(line)}</span>`);
+          } else {
+            paragraphLines.push(line);
+          }
+        }
+
+        flushParagraph();
+        flushList();
+        return html.join("");
+      }
+
+      return sections.map((section) => {
+        const isObjective = /learning objective|objective/i.test(section.title);
+        const title = escapeHtml(section.title);
+        const iconUrl = isObjective
+          ? "https://res.cloudinary.com/dopoxadlr/image/upload/v1784924492/target-objective_xacvpm.svg"
+          : "https://res.cloudinary.com/dopoxadlr/image/upload/v1784922880/info_vd9ndi.svg";
+
+        return `
+          <div class="noteSection ${isObjective ? "objectiveSection" : "instructionSection"}">
+            <div class="noteSectionIcon" aria-hidden="true">
+              <img src="${iconUrl}" alt="">
+            </div>
+            <div class="noteSectionContent">
+              ${title ? `<div class="noteSectionTitle">${title}</div>` : ""}
+              <div class="noteSectionBody">${renderLines(section.lines)}</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
     function renderNoteLikePreview(rawText, imageHtml){
-      const parsed = parseExamTextPartsPreview(rawText);
-      if (parsed.kind === "main") return `<div class="q"><div class="qMainHeading">${escapeHtml(parsed.label)}</div>${parsed.body ? `<div class="noteBox" style="margin-top:8px;">${renderMixedMathPreview(parsed.body)}</div>` : ""}${imageHtml}</div>`;
-      if (parsed.kind === "section") return `<div class="q"><div class="qSectionStem"><div class="qSectionLeft"><div class="qSectionNo">${escapeHtml(parsed.label)}</div><div class="qSectionText">${renderMixedMathPreview(parsed.body)}</div></div></div>${imageHtml}</div>`;
-      return `<div class="q"><div class="noteBox">${renderMixedMathPreview(cleanSpaces(rawText || ""))}</div>${imageHtml}</div>`;
+      const raw = cleanMultiline(rawText || "");
+      const parsed = parseExamTextPartsPreview(raw);
+
+      if (parsed.kind === "main") {
+        return `
+          <div class="q previewHeadingRow">
+            <div class="qMainHeading">${escapeHtml(parsed.label)}</div>
+            ${parsed.body ? `<div class="noteBox">${renderStructuredNotePreview(parsed.body)}</div>` : ""}
+          </div>
+          ${imageHtml || ""}
+        `;
+      }
+
+      if (parsed.kind === "section") {
+        return `
+          <div class="q previewSectionRow">
+            <div class="qSectionStem">
+              <div class="qSectionLeft">
+                <div class="qSectionNo">${escapeHtml(parsed.label)}</div>
+                <div class="qSectionText">${renderMixedMathPreview(parsed.body)}</div>
+              </div>
+            </div>
+          </div>
+          ${imageHtml || ""}
+        `;
+      }
+
+      return `
+        <div class="q previewNoteRow">
+          <div class="noteBox">${renderStructuredNotePreview(raw)}</div>
+        </div>
+        ${imageHtml || ""}
+      `;
     }
     function refreshFullLearnerPreview(target=fullLearnerPreview, mode=currentFullPreviewMode){
       if (!target) return;
@@ -2968,21 +3452,105 @@ function escapeHtml(str){
         ? "All Learners"
         : cleanSpaces(gradeEl.options[gradeEl.selectedIndex]?.text || "");
       const topic = cleanSpaces(topicEl.value || "");
-      const instructions = cleanSpaces(instructionsEl.value || "");
+      const instructions = cleanMultiline(instructionsEl.value || "");
+      const objectives = cleanMultiline(learningObjectivesEl.value || "");
       const cards = [...questionsWrap.querySelectorAll(".qcard")];
       const parts = [];
-      parts.push(`<div class="examPaper"><div class="paperMeta"><div style="font-size:14px; font-weight:400; margin:0 0 2px 0; line-height:1.5;">${escapeHtml(title)}</div><div class="paperMetaRow"><div>${escapeHtml([grade, topic].filter(Boolean).join(" • "))}${instructions ? `<div style="margin-top:4px;">${renderMixedMathPreview(instructions)}</div>` : ""}</div><div class="paperMetaRight">Time limit: ${escapeHtml(timeLimitEl.value || "10")} minutes</div></div></div>`);
+
+      parts.push(
+        `<div class="examPaper">` +
+        `<div class="paperMeta">` +
+          `<div style="font-size:14px; font-weight:400; margin:0 0 2px 0; line-height:1.5;">${escapeHtml(title)}</div>` +
+          `<div class="paperMetaRow">` +
+            `<div>${escapeHtml([grade, topic].filter(Boolean).join(" • "))}</div>` +
+            `<div class="paperMetaRight">Time limit: ${escapeHtml(timeLimitEl.value || "10")} minutes</div>` +
+          `</div>` +
+        `</div>`
+      );
+
+      if (instructions) {
+        parts.push(
+          `<div class="q previewNoteRow">` +
+            `<div class="noteBox">${renderStructuredNotePreview(`Assessment Instructions\n${instructions}`)}</div>` +
+          `</div>`
+        );
+      }
+
+      if (objectives) {
+        parts.push(
+          `<div class="q previewNoteRow">` +
+            `<div class="noteBox">${renderStructuredNotePreview(`Learning Objective\n${objectives}`)}</div>` +
+          `</div>`
+        );
+      }
       let displayNo = 0;
-      const hasManualMain = cards.some(card => (card.getAttribute("data-type") || "") === "group");
-      if (!hasManualMain) parts.push(`<div class="q"><div class="qMainHeading">QUESTION 1</div></div>`);
+      let previewMain = 0;
+      let previewTop = 0;
+      let previewSubParent = null;
+      let previewChild = 0;
+
       for (const card of cards) {
         const type = (card.getAttribute("data-type") || "").toLowerCase();
-        if (!type) continue;
-        if (type === "group") { const label = cleanSpaces(card.querySelector(".cardLabel")?.textContent || ""); if (label) parts.push(`<div class="q"><div class="qMainHeading">${escapeHtml(label)}</div></div>`); continue; }
-        if (type === "section") { const number = cleanSpaces(card.querySelector(".cardLabel")?.textContent || ""); const txt = cleanSpaces(card.querySelector(".sectionText")?.value || ""); parts.push(renderNoteLikePreview(`${number} ${txt}`.trim(), "")); continue; }
-        if (type === "note") { const txt = cleanSpaces(card.querySelector(".noteText")?.value || ""); if (txt) parts.push(renderNoteLikePreview(txt, "")); continue; }
+        if (!type || type === "group" || type === "section") continue;
+
+        if (type === "note") {
+          const txt = cleanMultiline(card.querySelector(".noteText")?.value || "");
+          const img = readCardImage(card);
+          const role = card.querySelector(".noteRole")?.value || "information";
+
+          if (role === "main") {
+            previewMain += 1;
+            previewTop = 0;
+            previewSubParent = null;
+            previewChild = 0;
+            parts.push(`<div class="q"><div class="qMainHeading">QUESTION ${previewMain}</div></div>`);
+            continue;
+          }
+
+          if (previewMain === 0) {
+            previewMain = 1;
+            parts.push(`<div class="q"><div class="qMainHeading">QUESTION 1</div></div>`);
+          }
+
+          if (role === "instruction") {
+            if (txt) parts.push(`<div class="q previewNoteRow"><div class="noteBox">${renderStructuredNotePreview(txt)}</div></div>`);
+            continue;
+          }
+
+          const imageHtml = img
+            ? `<div class="qImageWrap"><img class="qimg" src="${escapeAttr(img)}" alt="Diagram"></div>`
+            : "";
+
+          if (role === "subquestion") {
+            previewTop += 1;
+            previewSubParent = previewTop;
+            previewChild = 0;
+            parts.push(renderNoteLikePreview(`${previewMain}.${previewSubParent} ${txt}`.trim(), imageHtml));
+          } else {
+            previewSubParent = null;
+            previewChild = 0;
+            parts.push(`<div class="q previewNoteRow"><div class="noteBox">${renderStructuredNotePreview(txt)}</div>${imageHtml}</div>`);
+          }
+          continue;
+        }
+
+        if (previewMain === 0) {
+          previewMain = 1;
+          parts.push(`<div class="q"><div class="qMainHeading">QUESTION 1</div></div>`);
+        }
+
+        let autoLabel;
+        if (previewSubParent !== null) {
+          previewChild += 1;
+          autoLabel = `${previewMain}.${previewSubParent}.${previewChild}`;
+        } else {
+          previewTop += 1;
+          autoLabel = `${previewMain}.${previewTop}`;
+        }
+
+        displayNo += 1;
         const qText = stripLeadingQuestionNumber(card.querySelector(".qText")?.value || "");
-        const label = cleanSpaces(card.querySelector(".cardLabel")?.textContent || card.dataset.fullNumber || "");
+        const label = cleanSpaces(card.dataset.fullNumber || autoLabel);
         const hint = cleanSpaces(card.querySelector(".qHint")?.value || "");
         const solution = String(card.querySelector(".qSolution")?.value || "").trim();
         const img = readCardImage(card);
@@ -3199,12 +3767,27 @@ function escapeHtml(str){
             <button type="button" class="smallbtn removeBtn">Remove</button>
           </div>
 
+          <label>Note Type</label>
+          <select class="noteRole">
+            <option value="instruction">Instruction / Objective (blue icon note)</option>
+            <option value="main">Main Question Heading (QUESTION 1, QUESTION 2, etc.)</option>
+            <option value="information">Question Information (shared stem / diagram)</option>
+            <option value="subquestion">Subquestion Information (creates 1.3.1, 1.3.2, etc.)</option>
+          </select>
+
           <label>Text (supports math)</label>
           <textarea class="noteText" rows="3"></textarea>
+
+          <label>Diagram / Image URL (optional)</label>
+          <input class="qImage noteImageUrl" type="url" placeholder="https://..." />
 
           <div class="previewRow">
             <div class="prevTitle">Live Preview</div>
             <div class="previewBox prevNote paperBox"></div>
+            <div class="noteImagePreviewWrap hide">
+              <img class="noteImagePreview" alt="Note diagram preview">
+              <div class="noteImagePreviewError hide">The diagram could not be loaded from this URL.</div>
+            </div>
           </div>
         </div>
       `;
@@ -3691,7 +4274,22 @@ function escapeHtml(str){
 
       if (["dropdown","fill"].includes(card.getAttribute("data-type"))) card.querySelectorAll("input,textarea,select").forEach(el=>{el.addEventListener("input",()=>renderCardPreview(card));el.addEventListener("change",()=>renderCardPreview(card))});
       if (card.getAttribute("data-type") === "note") {
-        card.querySelector(".noteText")?.addEventListener("input", ()=>renderCardPreview(card));
+        card.querySelector(".noteText")?.addEventListener("input", ()=>{
+          renderCardPreview(card);
+          renumberCards();
+        });
+        card.querySelector(".noteRole")?.addEventListener("change", ()=>{
+          renderCardPreview(card);
+          renumberCards();
+        });
+        card.querySelector(".qImage")?.addEventListener("input", ()=>{
+          renderCardPreview(card);
+          renumberCards();
+        });
+        card.querySelector(".qImage")?.addEventListener("change", ()=>{
+          renderCardPreview(card);
+          renumberCards();
+        });
         renderCardPreview(card);
         return;
       }
@@ -4167,12 +4765,47 @@ function escapeHtml(str){
       return normalized;
     }
 
+    function renderUrlImagePreview(card){
+      if (!card) return;
+
+      const url = readCardImage(card);
+      const wrap = card.querySelector(".noteImagePreviewWrap");
+      const img = card.querySelector(".noteImagePreview");
+      const error = card.querySelector(".noteImagePreviewError");
+
+      if (!wrap || !img || !error) return;
+
+      if (!url) {
+        wrap.classList.add("hide");
+        error.classList.add("hide");
+        img.removeAttribute("src");
+        return;
+      }
+
+      wrap.classList.remove("hide");
+      error.classList.add("hide");
+
+      img.onload = () => {
+        error.classList.add("hide");
+        img.classList.remove("hide");
+      };
+
+      img.onerror = () => {
+        img.classList.add("hide");
+        error.classList.remove("hide");
+      };
+
+      img.classList.remove("hide");
+      img.src = url;
+    }
+
     function renderCardPreview(card){
       const type = card.getAttribute("data-type") || "mcq";
 
       if (type === "note") {
         const t = autoConvertMixedLatex(cleanSpaces(card.querySelector(".noteText")?.value || ""));
         setPreviewText(card.querySelector(".prevNote"), t || "(Note preview)");
+        renderUrlImagePreview(card);
         return;
       }
 
@@ -4305,115 +4938,130 @@ function escapeHtml(str){
 
     function renumberCards(){
       const cards = [...questionsWrap.querySelectorAll(".qcard")];
-      let blockNum = 0;
-      let mainNum = 1;
-      let sectionNum = 0;
-      let itemNum = 0;
-      let hasManualMainMarker = false;
+      let mainNo = 0;
+      let topNo = 0;
+      let activeSubParent = null;
+      let childNo = 0;
       const mainTotals = new Map();
-      const sectionTotals = new Map();
 
-      function getPoints(card){
+      function pointsOf(card){
         const type = (card.getAttribute("data-type") || "").toLowerCase();
-        if (!["mcq", "text", "dropdown", "fill"].includes(type)) return 0;
-        const raw = Number(card.querySelector(".qPoints")?.value || 0);
-        return Number.isFinite(raw) && raw > 0 ? raw : 0;
+        if (!["mcq","text","dropdown","fill"].includes(type)) return 0;
+        const value = Number(card.querySelector(".qPoints")?.value || 0);
+        return Number.isFinite(value) && value > 0 ? value : 0;
       }
 
+      function roleOf(card){
+        const selected = card.querySelector(".noteRole")?.value;
+        return ["instruction","main","information","subquestion"].includes(selected)
+          ? selected
+          : "information";
+      }
+
+      mainNo = 0;
       for (const card of cards){
-        const type = (card.getAttribute("data-type") || "mcq").toLowerCase();
+        const type = (card.getAttribute("data-type") || "").toLowerCase();
 
-        if (type === "group") {
-          hasManualMainMarker = true;
-          const manualMain = Number(card.dataset.manualNumber || "");
-          mainNum = Number.isFinite(manualMain) && manualMain > 0 ? manualMain : mainNum + 1;
-          sectionNum = 0;
-          itemNum = 0;
-          continue;
-        }
-
-        if (type === "section") {
-          const manualSection = cleanSpaces(card.dataset.manualNumber || "");
-          if (/^\d+\.\d+$/.test(manualSection)) {
-            const [mNo, sNo] = manualSection.split(".").map(Number);
-            if (Number.isFinite(mNo) && mNo > 0) mainNum = mNo;
-            if (Number.isFinite(sNo) && sNo > 0) sectionNum = sNo;
-          } else {
-            sectionNum = sectionNum < 1 ? 1 : sectionNum + 1;
+        if (type === "note"){
+          const role = roleOf(card);
+          if (role === "main"){
+            mainNo += 1;
+            topNo = 0;
+            activeSubParent = null;
+            childNo = 0;
+          } else if (role === "subquestion"){
+            if (mainNo === 0) mainNo = 1;
+            topNo += 1;
+            activeSubParent = topNo;
+            childNo = 0;
           }
-          itemNum = 0;
-          sectionTotals.set(`${mainNum}.${sectionNum}`, 0);
           continue;
         }
 
-        if (["mcq", "text", "dropdown", "fill"].includes(type)) {
-          if (sectionNum < 1) sectionNum = 1;
-          const key = `${mainNum}.${sectionNum}`;
-          const points = getPoints(card);
-          mainTotals.set(mainNum, (mainTotals.get(mainNum) || 0) + points);
-          sectionTotals.set(key, (sectionTotals.get(key) || 0) + points);
-        }
+        if (!["mcq","text","dropdown","fill"].includes(type)) continue;
+        if (mainNo === 0) mainNo = 1;
+        mainTotals.set(mainNo, (mainTotals.get(mainNo) || 0) + pointsOf(card));
       }
 
-      mainNum = hasManualMainMarker ? 0 : 1;
-      sectionNum = 0;
-      itemNum = 0;
+      mainNo = 0;
+      topNo = 0;
+      activeSubParent = null;
+      childNo = 0;
 
       for (const card of cards){
-        const type = (card.getAttribute("data-type") || "mcq").toLowerCase();
+        const type = (card.getAttribute("data-type") || "").toLowerCase();
         const labelEl = card.querySelector(".cardLabel");
         const subqEl = card.querySelector(".subqLabel");
         const marksEl = card.querySelector(".marksMeta");
-        if (!labelEl) continue;
 
-        if (type === "group") {
-          const manualMain = Number(card.dataset.manualNumber || "");
-          mainNum = Number.isFinite(manualMain) && manualMain > 0 ? manualMain : mainNum + 1;
-          sectionNum = 0;
-          itemNum = 0;
-          labelEl.textContent = `QUESTION ${mainNum}`;
+        if (type === "group" || type === "section"){
+          card.classList.add("hide");
           continue;
         }
 
-        if (type === "note") {
-          blockNum += 1;
-          labelEl.textContent = `Block ${blockNum}`;
+        if (type === "note"){
+          const role = roleOf(card);
+          card.dataset.standardRole = role;
+
+          if (role === "main"){
+            mainNo += 1;
+            topNo = 0;
+            activeSubParent = null;
+            childNo = 0;
+            if (labelEl) labelEl.textContent = `QUESTION ${mainNo}`;
+            card.dataset.mainNumber = String(mainNo);
+            card.dataset.fullNumber = "";
+          } else if (role === "instruction"){
+            if (mainNo === 0) mainNo = 1;
+            if (labelEl) labelEl.textContent = `QUESTION ${mainNo} — Instruction / Objective`;
+            card.dataset.mainNumber = String(mainNo);
+            card.dataset.fullNumber = "";
+          } else if (role === "information"){
+            if (mainNo === 0) mainNo = 1;
+            activeSubParent = null;
+            childNo = 0;
+            if (labelEl) labelEl.textContent = `QUESTION ${mainNo} — Question Information`;
+            card.dataset.mainNumber = String(mainNo);
+            card.dataset.fullNumber = "";
+          } else if (role === "subquestion"){
+            if (mainNo === 0) mainNo = 1;
+            topNo += 1;
+            activeSubParent = topNo;
+            childNo = 0;
+            if (labelEl) labelEl.textContent = `${mainNo}.${activeSubParent} — Subquestion Information`;
+            card.dataset.mainNumber = String(mainNo);
+            card.dataset.fullNumber = `${mainNo}.${activeSubParent}`;
+          }
+
           if (subqEl) subqEl.textContent = "";
           if (marksEl) marksEl.textContent = "";
-          continue;
-        }
-
-        if (type === "section") {
-          const manualSection = cleanSpaces(card.dataset.manualNumber || "");
-          if (/^\d+\.\d+$/.test(manualSection)) {
-            const [mNo, sNo] = manualSection.split(".").map(Number);
-            if (Number.isFinite(mNo) && mNo > 0) mainNum = mNo;
-            sectionNum = Number.isFinite(sNo) && sNo > 0 ? sNo : (sectionNum < 1 ? 1 : sectionNum + 1);
-          } else {
-            sectionNum = sectionNum < 1 ? 1 : sectionNum + 1;
-          }
-          itemNum = 0;
-          const key = `${mainNum}.${sectionNum}`;
-          const sectionTotal = sectionTotals.get(key) || 0;
-          labelEl.textContent = key;
-          card.dataset.fullNumber = key;
-          card.dataset.sectionTotal = String(sectionTotal);
           renderCardPreview(card);
           continue;
         }
 
-        if (sectionNum < 1) sectionNum = 1;
-        itemNum += 1;
-        const fullNumber = `${mainNum}.${sectionNum}.${itemNum}`;
-        const sectionKey = `${mainNum}.${sectionNum}`;
-        const points = getPoints(card);
-        const sectionTotal = sectionTotals.get(sectionKey) || 0;
-        const questionTotal = mainTotals.get(mainNum) || 0;
-        labelEl.textContent = fullNumber;
-        if (subqEl) subqEl.textContent = `Section ${sectionKey} • QUESTION ${mainNum}`;
-        if (marksEl) marksEl.textContent = `${points} mark${points === 1 ? "" : "s"} • Section total: ${sectionTotal} • Question total: ${questionTotal}`;
+        if (!["mcq","text","dropdown","fill"].includes(type)) continue;
+        if (mainNo === 0) mainNo = 1;
+
+        let fullNumber;
+        if (activeSubParent !== null){
+          childNo += 1;
+          fullNumber = `${mainNo}.${activeSubParent}.${childNo}`;
+        } else {
+          topNo += 1;
+          fullNumber = `${mainNo}.${topNo}`;
+        }
+
+        const points = pointsOf(card);
+        const total = mainTotals.get(mainNo) || points;
+
+        if (labelEl) labelEl.textContent = fullNumber;
+        if (subqEl) subqEl.textContent = `QUESTION ${mainNo}`;
+        if (marksEl) marksEl.textContent = `${points} mark${points === 1 ? "" : "s"} • Question total: ${total}`;
+
         card.dataset.fullNumber = fullNumber;
+        card.dataset.mainNumber = String(mainNo);
       }
+
       refreshFullLearnerPreview();
     }
 
@@ -4496,7 +5144,7 @@ function escapeHtml(str){
         if (!m) continue;
         const key = m[1].toUpperCase();
         const value = m[2] || "";
-        if (/^(HEADING|NOTE|QUESTION|[A-Z]|ANSWER|ANSWER_FIELD|ANSWER_PREFIX|ANSWER_SUFFIX|ANSWER_MODE|UNIT|TOLERANCE|NUMBER_TOLERANCE|INSTRUCTION|SOLUTION|HINT|POINTS|MARKS|TYPE|OPTIONS|MEMO|IMAGE)$/i.test(key)) continue;
+        if (/^(HEADING|NOTE|QUESTION|[A-Z]|ANSWER|ANSWER_FIELD|ANSWER_PREFIX|ANSWER_SUFFIX|ANSWER_MODE|UNIT|TOLERANCE|NUMBER_TOLERANCE|INSTRUCTION|SOLUTION|HINT|POINTS|MARKS|TYPE|OPTIONS|MEMO|IMAGE|IMAGE_URL)$/i.test(key)) continue;
 
         switch (key) {
           case "GRADE": meta.grade=value.trim(); break; case "SUBJECT": meta.subject=value.trim()||"Mathematics"; break; case "TERM": meta.term=Number(value||1); break; case "CHAPTER": meta.chapter=Number(value||1); break; case "TOPIC": meta.topic=value.trim(); break; case "SUBTOPIC": meta.subtopic=value.trim(); break; case "CURRICULUM": meta.curriculum=value.trim()||"CAPS"; break; case "LANGUAGE": meta.language=value.trim()||"English"; break; case "VERSION": meta.version=value.trim()||"1.0"; break; case "KEYWORDS": meta.keywords=value.split(",").map(x=>x.trim()).filter(Boolean); break;
@@ -4547,6 +5195,7 @@ function escapeHtml(str){
       let answerSuffix = "";
       let textAnswerMode = "exact";
       let numberTolerance = null;
+      let imageUrl = "";
       const answerFieldDefinitions = [];
       const options = [];
       const correctLetters = []; let dropdownPlaceholder="Select an answer"; let allowPartialMarks=true;
@@ -4583,6 +5232,11 @@ function escapeHtml(str){
 
         if (/^HINT\s*:/i.test(line) && !inSolution) {
           hint = line.replace(/^HINT\s*:/i, "").trim();
+          continue;
+        }
+
+        if (/^(IMAGE_URL|IMAGE)\s*:/i.test(line) && !inSolution) {
+          imageUrl = line.replace(/^(IMAGE_URL|IMAGE)\s*:/i, "").trim();
           continue;
         }
 
@@ -4748,8 +5402,8 @@ function escapeHtml(str){
 
       if (!["mcq","text","dropdown","fill"].includes(autoType)) throw Object.assign(new Error(`Unsupported TYPE "${explicitType}".`),{where});
 
-      if(autoType==="dropdown"){const dropdownOptions=options.map(o=>autoConvertMixedLatex(o.value)),correctText=autoConvertMixedLatex(rawTypedAnswer||typedAnswer);if(dropdownOptions.length<2)throw Object.assign(new Error("Dropdown must have at least 2 options."),{where});if(!correctText||!dropdownOptions.includes(correctText))throw Object.assign(new Error("Dropdown ANSWER must match an option."),{where});return{type:"dropdown",question,hint,solution,points,options:dropdownOptions,correctText,dropdownPlaceholder}}
-      if(autoType==="fill"){const fillAnswers=String(rawTypedAnswer||"").split("|").map(x=>autoConvertMixedLatex(x.trim())).filter(Boolean),blankCount=(question.match(/\[\[\s*\]\]/g)||[]).length;if(!fillAnswers.length)throw Object.assign(new Error("Fill question is missing ANSWER values."),{where});if(blankCount&&blankCount!==fillAnswers.length)throw Object.assign(new Error(`Fill question has ${blankCount} blank(s) but ${fillAnswers.length} answer(s).`),{where});return{type:"fill",question,hint,solution,points,instruction:answerInstruction,fillAnswers,allowPartialMarks}}
+      if(autoType==="dropdown"){const dropdownOptions=options.map(o=>autoConvertMixedLatex(o.value)),correctText=autoConvertMixedLatex(rawTypedAnswer||typedAnswer);if(dropdownOptions.length<2)throw Object.assign(new Error("Dropdown must have at least 2 options."),{where});if(!correctText||!dropdownOptions.includes(correctText))throw Object.assign(new Error("Dropdown ANSWER must match an option."),{where});return{type:"dropdown",question,hint,imageUrl,solution,points,options:dropdownOptions,correctText,dropdownPlaceholder}}
+      if(autoType==="fill"){const fillAnswers=String(rawTypedAnswer||"").split("|").map(x=>autoConvertMixedLatex(x.trim())).filter(Boolean),blankCount=(question.match(/\[\[\s*\]\]/g)||[]).length;if(!fillAnswers.length)throw Object.assign(new Error("Fill question is missing ANSWER values."),{where});if(blankCount&&blankCount!==fillAnswers.length)throw Object.assign(new Error(`Fill question has ${blankCount} blank(s) but ${fillAnswers.length} answer(s).`),{where});return{type:"fill",question,hint,imageUrl,solution,points,instruction:answerInstruction,fillAnswers,allowPartialMarks}}
 
       if (autoType === "text") {
         if (!typedAnswer) {
@@ -4769,6 +5423,7 @@ function escapeHtml(str){
           type: "text",
           question,
           hint,
+          imageUrl,
           solution,
           points,
           instruction: answerInstruction,
@@ -4802,6 +5457,7 @@ function escapeHtml(str){
         type: "mcq",
         question,
         hint,
+        imageUrl,
         solution,
         points,
         options: options.map(o => autoConvertMixedLatex(o.value)),
@@ -4835,14 +5491,44 @@ function escapeHtml(str){
     }
 
     function parseNoteBlock(block){
-      const line = String(block || "").trim();
-      if (/^HEADING\s*:/i.test(line)) {
-        return classifySpecialNote(line.replace(/^HEADING\s*:/i, "").trim());
+      const raw = String(block || "").replace(/\r/g, "").trim();
+      const lines = raw.split("\n");
+      let noteText = "";
+      let imageUrl = "";
+      let noteRole = "";
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+
+        if (/^NOTE_TYPE\s*:/i.test(line)) {
+          const parsedRole = line.replace(/^NOTE_TYPE\s*:/i, "").trim().toLowerCase();
+          if (["instruction","main","information","subquestion"].includes(parsedRole)) {
+            noteRole = parsedRole;
+          }
+          continue;
+        }
+
+        if (/^(IMAGE_URL|IMAGE)\s*:/i.test(line)) {
+          imageUrl = line.replace(/^(IMAGE_URL|IMAGE)\s*:/i, "").trim();
+          continue;
+        }
+
+        if (/^(HEADING|NOTE)\s*:/i.test(line)) {
+          const value = line.replace(/^(HEADING|NOTE)\s*:/i, "").trim();
+          if (value) noteText = noteText ? `${noteText}\n${value}` : value;
+          continue;
+        }
+
+        noteText = noteText ? `${noteText}\n${line}` : line;
       }
-      if (/^NOTE\s*:/i.test(line)) {
-        return classifySpecialNote(line.replace(/^NOTE\s*:/i, "").trim());
+
+      const item = classifySpecialNote(noteText);
+      if (item) {
+        item.imageUrl = imageUrl;
+        if (noteRole) item.noteRole = noteRole;
       }
-      return null;
+      return item;
     }
 
     function parseAssessmentFile(text, fallbackName=""){
@@ -4925,7 +5611,21 @@ function escapeHtml(str){
     }
 
     function fillNoteCard(card, data){
-      card.querySelector(".noteText").value = data.text || "";
+      const rawText = String(data.text || "");
+      const storedRole = data.noteRole || getStandardNoteRole(rawText);
+      const role = storedRole === "legacy" ? inferNewNoteRole(rawText) : storedRole;
+      const cleanText = stripStandardNoteMarker(rawText);
+
+      card.dataset.wasLegacyNote = storedRole === "legacy" ? "1" : "0";
+      card.querySelector(".noteText").value = cleanText;
+
+      const roleEl = card.querySelector(".noteRole");
+      if (roleEl) roleEl.value = ["instruction","main","information","subquestion"].includes(role)
+        ? role
+        : "information";
+
+      const imageEl = card.querySelector(".qImage");
+      if (imageEl) imageEl.value = data.imageUrl || "";
       renderCardPreview(card);
     }
 
@@ -5279,7 +5979,14 @@ function escapeHtml(str){
           return { type: "note", text: `${num} ${cleanSpaces(item.text || "")}` };
         }
         if (item.type === "note") {
-          return { type: "note", text: cleanSpaces(item.text || "") };
+          const rawText = cleanMultiline(item.text || "");
+          const detectedRole = item.noteRole || getStandardNoteRole(rawText);
+          const noteRole = detectedRole === "legacy" ? inferNewNoteRole(rawText) : detectedRole;
+          return {
+            type: "note",
+            text: `[[NOTE_ROLE:${["instruction","main","information","subquestion"].includes(noteRole) ? noteRole : "information"}]]\n${stripStandardNoteMarker(rawText)}`.trim(),
+            imageUrl: cleanSpaces(item.imageUrl || "")
+          };
         }
         if (item.type === "text") {
           return {
@@ -5418,9 +6125,22 @@ function escapeHtml(str){
         }
 
         if (type === "note") {
-          const noteText = cleanSpaces(card.querySelector(".noteText")?.value);
-          if (!noteText) throw new Error("Please fill in the note/heading text.");
-          questions.push({ type: "note", text: autoConvertMixedLatex(noteText) });
+          const noteText = cleanMultiline(card.querySelector(".noteText")?.value);
+          const imageUrl = readCardImage(card);
+          const selectedRole = card.querySelector(".noteRole")?.value;
+          const noteRole = ["instruction","main","information","subquestion"].includes(selectedRole)
+            ? selectedRole
+            : "information";
+
+          if (!noteText && !imageUrl) {
+            throw new Error("Please fill in the note text or provide a diagram URL.");
+          }
+
+          questions.push({
+            type: "note",
+            text: `[[NOTE_ROLE:${noteRole}]]\n${autoConvertMixedLatex(noteText || "")}`.trim(),
+            imageUrl: imageUrl || ""
+          });
           continue;
         }
 
