@@ -4,6 +4,13 @@
   - MathLive keyboard remains enabled for mathematical typed-answer questions.
   - Keyboard opens when the learner focuses the math answer field.
   - Existing MCQ, fill-in, marking, navigation and review behaviour is preserved.
+  - New note structure supports:
+      [[NOTE_ROLE:main]]         -> QUESTION 1, QUESTION 2, ...
+      [[NOTE_ROLE:instruction]]  -> blue instruction/objective note
+      [[NOTE_ROLE:information]]  -> blue shared question-information note
+      [[NOTE_ROLE:subquestion]]  -> parent such as 5.3, followed by 5.3.1, 5.3.2
+  - Shared notes and diagrams remain visible while moving between their questions.
+  - Old quizzes without NOTE_ROLE markers keep their original numbering and rendering.
 -->
 <!doctype html>
 <html lang="en">
@@ -6225,12 +6232,12 @@ function inlineQuizLoadingHtml(){
     let hasBuiltQuestionForContext = false;
 
     function currentContext(){
-      return [
+      return [...new Set([
         ...currentMainRows,
         ...currentSectionStemRows,
         ...currentTextContextRows,
         ...currentDiagramRows
-      ];
+      ])];
     }
 
     rows.forEach(row => {
@@ -6252,7 +6259,7 @@ function inlineQuizLoadingHtml(){
           currentSectionKey = sectionLabel;
           currentSectionStemRows = [row];
           currentTextContextRows = [];
-          currentDiagramRows = [];
+          currentDiagramRows = row.querySelector(".qImageWrap, .qimg") ? [row] : [];
           hasBuiltQuestionForContext = false;
           return;
         }
@@ -6271,10 +6278,13 @@ function inlineQuizLoadingHtml(){
            it starts a new diagram/stem context, so the previous stem is removed. */
         if (hasBuiltQuestionForContext) {
           currentTextContextRows = [row];
-          currentDiagramRows = [];
+          currentDiagramRows = row.querySelector(".qImageWrap, .qimg") ? [row] : [];
           hasBuiltQuestionForContext = false;
         } else {
           currentTextContextRows.push(row);
+          if (row.querySelector(".qImageWrap, .qimg")) {
+            currentDiagramRows = [row];
+          }
         }
         return;
       }
@@ -9231,17 +9241,27 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     });
     const autoMainHeadingHtml = hasMainHeading ? "" : `<div class="q"><div class="qMainHeading">QUESTION 1</div></div>`;
 
+    let standardMainNo = 0;
+    let standardTopNo = 0;
+    let standardSubParent = null;
+    let standardChildNo = 0;
+    let standardHeadingShown = false;
+    let standardModeActive = false;
+
     questionsDiv.innerHTML = paperMetaHtml + autoMainHeadingHtml + allQuestions.map((q, i) => {
       const type = String(q.type || "mcq").toLowerCase();
       const hint = cleanSpaces(q.hint || "");
       const img = cleanSpaces(q.imageUrl || "");
       const solution = String(q.solution || "").trim();
       const points = getQuestionPoints(q);
-      const rawText = cleanSpaces(q.text || "");
-      const mainNo = getMainQuestionNumber(rawText, 1);
-      const sectionKey = getSectionKey(rawText, mainNo);
-      const questionTotal = totals.mainTotals.get(mainNo) || points;
-      const sectionTotal = totals.sectionTotals.get(sectionKey) || points;
+      const storedRawText = String(q.text || "").trim();
+      const cleanStoredText = stripStandardNoteMarker(storedRawText);
+      let rawText = cleanSpaces(cleanStoredText);
+      let prefixHtml = "";
+      let mainNo = getMainQuestionNumber(rawText, 1);
+      let sectionKey = getSectionKey(rawText, mainNo);
+      let questionTotal = totals.mainTotals.get(mainNo) || points;
+      let sectionTotal = totals.sectionTotals.get(sectionKey) || points;
 
       const imageInnerHtml = img ? `<div class="qImageWrap"><img class="qimg" src="${escapeAttr(img)}" alt="Question image" loading="lazy" decoding="async"></div>` : "";
       const imageHtml = imageInnerHtml ? `<div class="q qDiagramContext" data-context-kind="diagram">${imageInnerHtml}</div>` : "";
@@ -9251,10 +9271,92 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
         String(q?.contentOrder || "").toLowerCase() === "image-question";
 
       if (type === "note") {
-        return renderNoteLike(rawText, imageInnerHtml, sectionTotal);
+        const noteRole = getStandardNoteRole(storedRawText);
+
+        // Backward compatibility:
+        // Existing quizzes without a NOTE_ROLE marker keep the old behaviour.
+        if (noteRole === "legacy") {
+          return renderNoteLike(rawText, imageInnerHtml, sectionTotal);
+        }
+
+        standardModeActive = true;
+
+        if (noteRole === "main") {
+          standardMainNo += 1;
+          standardTopNo = 0;
+          standardSubParent = null;
+          standardChildNo = 0;
+          standardHeadingShown = true;
+
+          return `<div class="q"><div class="qMainHeading">QUESTION ${standardMainNo}</div></div>`;
+        }
+
+        if (standardMainNo === 0) standardMainNo = 1;
+
+        const heading = standardHeadingShown
+          ? ""
+          : `<div class="q"><div class="qMainHeading">QUESTION ${standardMainNo}</div></div>`;
+
+        standardHeadingShown = true;
+
+        if (noteRole === "instruction") {
+          // Blue icon note. Supports bullets, numbering and maths.
+          return `${heading}${renderNoteLike(rawText, "", sectionTotal)}`;
+        }
+
+        if (noteRole === "subquestion") {
+          // Creates a parent such as 5.3.
+          // Following questions become 5.3.1, 5.3.2, ...
+          standardTopNo += 1;
+          standardSubParent = standardTopNo;
+          standardChildNo = 0;
+
+          const numberedStem = `${standardMainNo}.${standardSubParent} ${rawText}`.trim();
+          return `${heading}${renderNoteLike(numberedStem, imageInnerHtml, sectionTotal)}`;
+        }
+
+        // Question information note:
+        // stays blue, supports bullets/numbering/maths, and its diagram
+        // remains visible for the following top-level questions.
+        standardSubParent = null;
+        standardChildNo = 0;
+
+        return `${heading}${renderNoteLike(rawText, imageInnerHtml, sectionTotal)}`;
       }
 
-      displayNo += 1;
+      if (standardModeActive) {
+        if (standardMainNo === 0) standardMainNo = 1;
+
+        if (!standardHeadingShown) {
+          prefixHtml = `<div class="q"><div class="qMainHeading">QUESTION ${standardMainNo}</div></div>`;
+          standardHeadingShown = true;
+        }
+
+        displayNo += 1;
+
+        let generatedNumber;
+
+        if (standardSubParent !== null) {
+          standardChildNo += 1;
+          generatedNumber = `${standardMainNo}.${standardSubParent}.${standardChildNo}`;
+        } else {
+          standardTopNo += 1;
+          generatedNumber = `${standardMainNo}.${standardTopNo}`;
+        }
+
+        rawText = `${generatedNumber} ${stripVisibleQuestionNumber(rawText)}`.trim();
+        mainNo = standardMainNo;
+        sectionKey = standardSubParent !== null
+          ? `${standardMainNo}.${standardSubParent}`
+          : `${standardMainNo}.${standardTopNo}`;
+
+        questionTotal = totals.mainTotals.get(mainNo) || points;
+        sectionTotal = totals.sectionTotals.get(sectionKey) || points;
+      } else {
+        // Original numbering for all quizzes already stored in the database.
+        displayNo += 1;
+      }
+
       const headHtml = type === "fill"
         ? renderFillQuestionHead(rawText, points, displayNo, i)
         : type === "dropdown"
@@ -9263,6 +9365,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
       if (type === "text") {
         return `
+          ${prefixHtml}
           ${imageFirst ? imageHtml : ""}
           <div class="q" data-scorable="1" data-qindex="${i}">
             ${headHtml}
@@ -9286,6 +9389,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
       if (type === "dropdown") {
         return `
+          ${prefixHtml}
           ${imageFirst ? imageHtml : ""}
           <div class="q" data-scorable="1" data-qindex="${i}">
             ${headHtml}
@@ -9308,6 +9412,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
       if (type === "fill") {
         return `
+          ${prefixHtml}
           ${imageFirst ? imageHtml : ""}
           <div class="q" data-scorable="1" data-qindex="${i}">
             ${headHtml}
@@ -9334,6 +9439,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       const inputType = multi ? "checkbox" : "radio";
 
       return `
+        ${prefixHtml}
         ${imageFirst ? imageHtml : ""}
         <div class="q" data-scorable="1" data-qindex="${i}">
           ${headHtml}
@@ -10169,6 +10275,26 @@ function formatSolutionHtml(solutionText){
   }
   function escapeAttr(str){
     return String(str || "").replaceAll('"',"&quot;");
+  }
+
+  function stripStandardNoteMarker(rawText){
+    return String(rawText || "")
+      .replace(/^\s*\[\[NOTE_ROLE:(?:instruction|main|information|subquestion)\]\]\s*/i, "")
+      .trim();
+  }
+
+  function getStandardNoteRole(rawText){
+    const raw = String(rawText || "").trim();
+    const explicit = raw.match(/^\s*\[\[NOTE_ROLE:(instruction|main|information|subquestion)\]\]/i);
+    return explicit ? explicit[1].toLowerCase() : "legacy";
+  }
+
+  function stripVisibleQuestionNumber(rawText){
+    return String(rawText || "")
+      .replace(/^\s*\d+\.\d+\.\d+\s+/, "")
+      .replace(/^\s*\d+\.\d+\s+/, "")
+      .replace(/^\s*\d+[.)]\s+/, "")
+      .trim();
   }
 
   function parseExamTextParts(rawText){
