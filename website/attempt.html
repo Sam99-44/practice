@@ -5086,6 +5086,281 @@ mjx-container[jax="SVG"] svg{
   font-weight:400 !important;
 }
 
+
+
+
+/* ===== FINAL SCREENSHOT-MATCH QUESTION + NOTE LAYOUT =====
+   Layout only. Existing question/note construction and all logic remain unchanged. */
+
+/* Question card */
+.examPaper .q[data-scorable="1"]{
+  margin:14px 0 18px !important;
+  padding:20px 20px 18px !important;
+  border:1px solid #d7e0eb !important;
+  border-radius:7px !important;
+  background:#ffffff !important;
+  box-shadow:none !important;
+}
+
+/* Number | question sentence | marks */
+.examPaper .q[data-scorable="1"] .qHead{
+  display:grid !important;
+  grid-template-columns:56px minmax(0,1fr) 42px !important;
+  column-gap:12px !important;
+  align-items:start !important;
+  width:100% !important;
+  margin:0 !important;
+}
+
+.examPaper .q[data-scorable="1"] .qTitle{
+  display:contents !important;
+}
+
+.examPaper .q[data-scorable="1"] .qNo{
+  width:56px !important;
+  min-width:56px !important;
+  margin:0 !important;
+  color:#000000 !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:14px !important;
+  font-weight:700 !important;
+  line-height:1.55 !important;
+  text-align:left !important;
+}
+
+.examPaper .q[data-scorable="1"] .qText{
+  display:block !important;
+  min-width:0 !important;
+  margin:0 !important;
+  color:#111827 !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:14px !important;
+  font-weight:400 !important;
+  line-height:1.55 !important;
+  letter-spacing:normal !important;
+  word-spacing:normal !important;
+  white-space:normal !important;
+  overflow-wrap:break-word !important;
+}
+
+.examPaper .q[data-scorable="1"] .marksMeta{
+  width:42px !important;
+  min-width:42px !important;
+  margin:0 !important;
+  padding:0 !important;
+  justify-self:end !important;
+  align-self:start !important;
+  color:#111827 !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:14px !important;
+  font-weight:400 !important;
+  line-height:1.55 !important;
+  text-align:right !important;
+  white-space:nowrap !important;
+}
+
+/* Keep answer controls aligned under the question sentence */
+.examPaper .q[data-scorable="1"] .opt{
+  padding-left:68px !important;
+  padding-right:0 !important;
+}
+
+.examPaper .q[data-scorable="1"] .typedAnswerBlock,
+.examPaper .q[data-scorable="1"] .fillAnswerWrap,
+.examPaper .q[data-scorable="1"] .dropdownAnswerWrap{
+  margin-top:12px !important;
+  margin-left:68px !important;
+}
+
+/* Notes use the approved light information-card layout */
+.examPaper .q:not([data-scorable="1"]):has(.noteBox){
+  margin:14px 0 18px !important;
+  padding:0 !important;
+}
+
+.examPaper .q:not([data-scorable="1"]) > .noteBox{
+  position:relative !important;
+  display:block !important;
+  min-height:96px !important;
+  margin:0 !important;
+  padding:27px 30px 24px 78px !important;
+  border:1px solid #cddff4 !important;
+  border-radius:8px !important;
+  background:#f7faff !important;
+  color:#111827 !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:14px !important;
+  font-weight:400 !important;
+  line-height:1.55 !important;
+  white-space:normal !important;
+  overflow-wrap:break-word !important;
+}
+
+.examPaper .q:not([data-scorable="1"]) > .noteBox::before{
+  content:"ⓘ" !important;
+  position:absolute !important;
+  left:34px !important;
+  top:27px !important;
+  color:#1677d2 !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:25px !important;
+  font-weight:400 !important;
+  line-height:1 !important;
+}
+
+/* Section stems retain DBE numbering but use the same clean spacing */
+.examPaper .qSectionStem{
+  margin:14px 0 12px !important;
+  padding:10px 0 !important;
+}
+
+/* Inline maths aligns naturally with the sentence */
+.examPaper .qText mjx-container[jax="SVG"],
+.examPaper .noteBox mjx-container[jax="SVG"],
+.examPaper .qSectionText mjx-container[jax="SVG"],
+.examPaper .optText mjx-container[jax="SVG"]{
+  display:inline-block !important;
+  position:relative !important;
+  top:-0.07em !important;
+  margin:0 .03em !important;
+  padding:0 !important;
+  vertical-align:baseline !important;
+  line-height:1 !important;
+  font-size:1em !important;
+  font-weight:400 !important;
+}
+
+.examPaper .qText mjx-container[jax="SVG"] svg *,
+.examPaper .noteBox mjx-container[jax="SVG"] svg *,
+.examPaper .qSectionText mjx-container[jax="SVG"] svg *,
+.examPaper .optText mjx-container[jax="SVG"] svg *{
+  stroke-width:0 !important;
+}
+
+.examPaper .qText mjx-container[jax="SVG"] line,
+.examPaper .noteBox mjx-container[jax="SVG"] line,
+.examPaper .qSectionText mjx-container[jax="SVG"] line,
+.examPaper .optText mjx-container[jax="SVG"] line,
+.examPaper .qText mjx-container[jax="SVG"] mjx-line,
+.examPaper .noteBox mjx-container[jax="SVG"] mjx-line,
+.examPaper .qSectionText mjx-container[jax="SVG"] mjx-line,
+.examPaper .optText mjx-container[jax="SVG"] mjx-line{
+  stroke:#111827 !important;
+  stroke-width:1.2 !important;
+}
+
+@media(max-width:640px){
+  .examPaper .q[data-scorable="1"]{
+    padding:17px 13px 16px !important;
+  }
+
+  .examPaper .q[data-scorable="1"] .qHead{
+    grid-template-columns:46px minmax(0,1fr) 36px !important;
+    column-gap:8px !important;
+  }
+
+  .examPaper .q[data-scorable="1"] .qNo{
+    width:46px !important;
+    min-width:46px !important;
+  }
+
+  .examPaper .q[data-scorable="1"] .marksMeta{
+    width:36px !important;
+    min-width:36px !important;
+  }
+
+  .examPaper .q[data-scorable="1"] .opt{
+    padding-left:54px !important;
+  }
+
+  .examPaper .q[data-scorable="1"] .typedAnswerBlock,
+  .examPaper .q[data-scorable="1"] .fillAnswerWrap,
+  .examPaper .q[data-scorable="1"] .dropdownAnswerWrap{
+    margin-left:54px !important;
+  }
+
+  .examPaper .q:not([data-scorable="1"]) > .noteBox{
+    min-height:88px !important;
+    padding:22px 18px 20px 56px !important;
+  }
+
+  .examPaper .q:not([data-scorable="1"]) > .noteBox::before{
+    left:20px !important;
+    top:22px !important;
+    font-size:22px !important;
+  }
+}
+
+
+
+
+/* ===== FINAL HIGH-CONTRAST MATH INK =====
+   Improves fractions, radicals, operators and expressions only.
+   Question/note layout and maths sizing remain unchanged. */
+
+/* Strong, consistent mathematical ink */
+.examPaper mjx-container[jax="SVG"]{
+  color:#000000 !important;
+  opacity:1 !important;
+  filter:none !important;
+}
+
+/* MathJax glyphs use fill, not an artificial outline */
+.examPaper mjx-container[jax="SVG"] svg,
+.examPaper mjx-container[jax="SVG"] svg path,
+.examPaper mjx-container[jax="SVG"] svg use,
+.examPaper mjx-container[jax="SVG"] svg polygon,
+.examPaper mjx-container[jax="SVG"] svg circle,
+.examPaper mjx-container[jax="SVG"] svg ellipse{
+  fill:#000000 !important;
+  color:#000000 !important;
+  opacity:1 !important;
+  stroke:none !important;
+}
+
+/* Fraction bars and rule elements */
+.examPaper mjx-container[jax="SVG"] svg rect{
+  fill:#000000 !important;
+  stroke:#000000 !important;
+  stroke-width:0 !important;
+  opacity:1 !important;
+}
+
+.examPaper mjx-container[jax="SVG"] svg line,
+.examPaper mjx-container[jax="SVG"] mjx-line{
+  fill:none !important;
+  stroke:#000000 !important;
+  stroke-width:1.35 !important;
+  opacity:1 !important;
+  shape-rendering:crispEdges !important;
+}
+
+/* Keep ordinary variables normal rather than artificially bold */
+.examPaper .qText mjx-container[jax="SVG"],
+.examPaper .noteBox mjx-container[jax="SVG"],
+.examPaper .qSectionText mjx-container[jax="SVG"],
+.examPaper .optText mjx-container[jax="SVG"],
+.examPaper .hintText mjx-container[jax="SVG"]{
+  font-weight:400 !important;
+  text-shadow:none !important;
+  -webkit-font-smoothing:antialiased !important;
+  text-rendering:geometricPrecision !important;
+}
+
+/* Prevent clipping of tall fractions, powers, roots and hats */
+.examPaper mjx-container[jax="SVG"],
+.examPaper mjx-container[jax="SVG"] svg{
+  overflow:visible !important;
+  max-width:100% !important;
+}
+
+/* Display expressions get slightly more breathing room, not extra weight */
+.examPaper mjx-container[display="true"]{
+  margin:.35rem 0 !important;
+  font-size:1em !important;
+  font-weight:400 !important;
+}
+
 </style>
 </head>
 
