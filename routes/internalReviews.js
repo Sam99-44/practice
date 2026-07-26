@@ -266,7 +266,6 @@ export default function createInternalReviewRoutes({
   router.get(
     "/api/quizzes",
     authRequired,
-    adminOrEditor,
     async (req, res, next) => {
       const includeInternal =
         String(req.query.includeInternalReviews || "").toLowerCase() === "true";
@@ -274,9 +273,14 @@ export default function createInternalReviewRoutes({
       const includeRatings =
         String(req.query.includeRatings || "").toLowerCase() === "true";
 
-      if (!includeInternal && !includeRatings) return next();
+      // A normal learner request must continue to the main quiz route.
+      if (!includeInternal && !includeRatings) {
+        return next();
+      }
 
-      try {
+      // Only the special internal-review request requires Admin or Editor access.
+      return adminOrEditor(req, res, async () => {
+        try {
         const quizzes = await Quiz.find({})
           .sort({ updatedAt: -1, createdAt: -1 })
           .select(
@@ -356,12 +360,13 @@ export default function createInternalReviewRoutes({
             };
           })
         );
-      } catch (error) {
-        console.error("Load internal review list failed:", error);
-        res.status(500).json({
-          message: "Could not load internal review data.",
-        });
-      }
+        } catch (error) {
+          console.error("Load internal review list failed:", error);
+          res.status(500).json({
+            message: "Could not load internal review data.",
+          });
+        }
+      });
     }
   );
 
