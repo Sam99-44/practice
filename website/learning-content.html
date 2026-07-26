@@ -836,7 +836,7 @@ if(!localStorage.getItem("token")){
 </main>
 
 <script>
-const API = window.API || "https://practice-backend-msgn.onrender.com";
+const API = window.API || "https://api.practiceonline.co.za";
 const token = localStorage.getItem("token");
 
 const topAccountName = document.getElementById("topAccountName");
@@ -894,7 +894,27 @@ function getId(item){
 }
 
 function getContentType(item){
-  return item?.contentType || "quiz";
+  const raw = String(item?.contentType || "quiz")
+    .trim()
+    .replace(/[\s_-]+/g,"")
+    .toLowerCase();
+
+  const map = {
+    quiz:"quiz",
+    quizzes:"quiz",
+    activity:"activity",
+    activities:"activity",
+    homework:"homework",
+    homeworks:"homework",
+    assignment:"assignment",
+    assignments:"assignment",
+    gradechallenge:"gradeChallenge",
+    weeklychallenge:"weeklyChallenge",
+    weeklychallenges:"weeklyChallenge",
+    challengeoftheweek:"weeklyChallenge"
+  };
+
+  return map[raw] || "quiz";
 }
 
 function getTitle(item){
@@ -1223,12 +1243,13 @@ async function loadTopbarProfile(){
 
     if(!data) return;
 
-    learnerProfile = data;
+    const profile = data.user || data;
+    learnerProfile = profile;
 
-    topAccountName.textContent = data.fullName || data.username || "User";
-    topAccountType.textContent = data.accountType || data.role || "Account";
+    topAccountName.textContent = profile.fullName || profile.username || "User";
+    topAccountType.textContent = profile.accountType || profile.role || "Account";
 
-    const grade = data.grade || "-";
+    const grade = profile.grade || "-";
 
     document.getElementById("gradeChallengeTitle").textContent = grade !== "-"
       ? "Grade " + grade + " Challenge"
