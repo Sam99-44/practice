@@ -544,6 +544,55 @@ input:focus,textarea:focus,select:focus{
  margin:8px 0 8px 22px!important;
 }
 
+
+
+
+/* ===== LIVE DYNAMIC LEARNER PREVIEW ===== */
+.attemptPaperPreview .qTextPaper mjx-container[jax="SVG"],
+.attemptPaperPreview .qSectionText mjx-container[jax="SVG"],
+.attemptPaperPreview .noteBox mjx-container[jax="SVG"],
+.attemptPaperPreview .optTextPaper mjx-container[jax="SVG"],
+#paperPreviewContent .qTextPaper mjx-container[jax="SVG"],
+#paperPreviewContent .qSectionText mjx-container[jax="SVG"],
+#paperPreviewContent .noteBox mjx-container[jax="SVG"],
+#paperPreviewContent .optTextPaper mjx-container[jax="SVG"]{
+  display:inline-block !important;
+  position:relative !important;
+  top:-0.07em !important;
+  margin:0 .03em !important;
+  padding:0 !important;
+  vertical-align:baseline !important;
+  line-height:1 !important;
+  font-size:1em !important;
+  font-weight:400 !important;
+}
+
+.attemptPaperPreview mjx-container[jax="SVG"] svg *,
+#paperPreviewContent mjx-container[jax="SVG"] svg *{
+  stroke-width:0 !important;
+}
+
+.attemptPaperPreview mjx-container[jax="SVG"] line,
+.attemptPaperPreview mjx-container[jax="SVG"] mjx-line,
+#paperPreviewContent mjx-container[jax="SVG"] line,
+#paperPreviewContent mjx-container[jax="SVG"] mjx-line{
+  stroke:#111827 !important;
+  stroke-width:1.2 !important;
+}
+
+/* Smooth visual refresh without changing the paper layout */
+#fullLearnerPreview{
+  min-height:180px;
+}
+
+#fullLearnerPreview.previewRefreshing{
+  opacity:.72;
+}
+
+#fullLearnerPreview{
+  transition:opacity .12s ease;
+}
+
 </style>
 </head>
 
@@ -573,7 +622,10 @@ input:focus,textarea:focus,select:focus{
         <h3 style="margin:0;">Find an assessment to edit</h3>
         
       </div>
-      <div id="availabilityPill" class="pill">No assessment loaded</div>
+      <div>
+        <div id="availabilityPill" class="pill">No assessment loaded</div>
+        <div id="availabilityNote" class="muted tiny" style="margin-top:6px;"></div>
+      </div>
     </div>
 
     <div class="assessmentFilterGrid">
@@ -2675,6 +2727,7 @@ function escapeHtml(str){
       wireLastCard();
       renumberCards();
       setupDragAndDrop();
+      scheduleLiveLearnerPreview({ delay: 10 });
     }
     function addMcq(){
       qCount += 1;
@@ -2682,6 +2735,7 @@ function escapeHtml(str){
       wireLastCard();
       renumberCards();
       setupDragAndDrop();
+      scheduleLiveLearnerPreview({ delay: 10 });
     }
     function addText(){
       qCount += 1;
@@ -2690,6 +2744,7 @@ function escapeHtml(str){
       wireLastCard();
       renumberCards();
       setupDragAndDrop();
+      scheduleLiveLearnerPreview({ delay: 10 });
     }
     function addGroup(){
       qCount += 1;
@@ -2829,6 +2884,125 @@ function escapeHtml(str){
         renumberCards();
         refreshFullLearnerPreview();
       }
+    });
+
+
+    /* ===== LIVE DYNAMIC FULL LEARNER PREVIEW ===== */
+    let livePreviewTimer = null;
+    let livePreviewMutationTimer = null;
+
+    function scheduleLiveLearnerPreview(options = {}){
+      const {
+        renderCard = null,
+        delay = 70
+      } = options;
+
+      if (renderCard && typeof renderCardPreview === "function") {
+        try {
+          renderCardPreview(renderCard);
+        } catch {}
+      }
+
+      clearTimeout(livePreviewTimer);
+
+      fullLearnerPreview?.classList.add("previewRefreshing");
+
+      livePreviewTimer = setTimeout(() => {
+        try {
+          refreshFullLearnerPreview(
+            fullLearnerPreview,
+            currentFullPreviewMode
+          );
+        } finally {
+          requestAnimationFrame(() => {
+            fullLearnerPreview?.classList.remove("previewRefreshing");
+          });
+        }
+      }, delay);
+    }
+
+    /*
+     * Every editable control inside a widget/card updates both its local
+     * mini-preview and the complete learner preview.
+     */
+    questionsWrap.addEventListener("input", event => {
+      const card = event.target.closest(".qcard");
+      scheduleLiveLearnerPreview({
+        renderCard: card,
+        delay: 45
+      });
+    });
+
+    questionsWrap.addEventListener("change", event => {
+      const card = event.target.closest(".qcard");
+      scheduleLiveLearnerPreview({
+        renderCard: card,
+        delay: 20
+      });
+    });
+
+    /*
+     * Buttons may add/remove options, answer fields, images or other widget
+     * elements. Refresh after their click handler has changed the DOM.
+     */
+    questionsWrap.addEventListener("click", event => {
+      if (!event.target.closest("button")) return;
+
+      const card = event.target.closest(".qcard");
+
+      setTimeout(() => {
+        scheduleLiveLearnerPreview({
+          renderCard: card,
+          delay: 15
+        });
+      }, 0);
+    });
+
+    /*
+     * Observe cards being added, removed or reordered directly under
+     * questionsWrap. Subtree observation is intentionally disabled so
+     * MathJax's own DOM updates cannot cause a refresh loop.
+     */
+    const learnerPreviewWidgetObserver = new MutationObserver(mutations => {
+      const widgetStructureChanged = mutations.some(mutation =>
+        mutation.type === "childList" &&
+        mutation.target === questionsWrap
+      );
+
+      if (!widgetStructureChanged) return;
+
+      clearTimeout(livePreviewMutationTimer);
+      livePreviewMutationTimer = setTimeout(() => {
+        scheduleLiveLearnerPreview({ delay: 10 });
+      }, 10);
+    });
+
+    learnerPreviewWidgetObserver.observe(questionsWrap, {
+      childList: true,
+      subtree: false
+    });
+
+    /*
+     * Assessment metadata is also reflected immediately in the learner
+     * preview while the user types or changes a selection.
+     */
+    [
+      titleEl,
+      gradeEl,
+      topicEl,
+      timeLimitEl,
+      difficultyEl,
+      paperEl,
+      instructionsEl,
+      accessLevelEl
+    ].filter(Boolean).forEach(control => {
+      control.addEventListener("input", () => {
+        scheduleLiveLearnerPreview({ delay: 55 });
+      });
+
+      control.addEventListener("change", () => {
+        scheduleLiveLearnerPreview({ delay: 20 });
+      });
     });
 
     function wireTextModeForLastCard(){
@@ -4292,8 +4466,8 @@ function escapeHtml(str){
 
     function updateAvailabilityUi(){
       if (!currentQuiz) {
-        availabilityPill.textContent = "No assessment loaded";
-        availabilityNote.textContent = "Select an assessment to edit.";
+        if (availabilityPill) availabilityPill.textContent = "No assessment loaded";
+        if (availabilityNote) availabilityNote.textContent = "Select an assessment to edit.";
         toggleFreezeBtn.disabled = true;
         deleteAssessmentBtn.disabled = true;
         return;
