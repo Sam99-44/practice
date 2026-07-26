@@ -3156,13 +3156,21 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
         filter.isPublished = true;
       }
     } else {
-      if (!u.grade) {
+      const learnerGrade = Number(u.grade);
+
+      if (!Number.isInteger(learnerGrade)) {
+        console.warn("GET /api/quizzes: learner has no valid grade", {
+          userId: String(u._id),
+          role: u.role,
+          grade: u.grade,
+        });
+
         return res.json([]);
       }
 
       const now = new Date();
 
-      filter.grade = u.grade;
+      filter.grade = learnerGrade;
       filter.isPublished = true;
       filter.$or = [
         { publishAt: null },
@@ -3170,11 +3178,39 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
       ];
     }
 
+    console.log("GET /api/quizzes request", {
+      userId: String(u._id),
+      role: u.role,
+      grade: u.grade,
+      wantsAll,
+      query: req.query,
+      filter,
+    });
+
     const quizzes = await Quiz.find(filter)
       .sort({ createdAt: -1 })
       .select(
         "assessmentCode grade subject curriculum language term chapter title topic subtopic version keywords contentType audience isForAllLearners accessLevel isPremium requiresPayment accessFee paper difficulty questions timeLimitMinutes instructions assessmentInstructions learningObjectives isFrozen availableFrom availableUntil createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
       );
+
+    console.log("GET /api/quizzes result", {
+      userId: String(u._id),
+      role: u.role,
+      grade: u.grade,
+      count: quizzes.length,
+      firstQuiz: quizzes.length
+        ? {
+            id: String(quizzes[0]._id),
+            title: quizzes[0].title,
+            grade: quizzes[0].grade,
+            contentType: quizzes[0].contentType,
+            isPublished: quizzes[0].isPublished,
+            publishAt: quizzes[0].publishAt,
+            availableFrom: quizzes[0].availableFrom,
+            availableUntil: quizzes[0].availableUntil,
+          }
+        : null,
+    });
 
     return res.json(quizzes);
   } catch (e) {
