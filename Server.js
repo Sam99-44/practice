@@ -991,6 +991,8 @@ async function validatePayfastData(pfData) {
 const ALLOWED_ORIGINS = [
   process.env.APP_URL,
   process.env.FRONTEND_URL,
+  "https://practiceonline.co.za",
+  "https://www.practiceonline.co.za",
   "http://localhost:3000",
   "http://localhost:5500",
   "http://127.0.0.1:5500",
@@ -3137,7 +3139,9 @@ app.use(
 
 app.get("/api/quizzes", authRequired, async (req, res) => {
   try {
-    const u = await User.findById(req.user.userId).select("role grade");
+    const u = await User.findById(req.user.userId).select(
+      "role grade accountType"
+    );
 
     if (!u) {
       return res.status(401).json({
@@ -3146,7 +3150,6 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
     }
 
     const wantsAll = String(req.query.all || "") === "1";
-
     let filter = {};
 
     if (isPrivilegedRole(u.role) && wantsAll) {
@@ -3162,6 +3165,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
         console.warn("GET /api/quizzes: learner has no valid grade", {
           userId: String(u._id),
           role: u.role,
+          accountType: u.accountType,
           grade: u.grade,
         });
 
@@ -3170,46 +3174,75 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
 
       const now = new Date();
 
-      filter.grade = learnerGrade;
-      filter.isPublished = true;
-      filter.$or = [
-        { publishAt: null },
-        { publishAt: { $lte: now } }
+      /*
+       * Backward-compatible learner visibility:
+       * - Match the learner's grade.
+       * - Also allow weekly challenges and assessments marked for all learners.
+       * - Explicit drafts (isPublished:false) remain hidden.
+       * - Older assessments with no isPublished/publishAt fields remain visible.
+       * - Respect scheduled and availability dates when those fields exist.
+       */
+      filter.$and = [
+        {
+          $or: [
+            { grade: learnerGrade },
+            { isForAllLearners: true },
+            {
+              contentType: {
+                $in: [
+                  "weeklyChallenge",
+                  "weeklychallenge",
+                  "challengeOfTheWeek",
+                  "challengeoftheweek"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          $or: [
+            { isPublished: true },
+            { isPublished: null },
+            { isPublished: { $exists: false } }
+          ]
+        },
+        {
+          $or: [
+            { publishAt: null },
+            { publishAt: { $exists: false } },
+            { publishAt: { $lte: now } }
+          ]
+        },
+        {
+          $or: [
+            { availableFrom: null },
+            { availableFrom: { $exists: false } },
+            { availableFrom: { $lte: now } }
+          ]
+        },
+        {
+          $or: [
+            { availableUntil: null },
+            { availableUntil: { $exists: false } },
+            { availableUntil: { $gte: now } }
+          ]
+        }
       ];
     }
-
-    console.log("GET /api/quizzes request", {
-      userId: String(u._id),
-      role: u.role,
-      grade: u.grade,
-      wantsAll,
-      query: req.query,
-      filter,
-    });
 
     const quizzes = await Quiz.find(filter)
       .sort({ createdAt: -1 })
       .select(
         "assessmentCode grade subject curriculum language term chapter title topic subtopic version keywords contentType audience isForAllLearners accessLevel isPremium requiresPayment accessFee paper difficulty questions timeLimitMinutes instructions assessmentInstructions learningObjectives isFrozen availableFrom availableUntil createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
-      );
+      )
+      .lean();
 
     console.log("GET /api/quizzes result", {
       userId: String(u._id),
       role: u.role,
+      accountType: u.accountType,
       grade: u.grade,
       count: quizzes.length,
-      firstQuiz: quizzes.length
-        ? {
-            id: String(quizzes[0]._id),
-            title: quizzes[0].title,
-            grade: quizzes[0].grade,
-            contentType: quizzes[0].contentType,
-            isPublished: quizzes[0].isPublished,
-            publishAt: quizzes[0].publishAt,
-            availableFrom: quizzes[0].availableFrom,
-            availableUntil: quizzes[0].availableUntil,
-          }
-        : null,
     });
 
     return res.json(quizzes);
@@ -3240,12 +3273,30 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
 
     const now = new Date();
 
-    if (!quiz.isPublished) {
-      return res.status(403).json({ message: "This assessment is not yet published." });
+    // Only an explicit false value is treated as a draft.
+    // Missing legacy publishing fields remain learner-visible.
+    if (quiz.isPublished === false) {
+      return res.status(403).json({
+        message: "This assessment is not yet published."
+      });
     }
 
     if (quiz.publishAt && new Date(quiz.publishAt) > now) {
-      return res.status(403).json({ message: "This assessment is not yet published." });
+      return res.status(403).json({
+        message: "This assessment is not yet published."
+      });
+    }
+
+    if (quiz.availableFrom && new Date(quiz.availableFrom) > now) {
+      return res.status(403).json({
+        message: "This assessment is not available yet."
+      });
+    }
+
+    if (quiz.availableUntil && new Date(quiz.availableUntil) < now) {
+      return res.status(403).json({
+        message: "This assessment is no longer available."
+      });
     }
 
     return res.json(quiz);
