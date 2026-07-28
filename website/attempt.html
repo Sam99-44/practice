@@ -5834,6 +5834,191 @@ mjx-container[jax="SVG"] svg{
     max-width:100% !important;
   }
 }
+
+
+/* ===== FINAL CONNECTED QUESTION PROGRESS BELOW TOTAL MARKS ===== */
+.paperMeta .questionProgressCard{
+  margin:14px 0 0 !important;
+  padding:8px 0 0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  width:100% !important;
+  max-width:none !important;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+}
+.paperMeta .questionProgressTitle,
+.paperMeta .questionProgressLegend{
+  display:none !important;
+}
+.paperMeta .questionProgressList{
+  position:relative !important;
+  display:flex !important;
+  flex-wrap:nowrap !important;
+  align-items:flex-start !important;
+  justify-content:space-between !important;
+  gap:0 !important;
+  width:max-content !important;
+  min-width:100% !important;
+  max-width:none !important;
+  padding:0 10px 2px !important;
+  overflow:visible !important;
+}
+.paperMeta .questionProgressList::before{
+  content:"";
+  position:absolute;
+  left:26px;
+  right:26px;
+  top:10px;
+  height:2px;
+  background:#d4a017;
+  z-index:0;
+}
+.paperMeta .qProgressItem{
+  position:relative !important;
+  z-index:1 !important;
+  flex:1 0 48px !important;
+  width:auto !important;
+  min-width:48px !important;
+  min-height:46px !important;
+  height:auto !important;
+  padding:0 4px !important;
+  border:0 !important;
+  background:transparent !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:7px !important;
+  box-shadow:none !important;
+  color:#334155 !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:10px !important;
+  font-weight:400 !important;
+  line-height:1.1 !important;
+  text-align:center !important;
+}
+.paperMeta .qProgressItem:hover,
+.paperMeta .qProgressItem.correct,
+.paperMeta .qProgressItem.wrong{
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+.paperMeta .qProgressStatusIcon,
+.paperMeta span.qProgressStatusIcon.pending,
+.paperMeta img.qProgressStatusIcon.correct,
+.paperMeta img.qProgressStatusIcon.wrong{
+  position:relative !important;
+  z-index:2 !important;
+  width:20px !important;
+  height:20px !important;
+  flex:0 0 20px !important;
+  display:block !important;
+  object-fit:contain !important;
+  border-radius:50% !important;
+  background:#fff !important;
+}
+.paperMeta span.qProgressStatusIcon.pending{
+  border:2px solid #a8b2c1 !important;
+}
+.paperMeta .qProgressItem.active span.qProgressStatusIcon.pending{
+  border:3px solid #d4a017 !important;
+  box-shadow:0 0 0 3px rgba(212,160,23,.20) !important;
+}
+.paperMeta .qProgressItem.active img.qProgressStatusIcon.correct,
+.paperMeta .qProgressItem.active img.qProgressStatusIcon.wrong{
+  box-shadow:0 0 0 3px #fff, 0 0 0 5px #d4a017 !important;
+}
+.paperMeta img.qProgressStatusIcon.correct{
+  filter:brightness(0) saturate(100%) invert(39%) sepia(94%) saturate(604%) hue-rotate(87deg) brightness(91%) contrast(92%) !important;
+}
+.paperMeta img.qProgressStatusIcon.wrong{
+  filter:brightness(0) saturate(100%) invert(19%) sepia(94%) saturate(4511%) hue-rotate(352deg) brightness(91%) contrast(94%) !important;
+}
+.paperMeta .qProgressText{
+  white-space:nowrap !important;
+}
+@media(max-width:640px){
+  .paperMeta .questionProgressCard{
+    margin-top:12px !important;
+  }
+  .paperMeta .questionProgressList{
+    min-width:max-content !important;
+    padding-left:6px !important;
+    padding-right:6px !important;
+  }
+  .paperMeta .questionProgressList::before{
+    left:22px;
+    right:22px;
+  }
+  .paperMeta .qProgressItem{
+    flex-basis:44px !important;
+    min-width:44px !important;
+  }
+}
+
+
+
+/* ===== OUTLINED SVG PROGRESS STATUS ICONS ===== */
+.paperMeta .qProgressStatusIcon.correct,
+.paperMeta .qProgressStatusIcon.wrong{
+  border:0 !important;
+  background:#fff !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+.paperMeta .qProgressStatusIcon.correct{
+  color:#16a34a !important;
+}
+.paperMeta .qProgressStatusIcon.wrong{
+  color:#ef4444 !important;
+}
+.paperMeta .qProgressStatusIcon.correct svg,
+.paperMeta .qProgressStatusIcon.wrong svg{
+  width:20px !important;
+  height:20px !important;
+  display:block !important;
+  overflow:visible !important;
+}
+.paperMeta .qProgressStatusIcon.correct svg *,
+.paperMeta .qProgressStatusIcon.wrong svg *{
+  fill:none !important;
+  stroke:currentColor !important;
+}
+.paperMeta .qProgressItem.correct,
+.paperMeta .qProgressItem.wrong{
+  background:transparent !important;
+}
+
+
+/* ===== FINAL: SVG STATUS ICONS, ORIGINAL PROGRESS POSITION PRESERVED ===== */
+/* Disable the older corner badge so the existing connected progress row
+   shows only its inline SVG tick/cross in the same location. */
+.paperMeta .qProgressItem.correct::after,
+.paperMeta .qProgressItem.wrong::after{
+  content:none !important;
+  display:none !important;
+  background-image:none !important;
+}
+
+.paperMeta .qProgressStatusIcon.correct,
+.paperMeta .qProgressStatusIcon.wrong{
+  width:20px !important;
+  height:20px !important;
+  flex:0 0 20px !important;
+  background:#fff !important;
+}
+
+.paperMeta .qProgressStatusIcon.correct svg,
+.paperMeta .qProgressStatusIcon.wrong svg{
+  width:20px !important;
+  height:20px !important;
+  display:block !important;
+}
 </style>
 </head>
 
@@ -6399,6 +6584,14 @@ function inlineQuizLoadingHtml(){
     }
   }
 
+  function placeQuestionProgressBelowTotalMarks(){
+    if (!questionProgressCard || !questionsDiv) return;
+    const paperMeta = questionsDiv.querySelector(".paperMeta");
+    if (paperMeta && questionProgressCard.parentElement !== paperMeta) {
+      paperMeta.appendChild(questionProgressCard);
+    }
+  }
+
   function buildQuestionProgressCard(){
     if (!questionProgressCard || !questionProgressList) return;
 
@@ -6431,6 +6624,7 @@ function inlineQuizLoadingHtml(){
     });
 
     questionProgressCard.classList.remove("hidden");
+    placeQuestionProgressBelowTotalMarks();
     updateQuestionProgressActive();
   }
 
@@ -6455,14 +6649,17 @@ function inlineQuizLoadingHtml(){
     statusIcon.className =
       "qProgressStatusIcon " + (isCorrect ? "correct" : "wrong");
 
-    statusIcon.innerHTML = "";
-    const image = document.createElement("img");
-    image.src = isCorrect
-      ? "https://res.cloudinary.com/dopoxadlr/image/upload/v1784922756/correct-right-arrow-direction-left-down-up_lt6cfc.svg"
-      : "https://res.cloudinary.com/dopoxadlr/image/upload/v1784922779/wrong-delete-remove-trash-minus-cancel-close_jtaf7c.svg";
-    image.alt = isCorrect ? "Correct answer" : "Incorrect answer";
-    image.className = "qProgressStatusIcon " + (isCorrect ? "correct" : "wrong");
-    statusIcon.replaceWith(image);
+    statusIcon.setAttribute("role", "img");
+    statusIcon.setAttribute("aria-label", isCorrect ? "Correct answer" : "Incorrect answer");
+    statusIcon.innerHTML = isCorrect
+      ? `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+           <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"></circle>
+           <path d="M8 12.2l2.5 2.5L16.4 9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
+         </svg>`
+      : `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+           <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"></circle>
+           <path d="M9 9l6 6M15 9l-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path>
+         </svg>`;
   }
 
   function resetQuestionProgressCard(){
