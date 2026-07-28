@@ -5413,10 +5413,10 @@ mjx-container[jax="SVG"] svg{
 }
 
 /* Keep only the real icon supplied by the page */
-.examPaper .noteBox > img,
+.examPaper .noteBox > img.noteIcon,
+.examPaper .noteBox > img.infoIcon,
 .examPaper .noteBox .noteIcon,
-.examPaper .noteBox .infoIcon,
-.examPaper .noteBox img[src*="cloudinary"]{
+.examPaper .noteBox .infoIcon{
   display:block !important;
   grid-column:1 !important;
   grid-row:1 !important;
@@ -5439,7 +5439,7 @@ mjx-container[jax="SVG"] svg{
 }
 
 /* Put all note text/content safely in the second column */
-.examPaper .noteBox > :not(img),
+.examPaper .noteBox > :not(img):not(.noteDiagramPreview),
 .examPaper .noteBox .noteText,
 .examPaper .noteBox .noteContent{
   grid-column:2 !important;
@@ -5775,22 +5775,64 @@ mjx-container[jax="SVG"] svg{
 
 
 /* ===== NOTE DIAGRAM PREVIEW =====
-   Shows a note's shared diagram inside the note card and learner preview. */
+   Diagram sits on the plain white assessment paper, outside the coloured note. */
 .noteDiagramPreview{
-  width:100%;
-  margin:16px 0 0;
-  padding-top:14px;
-  border-top:1px solid #dbe7f5;
-}
-.noteDiagramPreview .qImageWrap{
-  margin:0 auto !important;
-}
-.noteDiagramPreview .qimg{
   display:block !important;
-  max-width:min(100%, 720px) !important;
+  width:100% !important;
+  max-width:100% !important;
+  margin:14px 0 18px !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:#ffffff !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+}
+
+.noteDiagramPreview .qImageWrap{
+  display:flex !important;
+  width:100% !important;
+  max-width:100% !important;
+  justify-content:center !important;
+  align-items:center !important;
+  margin:0 auto !important;
+  padding:0 !important;
+  border:0 !important;
+  background:#ffffff !important;
+  box-shadow:none !important;
+  overflow-x:auto !important;
+}
+
+.noteDiagramPreview img.qimg,
+.examPaper .noteDiagramPreview img.qimg{
+  display:block !important;
   width:auto !important;
   height:auto !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:min(100%, 720px) !important;
+  max-height:none !important;
   margin:0 auto !important;
+  padding:0 !important;
+  border:0 !important;
+  outline:0 !important;
+  border-radius:0 !important;
+  background:#ffffff !important;
+  box-shadow:none !important;
+  object-fit:contain !important;
+  filter:none !important;
+  opacity:1 !important;
+}
+
+@media(max-width:640px){
+  .noteDiagramPreview{
+    margin:12px 0 16px !important;
+  }
+
+  .noteDiagramPreview img.qimg,
+  .examPaper .noteDiagramPreview img.qimg{
+    max-width:100% !important;
+  }
 }
 </style>
 </head>
@@ -9237,16 +9279,25 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     const hasMainHeading = allQuestions.some(q => {
       const type = String(q?.type || "mcq").toLowerCase();
       if (type !== "note") return false;
-      return parseExamTextParts(cleanSpaces(q?.text || "")).kind === "main";
+
+      const stored = String(q?.text || "").trim();
+      const role = getStandardNoteRole(stored);
+      const parsed = parseExamTextParts(cleanSpaces(stripStandardNoteMarker(stored)));
+
+      return role === "main" || parsed.kind === "main";
     });
-    const autoMainHeadingHtml = hasMainHeading ? "" : `<div class="q"><div class="qMainHeading">QUESTION 1</div></div>`;
+
+    // Numbering is locked by display order, never by a number typed in the file.
+    // Do not pre-insert QUESTION 1 here. The first actual main note or first
+    // scorable question creates QUESTION 1, preventing an accidental jump to QUESTION 2.
+    const autoMainHeadingHtml = "";
 
     let standardMainNo = 0;
     let standardTopNo = 0;
     let standardSubParent = null;
     let standardChildNo = 0;
     let standardHeadingShown = false;
-    let standardModeActive = false;
+    let standardModeActive = true;
 
     questionsDiv.innerHTML = paperMetaHtml + autoMainHeadingHtml + allQuestions.map((q, i) => {
       const type = String(q.type || "mcq").toLowerCase();
@@ -9273,13 +9324,78 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       if (type === "note") {
         const noteRole = getStandardNoteRole(storedRawText);
 
-        // Backward compatibility:
-        // Existing quizzes without a NOTE_ROLE marker keep the old behaviour.
+        // Legacy notes now use the same locked numbering rules.
+        // A typed heading such as QUESTION 3 is treated as the next main heading,
+        // so the first main heading always displays as QUESTION 1.
         if (noteRole === "legacy") {
-          return renderNoteLike(rawText, imageInnerHtml, sectionTotal);
+          const legacyParsed = parseExamTextParts(rawText);
+          const legacyText = String(rawText || "").trim();
+
+          // Assessment instructions and learning objectives are introductory
+          // notes only. They display before the assessment but never create,
+          // increment, or reset QUESTION numbering.
+          const isLegacyIntroNote =
+            /^(assessment\s+instructions?|instructions?|learning\s+objectives?|objectives?)\b/i.test(legacyText);
+
+          if (isLegacyIntroNote) {
+            return renderNoteLike(rawText, imageInnerHtml, sectionTotal);
+          }
+
+          if (legacyParsed.kind === "main") {
+            // Old files often place NOTE: QUESTION 3, QUESTION 6, etc. before
+            // every subquestion even though all questions share one diagram.
+            // Only the first legacy QUESTION note starts the main question.
+            // Later legacy QUESTION notes are separators and do not increment
+            // the main number. Use [[NOTE_ROLE:main]] for a genuine new main
+            // question group.
+            if (standardMainNo === 0) {
+              standardMainNo = 1;
+              standardTopNo = 0;
+              standardSubParent = null;
+              standardChildNo = 0;
+              standardHeadingShown = true;
+
+              return `<div class="q"><div class="qMainHeading">QUESTION 1</div></div>`;
+            }
+
+            return "";
+          }
+
+          if (standardMainNo === 0) standardMainNo = 1;
+
+          const heading = standardHeadingShown
+            ? ""
+            : `<div class="q"><div class="qMainHeading">QUESTION ${standardMainNo}</div></div>`;
+
+          standardHeadingShown = true;
+
+          // A legacy section label such as 1.1 is treated as a shared parent stem.
+          if (legacyParsed.kind === "section") {
+            standardTopNo += 1;
+            standardSubParent = standardTopNo;
+            standardChildNo = 0;
+
+            const stemText = legacyParsed.body || rawText;
+            const numberedStem = `${standardMainNo}.${standardSubParent} ${stemText}`.trim();
+            return `${heading}${renderNoteLike(numberedStem, imageInnerHtml, sectionTotal)}`;
+          }
+
+          // Ordinary legacy notes are shared information/instruction context.
+          // Their diagram remains visible for 1.1, 1.2, ... until a new context
+          // note, section, or main question begins.
+          standardSubParent = null;
+          standardChildNo = 0;
+          return `${heading}${renderNoteLike(rawText, imageInnerHtml, sectionTotal)}`;
         }
 
         standardModeActive = true;
+
+        // Instruction and objective notes are introductory content.
+        // They must never create QUESTION 1, increment a question number,
+        // or reset the numbering state.
+        if (noteRole === "instruction") {
+          return renderNoteLike(rawText, imageInnerHtml, sectionTotal);
+        }
 
         if (noteRole === "main") {
           standardMainNo += 1;
@@ -9298,11 +9414,6 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
           : `<div class="q"><div class="qMainHeading">QUESTION ${standardMainNo}</div></div>`;
 
         standardHeadingShown = true;
-
-        if (noteRole === "instruction") {
-          // Blue icon note. Supports bullets, numbering and maths.
-          return `${heading}${renderNoteLike(rawText, "", sectionTotal)}`;
-        }
 
         if (noteRole === "subquestion") {
           // Creates a parent such as 5.3.
@@ -9324,38 +9435,35 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
         return `${heading}${renderNoteLike(rawText, imageInnerHtml, sectionTotal)}`;
       }
 
-      if (standardModeActive) {
-        if (standardMainNo === 0) standardMainNo = 1;
+      // Locked numbering applies to every assessment, including older files.
+      // Numbers typed into question text are removed and regenerated from order.
+      if (standardMainNo === 0) standardMainNo = 1;
 
-        if (!standardHeadingShown) {
-          prefixHtml = `<div class="q"><div class="qMainHeading">QUESTION ${standardMainNo}</div></div>`;
-          standardHeadingShown = true;
-        }
-
-        displayNo += 1;
-
-        let generatedNumber;
-
-        if (standardSubParent !== null) {
-          standardChildNo += 1;
-          generatedNumber = `${standardMainNo}.${standardSubParent}.${standardChildNo}`;
-        } else {
-          standardTopNo += 1;
-          generatedNumber = `${standardMainNo}.${standardTopNo}`;
-        }
-
-        rawText = `${generatedNumber} ${stripVisibleQuestionNumber(rawText)}`.trim();
-        mainNo = standardMainNo;
-        sectionKey = standardSubParent !== null
-          ? `${standardMainNo}.${standardSubParent}`
-          : `${standardMainNo}.${standardTopNo}`;
-
-        questionTotal = totals.mainTotals.get(mainNo) || points;
-        sectionTotal = totals.sectionTotals.get(sectionKey) || points;
-      } else {
-        // Original numbering for all quizzes already stored in the database.
-        displayNo += 1;
+      if (!standardHeadingShown) {
+        prefixHtml = `<div class="q"><div class="qMainHeading">QUESTION ${standardMainNo}</div></div>`;
+        standardHeadingShown = true;
       }
+
+      displayNo += 1;
+
+      let generatedNumber;
+
+      if (standardSubParent !== null) {
+        standardChildNo += 1;
+        generatedNumber = `${standardMainNo}.${standardSubParent}.${standardChildNo}`;
+      } else {
+        standardTopNo += 1;
+        generatedNumber = `${standardMainNo}.${standardTopNo}`;
+      }
+
+      rawText = `${generatedNumber} ${stripVisibleQuestionNumber(rawText)}`.trim();
+      mainNo = standardMainNo;
+      sectionKey = standardSubParent !== null
+        ? `${standardMainNo}.${standardSubParent}`
+        : `${standardMainNo}.${standardTopNo}`;
+
+      questionTotal = totals.mainTotals.get(mainNo) || points;
+      sectionTotal = totals.sectionTotals.get(sectionKey) || points;
 
       const headHtml = type === "fill"
         ? renderFillQuestionHead(rawText, points, displayNo, i)
@@ -10446,18 +10554,24 @@ function formatSolutionHtml(solutionText){
 
   function renderNoteLike(rawText, imageHtml, sectionTotal){
     const parsed = parseExamTextParts(rawText);
+
+    // Keep diagrams outside the blue information-note box so they appear
+    // as clean black-and-white assessment diagrams on the white paper.
     const noteImageHtml = imageHtml
       ? `<div class="noteDiagramPreview" data-context-kind="diagram">${imageHtml}</div>`
       : "";
 
     if (parsed.kind === "main") {
-      const bodyHtml = (parsed.body || noteImageHtml)
-        ? `<div class="noteBox" style="margin-top:8px;">${renderStructuredNote(parsed.body)}${noteImageHtml}</div>`
+      const hasBody = Boolean(String(parsed.body || "").trim());
+      const bodyHtml = hasBody
+        ? `<div class="noteBox" style="margin-top:8px;">${renderStructuredNote(parsed.body)}</div>`
         : "";
+
       return `
         <div class="q">
           <div class="qMainHeading">${escapeHtml(parsed.label)}</div>
           ${bodyHtml}
+          ${noteImageHtml}
         </div>
       `;
     }
@@ -10468,16 +10582,20 @@ function formatSolutionHtml(solutionText){
           <div class="qSectionStem">
             <div class="qSectionLeft">
               <div class="qSectionNo">${escapeHtml(parsed.label)}</div>
-              <div class="qSectionText">${renderStructuredNote(parsed.body)}${noteImageHtml}</div>
+              <div class="qSectionText">${renderStructuredNote(parsed.body)}</div>
             </div>
           </div>
+          ${noteImageHtml}
         </div>
       `;
     }
 
+    const noteText = String(rawText || "").trim();
+
     return `
       <div class="q">
-        <div class="noteBox">${renderStructuredNote(String(rawText || "").trim())}${noteImageHtml}</div>
+        ${noteText ? `<div class="noteBox">${renderStructuredNote(noteText)}</div>` : ""}
+        ${noteImageHtml}
       </div>
     `;
   }
