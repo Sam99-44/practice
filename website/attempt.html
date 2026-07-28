@@ -5994,30 +5994,29 @@ mjx-container[jax="SVG"] svg{
   background:transparent !important;
 }
 
-
-/* ===== FINAL: SVG STATUS ICONS, ORIGINAL PROGRESS POSITION PRESERVED ===== */
-/* Disable the older corner badge so the existing connected progress row
-   shows only its inline SVG tick/cross in the same location. */
-.paperMeta .qProgressItem.correct::after,
-.paperMeta .qProgressItem.wrong::after{
-  content:none !important;
-  display:none !important;
-  background-image:none !important;
+/* ===== FINAL SVG QUESTION PROGRESS ICON PATCH =====
+   Keeps Question Progress in its existing position below Total Marks. */
+.paperMeta .qProgressItem.correct,
+.paperMeta .qProgressItem.wrong{
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
 }
-
-.paperMeta .qProgressStatusIcon.correct,
-.paperMeta .qProgressStatusIcon.wrong{
+.paperMeta img.qProgressStatusIcon.correct,
+.paperMeta img.qProgressStatusIcon.wrong{
   width:20px !important;
   height:20px !important;
-  flex:0 0 20px !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
   background:#fff !important;
+  object-fit:contain !important;
+  filter:none !important;
 }
-
-.paperMeta .qProgressStatusIcon.correct svg,
-.paperMeta .qProgressStatusIcon.wrong svg{
-  width:20px !important;
-  height:20px !important;
-  display:block !important;
+.paperMeta .qProgressItem.active img.qProgressStatusIcon.correct,
+.paperMeta .qProgressItem.active img.qProgressStatusIcon.wrong{
+  border-radius:50% !important;
+  box-shadow:0 0 0 3px #fff, 0 0 0 5px #d4a017 !important;
 }
 </style>
 </head>
@@ -6643,23 +6642,18 @@ function inlineQuizLoadingHtml(){
     item.classList.remove("correct", "wrong");
     item.classList.add(isCorrect ? "correct" : "wrong");
 
-    const statusIcon = item.querySelector(".qProgressStatusIcon");
-    if (!statusIcon) return;
+    const currentIcon = item.querySelector(".qProgressStatusIcon");
+    if (!currentIcon) return;
 
-    statusIcon.className =
-      "qProgressStatusIcon " + (isCorrect ? "correct" : "wrong");
+    const statusIcon = document.createElement("img");
+    statusIcon.className = "qProgressStatusIcon " + (isCorrect ? "correct" : "wrong");
+    statusIcon.src = isCorrect
+      ? "https://res.cloudinary.com/dopoxadlr/image/upload/v1784922756/correct-right-arrow-direction-left-down-up_lt6cfc.svg"
+      : "https://res.cloudinary.com/dopoxadlr/image/upload/v1784922779/wrong-delete-remove-trash-minus-cancel-close_jtaf7c.svg";
+    statusIcon.alt = isCorrect ? "Correct answer" : "Incorrect answer";
+    statusIcon.setAttribute("aria-label", statusIcon.alt);
 
-    statusIcon.setAttribute("role", "img");
-    statusIcon.setAttribute("aria-label", isCorrect ? "Correct answer" : "Incorrect answer");
-    statusIcon.innerHTML = isCorrect
-      ? `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-           <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"></circle>
-           <path d="M8 12.2l2.5 2.5L16.4 9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
-         </svg>`
-      : `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-           <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"></circle>
-           <path d="M9 9l6 6M15 9l-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path>
-         </svg>`;
+    currentIcon.replaceWith(statusIcon);
   }
 
   function resetQuestionProgressCard(){
