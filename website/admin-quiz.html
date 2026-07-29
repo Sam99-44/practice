@@ -2443,6 +2443,54 @@ body > .card:last-of-type{
   }
 }
 
+
+
+/* ===== PER-BLOCK QUICK INSERT CONTROLS ===== */
+.blockQuickInsert{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.blockQuickInsert .quickInsertBtn{
+  min-height:34px !important;
+  padding:7px 9px !important;
+  border:1px solid var(--admin-border,#dfe5ec) !important;
+  background:#fff !important;
+  color:var(--admin-navy,#1b1648) !important;
+  font-size:11px !important;
+  white-space:nowrap;
+}
+.blockQuickInsert .quickInsertBtn:hover{
+  border-color:var(--admin-gold,#c9a227) !important;
+  background:var(--admin-gold-soft,#fff8dc) !important;
+}
+@media(max-width:720px){
+  .qhead .toolRow{width:100%;}
+  .blockQuickInsert{width:100%;}
+  .blockQuickInsert .quickInsertBtn{flex:1 1 auto;}
+}
+
+    .toolRow{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap;}
+    .blockQuickInsert{display:inline-flex;align-items:center;justify-content:flex-end;gap:5px;flex-wrap:wrap;}
+    .blockQuickInsert .smallbtn{min-height:32px!important;padding:6px 8px!important;font-size:11px!important;}
+    .duplicateBlockBtn{border-color:var(--admin-gold)!important;background:var(--admin-gold-soft)!important;}
+    .copyBlockBtn,.pasteBlockBtn{background:#f8faff!important;}
+    @media(max-width:760px){.qhead{align-items:flex-start!important}.toolRow{width:100%;justify-content:flex-start}.blockQuickInsert{justify-content:flex-start}}
+
+/* ===== AUTOMATIC DRAFT SAVING + DRAFT PICKER ===== */
+.draftManager{margin:0 0 18px;padding:16px;border:1px solid var(--admin-border);background:#fff;border-radius:8px;}
+.draftManagerHead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+.draftManagerTitle{margin:0;color:var(--admin-navy);font-size:16px;font-weight:800;}
+.draftManagerStatus{font-size:12px;color:var(--admin-muted);margin-top:4px;}
+.draftManagerControls{display:grid;grid-template-columns:minmax(280px,1fr) auto auto auto;gap:8px;align-items:end;}
+.draftManagerControls select{margin:0!important;}
+.autosaveBadge{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:#475569;}
+.autosaveDot{width:8px;height:8px;border-radius:50%;background:#94a3b8;}
+.autosaveBadge.saving .autosaveDot{background:#c9a227;}
+.autosaveBadge.saved .autosaveDot{background:#159447;}
+.autosaveBadge.error .autosaveDot{background:#b91c1c;}
+@media(max-width:700px){.draftManagerControls{grid-template-columns:1fr}.draftManagerControls button{width:100%}}
 </style>
 </head>
 
@@ -2465,6 +2513,25 @@ body > .card:last-of-type{
       <a class="btn2" href="edit-assessment.html">Edit / Freeze</a>
       <a class="btn2" href="learner-quizzes.html">Learner View</a>
       <button class="btn" id="logoutBtn" type="button">Logout</button>
+    </div>
+  </div>
+
+  <div class="draftManager">
+    <div class="draftManagerHead">
+      <div>
+        <h3 class="draftManagerTitle">Draft Assessments</h3>
+        <div class="draftManagerStatus">Select an unfinished assessment to load it into this editor, exactly like a file upload.</div>
+      </div>
+      <div class="autosaveBadge" id="autosaveBadge"><span class="autosaveDot"></span><span id="autosaveText">Automatic saving ready</span></div>
+    </div>
+    <div class="draftManagerControls">
+      <div>
+        <label for="draftAssessmentSelect">Saved drafts</label>
+        <select id="draftAssessmentSelect"><option value="">Select a draft assessment</option></select>
+      </div>
+      <button class="btn2" id="loadDraftBtn" type="button">Load Draft</button>
+      <button class="btn2" id="deleteDraftBtn" type="button">Remove Draft</button>
+      <button class="btn2" id="refreshDraftsBtn" type="button">Refresh Drafts</button>
     </div>
   </div>
 
@@ -2659,6 +2726,9 @@ body > .card:last-of-type{
       <button class="btn" id="saveBtn" disabled type="button">Save Content</button>
       <button class="btn btn2" id="publishBtn" disabled type="button">Publish Content</button>
       <button class="btn btn2" id="previewPaperBtn" type="button">Preview Exam Paper</button>
+      <button class="btn btn2" id="saveDefaultsBtn" type="button">Save Metadata Defaults</button>
+      <button class="btn btn2" id="applyDefaultsBtn" type="button">Apply Defaults</button>
+      <button class="btn btn2" id="cloneQuizBtn" type="button">Clone as New Draft</button>
     </div>
     <p class="msg muted" id="msg"></p>
     <div id="parseErrorsBox" class="hide" style="margin-top:10px; border:1px solid #fecaca; background:#fff1f2; color:#7f1d1d; border-radius:12px; padding:12px;"></div>
@@ -2718,6 +2788,9 @@ body > .card:last-of-type{
     const previewAttemptModeBtn = document.getElementById("previewAttemptModeBtn");
     const previewReviewModeBtn = document.getElementById("previewReviewModeBtn");
     const closePreviewBtn = document.getElementById("closePreviewBtn");
+    const saveDefaultsBtn = document.getElementById("saveDefaultsBtn");
+    const applyDefaultsBtn = document.getElementById("applyDefaultsBtn");
+    const cloneQuizBtn = document.getElementById("cloneQuizBtn");
 
     const gradeEl = document.getElementById("grade");
     const topicEl = document.getElementById("topic");
@@ -2757,6 +2830,18 @@ body > .card:last-of-type{
 
     let currentRole = "";
     let canPublish = false;
+    const draftAssessmentSelect = document.getElementById("draftAssessmentSelect");
+    const loadDraftBtn = document.getElementById("loadDraftBtn");
+    const deleteDraftBtn = document.getElementById("deleteDraftBtn");
+    const refreshDraftsBtn = document.getElementById("refreshDraftsBtn");
+    const autosaveBadge = document.getElementById("autosaveBadge");
+    const autosaveText = document.getElementById("autosaveText");
+    const LOCAL_AUTOSAVE_KEY = "practiceOnlineAdminQuizAutosaveV2";
+    let currentEditingQuizId = "";
+    let currentEditingAssessmentCode = "";
+    let autosaveTimer = null;
+    let autosaveReady = false;
+    let serverDraftCache = [];
 
     function setMsg(text, type="muted"){
       if (!msg) return;
@@ -3495,8 +3580,8 @@ function escapeHtml(str){
 
         if (type === "note") {
           const txt = cleanMultiline(card.querySelector(".noteText")?.value || "");
-          const img = readCardImage(card);
           const role = card.querySelector(".noteRole")?.value || "information";
+          const img = role === "information" ? readCardImage(card) : "";
 
           if (role === "main") {
             previewMain += 1;
@@ -3507,14 +3592,15 @@ function escapeHtml(str){
             continue;
           }
 
-          if (previewMain === 0) {
-            previewMain = 1;
-            parts.push(`<div class="q"><div class="qMainHeading">QUESTION 1</div></div>`);
-          }
-
+          // Match attempt.html: introductory instructions/objectives never create QUESTION 1.
           if (role === "instruction") {
             if (txt) parts.push(`<div class="q previewNoteRow"><div class="noteBox">${renderStructuredNotePreview(txt)}</div></div>`);
             continue;
+          }
+
+          if (previewMain === 0) {
+            previewMain = 1;
+            parts.push(`<div class="q"><div class="qMainHeading">QUESTION 1</div></div>`);
           }
 
           const imageHtml = img
@@ -3572,7 +3658,7 @@ function escapeHtml(str){
         card.dataset.imageFirst = imageFirst ? "1" : "0";
 
         const points = cleanSpaces(card.querySelector(".qPoints")?.value || "1");
-        const headHtml = renderQuestionHeadPreview(`${label} ${qText}`.trim(), points, ++displayNo);
+        const headHtml = renderQuestionHeadPreview(`${label} ${qText}`.trim(), points, displayNo);
         const questionAndImageHtml = imageFirst
           ? `${imageHtml}${headHtml}`
           : `${headHtml}${imageHtml}`;
@@ -3778,8 +3864,10 @@ function escapeHtml(str){
           <label>Text (supports math)</label>
           <textarea class="noteText" rows="3"></textarea>
 
-          <label>Diagram / Image URL (optional)</label>
-          <input class="qImage noteImageUrl" type="url" placeholder="https://..." />
+          <div class="noteImageField">
+            <label>Diagram / Image URL (shared stem / diagram only)</label>
+            <input class="qImage noteImageUrl" type="url" placeholder="https://..." />
+          </div>
 
           <div class="previewRow">
             <div class="prevTitle">Live Preview</div>
@@ -4086,6 +4174,16 @@ function escapeHtml(str){
       return !!firstField?.classList.contains("fieldImage");
     }
 
+    function applyPrimaryFieldOrder(card){
+      const wrap = card?.querySelector(".primaryFields");
+      if (!wrap || wrap.children.length < 2) return;
+      const image = wrap.querySelector(".fieldImage");
+      const question = wrap.querySelector(".fieldQuestion");
+      if (!image || !question) return;
+      if (card.dataset.imageFirst === "1") wrap.insertBefore(image, question);
+      else wrap.insertBefore(question, image);
+    }
+
     function swapPrimaryFields(card){
       const wrap = card?.querySelector(".primaryFields");
       if (!wrap || wrap.children.length < 2) return;
@@ -4116,6 +4214,24 @@ function escapeHtml(str){
           currentFullPreviewMode
         );
       }
+    }
+
+    function syncNoteImageAvailability(card, { clearWhenHidden = true } = {}){
+      if (!card || card.getAttribute("data-type") !== "note") return;
+
+      const role = card.querySelector(".noteRole")?.value || "information";
+      const isSharedInformation = role === "information";
+      const field = card.querySelector(".noteImageField");
+      const input = card.querySelector(".noteImageUrl");
+      const previewWrap = card.querySelector(".noteImagePreviewWrap");
+
+      field?.classList.toggle("hide", !isSharedInformation);
+      if (input) {
+        input.disabled = !isSharedInformation;
+        input.setAttribute("aria-hidden", isSharedInformation ? "false" : "true");
+        if (!isSharedInformation && clearWhenHidden) input.value = "";
+      }
+      if (!isSharedInformation) previewWrap?.classList.add("hide");
     }
 
     function readCardImage(card){
@@ -4249,6 +4365,175 @@ function escapeHtml(str){
       typesetMath(target);
     }
 
+    function quickInsertControlsHtml(){
+      return `
+        <span class="blockQuickInsert" aria-label="Block tools">
+          <button type="button" class="smallbtn duplicateBlockBtn" title="Duplicate this complete block">Duplicate</button>
+          <button type="button" class="smallbtn copyBlockBtn" title="Copy this complete block">Copy</button>
+          <button type="button" class="smallbtn pasteBlockBtn" title="Paste the copied block below">Paste Below</button>
+          <button type="button" class="smallbtn quickInsertBtn" data-insert-after="note">+ Note</button>
+          <button type="button" class="smallbtn quickInsertBtn" data-insert-after="mcq">+ MCQ</button>
+          <button type="button" class="smallbtn quickInsertBtn" data-insert-after="text">+ Typed</button>
+          <button type="button" class="smallbtn quickInsertBtn" data-insert-after="dropdown">+ Dropdown</button>
+          <button type="button" class="smallbtn quickInsertBtn" data-insert-after="fill">+ Fill Blank</button>
+          <button type="button" class="smallbtn quickInsertBtn" data-insert-after="group">+ Main Question</button>
+          <button type="button" class="smallbtn quickInsertBtn" data-insert-after="section">+ Section</button>
+        </span>
+      `;
+    }
+
+    function ensureQuickInsertControls(card){
+      if (!card || card.querySelector('.blockQuickInsert')) return;
+      const head = card.querySelector('.qhead');
+      if (!head) return;
+      let toolRow = head.querySelector('.toolRow');
+      if (!toolRow) {
+        toolRow = document.createElement('div');
+        toolRow.className = 'toolRow';
+        while (head.children.length > 1) toolRow.appendChild(head.lastElementChild);
+        head.appendChild(toolRow);
+      }
+      toolRow.insertAdjacentHTML('afterbegin', quickInsertControlsHtml());
+    }
+
+    function cardHtmlByType(type, id){
+      const builders = {
+        note: noteCardHtml,
+        mcq: mcqCardHtml,
+        text: textCardHtml,
+        dropdown: dropdownCardHtml,
+        fill: fillCardHtml,
+        group: groupCardHtml,
+        section: sectionCardHtml
+      };
+      return (builders[type] || mcqCardHtml)(id);
+    }
+
+    function insertBlockAfter(referenceCard, type){
+      if (!referenceCard) return null;
+      qCount += 1;
+      const html = cardHtmlByType(type, qCount);
+
+      referenceCard.insertAdjacentHTML('afterend', html);
+      const newCard = referenceCard.nextElementSibling;
+      if (!newCard) return null;
+
+      if (type === 'note') {
+        const role = newCard.querySelector('.noteRole');
+        if (role) role.value = 'information';
+        syncNoteImageAvailability(newCard, { clearWhenHidden: false });
+      }
+      if (type === 'section' || type === 'group') delete newCard.dataset.manualNumber;
+
+      wireCard(newCard);
+      renumberCards();
+      setupDragAndDrop();
+      scheduleLiveLearnerPreview({ renderCard:newCard, delay:10 });
+      newCard.scrollIntoView({ behavior:'smooth', block:'center' });
+      newCard.querySelector('textarea, input, select')?.focus({ preventScroll:true });
+      return newCard;
+    }
+
+    let copiedBlockData = null;
+
+    function snapshotBlock(card){
+      if (!card) return null;
+      const type = (card.dataset.type || "").toLowerCase();
+      const common = {
+        type,
+        imageFirst: card.dataset.imageFirst === "1",
+        manualNumber: card.dataset.manualNumber || ""
+      };
+      if (type === "group") return common;
+      if (type === "section") return {...common, text: card.querySelector(".sectionText")?.value || ""};
+      if (type === "note") return {
+        ...common,
+        noteRole: card.querySelector(".noteRole")?.value || "information",
+        text: card.querySelector(".noteText")?.value || "",
+        imageUrl: (card.querySelector(".noteRole")?.value || "information") === "information"
+          ? readCardImage(card)
+          : ""
+      };
+      const base = {
+        ...common,
+        question: card.querySelector(".qText")?.value || "",
+        imageUrl: readCardImage(card),
+        hint: card.querySelector(".qHint")?.value || "",
+        points: Number(card.querySelector(".qPoints")?.value || 1),
+        solution: card.querySelector(".qSolution")?.value || ""
+      };
+      if (type === "mcq") {
+        const rows = [...card.querySelectorAll(".optRow")];
+        return {...base,
+          options: rows.map(r => r.querySelector(".optInput")?.value || ""),
+          correctIndexes: rows.map((r,i)=>r.querySelector(".optCorrect")?.checked ? i : -1).filter(i=>i>=0)
+        };
+      }
+      if (type === "text") return {...base,
+        correctText: getMathFieldValue(card.querySelector(".correctText")),
+        instruction: card.querySelector(".answerInstruction")?.value || "",
+        answerPrefix: card.querySelector(".answerPrefix")?.value || "",
+        answerSuffix: card.querySelector(".answerSuffix")?.value || "",
+        answerFields: readAnswerFieldsFromCard(card),
+        textAnswerMode: card.querySelector(".textMode")?.value || "exact",
+        numberTolerance: card.querySelector(".tolerance")?.value || ""
+      };
+      if (type === "dropdown") return {...base,
+        options: String(card.querySelector(".dropdownOptions")?.value || "").split(/\n|\|/).map(v=>v.trim()).filter(Boolean),
+        correctText: card.querySelector(".dropdownAnswer")?.value || "",
+        dropdownPlaceholder: card.querySelector(".dropdownPlaceholder")?.value || "Select an answer"
+      };
+      if (type === "fill") return {...base,
+        instruction: card.querySelector(".fillInstruction")?.value || "",
+        fillAnswers: String(card.querySelector(".fillAnswers")?.value || "").split(/\n|\|/).map(v=>v.trim()).filter(Boolean),
+        allowPartialMarks: card.querySelector(".allowPartialMarks")?.checked !== false
+      };
+      return base;
+    }
+
+    function populateBlock(card, data){
+      if (!card || !data) return;
+      const type = data.type;
+      if (data.manualNumber) card.dataset.manualNumber = data.manualNumber;
+      else delete card.dataset.manualNumber;
+      if (type === "group") fillGroupCard(card, data);
+      else if (type === "section") fillSectionCard(card, data);
+      else if (type === "note") fillNoteCard(card, data);
+      else if (type === "mcq") fillMcqCard(card, data);
+      else if (type === "text") fillTextCard(card, data);
+      else if (type === "dropdown") fillDropdownCard(card, data);
+      else if (type === "fill") fillFillCard(card, data);
+      if (["mcq","text"].includes(type)) {
+        card.dataset.imageFirst = data.imageFirst ? "1" : "0";
+        applyPrimaryFieldOrder(card);
+      }
+    }
+
+    function pasteBlockAfter(referenceCard, data){
+      if (!referenceCard || !data?.type) return null;
+      const newCard = insertBlockAfter(referenceCard, data.type);
+      if (!newCard) return null;
+      populateBlock(newCard, typeof structuredClone === "function" ? structuredClone(data) : JSON.parse(JSON.stringify(data)));
+      renumberCards();
+      renderCardPreview(newCard);
+      scheduleLiveLearnerPreview({renderCard:newCard, delay:10});
+      return newCard;
+    }
+
+    function duplicateBlock(card){
+      const data = snapshotBlock(card);
+      if (!data) return;
+      pasteBlockAfter(card, data);
+      setMsg("Block duplicated below and numbering updated.", "ok");
+    }
+
+    function copyBlock(card){
+      copiedBlockData = snapshotBlock(card);
+      if (!copiedBlockData) return;
+      setMsg("Block copied. Use Paste Below on any block.", "ok");
+      document.querySelectorAll(".pasteBlockBtn").forEach(btn => btn.disabled = false);
+    }
+
     function wireCard(card){
       if (!card || card.dataset.wired === "1") return;
       card.dataset.wired = "1";
@@ -4263,6 +4548,22 @@ function escapeHtml(str){
       card.querySelector(".moveUpBtn")?.addEventListener("click", ()=>moveCard(card, -1));
       card.querySelector(".moveDownBtn")?.addEventListener("click", ()=>moveCard(card, 1));
       card.querySelector(".swapFieldsBtn")?.addEventListener("click", ()=>swapPrimaryFields(card));
+
+      ensureQuickInsertControls(card);
+      card.querySelectorAll(".quickInsertBtn").forEach(btn => {
+        btn.addEventListener("click", () => insertBlockAfter(card, btn.dataset.insertAfter || "mcq"));
+      });
+      card.querySelector(".duplicateBlockBtn")?.addEventListener("click", () => duplicateBlock(card));
+      card.querySelector(".copyBlockBtn")?.addEventListener("click", () => copyBlock(card));
+      const pasteBtn = card.querySelector(".pasteBlockBtn");
+      if (pasteBtn) {
+        pasteBtn.disabled = !copiedBlockData;
+        pasteBtn.addEventListener("click", () => {
+          if (!copiedBlockData) return setMsg("Copy a block first.", "error");
+          pasteBlockAfter(card, copiedBlockData);
+          setMsg("Copied block pasted below and numbering updated.", "ok");
+        });
+      }
 
       const convertBtn = card.querySelector(".convertBtn");
       if (convertBtn) {
@@ -4279,6 +4580,7 @@ function escapeHtml(str){
           renumberCards();
         });
         card.querySelector(".noteRole")?.addEventListener("change", ()=>{
+          syncNoteImageAvailability(card);
           renderCardPreview(card);
           renumberCards();
         });
@@ -4548,7 +4850,7 @@ function escapeHtml(str){
             const parsed = parseAssessmentFile(text, file.name);
             const payload = buildPayloadFromParsedAssessment(parsed);
 
-            const { res, data } = await createQuizWithUniqueServerCode(payload, token);
+            const { res, data } = await saveOrUpdateQuiz(payload, token);
             if (!res?.ok) throw new Error(data?.message || "Could not save assessment");
 
             const assignedCode = await resolveSavedAssessmentCode(data, token);
@@ -4803,9 +5105,12 @@ function escapeHtml(str){
       const type = card.getAttribute("data-type") || "mcq";
 
       if (type === "note") {
+        syncNoteImageAvailability(card, { clearWhenHidden: false });
         const t = autoConvertMixedLatex(cleanSpaces(card.querySelector(".noteText")?.value || ""));
         setPreviewText(card.querySelector(".prevNote"), t || "(Note preview)");
-        renderUrlImagePreview(card);
+        const role = card.querySelector(".noteRole")?.value || "information";
+        if (role === "information") renderUrlImagePreview(card);
+        else card.querySelector(".noteImagePreviewWrap")?.classList.add("hide");
         return;
       }
 
@@ -5012,9 +5317,8 @@ function escapeHtml(str){
             card.dataset.mainNumber = String(mainNo);
             card.dataset.fullNumber = "";
           } else if (role === "instruction"){
-            if (mainNo === 0) mainNo = 1;
-            if (labelEl) labelEl.textContent = `QUESTION ${mainNo} — Instruction / Objective`;
-            card.dataset.mainNumber = String(mainNo);
+            if (labelEl) labelEl.textContent = `Instruction / Objective`;
+            card.dataset.mainNumber = mainNo > 0 ? String(mainNo) : "";
             card.dataset.fullNumber = "";
           } else if (role === "information"){
             if (mainNo === 0) mainNo = 1;
@@ -5625,7 +5929,8 @@ function escapeHtml(str){
         : "information";
 
       const imageEl = card.querySelector(".qImage");
-      if (imageEl) imageEl.value = data.imageUrl || "";
+      if (imageEl) imageEl.value = role === "information" ? (data.imageUrl || "") : "";
+      syncNoteImageAvailability(card, { clearWhenHidden: true });
       renderCardPreview(card);
     }
 
@@ -5788,6 +6093,7 @@ function escapeHtml(str){
 
       renumberCards();
       setupDragAndDrop();
+      scheduleLiveLearnerPreview({delay:10});
     }
 
     function assessmentCodePrefix(grade, paper){
@@ -6087,6 +6393,12 @@ function escapeHtml(str){
     addSection();
     addMcq();
     setupDragAndDrop();
+    autosaveReady = true;
+    refreshDraftAssessmentList(false);
+    try {
+      const existingAutosave = JSON.parse(localStorage.getItem(LOCAL_AUTOSAVE_KEY) || "null");
+      if (existingAutosave?.savedAt) setAutosaveState("saved", "Automatic draft available");
+    } catch(_) {}
 
     function collectQuestions(){
       const cards = [...questionsWrap.querySelectorAll(".qcard")];
@@ -6126,11 +6438,11 @@ function escapeHtml(str){
 
         if (type === "note") {
           const noteText = cleanMultiline(card.querySelector(".noteText")?.value);
-          const imageUrl = readCardImage(card);
           const selectedRole = card.querySelector(".noteRole")?.value;
           const noteRole = ["instruction","main","information","subquestion"].includes(selectedRole)
             ? selectedRole
             : "information";
+          const imageUrl = noteRole === "information" ? readCardImage(card) : "";
 
           if (!noteText && !imageUrl) {
             throw new Error("Please fill in the note text or provide a diagram URL.");
@@ -6453,6 +6765,319 @@ function escapeHtml(str){
       if (e.target === paperPreviewModal) closePreview();
     });
 
+    function setAutosaveState(state, text){
+      if (!autosaveBadge || !autosaveText) return;
+      autosaveBadge.classList.remove("saving", "saved", "error");
+      if (state) autosaveBadge.classList.add(state);
+      autosaveText.textContent = text;
+    }
+
+    function quizIdOf(item){
+      return String(item?._id || item?.id || item?.quizId || "");
+    }
+
+    function isDraftQuiz(item){
+      const published = item?.isPublished === true || item?.published === true || item?.publishNow === true;
+      const scheduled = !!(item?.publishAt && new Date(item.publishAt).getTime() > Date.now());
+      const status = String(item?.status || item?.publishStatus || "").toLowerCase();
+      return !published && !scheduled && status !== "published";
+    }
+
+    function toDatetimeLocal(value){
+      if (!value) return "";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value).slice(0,16);
+      const pad=n=>String(n).padStart(2,"0");
+      return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function parsedFromQuiz(quiz){
+      const items=[];
+      for (const q of Array.isArray(quiz?.questions) ? quiz.questions : []) {
+        const type=String(q?.type || "mcq").toLowerCase();
+        const text=String(q?.text || q?.question || "");
+        if (type === "note") {
+          const main=text.match(/^QUESTION\s+(\d+)$/i);
+          if (main) { items.push({type:"group", number:main[1]}); continue; }
+          const section=text.match(/^(\d+(?:\.\d+)*)\s*(.*)$/s);
+          if (q?.noteKind === "section" || q?.isSection || (section && section[2])) {
+            items.push({type:"section", sectionNumber:section?.[1] || "", text:section?.[2] || text});
+          } else {
+            items.push({type:"note", text, noteType:q?.noteType || q?.noteKind || "instruction", imageUrl:q?.imageUrl || ""});
+          }
+          continue;
+        }
+        items.push({...q, type: type === "typed" ? "text" : type, question:text});
+      }
+      return {
+        meta:{
+          grade:quiz?.grade, title:quiz?.title || "", subject:quiz?.subject || "Mathematics",
+          term:quiz?.term || 1, chapter:quiz?.chapter || 1, topic:quiz?.topic || "", subtopic:quiz?.subtopic || "",
+          curriculum:quiz?.curriculum || "CAPS", language:quiz?.language || "English", version:quiz?.version || "1.0",
+          keywords:Array.isArray(quiz?.keywords)?quiz.keywords:[], learningObjectives:Array.isArray(quiz?.learningObjectives)?quiz.learningObjectives:[],
+          timeLimitMinutes:quiz?.timeLimitMinutes || quiz?.timeLimit || 10, difficulty:quiz?.difficulty || "moderate",
+          paper:quiz?.paper || "paper1", contentType:quiz?.contentType || "quiz", accessLevel:quiz?.accessLevel || "standard",
+          instructions:quiz?.instructions || quiz?.assessmentInstructions || "", publishMode:quiz?.publishAt ? "schedule" : "draft",
+          publishAt:toDatetimeLocal(quiz?.publishAt), availableFrom:toDatetimeLocal(quiz?.availableFrom), availableUntil:toDatetimeLocal(quiz?.availableUntil),
+          sendPublishEmail:!!quiz?.sendPublishEmail
+        }, items
+      };
+    }
+
+    function serializeEditorSnapshot(){
+      const cards=[...questionsWrap.querySelectorAll(".qcard")].map(card=>({html:card.outerHTML}));
+      return {
+        savedAt:Date.now(), currentEditingQuizId, currentEditingAssessmentCode,
+        fields:{
+          grade:gradeEl.value, topic:topicEl.value, timeLimit:timeLimitEl.value, title:titleEl.value,
+          subject:subjectEl.value, term:termEl.value, chapter:chapterEl.value, subtopic:subtopicEl.value,
+          curriculum:curriculumEl.value, language:languageEl.value, version:versionEl.value, keywords:keywordsEl.value,
+          assessmentCode:assessmentCodeEl?.value || "", contentType:contentTypeEl.value, accessLevel:accessLevelEl.value,
+          difficulty:difficultyEl.value, paper:paperEl.value, publishMode:publishModeEl.value, publishAt:publishAtEl.value,
+          availableFrom:availableFromEl.value, availableUntil:availableUntilEl.value, sendPublishEmail:sendPublishEmailEl.checked,
+          instructions:instructionsEl.value, learningObjectives:learningObjectivesEl.value
+        }, cards
+      };
+    }
+
+    function restoreEditorSnapshot(snapshot){
+      if (!snapshot?.fields) return false;
+      const f=snapshot.fields;
+      const assign=(el,v)=>{if(el && v!=null) el.value=v;};
+      assign(gradeEl,f.grade);assign(topicEl,f.topic);assign(timeLimitEl,f.timeLimit);assign(titleEl,f.title);
+      assign(subjectEl,f.subject);assign(termEl,f.term);assign(chapterEl,f.chapter);assign(subtopicEl,f.subtopic);
+      assign(curriculumEl,f.curriculum);assign(languageEl,f.language);assign(versionEl,f.version);assign(keywordsEl,f.keywords);
+      assign(contentTypeEl,f.contentType);assign(accessLevelEl,f.accessLevel);assign(difficultyEl,f.difficulty);assign(paperEl,f.paper);
+      assign(publishModeEl,f.publishMode);assign(publishAtEl,f.publishAt);assign(availableFromEl,f.availableFrom);assign(availableUntilEl,f.availableUntil);
+      assign(instructionsEl,f.instructions);assign(learningObjectivesEl,f.learningObjectives);
+      if (assessmentCodeEl) assessmentCodeEl.value=f.assessmentCode || "Assigned automatically when saved";
+      sendPublishEmailEl.checked=!!f.sendPublishEmail;
+      currentEditingQuizId=String(snapshot.currentEditingQuizId || "");
+      currentEditingAssessmentCode=String(snapshot.currentEditingAssessmentCode || "");
+      questionsWrap.innerHTML=(snapshot.cards || []).map(x=>x.html || "").join("");
+      qCount=questionsWrap.querySelectorAll(".qcard").length;
+      [...questionsWrap.querySelectorAll(".qcard")].forEach(wireCard);
+      setupDragAndDrop();renumberCards();renderInstructionsPreview();updatePublishUI();updateContentTypeUI();scheduleLiveLearnerPreview({delay:10});
+      return true;
+    }
+
+    function saveLocalAutosave(){
+      if (!autosaveReady) return;
+      setAutosaveState("saving","Saving automatically…");
+      try{
+        localStorage.setItem(LOCAL_AUTOSAVE_KEY,JSON.stringify(serializeEditorSnapshot()));
+        const now=new Date();
+        setAutosaveState("saved",`Automatically saved at ${now.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}`);
+      }catch(err){
+        console.error("Automatic draft saving failed",err);
+        setAutosaveState("error","Automatic saving failed");
+      }
+    }
+
+    function scheduleAutosave(){
+      if (!autosaveReady) return;
+      clearTimeout(autosaveTimer);
+      setAutosaveState("saving","Changes waiting to save…");
+      autosaveTimer=setTimeout(saveLocalAutosave,900);
+    }
+
+    async function fetchDraftAssessments(){
+      const token=localStorage.getItem("token");
+      if (!token) return [];
+      const res=await fetch(`${API}/api/quizzes?_=${Date.now()}`,{cache:"no-store",headers:{Authorization:`Bearer ${token}`}});
+      const data=await res.json().catch(()=>[]);
+      if(!res.ok) throw new Error(data?.message || "Could not load draft assessments.");
+      const list=Array.isArray(data)?data:Array.isArray(data?.quizzes)?data.quizzes:Array.isArray(data?.items)?data.items:[];
+      return list.filter(isDraftQuiz);
+    }
+
+    async function refreshDraftAssessmentList(showMessage=false){
+      if(!draftAssessmentSelect) return;
+      try{
+        serverDraftCache=await fetchDraftAssessments();
+        draftAssessmentSelect.innerHTML='<option value="">Select a draft assessment</option>';
+        const localRaw=localStorage.getItem(LOCAL_AUTOSAVE_KEY);
+        if(localRaw){
+          const local=JSON.parse(localRaw);
+          const label=local?.fields?.title || "Unsaved assessment";
+          const grade=local?.fields?.grade || "Not set";
+          const topic=local?.fields?.topic || "No topic";
+          const option=document.createElement("option");
+          option.value="local";
+          option.textContent=`Automatic draft — Grade ${grade} — ${topic} — ${label}`;
+          draftAssessmentSelect.appendChild(option);
+        }
+        serverDraftCache.sort((a,b)=>new Date(b.updatedAt||b.createdAt||0)-new Date(a.updatedAt||a.createdAt||0));
+        serverDraftCache.forEach(q=>{
+          const o=document.createElement("option");
+          const grade=q?.grade || q?.audience || "Not set";
+          const topic=q?.topic || q?.chapter || "No topic";
+          o.value=quizIdOf(q);
+          o.textContent=`${readAssessmentCode(q)||"No code"} — Grade ${grade} — ${topic} — ${q.title||"Untitled assessment"}`;
+          draftAssessmentSelect.appendChild(o);
+        });
+        if(showMessage) setMsg(`${serverDraftCache.length} saved draft assessment(s) available.`,"ok");
+      }catch(err){if(showMessage)setMsg(err.message,"error");}
+    }
+
+    async function loadSelectedDraft(){
+      const selected=draftAssessmentSelect?.value;
+      if(!selected) return setMsg("Please select a draft assessment.","error");
+      if(selected==="local"){
+        try{const snap=JSON.parse(localStorage.getItem(LOCAL_AUTOSAVE_KEY)||"null");if(!restoreEditorSnapshot(snap))throw new Error();setMsg("Automatic draft restored. You can continue editing, publish now, or schedule it.","ok");}
+        catch{setMsg("The automatic draft could not be restored.","error");}
+        return;
+      }
+      const token=localStorage.getItem("token");
+      try{
+        setMsg("Loading draft assessment…","muted");
+        let quiz=serverDraftCache.find(q=>quizIdOf(q)===selected);
+        const res=await fetch(`${API}/api/quizzes/${encodeURIComponent(selected)}?_=${Date.now()}`,{cache:"no-store",headers:{Authorization:`Bearer ${token}`}});
+        if(res.ok) quiz=await res.json();
+        if(!quiz) throw new Error("Draft assessment was not found.");
+        fillAssessmentForm(parsedFromQuiz(quiz));
+        currentEditingQuizId=quizIdOf(quiz)||selected;
+        currentEditingAssessmentCode=readAssessmentCode(quiz);
+        if(assessmentCodeEl) assessmentCodeEl.value=currentEditingAssessmentCode || "Assigned automatically when saved";
+        publishModeEl.value=quiz?.publishAt ? "schedule" : "draft";updatePublishUI();
+        saveLocalAutosave();
+        setMsg(`Draft ${currentEditingAssessmentCode || "assessment"} loaded. Edit it, then save, publish now, or schedule publishing.`,"ok");
+      }catch(err){setMsg(err.message || "Could not load the draft assessment.","error");}
+    }
+
+    async function removeSelectedDraft(){
+      const selected=draftAssessmentSelect?.value;
+      if(!selected) return setMsg("Please select a draft assessment to remove.","error");
+
+      const selectedOption=draftAssessmentSelect.options[draftAssessmentSelect.selectedIndex];
+      const label=selectedOption?.textContent || "this draft assessment";
+      if(!window.confirm(`Remove ${label}? This action cannot be undone.`)) return;
+
+      if(selected === "local") {
+        localStorage.removeItem(LOCAL_AUTOSAVE_KEY);
+        draftAssessmentSelect.value="";
+        setAutosaveState("saved","Automatic draft removed");
+        await refreshDraftAssessmentList(false);
+        setMsg("The automatic draft was removed.","ok");
+        return;
+      }
+
+      const token=localStorage.getItem("token");
+      if(!token) return setMsg("Your login session has expired. Please log in again.","error");
+
+      try{
+        setMsg("Removing draft assessment…","muted");
+        const res=await fetch(`${API}/api/quizzes/${encodeURIComponent(selected)}`,{
+          method:"DELETE",
+          headers:{Authorization:`Bearer ${token}`}
+        });
+        const data=await res.json().catch(()=>({}));
+        if(!res.ok) throw new Error(data?.message || "Could not remove the draft assessment.");
+
+        if(currentEditingQuizId === selected){
+          currentEditingQuizId="";
+          currentEditingAssessmentCode="";
+          if(assessmentCodeEl) assessmentCodeEl.value="Assigned automatically when saved";
+          localStorage.removeItem(LOCAL_AUTOSAVE_KEY);
+        }
+
+        draftAssessmentSelect.value="";
+        await refreshDraftAssessmentList(false);
+        setMsg("Draft assessment removed successfully.","ok");
+      }catch(err){
+        setMsg(err.message || "Could not remove the draft assessment.","error");
+      }
+    }
+
+    async function saveOrUpdateQuiz(payload,token){
+      if(!currentEditingQuizId) return createQuizWithUniqueServerCode(payload,token);
+      const res=await fetch(`${API}/api/quizzes/${encodeURIComponent(currentEditingQuizId)}?_=${Date.now()}`,{
+        method:"PUT",cache:"no-store",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify(payload)
+      });
+      const data=await res.json().catch(()=>({}));
+      return {res,data};
+    }
+
+    function captureSavedIdentity(data){
+      currentEditingQuizId=String(data?.quizId || data?._id || data?.quiz?._id || currentEditingQuizId || "");
+      currentEditingAssessmentCode=savedAssessmentCode(data) || currentEditingAssessmentCode || "";
+    }
+
+    loadDraftBtn?.addEventListener("click",loadSelectedDraft);
+    deleteDraftBtn?.addEventListener("click",removeSelectedDraft);
+    refreshDraftsBtn?.addEventListener("click",()=>refreshDraftAssessmentList(true));
+    document.addEventListener("input",event=>{if(event.target.closest(".card") || event.target.closest(".draftManager"))scheduleAutosave();},true);
+    document.addEventListener("change",event=>{if(event.target.closest(".card") || event.target.closest(".draftManager"))scheduleAutosave();},true);
+
+    const METADATA_DEFAULTS_KEY = "practiceOnlineQuizMetadataDefaultsV1";
+
+    function currentMetadataDefaults(){
+      return {
+        subject: subjectEl.value || "Mathematics",
+        term: termEl.value || "1",
+        chapter: chapterEl.value || "1",
+        curriculum: curriculumEl.value || "CAPS",
+        language: languageEl.value || "English",
+        version: versionEl.value || "1.0",
+        timeLimit: timeLimitEl.value || "10",
+        difficulty: difficultyEl.value || "moderate",
+        paper: paperEl.value || "paper1",
+        contentType: contentTypeEl.value || "quiz",
+        accessLevel: accessLevelEl.value || "standard",
+        publishMode: "draft",
+        sendPublishEmail: false
+      };
+    }
+
+    function applyMetadataDefaults(showMessage=true){
+      let values = null;
+      try { values = JSON.parse(localStorage.getItem(METADATA_DEFAULTS_KEY) || "null"); } catch(_){}
+      if (!values) {
+        if (showMessage) setMsg("No metadata defaults have been saved yet.", "error");
+        return false;
+      }
+      if (values.subject != null) subjectEl.value = values.subject;
+      if (values.term != null) termEl.value = String(values.term);
+      if (values.chapter != null) chapterEl.value = String(values.chapter);
+      if (values.curriculum != null) curriculumEl.value = values.curriculum;
+      if (values.language != null) languageEl.value = values.language;
+      if (values.version != null) versionEl.value = values.version;
+      if (values.timeLimit != null) timeLimitEl.value = String(values.timeLimit);
+      if (values.difficulty != null) difficultyEl.value = values.difficulty;
+      if (values.paper != null) paperEl.value = values.paper;
+      if (values.contentType != null) contentTypeEl.value = values.contentType;
+      if (values.accessLevel != null) accessLevelEl.value = values.accessLevel;
+      publishModeEl.value = "draft";
+      sendPublishEmailEl.checked = false;
+      updatePublishUI();
+      updateContentTypeUI();
+      refreshFullLearnerPreview();
+      if (showMessage) setMsg("Saved metadata defaults applied.", "ok");
+      return true;
+    }
+
+    saveDefaultsBtn?.addEventListener("click", () => {
+      localStorage.setItem(METADATA_DEFAULTS_KEY, JSON.stringify(currentMetadataDefaults()));
+      setMsg("Metadata defaults saved on this device.", "ok");
+    });
+    applyDefaultsBtn?.addEventListener("click", () => applyMetadataDefaults(true));
+
+    cloneQuizBtn?.addEventListener("click", () => {
+      const originalTitle = cleanSpaces(titleEl.value || "Assessment");
+      titleEl.value = /^Copy of /i.test(originalTitle) ? originalTitle : `Copy of ${originalTitle}`;
+      currentEditingQuizId = "";
+      currentEditingAssessmentCode = "";
+      if (assessmentCodeEl) assessmentCodeEl.value = "Assigned automatically when saved";
+      publishModeEl.value = "draft";
+      publishAtEl.value = "";
+      sendPublishEmailEl.checked = false;
+      updatePublishUI();
+      renumberCards();
+      refreshFullLearnerPreview();
+      setMsg("Quiz cloned in the editor as a new draft. Review the title, then save to receive a new assessment code.", "ok");
+      titleEl.focus();
+    });
+
     function resetFormAfterSave(){
       titleEl.value = "";
       gradeEl.value = "";
@@ -6466,6 +7091,7 @@ function escapeHtml(str){
       availableFromEl.value = "";
       availableUntilEl.value = "";
       sendPublishEmailEl.checked = false;
+      applyMetadataDefaults(false);
 
       try { renderInstructionsPreview(); } catch (error) {
         console.error("Instructions preview reset failed:", error);
@@ -6508,17 +7134,19 @@ function escapeHtml(str){
         publishBtn.disabled = true;
         setMsg("Saving assessment as draft...", "muted");
 
-        const { res, data } = await createQuizWithUniqueServerCode(payload, token);
+        const { res, data } = await saveOrUpdateQuiz(payload, token);
 
         if (res?.ok) {
           const assignedCode = await resolveSavedAssessmentCode(data, token);
           if (!assignedCode) throw new Error("Assessment saved, but the server did not return its unique code.");
 
+          captureSavedIdentity(data);
           if (assessmentCodeEl) assessmentCodeEl.value = assignedCode;
+          currentEditingAssessmentCode = assignedCode;
           localStorage.setItem("practiceOnlineQuizChangedAt", String(Date.now()));
-          setMsg(`Assessment ${assignedCode} saved as draft. This code is unique and cannot be reused.`, "ok");
-          resetFormAfterSave();
-          if (assessmentCodeEl) assessmentCodeEl.value = assignedCode;
+          saveLocalAutosave();
+          await refreshDraftAssessmentList(false);
+          setMsg(`Assessment ${assignedCode} saved as draft. It remains open for editing, publishing, or scheduling.`, "ok");
         } else {
           setMsg("Error: " + (data?.message || "Could not save assessment"), "error");
         }
@@ -6560,7 +7188,9 @@ function escapeHtml(str){
           const assignedCode = await resolveSavedAssessmentCode(data, token);
           if (!assignedCode) throw new Error("Assessment published, but the server did not return its unique code.");
 
+          captureSavedIdentity(data);
           if (assessmentCodeEl) assessmentCodeEl.value = assignedCode;
+          currentEditingAssessmentCode = assignedCode;
           localStorage.setItem("practiceOnlineQuizChangedAt", String(Date.now()));
 
           if (mode === "now") {
@@ -6579,6 +7209,10 @@ function escapeHtml(str){
             );
           }
 
+          localStorage.removeItem(LOCAL_AUTOSAVE_KEY);
+          currentEditingQuizId = "";
+          currentEditingAssessmentCode = "";
+          await refreshDraftAssessmentList(false);
           resetFormAfterSave();
           if (assessmentCodeEl) assessmentCodeEl.value = assignedCode;
         } else {
