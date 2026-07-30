@@ -6285,6 +6285,9 @@ mjx-container[jax="SVG"] svg{
 
   const qs = new URLSearchParams(window.location.search);
   const quizId = qs.get("quizId");
+  let assessmentRevision = Date.now();
+  let assessmentReloadTimer = null;
+  let assessmentReloading = false;
   const modeParam = String(qs.get("mode") || "").toLowerCase();
   const wantsPracticeFromLink = (modeParam === "practice");
 
@@ -9376,7 +9379,189 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     hideAllSolutions();
   }
 
-  async function loadQuiz() {
+
+  function normalizeQuizApiPayload(payload){
+    const candidate =
+      payload?.quiz ||
+      payload?.assessment ||
+      payload?.data?.quiz ||
+      payload?.data?.assessment ||
+      payload?.data ||
+      payload;
+
+    return candidate && typeof candidate === "object"
+      ? candidate
+      : null;
+  }
+
+  function getSyncedQuizId(payload){
+    return String(
+      payload?.id ||
+      payload?.quizId ||
+      payload?.assessmentId ||
+      payload?._id ||
+      ""
+    ).trim();
+  }
+
+  function isCurrentAssessmentSync(payload){
+    const incomingId = getSyncedQuizId(payload);
+    return Boolean(
+      incomingId &&
+      quizId &&
+      String(incomingId) === String(quizId)
+    );
+  }
+
+  function makeFreshQuizUrl(){
+    assessmentRevision = Date.now();
+    const base = `${API}/api/quizzes/${encodeURIComponent(quizId)}`;
+    return `${base}?_assessmentRevision=${assessmentRevision}`;
+  }
+
+  async function reloadAssessmentAfterCommit(payload = {}){
+    if (!isCurrentAssessmentSync(payload) || assessmentReloading) return;
+
+    assessmentReloading = true;
+
+    try {
+      /*
+       * Answers are already stored by the normal attempt autosave workflow.
+       * Reloading only refreshes the assessment structure and then restores
+       * the learner's saved answers through the existing loadQuiz path.
+       */
+      setStatusMessage("Assessment updated. Refreshing the latest version...", "loading");
+      showQuizLoader();
+      await loadQuiz({ preserveLearnerState:true, source:"assessment-sync" });
+      setStatusMessage("Assessment updated successfully.", "okState");
+    } catch (error) {
+      console.error("Assessment live refresh failed:", error);
+      setStatusMessage(
+        "The assessment was updated, but the latest version could not be loaded automatically. Refresh the page.",
+        "errorState"
+      );
+    } finally {
+      assessmentReloading = false;
+    }
+  }
+
+  function scheduleAssessmentReload(payload = {}){
+    if (!isCurrentAssessmentSync(payload)) return;
+
+    clearTimeout(assessmentReloadTimer);
+    assessmentReloadTimer = setTimeout(
+      () => reloadAssessmentAfterCommit(payload),
+      180
+    );
+  }
+
+  const assessmentSyncChannel = (() => {
+    try {
+      return "BroadcastChannel" in window
+        ? new BroadcastChannel("practiceonline-assessments")
+        : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  try {
+    assessmentSyncChannel?.addEventListener("message", event => {
+      const payload = event?.data || {};
+      if (
+        payload.type === "assessment-updated" ||
+        payload.type === "quiz-updated"
+      ) {
+        scheduleAssessmentReload(payload);
+      }
+    });
+  } catch {}
+
+  window.addEventListener("practiceonline:assessment-updated", event => {
+    scheduleAssessmentReload(event?.detail || {});
+  });
+
+  window.addEventListener("storage", event => {
+    if (!event.newValue) return;
+
+    const directVersionKey =
+      event.key === `practiceonline:quizVersion:${quizId}` ||
+      event.key === `quiz:${quizId}:updatedAt`;
+
+    if (directVersionKey) {
+      scheduleAssessmentReload({
+        type:"assessment-updated",
+        quizId,
+        version:event.newValue
+      });
+      return;
+    }
+
+    if (
+      ![
+        "practiceonline:quizUpdated",
+        "practiceonline:assessmentUpdated"
+      ].includes(event.key)
+    ) {
+      return;
+    }
+
+    try {
+      scheduleAssessmentReload(JSON.parse(event.newValue));
+    } catch {}
+  });
+
+  try {
+    navigator.serviceWorker?.addEventListener("message", event => {
+      const message = event?.data || {};
+      if (message.type === "PRACTICEONLINE_ASSESSMENT_UPDATED") {
+        scheduleAssessmentReload(message.payload || {});
+      }
+    });
+  } catch {}
+
+
+  try {
+    assessmentSyncChannel?.addEventListener("message", event => {
+      const payload = event?.data || {};
+      if (
+        payload.type === "assessment-deleted" &&
+        isCurrentAssessmentSync(payload)
+      ) {
+        setStatusMessage("This assessment has been removed.", "errorState");
+        submitBtn.disabled = true;
+        questionsDiv.innerHTML = "";
+      }
+    });
+  } catch {}
+
+
+  let lastSeenAssessmentVersion = String(
+    localStorage.getItem(`practiceonline:quizVersion:${quizId}`) ||
+    localStorage.getItem(`quiz:${quizId}:updatedAt`) ||
+    ""
+  );
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+
+    const currentVersion = String(
+      localStorage.getItem(`practiceonline:quizVersion:${quizId}`) ||
+      localStorage.getItem(`quiz:${quizId}:updatedAt`) ||
+      ""
+    );
+
+    if (currentVersion && currentVersion !== lastSeenAssessmentVersion) {
+      lastSeenAssessmentVersion = currentVersion;
+      scheduleAssessmentReload({
+        type:"assessment-updated",
+        quizId,
+        version:currentVersion
+      });
+    }
+  });
+
+  async function loadQuiz(options = {}) {
     msgEl.className = "muted";
     msgEl.textContent = "";
     blocked = false;
@@ -9391,8 +9576,14 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     try{
       const [attempted, quizRes] = await Promise.all([
         checkAlreadyAttempted(),
-        fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}`, {
-          headers: { Authorization: "Bearer " + token }
+        fetch(makeFreshQuizUrl(), {
+          method: "GET",
+          cache: "no-store",
+          headers: {
+            Authorization: "Bearer " + token,
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache"
+          }
         })
       ]);
       alreadyAttempted = attempted;
@@ -9444,7 +9635,8 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       return;
     }
 
-    quizData = await res.json().catch(()=>null);
+    const quizPayload = await res.json().catch(()=>null);
+    quizData = normalizeQuizApiPayload(quizPayload);
     if (!quizData){
       if (quizTitle) quizTitle.textContent = "Could not load assessment";
       setStatusMessage("Could not load assessment.", "errorState");
@@ -9493,7 +9685,16 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     questionsDiv.innerHTML = paperMetaHtml + autoMainHeadingHtml + allQuestions.map((q, i) => {
       const type = String(q.type || "mcq").toLowerCase();
       const hint = cleanSpaces(q.hint || "");
-      const img = cleanSpaces(q.imageUrl || "");
+      const img = cleanSpaces(
+        q.imageUrl ||
+        q.imageURL ||
+        q.image ||
+        q.diagramUrl ||
+        q.diagramURL ||
+        q.mediaUrl ||
+        q.mediaURL ||
+        ""
+      );
       const solution = String(q.solution || "").trim();
       const points = getQuestionPoints(q);
       const storedRawText = String(q.text || "").trim();
@@ -9505,7 +9706,19 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       let questionTotal = totals.mainTotals.get(mainNo) || points;
       let sectionTotal = totals.sectionTotals.get(sectionKey) || points;
 
-      const imageInnerHtml = img ? `<div class="qImageWrap"><img class="qimg" src="${escapeAttr(img)}" alt="Question image" loading="lazy" decoding="async"></div>` : "";
+      const imageInnerHtml = img
+        ? `<div class="qImageWrap">
+            <img
+              class="qimg"
+              src="${escapeAttr(img)}"
+              alt="Question image"
+              loading="eager"
+              decoding="async"
+              referrerpolicy="no-referrer"
+              onerror="this.closest('.qImageWrap').innerHTML='<div class=&quot;notice&quot; style=&quot;width:100%;margin:0;&quot;>The diagram could not be loaded. Please report this assessment image.</div>'"
+            >
+          </div>`
+        : "";
       const imageHtml = imageInnerHtml ? `<div class="q qDiagramContext" data-context-kind="diagram">${imageInnerHtml}</div>` : "";
 
       const imageFirst =
@@ -9513,7 +9726,9 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
         String(q?.contentOrder || "").toLowerCase() === "image-question";
 
       if (type === "note") {
-        const noteRole = getStandardNoteRole(storedRawText);
+        const noteRole =
+          String(q.noteRole || "").toLowerCase().trim() ||
+          getStandardNoteRole(storedRawText);
 
         // Legacy notes now use the same locked numbering rules.
         // A typed heading such as QUESTION 3 is treated as the next main heading,
