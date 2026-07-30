@@ -593,6 +593,143 @@ input:focus,textarea:focus,select:focus{
   transition:opacity .12s ease;
 }
 
+
+/* ===== CHANGE REVIEW, WARNINGS AND COMMIT WORKFLOW ===== */
+:root{--warning-gold:#c9a227;--warning-bg:#fffaf0;--error-red:#b91c1c;--error-bg:#fff1f2;}
+.assessmentReviewPanel{margin-top:16px;border:1px solid var(--edit-border);border-radius:8px;background:#fff;padding:14px;}
+.reviewPanelHeader{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+.reviewPanelTitle{margin:0;font-size:16px;color:var(--edit-navy);}
+.reviewStatus{font-size:12px;font-weight:800;color:var(--edit-muted);}
+.reviewGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px;}
+.reviewColumn{border:1px solid var(--edit-border);border-radius:6px;padding:12px;min-height:110px;background:#fbfcfe;}
+.reviewColumn h4{margin:0 0 10px;font-size:13px;color:var(--edit-navy);}
+.reviewList{display:grid;gap:8px;}
+.reviewItem{display:flex;align-items:flex-start;gap:9px;font-size:13px;line-height:1.45;}
+.warningIcon{width:18px;height:18px;flex:0 0 18px;background:var(--warning-gold);-webkit-mask:url('https://res.cloudinary.com/dopoxadlr/image/upload/v1785368225/warning-triangle_n6x9eb.svg') center/contain no-repeat;mask:url('https://res.cloudinary.com/dopoxadlr/image/upload/v1785368225/warning-triangle_n6x9eb.svg') center/contain no-repeat;}
+.errorIcon{width:18px;height:18px;flex:0 0 18px;background:var(--error-red);-webkit-mask:url('https://res.cloudinary.com/dopoxadlr/image/upload/v1785368225/warning-triangle_n6x9eb.svg') center/contain no-repeat;mask:url('https://res.cloudinary.com/dopoxadlr/image/upload/v1785368225/warning-triangle_n6x9eb.svg') center/contain no-repeat;}
+.changeDot{width:9px;height:9px;border-radius:50%;background:var(--edit-green);margin-top:5px;flex:0 0 9px;}
+.noIssues{color:var(--edit-muted);font-size:13px;}
+.changeBadge{display:inline-flex;align-items:center;padding:3px 7px;border-radius:4px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.35px;margin-left:8px;}
+.changeBadge.edited{background:#fff7d6;color:#725b00;border:1px solid #e7cf73;}
+.changeBadge.new{background:#eaf8ef;color:#116b35;border:1px solid #9dd7b5;}
+.qcard.changedCard{border-color:#d8bd55!important;box-shadow:inset 4px 0 0 var(--warning-gold)!important;}
+.qcard.newCard{border-color:#75c895!important;box-shadow:inset 4px 0 0 var(--edit-green)!important;}
+.commitActionBar{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center;}
+#commitChangesBtn{background:var(--edit-green)!important;color:#fff!important;}
+#discardChangesBtn{background:#fff!important;color:var(--edit-navy)!important;border:1px solid var(--edit-navy)!important;}
+#commitConfirmModal{position:fixed;inset:0;background:rgba(15,23,42,.62);display:none;align-items:center;justify-content:center;padding:20px;z-index:10020;}
+.commitModalCard{width:min(650px,100%);max-height:88vh;overflow:auto;background:#fff;border-radius:10px;padding:18px;border:1px solid var(--edit-border);}
+.commitModalActions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:16px;}
+.commitSummaryBox{border:1px solid var(--edit-border);border-radius:7px;padding:12px;background:#fbfcfe;margin-top:12px;}
+@media(max-width:760px){.reviewGrid{grid-template-columns:1fr;}}
+
+
+/* ===== ADMIN-QUIZ STYLE PER-BLOCK TOOLS ===== */
+.blockQuickInsert{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.blockQuickInsert .smallbtn{
+  padding:7px 9px;
+  font-size:11px;
+  border-radius:4px!important;
+}
+.blockQuickInsert .duplicateBlockBtn,
+.blockQuickInsert .copyBlockBtn,
+.blockQuickInsert .pasteBlockBtn{
+  background:#fff;
+  border:1px solid #cfd7e3;
+}
+.blockQuickInsert .quickInsertBtn{
+  background:#f8fafc;
+  border:1px solid #dfe5ec;
+  color:#1b1648;
+}
+.blockQuickInsert .pasteBlockBtn:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+.qcard .toolRow{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+}
+@media(max-width:760px){
+  .qcard .qhead{align-items:flex-start}
+  .qcard .toolRow{width:100%;justify-content:flex-start}
+  .blockQuickInsert{width:100%}
+  .blockQuickInsert .smallbtn{flex:1 1 auto}
+}
+
+
+/* ===== ATTEMPT-MATCHING PREVIEW FIXES ===== */
+.attemptPaperPreview .qImageWrap{margin:10px 0 16px 68px;max-width:560px}
+.attemptPaperPreview .qImageWrap .qimg{display:block;width:100%;max-width:560px;height:auto;margin:0!important;border:1px solid #d9dee7;object-fit:contain}
+.attemptPaperPreview .previewNoteRow,.attemptPaperPreview .previewHeadingRow,.attemptPaperPreview .previewSectionRow{padding:10px 0}
+.attemptPaperPreview .noteTitle{display:block;font-weight:700;margin-bottom:4px}
+.attemptPaperPreview .noteParagraph{margin:4px 0}
+.attemptPaperPreview .noteList{margin:6px 0 6px 20px;padding:0}
+.noteRoleFields{display:grid;grid-template-columns:minmax(180px,.55fr) minmax(0,1.45fr);gap:10px;align-items:end}
+.noteImageWrap.hide{display:none!important}
+@media(max-width:700px){.noteRoleFields{grid-template-columns:1fr}.attemptPaperPreview .qImageWrap{margin-left:56px;max-width:calc(100% - 56px)}}
+
+/* ===== PREVIEW ↔ EDITOR QUICK NAVIGATION ===== */
+.qcard.previewLinked{
+  cursor:pointer;
+}
+.qcard.previewLinked:hover{
+  border-color:#c9a227!important;
+  box-shadow:0 0 0 2px rgba(201,162,39,.14)!important;
+}
+.qcard.previewNavActive{
+  border-color:#c9a227!important;
+  box-shadow:0 0 0 4px rgba(201,162,39,.20)!important;
+}
+.previewLinkedItem{
+  cursor:pointer;
+  border-radius:4px;
+  transition:background .12s ease, box-shadow .12s ease;
+}
+.previewLinkedItem:hover{
+  background:rgba(201,162,39,.07);
+  box-shadow:0 0 0 6px rgba(201,162,39,.07);
+}
+.previewLinkedItem.previewNavActive{
+  background:rgba(201,162,39,.10);
+  box-shadow:0 0 0 6px rgba(201,162,39,.10);
+}
+.generatedQuestionLink{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-top:7px;
+  padding:5px 8px;
+  border:1px solid #ead9a5;
+  background:#fffaf0;
+  color:#1b1648;
+  font-size:11px;
+  font-weight:800;
+  border-radius:4px;
+  cursor:pointer;
+}
+.generatedQuestionLink:hover{
+  border-color:#c9a227;
+}
+.previewImageError{
+  margin:8px 0 12px 68px;
+  padding:8px 10px;
+  max-width:560px;
+  border:1px solid #ead9a5;
+  background:#fffaf0;
+  color:#7a5b00;
+  font-family:Arial,Helvetica,sans-serif;
+  font-size:12px;
+  line-height:1.4;
+}
 </style>
 </head>
 
@@ -906,10 +1043,32 @@ input:focus,textarea:focus,select:focus{
 
     <hr>
 
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <button class="btn" id="saveBtn" disabled type="button">Save Changes</button>
-      <button class="btn btn2" id="publishBtn" disabled type="button">Publish Changes</button>
+    <div class="assessmentReviewPanel" id="assessmentReviewPanel">
+      <div class="reviewPanelHeader">
+        <div>
+          <h3 class="reviewPanelTitle">Assessment Check & Changes Made</h3>
+          <div class="muted tiny" style="margin-top:4px;">Warnings do not stop a commit. Only errors must be corrected.</div>
+        </div>
+        <div class="reviewStatus" id="reviewStatus">Select an assessment to begin.</div>
+      </div>
+      <div class="reviewGrid">
+        <div class="reviewColumn">
+          <h4>Changes made</h4>
+          <div class="reviewList" id="changesMadeList"><div class="noIssues">No assessment selected.</div></div>
+        </div>
+        <div class="reviewColumn">
+          <h4>Assessment checks</h4>
+          <div class="reviewList" id="assessmentChecksList"><div class="noIssues">No assessment selected.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="commitActionBar">
+      <button class="btn" id="commitChangesBtn" disabled type="button">Commit Changes</button>
+      <button class="btn btn2" id="discardChangesBtn" disabled type="button">Discard Changes</button>
+      <button class="btn btn2" id="publishBtn" disabled type="button">Publish / Schedule Changes</button>
       <button class="btn btn2" id="previewPaperBtn" type="button">Preview Exam Paper</button>
+      <button class="btn hide" id="saveBtn" disabled type="button" aria-hidden="true">Save Changes</button>
     </div>
     <p class="msg muted" id="msg"></p>
     <div id="parseErrorsBox" class="hide" style="margin-top:10px; border:1px solid #fecaca; background:#fff1f2; color:#7f1d1d; border-radius:12px; padding:12px;"></div>
@@ -929,6 +1088,18 @@ input:focus,textarea:focus,select:focus{
     <div id="fullLearnerPreview" class="attemptPaperPreview"></div>
   </div>
 
+
+  <div id="commitConfirmModal" role="dialog" aria-modal="true" aria-labelledby="commitConfirmTitle">
+    <div class="commitModalCard">
+      <h3 id="commitConfirmTitle" style="margin:0;">Commit assessment changes?</h3>
+      <div class="muted tiny" style="margin-top:6px;">Review the learner preview and the summary below. Warnings are allowed and will not prevent committing.</div>
+      <div class="commitSummaryBox" id="commitConfirmSummary"></div>
+      <div class="commitModalActions">
+        <button class="smallbtn" id="cancelCommitBtn" type="button">Go Back</button>
+        <button class="btn" id="confirmCommitBtn" type="button">Yes, Commit Changes</button>
+      </div>
+    </div>
+  </div>
 
   <div id="paperPreviewModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.6); display:none; justify-content:center; align-items:center; z-index:9999; padding:20px; box-sizing:border-box;">
     <div style="width:min(980px, 100%); max-height:90vh; overflow:auto; background:#fff; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.20);">
@@ -950,6 +1121,15 @@ input:focus,textarea:focus,select:focus{
     const parseErrorsBox = document.getElementById("parseErrorsBox");
     const who = document.getElementById("who");
     const saveBtn = document.getElementById("saveBtn");
+    const commitChangesBtn = document.getElementById("commitChangesBtn");
+    const discardChangesBtn = document.getElementById("discardChangesBtn");
+    const changesMadeList = document.getElementById("changesMadeList");
+    const assessmentChecksList = document.getElementById("assessmentChecksList");
+    const reviewStatus = document.getElementById("reviewStatus");
+    const commitConfirmModal = document.getElementById("commitConfirmModal");
+    const commitConfirmSummary = document.getElementById("commitConfirmSummary");
+    const cancelCommitBtn = document.getElementById("cancelCommitBtn");
+    const confirmCommitBtn = document.getElementById("confirmCommitBtn");
     const publishBtn = document.getElementById("publishBtn");
     const previewPaperBtn = document.getElementById("previewPaperBtn");
     const paperPreviewModal = document.getElementById("paperPreviewModal");
@@ -1013,6 +1193,8 @@ input:focus,textarea:focus,select:focus{
     let currentRole = "";
     let canPublish = false;
     let currentQuiz = null;
+    let originalEditorSnapshot = null;
+    let pendingCommitMode = "draft";
     let allQuizzes = [];
 
     const assessmentSyncChannel = (() => {
@@ -1210,6 +1392,10 @@ input:focus,textarea:focus,select:focus{
           `practiceonline:quizSnapshot:${payload.id}`,
           JSON.stringify(quiz || currentQuiz || {})
         );
+        localStorage.setItem("quizUpdatedAt", String(payload.version));
+        localStorage.setItem("assessmentUpdatedAt", String(payload.version));
+        localStorage.setItem(`quiz:${payload.id}:updatedAt`, String(payload.version));
+        sessionStorage.setItem(`practiceonline:forceQuizReload:${payload.id}`, String(payload.version));
       } catch {}
 
       try {
@@ -1225,6 +1411,13 @@ input:focus,textarea:focus,select:focus{
         );
       } catch {}
 
+      try {
+        navigator.serviceWorker?.controller?.postMessage({
+          type:"PRACTICEONLINE_ASSESSMENT_UPDATED",
+          payload
+        });
+      } catch {}
+
       return payload;
     }
 
@@ -1233,6 +1426,7 @@ input:focus,textarea:focus,select:focus{
       savedQuiz,
       extra = {}
     ){
+      savedQuiz = savedQuiz?.quiz || savedQuiz?.assessment || savedQuiz?.data || savedQuiz;
       if (!savedQuiz) return;
 
       updateQuizInMemory(savedQuiz);
@@ -1315,6 +1509,177 @@ input:focus,textarea:focus,select:focus{
         );
       } catch {}
     });
+
+
+    function simpleValue(value){
+      return String(value ?? "").replace(/\r/g, "").trim();
+    }
+
+    function captureCardState(card){
+      const type = String(card?.dataset?.type || card?.getAttribute("data-type") || "").toLowerCase();
+      const base = { type };
+      if (type === "group") return { ...base, number:simpleValue(card.dataset.manualNumber || card.querySelector(".cardLabel")?.textContent) };
+      if (type === "section") return { ...base, number:simpleValue(card.querySelector(".cardLabel")?.textContent), text:simpleValue(card.querySelector(".sectionText")?.value) };
+      if (type === "note") return { ...base, text:simpleValue(card.querySelector(".noteText")?.value) };
+      const common = {
+        ...base,
+        number:simpleValue(card.querySelector(".cardLabel")?.textContent),
+        text:simpleValue(card.querySelector(".qText")?.value),
+        hint:simpleValue(card.querySelector(".qHint")?.value),
+        imageUrl:simpleValue(card.querySelector(".qImage")?.value || card.querySelector(".qImage2")?.value),
+        points:simpleValue(card.querySelector(".qPoints")?.value),
+        solution:simpleValue(card.querySelector(".qSolution")?.value),
+        imageFirst:String(card.dataset.imageFirst || "0")
+      };
+      if (type === "mcq") {
+        common.options = [...card.querySelectorAll(".optRow")].map(row => ({
+          text:simpleValue(row.querySelector(".optInput")?.value),
+          correct:!!row.querySelector(".optCorrect")?.checked
+        }));
+      }
+      if (type === "text") {
+        common.answerFields = getEditorAnswerFields(card).map(field => ({
+          key:simpleValue(field.key), prefix:simpleValue(field.prefix), suffix:simpleValue(field.suffix), correctAnswer:simpleValue(field.correctAnswer)
+        }));
+        common.mode=simpleValue(card.querySelector(".textMode")?.value);
+        common.tolerance=simpleValue(card.querySelector(".tolerance")?.value);
+      }
+      return common;
+    }
+
+    function captureEditorState(){
+      return {
+        meta:{
+          grade:simpleValue(gradeEl.value), topic:simpleValue(topicEl.value), title:simpleValue(titleEl.value),
+          timeLimit:simpleValue(timeLimitEl.value), difficulty:simpleValue(difficultyEl.value), paper:simpleValue(paperEl.value),
+          accessLevel:simpleValue(accessLevelEl.value), accessFee:simpleValue(accessFeeEl.value), instructions:simpleValue(instructionsEl.value),
+          publishMode:simpleValue(publishModeEl.value), publishAt:simpleValue(publishAtEl.value),
+          availableFrom:simpleValue(availableFromEl.value), availableUntil:simpleValue(availableUntilEl.value), sendEmail:!!sendPublishEmailEl.checked
+        },
+        cards:[...questionsWrap.querySelectorAll(".qcard")].map(captureCardState)
+      };
+    }
+
+    function sameState(a,b){ return JSON.stringify(a) === JSON.stringify(b); }
+    function cardLabelFor(state,index){
+      if (state?.type === "group") return `Main question ${state.number || index+1}`;
+      if (state?.type === "section") return `Section ${state.number || index+1}`;
+      if (state?.type === "note") return `Note ${index+1}`;
+      return `Question ${state?.number || index+1}`;
+    }
+
+    function getAssessmentChecks(){
+      const warnings=[]; const errors=[];
+      if (!currentQuiz?._id) errors.push("No assessment has been selected.");
+      if (!simpleValue(gradeEl.value)) errors.push("Grade is missing.");
+      if (!simpleValue(topicEl.value)) errors.push("Topic is missing.");
+      if (!simpleValue(titleEl.value)) errors.push("Assessment title is missing.");
+      const from=availableFromEl.value ? new Date(availableFromEl.value) : null;
+      const until=availableUntilEl.value ? new Date(availableUntilEl.value) : null;
+      if (from && Number.isNaN(from.getTime())) errors.push("Available From is not a valid date.");
+      if (until && Number.isNaN(until.getTime())) errors.push("Available Until is not a valid date.");
+      if (from && until && until <= from) errors.push("Available Until must be after Available From.");
+      if (publishModeEl.value === "schedule" && !publishAtEl.value) errors.push("A scheduled publish date and time is required.");
+      if (!simpleValue(instructionsEl.value)) warnings.push("No learner instructions have been supplied.");
+      if (!sendPublishEmailEl.checked) warnings.push("Learner publish email is disabled.");
+
+      const cards=[...questionsWrap.querySelectorAll(".qcard")];
+      let scorable=0;
+      cards.forEach((card,index)=>{
+        const state=captureCardState(card); const label=cardLabelFor(state,index);
+        if (state.type === "note" && !state.text) warnings.push(`${label} is empty. Commit is still allowed.`);
+        if (state.type === "section" && !state.text) warnings.push(`${label} has an empty stem. Commit is still allowed.`);
+        if (["mcq","text"].includes(state.type)) {
+          scorable += 1;
+          if (!state.text) warnings.push(`${label} has empty question text. Commit is still allowed.`);
+          if (!state.solution) warnings.push(`${label} has no solution or workings.`);
+          if (state.imageUrl && !/^https?:\/\//i.test(state.imageUrl)) warnings.push(`${label} has an image URL that may be invalid.`);
+          if (!Number.isInteger(Number(state.points)) || Number(state.points) < 1) errors.push(`${label} must have whole-number marks of 1 or more.`);
+          if (state.type === "mcq") {
+            const filled=(state.options||[]).filter(o=>o.text);
+            if (filled.length < 2) errors.push(`${label} needs at least two filled options.`);
+            if (!filled.some(o=>o.correct)) errors.push(`${label} needs at least one correct option.`);
+          }
+          if (state.type === "text") {
+            const fields=state.answerFields||[];
+            if (!fields.length || fields.some(f=>!f.correctAnswer)) errors.push(`${label} needs a correct answer for every answer box.`);
+          }
+        }
+      });
+      if (!scorable) errors.push("The assessment must contain at least one question.");
+      return {warnings:[...new Set(warnings)],errors:[...new Set(errors)]};
+    }
+
+    function getChangesMade(){
+      if (!originalEditorSnapshot) return [];
+      const current=captureEditorState(); const changes=[];
+      const names={grade:"Grade",topic:"Topic",title:"Assessment title",timeLimit:"Time limit",difficulty:"Difficulty",paper:"Paper",accessLevel:"Access level",accessFee:"Access fee",instructions:"Instructions",publishMode:"Publish option",publishAt:"Publish date",availableFrom:"Available from",availableUntil:"Available until",sendEmail:"Publish email"};
+      Object.keys(names).forEach(key=>{
+        const before=originalEditorSnapshot.meta[key]; const after=current.meta[key];
+        if (JSON.stringify(before)!==JSON.stringify(after)) changes.push(`${names[key]} changed${String(before)!=="" || String(after)!=="" ? ` (${String(before || "empty")} → ${String(after || "empty")})` : ""}.`);
+      });
+      const max=Math.max(originalEditorSnapshot.cards.length,current.cards.length);
+      for(let i=0;i<max;i++){
+        const before=originalEditorSnapshot.cards[i], after=current.cards[i];
+        if (!before && after) changes.push(`${cardLabelFor(after,i)} added.`);
+        else if (before && !after) changes.push(`${cardLabelFor(before,i)} removed.`);
+        else if (!sameState(before,after)) changes.push(`${cardLabelFor(after,i)} edited.`);
+      }
+      return changes;
+    }
+
+    function renderReviewList(el,items,kind){
+      if (!items.length) { el.innerHTML='<div class="noIssues">No items to show.</div>'; return; }
+      el.innerHTML=items.map(text=>`<div class="reviewItem"><span class="${kind==='error'?'errorIcon':kind==='warning'?'warningIcon':'changeDot'}" aria-hidden="true"></span><span>${escapeHtml(text)}</span></div>`).join("");
+    }
+
+    function updateCardChangeBadges(){
+      const cards=[...questionsWrap.querySelectorAll(".qcard")];
+      cards.forEach((card,index)=>{
+        card.classList.remove("changedCard","newCard");
+        card.querySelectorAll(".changeBadge").forEach(n=>n.remove());
+        if (!originalEditorSnapshot) return;
+        const current=captureCardState(card), before=originalEditorSnapshot.cards[index];
+        let status="";
+        if (!before) { status="New"; card.classList.add("newCard"); }
+        else if (!sameState(before,current)) { status="Edited"; card.classList.add("changedCard"); }
+        if (status) {
+          const badge=document.createElement("span"); badge.className=`changeBadge ${status.toLowerCase()}`; badge.textContent=status;
+          const head=card.querySelector(".qhead .headMeta") || card.querySelector(".qhead") || card;
+          head.appendChild(badge);
+        }
+      });
+    }
+
+    function updateChangeReview(){
+      const changes=getChangesMade(); const checks=getAssessmentChecks();
+      renderReviewList(changesMadeList,changes,"change");
+      const checkItems=[...checks.errors.map(x=>({t:x,k:"error"})),...checks.warnings.map(x=>({t:x,k:"warning"}))];
+      if (!checkItems.length) assessmentChecksList.innerHTML='<div class="noIssues">No warnings or errors found.</div>';
+      else assessmentChecksList.innerHTML=checkItems.map(x=>`<div class="reviewItem"><span class="${x.k==='error'?'errorIcon':'warningIcon'}" aria-hidden="true"></span><span>${escapeHtml(x.t)}</span></div>`).join("");
+      const dirty=changes.length>0;
+      reviewStatus.textContent=!currentQuiz?._id?'Select an assessment to begin.':`${changes.length} change${changes.length===1?'':'s'} • ${checks.warnings.length} warning${checks.warnings.length===1?'':'s'} • ${checks.errors.length} error${checks.errors.length===1?'':'s'}`;
+      commitChangesBtn.disabled=!currentQuiz?._id || checks.errors.length>0;
+      discardChangesBtn.disabled=!currentQuiz?._id || !dirty;
+      publishBtn.disabled=!currentQuiz?._id || !canPublish || checks.errors.length>0;
+      updateCardChangeBadges();
+      return {changes,checks,dirty};
+    }
+
+    function captureOriginalSnapshot(){
+      originalEditorSnapshot=captureEditorState();
+      updateChangeReview();
+    }
+
+    function openCommitConfirmation(mode="draft"){
+      const review=updateChangeReview();
+      if (review.checks.errors.length) { setMsg("Please fix the errors shown in Assessment Check before committing.","error"); return; }
+      pendingCommitMode=mode;
+      const changeHtml=review.changes.length?review.changes.map(x=>`<div class="reviewItem"><span class="changeDot"></span><span>${escapeHtml(x)}</span></div>`).join(""):'<div class="noIssues">No visible content changes were detected. You may still commit.</div>';
+      const warningHtml=review.checks.warnings.length?review.checks.warnings.map(x=>`<div class="reviewItem"><span class="warningIcon"></span><span>${escapeHtml(x)}</span></div>`).join(""):'<div class="noIssues">No warnings.</div>';
+      commitConfirmSummary.innerHTML=`<b>Changes</b><div class="reviewList" style="margin-top:8px">${changeHtml}</div><hr><b>Warnings (commit allowed)</b><div class="reviewList" style="margin-top:8px">${warningHtml}</div>`;
+      commitConfirmModal.style.display="flex";
+    }
 
     function setMsg(text, type="muted"){
       msg.className = "msg " + type;
@@ -1760,154 +2125,244 @@ function escapeHtml(str){
         </div>
       `;
     }
+
+    function stripNoteRoleMarker(rawText){
+      return String(rawText || "").replace(/^\s*\[\[NOTE_ROLE:(?:instruction|main|information|subquestion)\]\]\s*/i, "").trim();
+    }
+    function noteRoleFromText(rawText){
+      const m=String(rawText||"").match(/^\s*\[\[NOTE_ROLE:(instruction|main|information|subquestion)\]\]/i);
+      if(m)return m[1].toLowerCase();
+      const clean=stripNoteRoleMarker(rawText);
+      if(/^QUESTION\s+\d+\b/i.test(clean))return"main";
+      if(/^(assessment instructions|instructions|learning objective|learning objectives|objective|objectives)\b/i.test(clean))return"instruction";
+      if(/^\d+\.\d+\b/.test(clean))return"subquestion";
+      return"information";
+    }
+    function cleanMultilinePreview(value){return String(value||"").replace(/\r/g,"").trim()}
+    function renderStructuredNotePreview(rawText){
+      const clean=stripNoteRoleMarker(cleanMultilinePreview(rawText));
+      if(!clean)return"";
+      const lines=clean.split("\n").map(x=>x.trim()).filter(Boolean), html=[];
+      if(lines.length&&/^(assessment instructions|instructions|learning objective|learning objectives|objective|objectives|note|information)\b/i.test(lines[0])){
+        html.push(`<span class="noteTitle">${renderMixedMathPreview(lines.shift())}</span>`);
+      }
+      let list=[];
+      const flush=()=>{if(list.length){html.push(`<ul class="noteList">${list.map(x=>`<li>${renderMixedMathPreview(x)}</li>`).join("")}</ul>`);list=[]}};
+      for(const line of lines){const b=line.match(/^(?:[-•*]|\d+[.)])\s*(.+)$/);if(b)list.push(b[1]);else{flush();html.push(`<p class="noteParagraph">${renderMixedMathPreview(line)}</p>`)}}
+      flush();
+      return html.length?html.join(""):renderMixedMathPreview(clean);
+    }
+    function renderPreviewQuestionHead(label,questionText,points){
+      return `<div class="qHead"><div class="qTitle"><span class="qNo">${escapeHtml(label)}</span><span class="qTextPaper">${renderMixedMathPreview(questionText)}</span></div><div class="marksMetaPaper">${escapeHtml(points)}</div></div>`;
+    }
+
     function buildPreviewQuestionsFromCards(){
-      const cards = [...questionsWrap.querySelectorAll('.qcard')];
-      const questions = [];
-      for (const card of cards) {
-        const type = String(card.getAttribute('data-type') || '').toLowerCase();
-        if (!type) continue;
-        if (type === 'group') {
-          const label = cleanSpaces(card.querySelector('.cardLabel')?.textContent || '');
-          if (label) questions.push({ type:'note', text:label });
-          continue;
-        }
-        if (type === 'section') {
-          const number = cleanSpaces(card.querySelector('.cardLabel')?.textContent || '');
-          const txt = cleanSpaces(card.querySelector('.sectionText')?.value || '');
-          questions.push({ type:'note', text:`${number} ${txt}`.trim() });
-          continue;
-        }
-        if (type === 'note') {
-          const txt = cleanSpaces(card.querySelector('.noteText')?.value || '');
-          if (txt) questions.push({ type:'note', text:txt });
-          continue;
-        }
-        const qText = stripLeadingQuestionNumber(card.querySelector('.qText')?.value || '');
-        const label = cleanSpaces(card.querySelector('.cardLabel')?.textContent || card.dataset.fullNumber || '');
-        const hint = cleanSpaces(card.querySelector('.qHint')?.value || '');
-        const solution = String(card.querySelector('.qSolution')?.value || '').trim();
-        const img = readCardImage(card);
-        const points = cleanSpaces(card.querySelector('.qPoints')?.value || '1');
-        const imageFirst =
-          card.dataset.imageFirst === "1" ||
-          (
-            card.dataset.imageFirst !== "0" &&
-            getCardImageFirst(card)
-          );
+      return [...questionsWrap.querySelectorAll(".qcard")];
+    }
 
-        card.dataset.imageFirst = imageFirst ? "1" : "0";
 
-        const base = {
-          type,
-          text: `${label} ${qText}`.trim(),
-          hint,
-          solution,
-          imageUrl: img,
-          imageFirst,
-          contentOrder: imageFirst
-            ? "image-question"
-            : "question-image",
-          points
-        };
-        if (type === 'text') {
-          questions.push(base);
-        } else if (type === 'mcq') {
-          const options = [...card.querySelectorAll('.optRow')]
-            .map(row => cleanSpaces(row.querySelector('.optInput')?.value || ''))
-            .filter(Boolean);
-          questions.push({ ...base, options });
+    function previewLinkKey(index){
+      return `assessment-block-${index}`;
+    }
+
+    function clearPreviewNavigationHighlight(){
+      document.querySelectorAll(".previewNavActive").forEach(el => el.classList.remove("previewNavActive"));
+    }
+
+    function navigateToEditorBlock(key){
+      const card = questionsWrap.querySelector(`.qcard[data-preview-key="${CSS.escape(key)}"]`);
+      if (!card) return;
+      clearPreviewNavigationHighlight();
+      card.classList.add("previewNavActive");
+      card.scrollIntoView({behavior:"smooth", block:"center"});
+      setTimeout(() => card.querySelector("textarea,input,select")?.focus({preventScroll:true}), 350);
+      setTimeout(() => card.classList.remove("previewNavActive"), 1800);
+    }
+
+    function navigateToPreviewBlock(key){
+      const item = fullLearnerPreview?.querySelector(`[data-preview-key="${CSS.escape(key)}"]`);
+      if (!item) return;
+      clearPreviewNavigationHighlight();
+      item.classList.add("previewNavActive");
+      item.scrollIntoView({behavior:"smooth", block:"center"});
+      setTimeout(() => item.classList.remove("previewNavActive"), 1800);
+    }
+
+    function previewImageHtml(url, alt, key){
+      const clean = cleanSpaces(url || "");
+      if (!clean) return "";
+      return `<div class="qImageWrap" data-preview-key="${escapeAttr(key)}">
+        <img class="qimg" src="${escapeAttr(clean)}" alt="${escapeAttr(alt || "Diagram")}" loading="eager" decoding="async"
+          onerror="this.closest('.qImageWrap').innerHTML='<div class=&quot;previewImageError&quot;>The diagram could not be loaded. Check the image URL in the linked block.</div>'">
+      </div>`;
+    }
+
+    function updateGeneratedQuestionLinks(){
+      const cards=[...questionsWrap.querySelectorAll(".qcard")];
+      let mainNo=0,topNo=0,subParent=null,childNo=0;
+      const ensureMain=()=>{if(mainNo===0){mainNo=1;topNo=0;subParent=null;childNo=0}};
+
+      cards.forEach((card,index)=>{
+        const key=previewLinkKey(index);
+        card.dataset.previewKey=key;
+        card.classList.add("previewLinked");
+
+        const type=String(card.dataset.type||"").toLowerCase();
+        let label="";
+
+        if(type==="group"){
+          mainNo+=1;topNo=0;subParent=null;childNo=0;
+          label=`QUESTION ${mainNo}`;
+        }else if(type==="section"){
+          ensureMain();topNo+=1;subParent=topNo;childNo=0;
+          label=`${mainNo}.${subParent}`;
+        }else if(type==="note"){
+          const role=card.querySelector(".noteRole")?.value||"information";
+          if(role==="main"){
+            mainNo+=1;topNo=0;subParent=null;childNo=0;
+            label=`QUESTION ${mainNo}`;
+          }else if(role==="instruction"){
+            label="Assessment instructions";
+          }else if(role==="subquestion"){
+            ensureMain();topNo+=1;subParent=topNo;childNo=0;
+            label=`${mainNo}.${subParent}`;
+          }else{
+            ensureMain();
+            label=`QUESTION ${mainNo} information`;
+          }
+        }else if(type==="mcq"||type==="text"){
+          ensureMain();
+          if(subParent!==null){childNo+=1;label=`${mainNo}.${subParent}.${childNo}`}
+          else{topNo+=1;label=`${mainNo}.${topNo}`}
+        }
+
+        const generated=card.querySelector(".generatedQuestionText");
+        if(generated) generated.textContent=label||"Not numbered";
+      });
+    }
+
+    function refreshFullLearnerPreview(target=fullLearnerPreview, mode=currentFullPreviewMode){
+      if(!target)return;
+      currentFullPreviewMode=mode||"attempt";
+      previewAttemptModeBtn?.classList.toggle("btn",currentFullPreviewMode==="attempt");
+      previewReviewModeBtn?.classList.toggle("btn",currentFullPreviewMode==="review");
+
+      const title=cleanSpaces(titleEl.value||"Assessment Title");
+      const topic=cleanSpaces(topicEl.value||"");
+      const grade=cleanSpaces(gradeEl.options[gradeEl.selectedIndex]?.text||"");
+      const time=cleanSpaces(timeLimitEl.value||"10");
+      const instructions=cleanMultilinePreview(instructionsEl.value||"");
+      const parts=[`<div class="examPaper"><div class="paperMeta"><div style="font-size:14px;font-weight:400;margin:0 0 2px;line-height:1.5;">${escapeHtml(title)}</div><div class="paperMetaRow"><div>${escapeHtml([grade,topic].filter(Boolean).join(" • "))}</div><div class="paperMetaRight">Time limit: ${escapeHtml(time)} minutes</div></div></div>`];
+
+      if(instructions)parts.push(`<div class="q previewNoteRow"><div class="noteBox">${renderStructuredNotePreview(`Assessment Instructions\n${instructions}`)}</div></div>`);
+
+      let mainNo=0,topNo=0,subParent=null,childNo=0;
+      const ensureMain=()=>{if(mainNo===0){mainNo=1;topNo=0;subParent=null;childNo=0;parts.push(`<div class="q previewHeadingRow"><div class="qMainHeading">QUESTION 1</div></div>`)}};
+
+      updateGeneratedQuestionLinks();
+      const previewCards=[...questionsWrap.querySelectorAll(".qcard")];
+      for(const [cardIndex,card] of previewCards.entries()){
+        const previewKey=previewLinkKey(cardIndex);
+        const type=String(card.dataset.type||"").toLowerCase();
+        if(!type)continue;
+
+        if(type==="group"){
+          mainNo+=1;topNo=0;subParent=null;childNo=0;
+          parts.push(`<div class="q previewHeadingRow previewLinkedItem" data-preview-key="${escapeAttr(previewKey)}"><div class="qMainHeading">QUESTION ${mainNo}</div></div>`);
+          continue;
+        }
+
+        if(type==="section"){
+          ensureMain();topNo+=1;subParent=topNo;childNo=0;
+          const txt=cleanMultilinePreview(card.querySelector(".sectionText")?.value||"");
+          parts.push(`<div class="q previewSectionRow previewLinkedItem" data-preview-key="${escapeAttr(previewKey)}"><div class="qSectionStem"><div class="qSectionLeft"><div class="qSectionNo">${mainNo}.${subParent}</div><div class="qSectionText">${renderMixedMathPreview(txt)}</div></div></div></div>`);
+          continue;
+        }
+
+        if(type==="note"){
+          const raw=cleanMultilinePreview(card.querySelector(".noteText")?.value||"");
+          const role=card.querySelector(".noteRole")?.value||noteRoleFromText(raw);
+          const txt=stripNoteRoleMarker(raw);
+          const img=role==="information"?cleanSpaces(card.querySelector(".noteImage")?.value||card.dataset.imageUrl||""):"";
+
+          if(role==="instruction"){
+            if(txt)parts.push(`<div class="q previewNoteRow previewLinkedItem" data-preview-key="${escapeAttr(previewKey)}"><div class="noteBox">${renderStructuredNotePreview(txt)}</div></div>`);
+            continue;
+          }
+          if(role==="main"){
+            mainNo+=1;topNo=0;subParent=null;childNo=0;
+            parts.push(`<div class="q previewHeadingRow previewLinkedItem" data-preview-key="${escapeAttr(previewKey)}"><div class="qMainHeading">QUESTION ${mainNo}</div></div>`);
+            const body=txt.replace(/^QUESTION\s+\d+\s*[:.-]?\s*/i,"").trim();
+            if(body)parts.push(`<div class="q previewNoteRow"><div class="noteBox">${renderStructuredNotePreview(body)}</div></div>`);
+            continue;
+          }
+
+          ensureMain();
+          const imageHtml=previewImageHtml(img,"Diagram",previewKey);
+          if(role==="subquestion"){
+            topNo+=1;subParent=topNo;childNo=0;
+            parts.push(`<div class="q previewSectionRow previewLinkedItem" data-preview-key="${escapeAttr(previewKey)}"><div class="qSectionStem"><div class="qSectionLeft"><div class="qSectionNo">${mainNo}.${subParent}</div><div class="qSectionText">${renderStructuredNotePreview(txt)}</div></div></div>${imageHtml}</div>`);
+          }else{
+            parts.push(`<div class="q previewNoteRow"><div class="noteBox">${renderStructuredNotePreview(txt)}</div>${imageHtml}</div>`);
+          }
+          continue;
+        }
+
+        if(!["mcq","text"].includes(type))continue;
+        ensureMain();
+
+        let label;
+        if(subParent!==null){childNo+=1;label=`${mainNo}.${subParent}.${childNo}`}
+        else{topNo+=1;label=`${mainNo}.${topNo}`}
+
+        const qText=stripLeadingQuestionNumber(card.querySelector(".qText")?.value||"");
+        const points=cleanSpaces(card.querySelector(".qPoints")?.value||"1");
+        const hint=cleanSpaces(card.querySelector(".qHint")?.value||"");
+        const solution=String(card.querySelector(".qSolution")?.value||"").trim();
+        const img=readCardImage(card);
+        const imageHtml=previewImageHtml(img,"Question image",previewKey);
+        const imageFirst=card.dataset.imageFirst==="1"||(card.dataset.imageFirst!=="0"&&getCardImageFirst(card));
+        const headHtml=renderPreviewQuestionHead(label,qText,points);
+        const questionAndImageHtml=imageFirst?`${imageHtml}${headHtml}`:`${headHtml}${imageHtml}`;
+
+        if(type==="text"){
+          const fields=[...card.querySelectorAll(".editAnswerFieldRow")];
+          const answers=fields.length?fields.map(row=>{
+            const prefix=cleanSpaces(row.querySelector(".answerFieldPrefix")?.value||row.querySelector(".answerFieldKey")?.value||"");
+            const suffix=cleanSpaces(row.querySelector(".answerFieldSuffix")?.value||"");
+            return `<div class="answerPreviewRow" style="margin-left:68px;display:flex;align-items:center;gap:8px;margin-top:8px;">${prefix?`<span>${renderMixedMathPreview(prefix)}</span>`:""}<input class="textAnswerPaper" style="margin:0;width:150px;" disabled>${suffix?`<span>${renderMixedMathPreview(suffix)}</span>`:""}</div>`;
+          }).join(""):`<input class="textAnswerPaper" disabled>`;
+          parts.push(`<div class="q previewLinkedItem" data-preview-key="${escapeAttr(previewKey)}">${questionAndImageHtml}${answers}${hint?`<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>`:""}${currentFullPreviewMode==="review"&&solution?formatSolutionHtmlPreview(solution):""}</div>`);
+        }else{
+          const opts=[...card.querySelectorAll(".optRow")].map(row=>cleanSpaces(row.querySelector(".optInput")?.value||"")).filter(Boolean);
+          parts.push(`<div class="q previewLinkedItem" data-preview-key="${escapeAttr(previewKey)}">${questionAndImageHtml}${opts.map(o=>`<div class="optPaper"><span class="optBullet">○</span><span class="optTextPaper">${renderMixedMathPreview(o)}</span></div>`).join("")}${hint?`<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>`:""}${currentFullPreviewMode==="review"&&solution?formatSolutionHtmlPreview(solution):""}</div>`);
         }
       }
-      return questions;
-    }
-    function refreshFullLearnerPreview(target=fullLearnerPreview, mode=currentFullPreviewMode){
-      if (!target) return;
-      currentFullPreviewMode = mode || 'attempt';
-      previewAttemptModeBtn?.classList.toggle('btn', currentFullPreviewMode === 'attempt');
-      previewReviewModeBtn?.classList.toggle('btn', currentFullPreviewMode === 'review');
-
-      let displayNo = 0;
-      const previewQuiz = {
-        title: cleanSpaces(titleEl.value || 'Assessment Title'),
-        topic: cleanSpaces(topicEl.value || ''),
-        questions: buildPreviewQuestionsFromCards()
-      };
-      const totals = computeQuestionAndSectionTotals(previewQuiz.questions);
-      const paperMetaHtml = buildPaperMeta(previewQuiz);
-      const allQuestions = previewQuiz.questions;
-      const hasMainHeading = allQuestions.some(q => {
-        const type = String(q?.type || 'mcq').toLowerCase();
-        if (type !== 'note') return false;
-        return parseExamTextParts(cleanSpaces(q?.text || '')).kind === 'main';
-      });
-      const autoMainHeadingHtml = hasMainHeading ? '' : `<div class="q"><div class="qMainHeading">QUESTION 1</div></div>`;
-
-      target.innerHTML = `<div class="examPaper">${paperMetaHtml}${autoMainHeadingHtml}${allQuestions.map((q, i) => {
-        const type = String(q.type || 'mcq').toLowerCase();
-        const hint = cleanSpaces(q.hint || '');
-        const img = cleanSpaces(q.imageUrl || '');
-        const solution = String(q.solution || '').trim();
-        const points = getQuestionPoints(q);
-        const rawText = cleanSpaces(q.text || '');
-        const mainNo = getMainQuestionNumber(rawText, 1);
-        const sectionKey = getSectionKey(rawText, mainNo);
-        const questionTotal = totals.mainTotals.get(mainNo) || points;
-        const sectionTotal = totals.sectionTotals.get(sectionKey) || points;
-
-        const imageHtml = img
-          ? `<img class="qimg" src="${escapeAttr(img)}" alt="Question image" loading="lazy" decoding="async">`
-          : '';
-
-        if (type === 'note') {
-          return renderNoteLike(rawText, imageHtml, sectionTotal);
-        }
-
-        displayNo += 1;
-        const headHtml = renderQuestionHead(
-          rawText,
-          points,
-          displayNo,
-          questionTotal
-        );
-
-        const imageFirst =
-          q?.imageFirst === true ||
-          String(q?.contentOrder || "").toLowerCase() ===
-            "image-question";
-
-        const questionAndImageHtml = imageFirst
-          ? `${imageHtml}${headHtml}`
-          : `${headHtml}${imageHtml}`;
-
-        if (type === 'text') {
-          return `
-            <div class="q" data-scorable="1">
-              ${questionAndImageHtml}
-              <input class="textAnswer" id="previewTxt${i}" autocomplete="off" disabled />
-              ${hint ? `<div class="hint">Hint: <span class="hintText">${escapeHtml(hint)}</span></div>` : ``}
-              ${currentFullPreviewMode === 'review' ? formatSolutionHtml(solution) : `<div class="solutionHolder hidden">${formatSolutionHtml(solution)}</div>`}
-            </div>
-          `;
-        }
-
-        const opts = Array.isArray(q.options) ? q.options : [];
-        return `
-          <div class="q" data-scorable="1" data-qindex="${i}">
-            ${imageHtml}
-            ${headHtml}
-            ${opts.map((o, j) => `
-              <label class="opt">
-                <input class="mcqInput" data-qindex="${i}" type="radio" name="preview_q${i}" value="${j}" disabled>
-                <span class="optText">${renderMixedMath(cleanSpaces(o))}</span>
-              </label>
-            `).join('')}
-            ${hint ? `<div class="hint">Hint: <span class="hintText">${escapeHtml(hint)}</span></div>` : ``}
-            ${currentFullPreviewMode === 'review' ? formatSolutionHtml(solution) : `<div class="solutionHolder hidden">${formatSolutionHtml(solution)}</div>`}
-          </div>
-        `;
-      }).join('')}</div>`;
+      parts.push(`</div>`);
+      target.innerHTML=parts.join("");
       typesetMath(target);
     }
+
+
+    fullLearnerPreview?.addEventListener("click", event => {
+      const linked = event.target.closest("[data-preview-key]");
+      if (!linked) return;
+      const key = linked.dataset.previewKey;
+      if (key) navigateToEditorBlock(key);
+    });
+
+    questionsWrap.addEventListener("dblclick", event => {
+      const card = event.target.closest(".qcard[data-preview-key]");
+      if (card?.dataset.previewKey) navigateToPreviewBlock(card.dataset.previewKey);
+    });
+
+    questionsWrap.addEventListener("click", event => {
+      const generatedLink = event.target.closest(".generatedQuestionLink");
+      if (!generatedLink) return;
+      const card = generatedLink.closest(".qcard[data-preview-key]");
+      if (card?.dataset.previewKey) navigateToPreviewBlock(card.dataset.previewKey);
+    });
+
     function renderInstructionsPreview(){
       const t = cleanSpaces(instructionsEl.value || "");
       setPreviewText(prevInstructions, t || "(Instructions preview)");
@@ -2014,7 +2469,9 @@ function escapeHtml(str){
       const id = assessmentSelectEl.value;
       if (!id) {
         currentQuiz = null;
+        originalEditorSnapshot = null;
         updateAvailabilityUi();
+        updateChangeReview();
         return;
       }
       loadAssessmentIntoEditor(id);
@@ -2169,25 +2626,26 @@ function escapeHtml(str){
       return `
         <div class="qcard" data-type="note" draggable="false">
           <div class="qhead">
-            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
               <span class="moveBtns"><button type="button" class="smallbtn moveUpBtn">↑</button><button type="button" class="smallbtn moveDownBtn">↓</button></span>
-              <div>
-                <b class="cardLabel">Block ${id}</b>
-                <span class="pill">NOTE / HEADING</span>
-              </div>
+              <div><b class="cardLabel">Block ${id}</b> <span class="pill">NOTE / HEADING</span></div>
             </div>
             <button type="button" class="smallbtn removeBtn">Remove</button>
           </div>
-
+          <div class="noteRoleFields">
+            <div><label>Note Type</label><select class="noteRole">
+              <option value="instruction">Instruction / Objective</option>
+              <option value="main">Main Question</option>
+              <option value="information" selected>Question Information</option>
+              <option value="subquestion">Subquestion Heading</option>
+            </select></div>
+            <div class="noteImageWrap"><label>Diagram / Image URL</label><input class="noteImage" placeholder="https://..." /></div>
+          </div>
           <label>Text (supports math)</label>
           <textarea class="noteText" rows="3"></textarea>
-
-          <div class="previewRow">
-            <div class="prevTitle">Live Preview</div>
-            <div class="previewBox prevNote paperBox"></div>
-          </div>
-        </div>
-      `;
+          <button type="button" class="generatedQuestionLink">Shows under: <span class="generatedQuestionText">Not numbered</span></button>
+          <div class="previewRow"><div class="prevTitle">Live Preview</div><div class="previewBox prevNote paperBox"></div></div>
+        </div>`;
     }
 
     function mcqCardHtml(id){
@@ -2578,9 +3036,213 @@ function escapeHtml(str){
       return cleanSpaces(card?.querySelector(".qImage")?.value || card?.querySelector(".qImage2")?.value || "");
     }
 
+
+    /* ===== ADMIN-QUIZ STYLE BLOCK ACTIONS ===== */
+    function quickInsertControlsHtml(){
+      return `
+        <span class="blockQuickInsert" aria-label="Block tools">
+          <button type="button" class="smallbtn duplicateBlockBtn" title="Duplicate this complete block">Duplicate</button>
+          <button type="button" class="smallbtn copyBlockBtn" title="Copy this complete block">Copy</button>
+          <button type="button" class="smallbtn pasteBlockBtn" title="Paste the copied block below" disabled>Paste Below</button>
+          <button type="button" class="smallbtn quickInsertBtn" data-insert-after="note">+ Note</button>
+          <button type="button" class="smallbtn quickInsertBtn" data-insert-after="mcq">+ MCQ</button>
+          <button type="button" class="smallbtn quickInsertBtn" data-insert-after="text">+ Typed</button>
+          <button type="button" class="smallbtn quickInsertBtn" data-insert-after="group">+ Main Question</button>
+          <button type="button" class="smallbtn quickInsertBtn" data-insert-after="section">+ Section</button>
+        </span>
+      `;
+    }
+
+    function ensureQuickInsertControls(card){
+      if (!card || card.querySelector(".blockQuickInsert")) return;
+      const head = card.querySelector(".qhead");
+      if (!head) return;
+
+      let toolRow = head.querySelector(".toolRow");
+      if (!toolRow) {
+        toolRow = document.createElement("div");
+        toolRow.className = "toolRow";
+
+        const removable = [...head.children].filter(child =>
+          child.matches?.(".removeBtn, .convertBtn") ||
+          child.querySelector?.(".removeBtn, .convertBtn")
+        );
+
+        removable.forEach(child => toolRow.appendChild(child));
+        head.appendChild(toolRow);
+      }
+
+      toolRow.insertAdjacentHTML("afterbegin", quickInsertControlsHtml());
+
+      if (copiedBlockData) {
+        toolRow.querySelector(".pasteBlockBtn")?.removeAttribute("disabled");
+      }
+    }
+
+    function cardHtmlByType(type, id){
+      const builders = {
+        note: noteCardHtml,
+        mcq: mcqCardHtml,
+        text: textCardHtml,
+        group: groupCardHtml,
+        section: sectionCardHtml
+      };
+      return (builders[type] || mcqCardHtml)(id);
+    }
+
+    function cloneBlockData(data){
+      if (!data) return null;
+      return typeof structuredClone === "function"
+        ? structuredClone(data)
+        : JSON.parse(JSON.stringify(data));
+    }
+
+    function snapshotBlock(card){
+      if (!card) return null;
+      const type = String(card.dataset.type || "").toLowerCase();
+      const common = {
+        type,
+        imageFirst: card.dataset.imageFirst === "1",
+        manualNumber: card.dataset.manualNumber || ""
+      };
+
+      if (type === "group") return common;
+
+      if (type === "section") {
+        return {
+          ...common,
+          text: card.querySelector(".sectionText")?.value || ""
+        };
+      }
+
+      if (type === "note") {
+        const role=card.querySelector(".noteRole")?.value||"information";
+        return {...common,text:card.querySelector(".noteText")?.value||"",noteRole:role,imageUrl:role==="information"?(card.querySelector(".noteImage")?.value||""):""};
+      }
+
+      const base = {
+        ...common,
+        question: card.querySelector(".qText")?.value || "",
+        imageUrl: readCardImage(card),
+        hint: card.querySelector(".qHint")?.value || "",
+        points: Number(card.querySelector(".qPoints")?.value || 1),
+        solution: card.querySelector(".qSolution")?.value || ""
+      };
+
+      if (type === "mcq") {
+        const rows = [...card.querySelectorAll(".optRow")];
+        return {
+          ...base,
+          options: rows.map(row => row.querySelector(".optInput")?.value || ""),
+          correctIndexes: rows
+            .map((row, index) => row.querySelector(".optCorrect")?.checked ? index : -1)
+            .filter(index => index >= 0)
+        };
+      }
+
+      if (type === "text") {
+        return {
+          ...base,
+          correctText: card.querySelector(".correctText")?.value || "",
+          answerFields: [...card.querySelectorAll(".editAnswerFieldRow")].map((row, index) => ({
+            key: row.querySelector(".answerFieldKey")?.value || `answer_${index + 1}`,
+            prefix: row.querySelector(".answerFieldPrefix")?.value || "",
+            suffix: row.querySelector(".answerFieldSuffix")?.value || "",
+            correctAnswer: row.querySelector(".answerFieldCorrect")?.value || ""
+          })),
+          textAnswerMode: card.querySelector(".textMode")?.value || "exact",
+          numberTolerance: card.querySelector(".tolerance")?.value || ""
+        };
+      }
+
+      return base;
+    }
+
+    function populateBlock(card, data){
+      if (!card || !data) return;
+
+      if (data.manualNumber) card.dataset.manualNumber = data.manualNumber;
+      else delete card.dataset.manualNumber;
+
+      if (data.type === "group") fillGroupCard(card, data);
+      else if (data.type === "section") fillSectionCard(card, data);
+      else if (data.type === "note") fillNoteCard(card, data);
+      else if (data.type === "mcq") fillMcqCard(card, data);
+      else if (data.type === "text") fillTextCard(card, data);
+
+      if (["mcq", "text"].includes(data.type)) {
+        const desiredImageFirst = !!data.imageFirst;
+        if (getCardImageFirst(card) !== desiredImageFirst) {
+          const wrap = card.querySelector(".primaryFields");
+          if (wrap?.children.length >= 2) {
+            wrap.insertBefore(wrap.children[1], wrap.children[0]);
+          }
+        }
+        card.dataset.imageFirst = desiredImageFirst ? "1" : "0";
+      }
+
+      renderCardPreview(card);
+    }
+
+    function insertBlockAfter(referenceCard, type){
+      if (!referenceCard) return null;
+
+      qCount += 1;
+      referenceCard.insertAdjacentHTML("afterend", cardHtmlByType(type, qCount));
+      const newCard = referenceCard.nextElementSibling;
+      if (!newCard) return null;
+
+      if (type === "group" || type === "section") {
+        delete newCard.dataset.manualNumber;
+      }
+
+      wireCard(newCard);
+      renumberCards();
+      setupDragAndDrop();
+      scheduleLiveLearnerPreview({renderCard:newCard, delay:10});
+      setTimeout(updateChangeReview, 0);
+
+      newCard.scrollIntoView({behavior:"smooth", block:"center"});
+      newCard.querySelector("textarea, input, select")?.focus({preventScroll:true});
+      return newCard;
+    }
+
+    let copiedBlockData = null;
+
+    function pasteBlockAfter(referenceCard, data){
+      if (!referenceCard || !data?.type) return null;
+      const newCard = insertBlockAfter(referenceCard, data.type);
+      if (!newCard) return null;
+
+      populateBlock(newCard, cloneBlockData(data));
+      renumberCards();
+      scheduleLiveLearnerPreview({renderCard:newCard, delay:10});
+      setTimeout(updateChangeReview, 0);
+      return newCard;
+    }
+
+    function duplicateBlock(card){
+      const data = snapshotBlock(card);
+      if (!data) return;
+      pasteBlockAfter(card, data);
+      setMsg("Block duplicated below and numbering updated.", "ok");
+    }
+
+    function copyBlock(card){
+      copiedBlockData = snapshotBlock(card);
+      if (!copiedBlockData) return;
+
+      document.querySelectorAll(".pasteBlockBtn").forEach(button => {
+        button.disabled = false;
+      });
+
+      setMsg("Block copied. Use Paste Below on any block.", "ok");
+    }
+
     function wireCard(card){
       if (!card || card.dataset.wired === "1") return;
       card.dataset.wired = "1";
+      ensureQuickInsertControls(card);
       if(card.getAttribute("data-type")==="mcq"||card.getAttribute("data-type")==="text"){
         card.dataset.imageFirst=getCardImageFirst(card)?"1":"0";
       }
@@ -2598,7 +3260,20 @@ function escapeHtml(str){
       }
 
       if (card.getAttribute("data-type") === "note") {
-        card.querySelector(".noteText")?.addEventListener("input", ()=>renderCardPreview(card));
+        const roleEl=card.querySelector(".noteRole");
+        const imageWrap=card.querySelector(".noteImageWrap");
+        const imageEl=card.querySelector(".noteImage");
+        const syncNoteImage=()=>{
+          const allowed=(roleEl?.value||"information")==="information";
+          imageWrap?.classList.toggle("hide",!allowed);
+          if(!allowed&&imageEl)imageEl.value="";
+          renderCardPreview(card);
+          scheduleLiveLearnerPreview({renderCard:card,delay:10});
+        };
+        card.querySelector(".noteText")?.addEventListener("input",()=>renderCardPreview(card));
+        imageEl?.addEventListener("input",()=>renderCardPreview(card));
+        roleEl?.addEventListener("change",syncNoteImage);
+        syncNoteImage();
         renderCardPreview(card);
         return;
       }
@@ -2879,6 +3554,34 @@ function escapeHtml(str){
       const card = e.target.closest(".qcard");
       if (!card) return;
 
+
+      if (e.target.closest(".duplicateBlockBtn")) {
+        duplicateBlock(card);
+        return;
+      }
+
+      if (e.target.closest(".copyBlockBtn")) {
+        copyBlock(card);
+        return;
+      }
+
+      if (e.target.closest(".pasteBlockBtn")) {
+        if (!copiedBlockData) {
+          setMsg("Copy a block first, then choose Paste Below.", "error");
+          return;
+        }
+        pasteBlockAfter(card, copiedBlockData);
+        setMsg("Copied block pasted below and numbering updated.", "ok");
+        return;
+      }
+
+      const quickInsertBtn = e.target.closest(".quickInsertBtn");
+      if (quickInsertBtn) {
+        insertBlockAfter(card, quickInsertBtn.dataset.insertAfter || "mcq");
+        setMsg("New block inserted below and numbering updated.", "ok");
+        return;
+      }
+
       if (e.target.classList.contains("removeBtn")) {
         card.remove();
         renumberCards();
@@ -2931,6 +3634,7 @@ function escapeHtml(str){
         renderCard: card,
         delay: 45
       });
+      setTimeout(updateChangeReview, 0);
     });
 
     questionsWrap.addEventListener("change", event => {
@@ -2939,6 +3643,7 @@ function escapeHtml(str){
         renderCard: card,
         delay: 20
       });
+      setTimeout(updateChangeReview, 0);
     });
 
     /*
@@ -3317,6 +4022,7 @@ function escapeHtml(str){
         if (marksEl) marksEl.textContent = `${points} mark${points === 1 ? "" : "s"} • Section total: ${sectionTotal} • Question total: ${questionTotal}`;
         card.dataset.fullNumber = fullNumber;
       }
+      updateGeneratedQuestionLinks();
       refreshFullLearnerPreview();
     }
 
@@ -3690,7 +4396,15 @@ function escapeHtml(str){
     }
 
     function fillNoteCard(card, data){
-      card.querySelector(".noteText").value = data.text || "";
+      const raw=data?.text||"";
+      const role=data?.noteRole||noteRoleFromText(raw);
+      const roleEl=card.querySelector(".noteRole");
+      const imageEl=card.querySelector(".noteImage");
+      if(roleEl)roleEl.value=role;
+      card.querySelector(".noteText").value=stripNoteRoleMarker(raw);
+      if(imageEl)imageEl.value=role==="information"?(data?.imageUrl||""):"";
+      card.querySelector(".noteImageWrap")?.classList.toggle("hide",role!=="information");
+      card.dataset.imageUrl=role==="information"?(data?.imageUrl||""):"";
       renderCardPreview(card);
     }
 
@@ -3785,6 +4499,7 @@ function escapeHtml(str){
 
       renumberCards();
       setupDragAndDrop();
+      refreshFullLearnerPreview(fullLearnerPreview, currentFullPreviewMode);
     }
 
     function buildPayloadFromParsedAssessment(parsed){
@@ -4095,15 +4810,15 @@ function escapeHtml(str){
         if (type === "section") {
           const sectionText = cleanSpaces(card.querySelector(".sectionText")?.value || "");
           const sectionNumber = cleanSpaces(card.querySelector(".cardLabel")?.textContent || "");
-          if (!sectionText) throw new Error("Please fill in all section / stem texts.");
-          questions.push({ type: "note", text: `${sectionNumber} ${autoConvertMixedLatex(sectionText)}` });
+          questions.push({ type: "note", text: `${sectionNumber} ${autoConvertMixedLatex(sectionText)}`.trim() });
           continue;
         }
 
         if (type === "note") {
-          const noteText = cleanSpaces(card.querySelector(".noteText")?.value);
-          if (!noteText) throw new Error("Please fill in the note/heading text.");
-          questions.push({ type: "note", text: autoConvertMixedLatex(noteText) });
+          const noteText=String(card.querySelector(".noteText")?.value||"").replace(/\r/g,"").trim();
+          const role=card.querySelector(".noteRole")?.value||"information";
+          const imageUrl=role==="information"?cleanSpaces(card.querySelector(".noteImage")?.value||""):"";
+          questions.push({type:"note",text:`[[NOTE_ROLE:${role}]]${autoConvertMixedLatex(noteText)}`,noteRole:role,imageUrl});
           continue;
         }
 
@@ -4112,7 +4827,6 @@ function escapeHtml(str){
         const numberLabel = cleanSpaces(card.querySelector(".cardLabel")?.textContent || "");
         let text = rawText;
         if (numberLabel) text = `${numberLabel} ${text}`;
-        if (!rawText) throw new Error("Please fill in all question texts.");
         text = autoConvertMixedLatex(text);
 
         const hint = autoConvertMixedLatex(cleanSpaces(card.querySelector(".qHint")?.value || ""));
@@ -4371,18 +5085,41 @@ function escapeHtml(str){
       for (const q of questions) {
         const type = String(q?.type || "mcq").toLowerCase();
         if (type === "note") {
-          const noteText = cleanSpaces(q.text || "");
+          const rawNoteText = String(q.text || "");
+          const noteRole = String(q.noteRole || noteRoleFromText(rawNoteText) || "information").toLowerCase();
+          const noteText = stripNoteRoleMarker(rawNoteText);
+          const noteImageUrl = cleanSpaces(
+            q.imageUrl ||
+            q.imageURL ||
+            q.image ||
+            q.diagramUrl ||
+            q.diagramURL ||
+            q.mediaUrl ||
+            ""
+          );
           const groupMatch = noteText.match(/^QUESTION\s+(\d+)$/i);
           const sectionMatch = noteText.match(/^(\d+(?:\.\d+)*)\s+(.+)$/);
-          if (groupMatch) {
-            currentGroup = groupMatch[1];
+          if (noteRole === "main" || groupMatch) {
+            const explicitMain = groupMatch ? groupMatch[1] : "";
+            currentGroup = explicitMain || String(Number(currentGroup || 0) + 1);
             sectionCounter = 0;
             items.push({ type: "group", mainNumber: currentGroup });
-          } else if (sectionMatch && currentGroup && sectionMatch[1].startsWith(currentGroup + ".")) {
+            const body = noteText.replace(/^QUESTION\s+\d+\s*[:.-]?\s*/i, "").trim();
+            if (body) items.push({ type:"note", text:body, noteRole:"information", imageUrl:noteImageUrl });
+          } else if (noteRole === "subquestion" || (sectionMatch && currentGroup && sectionMatch[1].startsWith(currentGroup + "."))) {
             sectionCounter += 1;
-            items.push({ type: "section", sectionNumber: sectionMatch[1], text: sectionMatch[2] });
+            items.push({
+              type: "section",
+              sectionNumber: sectionMatch?.[1] || `${currentGroup}.${sectionCounter}`,
+              text: sectionMatch?.[2] || noteText
+            });
           } else {
-            pushAutoNote(noteText);
+            items.push({
+              type:"note",
+              text:noteText,
+              noteRole,
+              imageUrl:noteRole === "information" ? noteImageUrl : ""
+            });
           }
           continue;
         }
@@ -4411,7 +5148,7 @@ function escapeHtml(str){
             type: "text",
             question: questionBody,
             hint: q.hint || "",
-            imageUrl: q.imageUrl || "",
+            imageUrl: q.imageUrl || q.imageURL || q.image || q.diagramUrl || q.mediaUrl || "",
             imageFirst: q?.imageFirst === true || String(q?.contentOrder || "").toLowerCase() === "image-question",
             contentOrder: String(q?.contentOrder || "").trim() || (q?.imageFirst === true ? "image-question" : "question-image"),
             points: q.points || 1,
@@ -4430,7 +5167,7 @@ function escapeHtml(str){
             type: "mcq",
             question: questionBody,
             hint: q.hint || "",
-            imageUrl: q.imageUrl || "",
+            imageUrl: q.imageUrl || q.imageURL || q.image || q.diagramUrl || q.mediaUrl || "",
             imageFirst: q?.imageFirst === true || String(q?.contentOrder || "").toLowerCase() === "image-question",
             contentOrder: String(q?.contentOrder || "").trim() || (q?.imageFirst === true ? "image-question" : "question-image"),
             points: q.points || 1,
@@ -4676,6 +5413,11 @@ function escapeHtml(str){
       }
     }
 
+    [gradeEl,topicEl,timeLimitEl,titleEl,difficultyEl,paperEl,accessLevelEl,accessFeeEl,publishModeEl,publishAtEl,availableFromEl,availableUntilEl,sendPublishEmailEl,instructionsEl].forEach(el=>{
+      el?.addEventListener("input", ()=>setTimeout(updateChangeReview,0));
+      el?.addEventListener("change", ()=>setTimeout(updateChangeReview,0));
+    });
+
     async function loadAssessmentList(){
       const res = await fetch(`${API}/api/quizzes?all=1`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
@@ -4703,6 +5445,7 @@ function escapeHtml(str){
       if (!currentQuiz) return setMsg("Could not read assessment data.", "error");
       fillAssessmentForm(quizToParsedAssessment(currentQuiz));
       updateAvailabilityUi();
+      captureOriginalSnapshot();
 
       try {
         localStorage.setItem(
@@ -4713,6 +5456,22 @@ function escapeHtml(str){
 
       setMsg("Assessment loaded. You can now edit it with the full editor.", "ok");
     }
+
+    commitChangesBtn.addEventListener("click", ()=>openCommitConfirmation("draft"));
+    cancelCommitBtn.addEventListener("click", ()=>{ commitConfirmModal.style.display="none"; });
+    commitConfirmModal.addEventListener("click", event=>{ if(event.target===commitConfirmModal) commitConfirmModal.style.display="none"; });
+    confirmCommitBtn.addEventListener("click", ()=>{
+      commitConfirmModal.style.display="none";
+      if (pendingCommitMode === "draft") saveBtn.click();
+      else { publishConfirmed = true; publishBtn.click(); }
+    });
+    discardChangesBtn.addEventListener("click", ()=>{
+      if (!currentQuiz) return;
+      if (!confirm("Discard all uncommitted changes and restore the last saved assessment?")) return;
+      fillAssessmentForm(quizToParsedAssessment(currentQuiz));
+      captureOriginalSnapshot();
+      setMsg("Uncommitted changes were discarded. The learner preview now shows the saved assessment.","ok");
+    });
 
     saveBtn.addEventListener("click", async () => {
       const token = localStorage.getItem("token");
@@ -4761,6 +5520,8 @@ function escapeHtml(str){
            */
           await loadAssessmentList();
           assessmentSelectEl.value = currentQuiz._id;
+          fillAssessmentForm(quizToParsedAssessment(currentQuiz));
+          captureOriginalSnapshot();
 
           setMsg(
             "Changes saved, including the Image / Question order. Learner quiz and attempt pages were synchronized immediately.",
@@ -4838,7 +5599,13 @@ function escapeHtml(str){
       } catch {}
     });
 
+    let publishConfirmed = false;
     publishBtn.addEventListener("click", async () => {
+      if (!publishConfirmed) {
+        openCommitConfirmation(publishModeEl.value === "draft" ? "now" : publishModeEl.value);
+        return;
+      }
+      publishConfirmed = false;
       const token = localStorage.getItem("token");
       if (!token) {
         setMsg("You are not logged in. The page is still open, but publishing cannot continue until you log in again.", "error");
@@ -4892,6 +5659,8 @@ function escapeHtml(str){
 
           await loadAssessmentList();
           assessmentSelectEl.value = currentQuiz._id;
+          fillAssessmentForm(quizToParsedAssessment(currentQuiz));
+          captureOriginalSnapshot();
 
           if (mode === "now") {
             if (payload.sendPublishEmail) {
@@ -4916,6 +5685,8 @@ function escapeHtml(str){
         publishBtn.disabled = !canPublish;
       }
     });
+
+    updateChangeReview();
   </script>
 
 </div>
