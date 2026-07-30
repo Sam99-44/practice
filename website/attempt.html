@@ -7069,13 +7069,14 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       );
 
       const previewId = `mathPreview_${qIndex}_${fieldIndex}`;
-      const prefix = field.prefix || (
-        multiple ? `${field.key} =` : ""
-      );
+
+      /*
+       * field.key is an internal marking/storage identifier such as
+       * answer_1. It must never be shown to the learner.
+       */
+      const prefix = learnerVisibleAnswerLabel(field, fieldIndex);
       const suffix = field.suffix || "";
-      const placeholder = multiple
-        ? `Enter ${field.key}`
-        : "Type your answer";
+      const placeholder = "Enter your answer";
 
       const inputHtml = useMathLive
         ? `
@@ -7089,7 +7090,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
             smart-mode="true"
             smart-fence="true"
             placeholder="${escapeAttr(placeholder)}"
-            aria-label="${escapeAttr(prefix || placeholder)}"
+            aria-label="${escapeAttr(prefix || "Enter your answer")}"
           ></math-field>
         `
         : `
@@ -9379,6 +9380,25 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     hideAllSolutions();
   }
 
+
+
+  function learnerVisibleAnswerLabel(field, index){
+    const prefix = String(field?.prefix || "").trim();
+    if (prefix) return prefix;
+
+    const label = String(field?.label || field?.displayLabel || "").trim();
+    const key = String(field?.key || field?.name || `answer_${index + 1}`).trim();
+
+    const looksInternal =
+      /^answer[_\s-]*\d+$/i.test(key) ||
+      /^field[_\s-]*\d+$/i.test(key) ||
+      /^blank[_\s-]*\d+$/i.test(key);
+
+    if (label && label !== key && !looksInternal) return label;
+    if (label && label !== key) return label;
+
+    return looksInternal ? "" : key;
+  }
 
   function normalizeQuizApiPayload(payload){
     const candidate =
