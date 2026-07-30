@@ -1595,14 +1595,27 @@ input:focus,textarea:focus,select:focus{
           if (!state.solution) warnings.push(`${label} has no solution or workings.`);
           if (state.imageUrl && !/^https?:\/\//i.test(state.imageUrl)) warnings.push(`${label} has an image URL that may be invalid.`);
           if (!Number.isInteger(Number(state.points)) || Number(state.points) < 1) errors.push(`${label} must have whole-number marks of 1 or more.`);
+          const originalState = originalEditorSnapshot?.cards?.[index] || null;
+          const changedFromLoaded =
+            !originalState ||
+            !sameState(originalState, state);
+
           if (state.type === "mcq") {
             const filled=(state.options||[]).filter(o=>o.text);
             if (filled.length < 2) errors.push(`${label} needs at least two filled options.`);
-            if (!filled.some(o=>o.correct)) errors.push(`${label} needs at least one correct option.`);
+            if (!filled.some(o=>o.correct)) {
+              const message = `${label} has no correct option loaded.`;
+              if (changedFromLoaded) errors.push(`${message} Tick the correct option before committing this edited question.`);
+              else warnings.push(`${message} The existing assessment can still be committed because this question was not changed.`);
+            }
           }
           if (state.type === "text") {
             const fields=state.answerFields||[];
-            if (!fields.length || fields.some(f=>!f.correctAnswer)) errors.push(`${label} needs a correct answer for every answer box.`);
+            if (!fields.length || fields.some(f=>!f.correctAnswer)) {
+              const message = `${label} has a missing stored correct answer.`;
+              if (changedFromLoaded) errors.push(`${message} Complete every answer box before committing this edited question.`);
+              else warnings.push(`${message} The existing assessment can still be committed because this question was not changed.`);
+            }
           }
         }
       });
@@ -2241,6 +2254,25 @@ function escapeHtml(str){
       });
     }
 
+
+    function learnerVisibleAnswerLabel(field, index){
+      const prefix = String(field?.prefix || "").trim();
+      if (prefix) return prefix;
+
+      const label = String(field?.label || field?.displayLabel || "").trim();
+      const key = String(field?.key || field?.name || `answer_${index + 1}`).trim();
+
+      const looksInternal =
+        /^answer[_\s-]*\d+$/i.test(key) ||
+        /^field[_\s-]*\d+$/i.test(key) ||
+        /^blank[_\s-]*\d+$/i.test(key);
+
+      if (label && label !== key && !looksInternal) return label;
+      if (label && label !== key) return label;
+
+      return looksInternal ? "" : key;
+    }
+
     function refreshFullLearnerPreview(target=fullLearnerPreview, mode=currentFullPreviewMode){
       if(!target)return;
       currentFullPreviewMode=mode||"attempt";
@@ -2328,7 +2360,11 @@ function escapeHtml(str){
         if(type==="text"){
           const fields=[...card.querySelectorAll(".editAnswerFieldRow")];
           const answers=fields.length?fields.map(row=>{
-            const prefix=cleanSpaces(row.querySelector(".answerFieldPrefix")?.value||row.querySelector(".answerFieldKey")?.value||"");
+            const prefix = learnerVisibleAnswerLabel({
+              prefix: row.querySelector(".answerFieldPrefix")?.value || "",
+              label: row.querySelector(".answerFieldLabel")?.value || "",
+              key: row.querySelector(".answerFieldKey")?.value || ""
+            }, 0);
             const suffix=cleanSpaces(row.querySelector(".answerFieldSuffix")?.value||"");
             return `<div class="answerPreviewRow" style="margin-left:68px;display:flex;align-items:center;gap:8px;margin-top:8px;">${prefix?`<span>${renderMixedMathPreview(prefix)}</span>`:""}<input class="textAnswerPaper" style="margin:0;width:150px;" disabled>${suffix?`<span>${renderMixedMathPreview(suffix)}</span>`:""}</div>`;
           }).join(""):`<input class="textAnswerPaper" disabled>`;
@@ -4421,8 +4457,14 @@ function escapeHtml(str){
       const wrap = card.querySelector(".optsWrap");
       wrap.innerHTML = "";
 
-      data.options.forEach((opt, i) => {
-        addOption(card, opt, data.correctIndexes.includes(i));
+      const optionTexts = normaliseOptionTexts(data);
+      const correctIndexes = normaliseCorrectIndexes({
+        ...data,
+        options: optionTexts
+      });
+
+      optionTexts.forEach((opt, i) => {
+        addOption(card, opt, correctIndexes.includes(i));
       });
 
       relabelOptions(card);
@@ -4439,7 +4481,7 @@ function escapeHtml(str){
 
       applyStoredImageQuestionOrder(card, data);
 
-      restoreEditorAnswerFields(card, data);
+      restoreEditorAnswerFields(card, { ...data, answerFields: normaliseAnswerFields(data) });
       const modeSel = card.querySelector(".textMode");
       const tolInput = card.querySelector(".tolerance");
       if (modeSel) modeSel.value = data.textAnswerMode || "exact";
@@ -4779,6 +4821,27 @@ function escapeHtml(str){
     addMcq();
     setupDragAndDrop();
 
+
+    function originalQuestionForCard(cardIndex){
+      const originalQuestions = Array.isArray(currentQuiz?.questions)
+        ? currentQuiz.questions
+        : [];
+      const scorableCards = [...questionsWrap.querySelectorAll('.qcard')]
+        .filter(card => ["mcq","text"].includes(card.getAttribute("data-type") || ""));
+      const card = scorableCards[cardIndex];
+      if (!card) return null;
+
+      const absoluteIndex = [...questionsWrap.querySelectorAll(".qcard")].indexOf(card);
+      let scorableIndex = -1;
+      for (let index = 0; index <= absoluteIndex; index += 1) {
+        const type = questionsWrap.querySelectorAll(".qcard")[index]?.getAttribute("data-type");
+        if (type === "mcq" || type === "text") scorableIndex += 1;
+      }
+      return originalQuestions.filter(question =>
+        ["mcq","text"].includes(String(question?.type || "mcq").toLowerCase())
+      )[scorableIndex] || null;
+    }
+
     function collectQuestions(){
       const cards = [...questionsWrap.querySelectorAll(".qcard")];
       if (cards.length === 0) throw new Error("Add at least 1 question.");
@@ -5072,6 +5135,163 @@ function escapeHtml(str){
     }
 
 
+
+    function normaliseCorrectIndexes(question){
+      const options = Array.isArray(question?.options) ? question.options : [];
+      const valid = index =>
+        Number.isInteger(index) &&
+        index >= 0 &&
+        index < options.length;
+
+      const found = new Set();
+
+      const addIndex = value => {
+        const number = Number(value);
+        if (valid(number)) found.add(number);
+      };
+
+      if (Array.isArray(question?.correctIndexes)) {
+        question.correctIndexes.forEach(addIndex);
+      }
+
+      if (question?.correctIndex !== undefined && question?.correctIndex !== null && question?.correctIndex !== "") {
+        addIndex(question.correctIndex);
+      }
+
+      const answerValues = [
+        question?.correctAnswers,
+        question?.correctAnswer,
+        question?.answer,
+        question?.answers
+      ];
+
+      answerValues.forEach(value => {
+        const values = Array.isArray(value)
+          ? value
+          : String(value ?? "")
+              .split(/[,\n|;]/)
+              .map(item => item.trim())
+              .filter(Boolean);
+
+        values.forEach(item => {
+          if (/^\d+$/.test(String(item))) {
+            const number = Number(item);
+            /*
+             * Prefer zero-based indexes, but accept common one-based values
+             * when the zero-based value is outside the option range.
+             */
+            if (valid(number)) addIndex(number);
+            else if (valid(number - 1)) addIndex(number - 1);
+            return;
+          }
+
+          const letterMatch = String(item).match(/^[A-Za-z]$/);
+          if (letterMatch) {
+            addIndex(letterMatch[0].toUpperCase().charCodeAt(0) - 65);
+            return;
+          }
+
+          const optionTextIndex = options.findIndex(option => {
+            const optionText = typeof option === "object"
+              ? option?.text ?? option?.label ?? option?.value ?? ""
+              : option;
+            return cleanSpaces(optionText).toLowerCase() === cleanSpaces(item).toLowerCase();
+          });
+          if (optionTextIndex >= 0) addIndex(optionTextIndex);
+        });
+      });
+
+      options.forEach((option, index) => {
+        if (
+          option &&
+          typeof option === "object" &&
+          (
+            option.correct === true ||
+            option.isCorrect === true ||
+            option.correctAnswer === true ||
+            option.isAnswer === true
+          )
+        ) {
+          addIndex(index);
+        }
+      });
+
+      return [...found].sort((a, b) => a - b);
+    }
+
+    function normaliseOptionTexts(question){
+      return (Array.isArray(question?.options) ? question.options : [])
+        .map(option => {
+          if (option && typeof option === "object") {
+            return String(
+              option.text ??
+              option.label ??
+              option.value ??
+              option.option ??
+              ""
+            );
+          }
+          return String(option ?? "");
+        });
+    }
+
+    function parseStoredCorrectText(correctText){
+      const raw = String(correctText || "").trim();
+      if (!raw) return [];
+
+      return raw.split("|").map((part, index) => {
+        const separator = part.indexOf("=");
+        if (separator > 0) {
+          return {
+            key: cleanSpaces(part.slice(0, separator)) || `answer_${index + 1}`,
+            prefix: "",
+            suffix: "",
+            correctAnswer: cleanSpaces(part.slice(separator + 1))
+          };
+        }
+        return {
+          key: `answer_${index + 1}`,
+          prefix: "",
+          suffix: "",
+          correctAnswer: cleanSpaces(part)
+        };
+      }).filter(field => field.correctAnswer);
+    }
+
+    function normaliseAnswerFields(question){
+      const stored = Array.isArray(question?.answerFields)
+        ? question.answerFields.map((field, index) => ({
+            key: cleanSpaces(field?.key || field?.name || `answer_${index + 1}`),
+            prefix: String(field?.prefix || ""),
+            suffix: String(field?.suffix || field?.unit || ""),
+            correctAnswer: cleanSpaces(
+              field?.correctAnswer ??
+              field?.answer ??
+              field?.correctText ??
+              field?.value ??
+              ""
+            )
+          }))
+        : [];
+
+      const parsedCorrectText = parseStoredCorrectText(
+        question?.correctText ||
+        question?.correctAnswer ||
+        question?.answer ||
+        ""
+      );
+
+      if (!stored.length) return parsedCorrectText;
+
+      return stored.map((field, index) => ({
+        ...field,
+        correctAnswer:
+          field.correctAnswer ||
+          parsedCorrectText[index]?.correctAnswer ||
+          ""
+      }));
+    }
+
     function quizToParsedAssessment(quiz){
       const questions = Array.isArray(quiz?.questions) ? quiz.questions : [];
       const items = [];
@@ -5152,17 +5372,19 @@ function escapeHtml(str){
             imageFirst: q?.imageFirst === true || String(q?.contentOrder || "").toLowerCase() === "image-question",
             contentOrder: String(q?.contentOrder || "").trim() || (q?.imageFirst === true ? "image-question" : "question-image"),
             points: q.points || 1,
-            answerFields: Array.isArray(q.answerFields) ? q.answerFields : [],
-            correctText: q.correctText || "",
+            answerFields: normaliseAnswerFields(q),
+            correctText:
+              q.correctText ||
+              q.correctAnswer ||
+              q.answer ||
+              "",
             textAnswerMode: q.textAnswerMode || "exact",
             numberTolerance: q.numberTolerance ?? "",
             solution: q.solution || "",
             questionNumber: sectionNumber
           });
         } else {
-          const correctIndexes = Array.isArray(q.correctIndexes) && q.correctIndexes.length
-            ? q.correctIndexes.map(Number).filter(Number.isInteger)
-            : [Number.isInteger(Number(q.correctIndex)) ? Number(q.correctIndex) : 0];
+          const correctIndexes = normaliseCorrectIndexes(q);
           items.push({
             type: "mcq",
             question: questionBody,
@@ -5171,7 +5393,7 @@ function escapeHtml(str){
             imageFirst: q?.imageFirst === true || String(q?.contentOrder || "").toLowerCase() === "image-question",
             contentOrder: String(q?.contentOrder || "").trim() || (q?.imageFirst === true ? "image-question" : "question-image"),
             points: q.points || 1,
-            options: Array.isArray(q.options) ? q.options : [],
+            options: normaliseOptionTexts(q),
             correctIndexes,
             solution: q.solution || "",
             questionNumber: sectionNumber
