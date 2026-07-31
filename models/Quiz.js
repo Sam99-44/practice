@@ -579,8 +579,9 @@ Number(this.accessFee) || 0); } else { this.accessLevel = "standard";
 this.isPremium = false; this.requiresPayment = false; this.accessFee =
 0; }
 
-if (Array.isArray(this.questions)) { this.questions.forEach((question)
-=> { question.text = String(question.text || "").trim();
+if (Array.isArray(this.questions)) {
+  this.questions.forEach((question) => {
+    question.text = String(question.text || "").trim();
 question.imageUrl = String(question.imageUrl ||"").trim();
 question.imageAlt = String(question.imageAlt ||"").trim();
 question.imageSource = String(question.imageSource ||"").trim();
