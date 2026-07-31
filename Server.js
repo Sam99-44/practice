@@ -1,5 +1,5 @@
 // server.js (FULL UPDATED - COPY & PASTE)
-// ✅ Adds profile routes
+// ✅ Adds profile routes.
 // ✅ Adds profile photo upload/remove
 // ✅ Adds profile info update
 // ✅ Adds static /uploads serving
