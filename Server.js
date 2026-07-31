@@ -124,6 +124,17 @@ passport.use(
             trialStartDate: new Date(),
             trialEndDate: addDays(new Date(), 7),
           });
+
+          setImmediate(async () => {
+            try {
+              await sendNewRegistrationNotification(user, "Google registration");
+            } catch (notificationError) {
+              console.error(
+                "Google registration support notification failed:",
+                notificationError.message
+              );
+            }
+          });
         }
 
         return done(null, user);
@@ -167,6 +178,99 @@ app.use("/uploads", express.static(uploadsRoot));
 const BREVO_API_KEY = (process.env.BREVO_API_KEY || "").trim();
 const BREVO_SENDER_EMAIL = (process.env.BREVO_SENDER_EMAIL || "").trim();
 const BREVO_SENDER_NAME = (process.env.BREVO_SENDER_NAME || "Practice Online").trim();
+const SUPPORT_NOTIFICATION_EMAIL = (
+  process.env.SUPPORT_NOTIFICATION_EMAIL ||
+  "contactsupport@practiceonline.info"
+).trim();
+
+function escapeEmailHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function formatEmailDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toLocaleString("en-ZA", {
+    timeZone: "Africa/Johannesburg",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
+function assessmentContentTypeLabel(value) {
+  return {
+    quiz: "Quiz",
+    activity: "Activity",
+    homework: "Homework",
+    assignment: "Assignment",
+    test: "Test",
+    exam: "Exam",
+    gradeChallenge: "Grade Challenge",
+    weeklyChallenge: "Challenge of the Week",
+  }[normalizeAssessmentContentType(value)] || "Assessment";
+}
+
+function calculateAssessmentTotalMarks(quiz) {
+  const questions = Array.isArray(quiz?.questions) ? quiz.questions : [];
+  return questions.reduce((total, question) => {
+    if (String(question?.type || "").toLowerCase() === "note") return total;
+    const points = Number(question?.points || 0);
+    return total + (Number.isFinite(points) ? points : 0);
+  }, 0);
+}
+
+async function sendNewRegistrationNotification(user, source = "Registration form") {
+  if (!user || !SUPPORT_NOTIFICATION_EMAIL) return;
+
+  const registeredAt = formatEmailDate(user.createdAt || new Date());
+  const gradeText = user.grade ? `Grade ${user.grade}` : "Not applicable";
+  const learnerNumber =
+    user.learnerNumber || user.studentNumber || "Not assigned";
+
+  await sendEmail({
+    to: SUPPORT_NOTIFICATION_EMAIL,
+    subject: `New registration: ${user.fullName || user.username || user.email}`,
+    text: [
+      "New Practice Online Registration",
+      `Full Name: ${user.fullName || ""}`,
+      `Username: ${user.username || ""}`,
+      `Email: ${user.email || ""}`,
+      `Account Type: ${user.accountType || ""}`,
+      `Grade: ${gradeText}`,
+      `Curriculum: ${user.curriculum || "Not provided"}`,
+      `Learner / Practice Number: ${learnerNumber}`,
+      `Cellphone: ${user.cellphone || "Not provided"}`,
+      `Source: ${source}`,
+      `Registered: ${registeredAt}`,
+    ].join("\n"),
+    html: `
+      <div style="font-family:Inter,Arial,sans-serif;line-height:1.65;color:#111827;">
+        <h2 style="color:#1b1648;">New Practice Online Registration</h2>
+        <p><strong>Full Name:</strong> ${escapeEmailHtml(user.fullName || "")}</p>
+        <p><strong>Username:</strong> ${escapeEmailHtml(user.username || "")}</p>
+        <p><strong>Email:</strong> ${escapeEmailHtml(user.email || "")}</p>
+        <p><strong>Account Type:</strong> ${escapeEmailHtml(user.accountType || "")}</p>
+        <p><strong>Grade:</strong> ${escapeEmailHtml(gradeText)}</p>
+        <p><strong>Curriculum:</strong> ${escapeEmailHtml(user.curriculum || "Not provided")}</p>
+        <p><strong>Learner / Practice Number:</strong> ${escapeEmailHtml(learnerNumber)}</p>
+        <p><strong>Cellphone:</strong> ${escapeEmailHtml(user.cellphone || "Not provided")}</p>
+        <p><strong>Source:</strong> ${escapeEmailHtml(source)}</p>
+        <p><strong>Registered:</strong> ${escapeEmailHtml(registeredAt)}</p>
+      </div>
+    `,
+  });
+}
 
 async function sendEmail({ to, subject, html, text }) {
   if (!BREVO_API_KEY) throw new Error("Missing BREVO_API_KEY on server");
@@ -368,6 +472,12 @@ function normalizeAssessmentContentType(value) {
     homeworks: "homework",
     assignment: "assignment",
     assignments: "assignment",
+    test: "test",
+    tests: "test",
+    exam: "exam",
+    exams: "exam",
+    examination: "exam",
+    examinations: "exam",
     gradechallenge: "gradeChallenge",
     challenge: "gradeChallenge",
     weeklychallenge: "weeklyChallenge",
@@ -384,6 +494,8 @@ function assessmentCodePrefix(contentType) {
     activity: "AC",
     homework: "HW",
     assignment: "AS",
+    test: "TS",
+    exam: "EX",
     gradeChallenge: "GC",
     weeklyChallenge: "WC"
   }[normalizeAssessmentContentType(contentType)] || "QZ";
@@ -1394,48 +1506,129 @@ async function sendPublishedQuizEmails(quiz) {
   if (!quiz || !quiz.sendPublishEmail) return;
 
   try {
-    const learners = await User.find({
+    const contentType = normalizeAssessmentContentType(quiz.contentType);
+    const notifyAllGrades =
+      contentType === "weeklyChallenge" ||
+      quiz.isForAllLearners === true ||
+      String(quiz.audience || "").toLowerCase() === "all";
+
+    const query = {
       role: "learner",
-      accountType: "learner",
-      grade: quiz.grade,
+      accountType: { $in: ["learner", "practice"] },
       email: { $exists: true, $ne: "" },
       emailVerified: true,
-    }).select("email");
+    };
 
-    const emails = learners
-      .map((u) => String(u.email).toLowerCase().trim())
-      .filter(Boolean);
+    if (!notifyAllGrades) query.grade = quiz.grade;
 
-    if (!emails.length) {
-      console.log(`No learners found for grade ${quiz.grade} to notify.`);
+    const learners = await User.find(query)
+      .select("email fullName username")
+      .lean();
+
+    if (!learners.length) {
+      console.log("No eligible learners found to notify.");
       return;
     }
 
-    const subject = `New assessment for Grade ${quiz.grade}`;
+    const typeLabel = assessmentContentTypeLabel(contentType);
+    const totalMarks = calculateAssessmentTotalMarks(quiz);
+    const publishedText = formatEmailDate(quiz.publishedAt || quiz.publishAt);
+    const availableFromText = formatEmailDate(quiz.availableFrom);
+    const availableUntilText = formatEmailDate(quiz.availableUntil);
+    const marksReleaseText = formatEmailDate(quiz.marksReleaseAt);
+    const instructions = String(
+      quiz.assessmentInstructions || quiz.instructions || ""
+    ).trim();
+
     const link =
       "https://practiceonline.co.za/login.html?next=" +
-      encodeURIComponent("learner-quizzes.html");
+      encodeURIComponent(`attempt.html?quizId=${String(quiz._id || "")}`);
 
-    const html = `
-      <div style="font-family:Arial,sans-serif; line-height:1.6;">
-        <p>Hello,</p>
-        <p>A new assessment is available for <b>Grade ${quiz.grade}</b>.</p>
-        <p><b>${quiz.title}</b><br/>Topic: ${quiz.topic}</p>
-        <p>Paper: <b>${paperLabel(quiz.paper)}</b></p>
-        <p>Difficulty: <b>${quiz.difficulty}</b></p>
-        <p><a href="${link}" target="_blank">Log in to Practice Online</a></p>
-        <p>Regards,<br/>Practice Online Team</p>
-      </div>
-    `;
+    for (const learner of learners) {
+      const displayName = learner.fullName || learner.username || "Learner";
 
-    const text = `New assessment for Grade ${quiz.grade}: ${quiz.title} (Topic: ${quiz.topic}). Paper: ${paperLabel(
-      quiz.paper
-    )}. Difficulty: ${quiz.difficulty}. Login: ${link}`;
+      const details = [
+        ["Content Type", typeLabel],
+        ["Assessment", quiz.title || "Assessment"],
+        ["Assessment Code", quiz.assessmentCode],
+        ["Subject", quiz.subject],
+        ["Grade", notifyAllGrades ? "All eligible learners" : quiz.grade ? `Grade ${quiz.grade}` : ""],
+        ["Topic", quiz.topic],
+        ["Subtopic", quiz.subtopic],
+        ["Paper", quiz.paper ? paperLabel(quiz.paper) : ""],
+        ["Difficulty", quiz.difficulty],
+        ["Time Limit", Number(quiz.timeLimitMinutes) > 0 ? `${quiz.timeLimitMinutes} minutes` : ""],
+        ["Total Marks", totalMarks > 0 ? totalMarks : ""],
+        ["Published", publishedText],
+        ["Available From", availableFromText],
+        ["Submission Closes", availableUntilText],
+        ["Marks Release", marksReleaseText],
+      ].filter(([, value]) => value !== "" && value !== null && value !== undefined);
 
-    await sendBulkEmail({ recipients: emails, subject, html, text });
-    console.log(`Notified ${emails.length} learners for grade ${quiz.grade}.`);
-  } catch (e) {
-    console.error("Quiz publish email failed:", e.message);
+      const rows = details.map(([label, value]) => `
+        <tr>
+          <td style="padding:7px 10px;font-weight:700;">${escapeEmailHtml(label)}</td>
+          <td style="padding:7px 10px;">${escapeEmailHtml(value)}</td>
+        </tr>
+      `).join("");
+
+      const html = `
+        <div style="font-family:Inter,Arial,sans-serif;line-height:1.65;color:#111827;">
+          <p>Hello ${escapeEmailHtml(displayName)},</p>
+          <p>A new <strong>${escapeEmailHtml(typeLabel)}</strong> is available on Practice Online.</p>
+
+          <table style="border-collapse:collapse;width:100%;max-width:720px;margin:16px 0;">
+            ${rows}
+          </table>
+
+          ${instructions ? `
+            <p><strong>Instructions</strong></p>
+            <p style="white-space:pre-line;">${escapeEmailHtml(instructions)}</p>
+          ` : ""}
+
+          <p style="margin:22px 0;">
+            <a href="${link}" target="_blank"
+              style="display:inline-block;padding:12px 22px;background:#1b1648;color:#fff;text-decoration:none;border-radius:4px;font-weight:700;">
+              Open Assessment
+            </a>
+          </p>
+
+          <p>Kind Regards,<br><strong>Practice Online Team</strong></p>
+        </div>
+      `;
+
+      const plainText = [
+        `Hello ${displayName},`,
+        "",
+        `A new ${typeLabel} is available on Practice Online.`,
+        "",
+        ...details.map(([label, value]) => `${label}: ${value}`),
+        instructions ? `Instructions: ${instructions}` : "",
+        "",
+        `Open Assessment: ${link}`,
+        "",
+        "Kind Regards,",
+        "Practice Online Team",
+      ].filter(Boolean).join("\n");
+
+      try {
+        await sendEmail({
+          to: learner.email,
+          subject: `New ${typeLabel}: ${quiz.title || "Assessment"}`,
+          html,
+          text: plainText,
+        });
+      } catch (emailError) {
+        console.error(
+          `Assessment email failed for ${learner.email}:`,
+          emailError.message
+        );
+      }
+    }
+
+    console.log(`Notified ${learners.length} eligible learners.`);
+  } catch (error) {
+    console.error("Assessment publish email failed:", error.message);
   }
 }
 
@@ -2320,6 +2513,17 @@ app.post("/api/register", registerLimiter, async (req, res) => {
     const verifyUrl = `${APP_URL}/verify-email.html?token=${encodeURIComponent(
       rawVerifyToken
     )}&email=${encodeURIComponent(user.email)}`;
+
+    setImmediate(async () => {
+      try {
+        await sendNewRegistrationNotification(user, "Registration form");
+      } catch (notificationError) {
+        console.error(
+          "New registration support notification failed:",
+          notificationError.message
+        );
+      }
+    });
 
     try {
       const displayName = user.fullName || user.username || "there";
