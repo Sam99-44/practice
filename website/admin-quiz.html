@@ -37,12 +37,14 @@
      ✅ Upload .txt file can start with metadata:
         TITLE:
         GRADE:
+        SUBJECT: Mathematics | Physics
         TOPIC:
         TIME_LIMIT:
         DIFFICULTY:
         PAPER:
         CONTENT_TYPE: quiz | activity | homework | assignment | gradeChallenge | weeklyChallenge
         ACCESS_LEVEL: standard | premium
+        MARKS_RELEASE_AT:
         SEND_EMAIL:
 -->
 <!DOCTYPE html>
@@ -2563,7 +2565,14 @@ body > .card:last-of-type{
         <label>Assessment Title</label>
         <input id="title" />
       </div>
-      <div><label>Subject</label><input id="subject" value="Mathematics" /></div>
+      <div>
+        <label>Subject</label>
+        <select id="subject" required>
+          <option value="">Select Subject</option>
+          <option value="Mathematics">Mathematics</option>
+          <option value="Physics">Physics</option>
+        </select>
+      </div>
       <div><label>Term</label><select id="term"><option value="1" selected>Term 1</option><option value="2">Term 2</option><option value="3">Term 3</option><option value="4">Term 4</option></select></div>
       <div><label>Chapter</label><input id="chapter" type="number" min="1" value="1" /></div>
       <div><label>Subtopic</label><input id="subtopic" /></div>
@@ -2648,6 +2657,11 @@ body > .card:last-of-type{
         <label>Available Until (optional)</label>
         <input id="availableUntil" type="datetime-local" />
         
+      </div>
+
+      <div>
+        <label>Marks Release Date &amp; Time (optional)</label>
+        <input id="marksReleaseAt" type="datetime-local" />
       </div>
     </div>
 
@@ -2797,6 +2811,7 @@ body > .card:last-of-type{
     const timeLimitEl = document.getElementById("timeLimit");
     const titleEl = document.getElementById("title");
     const subjectEl=document.getElementById("subject"),termEl=document.getElementById("term"),chapterEl=document.getElementById("chapter"),subtopicEl=document.getElementById("subtopic"),curriculumEl=document.getElementById("curriculum"),languageEl=document.getElementById("language"),versionEl=document.getElementById("version"),keywordsEl=document.getElementById("keywords");
+    if (!subjectEl.value) subjectEl.value = "Mathematics";
     const assessmentCodeEl = document.getElementById("assessmentCode");
     const contentTypeEl = document.getElementById("contentType");
     const contentTypeHelp = document.getElementById("contentTypeHelp");
@@ -2810,6 +2825,7 @@ body > .card:last-of-type{
 
     const availableFromEl = document.getElementById("availableFrom");
     const availableUntilEl = document.getElementById("availableUntil");
+    const marksReleaseAtEl = document.getElementById("marksReleaseAt");
     const sendPublishEmailEl = document.getElementById("sendPublishEmail");
 
     const instructionsEl = document.getElementById("instructions");
@@ -5438,6 +5454,7 @@ function escapeHtml(str){
         publishAt: "",
         availableFrom: "",
         availableUntil: "",
+        marksReleaseAt: "",
         sendPublishEmail: false
       };
 
@@ -5473,6 +5490,11 @@ function escapeHtml(str){
           case "PUBLISH_AT": meta.publishAt = value.trim(); break;
           case "AVAILABLE_FROM": meta.availableFrom = value.trim(); break;
           case "AVAILABLE_UNTIL": meta.availableUntil = value.trim(); break;
+          case "MARKS_RELEASE_AT":
+          case "MARKS_RELEASE_DATE":
+          case "RESULTS_RELEASE_AT":
+            meta.marksReleaseAt = value.trim();
+            break;
           case "SEND_EMAIL": meta.sendPublishEmail = parseBooleanLike(value, false); break;
         }
       }
@@ -5894,6 +5916,7 @@ function escapeHtml(str){
           publishAt: String(meta.publishAt || "").trim(),
           availableFrom: String(meta.availableFrom || "").trim(),
           availableUntil: String(meta.availableUntil || "").trim(),
+          marksReleaseAt: String(meta.marksReleaseAt || "").trim(),
           sendPublishEmail: !!meta.sendPublishEmail
         },
         items
@@ -6050,6 +6073,7 @@ function escapeHtml(str){
       publishAtEl.value = meta.publishAt || "";
       availableFromEl.value = meta.availableFrom || "";
       availableUntilEl.value = meta.availableUntil || "";
+      marksReleaseAtEl.value = meta.marksReleaseAt || "";
       sendPublishEmailEl.checked = !!meta.sendPublishEmail;
 
       renderInstructionsPreview();
@@ -6263,6 +6287,7 @@ function escapeHtml(str){
         : [];
       const availableFrom = meta.availableFrom || null;
       const availableUntil = meta.availableUntil || null;
+      const marksReleaseAt = meta.marksReleaseAt || null;
       const publishMode = normalizePublishMode(meta.publishMode);
       const publishAt = meta.publishAt || null;
 
@@ -6381,6 +6406,7 @@ function escapeHtml(str){
         publishAt: finalPublishAt,
         availableFrom,
         availableUntil,
+        marksReleaseAt,
         sendPublishEmail: !!meta.sendPublishEmail
       };
     }
@@ -6661,12 +6687,16 @@ function escapeHtml(str){
 
       const availableFrom = availableFromEl.value ? availableFromEl.value : null;
       const availableUntil = availableUntilEl.value ? availableUntilEl.value : null;
+      const marksReleaseAt = marksReleaseAtEl.value ? marksReleaseAtEl.value : null;
 
       if (!grade && contentType !== "weeklyChallenge") {
         throw new Error("Please select grade.");
       }
       if (!topic) throw new Error("Please enter topic.");
       if (!title) throw new Error("Please enter assessment title.");
+      if (!["Mathematics", "Physics"].includes(subject)) {
+        throw new Error("Please select a valid subject.");
+      }
 
       if (!Number.isFinite(timeLimitMinutes) || timeLimitMinutes < 1 || timeLimitMinutes > 180) {
         throw new Error("Please enter a valid time limit (1–180 minutes).");
@@ -6683,6 +6713,10 @@ function escapeHtml(str){
         if (untilDate <= fromDate) {
           throw new Error("Available Until must be after Available From.");
         }
+      }
+
+      if (marksReleaseAt && isNaN(new Date(marksReleaseAt).getTime())) {
+        throw new Error("Please enter a valid marks release date and time.");
       }
 
       const questions = collectQuestions();
@@ -6735,6 +6769,7 @@ function escapeHtml(str){
         publishAt,
         availableFrom,
         availableUntil,
+        marksReleaseAt,
         sendPublishEmail: !!sendPublishEmailEl.checked,
       };
     }
@@ -6819,7 +6854,7 @@ function escapeHtml(str){
           paper:quiz?.paper || "paper1", contentType:quiz?.contentType || "quiz", accessLevel:quiz?.accessLevel || "standard",
           instructions:quiz?.instructions || quiz?.assessmentInstructions || "", publishMode:quiz?.publishAt ? "schedule" : "draft",
           publishAt:toDatetimeLocal(quiz?.publishAt), availableFrom:toDatetimeLocal(quiz?.availableFrom), availableUntil:toDatetimeLocal(quiz?.availableUntil),
-          sendPublishEmail:!!quiz?.sendPublishEmail
+          marksReleaseAt:toDatetimeLocal(quiz?.marksReleaseAt), sendPublishEmail:!!quiz?.sendPublishEmail
         }, items
       };
     }
@@ -6834,7 +6869,7 @@ function escapeHtml(str){
           curriculum:curriculumEl.value, language:languageEl.value, version:versionEl.value, keywords:keywordsEl.value,
           assessmentCode:assessmentCodeEl?.value || "", contentType:contentTypeEl.value, accessLevel:accessLevelEl.value,
           difficulty:difficultyEl.value, paper:paperEl.value, publishMode:publishModeEl.value, publishAt:publishAtEl.value,
-          availableFrom:availableFromEl.value, availableUntil:availableUntilEl.value, sendPublishEmail:sendPublishEmailEl.checked,
+          availableFrom:availableFromEl.value, availableUntil:availableUntilEl.value, marksReleaseAt:marksReleaseAtEl.value, sendPublishEmail:sendPublishEmailEl.checked,
           instructions:instructionsEl.value, learningObjectives:learningObjectivesEl.value
         }, cards
       };
@@ -6848,7 +6883,7 @@ function escapeHtml(str){
       assign(subjectEl,f.subject);assign(termEl,f.term);assign(chapterEl,f.chapter);assign(subtopicEl,f.subtopic);
       assign(curriculumEl,f.curriculum);assign(languageEl,f.language);assign(versionEl,f.version);assign(keywordsEl,f.keywords);
       assign(contentTypeEl,f.contentType);assign(accessLevelEl,f.accessLevel);assign(difficultyEl,f.difficulty);assign(paperEl,f.paper);
-      assign(publishModeEl,f.publishMode);assign(publishAtEl,f.publishAt);assign(availableFromEl,f.availableFrom);assign(availableUntilEl,f.availableUntil);
+      assign(publishModeEl,f.publishMode);assign(publishAtEl,f.publishAt);assign(availableFromEl,f.availableFrom);assign(availableUntilEl,f.availableUntil);assign(marksReleaseAtEl,f.marksReleaseAt);
       assign(instructionsEl,f.instructions);assign(learningObjectivesEl,f.learningObjectives);
       if (assessmentCodeEl) assessmentCodeEl.value=f.assessmentCode || "Assigned automatically when saved";
       sendPublishEmailEl.checked=!!f.sendPublishEmail;
@@ -7090,6 +7125,7 @@ function escapeHtml(str){
       publishAtEl.value = "";
       availableFromEl.value = "";
       availableUntilEl.value = "";
+      marksReleaseAtEl.value = "";
       sendPublishEmailEl.checked = false;
       applyMetadataDefaults(false);
 
