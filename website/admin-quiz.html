@@ -2594,6 +2594,8 @@ body > .card:last-of-type{
           <option value="activity">Activity</option>
           <option value="homework">Homework</option>
           <option value="assignment">Assignment</option>
+          <option value="test">Test</option>
+          <option value="exam">Exam</option>
           <option value="gradeChallenge">Grade Challenge</option>
           <option value="weeklyChallenge">Challenge of the Week</option>
         </select>
@@ -2659,9 +2661,12 @@ body > .card:last-of-type{
         
       </div>
 
-      <div>
-        <label>Marks Release Date &amp; Time (optional)</label>
+      <div id="marksReleaseAtWrap" class="hide">
+        <label>Marks Release Date &amp; Time</label>
         <input id="marksReleaseAt" type="datetime-local" />
+        <div id="marksReleaseHelp" class="muted tiny" style="margin-top:6px;">
+          Required for this assessment type.
+        </div>
       </div>
     </div>
 
@@ -2826,6 +2831,8 @@ body > .card:last-of-type{
     const availableFromEl = document.getElementById("availableFrom");
     const availableUntilEl = document.getElementById("availableUntil");
     const marksReleaseAtEl = document.getElementById("marksReleaseAt");
+    const marksReleaseAtWrap = document.getElementById("marksReleaseAtWrap");
+    const marksReleaseHelp = document.getElementById("marksReleaseHelp");
     const sendPublishEmailEl = document.getElementById("sendPublishEmail");
 
     const instructionsEl = document.getElementById("instructions");
@@ -3032,8 +3039,13 @@ body > .card:last-of-type{
 
     function normalizeContentType(v){
       const t = String(v || "").trim();
-      const allowed = ["quiz","activity","homework","assignment","gradeChallenge","weeklyChallenge"];
+      const allowed = ["quiz","activity","homework","assignment","test","exam","gradeChallenge","weeklyChallenge"];
       return allowed.includes(t) ? t : "quiz";
+    }
+
+    function requiresScheduledMarksRelease(type){
+      return ["assignment","test","exam","gradeChallenge","weeklyChallenge"]
+        .includes(normalizeContentType(type));
     }
 
     function normalizeAccessLevel(v){
@@ -3138,6 +3150,8 @@ body > .card:last-of-type{
         activity:"Activity",
         homework:"Homework",
         assignment:"Assignment",
+        test:"Test",
+        exam:"Exam",
         gradeChallenge:"Grade Challenge",
         weeklyChallenge:"Challenge of the Week"
       }[type] || "Quiz";
@@ -3773,6 +3787,8 @@ function escapeHtml(str){
         activity:"Activity appears under the Activities tab for the selected grade.",
         homework:"Homework appears under the Homework tab for the selected grade.",
         assignment:"Assignment appears under the Assignments tab for the selected grade.",
+        test:"Test appears under the Tests tab for the selected grade.",
+        exam:"Exam appears under the Exams tab for the selected grade.",
         gradeChallenge:"Grade Challenge appears only for learners in the selected grade.",
         weeklyChallenge:"Challenge of the Week appears for every learner, regardless of grade."
       };
@@ -3788,6 +3804,21 @@ function escapeHtml(str){
       }else{
         gradeEl.disabled = false;
         gradeEl.title = "";
+      }
+
+      const scheduledMarksRelease = requiresScheduledMarksRelease(type);
+      marksReleaseAtWrap.classList.toggle("hide", !scheduledMarksRelease);
+      marksReleaseAtEl.required = scheduledMarksRelease;
+      marksReleaseAtEl.disabled = !scheduledMarksRelease;
+
+      if (!scheduledMarksRelease) {
+        marksReleaseAtEl.value = "";
+      }
+
+      if (marksReleaseHelp) {
+        marksReleaseHelp.textContent = scheduledMarksRelease
+          ? "Required: learner marks will be released on this date and time."
+          : "Marks are released immediately after submission.";
       }
 
       refreshFullLearnerPreview();
@@ -6287,7 +6318,9 @@ function escapeHtml(str){
         : [];
       const availableFrom = meta.availableFrom || null;
       const availableUntil = meta.availableUntil || null;
-      const marksReleaseAt = meta.marksReleaseAt || null;
+      const marksReleaseAt = requiresScheduledMarksRelease(contentType)
+        ? (meta.marksReleaseAt || null)
+        : null;
       const publishMode = normalizePublishMode(meta.publishMode);
       const publishAt = meta.publishAt || null;
 
@@ -6296,6 +6329,12 @@ function escapeHtml(str){
       }
       if (!topic) throw new Error(`Missing TOPIC in "${meta.title || "file"}".`);
       if (!title) throw new Error(`Missing TITLE in "${meta.title || "file"}".`);
+      if (requiresScheduledMarksRelease(contentType) && !marksReleaseAt) {
+        throw new Error(`MARKS_RELEASE_AT is required for ${contentTypeLabel(contentType)}.`);
+      }
+      if (marksReleaseAt && isNaN(new Date(marksReleaseAt).getTime())) {
+        throw new Error(`Invalid MARKS_RELEASE_AT in "${meta.title || "file"}".`);
+      }
       if (!Number.isFinite(timeLimitMinutes) || timeLimitMinutes < 1 || timeLimitMinutes > 180) {
         throw new Error(`Invalid TIME_LIMIT in "${meta.title || "file"}".`);
       }
@@ -6687,7 +6726,9 @@ function escapeHtml(str){
 
       const availableFrom = availableFromEl.value ? availableFromEl.value : null;
       const availableUntil = availableUntilEl.value ? availableUntilEl.value : null;
-      const marksReleaseAt = marksReleaseAtEl.value ? marksReleaseAtEl.value : null;
+      const marksReleaseAt = requiresScheduledMarksRelease(contentType)
+        ? (marksReleaseAtEl.value ? marksReleaseAtEl.value : null)
+        : null;
 
       if (!grade && contentType !== "weeklyChallenge") {
         throw new Error("Please select grade.");
@@ -6713,6 +6754,10 @@ function escapeHtml(str){
         if (untilDate <= fromDate) {
           throw new Error("Available Until must be after Available From.");
         }
+      }
+
+      if (requiresScheduledMarksRelease(contentType) && !marksReleaseAt) {
+        throw new Error(`Please select the marks release date and time for ${contentTypeLabel(contentType)}.`);
       }
 
       if (marksReleaseAt && isNaN(new Date(marksReleaseAt).getTime())) {
