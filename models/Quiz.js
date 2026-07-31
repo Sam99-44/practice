@@ -1,9 +1,9 @@
 // models/Quiz.js
 
-import mongoose from “mongoose”;
+import mongoose from "mongoose";
 
 const QuestionSchema = new mongoose.Schema( { type: { type: String,
-enum: [“mcq”, “text”, “dropdown”, “fill”, “note”], default: “mcq”,
+enum: ["mcq", "text", "dropdown", "fill", "note"], default: "mcq",
 required: true, },
 
     text: {
@@ -517,79 +517,79 @@ String, default: undefined, trim: true, uppercase: true, index: true, },
 }, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals:
 true }, } );
 
-QuizSchema.virtual(“questionCount”).get(function () { return
+QuizSchema.virtual("questionCount").get(function () { return
 Array.isArray(this.questions) ? this.questions.filter((question) =>
-question.type !== “note”).length : 0; });
+question.type !== "note").length : 0; });
 
-QuizSchema.virtual(“totalMarks”).get(function () { if
+QuizSchema.virtual("totalMarks").get(function () { if
 (!Array.isArray(this.questions)) return 0;
 
 return this.questions.reduce((total, question) => { if (question.type
-=== “note”) return total; return total + (Number(question.points) || 0);
+=== "note") return total; return total + (Number(question.points) || 0);
 }, 0); });
 
-QuizSchema.virtual(“mcqCount”).get(function () { return
+QuizSchema.virtual("mcqCount").get(function () { return
 Array.isArray(this.questions) ? this.questions.filter((question) =>
-question.type === “mcq”).length : 0; });
+question.type === "mcq").length : 0; });
 
-QuizSchema.virtual(“textCount”).get(function () { return
+QuizSchema.virtual("textCount").get(function () { return
 Array.isArray(this.questions) ? this.questions.filter((question) =>
-question.type === “text”).length : 0; });
+question.type === "text").length : 0; });
 
-QuizSchema.virtual(“dropdownCount”).get(function () { return
+QuizSchema.virtual("dropdownCount").get(function () { return
 Array.isArray(this.questions) ? this.questions.filter((question) =>
-question.type === “dropdown”).length : 0; });
+question.type === "dropdown").length : 0; });
 
-QuizSchema.virtual(“fillCount”).get(function () { return
+QuizSchema.virtual("fillCount").get(function () { return
 Array.isArray(this.questions) ? this.questions.filter((question) =>
-question.type === “fill”).length : 0; });
+question.type === "fill").length : 0; });
 
-QuizSchema.pre(“validate”, function (next) { const code =
-String(this.assessmentCode || ““).trim().toUpperCase();
+QuizSchema.pre("validate", function (next) { const code =
+String(this.assessmentCode || "").trim().toUpperCase();
 this.assessmentCode = code || undefined;
 
-this.subject = String(this.subject || ““).trim(); this.curriculum =
-String(this.curriculum ||”CAPS”).trim() || “CAPS”; this.language =
-String(this.language || “English”).trim() || “English”; this.topic =
-String(this.topic || ““).trim(); this.subtopic = String(this.subtopic
-||”“).trim(); this.version = String(this.version ||”1.0”).trim() ||
-“1.0”;
+this.subject = String(this.subject || "").trim(); this.curriculum =
+String(this.curriculum ||"CAPS").trim() || "CAPS"; this.language =
+String(this.language || "English").trim() || "English"; this.topic =
+String(this.topic || "").trim(); this.subtopic = String(this.subtopic
+||"").trim(); this.version = String(this.version ||"1.0").trim() ||
+"1.0";
 
-this.keywords = Array.isArray(this.keywords) ? […new
-Set(this.keywords.map((k) => String(k || ““).trim()).filter(Boolean))] :
+this.keywords = Array.isArray(this.keywords) ? [...new
+Set(this.keywords.map((k) => String(k || "").trim()).filter(Boolean))] :
 [];
 
 this.learningObjectives = Array.isArray(this.learningObjectives) ?
 this.learningObjectives .map((objective) => String(objective ||
-““).trim()) .filter(Boolean) : [];
+"").trim()) .filter(Boolean) : [];
 
 this.assessmentInstructions = String( this.assessmentInstructions ||
-this.instructions || “” ).trim();
+this.instructions || "" ).trim();
 
 this.instructions = String( this.instructions ||
-this.assessmentInstructions || “” ).trim();
+this.assessmentInstructions || "" ).trim();
 
-if (this.contentType === “weeklyChallenge”) { this.grade = null;
-this.audience = “all”; this.isForAllLearners = true; } else {
-this.audience = “grade”; this.isForAllLearners = false; }
+if (this.contentType === "weeklyChallenge") { this.grade = null;
+this.audience = "all"; this.isForAllLearners = true; } else {
+this.audience = "grade"; this.isForAllLearners = false; }
 
-if (this.accessLevel === “premium”) { this.isPremium = true;
+if (this.accessLevel === "premium") { this.isPremium = true;
 this.requiresPayment = true; this.accessFee = Math.max(0,
-Number(this.accessFee) || 0); } else { this.accessLevel = “standard”;
+Number(this.accessFee) || 0); } else { this.accessLevel = "standard";
 this.isPremium = false; this.requiresPayment = false; this.accessFee =
 0; }
 
 if (Array.isArray(this.questions)) { this.questions.forEach((question)
-=> { question.text = String(question.text || ““).trim();
-question.imageUrl = String(question.imageUrl ||”“).trim();
-question.imageAlt = String(question.imageAlt ||”“).trim();
-question.imageSource = String(question.imageSource ||”“).trim();
-question.hint = String(question.hint ||”“).trim(); question.solution =
-String(question.solution ||”“).trim(); question.instruction =
-String(question.instruction ||”“).trim(); question.answerPrefix =
-String(question.answerPrefix ||”“).trim(); question.answerSuffix =
-String(question.answerSuffix ||”“).trim(); question.unit =
-String(question.unit || question.answerSuffix ||”“).trim();
+=> { question.text = String(question.text || "").trim();
+question.imageUrl = String(question.imageUrl ||"").trim();
+question.imageAlt = String(question.imageAlt ||"").trim();
+question.imageSource = String(question.imageSource ||"").trim();
+question.hint = String(question.hint ||"").trim(); question.solution =
+String(question.solution ||"").trim(); question.instruction =
+String(question.instruction ||"").trim(); question.answerPrefix =
+String(question.answerPrefix ||"").trim(); question.answerSuffix =
+String(question.answerSuffix ||"").trim(); question.unit =
+String(question.unit || question.answerSuffix ||"").trim();
 
       if (question.type === "note") {
         question.points = 0;
@@ -700,7 +700,7 @@ next(); });
 
 QuizSchema.index( { assessmentCode: 1 }, { unique: true,
 partialFilterExpression: { assessmentCode: { $exists: true, $type:
-“string”, $ne: ““, }, }, } );
+"string", $ne: "", }, }, } );
 
 QuizSchema.index({ contentType: 1, grade: 1, isPublished: 1,
 accessLevel: 1, createdAt: -1, });
@@ -711,4 +711,4 @@ createdAt: -1, });
 QuizSchema.index({ subject: 1, curriculum: 1, grade: 1, term: 1,
 chapter: 1, topic: 1, subtopic: 1, contentType: 1, difficulty: 1, });
 
-export default mongoose.model(“Quiz”, QuizSchema);
+export default mongoose.model("Quiz", QuizSchema);
