@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Learning Content | Practice Online</title>
 
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
 :root{
   --nav:#1b1648;
@@ -27,7 +29,7 @@
 html,body{
   margin:0;
   padding:0;
-  font-family:Arial, Helvetica, sans-serif;
+  font-family:"Inter",sans-serif;
   background:var(--bg);
   color:var(--text);
 }
@@ -42,7 +44,7 @@ button{font:inherit}
   position:sticky;
   top:0;
   z-index:1000;
-  font-family:Arial, Helvetica, sans-serif;
+  font-family:"Inter",sans-serif;
 }
 
 .topbar-inner{
@@ -246,7 +248,7 @@ button{font:inherit}
   font-size:14px;
   font-weight:700;
   color:#ffffff;
-  font-family:Arial, Helvetica, sans-serif;
+  font-family:"Inter",sans-serif;
 }
 
 .nav-btn:hover{
@@ -328,7 +330,7 @@ button{font:inherit}
   border:1px solid var(--nav);
   font-size:13px;
   font-weight:700;
-  font-family:Arial, Helvetica, sans-serif;
+  font-family:"Inter",sans-serif;
   cursor:pointer;
 }
 
@@ -758,7 +760,7 @@ if(!localStorage.getItem("token")){
 
   <section class="pageTitle">
     <h1>Learning Content</h1>
-    <p>Access activities, homework, quizzes, challenges and learner achievements.</p>
+    <p>Access activities, homework, assignments, quizzes, tests, exams, challenges and learner achievements.</p>
   </section>
 
   <section class="learning-shell">
@@ -770,6 +772,8 @@ if(!localStorage.getItem("token")){
       <button class="nav-btn" data-tab="homework">Homework</button>
       <button class="nav-btn" data-tab="assignments">Assignments</button>
       <button class="nav-btn" data-tab="quizzes">Quizzes</button>
+      <button class="nav-btn" data-tab="tests">Tests</button>
+      <button class="nav-btn" data-tab="exams">Exams</button>
       <button class="nav-btn" data-tab="gradeChallenge">Grade Challenge</button>
       <button class="nav-btn" data-tab="weeklyChallenge">Challenge of the Week</button>
       <button class="nav-btn" data-tab="newspaper">Newspaper</button>
@@ -800,6 +804,18 @@ if(!localStorage.getItem("token")){
         <p class="section-subtitle">Open your available practice quizzes and assessments.</p>
 
         <div id="quizzesList" class="content-list-loader">Loading quizzes...</div>
+      </div>
+      <div class="content-panel" id="tests">
+        <h2 class="section-title">Tests</h2>
+        <p class="section-subtitle">Your available tests will appear here.</p>
+
+        <div id="testsList" class="content-list-loader">Loading tests...</div>
+      </div>
+      <div class="content-panel" id="exams">
+        <h2 class="section-title">Exams</h2>
+        <p class="section-subtitle">Your available exams will appear here.</p>
+
+        <div id="examsList" class="content-list-loader">Loading exams...</div>
       </div>
       <div class="content-panel" id="gradeChallenge">
         <h2 class="section-title" id="gradeChallengeTitle">Grade Challenge</h2>
@@ -908,6 +924,12 @@ function getContentType(item){
     homeworks:"homework",
     assignment:"assignment",
     assignments:"assignment",
+    test:"test",
+    tests:"test",
+    exam:"exam",
+    exams:"exam",
+    examination:"exam",
+    examinations:"exam",
     gradechallenge:"gradeChallenge",
     weeklychallenge:"weeklyChallenge",
     weeklychallenges:"weeklyChallenge",
@@ -1199,6 +1221,20 @@ function renderLearningContent(){
   );
 
   renderCards(
+    "testsList",
+    filterContent("test"),
+    "No tests are available right now.",
+    "Start Test"
+  );
+
+  renderCards(
+    "examsList",
+    filterContent("exam"),
+    "No exams are available right now.",
+    "Start Exam"
+  );
+
+  renderCards(
     "gradeChallengeList",
     filterContent("gradeChallenge"),
     "No grade challenge is available for your grade right now.",
@@ -1330,6 +1366,8 @@ async function loadLearningContent(){
       "homeworkList",
       "assignmentsList",
       "quizzesList",
+      "testsList",
+      "examsList",
       "gradeChallengeList",
       "weeklyChallengeList"
     ].forEach(id => {
