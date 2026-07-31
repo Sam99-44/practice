@@ -6159,7 +6159,7 @@ mjx-container[jax="SVG"] svg{
             <span>Previous Quiz</span>
           </button>
 
-          <button id="startQuizBtn" class="topQuizSquareBtn primary" type="button" title="Start quiz">
+          <button id="startQuizBtn" class="topQuizSquareBtn primary hidden" type="button" title="Assessment starts automatically" aria-hidden="true" tabindex="-1">
             <span>Start</span>
           </button>
 
@@ -8187,8 +8187,15 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
   function setupStartGateAfterLoad(){
     const savedEnd = getSavedQuizEndTime();
+    const params = new URLSearchParams(window.location.search);
+    const openedFromQuizNavigation = params.get("entry") === "quiz-navigation";
 
+    /*
+     * Resume an assessment that was already started, regardless of how the
+     * learner returned to the page.
+     */
     if (savedEnd && savedEnd > Date.now()) {
+      if (startQuizBtn) startQuizBtn.classList.add("hidden");
       quizStarted = true;
       startQuizAttempt(false);
       return;
@@ -8198,8 +8205,30 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       localStorage.removeItem(END_KEY);
     }
 
-    lockQuizBeforeStart();
-    showQuestionPage(0, false);
+    currentQuestionPage = 0;
+
+    /*
+     * Start/Open from an assessment card means the learner deliberately
+     * selected that assessment, so it starts immediately.
+     *
+     * Previous Quiz / Next Quiz only browses to another assessment. The
+     * learner must press Start before its timer and attempt begin.
+     */
+    if (openedFromQuizNavigation) {
+      if (startQuizBtn) {
+        startQuizBtn.classList.remove("hidden");
+        startQuizBtn.removeAttribute("aria-hidden");
+        startQuizBtn.removeAttribute("tabindex");
+        startQuizBtn.title = "Start assessment";
+      }
+
+      lockQuizBeforeStart();
+      showQuestionPage(0, false);
+      return;
+    }
+
+    if (startQuizBtn) startQuizBtn.classList.add("hidden");
+    startQuizAttempt(false);
   }
 
   function startTimerWithQuiz(quiz){
@@ -8507,8 +8536,12 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   }
 
 
-  function buildCurrentAttemptUrl(targetQuizId, keepMode = true){
-    const safeId = encodeURIComponent(String(targetQuizId || ""));
+  function buildCurrentAttemptUrl(
+    targetQuizId,
+    keepMode = true,
+    requireManualStart = false
+  ){
+    const safeId = String(targetQuizId || "");
 
     /*
       IMPORTANT:
@@ -8525,6 +8558,10 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       params.set("mode", "practice");
     }
 
+    if (requireManualStart) {
+      params.set("entry", "quiz-navigation");
+    }
+
     return `${currentPath}?${params.toString()}`;
   }
 
@@ -8532,7 +8569,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     if (!previousQuizData) return;
     const previousId = getQuizObjectId(previousQuizData);
     if (!previousId) return;
-    window.location.href = buildCurrentAttemptUrl(previousId, true);
+    window.location.href = buildCurrentAttemptUrl(previousId, true, true);
   }
 
   function setNextQuizButtonState(quiz, message){
@@ -8602,7 +8639,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     const nextId = getQuizObjectId(nextQuizData);
     if (!nextId) return;
 
-    window.location.href = buildCurrentAttemptUrl(nextId, true);
+    window.location.href = buildCurrentAttemptUrl(nextId, true, true);
   }
 
 
