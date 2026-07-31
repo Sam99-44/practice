@@ -321,6 +321,20 @@ function normalizePaper(v) {
   if (p === "paper1" || p === "paper2") return p;
   return "paper1";
 }
+
+function normalizeQuizSubject(value) {
+  const subject = String(value || "").trim().toLowerCase();
+
+  if (subject === "mathematics" || subject === "maths" || subject === "math") {
+    return "Mathematics";
+  }
+
+  if (subject === "physics" || subject === "physical sciences" || subject === "physical science") {
+    return "Physics";
+  }
+
+  return null;
+}
 function normalizeQuizAccessLevel(value) {
   return String(value || "").toLowerCase().trim() === "premium"
     ? "premium"
@@ -3233,7 +3247,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
     const quizzes = await Quiz.find(filter)
       .sort({ createdAt: -1 })
       .select(
-        "assessmentCode grade subject curriculum language term chapter title topic subtopic version keywords contentType audience isForAllLearners accessLevel isPremium requiresPayment accessFee paper difficulty questions timeLimitMinutes instructions assessmentInstructions learningObjectives isFrozen availableFrom availableUntil createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
+        "assessmentCode grade subject curriculum language term chapter title topic subtopic version keywords contentType audience isForAllLearners accessLevel isPremium requiresPayment accessFee paper difficulty questions timeLimitMinutes instructions assessmentInstructions learningObjectives isFrozen availableFrom availableUntil marksReleaseAt createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
       )
       .lean();
 
@@ -3335,6 +3349,7 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
       publishAt,
       availableFrom,
       availableUntil,
+      marksReleaseAt,
       sendPublishEmail,
     } = req.body;
 
@@ -3343,6 +3358,13 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
     if (!title || !topic || !Array.isArray(questions) || questions.length === 0) {
       return res.status(400).json({
         message: "Topic, title, and questions are required.",
+      });
+    }
+
+    const finalSubject = normalizeQuizSubject(subject);
+    if (!finalSubject) {
+      return res.status(400).json({
+        message: "Subject is required and must be Mathematics or Physics.",
       });
     }
 
@@ -3378,6 +3400,7 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
     const publishAtRaw = validDateOrNull(publishAt);
     const availableFromRaw = validDateOrNull(availableFrom);
     const availableUntilRaw = validDateOrNull(availableUntil);
+    const marksReleaseAtRaw = validDateOrNull(marksReleaseAt);
 
     if (publishAtRaw === "INVALID") {
       return res.status(400).json({ message: "Invalid publish date/time." });
@@ -3387,6 +3410,9 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
     }
     if (availableUntilRaw === "INVALID") {
       return res.status(400).json({ message: "Invalid Available Until date/time." });
+    }
+    if (marksReleaseAtRaw === "INVALID") {
+      return res.status(400).json({ message: "Invalid marks release date/time." });
     }
     if (
       availableFromRaw &&
@@ -3417,7 +3443,7 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
 
     const quizPayload = {
       grade: g,
-      subject: cleanSpaces(subject || "Mathematics") || "Mathematics",
+      subject: finalSubject,
       curriculum: cleanSpaces(curriculum || "CAPS") || "CAPS",
       language: cleanSpaces(language || "English") || "English",
       term: parsedTerm,
@@ -3448,6 +3474,7 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
       frozenAt: null,
       availableFrom: availableFromRaw || null,
       availableUntil: availableUntilRaw || null,
+      marksReleaseAt: marksReleaseAtRaw || null,
       isPublished,
       publishedAt,
       publishAt: finalPublishAt,
@@ -3492,6 +3519,8 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
       assessmentCode: quiz.assessmentCode,
       assessmentSequence: generatedCode.assessmentSequence,
       assessmentCounterKey: generatedCode.assessmentCounterKey,
+      subject: quiz.subject,
+      marksReleaseAt: quiz.marksReleaseAt,
       accessLevel: quiz.accessLevel,
       isPublished: quiz.isPublished,
       publishAt: quiz.publishAt,
@@ -3542,6 +3571,7 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
       "timeLimitMinutes",
       "availableFrom",
       "availableUntil",
+      "marksReleaseAt",
       "questions",
       "isFrozen",
       "frozenAt",
@@ -3581,7 +3611,18 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
         continue;
       }
 
-      if (["subject", "curriculum", "language", "title", "topic", "subtopic", "version"].includes(key)) {
+      if (key === "subject") {
+        const normalizedSubject = normalizeQuizSubject(req.body.subject);
+        if (!normalizedSubject) {
+          return res.status(400).json({
+            message: "Subject is required and must be Mathematics or Physics.",
+          });
+        }
+        quiz.subject = normalizedSubject;
+        continue;
+      }
+
+      if (["curriculum", "language", "title", "topic", "subtopic", "version"].includes(key)) {
         quiz[key] = cleanSpaces(req.body[key] || "");
         continue;
       }
@@ -3644,18 +3685,18 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
         continue;
       }
 
-      if (key === "availableFrom" || key === "availableUntil") {
+      if (["availableFrom", "availableUntil", "marksReleaseAt"].includes(key)) {
         if (!req.body[key]) {
           quiz[key] = null;
         } else {
           const date = new Date(req.body[key]);
           if (isNaN(date.getTime())) {
-            return res.status(400).json({
-              message:
-                key === "availableFrom"
-                  ? "Invalid Available From date/time."
-                  : "Invalid Available Until date/time.",
-            });
+            const messages = {
+              availableFrom: "Invalid Available From date/time.",
+              availableUntil: "Invalid Available Until date/time.",
+              marksReleaseAt: "Invalid marks release date/time.",
+            };
+            return res.status(400).json({ message: messages[key] });
           }
           quiz[key] = date;
         }
@@ -3717,7 +3758,7 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
       });
     }
 
-    for (const field of ["publishAt", "publishedAt", "frozenAt"]) {
+    for (const field of ["publishAt", "publishedAt", "frozenAt", "marksReleaseAt"]) {
       if (quiz[field] && isNaN(new Date(quiz[field]).getTime())) {
         return res.status(400).json({ message: `Invalid ${field} date/time.` });
       }
