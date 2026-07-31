@@ -56,6 +56,36 @@ const SupportSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // ==========================
+    // Report Issue Details
+    // ==========================
+    reportIssue: {
+      quizId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Quiz",
+        default: null,
+        index: true,
+      },
+
+      quizName: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+
+      questionIndex: {
+        type: Number,
+        default: null,
+        min: 1,
+      },
+
+      question: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+    },
+
     wantExtraClasses: {
       type: Boolean,
       default: false,
@@ -76,12 +106,14 @@ const SupportSchema = new mongoose.Schema(
     changeAccount: {
       currentAccountType: {
         type: String,
+        enum: ["learner", "practice", "guest"],
         default: "",
         trim: true,
       },
 
       newAccountType: {
         type: String,
+        enum: ["learner", "practice", "guest"],
         default: "",
         trim: true,
       },
@@ -143,7 +175,9 @@ const SupportSchema = new mongoose.Schema(
       index: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
 SupportSchema.pre("validate", function (next) {
@@ -159,6 +193,12 @@ SupportSchema.index({ status: 1 });
 SupportSchema.index({ priority: 1 });
 SupportSchema.index({ status: 1, priority: 1 });
 SupportSchema.index({ email: 1, createdAt: -1 });
+
+// Helpful index for Report Issue searches
+SupportSchema.index({
+  "reportIssue.quizId": 1,
+  "reportIssue.questionIndex": 1,
+});
 
 const Support =
   mongoose.models.Support ||
