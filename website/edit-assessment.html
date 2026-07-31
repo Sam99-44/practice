@@ -30,12 +30,14 @@
      ✅ Upload .txt file can start with metadata:
         TITLE:
         GRADE:
+        SUBJECT:
         TOPIC:
         TIME_LIMIT:
         DIFFICULTY:
         PAPER:
         ACCESS_LEVEL:
         ACCESS_FEE:
+        MARKS_RELEASE_AT:
         SEND_EMAIL:
 -->
 <!DOCTYPE html>
@@ -872,6 +874,15 @@ input:focus,textarea:focus,select:focus{
           <option value="12">Grade 12</option>
         </select>
       </div>
+      <div>
+        <label>Subject</label>
+        <select id="subject" required>
+          <option value="">Select Subject</option>
+          <option value="Mathematics">Mathematics</option>
+          <option value="Physics">Physics</option>
+        </select>
+      </div>
+
 
       <div>
         <label>Topic (type it)</label>
@@ -954,6 +965,11 @@ input:focus,textarea:focus,select:focus{
         <label>Available Until (optional)</label>
         <input id="availableUntil" type="datetime-local" />
        
+      </div>
+
+      <div>
+        <label>Marks Release Date & Time (optional)</label>
+        <input id="marksReleaseAt" type="datetime-local" />
       </div>
     </div>
 
@@ -1140,6 +1156,7 @@ input:focus,textarea:focus,select:focus{
     const closePreviewBtn = document.getElementById("closePreviewBtn");
 
     const gradeEl = document.getElementById("grade");
+    const subjectEl = document.getElementById("subject");
     const topicEl = document.getElementById("topic");
     const timeLimitEl = document.getElementById("timeLimit");
     const titleEl = document.getElementById("title");
@@ -1156,6 +1173,7 @@ input:focus,textarea:focus,select:focus{
 
     const availableFromEl = document.getElementById("availableFrom");
     const availableUntilEl = document.getElementById("availableUntil");
+    const marksReleaseAtEl = document.getElementById("marksReleaseAt");
     const sendPublishEmailEl = document.getElementById("sendPublishEmail");
 
     const instructionsEl = document.getElementById("instructions");
@@ -1550,11 +1568,11 @@ input:focus,textarea:focus,select:focus{
     function captureEditorState(){
       return {
         meta:{
-          grade:simpleValue(gradeEl.value), topic:simpleValue(topicEl.value), title:simpleValue(titleEl.value),
+          grade:simpleValue(gradeEl.value), subject:simpleValue(subjectEl.value), topic:simpleValue(topicEl.value), title:simpleValue(titleEl.value),
           timeLimit:simpleValue(timeLimitEl.value), difficulty:simpleValue(difficultyEl.value), paper:simpleValue(paperEl.value),
           accessLevel:simpleValue(accessLevelEl.value), accessFee:simpleValue(accessFeeEl.value), instructions:simpleValue(instructionsEl.value),
           publishMode:simpleValue(publishModeEl.value), publishAt:simpleValue(publishAtEl.value),
-          availableFrom:simpleValue(availableFromEl.value), availableUntil:simpleValue(availableUntilEl.value), sendEmail:!!sendPublishEmailEl.checked
+          availableFrom:simpleValue(availableFromEl.value), availableUntil:simpleValue(availableUntilEl.value), marksReleaseAt:simpleValue(marksReleaseAtEl.value), sendEmail:!!sendPublishEmailEl.checked
         },
         cards:[...questionsWrap.querySelectorAll(".qcard")].map(captureCardState)
       };
@@ -1572,13 +1590,16 @@ input:focus,textarea:focus,select:focus{
       const warnings=[]; const errors=[];
       if (!currentQuiz?._id) errors.push("No assessment has been selected.");
       if (!simpleValue(gradeEl.value)) errors.push("Grade is missing.");
+      if (!["Mathematics", "Physics"].includes(simpleValue(subjectEl.value))) errors.push("Subject must be Mathematics or Physics.");
       if (!simpleValue(topicEl.value)) errors.push("Topic is missing.");
       if (!simpleValue(titleEl.value)) errors.push("Assessment title is missing.");
       const from=availableFromEl.value ? new Date(availableFromEl.value) : null;
       const until=availableUntilEl.value ? new Date(availableUntilEl.value) : null;
+      const marksRelease=marksReleaseAtEl.value ? new Date(marksReleaseAtEl.value) : null;
       if (from && Number.isNaN(from.getTime())) errors.push("Available From is not a valid date.");
       if (until && Number.isNaN(until.getTime())) errors.push("Available Until is not a valid date.");
       if (from && until && until <= from) errors.push("Available Until must be after Available From.");
+      if (marksRelease && Number.isNaN(marksRelease.getTime())) errors.push("Marks Release Date is not a valid date.");
       if (publishModeEl.value === "schedule" && !publishAtEl.value) errors.push("A scheduled publish date and time is required.");
       if (!simpleValue(instructionsEl.value)) warnings.push("No learner instructions have been supplied.");
       if (!sendPublishEmailEl.checked) warnings.push("Learner publish email is disabled.");
@@ -1626,7 +1647,7 @@ input:focus,textarea:focus,select:focus{
     function getChangesMade(){
       if (!originalEditorSnapshot) return [];
       const current=captureEditorState(); const changes=[];
-      const names={grade:"Grade",topic:"Topic",title:"Assessment title",timeLimit:"Time limit",difficulty:"Difficulty",paper:"Paper",accessLevel:"Access level",accessFee:"Access fee",instructions:"Instructions",publishMode:"Publish option",publishAt:"Publish date",availableFrom:"Available from",availableUntil:"Available until",sendEmail:"Publish email"};
+      const names={grade:"Grade",subject:"Subject",topic:"Topic",title:"Assessment title",timeLimit:"Time limit",difficulty:"Difficulty",paper:"Paper",accessLevel:"Access level",accessFee:"Access fee",instructions:"Instructions",publishMode:"Publish option",publishAt:"Publish date",availableFrom:"Available from",availableUntil:"Available until",marksReleaseAt:"Marks release date",sendEmail:"Publish email"};
       Object.keys(names).forEach(key=>{
         const before=originalEditorSnapshot.meta[key]; const after=current.meta[key];
         if (JSON.stringify(before)!==JSON.stringify(after)) changes.push(`${names[key]} changed${String(before)!=="" || String(after)!=="" ? ` (${String(before || "empty")} → ${String(after || "empty")})` : ""}.`);
@@ -4121,6 +4142,7 @@ function escapeHtml(str){
       const lines = String(raw || "").replace(/\r/g, "").split("\n");
       const meta = {
         grade: "",
+        subject: "",
         topic: "",
         title: "",
         timeLimitMinutes: 10,
@@ -4133,6 +4155,7 @@ function escapeHtml(str){
         publishAt: "",
         availableFrom: "",
         availableUntil: "",
+        marksReleaseAt: "",
         sendPublishEmail: false
       };
 
@@ -4147,6 +4170,7 @@ function escapeHtml(str){
 
         switch (key) {
           case "GRADE": meta.grade = value.trim(); break;
+          case "SUBJECT": meta.subject = value.trim(); break;
           case "TOPIC": meta.topic = value.trim(); break;
           case "TITLE": meta.title = value.trim(); break;
           case "TIME_LIMIT":
@@ -4161,6 +4185,9 @@ function escapeHtml(str){
           case "PUBLISH_AT": meta.publishAt = value.trim(); break;
           case "AVAILABLE_FROM": meta.availableFrom = value.trim(); break;
           case "AVAILABLE_UNTIL": meta.availableUntil = value.trim(); break;
+          case "MARKS_RELEASE_AT":
+          case "MARKS_RELEASE_DATE":
+          case "RELEASE_DATE": meta.marksReleaseAt = value.trim(); break;
           case "SEND_EMAIL": meta.sendPublishEmail = parseBooleanLike(value, false); break;
         }
       }
@@ -4493,6 +4520,7 @@ function escapeHtml(str){
     function fillAssessmentForm(parsed){
       const meta = parsed.meta || {};
       if (meta.grade) gradeEl.value = String(meta.grade);
+      subjectEl.value = ["Mathematics", "Physics"].includes(String(meta.subject || "").trim()) ? String(meta.subject).trim() : "";
       if (meta.topic) topicEl.value = meta.topic || "";
       if (meta.title) titleEl.value = meta.title || "";
       timeLimitEl.value = Number.isFinite(Number(meta.timeLimitMinutes)) ? String(meta.timeLimitMinutes) : "10";
@@ -4507,6 +4535,7 @@ function escapeHtml(str){
       publishAtEl.value = meta.publishAt || "";
       availableFromEl.value = meta.availableFrom || "";
       availableUntilEl.value = meta.availableUntil || "";
+      marksReleaseAtEl.value = meta.marksReleaseAt || "";
       sendPublishEmailEl.checked = !!meta.sendPublishEmail;
 
       renderInstructionsPreview();
@@ -4547,6 +4576,7 @@ function escapeHtml(str){
     function buildPayloadFromParsedAssessment(parsed){
       const meta = parsed.meta || {};
       const grade = Number(meta.grade);
+      const subject = String(meta.subject || "").trim();
       const topic = toTitleCase(meta.topic || "");
       const title = cleanSpaces(meta.title || "");
       const timeLimitMinutes = Number(meta.timeLimitMinutes || 10);
@@ -4557,10 +4587,12 @@ function escapeHtml(str){
       const accessFee = accessLevel === "premium" ? Math.max(0, Number(meta.accessFee) || 0) : 0;
       const availableFrom = meta.availableFrom || null;
       const availableUntil = meta.availableUntil || null;
+      const marksReleaseAt = meta.marksReleaseAt || null;
       const publishMode = normalizePublishMode(meta.publishMode);
       const publishAt = meta.publishAt || null;
 
       if (!grade) throw new Error(`Missing or invalid GRADE in "${meta.title || "file"}".`);
+      if (!["Mathematics", "Physics"].includes(subject)) throw new Error(`Missing or invalid SUBJECT in "${meta.title || "file"}". Use Mathematics or Physics.`);
       if (!topic) throw new Error(`Missing TOPIC in "${meta.title || "file"}".`);
       if (!title) throw new Error(`Missing TITLE in "${meta.title || "file"}".`);
       if (!Number.isFinite(timeLimitMinutes) || timeLimitMinutes < 1 || timeLimitMinutes > 180) {
@@ -4617,6 +4649,7 @@ function escapeHtml(str){
 
       return {
         grade,
+        subject,
         title,
         topic,
         paper,
@@ -4630,6 +4663,7 @@ function escapeHtml(str){
         publishAt: finalPublishAt,
         availableFrom,
         availableUntil,
+        marksReleaseAt,
         sendPublishEmail: !!meta.sendPublishEmail
       };
     }
@@ -4649,12 +4683,14 @@ function escapeHtml(str){
       const lines = [];
       lines.push(`TITLE: ${cleanSpaces(meta.title || "Assessment")}`);
       lines.push(`GRADE: ${cleanSpaces(meta.grade || "")}`);
+      lines.push(`SUBJECT: ${cleanSpaces(meta.subject || "")}`);
       lines.push(`TOPIC: ${cleanSpaces(meta.topic || "")}`);
       lines.push(`TIME_LIMIT: ${cleanSpaces(meta.timeLimitMinutes || "10")}`);
       lines.push(`DIFFICULTY: ${normalizeDifficulty(meta.difficulty)}`);
       lines.push(`PAPER: ${normalizePaper(meta.paper)}`);
       lines.push(`ACCESS_LEVEL: ${normalizeQuizAccessLevel(meta.accessLevel)}`);
       lines.push(`ACCESS_FEE: ${normalizeQuizAccessLevel(meta.accessLevel) === "premium" ? Math.max(0, Number(meta.accessFee) || 0) : 0}`);
+      if (cleanSpaces(meta.marksReleaseAt || "")) lines.push(`MARKS_RELEASE_AT: ${String(meta.marksReleaseAt).trim()}`);
       lines.push(`SEND_EMAIL: ${meta.sendPublishEmail ? "true" : "false"}`);
       if (cleanSpaces(meta.instructions || "")) lines.push(`INSTRUCTIONS: ${String(meta.instructions).trim()}`);
       lines.push("");
@@ -5011,6 +5047,7 @@ function escapeHtml(str){
 
     async function buildPayload(modeOverride = null){
       const grade = Number(gradeEl.value);
+      const subject = String(subjectEl.value || "").trim();
       const topic = toTitleCase(topicEl.value);
       const title = cleanSpaces(titleEl.value);
       const timeLimitMinutes = Number(timeLimitEl.value);
@@ -5022,14 +5059,18 @@ function escapeHtml(str){
 
       const availableFrom = availableFromEl.value ? availableFromEl.value : null;
       const availableUntil = availableUntilEl.value ? availableUntilEl.value : null;
+      const marksReleaseAt = marksReleaseAtEl.value ? marksReleaseAtEl.value : null;
 
       if (!grade) throw new Error("Please select grade.");
+      if (!["Mathematics", "Physics"].includes(subject)) throw new Error("Please select Mathematics or Physics.");
       if (!topic) throw new Error("Please enter topic.");
       if (!title) throw new Error("Please enter assessment title.");
 
       if (!Number.isFinite(timeLimitMinutes) || timeLimitMinutes < 1 || timeLimitMinutes > 180) {
         throw new Error("Please enter a valid time limit (1–180 minutes).");
       }
+
+      if (marksReleaseAt && isNaN(new Date(marksReleaseAt).getTime())) throw new Error("Please enter a valid marks release date and time.");
 
       if (availableFrom && availableUntil) {
         const fromDate = new Date(availableFrom);
@@ -5061,6 +5102,7 @@ function escapeHtml(str){
 
       return {
         grade,
+        subject,
         title,
         topic,
         paper,
@@ -5074,6 +5116,7 @@ function escapeHtml(str){
         publishAt,
         availableFrom,
         availableUntil,
+        marksReleaseAt,
         sendPublishEmail: !!sendPublishEmailEl.checked,
       };
     }
@@ -5107,6 +5150,7 @@ function escapeHtml(str){
     function resetFormAfterSave(){
       titleEl.value = "";
       gradeEl.value = "";
+      subjectEl.value = "";
       topicEl.value = "";
       timeLimitEl.value = "10";
       difficultyEl.value = "moderate";
@@ -5120,6 +5164,7 @@ function escapeHtml(str){
       publishAtEl.value = "";
       availableFromEl.value = "";
       availableUntilEl.value = "";
+      marksReleaseAtEl.value = "";
       sendPublishEmailEl.checked = false;
 
       renderInstructionsPreview();
@@ -5404,6 +5449,7 @@ function escapeHtml(str){
       return {
         meta: {
           grade: String(quiz?.grade || ""),
+          subject: quiz?.subject || "",
           topic: quiz?.topic || "",
           title: quiz?.title || "",
           timeLimitMinutes: Number(quiz?.timeLimitMinutes || 10),
@@ -5417,7 +5463,8 @@ function escapeHtml(str){
           publishAt: quiz?.publishAt ? isoToLocalInput(quiz.publishAt) : "",
           availableFrom: quiz?.availableFrom ? isoToLocalInput(quiz.availableFrom) : "",
           availableUntil: quiz?.availableUntil ? isoToLocalInput(quiz.availableUntil) : "",
-          sendPublishEmail: false
+          marksReleaseAt: quiz?.marksReleaseAt ? isoToLocalInput(quiz.marksReleaseAt) : "",
+          sendPublishEmail: !!quiz?.sendPublishEmail
         },
         items
       };
@@ -5635,7 +5682,7 @@ function escapeHtml(str){
       }
     }
 
-    [gradeEl,topicEl,timeLimitEl,titleEl,difficultyEl,paperEl,accessLevelEl,accessFeeEl,publishModeEl,publishAtEl,availableFromEl,availableUntilEl,sendPublishEmailEl,instructionsEl].forEach(el=>{
+    [gradeEl,subjectEl,topicEl,timeLimitEl,titleEl,difficultyEl,paperEl,accessLevelEl,accessFeeEl,publishModeEl,publishAtEl,availableFromEl,availableUntilEl,marksReleaseAtEl,sendPublishEmailEl,instructionsEl].forEach(el=>{
       el?.addEventListener("input", ()=>setTimeout(updateChangeReview,0));
       el?.addEventListener("change", ()=>setTimeout(updateChangeReview,0));
     });
