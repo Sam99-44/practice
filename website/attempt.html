@@ -10560,36 +10560,46 @@ function hasInlineLatexMathOnly(text){
     const raw = String(text || "").trim();
     if (!raw) return "";
 
+    // Preserve content that already contains explicit LaTeX delimiters/syntax.
     if (sharedHasLatexSyntax(raw)) {
-      // Already math: leave normal text+latex as given, but do not escape because old quizzes may contain valid HTML entities.
       return raw;
     }
 
+    // Short standalone expressions/options can still be rendered as one maths item.
     if (sharedLooksLikeWholeMath(raw)) {
       return "$" + sharedLatexifyMath(raw) + "$";
     }
 
+    /*
+      IMPORTANT INLINE-MATH BOUNDARY FIX
+      ----------------------------------
+      Only protect the actual equation/expression. Do not let a match continue
+      into normal sentence text after an expression such as:
+        y = 70° because both angles meet at D
+        y = 110° and x = 30°
+
+      This keeps ordinary words as text while MathJax receives only the maths.
+    */
     const fragments = [];
-    const isSentenceLike = /\b(express|calculate|determine|describe|write|show|predict|simplify|which|what|how|therefore|hence|final|answer|step|given|terms|data|value|values|units|days|price|valid|real|interval|will|for)\b/i.test(raw)
-      || ((raw.match(/[A-Za-z]{3,}/g) || []).length >= 3);
+    const protect = (m) => `@@M${fragments.push(m)-1}@@`;
 
-    const pattern = isSentenceLike
-      // In sentences, only convert safe small fragments. Do NOT grab long nested expressions.
-      ? /(sqrt\s*[A-Za-z0-9]+\s*[+\-]\s*[A-Za-z0-9]+\^\{?\d+\}?|\b(?:sin|cos|tan)\s*\d+\s*°|\d+\s*°|[A-Za-z]\s*∈\s*\[[^\]]+\]|\b\d+\s*\/\s*\d+\b|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+))/g
-      // In MCQ options/short answer text, convert full math expressions.
-      : /(sqrt\s*\([^()]+\)|sqrt\s*\{[^{}]+\}|sqrt\s*[A-Za-z0-9]+\s*[+\-]\s*[A-Za-z0-9]+\^\{?\d+\}?|\b(?:sin|cos|tan)\s*\d+\s*°|\d+\s*°|[A-Za-z]\s*∈\s*\[[^\]]+\]|\b[A-Za-z]\w*\s*=\s*[-+A-Za-z0-9().^\\\/ °{}]+|\b\d+\s*\/\s*\d+\b|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+)|\b[A-Za-z0-9(){}^+\- ]+\s*\/\s*(?:sqrt\s*\([^()]+\)|sqrt\s*[A-Za-z0-9]+\s*[+\-]\s*[A-Za-z0-9]+\^\{?\d+\}?|[A-Za-z0-9(){}^+\- ]+))/g;
+    const equationPattern = /\b(?:[A-Za-z](?:_\{?[A-Za-z0-9+-]+\}?)?|\d+(?:\.\d+)?°?)(?:\s*(?:[+\-−×÷*/]\s*)(?:[A-Za-z](?:_\{?[A-Za-z0-9+-]+\}?)?|\d+(?:\.\d+)?°?))*\s*(?:<=|>=|!=|=|≈|≤|≥)\s*(?:[A-Za-z](?:_\{?[A-Za-z0-9+-]+\}?)?|\d+(?:\.\d+)?°?)(?:\s*(?:[+\-−×÷*/]\s*)(?:[A-Za-z](?:_\{?[A-Za-z0-9+-]+\}?)?|\d+(?:\.\d+)?°?))*/g;
 
-    let temp = raw.replace(pattern, function(m){
-      return "@@M" + (fragments.push(m) - 1) + "@@";
-    });
+    let temp = raw.replace(equationPattern, protect);
+
+    // Protect other compact mathematical fragments without swallowing prose.
+    temp = temp.replace(
+      /(sqrt\s*\([^()]+\)|sqrt\s*\{[^{}]+\}|sqrt[A-Za-z0-9]+|\b(?:sin|cos|tan)\s*\d+\s*°|\d+\s*°|[A-Za-z]\s*∈\s*\[[^\]]+\]|\b\d+\s*\/\s*\d+\b|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+))/g,
+      protect
+    );
 
     temp = sharedEscapeHtml(temp);
-    temp = temp.replace(/@@M(\d+)@@/g, function(_, i){
+    temp = temp.replace(/@@M(\d+)@@/g, (_, i) => {
       return "$" + sharedLatexifyMath(fragments[Number(i)]) + "$";
     });
+
     return temp;
   }
-
 
 
     function renderMixedMath(text){
