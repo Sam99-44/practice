@@ -6139,6 +6139,22 @@ mjx-container[jax="SVG"] svg{
 .selectedAnswerStatus.wrong{
   filter:brightness(0) saturate(100%) invert(20%) sepia(93%) saturate(4300%) hue-rotate(352deg) brightness(82%) contrast(110%) drop-shadow(.35px 0 0 #dc2626) drop-shadow(-.35px 0 0 #dc2626);
 }
+/* When the general "Enter your answer" label is shown, do not repeat
+   "answer" beside the field. Keep the field and its Preview aligned. */
+.typedAnswerRow.noPrefix{
+  grid-template-columns:minmax(0,400px) max-content !important;
+}
+.enterAnswerLabel{
+  margin-left:68px !important;
+}
+@media(max-width:768px){
+  .typedAnswerRow.noPrefix{
+    grid-template-columns:1fr !important;
+  }
+  .enterAnswerLabel{
+    margin-left:0 !important;
+  }
+}
 .submitted-state .quizNavigation.show{
   display:flex !important;
 }
@@ -6701,7 +6717,7 @@ function inlineQuizLoadingHtml(){
     if (questionCounter) {
       const visibleQuestion = questionPageGroups[currentQuestionPage].find(row => row.dataset.scorable === "1");
       const label = getRowQuestionLabel(visibleQuestion, `Question ${currentQuestionPage + 1}`);
-      questionCounter.textContent = `${label} (${currentQuestionPage + 1} of ${questionPageGroups.length})`;
+      questionCounter.textContent = `(${currentQuestionPage + 1} of ${questionPageGroups.length})`;
     }
 
     updateQuestionProgressActive();
@@ -6810,7 +6826,10 @@ function inlineQuizLoadingHtml(){
       btn.addEventListener("click", () => {
         if (!quizStarted) return;
         const pageIndex = Number(btn.dataset.pageIndex);
-        if (Number.isInteger(pageIndex)) showQuestionPage(pageIndex);
+        if (Number.isInteger(pageIndex)) {
+          showQuestionPage(pageIndex);
+          saveAnswersToStorage();
+        }
       });
     });
 
@@ -6864,9 +6883,9 @@ function inlineQuizLoadingHtml(){
     updateQuestionProgressActive();
   }
 
-  function initQuestionNavigation(){
+  function initQuestionNavigation(savedPage = 0){
     buildQuestionPageGroups();
-    currentQuestionPage = 0;
+    currentQuestionPage = Math.max(0, Math.min(Number(savedPage) || 0, questionPageGroups.length - 1));
 
     if (prevQuestionBtn) {
       prevQuestionBtn.onclick = () => {
@@ -6874,6 +6893,7 @@ function inlineQuizLoadingHtml(){
         if (currentQuestionPage > 0) {
           saveAnswersToStorage();
           showQuestionPage(currentQuestionPage - 1);
+          saveAnswersToStorage();
         }
       };
     }
@@ -6884,6 +6904,7 @@ function inlineQuizLoadingHtml(){
         saveAnswersToStorage();
         if (currentQuestionPage < questionPageGroups.length - 1) {
           showQuestionPage(currentQuestionPage + 1);
+          saveAnswersToStorage();
         } else if (submitBtn && !submitBtn.disabled) {
           submitBtn.click();
         }
@@ -6891,7 +6912,7 @@ function inlineQuizLoadingHtml(){
     }
 
     buildQuestionProgressCard();
-    showQuestionPage(0, false);
+    showQuestionPage(currentQuestionPage, false);
   }
 
   function hideQuestionNavigation(){
@@ -7300,8 +7321,8 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
       return `
         <div class="typedFieldItem">
-          <div class="typedAnswerRow">
-            <span class="typedAnswerPrefix">${escapeHtml(prefix)}</span>
+          <div class="typedAnswerRow${prefix ? "" : " noPrefix"}">
+            ${prefix ? `<span class="typedAnswerPrefix">${escapeHtml(prefix)}</span>` : ""}
             ${inputHtml}
             <span class="typedAnswerSuffix">${escapeHtml(suffix)}</span>
           </div>
@@ -7486,6 +7507,8 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       answers: buildAnswersPayload(),
       checkedQuestions: [...localSubmittedQuestions],
       questionAttemptStates: Object.fromEntries(questionAttemptStates),
+      currentQuestionPage,
+      quizStarted,
       practiceMode,
       savedAt: Date.now()
     };
@@ -7559,6 +7582,16 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     });
 
     return true;
+  }
+
+  function getSavedQuestionPage(){
+    try{
+      const raw = JSON.parse(localStorage.getItem(ANSWERS_KEY) || "null");
+      const page = Number(raw?.currentQuestionPage);
+      return Number.isInteger(page) && page >= 0 ? page : 0;
+    }catch{
+      return 0;
+    }
   }
 
   function restoreCheckedQuestionsFromStorage(){
@@ -10165,7 +10198,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     const key = String(field?.key || field?.name || `answer_${index + 1}`).trim();
 
     const looksInternal =
-      /^answer[_\s-]*\d+$/i.test(key) ||
+      /^answer(?:[_\s-]*\d+)?$/i.test(key) ||
       /^field[_\s-]*\d+$/i.test(key) ||
       /^blank[_\s-]*\d+$/i.test(key);
 
@@ -10746,7 +10779,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
             return `
             <label class="opt">
               <input class="mcqInput" data-qindex="${i}" type="${inputType}" name="q${i}" value="${originalIndex}">
-              <span class="optText">${renderMixedMath(cleanSpaces(o))}<img class="selectedAnswerStatus" alt="" aria-hidden="true"></span>
+              <span class="optText">${renderAnswerChoice(o)}<img class="selectedAnswerStatus" alt="" aria-hidden="true"></span>
             </label>`;
           }).join("")}
           ${hint ? `<div class="hint">Hint: <span class="hintText">${renderMixedMath(hint)}</span></div>` : ``}
@@ -10786,9 +10819,13 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     attachMathInputBehaviour();
     attachSingleQuestionSubmit();
     attachShowAnswerButtons();
-    const restoredAnswers = restoreAnswersFromStorage();
-    initQuestionNavigation();
-    restoreCheckedQuestionsFromStorage();
+    /* A completed server submission starts clean. An unfinished attempt keeps
+       answers, per-question attempts, feedback and the learner's current page. */
+    if (alreadyAttempted) clearSavedAnswers();
+    const savedQuestionPage = alreadyAttempted ? 0 : getSavedQuestionPage();
+    const restoredAnswers = alreadyAttempted ? false : restoreAnswersFromStorage();
+    initQuestionNavigation(savedQuestionPage);
+    if (!alreadyAttempted) restoreCheckedQuestionsFromStorage();
     if (restoredAnswers && !alreadyAttempted && !wantsPracticeFromLink) {
       msgEl.className = "ok";
       msgEl.textContent = "Your previous answers were restored.";
@@ -11102,6 +11139,12 @@ function hasInlineLatexMathOnly(text){
 
     function renderMixedMath(text){
     return sharedRenderMixedMath(text);
+  }
+
+  function renderAnswerChoice(text){
+    const choice = cleanSpaces(text);
+    const containsMathMarkup = /(?:\$|\\\(|\\\[|\\frac|\\sqrt|\\times|\\div|[=<>≤≥±×÷√^])/i.test(choice);
+    return containsMathMarkup ? renderMixedMath(choice) : escapeHtml(choice);
   }
 
   function renderStructuredNote(text){
@@ -11735,12 +11778,14 @@ function formatSolutionHtml(solutionText){
     const parsed = parseExamTextParts(rawText);
     const label = parsed.label || `${fallbackNo}.`;
     const body = parsed.body || (parsed.kind === "plain" ? cleanSpaces(rawText || "") : "");
+    const visibleBody = String(body || cleanSpaces(rawText || ""))
+      .replace(/\[\s*\[\s*\]\s*\]/g, "........");
 
     return `
       <div class="qHead">
         <div class="qTitle">
           <span class="qNo">${escapeHtml(label)}</span>
-          <span class="qText">${renderMixedMath(body || cleanSpaces(rawText || "")).replace(/\[\s*\?\s*\]/g, '<span class="dropdownQuestionPlaceholder">[ ? ]</span>')}</span>
+          <span class="qText">${renderMixedMath(visibleBody).replace(/\[\s*\?\s*\]/g, '<span class="dropdownQuestionPlaceholder">[ ? ]</span>')}</span>
         </div>
         <div class="marksMeta" title="Question marks">
           <div class="marksLbl">Marks</div>
@@ -12001,6 +12046,46 @@ window.addEventListener("DOMContentLoaded", () => {
   } else {
     watchKeyboard();
   }
+})();
+</script>
+
+<script>
+/* Final production display correction for typed-answer questions. */
+(() => {
+  function replaceQuestionBlankBrackets(root = document){
+    root.querySelectorAll?.(".qText").forEach((questionText) => {
+      const walker = document.createTreeWalker(questionText, NodeFilter.SHOW_TEXT);
+      const textNodes = [];
+      while (walker.nextNode()) textNodes.push(walker.currentNode);
+      textNodes.forEach((node) => {
+        node.nodeValue = String(node.nodeValue || "")
+          .replace(/\[\s*\[\s*\]\s*\]/g, "........");
+      });
+    });
+  }
+
+  function alignTypedAnswerLabels(root = document){
+    const leftMargin = window.matchMedia("(max-width: 768px)").matches ? "0px" : "68px";
+    root.querySelectorAll?.(".enterAnswerLabel").forEach((label) => {
+      label.style.setProperty("margin-left", leftMargin, "important");
+    });
+  }
+
+  function applyTypedAnswerDisplayFixes(){
+    replaceQuestionBlankBrackets();
+    alignTypedAnswerLabels();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", applyTypedAnswerDisplayFixes);
+  } else {
+    applyTypedAnswerDisplayFixes();
+  }
+
+  const observer = new MutationObserver(applyTypedAnswerDisplayFixes);
+  observer.observe(document.documentElement, { childList:true, subtree:true });
+
+  window.addEventListener("resize", applyTypedAnswerDisplayFixes);
 })();
 </script>
 </body>
