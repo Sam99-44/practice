@@ -6487,6 +6487,7 @@ const postSubmitOverlay = document.getElementById("postSubmitOverlay");
   let previousQuizData = null;
   let quizStarted = false;
   let localSubmittedQuestions = new Set();
+  let questionAttemptStates = new Map();
 
   let currentQuestionPage = 0;
   let questionPageGroups = [];
@@ -7163,10 +7164,14 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
           if (checkButton) {
             checkButton.disabled = false;
-            checkButton.textContent = "Check Answer";
+            const retryState = questionAttemptStates.get(qIndex);
+            checkButton.textContent = retryState && !retryState.final
+              ? "Retry"
+              : "Check Answer";
           }
 
-          localSubmittedQuestions.delete(qIndex);
+          if (!questionAttemptStates.get(qIndex)?.final) localSubmittedQuestions.delete(qIndex);
+          clearRetryFeedbackOnAnswerChange(qIndex);
         }
 
         debouncedSaveAnswers();
@@ -7419,6 +7424,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     const payload = {
       answers: buildAnswersPayload(),
       checkedQuestions: [...localSubmittedQuestions],
+      questionAttemptStates: Object.fromEntries(questionAttemptStates),
       practiceMode,
       savedAt: Date.now()
     };
@@ -7502,6 +7508,10 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       raw = null;
     }
 
+    questionAttemptStates = new Map(
+      Object.entries(raw?.questionAttemptStates || {}).map(([key, value]) => [Number(key), value])
+    );
+
     const checkedQuestions = Array.isArray(raw?.checkedQuestions)
       ? raw.checkedQuestions.map(Number).filter(Number.isInteger)
       : [];
@@ -7516,6 +7526,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
       const feedback = box.querySelector(".qFeedback");
       const btn = box.querySelector(".qCheckBtn");
+      const attemptState = questionAttemptStates.get(i);
 
       box.classList.remove("is-local-correct", "is-local-wrong");
       box.classList.add(result.correct ? "is-local-correct" : "is-local-wrong");
@@ -7523,7 +7534,9 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       if (feedback) {
         feedback.textContent = result.correct
           ? "That’s correct — well done!"
-          : "That’s incorrect — keep trying.";
+          : attemptState?.used >= 2
+            ? "That’s incorrect. You have no attempts left."
+            : "That’s incorrect — keep trying.";
         feedback.className = `qFeedback ${result.correct ? "correct" : "wrong"}`;
       }
 
@@ -7542,7 +7555,56 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
       if (btn) {
         btn.disabled = true;
-        btn.textContent = "Checked";
+        btn.textContent = result.correct ? "Checked" : attemptState?.used >= 2 ? "No attempts left" : "Checked";
+      }
+    });
+
+    questionAttemptStates.forEach((state, i) => {
+      if (!state || state.final || !state.feedbackVisible || checkedQuestions.includes(i)) return;
+
+      const q = Array.isArray(quizData?.questions) ? quizData.questions[i] : null;
+      const box = document.querySelector(`.q[data-qindex="${i}"]`);
+      if (!q || !box) return;
+
+      const remaining = Math.max(0, 2 - Number(state.used || 0));
+      const feedback = box.querySelector(".qFeedback");
+      const btn = box.querySelector(".qCheckBtn");
+
+      if (Number(state.used || 0) >= 2) {
+        questionAttemptStates.set(i, { ...state, final:true, correct:false });
+        localSubmittedQuestions.add(i);
+        box.classList.remove("is-local-correct");
+        box.classList.add("is-local-wrong");
+        if (feedback) {
+          feedback.textContent = "That’s incorrect. You have no attempts left.";
+          feedback.className = "qFeedback wrong";
+        }
+        updateQuestionProgress(i, false);
+        showSelectedAnswerStatus(q, i, false);
+        box.querySelectorAll("input, select, textarea, math-field").forEach(el => { el.disabled = true; });
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = "No attempts left";
+        }
+        return;
+      }
+
+      box.classList.remove("is-local-correct", "is-local-wrong");
+      box.classList.add("is-local-wrong");
+      if (feedback) {
+        feedback.textContent = `That’s incorrect — keep trying. You have ${remaining} attempt${remaining === 1 ? "" : "s"} left.`;
+        feedback.className = "qFeedback wrong";
+      }
+
+      updateQuestionProgress(i, false);
+      showSelectedAnswerStatus(q, i, false);
+      box.querySelectorAll("input, select, textarea, math-field").forEach(el => {
+        el.disabled = true;
+      });
+      box.querySelectorAll(".opt").forEach(el => el.classList.add("disabled"));
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Retry";
       }
     });
   }
@@ -7557,9 +7619,40 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     autosaveTimer = setTimeout(saveAnswersToStorage, 180);
   }
 
+  function clearRetryFeedbackOnAnswerChange(qIndex){
+    const state = questionAttemptStates.get(qIndex);
+    if (!state || state.final) return;
+
+    questionAttemptStates.set(qIndex, { ...state, feedbackVisible:false });
+    const box = document.querySelector(`.q[data-qindex="${qIndex}"]`);
+    if (!box) return;
+
+    box.classList.remove("is-local-correct", "is-local-wrong");
+    box.querySelectorAll(".selectedAnswerStatus").forEach(icon => {
+      icon.className = "selectedAnswerStatus";
+      icon.removeAttribute("src");
+      icon.alt = "";
+      icon.setAttribute("aria-hidden", "true");
+    });
+
+    const feedback = box.querySelector(".qFeedback");
+    const button = box.querySelector(".qCheckBtn");
+    if (feedback) {
+      feedback.textContent = "";
+      feedback.className = "qFeedback neutral";
+    }
+    if (button) {
+      button.disabled = false;
+      button.textContent = state.awaitingAnswer ? "Check Answer" : "Retry";
+    }
+  }
+
   function attachAnswerAutosave(){
     document.querySelectorAll(".mcqInput, .dropdownAnswer, .fillAnswerInput").forEach(el => {
-      el.addEventListener("change", saveAnswersToStorage);
+      el.addEventListener("change", () => {
+        clearRetryFeedbackOnAnswerChange(Number(el.dataset.qindex));
+        saveAnswersToStorage();
+      });
       if (el.classList.contains("fillAnswerInput")) el.addEventListener("input", debouncedSaveAnswers);
     });
     attachMathInputBehaviour();
@@ -9319,6 +9412,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
   function resetLocalQuestionChecks(){
     localSubmittedQuestions = new Set();
+    questionAttemptStates = new Map();
 
     document.querySelectorAll(".q").forEach(box => {
       box.classList.remove("is-local-correct", "is-local-wrong");
@@ -9387,6 +9481,13 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     viewResultsBtn.onclick = () => window.location.href = "results.html";
   }
 
+  function allowsTwoAttemptsPerQuestion(){
+    const contentType = normalizeMarksReleaseContentType(
+      quizData?.contentType || quizData?.assessmentType || quizData?.type || "quiz"
+    );
+    return !practiceMode && !["test", "exam"].includes(contentType);
+  }
+
 
   function submitSingleQuestion(i){
     if (!quizData || submitted || blocked) return;
@@ -9410,6 +9511,22 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       return;
     }
 
+    const useTwoAttempts = allowsTwoAttemptsPerQuestion();
+    const previousState = questionAttemptStates.get(i) || { used:0 };
+    const used = useTwoAttempts
+      ? Math.min(2, Number(previousState.used || 0) + 1)
+      : 1;
+    const remaining = useTwoAttempts ? Math.max(0, 2 - used) : 0;
+    const isFinal = Boolean(result.correct) || !useTwoAttempts || remaining === 0;
+
+    questionAttemptStates.set(i, {
+      used,
+      final:isFinal,
+      correct:Boolean(result.correct),
+      feedbackVisible:true,
+      awaitingAnswer:false
+    });
+
     box.classList.remove("is-local-correct", "is-local-wrong");
 
     if (result.correct) {
@@ -9421,13 +9538,17 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     } else {
       box.classList.add("is-local-wrong");
       if (feedback) {
-        feedback.textContent = "That’s incorrect — keep trying.";
+        feedback.textContent = useTwoAttempts
+          ? remaining > 0
+            ? `That’s incorrect — keep trying. You have ${remaining} attempt${remaining === 1 ? "" : "s"} left.`
+            : "That’s incorrect. You have no attempts left."
+          : "That’s incorrect — keep trying.";
         feedback.className = "qFeedback wrong";
       }
     }
 
     updateQuestionProgress(i, !!result.correct);
-    localSubmittedQuestions.add(i);
+    if (isFinal) localSubmittedQuestions.add(i);
 
     markQuestionOptions(q, i);
     showSelectedAnswerStatus(q, i, !!result.correct);
@@ -9435,15 +9556,26 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     /* Do not open workings automatically. Learner can choose to show answer. */
     showAnswerButtonForQuestion(i);
 
-    box.querySelectorAll("input, textarea, math-field").forEach(el => {
-      if (el.id === "ratingCommentInline") return;
-      el.disabled = true;
-    });
-    box.querySelectorAll(".opt").forEach(el => el.classList.add("disabled"));
+    if (isFinal) {
+      box.querySelectorAll("input, select, textarea, math-field").forEach(el => {
+        if (el.id === "ratingCommentInline") return;
+        el.disabled = true;
+      });
+      box.querySelectorAll(".opt").forEach(el => el.classList.add("disabled"));
 
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "Checked";
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = result.correct ? "Checked" : "No attempts left";
+      }
+    } else {
+      box.querySelectorAll("input, select, textarea, math-field").forEach(el => {
+        el.disabled = true;
+      });
+      box.querySelectorAll(".opt").forEach(el => el.classList.add("disabled"));
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Retry";
+      }
     }
 
     saveAnswersToStorage();
@@ -9556,6 +9688,113 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     });
   }
 
+  function resetQuestionForRetry(i){
+    const q = quizData?.questions?.[i];
+    const box = document.querySelector(`.q[data-qindex="${i}"]`);
+    if (!q || !box) return;
+
+    const state = questionAttemptStates.get(i);
+    if (!state || state.final) return;
+
+    box.classList.remove("is-local-correct", "is-local-wrong");
+    const feedback = box.querySelector(".qFeedback");
+    if (feedback) {
+      feedback.textContent = "";
+      feedback.className = "qFeedback";
+    }
+
+    box.querySelectorAll(".selectedAnswerStatus").forEach(icon => {
+      icon.className = "selectedAnswerStatus";
+      icon.removeAttribute("src");
+      icon.alt = "";
+      icon.setAttribute("aria-hidden", "true");
+    });
+
+    const progressItem = questionProgressList?.querySelector(`.qProgressItem[data-qindex="${i}"]`);
+    if (progressItem) {
+      progressItem.classList.remove("correct", "wrong");
+      const currentIcon = progressItem.querySelector(".qProgressStatusIcon");
+      if (currentIcon) {
+        const pending = document.createElement("span");
+        pending.className = "qProgressStatusIcon pending";
+        pending.setAttribute("aria-hidden", "true");
+        currentIcon.replaceWith(pending);
+      }
+      updateQuestionProgressActive();
+    }
+
+    const type = String(q?.type || "mcq").toLowerCase();
+
+    if (type === "mcq") {
+      const options = [...box.querySelectorAll(".opt")];
+      options.forEach(option => {
+        option.classList.remove("disabled", "correct", "wrong");
+        const input = option.querySelector(".mcqInput");
+        if (input) {
+          input.checked = false;
+          input.disabled = false;
+        }
+      });
+
+      if (options.length > 1) {
+        let shuffled = shuffleArrayCopy(options);
+        const unchanged = shuffled.every((option, index) => option === options[index]);
+        if (unchanged) shuffled = [...shuffled.slice(1), shuffled[0]];
+        const afterOptions = options[options.length - 1].nextSibling;
+        const marker = document.createComment("retry-options-end");
+        box.insertBefore(marker, afterOptions);
+        shuffled.forEach(option => box.insertBefore(option, marker));
+        marker.remove();
+
+        const order = shuffled.map(option => Number(option.querySelector(".mcqInput")?.value));
+        const questionKey = String(q?._id || q?.id || i);
+        const stored = loadStoredOptionOrders();
+        q.__optionDisplayOrder = order;
+        stored[questionKey] = order;
+        saveStoredOptionOrders(stored);
+      }
+    } else if (type === "dropdown") {
+      const select = getDropdownInput(i);
+      if (select) {
+        select.value = "";
+        select.disabled = false;
+        const choices = [...select.querySelectorAll("option")].filter(option => option.value !== "");
+        let shuffled = shuffleArrayCopy(choices);
+        if (shuffled.length > 1 && shuffled.every((option, index) => option === choices[index])) {
+          shuffled = [...shuffled.slice(1), shuffled[0]];
+        }
+        shuffled.forEach(option => select.appendChild(option));
+      }
+    } else if (type === "fill") {
+      getFillInputs(i).forEach(input => {
+        input.value = "";
+        input.disabled = false;
+        input.classList.remove("correctBlank", "wrongBlank");
+      });
+    } else if (type === "text") {
+      getTypedInputsForQuestion(i).forEach(input => {
+        setTypedInputValue(input, "");
+        input.disabled = false;
+        input.readOnly = false;
+        input.removeAttribute("read-only");
+      });
+    }
+
+    questionAttemptStates.set(i, {
+      ...state,
+      feedbackVisible:false,
+      awaitingAnswer:true
+    });
+
+    const btn = box.querySelector(".qCheckBtn");
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Check Answer";
+    }
+
+    saveAnswersToStorage();
+  }
+
 
   function attachSingleQuestionSubmit(){
     document.querySelectorAll(".qCheckBtn").forEach(btn => {
@@ -9563,7 +9802,13 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       btn.dataset.bound = "1";
       btn.addEventListener("click", () => {
         const i = Number(btn.dataset.qindex);
-        if (Number.isInteger(i)) submitSingleQuestion(i);
+        if (!Number.isInteger(i)) return;
+        const state = questionAttemptStates.get(i);
+        if (state && !state.final && state.feedbackVisible) {
+          resetQuestionForRetry(i);
+          return;
+        }
+        submitSingleQuestion(i);
       });
     });
   }
@@ -9644,6 +9889,17 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
     const total = countScorableQuestions();
     const answered = countAnswered();
+
+    if (
+      mode === "manual" &&
+      allowsTwoAttemptsPerQuestion() &&
+      countLocalSubmittedScorableQuestions() < total
+    ) {
+      const remainingQuestions = total - countLocalSubmittedScorableQuestions();
+      msgEl.className = "error";
+      msgEl.textContent = `Please finish checking ${remainingQuestions} question${remainingQuestions === 1 ? "" : "s"}. Each question must be answered correctly or use both attempts before submitting.`;
+      return;
+    }
 
     if (mode === "manual" && !options.skipConfirm) {
       const unanswered = Math.max(0, total - answered);
@@ -10430,8 +10686,10 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
         const feedback = box.querySelector(".qFeedback");
         const button = box.querySelector(".qCheckBtn");
         if (feedback) { feedback.textContent = ""; feedback.className = "qFeedback neutral"; }
-        if (button) { button.disabled = false; button.textContent = "Check Answer"; }
-        localSubmittedQuestions.delete(qIndex);
+        const retryState = questionAttemptStates.get(qIndex);
+        if (button) { button.disabled = false; button.textContent = retryState && !retryState.final ? "Retry" : "Check Answer"; }
+        if (!retryState?.final) localSubmittedQuestions.delete(qIndex);
+        clearRetryFeedbackOnAnswerChange(qIndex);
       });
     });
     attachMathInputBehaviour();
