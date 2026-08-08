@@ -6108,7 +6108,7 @@ mjx-container[jax="SVG"] svg{
   width:24px;
   height:24px;
   flex:0 0 24px;
-  margin:0 8px 0 0;
+  margin:0 0 0 8px;
   padding:0;
   border:0;
   border-radius:0;
@@ -6122,12 +6122,30 @@ mjx-container[jax="SVG"] svg{
 .optText .selectedAnswerStatus.visible{
   display:inline-block;
   vertical-align:middle;
+  position:relative;
+  top:-1px;
+}
+.typedAnswerRow .selectedAnswerStatus.visible,
+.fillInlineWrap .selectedAnswerStatus.visible,
+.dropdownInlineWrap .selectedAnswerStatus.visible{
+  display:inline-block;
+  vertical-align:middle;
+  position:relative;
+  top:-1px;
 }
 .selectedAnswerStatus.correct{
   filter:brightness(0) saturate(100%) invert(43%) sepia(91%) saturate(700%) hue-rotate(83deg) brightness(82%) contrast(110%) drop-shadow(.35px 0 0 #16a34a) drop-shadow(-.35px 0 0 #16a34a);
 }
 .selectedAnswerStatus.wrong{
   filter:brightness(0) saturate(100%) invert(20%) sepia(93%) saturate(4300%) hue-rotate(352deg) brightness(82%) contrast(110%) drop-shadow(.35px 0 0 #dc2626) drop-shadow(-.35px 0 0 #dc2626);
+}
+.submitted-state .quizNavigation.show{
+  display:flex !important;
+}
+@media(max-width:640px){
+  .submitted-state .quizNavigation.show{
+    display:grid !important;
+  }
 }
 </style>
 </head>
@@ -6688,14 +6706,42 @@ function inlineQuizLoadingHtml(){
 
     updateQuestionProgressActive();
 
+    if (submitted) {
+      placeReviewNavigationBelowQuestion();
+      questionPageGroups[currentQuestionPage].forEach(row => {
+        if (row?.dataset?.scorable !== "1") return;
+        const qIndex = Number(row.dataset.qindex);
+        if (!Number.isInteger(qIndex)) return;
+
+        const solution = row.querySelector(".solutionHolder");
+        const workingsButton = row.querySelector(".qShowAnswerBtn");
+
+        if (solution && solution.innerHTML.trim()) {
+          solution.classList.remove("hidden");
+          typesetMath(solution);
+        }
+
+        if (workingsButton) {
+          workingsButton.classList.add("visible");
+          workingsButton.textContent = "Workings Shown";
+          workingsButton.disabled = true;
+        }
+      });
+    }
+
     if (prevQuestionBtn) prevQuestionBtn.disabled = !quizStarted || currentQuestionPage === 0;
 
     if (nextQuestionBtn) {
       const isLast = currentQuestionPage === questionPageGroups.length - 1;
-      nextQuestionBtn.innerHTML = isLast
-        ? `Finish`
-        : `Next<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">`;
-      nextQuestionBtn.disabled = !quizStarted;
+      if (submitted) {
+        nextQuestionBtn.innerHTML = `Next<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">`;
+        nextQuestionBtn.disabled = isLast;
+      } else {
+        nextQuestionBtn.innerHTML = isLast
+          ? `Finish`
+          : `Next<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">`;
+        nextQuestionBtn.disabled = !quizStarted;
+      }
     }
 
     if (quizNavigation) {
@@ -6712,6 +6758,21 @@ function inlineQuizLoadingHtml(){
       const top = Math.max(0, questionsWrap.getBoundingClientRect().top + window.scrollY - 85);
       window.scrollTo({ top, behavior:"smooth" });
     }
+  }
+
+  function placeReviewNavigationBelowQuestion(){
+    if (!quizNavigation || !questionsWrap) return;
+
+    if (quizNavigation.parentElement !== questionsWrap) {
+      questionsWrap.appendChild(quizNavigation);
+    }
+
+    quizNavigation.classList.add("show");
+    quizNavigation.hidden = false;
+    quizNavigation.removeAttribute("aria-hidden");
+    quizNavigation.style.display = window.matchMedia("(max-width:640px)").matches
+      ? "grid"
+      : "flex";
   }
 
   function placeQuestionProgressBelowTotalMarks(){
@@ -7330,11 +7391,11 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
     const selectHtml = `
       <span class="dropdownInlineWrap">
-        <img class="selectedAnswerStatus" alt="" aria-hidden="true">
         <select class="dropdownAnswer dropdownInlineSelect" data-qindex="${qIndex}" aria-label="Select an answer">
           <option value="">${escapeHtml(placeholder)}</option>
           ${options.map(option => `<option value="${escapeAttr(String(option ?? ""))}">${escapeHtml(String(option ?? ""))}</option>`).join("")}
         </select>
+        <img class="selectedAnswerStatus" alt="" aria-hidden="true">
       </span>
     `;
 
@@ -7536,7 +7597,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
           ? "That’s correct — well done!"
           : attemptState?.used >= 2
             ? "That’s incorrect. You have no attempts left."
-            : "That’s incorrect — keep trying.";
+            : "That’s incorrect , keep trying.";
         feedback.className = `qFeedback ${result.correct ? "correct" : "wrong"}`;
       }
 
@@ -7592,7 +7653,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       box.classList.remove("is-local-correct", "is-local-wrong");
       box.classList.add("is-local-wrong");
       if (feedback) {
-        feedback.textContent = `That’s incorrect — keep trying. You have ${remaining} attempt${remaining === 1 ? "" : "s"} left.`;
+        feedback.textContent = `That’s incorrect , keep trying. You have ${remaining} attempt${remaining === 1 ? "" : "s"} left.`;
         feedback.className = "qFeedback wrong";
       }
 
@@ -9335,6 +9396,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
     const type = String(q?.type || "mcq").toLowerCase();
     let icon = null;
+    let iconTarget = null;
 
     if (type === "mcq") {
       icon = box.querySelector(`.mcqInput[data-qindex="${i}"]:checked`)
@@ -9342,6 +9404,22 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
         ?.querySelector(".selectedAnswerStatus") || null;
     } else if (type === "dropdown") {
       icon = box.querySelector(".dropdownInlineWrap .selectedAnswerStatus");
+    } else if (type === "fill") {
+      const targets = [...box.querySelectorAll(".fillInlineWrap")];
+      iconTarget = targets[targets.length - 1] || null;
+      icon = iconTarget?.querySelector(".selectedAnswerStatus") || null;
+    } else if (type === "text") {
+      const targets = [...box.querySelectorAll(".typedAnswerRow")];
+      iconTarget = targets[targets.length - 1] || null;
+      icon = iconTarget?.querySelector(".selectedAnswerStatus") || null;
+    }
+
+    if (!icon && iconTarget) {
+      icon = document.createElement("img");
+      icon.className = "selectedAnswerStatus";
+      icon.alt = "";
+      icon.setAttribute("aria-hidden", "true");
+      iconTarget.appendChild(icon);
     }
 
     if (!icon) return;
@@ -9532,7 +9610,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     if (result.correct) {
       box.classList.add("is-local-correct");
       if (feedback) {
-        feedback.textContent = "That’s correct — well done!";
+        feedback.textContent = "That’s correct, well done!";
         feedback.className = "qFeedback correct";
       }
     } else {
@@ -9540,7 +9618,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       if (feedback) {
         feedback.textContent = useTwoAttempts
           ? remaining > 0
-            ? `That’s incorrect — keep trying. You have ${remaining} attempt${remaining === 1 ? "" : "s"} left.`
+            ? `That’s incorrect , keep trying. You have ${remaining} attempt${remaining === 1 ? "" : "s"} left.`
             : "That’s incorrect. You have no attempts left."
           : "That’s incorrect — keep trying.";
         feedback.className = "qFeedback wrong";
@@ -9685,6 +9763,24 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       btn.textContent = "Show Workings";
       btn.classList.add("visible");
       btn.disabled = false;
+    });
+  }
+
+  function showAllWorkingsAfterFinish(){
+    document.querySelectorAll(".q[data-scorable=\"1\"]").forEach(box => {
+      const solution = box.querySelector(".solutionHolder");
+      const btn = box.querySelector(".qShowAnswerBtn");
+
+      if (solution && solution.innerHTML.trim()) {
+        solution.classList.remove("hidden");
+        typesetMath(solution);
+      }
+
+      if (btn) {
+        btn.classList.add("visible");
+        btn.textContent = "Workings Shown";
+        btn.disabled = true;
+      }
     });
   }
 
@@ -9890,17 +9986,6 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     const total = countScorableQuestions();
     const answered = countAnswered();
 
-    if (
-      mode === "manual" &&
-      allowsTwoAttemptsPerQuestion() &&
-      countLocalSubmittedScorableQuestions() < total
-    ) {
-      const remainingQuestions = total - countLocalSubmittedScorableQuestions();
-      msgEl.className = "error";
-      msgEl.textContent = `Please finish checking ${remainingQuestions} question${remainingQuestions === 1 ? "" : "s"}. Each question must be answered correctly or use both attempts before submitting.`;
-      return;
-    }
-
     if (mode === "manual" && !options.skipConfirm) {
       const unanswered = Math.max(0, total - answered);
       if (unanswered > 0) {
@@ -9916,7 +10001,10 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
     submitted = true;
     document.body.classList.add("submitted-state");
+    placeReviewNavigationBelowQuestion();
+    showQuestionPage(currentQuestionPage, false);
     showAllWorkingsButtons();
+    showAllWorkingsAfterFinish();
     showBottomResultsButton();
     submitBtn.disabled = true;
 
@@ -10061,7 +10149,10 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     showBottomResultsButton();
 
     disableAllInputs();
-    hideAllSolutions();
+    if (quizNavigation) quizNavigation.classList.add("show");
+    showQuestionPage(currentQuestionPage, false);
+    showAllWorkingsButtons();
+    showAllWorkingsAfterFinish();
   }
 
 
@@ -10655,7 +10746,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
             return `
             <label class="opt">
               <input class="mcqInput" data-qindex="${i}" type="${inputType}" name="q${i}" value="${originalIndex}">
-              <span class="optText"><img class="selectedAnswerStatus" alt="" aria-hidden="true">${renderMixedMath(cleanSpaces(o))}</span>
+              <span class="optText">${renderMixedMath(cleanSpaces(o))}<img class="selectedAnswerStatus" alt="" aria-hidden="true"></span>
             </label>`;
           }).join("")}
           ${hint ? `<div class="hint">Hint: <span class="hintText">${renderMixedMath(hint)}</span></div>` : ``}
