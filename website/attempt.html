@@ -6066,6 +6066,69 @@ mjx-container[jax="SVG"] svg{
   border-radius:50% !important;
   box-shadow:0 0 0 3px #fff, 0 0 0 5px #d4a017 !important;
 }
+
+/* Selected-answer feedback only. This does not alter Question Progress. */
+.qFeedback.correct,
+.qFeedback.wrong{
+  display:inline-flex !important;
+  order:initial !important;
+  flex:0 1 auto !important;
+  width:auto !important;
+  min-width:0 !important;
+  max-width:none !important;
+  min-height:0 !important;
+  height:auto !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  align-items:center !important;
+  font-size:14px !important;
+  line-height:1.35 !important;
+  font-weight:700 !important;
+}
+.qFeedback.correct::before,
+.qFeedback.wrong::before{
+  display:none !important;
+  content:none !important;
+}
+.qShowAnswerBtn{
+  display:none !important;
+}
+.qShowAnswerBtn.visible{
+  display:inline-flex !important;
+}
+.q.is-local-correct .optText,
+.q.is-local-wrong .optText{
+  color:#111827 !important;
+}
+.selectedAnswerStatus{
+  display:none;
+  width:24px;
+  height:24px;
+  flex:0 0 24px;
+  margin:0 8px 0 0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  object-fit:contain;
+  vertical-align:middle;
+}
+.selectedAnswerStatus.visible{
+  display:inline-block;
+}
+.optText .selectedAnswerStatus.visible{
+  display:inline-block;
+  vertical-align:middle;
+}
+.selectedAnswerStatus.correct{
+  filter:brightness(0) saturate(100%) invert(43%) sepia(91%) saturate(700%) hue-rotate(83deg) brightness(82%) contrast(110%) drop-shadow(.35px 0 0 #16a34a) drop-shadow(-.35px 0 0 #16a34a);
+}
+.selectedAnswerStatus.wrong{
+  filter:brightness(0) saturate(100%) invert(20%) sepia(93%) saturate(4300%) hue-rotate(352deg) brightness(82%) contrast(110%) drop-shadow(.35px 0 0 #dc2626) drop-shadow(-.35px 0 0 #dc2626);
+}
 </style>
 </head>
 
@@ -7262,6 +7325,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
     const selectHtml = `
       <span class="dropdownInlineWrap">
+        <img class="selectedAnswerStatus" alt="" aria-hidden="true">
         <select class="dropdownAnswer dropdownInlineSelect" data-qindex="${qIndex}" aria-label="Select an answer">
           <option value="">${escapeHtml(placeholder)}</option>
           ${options.map(option => `<option value="${escapeAttr(String(option ?? ""))}">${escapeHtml(String(option ?? ""))}</option>`).join("")}
@@ -7354,6 +7418,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     if (!quizData || submitted) return;
     const payload = {
       answers: buildAnswersPayload(),
+      checkedQuestions: [...localSubmittedQuestions],
       practiceMode,
       savedAt: Date.now()
     };
@@ -7427,6 +7492,59 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     });
 
     return true;
+  }
+
+  function restoreCheckedQuestionsFromStorage(){
+    let raw = null;
+    try{
+      raw = JSON.parse(localStorage.getItem(ANSWERS_KEY) || "null");
+    }catch{
+      raw = null;
+    }
+
+    const checkedQuestions = Array.isArray(raw?.checkedQuestions)
+      ? raw.checkedQuestions.map(Number).filter(Number.isInteger)
+      : [];
+
+    checkedQuestions.forEach(i => {
+      const q = Array.isArray(quizData?.questions) ? quizData.questions[i] : null;
+      const box = document.querySelector(`.q[data-qindex="${i}"]`);
+      if (!q || !box || String(q?.type || "").toLowerCase() === "note") return;
+
+      const result = getSingleQuestionResult(q, i);
+      if (!result.answered) return;
+
+      const feedback = box.querySelector(".qFeedback");
+      const btn = box.querySelector(".qCheckBtn");
+
+      box.classList.remove("is-local-correct", "is-local-wrong");
+      box.classList.add(result.correct ? "is-local-correct" : "is-local-wrong");
+
+      if (feedback) {
+        feedback.textContent = result.correct
+          ? "That’s correct — well done!"
+          : "That’s incorrect — keep trying.";
+        feedback.className = `qFeedback ${result.correct ? "correct" : "wrong"}`;
+      }
+
+      updateQuestionProgress(i, !!result.correct);
+      markQuestionOptions(q, i);
+      showSelectedAnswerStatus(q, i, !!result.correct);
+      localSubmittedQuestions.add(i);
+
+      box.querySelectorAll("input, select, textarea, math-field").forEach(el => {
+        el.disabled = true;
+        if (el.matches("math-field")) {
+          el.readOnly = true;
+          el.setAttribute("read-only", "");
+        }
+      });
+
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Checked";
+      }
+    });
   }
 
   function clearSavedAnswers(){
@@ -9104,23 +9222,43 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     const type = String(q?.type || "mcq").toLowerCase();
     if (type !== "mcq") return;
 
-    const multi = isMultiQuestion(q);
-    const correctIndexes = multi
-      ? normalizeIndexArray(q.correctIndexes || [])
-      : [Number(q.correctIndex)].filter(n => Number.isInteger(n) && n >= 0);
-
     document.querySelectorAll(`.mcqInput[data-qindex="${i}"]`).forEach(input => {
       const opt = input.closest(".opt");
       if (!opt) return;
-      const idx = Number(input.value);
       opt.classList.remove("correct", "wrong");
-
-      if (correctIndexes.includes(idx)) {
-        opt.classList.add("correct");
-      } else if (input.checked) {
-        opt.classList.add("wrong");
-      }
     });
+  }
+
+  function showSelectedAnswerStatus(q, i, isCorrect){
+    const box = document.querySelector(`.q[data-qindex="${i}"]`);
+    if (!box) return;
+
+    box.querySelectorAll(".selectedAnswerStatus").forEach(icon => {
+      icon.className = "selectedAnswerStatus";
+      icon.removeAttribute("src");
+      icon.alt = "";
+      icon.setAttribute("aria-hidden", "true");
+    });
+
+    const type = String(q?.type || "mcq").toLowerCase();
+    let icon = null;
+
+    if (type === "mcq") {
+      icon = box.querySelector(`.mcqInput[data-qindex="${i}"]:checked`)
+        ?.closest(".opt")
+        ?.querySelector(".selectedAnswerStatus") || null;
+    } else if (type === "dropdown") {
+      icon = box.querySelector(".dropdownInlineWrap .selectedAnswerStatus");
+    }
+
+    if (!icon) return;
+
+    icon.src = isCorrect
+      ? "https://res.cloudinary.com/dopoxadlr/image/upload/v1773875245/tick_sklwla.svg"
+      : "https://res.cloudinary.com/dopoxadlr/image/upload/v1773875245/cross_hznn67.svg";
+    icon.className = `selectedAnswerStatus visible ${isCorrect ? "correct" : "wrong"}`;
+    icon.alt = isCorrect ? "Correct answer" : "Incorrect answer";
+    icon.setAttribute("aria-hidden", "false");
   }
 
 
@@ -9145,6 +9283,13 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       el.className = "qFeedback";
     });
 
+    document.querySelectorAll(".selectedAnswerStatus").forEach(icon => {
+      icon.className = "selectedAnswerStatus";
+      icon.removeAttribute("src");
+      icon.alt = "";
+      icon.setAttribute("aria-hidden", "true");
+    });
+
     document.querySelectorAll(".qCheckBtn").forEach(btn => {
       btn.disabled = false;
       btn.textContent = "Check Answer";
@@ -9153,7 +9298,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     document.querySelectorAll(".qShowAnswerBtn").forEach(btn => {
       btn.classList.remove("visible");
       btn.disabled = false;
-      btn.textContent = "Show Answer";
+      btn.textContent = "Show Workings";
     });
 
     if (!hasCompletedAttempt) {
@@ -9184,6 +9329,13 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       el.className = "qFeedback";
     });
 
+    document.querySelectorAll(".selectedAnswerStatus").forEach(icon => {
+      icon.className = "selectedAnswerStatus";
+      icon.removeAttribute("src");
+      icon.alt = "";
+      icon.setAttribute("aria-hidden", "true");
+    });
+
     document.querySelectorAll(".qCheckBtn").forEach(btn => {
       btn.disabled = false;
       btn.textContent = "Check Answer";
@@ -9192,7 +9344,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     document.querySelectorAll(".qShowAnswerBtn").forEach(btn => {
       btn.classList.remove("visible");
       btn.disabled = false;
-      btn.textContent = "Show Answer";
+      btn.textContent = "Show Workings";
     });
 
     document.querySelectorAll(".opt").forEach(opt => {
@@ -9263,13 +9415,13 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     if (result.correct) {
       box.classList.add("is-local-correct");
       if (feedback) {
-        feedback.textContent = "Correct — well done! Excellent work, you have the right answer.";
+        feedback.textContent = "That’s correct — well done!";
         feedback.className = "qFeedback correct";
       }
     } else {
       box.classList.add("is-local-wrong");
       if (feedback) {
-        feedback.textContent = "Not quite — keep practising. Review your answer and try again.";
+        feedback.textContent = "That’s incorrect — keep trying.";
         feedback.className = "qFeedback wrong";
       }
     }
@@ -9278,6 +9430,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     localSubmittedQuestions.add(i);
 
     markQuestionOptions(q, i);
+    showSelectedAnswerStatus(q, i, !!result.correct);
 
     /* Do not open workings automatically. Learner can choose to show answer. */
     showAnswerButtonForQuestion(i);
@@ -9388,10 +9541,19 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   }
 
   function showAnswerButtonForQuestion(i){
+    if (!submitted) return;
     const box = document.querySelector(`.q[data-qindex="${i}"]`);
     if (!box) return;
     const btn = box.querySelector(".qShowAnswerBtn");
     if (btn) btn.classList.add("visible");
+  }
+
+  function showAllWorkingsButtons(){
+    document.querySelectorAll(".qShowAnswerBtn").forEach(btn => {
+      btn.textContent = "Show Workings";
+      btn.classList.add("visible");
+      btn.disabled = false;
+    });
   }
 
 
@@ -9436,13 +9598,13 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       if (result.correct) {
         box.classList.add("is-local-correct");
         if (feedback) {
-          feedback.textContent = "Correct — well done! Excellent work, you have the right answer.";
+          feedback.textContent = "That’s correct — well done!";
           feedback.className = "qFeedback correct";
         }
       } else {
         box.classList.add("is-local-wrong");
         if (feedback) {
-          feedback.textContent = "Not quite — keep practising. Review the workings below and try a similar question again.";
+          feedback.textContent = "That’s incorrect — keep trying.";
           feedback.className = "qFeedback wrong";
         }
       }
@@ -9450,6 +9612,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       updateQuestionProgress(i, !!result.correct);
 
       markQuestionOptions(q, i);
+      showSelectedAnswerStatus(q, i, !!result.correct);
       if (String(q?.type || "").toLowerCase() === "fill") {
         const fillResult = markFillInputs(q, i);
         if (feedback && !result.correct && fillResult.correctCount > 0) {
@@ -9497,6 +9660,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
     submitted = true;
     document.body.classList.add("submitted-state");
+    showAllWorkingsButtons();
     showBottomResultsButton();
     submitBtn.disabled = true;
 
@@ -10172,13 +10336,9 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
             ${hint ? `<div class="hint">Hint: <span class="hintText">${renderMixedMath(hint)}</span></div>` : ``}
             <div class="qLocalActions">
               <button class="qCheckBtn" type="button" data-qindex="${i}">Check Answer</button>
-              <button class="qShowAnswerBtn" type="button" data-qindex="${i}">Show Answer</button>
+              <button class="qShowAnswerBtn" type="button" data-qindex="${i}">Show Workings</button>
               <span class="qFeedback"></span>
             
-      <a class="reportIssueLink" href="support.html" target="_blank" rel="noopener">
-        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784924760/report_qoathp.svg" alt="">
-        <span>Report an issue</span>
-      </a>
     </div>
             <div class="solutionHolder hidden">${renderReviewStyleSolutionBox(q)}</div>
           </div>
@@ -10195,13 +10355,9 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
             ${hint ? `<div class="hint">Hint: <span class="hintText">${renderMixedMath(hint)}</span></div>` : ``}
             <div class="qLocalActions">
               <button class="qCheckBtn" type="button" data-qindex="${i}">Check Answer</button>
-              <button class="qShowAnswerBtn" type="button" data-qindex="${i}">Show Answer</button>
+              <button class="qShowAnswerBtn" type="button" data-qindex="${i}">Show Workings</button>
               <span class="qFeedback"></span>
             
-      <a class="reportIssueLink" href="support.html" target="_blank" rel="noopener">
-        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784924760/report_qoathp.svg" alt="">
-        <span>Report an issue</span>
-      </a>
     </div>
             <div class="solutionHolder hidden">${renderReviewStyleSolutionBox(q)}</div>
           </div>
@@ -10218,13 +10374,9 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
             ${hint ? `<div class="hint">Hint: <span class="hintText">${renderMixedMath(hint)}</span></div>` : ``}
             <div class="qLocalActions">
               <button class="qCheckBtn" type="button" data-qindex="${i}">Check Answer</button>
-              <button class="qShowAnswerBtn" type="button" data-qindex="${i}">Show Answer</button>
+              <button class="qShowAnswerBtn" type="button" data-qindex="${i}">Show Workings</button>
               <span class="qFeedback"></span>
             
-      <a class="reportIssueLink" href="support.html" target="_blank" rel="noopener">
-        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784924760/report_qoathp.svg" alt="">
-        <span>Report an issue</span>
-      </a>
     </div>
             <div class="solutionHolder hidden">${renderReviewStyleSolutionBox(q)}</div>
           </div>
@@ -10247,19 +10399,15 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
             return `
             <label class="opt">
               <input class="mcqInput" data-qindex="${i}" type="${inputType}" name="q${i}" value="${originalIndex}">
-              <span class="optText">${renderMixedMath(cleanSpaces(o))}</span>
+              <span class="optText"><img class="selectedAnswerStatus" alt="" aria-hidden="true">${renderMixedMath(cleanSpaces(o))}</span>
             </label>`;
           }).join("")}
           ${hint ? `<div class="hint">Hint: <span class="hintText">${renderMixedMath(hint)}</span></div>` : ``}
           <div class="qLocalActions">
             <button class="qCheckBtn" type="button" data-qindex="${i}">Check Answer</button>
-            <button class="qShowAnswerBtn" type="button" data-qindex="${i}">Show Answer</button>
+            <button class="qShowAnswerBtn" type="button" data-qindex="${i}">Show Workings</button>
             <span class="qFeedback"></span>
           
-      <a class="reportIssueLink" href="support.html" target="_blank" rel="noopener">
-        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784924760/report_qoathp.svg" alt="">
-        <span>Report an issue</span>
-      </a>
     </div>
           <div class="solutionHolder hidden">${renderReviewStyleSolutionBox(q)}</div>
         </div>
@@ -10291,6 +10439,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     attachShowAnswerButtons();
     const restoredAnswers = restoreAnswersFromStorage();
     initQuestionNavigation();
+    restoreCheckedQuestionsFromStorage();
     if (restoredAnswers && !alreadyAttempted && !wantsPracticeFromLink) {
       msgEl.className = "ok";
       msgEl.textContent = "Your previous answers were restored.";
@@ -11375,21 +11524,6 @@ window.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".q").forEach((question) => {
     const actions = question.querySelector(".qLocalActions");
     if (!actions) return;
-
-    let report = actions.querySelector(".reportIssueLink");
-
-    if (!report) {
-      report = document.createElement("a");
-      report.className = "reportIssueLink";
-      report.href = "support.html";
-      report.target = "_blank";
-      report.rel = "noopener";
-      report.innerHTML = `
-        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784924760/report_qoathp.svg" alt="">
-        <span>Report an issue</span>
-      `;
-      actions.appendChild(report);
-    }
 
     let bottomTools = question.querySelector(".questionBottomTools");
 
