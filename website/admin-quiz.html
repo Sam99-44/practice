@@ -2187,6 +2187,28 @@ body > .card:last-of-type{
   word-break:normal !important;
 }
 
+.questionContinuationPaper{
+  display:block !important;
+  margin-top:10px !important;
+  padding:0 !important;
+  border:0 !important;
+  background:transparent !important;
+  font-weight:400 !important;
+}
+.questionContinuationPaper p{
+  margin:7px 0 !important;
+}
+.questionContinuationPaper ul{
+  margin:7px 0 9px 20px !important;
+  padding-left:16px !important;
+  list-style:disc !important;
+}
+.questionContinuationPaper li{
+  display:list-item !important;
+  margin:4px 0 !important;
+  line-height:1.55 !important;
+}
+
 @media(max-width:820px){
   .topbar{
     padding-left:16px !important;
@@ -3026,6 +3048,14 @@ body > .card:last-of-type{
         .trim();
     }
 
+    function stripLeadingQuestionNumberMultiline(text){
+      const cleaned = cleanMultiline(text || "");
+      if (!cleaned) return "";
+      const lines = cleaned.split("\n");
+      lines[0] = stripLeadingQuestionNumber(lines[0]);
+      return cleanMultiline(lines.join("\n"));
+    }
+
     function extractLeadingQuestionNumber(text){
       const s = cleanSpaces(text || "");
       if (!s) return "";
@@ -3387,10 +3417,44 @@ function escapeHtml(str){
       return { kind: "plain", label: "", body: text };
     }
     function renderQuestionHeadPreview(rawText, points, fallbackNo){
-      const parsed = parseExamTextPartsPreview(rawText);
+      const fullText = cleanMultiline(
+        String(rawText || "")
+          .replace(/\s*•\s*/g, "\n• ")
+          .replace(/([.!?])\s+(?=[^.!?\n]*\[\[)/g, "$1\n")
+          .replace(/([.!?])\s+(?=[^.!?\n]*\[\s*\?\s*\])/g, "$1\n")
+          .replace(/([.!?])\s+(?=(?:Which|What|How|Why|Calculate|Determine|Select|Complete|State|Give|Find)\b)/g, "$1\n")
+      );
+      const lines = fullText.split("\n");
+      const firstLine = lines.shift() || "";
+      const parsed = parseExamTextPartsPreview(firstLine);
       const label = parsed.label || `${fallbackNo}.`;
-      const body = parsed.body || (parsed.kind === "plain" ? cleanSpaces(rawText || "") : "");
-      return `<div class="qHead"><div class="qTitle"><span class="qNo">${escapeHtml(label)}</span><span class="qTextPaper">${renderMixedMathPreview(body || cleanSpaces(rawText || ""))}</span></div><div class="marksMetaPaper"><div class="marksBox">${String(points).trim()}</div></div></div>`;
+      const body = parsed.body || (parsed.kind === "plain" ? cleanSpaces(firstLine) : "");
+
+      let continuationHtml = "";
+      let bulletItems = [];
+      const flushBullets = () => {
+        if (!bulletItems.length) return;
+        continuationHtml += `<ul>${bulletItems.map(item => `<li>${renderMixedMathPreview(item)}</li>`).join("")}</ul>`;
+        bulletItems = [];
+      };
+
+      lines.forEach(sourceLine => {
+        const line = String(sourceLine || "").trim();
+        if (!line) {
+          flushBullets();
+          return;
+        }
+        const bullet = line.match(/^[•*-]\s*(.+)$/);
+        if (bullet) {
+          bulletItems.push(bullet[1]);
+          return;
+        }
+        flushBullets();
+        continuationHtml += `<p>${renderMixedMathPreview(line)}</p>`;
+      });
+      flushBullets();
+
+      return `<div class="qHead"><div class="qTitle"><span class="qNo">${escapeHtml(label)}</span><span class="qTextPaper"><span>${renderMixedMathPreview(body || firstLine)}</span>${continuationHtml ? `<span class="questionContinuationPaper">${continuationHtml}</span>` : ""}</span></div><div class="marksMetaPaper"><div class="marksBox">${String(points).trim()}</div></div></div>`;
     }
     function renderStructuredNotePreview(rawText){
       const raw = String(rawText || "").replace(/\r/g, "").trim();
@@ -3692,7 +3756,7 @@ function escapeHtml(str){
         }
 
         displayNo += 1;
-        const qText = stripLeadingQuestionNumber(card.querySelector(".qText")?.value || "");
+        const qText = stripLeadingQuestionNumberMultiline(card.querySelector(".qText")?.value || "");
         const label = cleanSpaces(card.dataset.fullNumber || autoLabel);
         const hint = cleanSpaces(card.querySelector(".qHint")?.value || "");
         const solution = String(card.querySelector(".qSolution")?.value || "").trim();
@@ -3757,14 +3821,15 @@ function escapeHtml(str){
           parts.push(`<div class="q">${questionAndImageHtml}${selectHtml}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${currentFullPreviewMode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`);
         } else if (type === "fill") {
           const instruction = cleanSpaces(card.querySelector(".fillInstruction")?.value || "");
-          const rawQuestion = stripLeadingQuestionNumber(card.querySelector(".qText")?.value || "");
+          const rawQuestion = stripLeadingQuestionNumberMultiline(card.querySelector(".qText")?.value || "")
+            .replace(/([.!?])\s+(?=[^.!?\n]*\[\[)/g, "$1\n");
           let blankIndex = 0;
           const blankHtml = rawQuestion.split(/(\[\[\s*\]\])/g).map(part => {
             if (/^\[\[\s*\]\]$/.test(part)) {
               blankIndex += 1;
               return `<input disabled aria-label="Blank ${blankIndex}" style="display:inline-block;width:46px;height:46px;min-width:46px;min-height:46px;margin:0 6px;padding:2px;border:2px solid #000;border-radius:0;box-sizing:border-box;background:#fff;color:#000;text-align:center;font-family:'Times New Roman',Times,serif;font-size:16px;line-height:42px;vertical-align:middle;">`;
             }
-            return renderMixedMathPreview(part);
+            return renderMixedMathPreview(part).replace(/\n/g, "<br>");
           }).join("");
 
           /*
@@ -5492,10 +5557,31 @@ function escapeHtml(str){
         }
       }
 
-      return contentOnly
+      const candidateBlocks = contentOnly
         .split(/(?=^(?:HEADING|NOTE|QUESTION\s*:|QUESTION\s+\d+|(?:\d+\.)?\d+\.\d+\s))/gim)
         .map(b => b.trim())
         .filter(Boolean);
+
+      /* A numbered line inside a NOTE (for example 1.1, 2.3 or a decimal)
+         is not automatically a new assessment question. Keep it in the note
+         unless that candidate also contains real question fields. */
+      const mergedBlocks = [];
+      const startsNote = value => /^(?:HEADING|NOTE)\s*:/i.test(String(value || "").trim());
+      const startsNumberedLine = value => /^(?:\d+\.)?\d+\.\d+\s/i.test(String(value || "").trim());
+      const hasQuestionFields = value => /^(?:TYPE|OPTIONS|ANSWER|ANSWER_FIELD|ANSWER_PREFIX|ANSWER_SUFFIX|ANSWER_MODE|UNIT|TOLERANCE|NUMBER_TOLERANCE|SOLUTION|MEMO|POINTS|MARKS)\s*:/im.test(String(value || "")) || /^[A-Z]\s*[:.)-]\s*\S+/im.test(String(value || ""));
+
+      candidateBlocks.forEach(block => {
+        const previousIndex = mergedBlocks.length - 1;
+        const previous = previousIndex >= 0 ? mergedBlocks[previousIndex] : "";
+
+        if (startsNote(previous) && startsNumberedLine(block) && !hasQuestionFields(block)) {
+          mergedBlocks[previousIndex] = `${previous}\n${block}`.trim();
+        } else {
+          mergedBlocks.push(block);
+        }
+      });
+
+      return mergedBlocks;
     }
 
     function parseAssessmentMetadata(raw, fallbackName=""){
@@ -5568,6 +5654,8 @@ function escapeHtml(str){
       const raw = String(block || "").replace(/\r/g, "").trim();
       const lines = raw.split("\n");
       let question = "";
+      const questionLines = [];
+      let collectingQuestion = false;
       let hint = "";
       let solution = "";
       let points = 1;
@@ -5590,24 +5678,43 @@ function escapeHtml(str){
         const rawLine = lines[lineIndex];
         const line = rawLine.trim();
         if (!line) {
+          if (collectingQuestion && questionLines.length && questionLines[questionLines.length - 1] !== "") {
+            questionLines.push("");
+          }
           if (inSolution) solutionLines.push(rawLine);
           continue;
         }
 
         if (/^QUESTION\s*:/i.test(line)) {
           question = line.replace(/^QUESTION\s*:/i, "").trim();
+          questionLines.length = 0;
+          if (question) questionLines.push(question);
+          collectingQuestion = true;
           continue;
         }
 
         if (/^QUESTION\s+\d+/i.test(line) && !question) {
           question = line.trim();
+          questionLines.push(question);
+          collectingQuestion = true;
           continue;
         }
 
         if (/^(?:\d+\.)?\d+\.\d+\s+/i.test(line) && !question) {
           question = line.trim();
+          questionLines.push(question);
+          collectingQuestion = true;
           continue;
         }
+
+        const startsQuestionField = /^(?:TYPE|HINT|IMAGE_URL|IMAGE|INSTRUCTION|ANSWER_PREFIX|ANSWER_SUFFIX|UNIT|ANSWER_FIELD|ANSWER_MODE|TOLERANCE|NUMBER_TOLERANCE|POINTS|MARKS|DROPDOWN_PLACEHOLDER|PARTIAL_MARKS|OPTIONS|SOLUTION|MEMO|ANSWER)\s*:/i.test(line) || /^[A-Z]\s*[:.)-]\s*\S+/i.test(line);
+
+        if (collectingQuestion && !startsQuestionField && !inSolution) {
+          questionLines.push(rawLine.trimEnd());
+          continue;
+        }
+
+        if (startsQuestionField) collectingQuestion = false;
 
         if (/^TYPE\s*:/i.test(line) && !inSolution) {
           explicitType = line.replace(/^TYPE\s*:/i, "").trim().toLowerCase();
@@ -5710,6 +5817,7 @@ function escapeHtml(str){
         }
       }
 
+      if (questionLines.length) question = cleanMultiline(questionLines.join("\n"));
       solution = solutionLines.join("\n").trim();
       question = stripLeadingQuestionNumber(question);
       question = autoConvertMixedLatex(question);
@@ -5850,7 +5958,8 @@ function escapeHtml(str){
     }
 
     function classifySpecialNote(text){
-      const t = cleanSpaces(text || "");
+      const multilineText = cleanMultiline(text || "");
+      const t = cleanSpaces(multilineText);
       if (!t) return { type: "note", text: "" };
 
       const mainMatch = t.match(/^QUESTION\s+(\d+)\s*[:.-]?\s*(.*)$/i);
@@ -5871,7 +5980,7 @@ function escapeHtml(str){
         };
       }
 
-      return { type: "note", text: autoConvertMixedLatex(t) };
+      return { type: "note", text: autoConvertMixedLatex(multilineText) };
     }
 
     function parseNoteBlock(block){
@@ -5883,7 +5992,10 @@ function escapeHtml(str){
 
       for (const rawLine of lines) {
         const line = rawLine.trim();
-        if (!line) continue;
+        if (!line) {
+          if (noteText && !noteText.endsWith("\n")) noteText += "\n";
+          continue;
+        }
 
         if (/^NOTE_TYPE\s*:/i.test(line)) {
           const parsedRole = line.replace(/^NOTE_TYPE\s*:/i, "").trim().toLowerCase();
@@ -5904,8 +6016,10 @@ function escapeHtml(str){
           continue;
         }
 
-        noteText = noteText ? `${noteText}\n${line}` : line;
+        noteText = noteText ? `${noteText}\n${rawLine.trimEnd()}` : rawLine.trimEnd();
       }
+
+      noteText = cleanMultiline(noteText);
 
       const item = classifySpecialNote(noteText);
       if (item) {
@@ -6388,7 +6502,7 @@ function escapeHtml(str){
         if (item.type === "text") {
           return {
             type: "text",
-            text: cleanSpaces(item.question || ""),
+            text: cleanMultiline(item.question || ""),
             hint: cleanSpaces(item.hint || ""),
             imageUrl: item.imageUrl || "",
             points: Number(item.points || 1),
@@ -6406,7 +6520,7 @@ function escapeHtml(str){
         if (item.type === "dropdown") {
           return {
             type: "dropdown",
-            text: cleanSpaces(item.question || ""),
+            text: cleanMultiline(item.question || ""),
             hint: cleanSpaces(item.hint || ""),
             imageUrl: item.imageUrl || "",
             points: Number(item.points || 1),
@@ -6419,7 +6533,7 @@ function escapeHtml(str){
         if (item.type === "fill") {
           return {
             type: "fill",
-            text: cleanSpaces(item.question || ""),
+            text: cleanMultiline(item.question || ""),
             hint: cleanSpaces(item.hint || ""),
             imageUrl: item.imageUrl || "",
             points: Number(item.points || 1),
@@ -6434,7 +6548,7 @@ function escapeHtml(str){
         const correctIndexes = [...(item.correctIndexes || [])];
         const payload = {
           type: "mcq",
-          text: cleanSpaces(item.question || ""),
+          text: cleanMultiline(item.question || ""),
           hint: cleanSpaces(item.hint || ""),
           imageUrl: item.imageUrl || "",
           points: Number(item.points || 1),
@@ -6548,7 +6662,7 @@ function escapeHtml(str){
           continue;
         }
 
-        const rawText = stripLeadingQuestionNumber(card.querySelector(".qText")?.value || "");
+        const rawText = stripLeadingQuestionNumberMultiline(card.querySelector(".qText")?.value || "");
         const typedPrefix = extractLeadingQuestionNumber(card.querySelector(".qText")?.value || "");
         const numberLabel = cleanSpaces(card.querySelector(".cardLabel")?.textContent || "");
         let text = rawText;
