@@ -6126,8 +6126,11 @@ mjx-container[jax="SVG"] svg{
   top:-1px;
 }
 .typedAnswerRow .selectedAnswerStatus.visible,
+.typedAnswerSuffix .selectedAnswerStatus.visible,
 .fillInlineWrap .selectedAnswerStatus.visible,
-.dropdownInlineWrap .selectedAnswerStatus.visible{
+.fillQuestionText .selectedAnswerStatus.visible,
+.dropdownInlineWrap .selectedAnswerStatus.visible,
+.dropdownQuestionText .selectedAnswerStatus.visible{
   display:inline-block;
   vertical-align:middle;
   position:relative;
@@ -6138,6 +6141,32 @@ mjx-container[jax="SVG"] svg{
 }
 .selectedAnswerStatus.wrong{
   filter:brightness(0) saturate(100%) invert(20%) sepia(93%) saturate(4300%) hue-rotate(352deg) brightness(82%) contrast(110%) drop-shadow(.35px 0 0 #dc2626) drop-shadow(-.35px 0 0 #dc2626);
+}
+.questionContinuation{
+  display:block;
+  margin-top:10px;
+  padding:0;
+  border:0;
+  background:transparent;
+  font-weight:400;
+}
+.questionContinuation p{ margin:7px 0; }
+.questionContinuation ul{
+  margin:7px 0 9px 20px;
+  padding-left:16px;
+  list-style:disc;
+}
+.questionContinuation li{
+  display:list-item;
+  margin:4px 0;
+  line-height:1.55;
+}
+.typedAnswerSuffix:has(.selectedAnswerStatus.visible){
+  width:36px !important;
+  min-width:36px !important;
+  max-width:36px !important;
+  overflow:visible !important;
+  white-space:nowrap !important;
 }
 /* When the general "Enter your answer" label is shown, do not repeat
    "answer" beside the field. Keep the field and its Preview aligned. */
@@ -6150,6 +6179,9 @@ mjx-container[jax="SVG"] svg{
 @media(max-width:768px){
   .typedAnswerRow.noPrefix{
     grid-template-columns:1fr !important;
+  }
+  .typedAnswerRow.noPrefix:has(.selectedAnswerStatus.visible){
+    grid-template-columns:minmax(0,1fr) 36px !important;
   }
   .enterAnswerLabel{
     margin-left:0 !important;
@@ -7404,9 +7436,16 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   }
 
   function renderDropdownQuestionHead(q, rawText, points, fallbackNo, qIndex){
-    const parsed = parseExamTextParts(rawText);
+    const fullText = String(rawText || "").replace(/\r/g, "")
+      .replace(/\s*•\s*/g, "\n• ")
+      .replace(/([.!?])\s+(?=[^.!?\n]*\[\s*\?\s*\])/g, "$1\n")
+      .replace(/([.!?])\s+(?=(?:Which|What|How|Why|Calculate|Determine|Select|Complete|State|Give|Find)\b)/g, "$1\n")
+      .split("\n").map(line => line.replace(/[\t ]+/g, " ").trim()).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+    const lines = fullText.split("\n");
+    const firstLine = lines.shift() || "";
+    const parsed = parseExamTextParts(firstLine);
     const label = parsed.label || `${fallbackNo}.`;
-    const body = parsed.body || (parsed.kind === "plain" ? cleanSpaces(rawText || "") : "");
+    const body = parsed.body || (parsed.kind === "plain" ? cleanSpaces(firstLine) : "");
     const options = Array.isArray(q?.options) ? q.options : [];
     const placeholder = String(q?.dropdownPlaceholder || "Select an answer").trim();
 
@@ -7420,20 +7459,39 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       </span>
     `;
 
-    const source = String(body || rawText || "");
-    let bodyHtml = renderMixedMath(source);
-
-    if (/\[\s*\?\s*\]/.test(source)) {
-      bodyHtml = bodyHtml.replace(/\[\s*\?\s*\]/, selectHtml);
-    } else {
-      bodyHtml = `${bodyHtml}${selectHtml}`;
-    }
+    let selectUsed = false;
+    const renderDropdownLine = sourceValue => {
+      const source = String(sourceValue || "");
+      const marker = source.match(/\[\s*\?\s*\]/);
+      if (!marker) return renderMixedMath(source);
+      const markerIndex = marker.index || 0;
+      selectUsed = true;
+      return `${renderMixedMath(source.slice(0, markerIndex))}${selectHtml}${renderMixedMath(source.slice(markerIndex + marker[0].length))}`;
+    };
+    let bodyHtml = renderDropdownLine(body || firstLine);
+    let continuationHtml = "";
+    let bulletItems = [];
+    const flushBullets = () => {
+      if (!bulletItems.length) return;
+      continuationHtml += `<ul>${bulletItems.map(item => `<li>${renderDropdownLine(item)}</li>`).join("")}</ul>`;
+      bulletItems = [];
+    };
+    lines.forEach(sourceLine => {
+      const value = String(sourceLine || "").trim();
+      if (!value) { flushBullets(); return; }
+      const bullet = value.match(/^[•*-]\s*(.+)$/);
+      if (bullet) { bulletItems.push(bullet[1]); return; }
+      flushBullets();
+      continuationHtml += `<p>${renderDropdownLine(value)}</p>`;
+    });
+    flushBullets();
+    if (!selectUsed) continuationHtml += `<p>${selectHtml}</p>`;
 
     return `
       <div class="qHead dropdownQuestionHead">
         <div class="qTitle">
           <span class="qNo">${escapeHtml(label)}</span>
-          <span class="qText dropdownQuestionText">${bodyHtml}</span>
+          <span class="qText dropdownQuestionText">${bodyHtml}${continuationHtml ? `<span class="questionContinuation">${continuationHtml}</span>` : ""}</span>
         </div>
         <div class="marksMeta" title="Question marks">
           <div class="marksLbl">Marks</div>
@@ -7444,36 +7502,46 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   }
 
   function renderFillQuestionHead(rawText, points, fallbackNo, qIndex){
-    const parsed = parseExamTextParts(rawText);
+    const fullText = String(rawText || "").replace(/\r/g, "")
+      .replace(/([.!?])\s+(?=[^.!?\n]*\[\[)/g, "$1\n")
+      .split("\n").map(line => line.replace(/[\t ]+/g, " ").trim()).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+    const lines = fullText.split("\n");
+    const firstLine = lines.shift() || "";
+    const parsed = parseExamTextParts(firstLine);
     const label = parsed.label || `${fallbackNo}.`;
-    const body = parsed.body || (parsed.kind === "plain" ? cleanSpaces(rawText || "") : "");
+    const body = parsed.body || (parsed.kind === "plain" ? cleanSpaces(firstLine) : "");
     const blankPattern = /\[\[\s*[^\]]*?\s*\]\]/g;
     let blankIndex = 0;
-    let lastIndex = 0;
-    let bodyHtml = "";
-    const source = String(body || rawText || "");
-    let match;
-
-    while ((match = blankPattern.exec(source)) !== null) {
-      const before = source.slice(lastIndex, match.index);
-      if (before) bodyHtml += renderMixedMath(before);
-      bodyHtml += `<span class="fillInlineWrap"><input class="fillAnswerInput" type="text" inputmode="text" autocomplete="off" data-qindex="${qIndex}" data-blank-index="${blankIndex}" aria-label="Blank ${blankIndex + 1}"></span>`;
-      blankIndex += 1;
-      lastIndex = match.index + match[0].length;
-    }
-
-    const after = source.slice(lastIndex);
-    if (after) bodyHtml += renderMixedMath(after);
+    const renderFillLine = sourceValue => {
+      const source = String(sourceValue || "");
+      blankPattern.lastIndex = 0;
+      let lastIndex = 0, html = "", match;
+      while ((match = blankPattern.exec(source)) !== null) {
+        const before = source.slice(lastIndex, match.index);
+        if (before) html += renderMixedMath(before);
+        html += `<span class="fillInlineWrap"><input class="fillAnswerInput" type="text" inputmode="text" autocomplete="off" data-qindex="${qIndex}" data-blank-index="${blankIndex}" aria-label="Blank ${blankIndex + 1}"></span>`;
+        blankIndex += 1;
+        lastIndex = match.index + match[0].length;
+      }
+      const after = source.slice(lastIndex);
+      if (after) html += renderMixedMath(after);
+      return html;
+    };
+    let bodyHtml = renderFillLine(body || firstLine);
+    const continuationHtml = lines.map(line => {
+      const value = String(line || "").trim();
+      return value ? `<p>${renderFillLine(value)}</p>` : "";
+    }).join("");
 
     if (!blankIndex) {
-      bodyHtml = `${renderMixedMath(source)} <span class="fillInlineWrap"><input class="fillAnswerInput" type="text" inputmode="text" autocomplete="off" data-qindex="${qIndex}" data-blank-index="0" aria-label="Blank 1"></span>`;
+      bodyHtml += ` <span class="fillInlineWrap"><input class="fillAnswerInput" type="text" inputmode="text" autocomplete="off" data-qindex="${qIndex}" data-blank-index="0" aria-label="Blank 1"></span>`;
     }
 
     return `
       <div class="qHead">
         <div class="qTitle">
           <span class="qNo">${escapeHtml(label)}</span>
-          <span class="fillQuestionText">${bodyHtml}</span>
+          <span class="fillQuestionText">${bodyHtml}${continuationHtml ? `<span class="questionContinuation">${continuationHtml}</span>` : ""}</span>
         </div>
         <div class="marksMeta" title="Question marks"><div class="marksLbl">Marks</div><div class="marksBox">${String(points).trim()}</div></div>
       </div>
@@ -9436,15 +9504,22 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
         ?.closest(".opt")
         ?.querySelector(".selectedAnswerStatus") || null;
     } else if (type === "dropdown") {
-      icon = box.querySelector(".dropdownInlineWrap .selectedAnswerStatus");
+      const wrapper = box.querySelector(".dropdownInlineWrap");
+      iconTarget = wrapper?.closest("p") || wrapper?.parentElement || box.querySelector(".dropdownQuestionText");
+      icon = box.querySelector(".dropdownQuestionText .selectedAnswerStatus") || wrapper?.querySelector(".selectedAnswerStatus") || null;
     } else if (type === "fill") {
       const targets = [...box.querySelectorAll(".fillInlineWrap")];
-      iconTarget = targets[targets.length - 1] || null;
-      icon = iconTarget?.querySelector(".selectedAnswerStatus") || null;
+      const lastTarget = targets[targets.length - 1] || null;
+      iconTarget = lastTarget?.closest("p") || lastTarget?.parentElement || box.querySelector(".fillQuestionText");
+      icon = box.querySelector(".fillQuestionText .selectedAnswerStatus") || lastTarget?.querySelector(".selectedAnswerStatus") || null;
     } else if (type === "text") {
-      const targets = [...box.querySelectorAll(".typedAnswerRow")];
+      const targets = [...box.querySelectorAll(".typedAnswerSuffix")];
       iconTarget = targets[targets.length - 1] || null;
       icon = iconTarget?.querySelector(".selectedAnswerStatus") || null;
+    }
+
+    if (icon && iconTarget && icon.parentElement !== iconTarget) {
+      iconTarget.appendChild(icon);
     }
 
     if (!icon && iconTarget) {
@@ -10525,9 +10600,24 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       );
       const solution = String(q.solution || "").trim();
       const points = getQuestionPoints(q);
-      const storedRawText = String(q.text || "").trim();
+      const storedRawText = [
+        q?.text,
+        q?.question,
+        q?.questionText,
+        q?.prompt,
+        q?.stem
+      ]
+        .map(value => typeof value === "string" ? value.trim() : "")
+        .filter(Boolean)
+        .sort((a, b) => b.length - a.length)[0] || "";
       const cleanStoredText = stripStandardNoteMarker(storedRawText);
-      let rawText = cleanSpaces(cleanStoredText);
+      let rawText = String(cleanStoredText || "")
+        .replace(/\r/g, "")
+        .split("\n")
+        .map(line => line.replace(/[\t ]+/g, " ").trim())
+        .join("\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
       let prefixHtml = "";
       let mainNo = getMainQuestionNumber(rawText, 1);
       let sectionKey = getSectionKey(rawText, mainNo);
@@ -11775,17 +11865,44 @@ function formatSolutionHtml(solutionText){
 }
 
   function renderQuestionHead(rawText, points, fallbackNo, questionTotal){
-    const parsed = parseExamTextParts(rawText);
+    const fullText = String(rawText || "")
+      .replace(/\r/g, "")
+      .replace(/\s*•\s*/g, "\n• ")
+      .replace(/([.!?])\s+(?=(?:Which|What|How|Why|Calculate|Determine|Select|Complete|State|Give|Find)\b)/g, "$1\n")
+      .split("\n").map(line => line.replace(/[\t ]+/g, " ").trim()).join("\n")
+      .replace(/\n{3,}/g, "\n\n").trim();
+    const lines = fullText.split("\n");
+    const firstLine = lines.shift() || "";
+    const parsed = parseExamTextParts(firstLine);
     const label = parsed.label || `${fallbackNo}.`;
-    const body = parsed.body || (parsed.kind === "plain" ? cleanSpaces(rawText || "") : "");
-    const visibleBody = String(body || cleanSpaces(rawText || ""))
+    const body = parsed.body || (parsed.kind === "plain" ? cleanSpaces(firstLine) : "");
+    const visibleBody = String(body || firstLine)
       .replace(/\[\s*\[\s*\]\s*\]/g, "........");
+
+    const renderQuestionLine = value => renderMixedMath(String(value || "").replace(/\[\s*\[\s*\]\s*\]/g, "........"))
+      .replace(/\[\s*\?\s*\]/g, '<span class="dropdownQuestionPlaceholder">[ ? ]</span>');
+    let continuationHtml = "";
+    let bulletItems = [];
+    const flushBullets = () => {
+      if (!bulletItems.length) return;
+      continuationHtml += `<ul>${bulletItems.map(item => `<li>${renderQuestionLine(item)}</li>`).join("")}</ul>`;
+      bulletItems = [];
+    };
+    lines.forEach(sourceLine => {
+      const line = String(sourceLine || "").trim();
+      if (!line) { flushBullets(); return; }
+      const bullet = line.match(/^[•*-]\s*(.+)$/);
+      if (bullet) { bulletItems.push(bullet[1]); return; }
+      flushBullets();
+      continuationHtml += `<p>${renderQuestionLine(line)}</p>`;
+    });
+    flushBullets();
 
     return `
       <div class="qHead">
         <div class="qTitle">
           <span class="qNo">${escapeHtml(label)}</span>
-          <span class="qText">${renderMixedMath(visibleBody).replace(/\[\s*\?\s*\]/g, '<span class="dropdownQuestionPlaceholder">[ ? ]</span>')}</span>
+          <span class="qText">${renderQuestionLine(visibleBody)}${continuationHtml ? `<span class="questionContinuation">${continuationHtml}</span>` : ""}</span>
         </div>
         <div class="marksMeta" title="Question marks">
           <div class="marksLbl">Marks</div>
