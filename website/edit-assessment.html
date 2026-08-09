@@ -266,6 +266,10 @@ function canManageAssessmentsRole(role){
 
 
     .attemptPaperPreview .qText{min-width:0; font-weight:400;}
+    .questionContinuation{display:block;margin-top:10px;padding:0;border:0;background:transparent;font-weight:400;}
+    .questionContinuation p{margin:7px 0;}
+    .questionContinuation ul{margin:7px 0 9px 20px;padding-left:16px;list-style:disc;}
+    .questionContinuation li{display:list-item;margin:4px 0;line-height:1.55;}
     .attemptPaperPreview .marksMeta{display:flex; align-items:flex-start; gap:0; flex:0 0 auto; font-family:"Times New Roman", Times, serif; color:#111827; padding-top:0; font-size:14px; line-height:1.3; white-space:nowrap; justify-self:end; margin:0; text-align:right; min-width:32px;}
     .attemptPaperPreview .marksMeta::before{content:"(";}
     .attemptPaperPreview .marksMeta::after{content:")";}
@@ -1888,6 +1892,48 @@ input:focus,textarea:focus,select:focus{
         .trim();
     }
 
+    function cleanMultilineQuestion(text){
+      return String(text || "")
+        .replace(/\r/g, "")
+        .replace(/\s*•\s*/g, "\n• ")
+        .replace(/([.!?])\s+(?=(?:Which|What|How|Why|Calculate|Determine|Select|Complete|State|Give|Find)\b)/g, "$1\n")
+        .split("\n")
+        .map(line => line.replace(/[\t ]+/g, " ").trim())
+        .join("\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+    }
+
+    function stripLeadingQuestionNumberMultiline(text){
+      const cleaned = cleanMultilineQuestion(text);
+      if (!cleaned) return "";
+      const lines = cleaned.split("\n");
+      lines[0] = stripLeadingQuestionNumber(lines[0]);
+      return cleanMultilineQuestion(lines.join("\n"));
+    }
+
+    function renderStructuredQuestionText(rawText, renderer){
+      const lines = cleanMultilineQuestion(rawText).split("\n");
+      const firstLine = lines.shift() || "";
+      let continuation = "";
+      let bullets = [];
+      const flush = () => {
+        if (!bullets.length) return;
+        continuation += `<ul>${bullets.map(item => `<li>${renderer(item)}</li>`).join("")}</ul>`;
+        bullets = [];
+      };
+      lines.forEach(sourceLine => {
+        const line = String(sourceLine || "").trim();
+        if (!line) { flush(); return; }
+        const bullet = line.match(/^[•*-]\s*(.+)$/);
+        if (bullet) { bullets.push(bullet[1]); return; }
+        flush();
+        continuation += `<p>${renderer(line)}</p>`;
+      });
+      flush();
+      return `${renderer(firstLine)}${continuation ? `<span class="questionContinuation">${continuation}</span>` : ""}`;
+    }
+
     function extractLeadingQuestionNumber(text){
       const s = cleanSpaces(text || "");
       if (!s) return "";
@@ -2158,15 +2204,19 @@ function escapeHtml(str){
       `;
     }
     function renderQuestionHead(rawText, points, fallbackNo, questionTotal){
-      const parsed = parseExamTextParts(rawText);
+      const fullText = cleanMultilineQuestion(rawText);
+      const lines = fullText.split("\n");
+      const firstLine = lines.shift() || "";
+      const parsed = parseExamTextParts(firstLine);
       const label = parsed.label || `${fallbackNo}.`;
-      const body = parsed.body || (parsed.kind === "plain" ? cleanSpaces(rawText || "") : "");
+      const body = parsed.body || (parsed.kind === "plain" ? cleanSpaces(firstLine) : "");
+      const structuredBody = [body || firstLine, ...lines].join("\n");
 
       return `
         <div class="qHead">
           <div class="qTitle">
             <span class="qNo">${escapeHtml(label)}</span>
-            <span class="qText">${renderMixedMath(body || cleanSpaces(rawText || ""))}</span>
+            <span class="qText">${renderStructuredQuestionText(structuredBody, renderMixedMath)}</span>
           </div>
           <div class="marksMeta" title="Question marks">
             <div class="marksLbl">Marks</div>
@@ -2179,7 +2229,7 @@ function escapeHtml(str){
       const parsed = parseExamTextParts(rawText);
 
       if (parsed.kind === "main") {
-        const bodyHtml = parsed.body ? `<div class="noteBox" style="margin-top:8px;">${renderMixedMath(parsed.body)}</div>` : "";
+        const bodyHtml = parsed.body ? `<div class="noteBox" style="margin-top:8px;">${renderStructuredNotePreview(parsed.body)}</div>` : "";
         return `
           <div class="q">
             <div class="qMainHeading">${escapeHtml(parsed.label)}</div>
@@ -2195,7 +2245,7 @@ function escapeHtml(str){
             <div class="qSectionStem">
               <div class="qSectionLeft">
                 <div class="qSectionNo">${escapeHtml(parsed.label)}</div>
-                <div class="qSectionText">${renderMixedMath(parsed.body)}</div>
+                <div class="qSectionText">${renderStructuredNotePreview(parsed.body)}</div>
               </div>
             </div>
             ${imageHtml}
@@ -2205,7 +2255,7 @@ function escapeHtml(str){
 
       return `
         <div class="q">
-          <div class="noteBox">${renderMixedMath(cleanSpaces(rawText || ""))}</div>
+          <div class="noteBox">${renderStructuredNotePreview(rawText)}</div>
           ${imageHtml}
         </div>
       `;
@@ -2238,7 +2288,7 @@ function escapeHtml(str){
       return html.length?html.join(""):renderMixedMathPreview(clean);
     }
     function renderPreviewQuestionHead(label,questionText,points){
-      return `<div class="qHead"><div class="qTitle"><span class="qNo">${escapeHtml(label)}</span><span class="qTextPaper">${renderMixedMathPreview(questionText)}</span></div><div class="marksMetaPaper">${escapeHtml(points)}</div></div>`;
+      return `<div class="qHead"><div class="qTitle"><span class="qNo">${escapeHtml(label)}</span><span class="qTextPaper">${renderStructuredQuestionText(questionText, renderMixedMathPreview)}</span></div><div class="marksMetaPaper">${escapeHtml(points)}</div></div>`;
     }
 
     function buildPreviewQuestionsFromCards(){
@@ -2419,7 +2469,7 @@ function escapeHtml(str){
         if(subParent!==null){childNo+=1;label=`${mainNo}.${subParent}.${childNo}`}
         else{topNo+=1;label=`${mainNo}.${topNo}`}
 
-        const qText=stripLeadingQuestionNumber(card.querySelector(".qText")?.value||"");
+        const qText=stripLeadingQuestionNumberMultiline(card.querySelector(".qText")?.value||"");
         const points=cleanSpaces(card.querySelector(".qPoints")?.value||"1");
         const hint=cleanSpaces(card.querySelector(".qHint")?.value||"");
         const solution=String(card.querySelector(".qSolution")?.value||"").trim();
@@ -3455,7 +3505,7 @@ function escapeHtml(str){
       if (currentType === targetType) return;
 
       const base = {
-        question: stripLeadingQuestionNumber(card.querySelector(".qText")?.value || ""),
+        question: stripLeadingQuestionNumberMultiline(card.querySelector(".qText")?.value || ""),
         hint: cleanSpaces(card.querySelector(".qHint")?.value || ""),
         points: cleanSpaces(card.querySelector(".qPoints")?.value || "1"),
         solution: String(card.querySelector(".qSolution")?.value || "").trim(),
@@ -3920,7 +3970,7 @@ function escapeHtml(str){
         return;
       }
 
-      const qText = autoConvertMixedLatex(stripLeadingQuestionNumber(card.querySelector(".qText")?.value || ""));
+      const qText = autoConvertMixedLatex(stripLeadingQuestionNumberMultiline(card.querySelector(".qText")?.value || ""));
       const hint  = autoConvertMixedLatex(cleanSpaces(card.querySelector(".qHint")?.value || ""));
       const solRaw = cleanSpaces(card.querySelector(".qSolution")?.value || "");
       const sol   = formatSolutionPreviewHtml(solRaw);
@@ -4183,10 +4233,22 @@ function escapeHtml(str){
         }
       }
 
-      return contentOnly
+      const candidateBlocks = contentOnly
         .split(/(?=^(?:HEADING|NOTE|QUESTION\s*:|QUESTION\s+\d+|(?:\d+\.)?\d+\.\d+\s))/gim)
         .map(b => b.trim())
         .filter(Boolean);
+
+      const mergedBlocks = [];
+      const startsNote = value => /^(?:HEADING|NOTE)\s*:/i.test(String(value || "").trim());
+      const startsNumberedLine = value => /^(?:\d+\.)?\d+\.\d+\s/i.test(String(value || "").trim());
+      const hasQuestionFields = value => /^(?:TYPE|OPTIONS|ANSWER|ANSWER_FIELD|ANSWER_PREFIX|ANSWER_SUFFIX|ANSWER_MODE|UNIT|TOLERANCE|NUMBER_TOLERANCE|SOLUTION|MEMO|POINTS|MARKS)\s*:/im.test(String(value || "")) || /^[A-Z]\s*[:.)-]\s*\S+/im.test(String(value || ""));
+      candidateBlocks.forEach(block => {
+        const previousIndex = mergedBlocks.length - 1;
+        const previous = previousIndex >= 0 ? mergedBlocks[previousIndex] : "";
+        if (startsNote(previous) && startsNumberedLine(block) && !hasQuestionFields(block)) mergedBlocks[previousIndex] = `${previous}\n${block}`.trim();
+        else mergedBlocks.push(block);
+      });
+      return mergedBlocks;
     }
 
     function parseAssessmentMetadata(raw, fallbackName=""){
@@ -4256,6 +4318,8 @@ function escapeHtml(str){
       const raw = String(block || "").replace(/\r/g, "").trim();
       const lines = raw.split("\n");
       let question = "";
+      const questionLines = [];
+      let collectingQuestion = false;
       let hint = "";
       let solution = "";
       let points = 1;
@@ -4271,24 +4335,39 @@ function escapeHtml(str){
         const rawLine = lines[lineIndex];
         const line = rawLine.trim();
         if (!line) {
+          if (collectingQuestion && questionLines.length && questionLines[questionLines.length - 1] !== "") questionLines.push("");
           if (inSolution) solutionLines.push(rawLine);
           continue;
         }
 
         if (/^QUESTION\s*:/i.test(line)) {
           question = line.replace(/^QUESTION\s*:/i, "").trim();
+          questionLines.length = 0;
+          if (question) questionLines.push(question);
+          collectingQuestion = true;
           continue;
         }
 
         if (/^QUESTION\s+\d+/i.test(line) && !question) {
           question = line.trim();
+          questionLines.push(question);
+          collectingQuestion = true;
           continue;
         }
 
         if (/^(?:\d+\.)?\d+\.\d+\s+/i.test(line) && !question) {
           question = line.trim();
+          questionLines.push(question);
+          collectingQuestion = true;
           continue;
         }
+
+        const startsQuestionField = /^(?:TYPE|HINT|IMAGE_URL|IMAGE|POINTS|MARKS|OPTIONS|SOLUTION|MEMO|ANSWER)\s*:/i.test(line) || /^[A-Z]\s*[:.)-]\s*\S+/i.test(line);
+        if (collectingQuestion && !startsQuestionField && !inSolution) {
+          questionLines.push(rawLine.trimEnd());
+          continue;
+        }
+        if (startsQuestionField) collectingQuestion = false;
 
         if (/^TYPE\s*:/i.test(line) && !inSolution) {
           explicitType = line.replace(/^TYPE\s*:/i, "").trim().toLowerCase();
@@ -4345,8 +4424,9 @@ function escapeHtml(str){
         }
       }
 
+      if (questionLines.length) question = cleanMultilineQuestion(questionLines.join("\n"));
       solution = solutionLines.join("\n").trim();
-      question = stripLeadingQuestionNumber(question);
+      question = stripLeadingQuestionNumberMultiline(question);
       question = autoConvertMixedLatex(question);
       hint = autoConvertMixedLatex(hint);
       solution = autoConvertMixedLatex(solution);
@@ -4408,7 +4488,8 @@ function escapeHtml(str){
     }
 
     function classifySpecialNote(text){
-      const t = cleanSpaces(text || "");
+      const multilineText = cleanMultilineQuestion(text || "");
+      const t = cleanSpaces(multilineText);
       if (!t) return { type: "note", text: "" };
 
       const mainMatch = t.match(/^QUESTION\s+(\d+)\s*[:.-]?\s*(.*)$/i);
@@ -4429,7 +4510,7 @@ function escapeHtml(str){
         };
       }
 
-      return { type: "note", text: autoConvertMixedLatex(t) };
+      return { type: "note", text: autoConvertMixedLatex(multilineText) };
     }
 
     function parseNoteBlock(block){
@@ -4525,7 +4606,7 @@ function escapeHtml(str){
     }
 
     function fillMcqCard(card, data){
-      card.querySelector(".qText").value = stripLeadingQuestionNumber(data.question || "");
+      card.querySelector(".qText").value = stripLeadingQuestionNumberMultiline(data.question || "");
       card.querySelector(".qHint").value = data.hint || "";
       card.querySelector(".qPoints").value = data.points || 1;
       card.querySelector(".qSolution").value = data.solution || "";
@@ -4552,7 +4633,7 @@ function escapeHtml(str){
     }
 
     function fillTextCard(card, data){
-      card.querySelector(".qText").value = stripLeadingQuestionNumber(data.question || "");
+      card.querySelector(".qText").value = stripLeadingQuestionNumberMultiline(data.question || "");
       card.querySelector(".qHint").value = data.hint || "";
       card.querySelector(".qPoints").value = data.points || 1;
       card.querySelector(".qSolution").value = data.solution || "";
@@ -4984,7 +5065,7 @@ function escapeHtml(str){
           continue;
         }
 
-        const rawText = stripLeadingQuestionNumber(card.querySelector(".qText")?.value || "");
+        const rawText = stripLeadingQuestionNumberMultiline(card.querySelector(".qText")?.value || "");
         const typedPrefix = extractLeadingQuestionNumber(card.querySelector(".qText")?.value || "");
         const numberLabel = cleanSpaces(card.querySelector(".cardLabel")?.textContent || "");
         let text = rawText;
