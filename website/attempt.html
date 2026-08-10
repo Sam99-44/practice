@@ -6190,6 +6190,61 @@ mjx-container[jax="SVG"] svg{
 .submitted-state .quizNavigation.show{
   display:flex !important;
 }
+
+/* Simple probability notation is rendered before MathJax so it inherits the
+   exact baseline and line-height of the question or note containing it. */
+.examPaper .probabilityInline{
+  display:inline !important;
+  position:static !important;
+  top:auto !important;
+  transform:none !important;
+  vertical-align:baseline !important;
+  font-family:inherit !important;
+  font-size:1em !important;
+  font-weight:400 !important;
+  font-style:italic !important;
+  line-height:inherit !important;
+  white-space:nowrap !important;
+}
+.examPaper .probabilityInline .probabilityWord{
+  font-style:normal !important;
+}
+.examPaper .noteValueInline{
+  display:inline !important;
+  position:static !important;
+  top:auto !important;
+  transform:none !important;
+  vertical-align:baseline !important;
+  font-family:inherit !important;
+  font-size:1em !important;
+  font-weight:inherit !important;
+  font-style:normal !important;
+  line-height:inherit !important;
+  white-space:nowrap !important;
+}
+
+/* Topic-independent baseline correction for compact inline MathJax output.
+   The pixel shift is measured from the surrounding text after typesetting. */
+.examPaper mjx-container.inlineMathAutoBaseline[jax="SVG"]{
+  top:0 !important;
+  transform:translateY(var(--inline-math-baseline-shift, 0px)) !important;
+  vertical-align:baseline !important;
+}
+.inlineMathBaselineProbe{
+  display:inline-block !important;
+  width:0 !important;
+  min-width:0 !important;
+  height:auto !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  overflow:visible !important;
+  visibility:hidden !important;
+  font:inherit !important;
+  line-height:inherit !important;
+  white-space:nowrap !important;
+  pointer-events:none !important;
+}
 @media(max-width:640px){
   .submitted-state .quizNavigation.show{
     display:grid !important;
@@ -6567,8 +6622,62 @@ const postSubmitOverlay = document.getElementById("postSubmitOverlay");
       try { window.MathJax.typesetClear([root]); } catch(e) {}
     }
     if (window.MathJax?.typesetPromise) {
-      window.MathJax.typesetPromise([root]).catch(()=>{});
+      window.MathJax.typesetPromise([root])
+        .then(() => requestAnimationFrame(() => alignCompactInlineMath(root)))
+        .catch(()=>{});
     }
+  }
+
+  function alignCompactInlineMath(root=document){
+    const scope = root?.querySelectorAll ? root : document;
+    const maths = scope.querySelectorAll(
+      '.examPaper .qText mjx-container[jax="SVG"]:not([display="true"]),' +
+      '.examPaper .questionContinuation mjx-container[jax="SVG"]:not([display="true"]),' +
+      '.examPaper .optText mjx-container[jax="SVG"]:not([display="true"]),' +
+      '.examPaper .noteBox mjx-container[jax="SVG"]:not([display="true"]),' +
+      '.examPaper .hintText mjx-container[jax="SVG"]:not([display="true"]),' +
+      '.examPaper .solutionBody mjx-container[jax="SVG"]:not([display="true"])'
+    );
+
+    maths.forEach(math => {
+      /* Fractions, roots, matrices and stacked notation need MathJax's own
+         vertical metrics. Only compact inline expressions are auto-aligned. */
+      if (math.querySelector(
+        'mjx-mfrac,mjx-msqrt,mjx-mroot,mjx-mtable,mjx-mover,mjx-munder,mjx-munderover,' +
+        '[data-mml-node="mfrac"],[data-mml-node="msqrt"],[data-mml-node="mroot"],' +
+        '[data-mml-node="mtable"],[data-mml-node="mover"],[data-mml-node="munder"],' +
+        '[data-mml-node="munderover"]'
+      )) {
+        math.classList.remove('inlineMathAutoBaseline');
+        math.style.removeProperty('--inline-math-baseline-shift');
+        return;
+      }
+
+      const parent = math.parentElement;
+      if (!parent || !math.getClientRects().length) return;
+
+      const fontSize = parseFloat(getComputedStyle(parent).fontSize) || 16;
+      const initialRect = math.getBoundingClientRect();
+      if (!initialRect.height || initialRect.height > fontSize * 1.75) return;
+
+      math.classList.add('inlineMathAutoBaseline');
+      math.style.setProperty('--inline-math-baseline-shift', '0px');
+
+      const probe = document.createElement('span');
+      probe.className = 'inlineMathBaselineProbe';
+      probe.textContent = 'Ag';
+      math.before(probe);
+
+      const textRect = probe.getBoundingClientRect();
+      const mathRect = math.getBoundingClientRect();
+      probe.remove();
+
+      if (!textRect.height || !mathRect.height) return;
+      const textMiddle = textRect.top + (textRect.height / 2);
+      const mathMiddle = mathRect.top + (mathRect.height / 2);
+      const measuredShift = Math.max(-4, Math.min(4, textMiddle - mathMiddle));
+      math.style.setProperty('--inline-math-baseline-shift', `${measuredShift.toFixed(2)}px`);
+    });
   }
 
   function typesetMathSoon(root=document){
@@ -11181,9 +11290,87 @@ function hasInlineLatexMathOnly(text){
     return words.length <= 1 && !sentenceWords;
   }
 
+  function sharedProbabilityToken(body){
+    let value = String(body || "").trim();
+    if (!/^P\s*(?:\\left\s*)?\(/.test(value)) return "";
+    if (!/(?:\\right\s*)?\)\s*$/.test(value)) return "";
+
+    const uprightWords = [];
+    value = value
+      .replace(/\\text\s*\{([^{}]*)\}/g, (_, word) => `@@PW${uprightWords.push(word)-1}@@`)
+      .replace(/\\mathrm\s*\{([^{}]*)\}/g, (_, word) => `@@PW${uprightWords.push(word)-1}@@`)
+      .replace(/\\operatorname\s*\{([^{}]*)\}/g, (_, word) => `@@PW${uprightWords.push(word)-1}@@`);
+
+    value = value
+      .replace(/\\left|\\right/g, "")
+      .replace(/\\cap\b/g, "∩")
+      .replace(/\\cup\b/g, "∪")
+      .replace(/\\mid\b/g, "|")
+      .replace(/\\setminus\b/g, "∖")
+      .replace(/\\,/g, " ")
+      .replace(/\\!/g, "")
+      .replace(/-/g, "−")
+      .replace(/\s*([=+−∩∪|])\s*/g, " $1 ")
+      .replace(/\(\s+/g, "(")
+      .replace(/\s+\)/g, ")")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    let safeValue = sharedEscapeHtml(value);
+    safeValue = safeValue.replace(/@@PW(\d+)@@/g, (_, index) => {
+      return `<span class="probabilityWord">${sharedEscapeHtml(uprightWords[Number(index)] || "")}</span>`;
+    });
+
+    return `<span class="probabilityInline" data-native-probability="1">${safeValue}</span>`;
+  }
+
+  function sharedRenderProbabilityBeforeMathJax(raw){
+    const directToken = sharedProbabilityToken(raw);
+    if (directToken) return directToken;
+
+    let changed = false;
+    const replaceToken = (whole, body) => {
+      const token = sharedProbabilityToken(body);
+      if (!token) return whole;
+      changed = true;
+      return token;
+    };
+
+    let value = String(raw || "").replace(/\$([^$\n]+)\$/g, replaceToken);
+    value = value.replace(/\\\(([^\n]+?)\\\)/g, replaceToken);
+    if (changed) return value;
+
+    /* A complete delimited formula may contain P(...) as an ordinary
+       variable, for example A=P(1\pm i)^n. Keep that formula intact for
+       MathJax instead of mistaking P for probability notation. */
+    if (sharedHasLatexSyntax(raw)) return raw;
+
+    /* Also detect undelimited P(...) notation in imported question text,
+       answer choices and note lines before MathJax sees the content. */
+    value = String(raw || "").replace(
+      /P\s*(?:\\left\s*)?\([^()\n]*\)(?:\s*(?:=|[+\-−])\s*(?:\d+(?:\.\d+)?|P\s*(?:\\left\s*)?\([^()\n]*\)))*/g,
+      whole => sharedProbabilityToken(whole) || whole
+    );
+    return value !== raw ? value : raw;
+  }
+
   function sharedRenderMixedMath(text){
     const raw = String(text || "").trim();
     if (!raw) return "";
+
+    /* Counting phrases in probability notes are ordinary language, not
+       algebra. This also repairs stored forms such as "$3starters$". */
+    const countPhrase = raw.match(/^\$?\s*(\d+(?:\.\d+)?)\s*([A-Za-z]{3,}(?:\s+[A-Za-z]{2,})*)\s*\$?$/);
+    if (countPhrase) {
+      return escapeHtml(`${countPhrase[1]} ${countPhrase[2]}`);
+    }
+
+    /* Detect simple P(...) notation before MathJax loads. Native inline text
+       follows the same baseline as its surrounding question automatically. */
+    const probabilityReady = sharedRenderProbabilityBeforeMathJax(raw);
+    if (probabilityReady !== raw) {
+      return probabilityReady;
+    }
 
     // Preserve content that already contains explicit LaTeX delimiters/syntax.
     if (sharedHasLatexSyntax(raw)) {
@@ -11229,6 +11416,26 @@ function hasInlineLatexMathOnly(text){
 
     function renderMixedMath(text){
     return sharedRenderMixedMath(text);
+  }
+
+  function renderNoteMixedMath(text){
+    let rendered = renderMixedMath(text);
+    const nativeValue = (_, value) => {
+      const cleanValue = String(value || "").replace(/\\%/g, "%");
+      return `<span class="noteValueInline" data-native-note-value="1">${sharedEscapeHtml(cleanValue)}</span>`;
+    };
+
+    /* Numeric-only values in prose notes are text values, not displayed
+       equations. Replace their delimiters before MathJax typesets the note. */
+    rendered = rendered.replace(
+      /\$\s*([-+−]?\d+(?:\.\d+)?(?:\\%|%)?)\s*\$/g,
+      nativeValue
+    );
+    rendered = rendered.replace(
+      /\\\(\s*([-+−]?\d+(?:\.\d+)?(?:\\%|%)?)\s*\\\)/g,
+      nativeValue
+    );
+    return rendered;
   }
 
   function renderAnswerChoice(text){
@@ -11304,7 +11511,7 @@ function hasInlineLatexMathOnly(text){
       function flushParagraph(){
         if (!paragraphLines.length) return;
         const value = paragraphLines.join(" ").trim();
-        if (value) html.push(`<p class="noteParagraph">${renderMixedMath(value)}</p>`);
+        if (value) html.push(`<p class="noteParagraph">${renderNoteMixedMath(value)}</p>`);
         paragraphLines = [];
       }
 
@@ -11313,7 +11520,7 @@ function hasInlineLatexMathOnly(text){
         const className = listType === "ol" ? "numbered" : "bulleted";
         html.push(
           `<${listType} class="noteList ${className}">` +
-          listItems.map(item => `<li>${renderMixedMath(item)}</li>`).join("") +
+          listItems.map(item => `<li>${renderNoteMixedMath(item)}</li>`).join("") +
           `</${listType}>`
         );
         listItems = [];
@@ -11365,7 +11572,7 @@ function hasInlineLatexMathOnly(text){
 
         if (line.length <= 70 && !/[.!?]$/.test(line)){
           flushParagraph();
-          html.push(`<span class="noteLine">${renderMixedMath(line)}</span>`);
+          html.push(`<span class="noteLine">${renderNoteMixedMath(line)}</span>`);
         } else {
           paragraphLines.push(line);
         }
