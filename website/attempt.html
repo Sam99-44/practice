@@ -6209,6 +6209,28 @@ mjx-container[jax="SVG"] svg{
 .examPaper .probabilityInline .probabilityWord{
   font-style:normal !important;
 }
+.examPaper .inlineVariable{
+  display:inline !important;
+  position:static !important;
+  top:auto !important;
+  transform:none !important;
+  vertical-align:baseline !important;
+  font-family:inherit !important;
+  font-size:1em !important;
+  font-weight:inherit !important;
+  font-style:italic !important;
+  line-height:inherit !important;
+  white-space:nowrap !important;
+}
+.examPaper .qText .inlineVariable,
+.examPaper .questionContinuation .inlineVariable,
+.examPaper .qSectionText .inlineVariable{
+  font-weight:700 !important;
+}
+.examPaper .noteBox .inlineVariable{
+  display:inline-block !important;
+  font-weight:400 !important;
+}
 .examPaper .noteValueInline{
   display:inline !important;
   position:static !important;
@@ -6229,6 +6251,13 @@ mjx-container[jax="SVG"] svg{
   top:0 !important;
   transform:translateY(var(--inline-math-baseline-shift, 0px)) !important;
   vertical-align:baseline !important;
+}
+/* Inline fractions need enough size for the numerator, denominator and bar
+   to remain clearly legible without enlarging ordinary maths. */
+.examPaper mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+.examPaper mjx-container[jax="SVG"]:has(mjx-mfrac){
+  font-size:1.18em !important;
+  margin-inline:.04em !important;
 }
 .inlineMathBaselineProbe{
   display:inline-block !important;
@@ -11363,6 +11392,26 @@ function hasInlineLatexMathOnly(text){
     return value !== raw ? value : raw;
   }
 
+  function sharedRenderVariablesBeforeMathJax(raw){
+    let changed = false;
+    const replaceVariable = (whole, variable) => {
+      changed = true;
+      const cleanVariable = String(variable || "")
+        .replace(/\^\{?c\}?/gi, "ᶜ")
+        .replace(/\\prime|'/g, "′");
+      return `<span class="inlineVariable" data-native-variable="1">${sharedEscapeHtml(cleanVariable)}</span>`;
+    };
+    let value = String(raw || "").replace(
+      /\$\s*([A-Za-z](?:['′]|\\prime|\^\{?c\}?)?)\s*\$/g,
+      replaceVariable
+    );
+    value = value.replace(
+      /\\\(\s*([A-Za-z](?:['′]|\\prime|\^\{?c\}?)?)\s*\\\)/g,
+      replaceVariable
+    );
+    return changed ? value : raw;
+  }
+
   function sharedRenderMixedMath(text){
     const raw = String(text || "").trim();
     if (!raw) return "";
@@ -11373,6 +11422,9 @@ function hasInlineLatexMathOnly(text){
     if (countPhrase) {
       return escapeHtml(`${countPhrase[1]} ${countPhrase[2]}`);
     }
+
+    const variableReady = sharedRenderVariablesBeforeMathJax(raw);
+    if (variableReady !== raw) return variableReady;
 
     /* Detect simple P(...) notation before MathJax loads. Native inline text
        follows the same baseline as its surrounding question automatically. */
@@ -11429,6 +11481,20 @@ function hasInlineLatexMathOnly(text){
 
   function renderNoteMixedMath(text){
     let rendered = renderMixedMath(text);
+    const nativeDefinition = (whole, variable, description) => {
+      let cleanDescription = String(description || "")
+        .replace(/\\text\s*\{([^{}]*)\}/g, "$1")
+        .replace(/\\mathrm\s*\{([^{}]*)\}/g, "$1")
+        .replace(/\\operatorname\s*\{([^{}]*)\}/g, "$1")
+        .replace(/\\,/g, " ")
+        .replace(/\\!/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (!/[A-Za-z]{3,}/.test(cleanDescription) || /[+*/^]/.test(cleanDescription)) return whole;
+      return `<span class="noteDefinitionInline"><span class="inlineVariable" data-native-variable="1">${sharedEscapeHtml(variable)}</span> = ${sharedEscapeHtml(cleanDescription)}</span>`;
+    };
+    rendered = rendered.replace(/\$\s*([A-Za-z])\s*=\s*([^$]+?)\s*\$/g, nativeDefinition);
+    rendered = rendered.replace(/\\\(\s*([A-Za-z])\s*=\s*([^\n]+?)\s*\\\)/g, nativeDefinition);
     const nativeValue = (_, value) => {
       const cleanValue = String(value || "").replace(/\\%/g, "%");
       return `<span class="noteValueInline" data-native-note-value="1">${sharedEscapeHtml(cleanValue)}</span>`;
