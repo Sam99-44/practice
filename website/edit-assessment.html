@@ -755,6 +755,28 @@ input:focus,textarea:focus,select:focus{
 .attemptPaperPreview .probabilityInline .probabilityWord{
   font-style:normal !important;
 }
+.attemptPaperPreview .inlineVariable{
+  display:inline !important;
+  position:static !important;
+  top:auto !important;
+  transform:none !important;
+  vertical-align:baseline !important;
+  font-family:inherit !important;
+  font-size:1em !important;
+  font-weight:inherit !important;
+  font-style:italic !important;
+  line-height:inherit !important;
+  white-space:nowrap !important;
+}
+.attemptPaperPreview .qText .inlineVariable,
+.attemptPaperPreview .qTextPaper .inlineVariable,
+.attemptPaperPreview .qSectionText .inlineVariable{
+  font-weight:700 !important;
+}
+.attemptPaperPreview .noteBox .inlineVariable{
+  display:inline-block !important;
+  font-weight:400 !important;
+}
 .attemptPaperPreview .noteValueInline{
   display:inline !important;
   position:static !important;
@@ -772,6 +794,11 @@ input:focus,textarea:focus,select:focus{
   top:0 !important;
   transform:translateY(var(--inline-math-baseline-shift, 0px)) !important;
   vertical-align:baseline !important;
+}
+.attemptPaperPreview mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+.attemptPaperPreview mjx-container[jax="SVG"]:has(mjx-mfrac){
+  font-size:1.18em !important;
+  margin-inline:.04em !important;
 }
 .inlineMathBaselineProbe{
   display:inline-block !important;
@@ -2174,12 +2201,34 @@ function escapeHtml(str){
       );
       return value !== raw ? value : raw;
     }
+    function renderVariablesBeforeMathJaxPreview(raw){
+      let changed = false;
+      const replaceVariable = (whole, variable) => {
+        changed = true;
+        const cleanVariable = String(variable || "")
+          .replace(/\^\{?c\}?/gi, "ᶜ")
+          .replace(/\\prime|'/g, "′");
+        return `<span class="inlineVariable" data-native-variable="1">${escapeHtml(cleanVariable)}</span>`;
+      };
+      let value = String(raw || "").replace(
+        /\$\s*([A-Za-z](?:['′]|\\prime|\^\{?c\}?)?)\s*\$/g,
+        replaceVariable
+      );
+      value = value.replace(
+        /\\\(\s*([A-Za-z](?:['′]|\\prime|\^\{?c\}?)?)\s*\\\)/g,
+        replaceVariable
+      );
+      return changed ? value : raw;
+    }
     function renderMixedMathPreview(text){
       const raw = String(text || "").trim();
       if (!raw) return "";
 
       const countPhrase = raw.match(/^\$?\s*(\d+(?:\.\d+)?)\s*([A-Za-z]{3,}(?:\s+[A-Za-z]{2,})*)\s*\$?$/);
       if (countPhrase) return escapeHtml(`${countPhrase[1]} ${countPhrase[2]}`);
+
+      const variableReady = renderVariablesBeforeMathJaxPreview(raw);
+      if (variableReady !== raw) return variableReady;
 
       const probabilityReady = renderProbabilityBeforeMathJaxPreview(raw);
       if (probabilityReady !== raw) return probabilityReady;
@@ -2193,6 +2242,20 @@ function escapeHtml(str){
     }
     function renderNoteMixedMathPreview(text){
       let rendered = renderMixedMathPreview(text);
+      const nativeDefinition = (whole, variable, description) => {
+        let cleanDescription = String(description || "")
+          .replace(/\\text\s*\{([^{}]*)\}/g, "$1")
+          .replace(/\\mathrm\s*\{([^{}]*)\}/g, "$1")
+          .replace(/\\operatorname\s*\{([^{}]*)\}/g, "$1")
+          .replace(/\\,/g, " ")
+          .replace(/\\!/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (!/[A-Za-z]{3,}/.test(cleanDescription) || /[+*/^]/.test(cleanDescription)) return whole;
+        return `<span class="noteDefinitionInline"><span class="inlineVariable" data-native-variable="1">${escapeHtml(variable)}</span> = ${escapeHtml(cleanDescription)}</span>`;
+      };
+      rendered = rendered.replace(/\$\s*([A-Za-z])\s*=\s*([^$]+?)\s*\$/g, nativeDefinition);
+      rendered = rendered.replace(/\\\(\s*([A-Za-z])\s*=\s*([^\n]+?)\s*\\\)/g, nativeDefinition);
       const nativeValue = (_, value) => {
         const cleanValue = String(value || "").replace(/\\%/g, "%");
         return `<span class="noteValueInline" data-native-note-value="1">${escapeHtml(cleanValue)}</span>`;
