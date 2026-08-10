@@ -737,6 +737,57 @@ input:focus,textarea:focus,select:focus{
   font-size:12px;
   line-height:1.4;
 }
+
+/* Shared, topic-independent inline rendering used by the attempt file. */
+.attemptPaperPreview .probabilityInline{
+  display:inline !important;
+  position:static !important;
+  top:auto !important;
+  transform:none !important;
+  vertical-align:baseline !important;
+  font-family:inherit !important;
+  font-size:1em !important;
+  font-weight:400 !important;
+  font-style:italic !important;
+  line-height:inherit !important;
+  white-space:nowrap !important;
+}
+.attemptPaperPreview .probabilityInline .probabilityWord{
+  font-style:normal !important;
+}
+.attemptPaperPreview .noteValueInline{
+  display:inline !important;
+  position:static !important;
+  top:auto !important;
+  transform:none !important;
+  vertical-align:baseline !important;
+  font-family:inherit !important;
+  font-size:1em !important;
+  font-weight:inherit !important;
+  font-style:normal !important;
+  line-height:inherit !important;
+  white-space:nowrap !important;
+}
+.attemptPaperPreview mjx-container.inlineMathAutoBaseline[jax="SVG"]{
+  top:0 !important;
+  transform:translateY(var(--inline-math-baseline-shift, 0px)) !important;
+  vertical-align:baseline !important;
+}
+.inlineMathBaselineProbe{
+  display:inline-block !important;
+  width:0 !important;
+  min-width:0 !important;
+  height:auto !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  overflow:visible !important;
+  visibility:hidden !important;
+  font:inherit !important;
+  line-height:inherit !important;
+  white-space:nowrap !important;
+  pointer-events:none !important;
+}
 </style>
 </head>
 
@@ -1979,8 +2030,59 @@ input:focus,textarea:focus,select:focus{
 
     function typesetMath(root=document){
       if (window.MathJax?.typesetPromise) {
-        window.MathJax.typesetPromise([root]).catch(()=>{});
+        window.MathJax.typesetPromise([root])
+          .then(() => requestAnimationFrame(() => alignCompactInlineMath(root)))
+          .catch(()=>{});
       }
+    }
+
+    function alignCompactInlineMath(root=document){
+      const scope = root?.querySelectorAll ? root : document;
+      const maths = scope.querySelectorAll(
+        '.attemptPaperPreview .qText mjx-container[jax="SVG"]:not([display="true"]),' +
+        '.attemptPaperPreview .qTextPaper mjx-container[jax="SVG"]:not([display="true"]),' +
+        '.attemptPaperPreview .questionContinuation mjx-container[jax="SVG"]:not([display="true"]),' +
+        '.attemptPaperPreview .qSectionText mjx-container[jax="SVG"]:not([display="true"]),' +
+        '.attemptPaperPreview .optTextPaper mjx-container[jax="SVG"]:not([display="true"]),' +
+        '.attemptPaperPreview .noteBox mjx-container[jax="SVG"]:not([display="true"]),' +
+        '.attemptPaperPreview .hint mjx-container[jax="SVG"]:not([display="true"]),' +
+        '.attemptPaperPreview .solutionBody mjx-container[jax="SVG"]:not([display="true"])'
+      );
+
+      maths.forEach(math => {
+        if (math.querySelector(
+          'mjx-mfrac,mjx-msqrt,mjx-mroot,mjx-mtable,mjx-mover,mjx-munder,mjx-munderover,' +
+          '[data-mml-node="mfrac"],[data-mml-node="msqrt"],[data-mml-node="mroot"],' +
+          '[data-mml-node="mtable"],[data-mml-node="mover"],[data-mml-node="munder"],' +
+          '[data-mml-node="munderover"]'
+        )) {
+          math.classList.remove('inlineMathAutoBaseline');
+          math.style.removeProperty('--inline-math-baseline-shift');
+          return;
+        }
+
+        const parent = math.parentElement;
+        if (!parent || !math.getClientRects().length) return;
+        const fontSize = parseFloat(getComputedStyle(parent).fontSize) || 16;
+        const initialRect = math.getBoundingClientRect();
+        if (!initialRect.height || initialRect.height > fontSize * 1.75) return;
+
+        math.classList.add('inlineMathAutoBaseline');
+        math.style.setProperty('--inline-math-baseline-shift', '0px');
+        const probe = document.createElement('span');
+        probe.className = 'inlineMathBaselineProbe';
+        probe.textContent = 'Ag';
+        math.before(probe);
+        const textRect = probe.getBoundingClientRect();
+        const mathRect = math.getBoundingClientRect();
+        probe.remove();
+
+        if (!textRect.height || !mathRect.height) return;
+        const textMiddle = textRect.top + (textRect.height / 2);
+        const mathMiddle = mathRect.top + (mathRect.height / 2);
+        const measuredShift = Math.max(-4, Math.min(4, textMiddle - mathMiddle));
+        math.style.setProperty('--inline-math-baseline-shift', `${measuredShift.toFixed(2)}px`);
+      });
     }
 
     let currentFullPreviewMode = "attempt";
@@ -2009,15 +2111,92 @@ function escapeHtml(str){
     function toLatex(text){
       return autoConvertMixedLatex(String(text || "").trim());
     }
+    function probabilityTokenPreview(body){
+      let value = String(body || "").trim();
+      if (!/^P\s*(?:\\left\s*)?\(/.test(value)) return "";
+      if (!/(?:\\right\s*)?\)\s*$/.test(value)) return "";
+
+      const uprightWords = [];
+      value = value
+        .replace(/\\text\s*\{([^{}]*)\}/g, (_, word) => `@@PW${uprightWords.push(word)-1}@@`)
+        .replace(/\\mathrm\s*\{([^{}]*)\}/g, (_, word) => `@@PW${uprightWords.push(word)-1}@@`)
+        .replace(/\\operatorname\s*\{([^{}]*)\}/g, (_, word) => `@@PW${uprightWords.push(word)-1}@@`)
+        .replace(/\\left|\\right/g, "")
+        .replace(/\\cap\b/g, "∩")
+        .replace(/\\cup\b/g, "∪")
+        .replace(/\\mid\b/g, "|")
+        .replace(/\\setminus\b/g, "∖")
+        .replace(/\\,/g, " ")
+        .replace(/\\!/g, "")
+        .replace(/-/g, "−")
+        .replace(/\s*([=+−∩∪|])\s*/g, " $1 ")
+        .replace(/\(\s+/g, "(")
+        .replace(/\s+\)/g, ")")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      let safeValue = escapeHtml(value);
+      safeValue = safeValue.replace(/@@PW(\d+)@@/g, (_, index) => {
+        return `<span class="probabilityWord">${escapeHtml(uprightWords[Number(index)] || "")}</span>`;
+      });
+      return `<span class="probabilityInline" data-native-probability="1">${safeValue}</span>`;
+    }
+    function renderProbabilityBeforeMathJaxPreview(raw){
+      const directToken = probabilityTokenPreview(raw);
+      if (directToken) return directToken;
+
+      let changed = false;
+      const replaceToken = (whole, body) => {
+        const token = probabilityTokenPreview(body);
+        if (!token) return whole;
+        changed = true;
+        return token;
+      };
+      let value = String(raw || "").replace(/\$([^$\n]+)\$/g, replaceToken);
+      value = value.replace(/\\\(([^\n]+?)\\\)/g, replaceToken);
+      if (changed) return value;
+
+      /* Preserve complete formulas such as A=P(1\pm i)^n. */
+      if (hasLatexSyntax(raw)) return raw;
+
+      value = String(raw || "").replace(
+        /P\s*(?:\\left\s*)?\([^()\n]*\)(?:\s*(?:=|[+\-−])\s*(?:\d+(?:\.\d+)?|P\s*(?:\\left\s*)?\([^()\n]*\)))*/g,
+        whole => probabilityTokenPreview(whole) || whole
+      );
+      return value !== raw ? value : raw;
+    }
     function renderMixedMathPreview(text){
       const raw = String(text || "").trim();
       if (!raw) return "";
+
+      const countPhrase = raw.match(/^\$?\s*(\d+(?:\.\d+)?)\s*([A-Za-z]{3,}(?:\s+[A-Za-z]{2,})*)\s*\$?$/);
+      if (countPhrase) return escapeHtml(`${countPhrase[1]} ${countPhrase[2]}`);
+
+      const probabilityReady = renderProbabilityBeforeMathJaxPreview(raw);
+      if (probabilityReady !== raw) return probabilityReady;
+
       if (hasLatexSyntax(raw)) return raw;
       const parts = [];
       let temp = raw.replace(/(sqrt\s*\([^()]+\)|sqrt\s*\{[^{}]+\}|sqrt[A-Za-z0-9]+|[A-Za-z0-9)\]\s]+(?:<=|>=|<|>|=|≈|≤|≥)[A-Za-z0-9(\[\]{}\\\s+\-*/^.,]+|\d+\s*\/\s*\d+|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+))/g, (m) => `@@M${parts.push(m)-1}@@`);
       temp = escapeHtml(temp);
       temp = temp.replace(/@@M(\d+)@@/g, (_, i) => toLatex(parts[Number(i)]));
       return temp;
+    }
+    function renderNoteMixedMathPreview(text){
+      let rendered = renderMixedMathPreview(text);
+      const nativeValue = (_, value) => {
+        const cleanValue = String(value || "").replace(/\\%/g, "%");
+        return `<span class="noteValueInline" data-native-note-value="1">${escapeHtml(cleanValue)}</span>`;
+      };
+      rendered = rendered.replace(
+        /\$\s*([-+−]?\d+(?:\.\d+)?(?:\\%|%)?)\s*\$/g,
+        nativeValue
+      );
+      rendered = rendered.replace(
+        /\\\(\s*([-+−]?\d+(?:\.\d+)?(?:\\%|%)?)\s*\\\)/g,
+        nativeValue
+      );
+      return rendered;
     }
     function renderMixedMath(text){
       return renderMixedMathPreview(text);
@@ -2279,13 +2458,13 @@ function escapeHtml(str){
       if(!clean)return"";
       const lines=clean.split("\n").map(x=>x.trim()).filter(Boolean), html=[];
       if(lines.length&&/^(assessment instructions|instructions|learning objective|learning objectives|objective|objectives|note|information)\b/i.test(lines[0])){
-        html.push(`<span class="noteTitle">${renderMixedMathPreview(lines.shift())}</span>`);
+        html.push(`<span class="noteTitle">${renderNoteMixedMathPreview(lines.shift())}</span>`);
       }
       let list=[];
-      const flush=()=>{if(list.length){html.push(`<ul class="noteList">${list.map(x=>`<li>${renderMixedMathPreview(x)}</li>`).join("")}</ul>`);list=[]}};
-      for(const line of lines){const b=line.match(/^(?:[-•*]|\d+[.)])\s*(.+)$/);if(b)list.push(b[1]);else{flush();html.push(`<p class="noteParagraph">${renderMixedMathPreview(line)}</p>`)}}
+      const flush=()=>{if(list.length){html.push(`<ul class="noteList">${list.map(x=>`<li>${renderNoteMixedMathPreview(x)}</li>`).join("")}</ul>`);list=[]}};
+      for(const line of lines){const b=line.match(/^(?:[-•*]|\d+[.)])\s*(.+)$/);if(b)list.push(b[1]);else{flush();html.push(`<p class="noteParagraph">${renderNoteMixedMathPreview(line)}</p>`)}}
       flush();
-      return html.length?html.join(""):renderMixedMathPreview(clean);
+      return html.length?html.join(""):renderNoteMixedMathPreview(clean);
     }
     function renderPreviewQuestionHead(label,questionText,points){
       return `<div class="qHead"><div class="qTitle"><span class="qNo">${escapeHtml(label)}</span><span class="qTextPaper">${renderStructuredQuestionText(questionText, renderMixedMathPreview)}</span></div><div class="marksMetaPaper">${escapeHtml(points)}</div></div>`;
