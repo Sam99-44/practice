@@ -572,6 +572,96 @@ button{font:inherit}
   font-weight:700;
 }
 
+.in-progress{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  min-height:24px;
+  color:#075985;
+  font-size:10px;
+  font-weight:800;
+}
+
+.in-progress img{
+  width:17px;
+  height:17px;
+  display:block;
+  flex:0 0 17px;
+  opacity:1;
+  filter:brightness(0) saturate(100%) invert(27%) sepia(68%) saturate(1186%) hue-rotate(166deg) brightness(87%) contrast(95%);
+}
+
+.attempted-status{
+  padding:9px 10px;
+  border:1px solid #d1d5db;
+  border-radius:4px;
+  background:#f8fafc;
+  color:#334155;
+  font-size:10px;
+  font-weight:800;
+}
+
+.content-filters{
+  display:grid;
+  grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) auto;
+  gap:10px;
+  align-items:end;
+  margin:0 0 22px;
+  padding:0;
+  border:none;
+  background:transparent;
+}
+
+.content-filter-field{
+  display:grid;
+  gap:5px;
+}
+
+.content-filter-field label{
+  color:#334155;
+  font-size:11px;
+  font-weight:800;
+}
+
+.content-filter-field input,
+.content-filter-field select{
+  width:100%;
+  height:36px;
+  padding:0 10px;
+  border:1px solid #cbd5e1;
+  border-radius:4px;
+  background:#fff;
+  color:#111827;
+  font:12px "Inter",sans-serif;
+}
+
+.clear-filters-btn{
+  height:36px;
+  padding:0 14px;
+  border:1px solid #cbd5e1;
+  border-radius:4px;
+  background:#fff;
+  color:#0b5d84;
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+}
+
+.clear-filters-btn:hover{background:#eef6fb;}
+
+.clear-filters-btn img{
+  width:16px;
+  height:16px;
+  display:block;
+  flex:0 0 16px;
+  opacity:1;
+  filter:brightness(0) saturate(100%) invert(27%) sepia(68%) saturate(1186%) hue-rotate(166deg) brightness(87%) contrast(95%);
+}
+
 .assessment-actions{
   display:flex;
   justify-content:flex-end;
@@ -597,8 +687,10 @@ button{font:inherit}
 
 .assessment-btn.start{background:#16a34a;}
 .assessment-btn.start:hover{background:#15803d;}
-.assessment-btn.retake{background:#0b5d84;}
-.assessment-btn.retake:hover{background:#084c6b;}
+.assessment-btn.continue{background:#0b5d84;}
+.assessment-btn.continue:hover{background:#084c6b;}
+.assessment-btn.retake{background:#082f5b;}
+.assessment-btn.retake:hover{background:#061f3d;}
 .assessment-btn.locked-btn{
   min-width:112px;
   background:var(--gold);
@@ -656,6 +748,7 @@ button{font:inherit}
 @media(max-width:640px){
   .wrap{padding:14px}
   .content-area{padding:16px}
+  .content-filters{grid-template-columns:1fr;}
   .menuBtnText{display:none}
   .menuDropdown{width:210px}
 }
@@ -781,6 +874,23 @@ if(!localStorage.getItem("token")){
 
     <div class="content-area">
 
+      <div class="content-filters" id="contentFilters" aria-label="Filter learning content">
+        <div class="content-filter-field">
+          <label for="assessmentCodeFilter">Assessment code</label>
+          <input id="assessmentCodeFilter" type="search" placeholder="Enter assessment code" autocomplete="off">
+        </div>
+        <div class="content-filter-field">
+          <label for="topicFilter">Topic</label>
+          <select id="topicFilter">
+            <option value="">All topics</option>
+          </select>
+        </div>
+        <button class="clear-filters-btn" id="clearContentFilters" type="button">
+          <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1785018583/clear-filter_shutdz.svg" alt="" aria-hidden="true">
+          <span>Clear filters</span>
+        </button>
+      </div>
+
       <div class="content-panel active" id="activities">
         <h2 class="section-title">Activities</h2>
         <p class="section-subtitle">Class activities and practice tasks will appear here.</p>
@@ -866,6 +976,16 @@ let allLearningContent = [];
 let resultsMap = {};
 let ratingsMap = {};
 
+const contentFilters = document.getElementById("contentFilters");
+const assessmentCodeFilter = document.getElementById("assessmentCodeFilter");
+const topicFilter = document.getElementById("topicFilter");
+const clearContentFilters = document.getElementById("clearContentFilters");
+
+const learningFilterState = {
+  code:"",
+  topic:""
+};
+
 logoutBtn.onclick = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("username");
@@ -893,7 +1013,26 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
 
     btn.classList.add("active");
     document.getElementById(btn.dataset.tab).classList.add("active");
+    if(contentFilters) contentFilters.hidden = btn.dataset.tab === "newspaper";
   });
+});
+
+assessmentCodeFilter?.addEventListener("input", () => {
+  learningFilterState.code = assessmentCodeFilter.value.trim().toUpperCase();
+  renderLearningContent();
+});
+
+topicFilter?.addEventListener("change", () => {
+  learningFilterState.topic = topicFilter.value;
+  renderLearningContent();
+});
+
+clearContentFilters?.addEventListener("click", () => {
+  learningFilterState.code = "";
+  learningFilterState.topic = "";
+  assessmentCodeFilter.value = "";
+  topicFilter.value = "";
+  renderLearningContent();
 });
 
 function esc(value){
@@ -957,6 +1096,10 @@ function getAssessmentCode(item){
   return String(item?.assessmentCode || item?.quizCode || item?.examCode || item?.code || "").trim().toUpperCase();
 }
 
+function getTopic(item){
+  return String(item?.topic || item?.topicType || item?.topic_type || "").trim();
+}
+
 function getDifficulty(item){
   const value = String(item?.difficulty || "moderate");
   return value.charAt(0).toUpperCase() + value.slice(1);
@@ -978,6 +1121,23 @@ function isLocked(item){
 
 function getResult(item){
   return resultsMap[getId(item)] || null;
+}
+
+function getAttemptStatus(item, result){
+  if(result) return "attempted";
+
+  const id = getId(item);
+  if(!id) return "not-attempted";
+
+  const username = localStorage.getItem("username") || "user";
+  const endAt = Number(localStorage.getItem(`quiz_end_${id}_${username}`));
+  const savedAnswers = localStorage.getItem(`quiz_answers_${id}_${username}`);
+
+  if(Number.isFinite(endAt) && endAt > 0){
+    return endAt > Date.now() ? "in-progress" : "attempted";
+  }
+
+  return savedAnswers ? "in-progress" : "not-attempted";
 }
 
 function getBestScore(result){
@@ -1063,11 +1223,36 @@ function filterContent(type){
     .filter(item => getContentType(item) === type)
     .filter(isPublished)
     .filter(matchesLearner)
+    .filter(item => {
+      if(learningFilterState.code && !getAssessmentCode(item).includes(learningFilterState.code)) return false;
+      if(learningFilterState.topic && getTopic(item) !== learningFilterState.topic) return false;
+      return true;
+    })
     .sort((a,b) => {
       const ad = new Date(a.availableFrom || a.publishedAt || a.createdAt || 0).getTime();
       const bd = new Date(b.availableFrom || b.publishedAt || b.createdAt || 0).getTime();
       return bd - ad;
     });
+}
+
+function populateTopicFilter(){
+  if(!topicFilter) return;
+
+  const currentValue = learningFilterState.topic;
+  const topics = [...new Set(
+    allLearningContent
+      .filter(isPublished)
+      .filter(matchesLearner)
+      .map(getTopic)
+      .filter(Boolean)
+  )].sort((a,b) => a.localeCompare(b));
+
+  topicFilter.innerHTML = `<option value="">All topics</option>` + topics
+    .map(topic => `<option value="${esc(topic)}">${esc(topic)}</option>`)
+    .join("");
+
+  if(topics.includes(currentValue)) topicFilter.value = currentValue;
+  else learningFilterState.topic = "";
 }
 
 function attemptUrl(item){
@@ -1080,6 +1265,15 @@ function openSpecificContent(item){
   if(!id){
     alert("This item could not be opened because it has no ID.");
     return;
+  }
+
+  /* An elapsed local attempt has no submitted result yet. Starting it again
+     must create a fresh timer instead of reopening the expired timer. */
+  if(!getResult(item) && getAttemptStatus(item, null) === "attempted"){
+    const username = localStorage.getItem("username") || "user";
+    localStorage.removeItem(`quiz_end_${id}_${username}`);
+    localStorage.removeItem(`quiz_answers_${id}_${username}`);
+    localStorage.removeItem(`quiz_option_order_${id}_${username}`);
   }
 
   location.href = attemptUrl(item);
@@ -1103,6 +1297,7 @@ function renderCards(containerId, items, emptyText, startText){
         const paper = getPaper(item);
         const questionCount = getQuestionCount(item);
         const result = getResult(item);
+        const attemptStatus = getAttemptStatus(item, result);
         const bestScore = getBestScore(result);
         const achievement = getAchievement(bestScore);
         const lastAttempt = formatLastAttempt(result);
@@ -1159,6 +1354,13 @@ function renderCards(containerId, items, emptyText, startText){
                 <div><strong>Best Score:</strong> ${bestScore}%</div>
                 <div><strong>Last Attempt:</strong> ${esc(lastAttempt)}</div>
               </div>
+            ` : attemptStatus === "in-progress" ? `
+              <div class="in-progress">
+                <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1786803949/in-progress_mnhrex.svg" alt="" aria-hidden="true">
+                <span>In Progress</span>
+              </div>
+            ` : attemptStatus === "attempted" ? `
+              <div class="attempted-status">Attempted</div>
             ` : `
               <div class="not-attempted">Not Attempted</div>
             `}
@@ -1166,8 +1368,10 @@ function renderCards(containerId, items, emptyText, startText){
             <div class="assessment-actions">
               ${locked
                 ? `<button class="assessment-btn locked-btn open-content-btn" type="button" data-id="${esc(id)}" data-locked="true">Subscribe to Unlock</button>`
-                : result
+                : result || attemptStatus === "attempted"
                   ? `<button class="assessment-btn retake open-content-btn" type="button" data-id="${esc(id)}">Retake</button>`
+                  : attemptStatus === "in-progress"
+                    ? `<button class="assessment-btn continue open-content-btn" type="button" data-id="${esc(id)}">Continue</button>`
                   : `<button class="assessment-btn start open-content-btn" type="button" data-id="${esc(id)}">${esc(startText)}</button>`
               }
             </div>
@@ -1359,6 +1563,7 @@ async function loadLearningContent(){
       }
     }
 
+    populateTopicFilter();
     renderLearningContent();
   }catch(err){
     [
@@ -1383,6 +1588,9 @@ async function loadLearningContent(){
   await loadTopbarProfile();
   await loadAnnouncementCount();
   await loadLearningContent();
+
+  /* Keep active/elapsed attempt labels accurate while this page stays open. */
+  window.setInterval(renderLearningContent, 15000);
 })();
 </script>
 
