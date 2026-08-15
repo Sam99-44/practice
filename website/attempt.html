@@ -874,29 +874,30 @@ body.submitted-state .solutionBox{display:none!important;}
     }
 
     .confirmCard{
-      width:min(100%, 420px);
+      width:min(100%, 430px);
       background:#fff;
-      border:1px solid #e5e7eb;
-      border-radius:16px;
-      box-shadow:0 16px 40px rgba(15,23,42,.18);
-      padding:18px 18px 16px;
-      font-family:"Times New Roman", Times, serif;
+      border:1px solid #dfe5ec;
+      border-radius:7px;
+      box-shadow:0 18px 48px rgba(15,23,42,.20);
+      padding:22px 22px 18px;
+      font-family:Arial, Helvetica, sans-serif;
       color:#111827;
     }
 
     .confirmTitle{
-      font-size:15px;
-      font-weight:700;
-      margin:0 0 6px;
-      color:#111827;
+      font-size:16px;
+      font-weight:600;
+      margin:0 0 9px;
+      color:#102a56;
       line-height:1.4;
     }
 
     .confirmText{
       font-size:13px;
-      line-height:1.55;
+      line-height:1.65;
       color:#334155;
       margin:0;
+      white-space:pre-line;
     }
 
     .confirmActions{
@@ -905,6 +906,21 @@ body.submitted-state .solutionBox{display:none!important;}
       gap:10px;
       margin-top:16px;
       flex-wrap:wrap;
+    }
+
+    #submitBtn,
+    #confirmSubmitBtn,
+    #nextQuestionBtn.submit-final{
+      background:#dc2626 !important;
+      border-color:#dc2626 !important;
+      color:#fff !important;
+    }
+
+    #submitBtn:hover,
+    #confirmSubmitBtn:hover,
+    #nextQuestionBtn.submit-final:hover{
+      background:#b91c1c !important;
+      border-color:#b91c1c !important;
     }
 
     @media(max-width:640px){
@@ -1009,14 +1025,24 @@ body.submitted-state .solutionBox{display:none!important;}
     }
 
     .postSubmitTitle{
-      margin:0 0 10px;
+      margin:0 0 6px;
       font-size:18px;
       line-height:1.4;
-      font-weight:700;
-      font-family:"Times New Roman", Times, serif;
-      color:#111827;
+      font-weight:600;
+      font-family:Arial, Helvetica, sans-serif;
+      color:#102a56;
       text-align:center;
     }
+
+    .postSubmitMessage{
+      display:none;
+      margin:0 0 14px;
+      color:#475569;
+      font:13px/1.55 Arial, Helvetica, sans-serif;
+      text-align:center;
+    }
+
+    .postSubmitMessage.show{display:block;}
 
     .marksReleaseNotice{
       display:none;
@@ -6430,6 +6456,7 @@ mjx-container[jax="SVG"] svg{
       <div id="postSubmitOverlay" class="postSubmitOverlay hidden" aria-hidden="true">
         <div id="postSubmitPanel" class="postSubmitPanel" role="dialog" aria-modal="true" aria-labelledby="postSubmitTitle">
           <h3 class="postSubmitTitle" id="postSubmitTitle">Assessment Completed</h3>
+          <p class="postSubmitMessage" id="postSubmitMessage"></p>
 
           <div id="marksReleaseNotice" class="marksReleaseNotice" role="status" aria-live="polite"></div>
 
@@ -6498,11 +6525,11 @@ mjx-container[jax="SVG"] svg{
 
       <div id="submitConfirmModal" class="confirmOverlay hidden" aria-hidden="true">
         <div class="confirmCard" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
-          <h3 class="confirmTitle" id="confirmTitle">Ready to submit?</h3>
-          <p class="confirmText" id="confirmText">Please confirm before submitting.</p>
+          <h3 class="confirmTitle" id="confirmTitle">Are you sure you want to submit?</h3>
+          <p class="confirmText" id="confirmText">After submitting, you can move through the questions and view the workings for any answers you got wrong.</p>
           <div class="confirmActions">
             <button class="btn2" id="confirmCancelBtn" type="button">Cancel</button>
-            <button class="btn" id="confirmSubmitBtn" type="button">Submit</button>
+            <button class="btn" id="confirmSubmitBtn" type="button">Continue with Submission</button>
           </div>
         </div>
       </div>
@@ -6593,6 +6620,7 @@ mjx-container[jax="SVG"] svg{
 const postSubmitOverlay = document.getElementById("postSubmitOverlay");
   const postSubmitPanel = document.getElementById("postSubmitPanel");
   const postSubmitTitle = document.getElementById("postSubmitTitle");
+  const postSubmitMessage = document.getElementById("postSubmitMessage");
   const marksReleaseNotice = document.getElementById("marksReleaseNotice");
   const postSubmitGrid = document.getElementById("postSubmitGrid");
   const postSubmitRankStat = document.getElementById("postSubmitRankStat");
@@ -6919,12 +6947,13 @@ function inlineQuizLoadingHtml(){
 
     if (nextQuestionBtn) {
       const isLast = currentQuestionPage === questionPageGroups.length - 1;
+      nextQuestionBtn.classList.toggle("submit-final", !submitted && isLast);
       if (submitted) {
         nextQuestionBtn.innerHTML = `Next<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">`;
         nextQuestionBtn.disabled = isLast;
       } else {
         nextQuestionBtn.innerHTML = isLast
-          ? `Finish`
+          ? `Submit`
           : `Next<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">`;
         nextQuestionBtn.disabled = !quizStarted;
       }
@@ -6935,7 +6964,8 @@ function inlineQuizLoadingHtml(){
     }
 
     if (submitBtn && !submitted && !blocked) {
-      submitBtn.style.display = quizStarted && currentQuestionPage === questionPageGroups.length - 1 ? "" : "none";
+      /* The final navigation button is the single visible Submit action. */
+      submitBtn.style.display = "none";
     }
 
     typesetMathSoon(questionsDiv);
@@ -7958,11 +7988,12 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     attachMathInputBehaviour();
   }
 
-  function showSubmitConfirm(message, title="Ready to submit?"){
+  function showSubmitConfirm(message, title="Are you sure you want to submit?"){
     confirmTitleEl.textContent = title;
     confirmTextEl.textContent = message;
     submitConfirmModal.classList.remove("hidden");
     submitConfirmModal.setAttribute("aria-hidden", "false");
+    window.setTimeout(() => confirmCancelBtn?.focus(), 0);
   }
 
   function hideSubmitConfirm(){
@@ -9162,6 +9193,10 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     postSubmitScore.textContent = "—";
     postSubmitPercent.textContent = "—";
     postSubmitRank.textContent = "—";
+    if (postSubmitMessage) {
+      postSubmitMessage.textContent = "";
+      postSubmitMessage.classList.remove("show");
+    }
     setNextQuizButtonState(null, "");
     selectedInlineRating = 0;
     updateInlineStars();
@@ -9257,6 +9292,10 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
       if (postSubmitTitle) {
         postSubmitTitle.textContent = "Assessment Submitted";
+      }
+      if (postSubmitMessage) {
+        postSubmitMessage.textContent = "";
+        postSubmitMessage.classList.remove("show");
       }
 
       if (marksReleaseNotice) {
@@ -9364,12 +9403,26 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
     if (!pendingMarksRelease) {
       const score = `${Number(savedData?.score || 0)}/${Number(savedData?.total || 0)}`;
-      const percent = `${Number(savedData?.percent || 0)}%`;
+      const percentValue = Number(savedData?.percent || 0);
+      const percent = `${percentValue}%`;
+      const canShowPosition = !practiceMode && percentValue >= 50;
+      const passed = percentValue >= 50;
+
+      if (postSubmitTitle) {
+        postSubmitTitle.textContent = passed ? "Well done!" : "Assessment Completed";
+      }
+      if (postSubmitMessage) {
+        postSubmitMessage.textContent = passed
+          ? "You passed this quiz. Review your marks below and continue to the suggested quiz when you are ready."
+          : "Review your marks and workings, then try again when you are ready to improve your score.";
+        postSubmitMessage.classList.add("show");
+      }
 
       postSubmitScore.textContent = score;
       postSubmitPercent.textContent = percent;
+      if (postSubmitRankStat) postSubmitRankStat.hidden = !canShowPosition;
 
-      if (rankedData && rankedData.rank) {
+      if (canShowPosition && rankedData && rankedData.rank) {
         postSubmitRank.textContent = `#${rankedData.rank}`;
       } else {
         postSubmitRank.textContent = "#-";
@@ -9389,6 +9442,17 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   function updatePostSubmitRankOnly(rankedData){
     if (isMarksReleasePending()) {
       postSubmitRank.textContent = "Pending";
+      return;
+    }
+
+    const percentValue = Number(
+      rankedData?.percent ?? String(postSubmitPercent?.textContent || "").replace("%", "")
+    );
+    const canShowPosition = !practiceMode && Number.isFinite(percentValue) && percentValue >= 50;
+
+    if (postSubmitRankStat) postSubmitRankStat.hidden = !canShowPosition;
+    if (!canShowPosition) {
+      postSubmitRank.textContent = "#-";
       return;
     }
 
@@ -10235,9 +10299,13 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     if (mode === "manual" && !options.skipConfirm) {
       const unanswered = Math.max(0, total - answered);
       if (unanswered > 0) {
-        showSubmitConfirm(`You still have ${unanswered} unanswered question${unanswered === 1 ? "" : "s"}. Do you want to submit anyway?`);
+        showSubmitConfirm(
+          `You still have ${unanswered} unanswered question${unanswered === 1 ? "" : "s"}. If you continue, the assessment will be submitted with those questions unanswered.\n\nAfter submitting, you can move through the questions and view the workings for any answers you got wrong.`
+        );
       } else {
-        showSubmitConfirm("You answered all questions. Are you ready to submit?");
+        showSubmitConfirm(
+          "You have answered all the questions. Once you continue, your assessment will be submitted.\n\nAfter submitting, you can move through the questions and view the workings for any answers you got wrong."
+        );
       }
       return;
     }
