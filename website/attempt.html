@@ -8412,11 +8412,47 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
     if (!normalized) return null;
 
-    const unwrapped = normalized
-      .replace(/^\(+/, "")
-      .replace(/\)+$/, "");
+    /*
+     * MathLive returns a typed fraction such as 1/10 as
+     * ((1)/(10)). Remove only complete outer wrapper pairs.
+     * Removing every leading/trailing bracket would leave the invalid
+     * expression 1)/(10 and make an equivalent fraction look wrong.
+     */
+    let unwrapped = normalized;
 
-    const fractionMatch = unwrapped.match(
+    while (
+      unwrapped.startsWith("(") &&
+      unwrapped.endsWith(")")
+    ) {
+      let depth = 0;
+      let outerPairWrapsEverything = true;
+
+      for (let index = 0; index < unwrapped.length; index += 1) {
+        const character = unwrapped[index];
+
+        if (character === "(") depth += 1;
+        if (character === ")") depth -= 1;
+
+        if (depth === 0 && index < unwrapped.length - 1) {
+          outerPairWrapsEverything = false;
+          break;
+        }
+
+        if (depth < 0) {
+          outerPairWrapsEverything = false;
+          break;
+        }
+      }
+
+      if (!outerPairWrapsEverything || depth !== 0) break;
+
+      unwrapped = unwrapped.slice(1, -1).trim();
+    }
+
+    /* Accept the South African decimal comma during numeric comparison. */
+    const numericAnswer = unwrapped.replace(/,/g, ".");
+
+    const fractionMatch = numericAnswer.match(
       /^\(?([+-]?(?:\d+(?:\.\d*)?|\.\d+))\)?\/\(?([+-]?(?:\d+(?:\.\d*)?|\.\d+))\)?$/
     );
 
@@ -8438,7 +8474,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
      * Full symbolic expression equivalence is still checked securely
      * by the server using Math.js.
      */
-    const numericExpression = unwrapped
+    const numericExpression = numericAnswer
       .replace(/\^/g, "**")
       .replace(/sqrt\(/g, "Math.sqrt(");
 
@@ -8466,6 +8502,94 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
   function parseNumberOrFraction(input) {
     return evaluateNumericMathAnswer(input);
+  }
+
+  function getNumericAcceptableRange(
+    correctAnswer,
+    configuredTolerance = 0
+  ) {
+    const normalized = normalizeMathLiveAnswer(
+      extractStoredTypedAnswerValue(correctAnswer)
+    )
+      .replace(/,/g, ".")
+      .replace(/^\((.*)\)$/, "$1")
+      .trim();
+
+    const decimalMatch = normalized.match(
+      /^[+-]?(?:\d+\.([0-9]+)|\.([0-9]+))$/
+    );
+
+    const decimalPart = decimalMatch
+      ? String(decimalMatch[1] || decimalMatch[2] || "")
+      : "";
+
+    const configured = Number.isFinite(Number(configuredTolerance))
+      ? Math.max(0, Number(configuredTolerance))
+      : 0;
+
+    /*
+     * For answers stored to two decimal places, use the agreed learner
+     * range. Example: when the correct answer is 9.16, accept 9.13 to
+     * 9.20 inclusive. A larger configured tolerance still takes priority.
+     */
+    if (decimalPart.length === 2) {
+      return {
+        lower: Math.max(configured, 0.03),
+        upper: Math.max(configured, 0.04)
+      };
+    }
+
+    const roundingTolerance = decimalPart
+      ? (0.5 * (10 ** -decimalPart.length)) + 1e-12
+      : 1e-12;
+
+    return {
+      lower: Math.max(configured, roundingTolerance),
+      upper: Math.max(configured, roundingTolerance)
+    };
+  }
+
+  function numericValuesAreInAcceptableRange(
+    learnerValue,
+    correctValue,
+    correctAnswer,
+    configuredTolerance = 0
+  ) {
+    /*
+     * Mark numeric answers to two decimal places. This makes equivalent
+     * forms such as 19/40, 0.475, 0,475 and 0.48 agree before the wider
+     * question tolerance is considered.
+     */
+    const roundForMarking = (value) => {
+      const numericValue = Number(value);
+      const direction = numericValue < 0 ? -1 : 1;
+      const adjustment =
+        direction * Number.EPSILON *
+        Math.max(1, Math.abs(numericValue)) * 10;
+
+      return Math.round((numericValue + adjustment) * 100) / 100;
+    };
+
+    if (
+      Math.abs(
+        roundForMarking(learnerValue) -
+        roundForMarking(correctValue)
+      ) <= 1e-12
+    ) {
+      return true;
+    }
+
+    const range = getNumericAcceptableRange(
+      correctAnswer,
+      configuredTolerance
+    );
+
+    const difference = learnerValue - correctValue;
+
+    return (
+      difference >= (-range.lower - 1e-12) &&
+      difference <= (range.upper + 1e-12)
+    );
   }
 
   function normalizeTextAnswer(value) {
@@ -8528,11 +8652,20 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
         return false;
       }
 
-      return Math.abs(uNum - cNum) <= tol;
+      return numericValuesAreInAcceptableRange(
+        uNum,
+        cNum,
+        caRaw,
+        tol
+      );
     }
 
     if (uNum !== null && cNum !== null) {
-      return Math.abs(uNum - cNum) <= 1e-12;
+      return numericValuesAreInAcceptableRange(
+        uNum,
+        cNum,
+        caRaw
+      );
     }
 
     const ua = normalizeTextAnswer(uaRaw)
