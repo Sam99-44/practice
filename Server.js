@@ -4103,7 +4103,7 @@ function normalizeAnswer(ans) {
     .replace(/\s+/g, "")
     .replace(/,/g, ".")
     .replace(/−/g, "-")
-    .replace(/^[a-z]+\s*=\s*/, "");
+    .replace(/^[a-z][a-z0-9_]*\s*=\s*/, "");
 }
 
 function parseNumberOrFraction(input) {
@@ -4120,6 +4120,60 @@ function parseNumberOrFraction(input) {
 
   const n = Number(s);
   return Number.isFinite(n) ? n : null;
+}
+
+function getNumericAcceptableRange(
+  correctAnswer,
+  configuredTolerance = 0
+) {
+  const normalized = normalizeAnswer(correctAnswer);
+  const decimalMatch = normalized.match(
+    /^[+-]?(?:\d+\.([0-9]+)|\.([0-9]+))$/
+  );
+
+  const decimalPart = decimalMatch
+    ? String(decimalMatch[1] || decimalMatch[2] || "")
+    : "";
+
+  const configured = Number.isFinite(Number(configuredTolerance))
+    ? Math.max(0, Number(configuredTolerance))
+    : 0;
+
+  /* For 9.16, accept the agreed inclusive range from 9.13 to 9.20. */
+  if (decimalPart.length === 2) {
+    return {
+      lower: Math.max(configured, 0.03),
+      upper: Math.max(configured, 0.04),
+    };
+  }
+
+  const roundingTolerance = decimalPart
+    ? (0.5 * (10 ** -decimalPart.length)) + 1e-12
+    : 1e-12;
+
+  return {
+    lower: Math.max(configured, roundingTolerance),
+    upper: Math.max(configured, roundingTolerance),
+  };
+}
+
+function numericValuesAreInAcceptableRange(
+  learnerValue,
+  correctValue,
+  correctAnswer,
+  configuredTolerance = 0
+) {
+  const range = getNumericAcceptableRange(
+    correctAnswer,
+    configuredTolerance
+  );
+
+  const difference = learnerValue - correctValue;
+
+  return (
+    difference >= (-range.lower - 1e-12) &&
+    difference <= (range.upper + 1e-12)
+  );
 }
 
 function normalizeTextAnswer(s) {
@@ -4157,18 +4211,29 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
 
       if (mode === "number_tolerance") {
         const tol = Number(tolerance);
+
         if (
           uNum !== null &&
           cNum !== null &&
           Number.isFinite(tol) &&
           tol >= 0 &&
-          Math.abs(uNum - cNum) <= tol
+          numericValuesAreInAcceptableRange(
+            uNum,
+            cNum,
+            allowed,
+            tol
+          )
         ) {
           return true;
         }
       } else if (uNum !== null && cNum !== null) {
-        const defaultTolerance = 0.01;
-        if (Math.abs(uNum - cNum) <= defaultTolerance) {
+        if (
+          numericValuesAreInAcceptableRange(
+            uNum,
+            cNum,
+            allowed
+          )
+        ) {
           return true;
         }
       }
@@ -4864,7 +4929,9 @@ function areExpressionsEquivalent(learnerAnswer, correctAnswer) {
 }
 
 function decimalFromAnswer(value) {
-  const normalized = normalizeMathExpression(value);
+  const normalized = normalizeMathExpression(
+    String(value ?? "").replace(/,/g, ".")
+  );
 
   if (!normalized) return null;
 
@@ -4922,18 +4989,25 @@ function compareDecimalWithTolerance(
   if (!learner || !correct) return false;
 
   try {
-    const allowedDifference = new Decimal(
-      Number.isFinite(Number(tolerance))
-        ? Math.max(0, Number(tolerance))
-        : 0
+    const configuredTolerance = Number.isFinite(Number(tolerance))
+      ? Math.max(0, Number(tolerance))
+      : 0;
+
+    const acceptableRange = getNumericAcceptableRange(
+      correctAnswer,
+      configuredTolerance
     );
 
-    return learner
-      .minus(correct)
-      .abs()
-      .lessThanOrEqualTo(
-        Decimal.max(allowedDifference, new Decimal("1e-12"))
-      );
+    const difference = learner.minus(correct);
+
+    return (
+      difference.greaterThanOrEqualTo(
+        new Decimal(acceptableRange.lower).negated()
+      ) &&
+      difference.lessThanOrEqualTo(
+        new Decimal(acceptableRange.upper)
+      )
+    );
   } catch {
     return false;
   }
