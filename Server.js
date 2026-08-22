@@ -4110,7 +4110,32 @@ function parseNumberOrFraction(input) {
   const s = normalizeAnswer(input);
   if (!s) return null;
 
-  const m = s.match(/^([+-]?\d+(?:\.\d+)?)\s*\/\s*([+-]?\d+(?:\.\d+)?)$/);
+  const numericPart = String.raw`[+-]?(?:\d+(?:\.\d+)?|\.\d+)`;
+
+  const latexFraction = s.match(
+    new RegExp(
+      String.raw`^\\(?:dfrac|tfrac|frac)\{(${numericPart})\}\{(${numericPart})\}$`
+    )
+  );
+
+  if (latexFraction) {
+    const numerator = Number(latexFraction[1]);
+    const denominator = Number(latexFraction[2]);
+
+    if (
+      !Number.isFinite(numerator) ||
+      !Number.isFinite(denominator) ||
+      denominator === 0
+    ) {
+      return null;
+    }
+
+    return numerator / denominator;
+  }
+
+  const m = s.match(
+    new RegExp(String.raw`^(${numericPart})\/(${numericPart})$`)
+  );
   if (m) {
     const a = Number(m[1]);
     const b = Number(m[2]);
@@ -4163,6 +4188,26 @@ function numericValuesAreInAcceptableRange(
   correctAnswer,
   configuredTolerance = 0
 ) {
+  /* Compare the mathematical values after rounding to two decimal places. */
+  const roundForMarking = (value) => {
+    const numericValue = Number(value);
+    const direction = numericValue < 0 ? -1 : 1;
+    const adjustment =
+      direction * Number.EPSILON *
+      Math.max(1, Math.abs(numericValue)) * 10;
+
+    return Math.round((numericValue + adjustment) * 100) / 100;
+  };
+
+  if (
+    Math.abs(
+      roundForMarking(learnerValue) -
+      roundForMarking(correctValue)
+    ) <= 1e-12
+  ) {
+    return true;
+  }
+
   const range = getNumericAcceptableRange(
     correctAnswer,
     configuredTolerance
@@ -4997,6 +5042,16 @@ function compareDecimalWithTolerance(
       correctAnswer,
       configuredTolerance
     );
+
+    if (
+      learner
+        .toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
+        .equals(
+          correct.toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
+        )
+    ) {
+      return true;
+    }
 
     const difference = learner.minus(correct);
 
