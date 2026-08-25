@@ -11315,7 +11315,8 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     let standardHeadingShown = false;
     let standardModeActive = true;
 
-    questionsDiv.innerHTML = paperMetaHtml + autoMainHeadingHtml + allQuestions.map((q, i) => {
+    try {
+      questionsDiv.innerHTML = paperMetaHtml + autoMainHeadingHtml + allQuestions.map((q, i) => {
       const type = String(q.type || "mcq").toLowerCase();
       const hint = cleanSpaces(q.hint || "");
       const img = cleanSpaces(
@@ -11612,7 +11613,17 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
           <div class="solutionHolder hidden">${renderReviewStyleSolutionBox(q)}</div>
         </div>
       `;
-    }).join("");
+      }).join("");
+    } catch (error) {
+      console.error("Assessment questions could not be rendered:", error);
+      if (quizTitle) quizTitle.textContent = cleanSpaces(quizData.title || "Assessment");
+      setStatusMessage("The assessment loaded, but one question or diagram could not be displayed.", "errorState");
+      questionsDiv.innerHTML = '<div class="notice" style="margin:18px;">This assessment contains a visual that could not be drawn. Please refresh after the assessment file has been corrected.</div>';
+      showQuestionsContent();
+      hideQuizLoader();
+      submitBtn.disabled = true;
+      return;
+    }
 
     showQuestionsContent();
     hideAllSolutions();
@@ -12111,7 +12122,6 @@ function hasInlineLatexMathOnly(text){
     return containsMathMarkup ? renderMixedMath(choice) : escapeHtml(choice);
   }
 
-+
   function renderNoteVisualTitle(title){
     const text = String(title || "").trim();
     if (!text) return "";
@@ -14013,7 +14023,17 @@ function hasInlineLatexMathOnly(text){
     /* Native assessment visuals are rendered before ordinary note formatting.
        This prevents their commands from ever appearing as learner-facing text. */
     if (/\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(raw)) {
-      return renderStructuredVisualNote(raw);
+      try {
+        return renderStructuredVisualNote(raw);
+      } catch (error) {
+        console.error("Assessment visual could not be drawn:", error);
+        const directiveStart = raw.search(
+          /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i
+        );
+        const introduction = (directiveStart >= 0 ? raw.slice(0, directiveStart) : raw).trim();
+        return (introduction ? renderStructuredNoteTextVisual(introduction) : "") +
+          noteVisualError("This diagram could not be displayed. Please report this assessment to your teacher.");
+      }
     }
 
     const lines = raw.split("\n");
