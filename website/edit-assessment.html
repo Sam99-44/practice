@@ -554,6 +554,762 @@ input:focus,textarea:focus,select:focus{
 
 
 
+/* =====================================================================
+   FULL LEARNER PREVIEW — 100% ATTEMPT NOTE STYLE
+   ===================================================================== */
+.attemptPaperPreview .previewNoteRow,
+#paperPreviewContent .previewNoteRow,
+.attemptPaperPreview .previewHeadingRow,
+#paperPreviewContent .previewHeadingRow,
+.attemptPaperPreview .previewSectionRow,
+#paperPreviewContent .previewSectionRow{
+  border:none !important;
+  border-top:none !important;
+  border-bottom:none !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  background:transparent !important;
+  padding:8px 0 !important;
+  margin:0 0 12px !important;
+}
+
+.attemptPaperPreview .noteBox,
+#paperPreviewContent .noteBox{
+  display:block !important;
+  width:100% !important;
+  min-width:0 !important;
+  margin:12px 0 18px !important;
+  padding:0 !important;
+  border:1px solid #dbe4ee !important;
+  border-radius:10px !important;
+  background:#f8fbff !important;
+  color:#111827 !important;
+  overflow:hidden !important;
+  box-shadow:none !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+}
+
+.attemptPaperPreview .noteSection,
+#paperPreviewContent .noteSection{
+  display:grid !important;
+  grid-template-columns:38px minmax(0,1fr) !important;
+  gap:12px !important;
+  align-items:start !important;
+  padding:26px 30px !important;
+  border-bottom:1px solid #dbe4ee !important;
+  background:#f7faff !important;
+}
+
+.attemptPaperPreview .noteSection:last-child,
+#paperPreviewContent .noteSection:last-child{
+  border-bottom:none !important;
+}
+
+.attemptPaperPreview .noteSectionIcon,
+#paperPreviewContent .noteSectionIcon{
+  width:30px !important;
+  height:30px !important;
+  min-width:30px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:transparent !important;
+  border:none !important;
+  border-radius:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+
+.attemptPaperPreview .noteSectionIcon img,
+#paperPreviewContent .noteSectionIcon img{
+  display:block !important;
+  width:24px !important;
+  height:24px !important;
+  min-width:24px !important;
+  max-width:24px !important;
+  object-fit:contain !important;
+  filter:none !important;
+}
+
+/* Keep the information/objective icon tidy inside each admin card preview too. */
+.previewBox.prevNote .noteSection{
+  display:grid !important;
+  grid-template-columns:28px minmax(0,1fr) !important;
+  gap:10px !important;
+  align-items:start !important;
+  padding:12px 14px !important;
+  border-bottom:1px solid #dbe4ee !important;
+  background:#f7faff !important;
+  white-space:normal !important;
+}
+
+.previewBox.prevNote .noteSection:last-child{
+  border-bottom:none !important;
+}
+
+.previewBox.prevNote .noteSectionIcon{
+  width:24px !important;
+  height:24px !important;
+  min-width:24px !important;
+  max-width:24px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  background:transparent !important;
+  overflow:hidden !important;
+}
+
+.previewBox.prevNote .noteSectionIcon img{
+  display:block !important;
+  width:20px !important;
+  height:20px !important;
+  min-width:20px !important;
+  max-width:20px !important;
+  min-height:20px !important;
+  max-height:20px !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  object-fit:contain !important;
+}
+
+.previewBox.prevNote .noteSectionContent,
+.previewBox.prevNote .noteSectionBody{
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+
+.previewBox.prevNote .noteSectionTitle{
+  margin:0 0 4px !important;
+  font-size:13px !important;
+  line-height:1.4 !important;
+}
+
+.previewBox.prevNote .noteSectionBody{
+  font-size:13px !important;
+  line-height:1.5 !important;
+}
+
+/* Full learner preview items double as simple links back to their editor cards. */
+.previewEditorJump{
+  display:block;
+  position:relative;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+.previewEditorJump:hover{
+  background:rgba(14,116,144,.035);
+  box-shadow:0 0 0 1px rgba(14,116,144,.20);
+}
+
+.previewEditorJump:focus-visible{
+  outline:2px solid #0e7490;
+  outline-offset:3px;
+}
+
+.previewSharedReference{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:0 0 8px;
+  color:#334155;
+  font-family:"Times New Roman", Times, serif;
+  font-size:13px;
+  line-height:1.35;
+  letter-spacing:.01em;
+}
+
+.previewSharedReferenceNo{
+  color:#111827;
+  font-weight:700;
+}
+
+.previewSharedReferenceKind{
+  color:#64748b;
+  font-size:11px;
+  font-weight:400;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+.livePreviewReference{
+  margin:0 0 8px;
+  color:#334155;
+  font-family:Arial, Helvetica, sans-serif;
+  font-size:11px;
+  font-weight:700;
+  line-height:1.4;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+.qcard.previewJumpTarget{
+  border-color:#0e7490 !important;
+  box-shadow:0 0 0 3px rgba(14,116,144,.18), 0 8px 24px rgba(15,23,42,.10) !important;
+}
+
+.previewNavigationHint{
+  margin-top:4px;
+}
+
+.attemptPaperPreview .noteSectionContent,
+#paperPreviewContent .noteSectionContent{
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+
+.attemptPaperPreview .noteSectionTitle,
+#paperPreviewContent .noteSectionTitle{
+  margin:0 0 8px !important;
+  color:#111827 !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:14px !important;
+  font-weight:700 !important;
+  line-height:1.4 !important;
+}
+
+.attemptPaperPreview .noteSectionBody,
+#paperPreviewContent .noteSectionBody{
+  min-width:0 !important;
+  color:#111827 !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:14px !important;
+  font-weight:400 !important;
+  line-height:1.65 !important;
+}
+
+.attemptPaperPreview .noteParagraph,
+#paperPreviewContent .noteParagraph{
+  margin:0 0 8px !important;
+}
+
+.attemptPaperPreview .noteList,
+#paperPreviewContent .noteList{
+  display:block !important;
+  margin:4px 0 0 20px !important;
+  padding-left:14px !important;
+  list-style-position:outside !important;
+}
+
+.attemptPaperPreview .noteList.bulleted,
+#paperPreviewContent .noteList.bulleted{
+  list-style-type:disc !important;
+}
+
+.attemptPaperPreview .noteList.numbered,
+#paperPreviewContent .noteList.numbered{
+  list-style-type:decimal !important;
+}
+
+.attemptPaperPreview .noteList li,
+#paperPreviewContent .noteList li{
+  display:list-item !important;
+  margin:3px 0 !important;
+  padding-left:3px !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:14px !important;
+  line-height:1.65 !important;
+}
+
+.attemptPaperPreview .noteLine,
+#paperPreviewContent .noteLine{
+  display:block !important;
+  margin:2px 0 !important;
+  line-height:1.65 !important;
+}
+
+/* Diagram remains directly below its shared note, matching attempt.html. */
+.attemptPaperPreview .qImageWrap,
+#paperPreviewContent .qImageWrap{
+  width:100% !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:center !important;
+  margin:14px auto 20px !important;
+  padding:0 !important;
+  overflow-x:auto !important;
+}
+
+.attemptPaperPreview .qImageWrap .qimg,
+#paperPreviewContent .qImageWrap .qimg{
+  display:block !important;
+  width:auto !important;
+  max-width:min(100%,720px) !important;
+  height:auto !important;
+  margin:0 auto !important;
+  border:none !important;
+  outline:none !important;
+  box-shadow:none !important;
+  background:transparent !important;
+}
+
+@media(max-width:640px){
+  .attemptPaperPreview .noteSection,
+  #paperPreviewContent .noteSection{
+    grid-template-columns:30px minmax(0,1fr) !important;
+    gap:10px !important;
+    padding:18px 16px !important;
+  }
+
+  .attemptPaperPreview .noteSectionIcon,
+  #paperPreviewContent .noteSectionIcon{
+    width:26px !important;
+    height:26px !important;
+    min-width:26px !important;
+  }
+
+  .attemptPaperPreview .noteSectionIcon img,
+  #paperPreviewContent .noteSectionIcon img{
+    width:22px !important;
+    height:22px !important;
+    min-width:22px !important;
+  }
+}
+
+
+
+/* ===== PER-BLOCK QUICK INSERT CONTROLS ===== */
+.blockQuickInsert{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.blockQuickInsert .quickInsertBtn{
+  min-height:34px !important;
+  padding:7px 9px !important;
+  border:1px solid var(--admin-border,#dfe5ec) !important;
+  background:#fff !important;
+  color:var(--admin-navy,#1b1648) !important;
+  font-size:11px !important;
+  white-space:nowrap;
+}
+.blockQuickInsert .quickInsertBtn:hover{
+  border-color:var(--admin-gold,#c9a227) !important;
+  background:var(--admin-gold-soft,#fff8dc) !important;
+}
+@media(max-width:720px){
+  .qhead .toolRow{width:100%;}
+  .blockQuickInsert{width:100%;}
+  .blockQuickInsert .quickInsertBtn{flex:1 1 auto;}
+}
+
+    .toolRow{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap;}
+    .blockQuickInsert{display:inline-flex;align-items:center;justify-content:flex-end;gap:5px;flex-wrap:wrap;}
+    .blockQuickInsert .smallbtn{min-height:32px!important;padding:6px 8px!important;font-size:11px!important;}
+    .duplicateBlockBtn{border-color:var(--admin-gold)!important;background:var(--admin-gold-soft)!important;}
+    .copyBlockBtn,.pasteBlockBtn{background:#f8faff!important;}
+    @media(max-width:760px){.qhead{align-items:flex-start!important}.toolRow{width:100%;justify-content:flex-start}.blockQuickInsert{justify-content:flex-start}}
+
+/* ===== AUTOMATIC DRAFT SAVING + DRAFT PICKER ===== */
+.draftManager{margin:0 0 18px;padding:16px;border:1px solid var(--admin-border);background:#fff;border-radius:8px;}
+.draftManagerHead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+.draftManagerTitle{margin:0;color:var(--admin-navy);font-size:16px;font-weight:800;}
+.draftManagerStatus{font-size:12px;color:var(--admin-muted);margin-top:4px;}
+.draftManagerControls{display:grid;grid-template-columns:minmax(280px,1fr) auto auto auto;gap:8px;align-items:end;}
+.draftManagerControls select{margin:0!important;}
+.autosaveBadge{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:#475569;}
+.autosaveDot{width:8px;height:8px;border-radius:50%;background:#94a3b8;}
+.autosaveBadge.saving .autosaveDot{background:#c9a227;}
+.autosaveBadge.saved .autosaveDot{background:#159447;}
+.autosaveBadge.error .autosaveDot{background:#b91c1c;}
+@media(max-width:700px){.draftManagerControls{grid-template-columns:1fr}.draftManagerControls button{width:100%}}
+
+/* Shared, topic-independent inline rendering used by the attempt file. */
+.attemptPaperPreview .probabilityInline,
+#paperPreviewContent .probabilityInline{
+  display:inline !important;
+  position:static !important;
+  top:auto !important;
+  transform:none !important;
+  vertical-align:baseline !important;
+  font-family:inherit !important;
+  font-size:1em !important;
+  font-weight:400 !important;
+  font-style:italic !important;
+  line-height:inherit !important;
+  white-space:nowrap !important;
+}
+.attemptPaperPreview .probabilityInline .probabilityWord,
+#paperPreviewContent .probabilityInline .probabilityWord{
+  font-style:normal !important;
+}
+.attemptPaperPreview .inlineVariable,
+#paperPreviewContent .inlineVariable{
+  display:inline !important;
+  position:static !important;
+  top:auto !important;
+  transform:none !important;
+  vertical-align:baseline !important;
+  font-family:inherit !important;
+  font-size:1em !important;
+  font-weight:inherit !important;
+  font-style:italic !important;
+  line-height:inherit !important;
+  white-space:nowrap !important;
+}
+.attemptPaperPreview .qTextPaper .inlineVariable,
+#paperPreviewContent .qTextPaper .inlineVariable,
+.attemptPaperPreview .qSectionText .inlineVariable,
+#paperPreviewContent .qSectionText .inlineVariable{
+  font-weight:700 !important;
+}
+.attemptPaperPreview .noteBox .inlineVariable,
+#paperPreviewContent .noteBox .inlineVariable{
+  display:inline-block !important;
+  font-weight:400 !important;
+}
+.attemptPaperPreview .noteValueInline,
+#paperPreviewContent .noteValueInline{
+  display:inline !important;
+  position:static !important;
+  top:auto !important;
+  transform:none !important;
+  vertical-align:baseline !important;
+  font-family:inherit !important;
+  font-size:1em !important;
+  font-weight:inherit !important;
+  font-style:normal !important;
+  line-height:inherit !important;
+  white-space:nowrap !important;
+}
+.attemptPaperPreview mjx-container.inlineMathAutoBaseline[jax="SVG"],
+#paperPreviewContent mjx-container.inlineMathAutoBaseline[jax="SVG"]{
+  top:0 !important;
+  transform:translateY(var(--inline-math-baseline-shift, 0px)) !important;
+  vertical-align:baseline !important;
+}
+.attemptPaperPreview mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+#paperPreviewContent mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+.attemptPaperPreview mjx-container[jax="SVG"]:has(mjx-mfrac),
+#paperPreviewContent mjx-container[jax="SVG"]:has(mjx-mfrac){
+  font-size:1.18em !important;
+  margin-inline:.04em !important;
+}
+.inlineMathBaselineProbe{
+  display:inline-block !important;
+  width:0 !important;
+  min-width:0 !important;
+  height:auto !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  overflow:visible !important;
+  visibility:hidden !important;
+  font:inherit !important;
+  line-height:inherit !important;
+  white-space:nowrap !important;
+  pointer-events:none !important;
+}
+
+/* ===== NATIVE NOTE TABLES, GRAPHS + MATHEMATICAL DIAGRAMS ===== */
+.noteVisualTools{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:8px 0 4px;
+  padding:10px;
+  border:1px solid #dbe5ef;
+  border-radius:10px;
+  background:#f8fbff;
+}
+.noteVisualToolsLabel{
+  color:#0b3c5d;
+  font-size:12px;
+  font-weight:800;
+  margin-right:2px;
+}
+.noteVisualInsertBtn{
+  padding:7px 10px !important;
+  border:1px solid #b8cce0 !important;
+  border-radius:8px !important;
+  background:#fff !important;
+  color:#0b3c5d !important;
+  font-size:12px !important;
+  font-weight:800 !important;
+}
+.noteVisualInsertBtn:hover{
+  border-color:#0b3c5d !important;
+  background:#eef6ff !important;
+}
+.noteVisualHelp{
+  width:100%;
+  color:#516173;
+  font-size:11px;
+  line-height:1.45;
+}
+.noteVisualBlock{
+  width:100%;
+  max-width:100%;
+  margin:12px 0;
+  break-inside:avoid;
+}
+.noteVisualTitle{
+  margin:0 0 8px;
+  color:#111827;
+  font-size:14px;
+  font-weight:400;
+  text-align:center;
+}
+.noteVisualTitleLabel{
+  font-weight:800;
+}
+.noteVisualTitleValue,
+.noteVisualTitleValue *{
+  font-weight:400 !important;
+}
+.noteTableScroll{
+  max-width:100%;
+  overflow-x:auto;
+  border:1px solid #cbd5e1;
+  border-radius:8px;
+  background:#fff;
+}
+.generatedNoteTable{
+  width:100%;
+  min-width:360px;
+  border-collapse:collapse;
+  table-layout:auto;
+  background:#fff;
+  color:#111827;
+  font-size:13px;
+}
+.generatedNoteTable th,
+.generatedNoteTable td{
+  padding:8px 10px;
+  border:1px solid #cbd5e1;
+  text-align:left;
+  vertical-align:middle;
+  white-space:normal;
+  font-weight:400;
+}
+.generatedNoteTable th{
+  background:#eaf2f8;
+  color:#0b3c5d;
+  font-weight:800;
+}
+.generatedNoteTable tbody tr:nth-child(even) td{
+  background:#f8fafc;
+}
+.generatedNoteGraphWrap{
+  width:100%;
+  padding:10px;
+  border:1px solid #cbd5e1;
+  border-radius:8px;
+  background:#fff;
+  overflow:hidden;
+}
+.generatedNoteGraph{
+  display:block;
+  width:100%;
+  height:auto;
+  min-height:260px;
+  background:#fff;
+}
+.generatedNoteDiagram{
+  display:block;
+  width:100%;
+  height:auto;
+  min-height:300px;
+  background:#fff;
+}
+.noteVisualToolsGroup{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.noteVisualError{
+  padding:9px 10px;
+  border:1px solid #fecaca;
+  border-radius:8px;
+  background:#fff7f7;
+  color:#991b1b;
+  font-size:12px;
+  line-height:1.45;
+}
+.noteVisualSyntax{
+  margin-top:6px;
+  color:#64748b;
+  font-size:11px;
+}
+.minimalDiagramTheme .generatedNoteGraphWrap,
+.minimalDiagramTheme .noteTableScroll{
+  border-color:#9ca3af;
+  box-shadow:none;
+}
+.minimalDiagramTheme .generatedNoteTable th{
+  background:#f3f4f6;
+  color:#111827;
+  border-color:#6b7280;
+}
+.minimalDiagramTheme .generatedNoteTable td{
+  color:#111827;
+  border-color:#9ca3af;
+}
+.minimalDiagramTheme .generatedNoteTable tbody tr:nth-child(even) td{
+  background:#fafafa;
+}
+
+/* Quiz, test and exam visuals use one aligned DBE-style rectangular frame. */
+.assessmentVisualFrame{
+  width:100%;
+  max-width:100%;
+  margin:12px 0 18px;
+  border:1px solid #9ca3af;
+  border-radius:0;
+  background:#fff;
+  overflow:hidden;
+  box-shadow:none;
+  box-sizing:border-box;
+  break-inside:avoid;
+}
+
+.attemptPaperPreview .noteBox:has(.assessmentVisualFrame),
+#paperPreviewContent .noteBox:has(.assessmentVisualFrame){
+  margin:12px 0 18px !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  overflow:visible !important;
+  box-shadow:none !important;
+}
+
+.attemptPaperPreview .assessmentVisualFrame > .noteSection,
+#paperPreviewContent .assessmentVisualFrame > .noteSection{
+  display:grid !important;
+  grid-template-columns:28px minmax(0,1fr) !important;
+  gap:12px !important;
+  align-items:center !important;
+  width:100% !important;
+  margin:0 !important;
+  padding:18px 20px !important;
+  border:0 !important;
+  border-bottom:1px solid #cbd5e1 !important;
+  border-radius:0 !important;
+  background:#f8fafc !important;
+  box-sizing:border-box !important;
+}
+
+.attemptPaperPreview .assessmentVisualFrame .noteSectionIcon,
+#paperPreviewContent .assessmentVisualFrame .noteSectionIcon{
+  width:24px !important;
+  height:24px !important;
+  min-width:24px !important;
+  margin:0 !important;
+  padding:0 !important;
+  align-self:center !important;
+}
+
+.attemptPaperPreview .assessmentVisualFrame .noteSectionIcon img,
+#paperPreviewContent .assessmentVisualFrame .noteSectionIcon img{
+  width:22px !important;
+  height:22px !important;
+  min-width:22px !important;
+  max-width:22px !important;
+}
+
+.attemptPaperPreview .assessmentVisualFrame .noteSectionContent,
+#paperPreviewContent .assessmentVisualFrame .noteSectionContent,
+.attemptPaperPreview .assessmentVisualFrame .noteSectionBody,
+#paperPreviewContent .assessmentVisualFrame .noteSectionBody{
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:14px !important;
+  font-weight:400 !important;
+  line-height:1.5 !important;
+  color:#111827 !important;
+}
+
+.attemptPaperPreview .assessmentVisualFrame .noteParagraph,
+#paperPreviewContent .assessmentVisualFrame .noteParagraph{
+  margin:0 !important;
+}
+
+.assessmentVisualFrame .noteVisualBlock{
+  width:100% !important;
+  max-width:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:#fff !important;
+  box-sizing:border-box !important;
+}
+
+.assessmentVisualFrame .noteVisualTitle{
+  width:100% !important;
+  margin:0 !important;
+  padding:12px 18px !important;
+  border:0 !important;
+  border-bottom:1px solid #cbd5e1 !important;
+  border-radius:0 !important;
+  background:#fff !important;
+  line-height:1.4 !important;
+  box-sizing:border-box !important;
+}
+
+.assessmentVisualFrame .generatedNoteGraphWrap,
+.assessmentVisualFrame .noteTableScroll{
+  width:100% !important;
+  max-width:100% !important;
+  margin:0 !important;
+  padding:14px 18px 16px !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:#fff !important;
+  box-shadow:none !important;
+  box-sizing:border-box !important;
+}
+
+.assessmentVisualFrame .generatedNoteGraph,
+.assessmentVisualFrame .generatedNoteDiagram,
+.assessmentVisualFrame .generatedNoteTable{
+  display:block;
+  width:100% !important;
+  max-width:100% !important;
+  margin:0 auto !important;
+  border-radius:0 !important;
+  box-sizing:border-box !important;
+}
+
+@media(max-width:700px){
+  .noteVisualTools{
+    align-items:stretch;
+  }
+  .noteVisualInsertBtn{
+    flex:1 1 calc(50% - 8px);
+  }
+  .generatedNoteGraph{
+    min-height:220px;
+  }
+  .generatedNoteDiagram{
+    min-height:240px;
+  }
+  .attemptPaperPreview .assessmentVisualFrame > .noteSection,
+  #paperPreviewContent .assessmentVisualFrame > .noteSection{
+    grid-template-columns:24px minmax(0,1fr) !important;
+    gap:10px !important;
+    padding:14px 12px !important;
+  }
+  .assessmentVisualFrame .noteVisualTitle{
+    padding:10px 12px !important;
+  }
+  .assessmentVisualFrame .generatedNoteGraphWrap,
+  .assessmentVisualFrame .noteTableScroll{
+    padding:12px !important;
+  }
+}
+
 /* ===== LIVE DYNAMIC LEARNER PREVIEW ===== */
 .attemptPaperPreview .qTextPaper mjx-container[jax="SVG"],
 .attemptPaperPreview .qSectionText mjx-container[jax="SVG"],
@@ -708,6 +1464,10 @@ input:focus,textarea:focus,select:focus{
 .previewLinkedItem.previewNavActive{
   background:rgba(201,162,39,.10);
   box-shadow:0 0 0 6px rgba(201,162,39,.10);
+}
+.previewLinkedItem:focus-visible{
+  outline:2px solid #0e7490;
+  outline-offset:3px;
 }
 .generatedQuestionLink{
   display:inline-flex;
@@ -1180,7 +1940,7 @@ input:focus,textarea:focus,select:focus{
     <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
       <div>
         <h3 style="margin:0;">Full Learner Preview</h3>
-        
+        <div class="muted tiny previewNavigationHint">Click any question or diagram to edit it.</div>
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="smallbtn" id="previewAttemptModeBtn" type="button">Attempt Preview</button>
@@ -1208,7 +1968,7 @@ input:focus,textarea:focus,select:focus{
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding:16px 18px; border-bottom:1px solid #e5e7eb; position:sticky; top:0; background:#fff; z-index:1;">
         <div>
           <h3 style="margin:0;">Exam Paper Preview</h3>
-          <div class="muted tiny">Preview the full paper exactly in the attempt-style layout before saving or publishing.</div>
+          <div class="muted tiny">Click any question or diagram to return to its editor.</div>
         </div>
         <button class="smallbtn" id="closePreviewBtn" type="button">Close</button>
       </div>
@@ -2538,6 +3298,1989 @@ function escapeHtml(str){
       flush();
       return html.length?html.join(""):renderNoteMixedMathPreview(clean);
     }
+    function renderNoteVisualTitle(title){
+      const text = String(title || "").trim();
+      if (!text) return "";
+      const divider = text.indexOf(":");
+      if (divider < 0) {
+        return '<span class="noteVisualTitleLabel">' +
+          renderNoteMixedMathPreview(text) +
+          "</span>";
+      }
+      const label = text.slice(0, divider + 1).trim();
+      const value = text.slice(divider + 1).trim();
+      return '<span class="noteVisualTitleLabel">' +
+        renderNoteMixedMathPreview(label) +
+        "</span>" +
+        (value
+          ? ' <span class="noteVisualTitleValue">' +
+            renderNoteMixedMathPreview(value) +
+            "</span>"
+          : "");
+    }
+
+    function renderStructuredNoteTextPreview(rawText){
+      const raw = String(rawText || "").replace(/\r/g, "").trim();
+      if (!raw) return "";
+
+      const lines = raw.split("\n");
+      const sections = [];
+      let currentTitle = "";
+      let currentLines = [];
+
+      function flushSection(){
+        if (!currentTitle && !currentLines.length) return;
+        sections.push({
+          title: currentTitle || "",
+          lines: [...currentLines]
+        });
+        currentTitle = "";
+        currentLines = [];
+      }
+
+      for (const sourceLine of lines){
+        const line = String(sourceLine || "").trim();
+
+        if (!line){
+          if (currentLines.length) currentLines.push("");
+          continue;
+        }
+
+        const looksLikeHeading =
+          /^(activity instructions|assessment instructions|instructions|learning objective|learning objectives|objective|objectives|note|notes)\s*:?\s*$/i.test(line);
+
+        if (looksLikeHeading){
+          flushSection();
+          currentTitle = line.replace(/:\s*$/, "");
+          continue;
+        }
+
+        const inlineHeading = line.match(
+          /^(Activity Instructions|Assessment Instructions|Instructions|Learning Objective|Learning Objectives|Objective|Objectives)\s*(.*)$/i
+        );
+
+        if (inlineHeading && !currentTitle){
+          flushSection();
+          currentTitle = inlineHeading[1];
+          const remainder = String(inlineHeading[2] || "").trim();
+          if (remainder) currentLines.push(remainder);
+          continue;
+        }
+
+        currentLines.push(line);
+      }
+
+      flushSection();
+
+      function renderLines(sectionLines){
+        const html = [];
+        let listType = "";
+        let listItems = [];
+        let paragraphLines = [];
+
+        function flushParagraph(){
+          if (!paragraphLines.length) return;
+          const value = paragraphLines.join(" ").trim();
+          if (value) html.push(`<p class="noteParagraph">${renderNoteMixedMathPreview(value)}</p>`);
+          paragraphLines = [];
+        }
+
+        function flushList(){
+          if (!listItems.length) return;
+          const className = listType === "ol" ? "numbered" : "bulleted";
+          html.push(
+            `<${listType} class="noteList ${className}">` +
+            listItems.map(item => `<li>${renderNoteMixedMathPreview(item)}</li>`).join("") +
+            `</${listType}>`
+          );
+          listItems = [];
+          listType = "";
+        }
+
+        for (const sourceLine of sectionLines){
+          const line = String(sourceLine || "").trim();
+
+          if (!line){
+            flushParagraph();
+            flushList();
+            continue;
+          }
+
+          const bulletParts = line
+            .split(/\s*•\s*/)
+            .map(part => part.trim())
+            .filter(Boolean);
+
+          if (bulletParts.length > 1){
+            flushParagraph();
+            if (listType && listType !== "ul") flushList();
+            listType = "ul";
+            listItems.push(...bulletParts);
+            continue;
+          }
+
+          const bullet = line.match(/^(?:•|-|\*)\s+(.+)$/);
+          const numbered = line.match(/^\d+[.)]\s+(.+)$/);
+          const lettered = line.match(/^[A-Za-z][.)]\s+(.+)$/);
+
+          if (bullet){
+            flushParagraph();
+            if (listType && listType !== "ul") flushList();
+            listType = "ul";
+            listItems.push(bullet[1].trim());
+            continue;
+          }
+
+          if (numbered || lettered){
+            flushParagraph();
+            if (listType && listType !== "ol") flushList();
+            listType = "ol";
+            listItems.push((numbered || lettered)[1].trim());
+            continue;
+          }
+
+          flushList();
+
+          if (line.length <= 70 && !/[.!?]$/.test(line)){
+            flushParagraph();
+            html.push(`<span class="noteLine">${renderNoteMixedMathPreview(line)}</span>`);
+          } else {
+            paragraphLines.push(line);
+          }
+        }
+
+        flushParagraph();
+        flushList();
+        return html.join("");
+      }
+
+      return sections.map((section) => {
+        const isObjective = /learning objective|objective/i.test(section.title);
+        const title = escapeHtml(section.title);
+        const iconUrl = isObjective
+          ? "https://res.cloudinary.com/dopoxadlr/image/upload/v1784924492/target-objective_xacvpm.svg"
+          : "https://res.cloudinary.com/dopoxadlr/image/upload/v1784922880/info_vd9ndi.svg";
+
+        return `
+          <div class="noteSection ${isObjective ? "objectiveSection" : "instructionSection"}">
+            <div class="noteSectionIcon" aria-hidden="true">
+              <img src="${iconUrl}" alt="">
+            </div>
+            <div class="noteSectionContent">
+              ${title ? `<div class="noteSectionTitle">${title}</div>` : ""}
+              <div class="noteSectionBody">${renderLines(section.lines)}</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function readNoteVisualAttributes(rawAttributes){
+      const attributes = {};
+
+      String(rawAttributes || "").replace(
+        /([A-Za-z][A-Za-z0-9_-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s]+))/g,
+        (whole, rawKey, doubleQuoted, singleQuoted, plainValue) => {
+          const key = String(rawKey || "").toLowerCase();
+          const value = String(
+            doubleQuoted ?? singleQuoted ?? plainValue ?? ""
+          ).trim();
+          if (key) attributes[key] = value;
+          return whole;
+        }
+      );
+
+      return attributes;
+    }
+
+    function noteVisualError(message){
+      return '<div class="noteVisualError">' +
+        escapeHtml(message) +
+        '</div>';
+    }
+
+    let noteVisualSvgSequence = 0;
+
+    function selectedVisualContentType(){
+      return typeof contentTypeEl !== "undefined"
+        ? String(contentTypeEl?.value || "").trim().toLowerCase()
+        : (typeof currentContentType !== "undefined"
+          ? String(currentContentType || "").trim().toLowerCase()
+          : "");
+    }
+
+    function isFormalAssessmentVisual(){
+      return ["quiz", "test", "exam"].includes(selectedVisualContentType());
+    }
+
+    function useMinimalAssessmentVisualTheme(attributes){
+      if (isFormalAssessmentVisual()) return true;
+      const explicitTheme = String(attributes?.theme || "").trim().toLowerCase();
+      if (["dbe", "exam", "minimal", "mono", "monochrome"].includes(explicitTheme)) return true;
+      if (["colour", "color", "activity", "notes"].includes(explicitTheme)) return false;
+      return false;
+    }
+
+    function getNoteVisualLines(bodyText){
+      return String(bodyText || "")
+        .replace(/\r/g, "")
+        .split("\n")
+        .map(line => String(line || "").trim())
+        .filter(line => line && !/^#/.test(line));
+    }
+
+    function renderNoteTableBlock(rawAttributes, bodyText){
+      const attributes = readNoteVisualAttributes(rawAttributes);
+      const minimalTheme = useMinimalAssessmentVisualTheme(attributes);
+      const lines = getNoteVisualLines(bodyText);
+      const rows = lines.map(line =>
+        line.split("|").map(cell => String(cell || "").trim())
+      );
+
+      if (!rows.length) {
+        return noteVisualError(
+          "This table has no rows. Add headings and values between [[TABLE]] and [[/TABLE]]."
+        );
+      }
+
+      const columnCount = Math.max(...rows.map(row => row.length));
+
+      if (columnCount < 2) {
+        return noteVisualError(
+          "Use the | symbol between table columns."
+        );
+      }
+
+      const normalisedRows = rows.map(row =>
+        Array.from(
+          { length: columnCount },
+          (_, index) => row[index] || ""
+        )
+      );
+
+      const headingRow = normalisedRows[0];
+      const bodyRows = normalisedRows.slice(1);
+      const requestedTitle = String(attributes.title || "").trim();
+      const showTitle = !/^(?:0|false|no|off|hide|none)$/i.test(
+        String(attributes.show_title ?? attributes.showtitle ?? "true").trim()
+      );
+      const title = showTitle ? requestedTitle : "";
+      const allowedAlignments = ["left", "center", "right"];
+      const bodyAlignment = allowedAlignments.includes(String(attributes.align || "").toLowerCase())
+        ? String(attributes.align).toLowerCase()
+        : "left";
+      const headingAlignment = allowedAlignments.includes(String(attributes.header_align || attributes.headeralign || "").toLowerCase())
+        ? String(attributes.header_align || attributes.headeralign).toLowerCase()
+        : bodyAlignment;
+      const firstColumnAlignment = allowedAlignments.includes(String(attributes.first_column || attributes.firstcolumn || "").toLowerCase())
+        ? String(attributes.first_column || attributes.firstcolumn).toLowerCase()
+        : bodyAlignment;
+      const firstColumnAsHeader = /^(?:1|true|yes|on)$/i.test(
+        String(attributes.row_headers || attributes.rowheaders || attributes.first_column_header || "").trim()
+      );
+      const requestedMinWidth = parseNoteGraphNumber(attributes.min_width || attributes.minwidth);
+      const tableMinWidth = requestedMinWidth === null
+        ? 360
+        : Math.max(280, Math.min(1200, requestedMinWidth));
+      const renderTableCell = cell => String(cell || "")
+        .split(/\[br\]/i)
+        .map(part => renderNoteMixedMathPreview(part.trim()))
+        .join("<br>");
+
+      const headingHtml =
+        "<thead><tr>" +
+        headingRow.map(cell =>
+          '<th scope="col" style="text-align:' +
+          headingAlignment +
+          ';">' +
+          renderTableCell(cell) +
+          "</th>"
+        ).join("") +
+        "</tr></thead>";
+
+      const bodyHtml = bodyRows.length
+        ? "<tbody>" +
+          bodyRows.map(row =>
+            "<tr>" +
+            row.map((cell, index) => {
+              const rowHeader = firstColumnAsHeader && index === 0;
+              const tag = rowHeader ? "th" : "td";
+              return '<' + tag + (rowHeader ? ' scope="row"' : '') + ' style="text-align:' +
+                (index === 0 ? firstColumnAlignment : bodyAlignment) +
+                ';">' +
+                renderTableCell(cell) +
+                '</' + tag + '>';
+            }).join("") +
+            "</tr>"
+          ).join("") +
+          "</tbody>"
+        : "";
+
+      return (
+        '<div class="noteVisualBlock noteTableBlock' + (minimalTheme ? ' minimalDiagramTheme' : '') + '">' +
+          (title
+            ? '<div class="noteVisualTitle">' +
+              renderNoteVisualTitle(title) +
+              "</div>"
+            : "") +
+          '<div class="noteTableScroll">' +
+            '<table class="generatedNoteTable" style="min-width:' + tableMinWidth + 'px;">' +
+              headingHtml +
+              bodyHtml +
+            "</table>" +
+          "</div>" +
+        "</div>"
+      );
+    }
+
+    function parseNoteGraphNumber(rawValue){
+      const text = String(rawValue ?? "")
+        .trim()
+        .replace(/[−–—]/g, "-")
+        .replace(/,/g, ".")
+        .replace(/%$/, "")
+        .replace(/\s+/g, "");
+
+      if (!text) return null;
+
+      const fraction = text.match(
+        /^([+-]?(?:\d+(?:\.\d+)?|\.\d+))\/([+-]?(?:\d+(?:\.\d+)?|\.\d+))$/
+      );
+
+      if (fraction) {
+        const numerator = Number(fraction[1]);
+        const denominator = Number(fraction[2]);
+        if (
+          Number.isFinite(numerator) &&
+          Number.isFinite(denominator) &&
+          denominator !== 0
+        ) {
+          return numerator / denominator;
+        }
+        return null;
+      }
+
+      const value = Number(text);
+      return Number.isFinite(value) ? value : null;
+    }
+
+    function formatNoteGraphNumber(value){
+      const number = Number(value);
+      if (!Number.isFinite(number)) return "";
+      if (Math.abs(number) < 1e-12) return "0";
+      return String(Number(number.toFixed(3)));
+    }
+
+    function renderNoteGraphBlock(rawAttributes, bodyText){
+      const attributes = readNoteVisualAttributes(rawAttributes);
+      const minimalTheme = useMinimalAssessmentVisualTheme(attributes);
+      const primaryColour = minimalTheme ? "#111827" : "#0b5fa5";
+      const accentColour = minimalTheme ? "#374151" : "#c2410c";
+      const barColour = minimalTheme ? "#d1d5db" : "#c9a227";
+      const graphType = ["line", "bar", "scatter", "histogram"].includes(
+        String(attributes.type || "line").toLowerCase()
+      )
+        ? String(attributes.type || "line").toLowerCase()
+        : "line";
+
+      const title = String(attributes.title || "Graph").trim();
+      const xLabel = String(attributes.x || attributes.xlabel || "x").trim();
+      const yLabel = String(attributes.y || attributes.ylabel || "y").trim();
+      const decimalSeparator = /^(?:comma|,|south-african|sa)$/i.test(
+        String(attributes.decimal_separator || attributes.decimal || "").trim()
+      ) ? "," : ".";
+      const formatGraphDisplayNumber = value => {
+        const formatted = formatNoteGraphNumber(value);
+        return decimalSeparator === "," ? formatted.replace(".", ",") : formatted;
+      };
+      const lines = getNoteVisualLines(bodyText);
+      const points = [];
+
+      lines.forEach((line, index) => {
+        const parts = line.split("|").map(part => String(part || "").trim());
+        if (parts.length < 2) return;
+
+        if (graphType === "bar") {
+          const yValue = parseNoteGraphNumber(parts[1]);
+          if (yValue === null) return;
+          points.push({
+            label: parts[0] || "Item " + (index + 1),
+            x: points.length,
+            y: yValue
+          });
+          return;
+        }
+
+        if (graphType === "histogram") {
+          let lower = null;
+          let upper = null;
+          let frequency = null;
+
+          if (parts.length >= 3) {
+            lower = parseNoteGraphNumber(parts[0]);
+            upper = parseNoteGraphNumber(parts[1]);
+            frequency = parseNoteGraphNumber(parts[2]);
+          } else {
+            const interval = String(parts[0] || "").match(
+              /^\s*([+-]?(?:\d+(?:[.,]\d+)?|[.,]\d+))\s*(?:-|–|—|to)\s*([+-]?(?:\d+(?:[.,]\d+)?|[.,]\d+))\s*$/i
+            );
+            if (interval) {
+              lower = parseNoteGraphNumber(interval[1]);
+              upper = parseNoteGraphNumber(interval[2]);
+            }
+            frequency = parseNoteGraphNumber(parts[1]);
+          }
+
+          if (lower === null || upper === null || frequency === null || !(upper > lower)) return;
+          points.push({ x1: lower, x2: upper, x: (lower + upper) / 2, y: frequency });
+          return;
+        }
+
+        const xValue = parseNoteGraphNumber(parts[0]);
+        const yValue = parseNoteGraphNumber(parts[1]);
+        if (xValue === null || yValue === null) return;
+        points.push({ x: xValue, y: yValue });
+      });
+
+      if (points.length < 1) {
+        return noteVisualError(
+          "This graph has no valid data. Use one row per point, for example: 1 | 2."
+        );
+      }
+
+      if (!["bar", "histogram"].includes(graphType) && points.length < 2) {
+        return noteVisualError(
+          "A line or scatter graph needs at least two x | y points."
+        );
+      }
+
+      const width = 760;
+      const height = 390;
+      const margin = { left: 72, right: 28, top: 24, bottom: 72 };
+      const plotWidth = width - margin.left - margin.right;
+      const plotHeight = height - margin.top - margin.bottom;
+      const yValues = points.map(point => point.y);
+
+      let yMin = Math.min(0, ...yValues);
+      let yMax = Math.max(0, ...yValues);
+      const requestedYMin = parseNoteGraphNumber(attributes.ymin);
+      const requestedYMax = parseNoteGraphNumber(attributes.ymax);
+      if (requestedYMin !== null) yMin = requestedYMin;
+      if (requestedYMax !== null) yMax = requestedYMax;
+
+      if (Math.abs(yMax - yMin) < 1e-12) {
+        const expansion = Math.max(1, Math.abs(yMax) * 0.2);
+        yMin -= expansion;
+        yMax += expansion;
+      }
+
+      let xMin = 0;
+      let xMax = Math.max(1, points.length - 1);
+
+      if (graphType !== "bar") {
+        const xValues = graphType === "histogram"
+          ? points.flatMap(point => [point.x1, point.x2])
+          : points.map(point => point.x);
+        xMin = Math.min(0, ...xValues);
+        xMax = Math.max(0, ...xValues);
+
+        if (graphType === "histogram") {
+          xMin = Math.min(...xValues);
+          xMax = Math.max(...xValues);
+        }
+
+        const requestedXMin = parseNoteGraphNumber(attributes.xmin);
+        const requestedXMax = parseNoteGraphNumber(attributes.xmax);
+        if (requestedXMin !== null) xMin = requestedXMin;
+        if (requestedXMax !== null) xMax = requestedXMax;
+
+        if (Math.abs(xMax - xMin) < 1e-12) {
+          const expansion = Math.max(1, Math.abs(xMax) * 0.2);
+          xMin -= expansion;
+          xMax += expansion;
+        }
+      }
+
+      const toX = value =>
+        margin.left +
+        ((Number(value) - xMin) / (xMax - xMin)) * plotWidth;
+
+      const toY = value =>
+        margin.top +
+        ((yMax - Number(value)) / (yMax - yMin)) * plotHeight;
+
+      const svgParts = [];
+      const axisMarkerId = "noteAxisArrow" + (++noteVisualSvgSequence);
+      svgParts.push('<defs><marker id="' + axisMarkerId + '" viewBox="0 0 10 10" refX="8.2" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse"><path d="M 1 1 L 9 5 L 1 9 z" fill="#111827" /></marker></defs>');
+      const buildNoteGraphTicks = (min, max, rawStep, fallbackCount) => {
+        const explicitStep = parseNoteGraphNumber(rawStep);
+        if (explicitStep !== null && explicitStep > 0) {
+          const ticks = [];
+          const first = min;
+          for (let value = first, guard = 0; value <= max + 1e-10 && guard < 200; value += explicitStep, guard += 1) {
+            ticks.push(Number(value.toFixed(10)));
+          }
+          return ticks;
+        }
+        return Array.from({ length: fallbackCount + 1 }, (_, index) =>
+          min + ((max - min) * index) / fallbackCount
+        );
+      };
+      const yTicks = buildNoteGraphTicks(yMin, yMax, attributes.ystep || attributes.ytick, 5);
+
+      yTicks.forEach(value => {
+        const y = toY(value);
+
+        svgParts.push(
+          '<line x1="' + margin.left + '" y1="' + y.toFixed(2) +
+          '" x2="' + (margin.left + plotWidth) + '" y2="' + y.toFixed(2) +
+          '" stroke="#e2e8f0" stroke-width="1" />'
+        );
+
+        svgParts.push(
+          '<text x="' + (margin.left - 10) + '" y="' + (y + 4).toFixed(2) +
+          '" text-anchor="end" font-size="11" fill="#475569">' +
+          escapeHtml(formatGraphDisplayNumber(value)) +
+          "</text>"
+        );
+      });
+
+      if (graphType === "bar") {
+        const slotWidth = plotWidth / Math.max(1, points.length);
+        const barWidth = Math.max(12, Math.min(70, slotWidth * 0.58));
+        const zeroY = toY(0);
+
+        points.forEach((point, index) => {
+          const centreX = margin.left + slotWidth * (index + 0.5);
+          const valueY = toY(point.y);
+          const rectY = Math.min(zeroY, valueY);
+          const rectHeight = Math.max(1, Math.abs(zeroY - valueY));
+
+          svgParts.push(
+            '<rect x="' + (centreX - barWidth / 2).toFixed(2) +
+            '" y="' + rectY.toFixed(2) +
+            '" width="' + barWidth.toFixed(2) +
+            '" height="' + rectHeight.toFixed(2) +
+            '" rx="3" fill="' + barColour + '" stroke="' + (minimalTheme ? "#4b5563" : barColour) + '" stroke-width="1" />'
+          );
+
+          svgParts.push(
+            '<text x="' + centreX.toFixed(2) +
+            '" y="' + (rectY - 6).toFixed(2) +
+            '" text-anchor="middle" font-size="11" font-weight="400" fill="#334155">' +
+            escapeHtml(formatGraphDisplayNumber(point.y)) +
+            "</text>"
+          );
+
+          const labelY = margin.top + plotHeight + 22;
+          const transform = points.length > 6
+            ? ' transform="rotate(-28 ' + centreX.toFixed(2) + " " + labelY + ')"'
+            : "";
+
+          svgParts.push(
+            '<text x="' + centreX.toFixed(2) +
+            '" y="' + labelY +
+            '" text-anchor="' + (points.length > 6 ? "end" : "middle") +
+            '" font-size="11" fill="#334155"' + transform + ">" +
+            escapeHtml(point.label) +
+            "</text>"
+          );
+        });
+      } else {
+        const xTicks = buildNoteGraphTicks(xMin, xMax, attributes.xstep || attributes.xtick, 5);
+
+        xTicks.forEach(value => {
+          const x = toX(value);
+
+          svgParts.push(
+            '<line x1="' + x.toFixed(2) + '" y1="' + margin.top +
+            '" x2="' + x.toFixed(2) + '" y2="' + (margin.top + plotHeight) +
+            '" stroke="#f1f5f9" stroke-width="1" />'
+          );
+
+          svgParts.push(
+            '<text x="' + x.toFixed(2) +
+            '" y="' + (margin.top + plotHeight + 22) +
+            '" text-anchor="middle" font-size="11" fill="#475569">' +
+            escapeHtml(formatGraphDisplayNumber(value)) +
+            "</text>"
+          );
+        });
+
+        if (graphType === "histogram") {
+          const zeroY = toY(0);
+          [...points].sort((left, right) => left.x1 - right.x1).forEach(point => {
+            const leftX = toX(point.x1);
+            const rightX = toX(point.x2);
+            const valueY = toY(point.y);
+            const rectY = Math.min(zeroY, valueY);
+            const rectHeight = Math.max(1, Math.abs(zeroY - valueY));
+
+            svgParts.push(
+              '<rect x="' + leftX.toFixed(2) +
+              '" y="' + rectY.toFixed(2) +
+              '" width="' + Math.max(1, rightX - leftX).toFixed(2) +
+              '" height="' + rectHeight.toFixed(2) +
+              '" fill="' + barColour +
+              '" stroke="#4b5563" stroke-width="1" vector-effect="non-scaling-stroke" />'
+            );
+
+            svgParts.push(
+              '<text x="' + ((leftX + rightX) / 2).toFixed(2) +
+              '" y="' + Math.max(margin.top + 11, rectY - 6).toFixed(2) +
+              '" text-anchor="middle" font-size="11" font-weight="400" fill="#334155">' +
+              escapeHtml(formatGraphDisplayNumber(point.y)) +
+              '</text>'
+            );
+          });
+        } else {
+          const orderedPoints = graphType === "line"
+            ? [...points].sort((left, right) => left.x - right.x)
+            : points;
+
+          if (graphType === "line") {
+            const polylinePoints = orderedPoints
+              .map(point =>
+                toX(point.x).toFixed(2) + "," + toY(point.y).toFixed(2)
+              )
+              .join(" ");
+
+            svgParts.push(
+              '<polyline points="' + polylinePoints +
+              '" fill="none" stroke="' + primaryColour + '" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />'
+            );
+          }
+
+          orderedPoints.forEach(point => {
+            svgParts.push(
+              '<circle cx="' + toX(point.x).toFixed(2) +
+              '" cy="' + toY(point.y).toFixed(2) +
+              '" r="' + (graphType === "scatter" ? 5 : 4) +
+              '" fill="' + (graphType === "scatter" ? accentColour : primaryColour) +
+              '" stroke="#fff" stroke-width="1.5" />'
+            );
+          });
+        }
+      }
+
+      const horizontalAxisY = Math.max(
+        margin.top,
+        Math.min(margin.top + plotHeight, toY(0))
+      );
+
+      const verticalAxisX = ["bar", "histogram"].includes(graphType)
+        ? margin.left
+        : Math.max(
+            margin.left,
+            Math.min(margin.left + plotWidth, toX(0))
+          );
+
+      svgParts.push(
+        '<line x1="' + margin.left + '" y1="' + horizontalAxisY.toFixed(2) +
+        '" x2="' + (margin.left + plotWidth) + '" y2="' + horizontalAxisY.toFixed(2) +
+        '" stroke="#111827" stroke-width="1.1" vector-effect="non-scaling-stroke" marker-end="url(#' + axisMarkerId + ')" />'
+      );
+
+      svgParts.push(
+        '<line x1="' + verticalAxisX.toFixed(2) + '" y1="' + margin.top +
+        '" x2="' + verticalAxisX.toFixed(2) + '" y2="' + (margin.top + plotHeight) +
+        '" stroke="#111827" stroke-width="1.1" vector-effect="non-scaling-stroke" marker-end="url(#' + axisMarkerId + ')" />'
+      );
+
+      svgParts.push(
+        '<text x="' + (margin.left + plotWidth / 2).toFixed(2) +
+        '" y="' + (height - 14) +
+        '" text-anchor="middle" font-size="12" font-weight="400" fill="#111827">' +
+        escapeHtml(xLabel) +
+        "</text>"
+      );
+
+      svgParts.push(
+        '<text x="18" y="' + (margin.top + plotHeight / 2).toFixed(2) +
+        '" text-anchor="middle" font-size="12" font-weight="400" fill="#111827"' +
+        ' transform="rotate(-90 18 ' + (margin.top + plotHeight / 2).toFixed(2) + ')">' +
+        escapeHtml(yLabel) +
+        "</text>"
+      );
+
+      return (
+        '<div class="noteVisualBlock noteGraphBlock' + (minimalTheme ? ' minimalDiagramTheme' : '') + '">' +
+          (title
+            ? '<div class="noteVisualTitle">' + renderNoteVisualTitle(title) + "</div>"
+            : "") +
+          '<div class="generatedNoteGraphWrap">' +
+            '<svg class="generatedNoteGraph" viewBox="0 0 ' + width + " " + height +
+            '" role="img" aria-label="' + escapeHtml(title || graphType + " graph") + '">' +
+              svgParts.join("") +
+            "</svg>" +
+          "</div>" +
+        "</div>"
+      );
+    }
+
+    function renderHistogramBlock(rawAttributes, bodyText){
+      return renderNoteGraphBlock(
+        'type="histogram" ' + String(rawAttributes || ""),
+        bodyText
+      );
+    }
+
+    function noteSvgLabel(value){
+      return String(value ?? "")
+        .replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "$1/$2")
+        .replace(/\\theta/g, "θ")
+        .replace(/\\alpha/g, "α")
+        .replace(/\\beta/g, "β")
+        .replace(/\\pi/g, "π")
+        .replace(/\\times/g, "×")
+        .replace(/\\div/g, "÷")
+        .replace(/\\(?:left|right)/g, "")
+        .replace(/\$|\\\(|\\\)|\\\[|\\\]/g, "")
+        .replace(/\^\{([^{}]+)\}/g, "^$1")
+        .replace(/(^|[\s(;=])-(?=\d)/g, "$1−")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function noteVisualNumber(attributes, key, fallback){
+      const cleanedValue = String(attributes[key] ?? "")
+        .replace(/\$/g, "")
+        .replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "$1/$2")
+        .trim();
+      const value = parseNoteGraphNumber(cleanedValue);
+      return value === null ? fallback : value;
+    }
+
+    function renderBoxPlotBlock(rawAttributes, bodyText){
+      const attributes = readNoteVisualAttributes(rawAttributes);
+      const minimalTheme = useMinimalAssessmentVisualTheme(attributes);
+      const requestedTitle = String(attributes.title || "").trim();
+      const showTitle = !/^(?:0|false|no|off|hide|none)$/i.test(
+        String(attributes.show_title ?? attributes.showtitle ?? "true").trim()
+      );
+      const title = showTitle ? requestedTitle : "";
+      const accessibleTitle = requestedTitle || "Box-and-whisker plot";
+      const sourceLines = getNoteVisualLines(bodyText);
+      const rows = sourceLines.map(line => {
+        const parts = line.split("|").map(part => String(part || "").trim());
+        if (parts.length < 6) return null;
+        const values = parts.slice(1, 6).map(parseNoteGraphNumber);
+        if (values.some(value => value === null)) return null;
+        return {
+          label:noteSvgLabel(parts[0] || "Graph"),
+          minimum:values[0],
+          lowerQuartile:values[1],
+          median:values[2],
+          upperQuartile:values[3],
+          maximum:values[4]
+        };
+      }).filter(Boolean);
+
+      if (!rows.length) {
+        return noteVisualError("Add each box plot as: Graph A | minimum | lower quartile | median | upper quartile | maximum.");
+      }
+      if (rows.length !== sourceLines.length) {
+        return noteVisualError("Every box plot must contain a label followed by five numeric values: minimum | lower quartile | median | upper quartile | maximum.");
+      }
+
+      const invalidRow = rows.find(row => !(
+        row.minimum <= row.lowerQuartile &&
+        row.lowerQuartile <= row.median &&
+        row.median <= row.upperQuartile &&
+        row.upperQuartile <= row.maximum
+      ));
+      if (invalidRow) {
+        return noteVisualError((invalidRow.label || "A box plot") + " must follow minimum ≤ lower quartile ≤ median ≤ upper quartile ≤ maximum.");
+      }
+
+      const observedMinimum = Math.min(...rows.map(row => row.minimum));
+      const observedMaximum = Math.max(...rows.map(row => row.maximum));
+      const observedSpan = Math.max(1, observedMaximum - observedMinimum);
+      const xMin = noteVisualNumber(attributes, "xmin", Math.floor(observedMinimum - observedSpan * .06));
+      const xMax = noteVisualNumber(attributes, "xmax", Math.ceil(observedMaximum + observedSpan * .06));
+      if (!(xMax > xMin) || observedMinimum < xMin || observedMaximum > xMax) {
+        return noteVisualError("The box-plot scale must include every minimum and maximum value.");
+      }
+
+      const chooseStep = span => {
+        const rough = Math.max(Number.EPSILON, span / 14);
+        const power = Math.pow(10, Math.floor(Math.log10(rough)));
+        const normalised = rough / power;
+        const factor = normalised <= 1.5 ? 1 : normalised <= 3 ? 2 : normalised <= 7 ? 5 : 10;
+        return factor * power;
+      };
+      const majorStep = Math.max(Number.EPSILON, noteVisualNumber(attributes, "step", chooseStep(xMax - xMin)));
+      const requestedMinorStep = Math.max(Number.EPSILON, noteVisualNumber(attributes, "minor_step", noteVisualNumber(attributes, "minorstep", majorStep / 2)));
+      const minorStep = Math.min(majorStep, requestedMinorStep);
+      const width = 760;
+      const minimumHeight = rows.length * 96 + 42;
+      const defaultHeight = rows.length * 112 + 50;
+      const requestedHeight = parseNoteGraphNumber(attributes.height);
+      const height = requestedHeight === null
+        ? Math.min(700, Math.max(minimumHeight, defaultHeight))
+        : Math.min(700, Math.max(minimumHeight, requestedHeight));
+      const margin = { left:126, right:34, top:30, bottom:26 };
+      const plotWidth = width - margin.left - margin.right;
+      const rowBand = (height - margin.top - margin.bottom) / rows.length;
+      const toX = value => margin.left + ((Number(value) - xMin) / (xMax - xMin)) * plotWidth;
+      const formatValue = value => {
+        const rounded = Number(Number(value).toFixed(6));
+        return String(Object.is(rounded, -0) ? 0 : rounded).replace(/^-/, "−");
+      };
+      const isMultiple = (value, step) => {
+        const quotient = value / step;
+        return Math.abs(quotient - Math.round(quotient)) < 1e-7;
+      };
+      const stroke = minimalTheme ? "#111827" : "#1f2937";
+      const boxFill = minimalTheme ? "#fff" : "#eff6ff";
+      const svg = ['<g font-family="Times New Roman, Times, serif" fill="#111827" shape-rendering="geometricPrecision">'];
+
+      rows.forEach((row, index) => {
+        const boxY = margin.top + index * rowBand + Math.min(30, rowBand * .3);
+        const axisY = boxY + 36;
+        const boxHeight = Math.min(30, Math.max(24, rowBand * .27));
+        const labelY = boxY + 5;
+        svg.push('<text x="18" y="' + labelY.toFixed(2) + '" text-anchor="start" font-size="14" font-weight="400">' + escapeHtml(row.label) + '</text>');
+        svg.push('<line x1="' + toX(xMin).toFixed(2) + '" y1="' + axisY.toFixed(2) + '" x2="' + toX(xMax).toFixed(2) + '" y2="' + axisY.toFixed(2) + '" stroke="' + stroke + '" stroke-width="1.05" vector-effect="non-scaling-stroke" />');
+
+        const firstTick = Math.ceil((xMin - 1e-9) / minorStep) * minorStep;
+        for (let value = firstTick, guard = 0; value <= xMax + minorStep * 1e-7 && guard < 1000; value += minorStep, guard += 1) {
+          const x = toX(value);
+          const major = isMultiple(value - xMin, majorStep) || isMultiple(value, majorStep);
+          svg.push('<line x1="' + x.toFixed(2) + '" y1="' + axisY.toFixed(2) + '" x2="' + x.toFixed(2) + '" y2="' + (axisY + (major ? 6 : 3.5)).toFixed(2) + '" stroke="' + stroke + '" stroke-width=".9" vector-effect="non-scaling-stroke" />');
+          if (major) {
+            svg.push('<text x="' + x.toFixed(2) + '" y="' + (axisY + 20).toFixed(2) + '" text-anchor="middle" font-size="11" font-weight="400">' + escapeHtml(formatValue(value)) + '</text>');
+          }
+        }
+
+        const minimumX = toX(row.minimum);
+        const lowerX = toX(row.lowerQuartile);
+        const medianX = toX(row.median);
+        const upperX = toX(row.upperQuartile);
+        const maximumX = toX(row.maximum);
+        svg.push('<line x1="' + minimumX.toFixed(2) + '" y1="' + boxY.toFixed(2) + '" x2="' + lowerX.toFixed(2) + '" y2="' + boxY.toFixed(2) + '" stroke="' + stroke + '" stroke-width="1.15" vector-effect="non-scaling-stroke" />');
+        svg.push('<line x1="' + upperX.toFixed(2) + '" y1="' + boxY.toFixed(2) + '" x2="' + maximumX.toFixed(2) + '" y2="' + boxY.toFixed(2) + '" stroke="' + stroke + '" stroke-width="1.15" vector-effect="non-scaling-stroke" />');
+        svg.push('<rect x="' + lowerX.toFixed(2) + '" y="' + (boxY - boxHeight / 2).toFixed(2) + '" width="' + Math.max(0, upperX - lowerX).toFixed(2) + '" height="' + boxHeight.toFixed(2) + '" fill="' + boxFill + '" stroke="' + stroke + '" stroke-width="1.15" vector-effect="non-scaling-stroke" />');
+        svg.push('<line x1="' + medianX.toFixed(2) + '" y1="' + (boxY - boxHeight / 2).toFixed(2) + '" x2="' + medianX.toFixed(2) + '" y2="' + (boxY + boxHeight / 2).toFixed(2) + '" stroke="' + stroke + '" stroke-width="1.15" vector-effect="non-scaling-stroke" />');
+        svg.push('<circle cx="' + minimumX.toFixed(2) + '" cy="' + boxY.toFixed(2) + '" r="3" fill="' + stroke + '" />');
+        svg.push('<circle cx="' + maximumX.toFixed(2) + '" cy="' + boxY.toFixed(2) + '" r="3" fill="' + stroke + '" />');
+      });
+
+      svg.push('</g>');
+      return '<div class="noteVisualBlock' + (minimalTheme ? ' minimalDiagramTheme' : '') + '">' +
+        (title ? '<div class="noteVisualTitle">' + renderNoteVisualTitle(title) + '</div>' : '') +
+        '<div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="' + escapeHtml(accessibleTitle) + '">' + svg.join("") + '</svg></div></div>';
+    }
+
+    function parseAdvancedGraphPoints(bodyText){
+      return getNoteVisualLines(bodyText).map(line => {
+        const match = line.match(/^POINT\s+([^|]+)\|\s*([^|]+)(?:\|\s*(.*))?$/i);
+        if (!match) return null;
+        const x = parseNoteGraphNumber(match[1]);
+        const y = parseNoteGraphNumber(match[2]);
+        if (x === null || y === null) return null;
+        return { x, y, label: noteSvgLabel(match[3] || "") };
+      }).filter(Boolean);
+    }
+
+    function renderAdvancedCartesianGraph(options){
+      const width = 760;
+      const height = 410;
+      const margin = { left: 72, right: 28, top: 24, bottom: 72 };
+      const plotWidth = width - margin.left - margin.right;
+      const plotHeight = height - margin.top - margin.bottom;
+      const xMin = Number(options.xMin);
+      const xMax = Number(options.xMax);
+      const yMin = Number(options.yMin);
+      const yMax = Number(options.yMax);
+      const toX = value => margin.left + ((value - xMin) / (xMax - xMin)) * plotWidth;
+      const toY = value => margin.top + ((yMax - value) / (yMax - yMin)) * plotHeight;
+      const svg = [];
+      const minimalTheme = Boolean(options.minimalTheme);
+      const showGrid = options.showGrid !== false;
+      const showTicks = options.showTicks !== false;
+      const axisMarkerId = "advancedAxisArrow" + (++noteVisualSvgSequence);
+      svg.push('<defs><marker id="' + axisMarkerId + '" viewBox="0 0 10 10" refX="8.2" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse"><path d="M 1 1 L 9 5 L 1 9 z" fill="#111827" /></marker></defs>');
+      const buildAxisTicks = (min, max, axisName) => {
+        const explicitStep = Number(axisName === "x" ? options.xTickStep : options.yTickStep);
+        let step = Number.isFinite(explicitStep) && explicitStep > 0 ? explicitStep : null;
+
+        if (step === null && options.preferIntegerTicks) {
+          const span = max - min;
+          if (axisName === "x" && span >= 90 && span <= 720) {
+            const degreeSteps = [15, 30, 45, 60, 90, 120, 180, 360];
+            const target = span / 6;
+            step = degreeSteps.find(value => value >= target) || 360;
+          } else {
+            step = Math.max(1, Math.ceil(span / 6));
+          }
+        }
+
+        if (step === null) {
+          return Array.from({ length: 7 }, (_, index) =>
+            min + ((max - min) * index) / 6
+          );
+        }
+
+        const ticks = [];
+        const first = Math.ceil((min - 1e-10) / step) * step;
+        for (let value = first, guard = 0; value <= max + 1e-10 && guard < 100; value += step, guard += 1) {
+          ticks.push(Number(value.toFixed(10)));
+        }
+        return ticks;
+      };
+
+      const xTicks = buildAxisTicks(xMin, xMax, "x");
+      const yTicks = buildAxisTicks(yMin, yMax, "y");
+
+      xTicks.forEach(xValue => {
+        const x = toX(xValue);
+        if (showGrid) {
+          svg.push('<line x1="' + x.toFixed(2) + '" y1="' + margin.top + '" x2="' + x.toFixed(2) + '" y2="' + (margin.top + plotHeight) + '" stroke="' + (minimalTheme ? "#d1d5db" : "#e2e8f0") + '" stroke-width=".75" vector-effect="non-scaling-stroke" />');
+        }
+        if (showTicks) {
+          svg.push('<text x="' + x.toFixed(2) + '" y="' + (margin.top + plotHeight + 19) + '" text-anchor="middle" font-size="9.2" fill="#475569">' + escapeHtml(formatNoteGraphNumber(xValue)) + '</text>');
+        }
+      });
+
+      yTicks.forEach(yValue => {
+        const y = toY(yValue);
+        if (showGrid) {
+          svg.push('<line x1="' + margin.left + '" y1="' + y.toFixed(2) + '" x2="' + (margin.left + plotWidth) + '" y2="' + y.toFixed(2) + '" stroke="' + (minimalTheme ? "#d1d5db" : "#e2e8f0") + '" stroke-width=".75" vector-effect="non-scaling-stroke" />');
+        }
+        if (showTicks) {
+          svg.push('<text x="' + (margin.left - 9) + '" y="' + (y + 3.5).toFixed(2) + '" text-anchor="end" font-size="9.2" fill="#475569">' + escapeHtml(formatNoteGraphNumber(yValue)) + '</text>');
+        }
+      });
+
+      const axisY = Math.max(margin.top, Math.min(margin.top + plotHeight, toY(0)));
+      const axisX = Math.max(margin.left, Math.min(margin.left + plotWidth, toX(0)));
+      svg.push('<line x1="' + margin.left + '" y1="' + axisY.toFixed(2) + '" x2="' + (margin.left + plotWidth) + '" y2="' + axisY.toFixed(2) + '" stroke="#111827" stroke-width="1.1" vector-effect="non-scaling-stroke" marker-start="url(#' + axisMarkerId + ')" marker-end="url(#' + axisMarkerId + ')" />');
+      svg.push('<line x1="' + axisX.toFixed(2) + '" y1="' + margin.top + '" x2="' + axisX.toFixed(2) + '" y2="' + (margin.top + plotHeight) + '" stroke="#111827" stroke-width="1.1" vector-effect="non-scaling-stroke" marker-start="url(#' + axisMarkerId + ')" marker-end="url(#' + axisMarkerId + ')" />');
+
+      (options.guides || []).forEach(guide => {
+        if (![guide.x1, guide.y1, guide.x2, guide.y2].every(Number.isFinite)) return;
+        const x1 = toX(guide.x1);
+        const y1 = toY(guide.y1);
+        const x2 = toX(guide.x2);
+        const y2 = toY(guide.y2);
+        svg.push('<line x1="' + x1.toFixed(2) + '" y1="' + y1.toFixed(2) + '" x2="' + x2.toFixed(2) + '" y2="' + y2.toFixed(2) + '" stroke="' + escapeHtml(minimalTheme ? "#4b5563" : (guide.colour || "#64748b")) + '" stroke-width="' + Number(guide.width || (minimalTheme ? 1 : 1.2)) + '" vector-effect="non-scaling-stroke" stroke-dasharray="' + escapeHtml(guide.dash || "6 5") + '" />');
+        if (guide.label) {
+          const isVertical = Math.abs(guide.x1 - guide.x2) < 1e-12;
+          const labelX = isVertical ? x2 + 9 : x2 - 8;
+          const labelY = isVertical ? (y1 + y2) / 2 - 7 : y2 - 8;
+          svg.push('<text x="' + labelX.toFixed(2) + '" y="' + labelY.toFixed(2) + '" text-anchor="' + (isVertical ? "start" : "end") + '" font-size="10" font-weight="400" fill="#475569" style="paint-order:stroke;stroke:#fff;stroke-width:3.5px">' + escapeHtml(noteSvgLabel(guide.label)) + '</text>');
+        }
+      });
+
+      const graphSeries = Array.isArray(options.series) && options.series.length
+        ? options.series
+        : [{ segments: options.segments || [], colour: options.colour || "#0b5fa5" }];
+
+      graphSeries.forEach((series, seriesIndex) => {
+        const seriesColour = minimalTheme
+          ? ["#111827", "#4b5563", "#6b7280", "#374151"][seriesIndex % 4]
+          : (series.colour || "#0b5fa5");
+        const seriesMarkerId = "advancedCurveArrow" + (++noteVisualSvgSequence);
+        svg.push('<defs><marker id="' + seriesMarkerId + '" viewBox="0 0 10 10" refX="8.2" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse"><path d="M 1 1 L 9 5 L 1 9 z" fill="' + escapeHtml(seriesColour) + '" /></marker></defs>');
+        (series.segments || []).forEach(segment => {
+          if (segment.length < 2) return;
+          const path = segment.map((point, index) =>
+            (index ? "L" : "M") + toX(point.x).toFixed(2) + " " + toY(point.y).toFixed(2)
+          ).join(" ");
+          svg.push('<path d="' + path + '" fill="none" stroke="' + escapeHtml(seriesColour) + '" stroke-width="' + Number(series.width || (minimalTheme ? 1.6 : 2.1)) + '" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round" marker-start="url(#' + seriesMarkerId + ')" marker-end="url(#' + seriesMarkerId + ')" />');
+        });
+      });
+
+      const occupiedPointLabels = [];
+      const boxesOverlap = (left, right) => !(
+        left.right + 4 < right.left ||
+        left.left - 4 > right.right ||
+        left.bottom + 3 < right.top ||
+        left.top - 3 > right.bottom
+      );
+
+      (options.points || []).forEach(point => {
+        if (point.x < xMin || point.x > xMax || point.y < yMin || point.y > yMax) return;
+        const x = toX(point.x);
+        const y = toY(point.y);
+        svg.push('<circle cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) + '" r="3.6" fill="' + (minimalTheme ? "#111827" : "#c2410c") + '" stroke="#fff" stroke-width="1" />');
+        if (point.label) {
+          const labelWidth = Math.max(16, Math.min(160, noteSvgLabel(point.label).length * 6.2));
+          const candidates = [
+            { x: x + 10, y: y - 10, anchor: "start", box: { left: x + 8, right: x + 8 + labelWidth, top: y - 24, bottom: y - 5 } },
+            { x: x + 10, y: y + 18, anchor: "start", box: { left: x + 8, right: x + 8 + labelWidth, top: y + 3, bottom: y + 22 } },
+            { x: x - 10, y: y - 10, anchor: "end", box: { left: x - 8 - labelWidth, right: x - 8, top: y - 24, bottom: y - 5 } },
+            { x: x - 10, y: y + 18, anchor: "end", box: { left: x - 8 - labelWidth, right: x - 8, top: y + 3, bottom: y + 22 } }
+          ];
+          const insidePlot = candidate => candidate.box.left >= margin.left && candidate.box.right <= margin.left + plotWidth && candidate.box.top >= margin.top && candidate.box.bottom <= margin.top + plotHeight;
+          const selected = candidates.find(candidate => insidePlot(candidate) && !occupiedPointLabels.some(box => boxesOverlap(candidate.box, box))) ||
+            candidates.find(insidePlot) ||
+            candidates[0];
+          occupiedPointLabels.push(selected.box);
+          svg.push('<text x="' + selected.x.toFixed(2) + '" y="' + selected.y.toFixed(2) + '" text-anchor="' + selected.anchor + '" font-size="10" font-weight="400" fill="' + (minimalTheme ? "#111827" : "#7c2d12") + '" style="paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round">' + escapeHtml(point.label) + '</text>');
+        }
+      });
+
+      (options.labels || []).forEach(label => {
+        if (!Number.isFinite(label.x) || !Number.isFinite(label.y)) return;
+        if (label.x < xMin || label.x > xMax || label.y < yMin || label.y > yMax) return;
+        svg.push('<text x="' + toX(label.x).toFixed(2) + '" y="' + toY(label.y).toFixed(2) + '" text-anchor="' + escapeHtml(label.anchor || "middle") + '" font-size="10.5" font-weight="400" fill="' + escapeHtml(minimalTheme ? "#111827" : (label.colour || "#111827")) + '" style="paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round">' + escapeHtml(noteSvgLabel(label.text || "")) + '</text>');
+      });
+
+      if (options.showAxisLabels !== false) {
+        const xAxisLabel = noteSvgLabel(options.xLabel || "");
+        const yAxisLabel = noteSvgLabel(options.yLabel || "");
+        if (xAxisLabel) svg.push('<text x="' + (margin.left + plotWidth / 2).toFixed(2) + '" y="' + (height - 14) + '" text-anchor="middle" font-size="10" font-weight="400">' + escapeHtml(xAxisLabel) + '</text>');
+        if (yAxisLabel) svg.push('<text x="18" y="' + (margin.top + plotHeight / 2).toFixed(2) + '" text-anchor="middle" font-size="10" font-weight="400" transform="rotate(-90 18 ' + (margin.top + plotHeight / 2).toFixed(2) + ')">' + escapeHtml(yAxisLabel) + '</text>');
+      }
+
+      const title = String(options.title || "Graph").trim();
+      return '<div class="noteVisualBlock noteGraphBlock' + (minimalTheme ? ' minimalDiagramTheme' : '') + '">' +
+        (title ? '<div class="noteVisualTitle">' + renderNoteVisualTitle(title) + '</div>' : '') +
+        '<div class="generatedNoteGraphWrap"><svg class="generatedNoteGraph" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="' + escapeHtml(title) + '">' + svg.join("") + '</svg></div></div>';
+    }
+
+    function renderFunctionGraphBlock(rawAttributes, bodyText){
+      const attributes = readNoteVisualAttributes(rawAttributes);
+      const minimalTheme = useMinimalAssessmentVisualTheme(attributes);
+      const supportedTypes = ["linear", "quadratic", "exponential", "hyperbola"];
+      const defaultType = supportedTypes.includes(String(attributes.type || "quadratic").toLowerCase())
+        ? String(attributes.type || "quadratic").toLowerCase()
+        : "quadratic";
+      const xMin = noteVisualNumber(attributes, "xmin", -5);
+      const xMax = noteVisualNumber(attributes, "xmax", 5);
+      const yMin = noteVisualNumber(attributes, "ymin", -6);
+      const yMax = noteVisualNumber(attributes, "ymax", 10);
+      if (!(xMax > xMin) || !(yMax > yMin)) return noteVisualError("The function graph needs xmin < xmax and ymin < ymax.");
+
+      const lines = getNoteVisualLines(bodyText);
+      const palette = ["#0b5fa5", "#7c3aed", "#059669", "#c2410c", "#be185d"];
+
+      const buildSeries = (seriesType, seriesAttributes, seriesIndex, seriesLabel) => {
+        const type = supportedTypes.includes(String(seriesType || "").toLowerCase())
+          ? String(seriesType).toLowerCase()
+          : defaultType;
+        const a = noteVisualNumber(seriesAttributes, "a", 1);
+        const b = noteVisualNumber(seriesAttributes, "b", type === "exponential" ? 2 : 0);
+        const c = noteVisualNumber(seriesAttributes, "c", 0);
+        const m = noteVisualNumber(seriesAttributes, "m", 1);
+        const p = noteVisualNumber(seriesAttributes, "p", 0);
+        const q = noteVisualNumber(seriesAttributes, "q", 0);
+        const evaluate = x => {
+          if (type === "linear") return m * x + c;
+          if (type === "exponential") return a * Math.pow(b, x) + q;
+          if (type === "hyperbola") return a / (x - p) + q;
+          return a * x * x + b * x + c;
+        };
+        const segments = [];
+        let current = [];
+        for (let index = 0; index <= 480; index += 1) {
+          const x = xMin + ((xMax - xMin) * index) / 480;
+          const y = evaluate(x);
+          const nearBreak = type === "hyperbola" && Math.abs(x - p) < (xMax - xMin) / 420;
+          if (!Number.isFinite(y) || y < yMin || y > yMax || nearBreak) {
+            if (current.length > 1) segments.push(current);
+            current = [];
+          } else {
+            current.push({ x, y });
+          }
+        }
+        if (current.length > 1) segments.push(current);
+        return {
+          label: noteSvgLabel(seriesLabel || ""),
+          type,
+          segments,
+          colour: String(seriesAttributes.color || seriesAttributes.colour || palette[seriesIndex % palette.length]),
+          width: Math.max(0.8, Math.min(4, noteVisualNumber(seriesAttributes, "width", minimalTheme ? 1.6 : 2.1)))
+        };
+      };
+
+      const series = [];
+      lines.forEach(line => {
+        const match = line.match(/^SERIES\s+([^|]+)\|\s*([^|]+)(?:\|(.*))?$/i);
+        if (!match) return;
+        const seriesAttributes = readNoteVisualAttributes(match[3] || "");
+        series.push(buildSeries(match[2].trim(), seriesAttributes, series.length, match[1].trim()));
+      });
+
+      if (!series.length) {
+        series.push(buildSeries(defaultType, attributes, 0, attributes.label || ""));
+      }
+
+      const guides = [];
+      const labels = [];
+      lines.forEach(line => {
+        let match = line.match(/^HLINE\s+([^|]+)(?:\|\s*(.*))?$/i);
+        if (match) {
+          const y = parseNoteGraphNumber(match[1]);
+          if (y !== null) guides.push({ x1: xMin, y1: y, x2: xMax, y2: y, label: noteSvgLabel(match[2] || ""), dash: "7 5", colour: "#64748b" });
+          return;
+        }
+        match = line.match(/^VLINE\s+([^|]+)(?:\|\s*(.*))?$/i);
+        if (match) {
+          const x = parseNoteGraphNumber(match[1]);
+          if (x !== null) guides.push({ x1: x, y1: yMin, x2: x, y2: yMax, label: noteSvgLabel(match[2] || ""), dash: "7 5", colour: "#64748b" });
+          return;
+        }
+        match = line.match(/^SEGMENT\s+([^|]+)\|\s*([^|]+)\|\s*([^|]+)\|\s*([^|]+)(?:\|\s*(.*))?$/i);
+        if (match) {
+          const values = [match[1], match[2], match[3], match[4]].map(parseNoteGraphNumber);
+          if (values.every(value => value !== null)) guides.push({ x1: values[0], y1: values[1], x2: values[2], y2: values[3], label: noteSvgLabel(match[5] || ""), dash: "5 4", colour: "#64748b" });
+          return;
+        }
+        match = line.match(/^LABEL\s+([^|]+)\|\s*([^|]+)\|\s*(.*)$/i);
+        if (match) {
+          const x = parseNoteGraphNumber(match[1]);
+          const y = parseNoteGraphNumber(match[2]);
+          if (x !== null && y !== null) labels.push({ x, y, text: noteSvgLabel(match[3]), colour: "#111827" });
+        }
+      });
+
+      return renderAdvancedCartesianGraph({
+        title: attributes.title || (defaultType.charAt(0).toUpperCase() + defaultType.slice(1) + " function"),
+        xLabel: attributes.x || attributes.xlabel || "x",
+        yLabel: attributes.y || attributes.ylabel || "y",
+        xMin, xMax, yMin, yMax, series, guides, labels, minimalTheme,
+        showAxisLabels: false,
+        showGrid: false,
+        showTicks: false,
+        points: parseAdvancedGraphPoints(bodyText),
+        colour: "#0b5fa5"
+      });
+    }
+
+    function renderTrigGraphBlock(rawAttributes, bodyText){
+      const attributes = readNoteVisualAttributes(rawAttributes);
+      const minimalTheme = useMinimalAssessmentVisualTheme(attributes);
+      const fn = ["sin", "cos", "tan"].includes(String(attributes.function || "sin").toLowerCase())
+        ? String(attributes.function || "sin").toLowerCase()
+        : "sin";
+      const amplitude = noteVisualNumber(attributes, "amplitude", 1);
+      const period = noteVisualNumber(attributes, "period", 360);
+      const shift = noteVisualNumber(attributes, "shift", 0);
+      const vertical = noteVisualNumber(attributes, "vertical", 0);
+      const xMin = noteVisualNumber(attributes, "xmin", 0);
+      const xMax = noteVisualNumber(attributes, "xmax", 360);
+      const yMin = noteVisualNumber(attributes, "ymin", -2);
+      const yMax = noteVisualNumber(attributes, "ymax", 2);
+      const xTickStep = noteVisualNumber(attributes, "xstep", noteVisualNumber(attributes, "xtick", null));
+      const yTickStep = noteVisualNumber(attributes, "ystep", noteVisualNumber(attributes, "ytick", null));
+      if (!(xMax > xMin) || !(yMax > yMin) || Math.abs(period) < 1e-12) return noteVisualError("The trigonometry graph needs valid axis ranges and a non-zero period.");
+      const trig = fn === "cos" ? Math.cos : (fn === "tan" ? Math.tan : Math.sin);
+      const segments = [];
+      let current = [];
+      for (let index = 0; index <= 720; index += 1) {
+        const x = xMin + ((xMax - xMin) * index) / 720;
+        const angle = 2 * Math.PI * (x - shift) / period;
+        const rawY = amplitude * trig(angle) + vertical;
+        const nearTanBreak = fn === "tan" && Math.abs(Math.cos(angle)) < 0.025;
+        if (!Number.isFinite(rawY) || nearTanBreak || rawY < yMin || rawY > yMax) {
+          if (current.length > 1) segments.push(current);
+          current = [];
+        } else {
+          current.push({ x, y: rawY });
+        }
+      }
+      if (current.length > 1) segments.push(current);
+      return renderAdvancedCartesianGraph({
+        title: attributes.title || (fn + " graph"),
+        xLabel: attributes.x || attributes.xlabel || "Angle (degrees)",
+        yLabel: attributes.y || attributes.ylabel || "y",
+        xMin, xMax, yMin, yMax, segments, minimalTheme,
+        showAxisLabels: true,
+        showGrid: true,
+        showTicks: true,
+        preferIntegerTicks: true,
+        xTickStep,
+        yTickStep,
+        points: parseAdvancedGraphPoints(bodyText),
+        colour: "#7c3aed"
+      });
+    }
+
+    function parseKeyValueVisualBlock(bodyText){
+      const values = {};
+      getNoteVisualLines(bodyText).forEach(line => {
+        const divider = line.indexOf("|");
+        if (divider < 0) return;
+        const key = line.slice(0, divider).trim().toUpperCase();
+        const value = noteSvgLabel(line.slice(divider + 1));
+        if (key) values[key] = value;
+      });
+      return values;
+    }
+
+    function renderVennBlock(rawAttributes, bodyText){
+      const attributes = readNoteVisualAttributes(rawAttributes);
+      const minimalTheme = useMinimalAssessmentVisualTheme(attributes);
+      const sets = String(attributes.sets || "2") === "3" ? 3 : 2;
+      const values = parseKeyValueVisualBlock(bodyText);
+      const title = String(attributes.title || (sets + "-set Venn diagram"));
+      const svg = [];
+      const addText = (x, y, value, size) => {
+        if (value === undefined || value === "") return;
+        svg.push('<text x="' + x + '" y="' + y + '" text-anchor="middle" font-size="' + (size || 15) + '" font-weight="400" fill="#111827" style="paint-order:stroke;stroke:#fff;stroke-width:4px">' + escapeHtml(value) + '</text>');
+      };
+      svg.push('<rect x="42" y="35" width="676" height="350" rx="8" fill="' + (minimalTheme ? "#fff" : "#f8fbff") + '" stroke="' + (minimalTheme ? "#374151" : "#64748b") + '" stroke-width="2" />');
+      svg.push('<text x="58" y="60" font-size="15" font-weight="400" fill="#334155">U</text>');
+      if (sets === 2) {
+        svg.push('<circle cx="310" cy="210" r="125" fill="' + (minimalTheme ? "none" : "#60a5fa") + '" fill-opacity=".2" stroke="' + (minimalTheme ? "#111827" : "#2563eb") + '" stroke-width="' + (minimalTheme ? 2.2 : 3) + '" />');
+        svg.push('<circle cx="450" cy="210" r="125" fill="' + (minimalTheme ? "none" : "#f59e0b") + '" fill-opacity=".2" stroke="' + (minimalTheme ? "#374151" : "#d97706") + '" stroke-width="' + (minimalTheme ? 2.2 : 3) + '" />');
+        addText(260, 72, values.A_LABEL || "A", 15);
+        addText(500, 72, values.B_LABEL || "B", 15);
+        addText(260, 216, values.A_ONLY, 18);
+        addText(380, 216, values.INTERSECTION || values.AB, 18);
+        addText(500, 216, values.B_ONLY, 18);
+        addText(655, 345, values.OUTSIDE, 18);
+      } else {
+        svg.push('<circle cx="315" cy="175" r="112" fill="' + (minimalTheme ? "none" : "#60a5fa") + '" fill-opacity=".18" stroke="' + (minimalTheme ? "#111827" : "#2563eb") + '" stroke-width="' + (minimalTheme ? 2.2 : 3) + '" />');
+        svg.push('<circle cx="445" cy="175" r="112" fill="' + (minimalTheme ? "none" : "#f59e0b") + '" fill-opacity=".18" stroke="' + (minimalTheme ? "#374151" : "#d97706") + '" stroke-width="' + (minimalTheme ? 2.2 : 3) + '" />');
+        svg.push('<circle cx="380" cy="275" r="112" fill="' + (minimalTheme ? "none" : "#34d399") + '" fill-opacity=".18" stroke="' + (minimalTheme ? "#6b7280" : "#059669") + '" stroke-width="' + (minimalTheme ? 2.2 : 3) + '" />');
+        addText(255, 62, values.A_LABEL || "A", 15);
+        addText(505, 62, values.B_LABEL || "B", 15);
+        addText(380, 360, values.C_LABEL || "C", 15);
+        addText(278, 160, values.A_ONLY, 17);
+        addText(482, 160, values.B_ONLY, 17);
+        addText(380, 319, values.C_ONLY, 17);
+        addText(380, 142, values.AB_ONLY, 17);
+        addText(320, 245, values.AC_ONLY, 17);
+        addText(440, 245, values.BC_ONLY, 17);
+        addText(380, 215, values.ABC, 17);
+        addText(655, 345, values.OUTSIDE, 17);
+      }
+      return '<div class="noteVisualBlock' + (minimalTheme ? ' minimalDiagramTheme' : '') + '"><div class="noteVisualTitle">' + renderNoteVisualTitle(title) + '</div><div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram" viewBox="0 0 760 420" role="img" aria-label="' + escapeHtml(title) + '">' + svg.join("") + '</svg></div></div>';
+    }
+
+    function renderTreeBlock(rawAttributes, bodyText){
+      const attributes = readNoteVisualAttributes(rawAttributes);
+      const minimalTheme = useMinimalAssessmentVisualTheme(attributes);
+      const title = String(attributes.title || "Tree diagram");
+      const edges = [];
+      getNoteVisualLines(bodyText).forEach(line => {
+        const match = line.match(/^(.*?)\s*(?:->|→)\s*(.*?)\s*\|\s*(.*)$/);
+        if (!match || edges.length >= 30) return;
+        edges.push({ from: noteSvgLabel(match[1]), to: noteSvgLabel(match[2]), label: noteSvgLabel(match[3]) });
+      });
+      if (!edges.length) return noteVisualError("Add tree branches as: Start -> Outcome | probability.");
+      const sources = new Set(edges.map(edge => edge.from));
+      const targets = new Set(edges.map(edge => edge.to));
+      const rootLabel = [...sources].find(label => !targets.has(label)) || edges[0].from;
+      let leafIndex = 0;
+      let maxDepth = 0;
+      const build = (label, depth, trail) => {
+        maxDepth = Math.max(maxDepth, depth);
+        const outgoing = depth >= 6 || trail.has(label) ? [] : edges.filter(edge => edge.from === label);
+        const node = { label, depth, children: [], y: 0 };
+        const nextTrail = new Set(trail);
+        nextTrail.add(label);
+        outgoing.forEach(edge => node.children.push({ edge, node: build(edge.to, depth + 1, nextTrail) }));
+        if (!node.children.length) node.y = leafIndex++;
+        return node;
+      };
+      const root = build(rootLabel, 0, new Set());
+      const height = Math.max(360, leafIndex * 76 + 80);
+      const yForLeaf = index => leafIndex <= 1 ? height / 2 : 50 + index * ((height - 100) / (leafIndex - 1));
+      const position = node => {
+        if (!node.children.length) node.py = yForLeaf(node.y);
+        else {
+          node.children.forEach(child => position(child.node));
+          node.py = node.children.reduce((sum, child) => sum + child.node.py, 0) / node.children.length;
+        }
+        node.px = 75 + node.depth * (620 / Math.max(1, maxDepth));
+      };
+      position(root);
+      const svg = [];
+      const draw = node => {
+        node.children.forEach(child => {
+          const target = child.node;
+          svg.push('<line x1="' + node.px.toFixed(2) + '" y1="' + node.py.toFixed(2) + '" x2="' + target.px.toFixed(2) + '" y2="' + target.py.toFixed(2) + '" stroke="#334155" stroke-width="2.2" />');
+          const midX = (node.px + target.px) / 2;
+          const midY = (node.py + target.py) / 2 - 7;
+          svg.push('<text x="' + midX.toFixed(2) + '" y="' + midY.toFixed(2) + '" text-anchor="middle" font-size="13" font-weight="400" fill="' + (minimalTheme ? "#111827" : "#7c3aed") + '" style="paint-order:stroke;stroke:#fff;stroke-width:5px">' + escapeHtml(child.edge.label) + '</text>');
+          draw(target);
+        });
+        svg.push('<circle cx="' + node.px.toFixed(2) + '" cy="' + node.py.toFixed(2) + '" r="5" fill="' + (minimalTheme ? "#111827" : "#0b5fa5") + '" />');
+        svg.push('<text x="' + node.px.toFixed(2) + '" y="' + (node.py - 12).toFixed(2) + '" text-anchor="middle" font-size="12" font-weight="400" fill="#111827" style="paint-order:stroke;stroke:#fff;stroke-width:5px">' + escapeHtml(node.label) + '</text>');
+      };
+      draw(root);
+      return '<div class="noteVisualBlock' + (minimalTheme ? ' minimalDiagramTheme' : '') + '"><div class="noteVisualTitle">' + renderNoteVisualTitle(title) + '</div><div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram" viewBox="0 0 760 ' + height + '" role="img" aria-label="' + escapeHtml(title) + '">' + svg.join("") + '</svg></div></div>';
+    }
+
+    function renderCircleBlock(rawAttributes, bodyText){
+      const attributes = readNoteVisualAttributes(rawAttributes);
+      const minimalTheme = useMinimalAssessmentVisualTheme(attributes);
+      const title = String(attributes.title || "Circle geometry");
+      const centreLabel = noteSvgLabel(attributes.center || "O");
+      const cx = 380;
+      const cy = 220;
+      const radius = Math.max(70, Math.min(170, noteVisualNumber(attributes, "radius", 145)));
+      const lines = getNoteVisualLines(bodyText);
+      const points = {};
+      lines.forEach(line => {
+        const parts = line.split("|").map(part => part.trim());
+        const match = parts[0].match(/^POINT\s+(.+)$/i);
+        const angle = parts.length > 1 ? parseNoteGraphNumber(parts[1]) : null;
+        if (!match || angle === null) return;
+        const key = noteSvgLabel(match[1]);
+        const radians = angle * Math.PI / 180;
+        points[key] = { x: cx + radius * Math.cos(radians), y: cy - radius * Math.sin(radians), angle };
+      });
+      if (Object.keys(points).length < 2) return noteVisualError("A circle diagram needs at least two POINT rows, for example POINT A | 30.");
+      const svg = [];
+      svg.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + radius + '" fill="' + (minimalTheme ? "#fff" : "#eff6ff") + '" stroke="#0f172a" stroke-width="' + (minimalTheme ? 2.3 : 3) + '" />');
+      svg.push('<circle cx="' + cx + '" cy="' + cy + '" r="4" fill="#0f172a" /><text x="' + (cx + 9) + '" y="' + (cy - 8) + '" font-size="14" font-weight="400">' + escapeHtml(centreLabel) + '</text>');
+      const getPoint = name => points[noteSvgLabel(name)];
+      const lineBetween = (left, right, colour, width, dash) => {
+        if (!left || !right) return;
+        svg.push('<line x1="' + left.x.toFixed(2) + '" y1="' + left.y.toFixed(2) + '" x2="' + right.x.toFixed(2) + '" y2="' + right.y.toFixed(2) + '" stroke="' + colour + '" stroke-width="' + width + '"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + ' />');
+      };
+      lines.forEach(line => {
+        const parts = line.split("|").map(part => part.trim());
+        const commandParts = parts[0].split(/\s+/);
+        const command = String(commandParts.shift() || "").toUpperCase();
+        if (command === "POINT") return;
+        if (["CHORD", "LINE", "DIAMETER"].includes(command)) {
+          lineBetween(getPoint(commandParts.join(" ")), getPoint(parts[1]), minimalTheme ? (command === "DIAMETER" ? "#111827" : "#374151") : (command === "DIAMETER" ? "#7c3aed" : "#0b5fa5"), command === "DIAMETER" ? 3 : 2.4, "");
+        } else if (command === "RADIUS") {
+          lineBetween({ x: cx, y: cy }, getPoint(commandParts.join(" ")), minimalTheme ? "#4b5563" : "#059669", 2.5, "6 4");
+        } else if (command === "TANGENT") {
+          const point = getPoint(commandParts.join(" "));
+          if (!point) return;
+          const dx = point.x - cx;
+          const dy = point.y - cy;
+          const length = 100;
+          const norm = Math.hypot(dx, dy) || 1;
+          const tx = -dy / norm;
+          const ty = dx / norm;
+          lineBetween({ x: point.x - tx * length, y: point.y - ty * length }, { x: point.x + tx * length, y: point.y + ty * length }, minimalTheme ? "#111827" : "#dc2626", 2.6, "");
+        } else if (command === "ANGLE") {
+          const first = getPoint(commandParts.join(" ")) || (noteSvgLabel(commandParts.join(" ")) === centreLabel ? { x: cx, y: cy } : null);
+          const vertexName = noteSvgLabel(parts[1]);
+          const vertex = getPoint(parts[1]) || (vertexName === centreLabel ? { x: cx, y: cy } : null);
+          const second = getPoint(parts[2]) || (noteSvgLabel(parts[2]) === centreLabel ? { x: cx, y: cy } : null);
+          if (!first || !vertex || !second) return;
+          let a1 = Math.atan2(first.y - vertex.y, first.x - vertex.x);
+          let a2 = Math.atan2(second.y - vertex.y, second.x - vertex.x);
+          let delta = a2 - a1;
+          while (delta > Math.PI) delta -= 2 * Math.PI;
+          while (delta < -Math.PI) delta += 2 * Math.PI;
+          const arcRadius = 30;
+          const start = { x: vertex.x + arcRadius * Math.cos(a1), y: vertex.y + arcRadius * Math.sin(a1) };
+          const end = { x: vertex.x + arcRadius * Math.cos(a1 + delta), y: vertex.y + arcRadius * Math.sin(a1 + delta) };
+          svg.push('<path d="M ' + start.x.toFixed(2) + ' ' + start.y.toFixed(2) + ' A ' + arcRadius + ' ' + arcRadius + ' 0 0 ' + (delta >= 0 ? 1 : 0) + ' ' + end.x.toFixed(2) + ' ' + end.y.toFixed(2) + '" fill="none" stroke="' + (minimalTheme ? "#111827" : "#c2410c") + '" stroke-width="2.5" />');
+          const middle = a1 + delta / 2;
+          svg.push('<text x="' + (vertex.x + 51 * Math.cos(middle)).toFixed(2) + '" y="' + (vertex.y + 51 * Math.sin(middle) + 4).toFixed(2) + '" text-anchor="middle" font-size="14" font-weight="400" fill="' + (minimalTheme ? "#111827" : "#9a3412") + '" style="paint-order:stroke;stroke:#fff;stroke-width:4px">' + escapeHtml(noteSvgLabel(parts[3] || "")) + '</text>');
+        } else if (command === "ARC") {
+          const first = getPoint(commandParts.join(" "));
+          const second = getPoint(parts[1]);
+          if (!first || !second) return;
+          const a1 = Math.atan2(first.y - cy, first.x - cx);
+          let delta = Math.atan2(second.y - cy, second.x - cx) - a1;
+          while (delta > Math.PI) delta -= 2 * Math.PI;
+          while (delta < -Math.PI) delta += 2 * Math.PI;
+          svg.push('<path d="M ' + first.x.toFixed(2) + ' ' + first.y.toFixed(2) + ' A ' + radius + ' ' + radius + ' 0 0 ' + (delta >= 0 ? 1 : 0) + ' ' + second.x.toFixed(2) + ' ' + second.y.toFixed(2) + '" fill="none" stroke="' + (minimalTheme ? "#4b5563" : "#f59e0b") + '" stroke-width="' + (minimalTheme ? 3 : 6) + '" />');
+          const middle = a1 + delta / 2;
+          svg.push('<text x="' + (cx + (radius + 23) * Math.cos(middle)).toFixed(2) + '" y="' + (cy + (radius + 23) * Math.sin(middle) + 4).toFixed(2) + '" text-anchor="middle" font-size="14" font-weight="400" fill="' + (minimalTheme ? "#111827" : "#92400e") + '">' + escapeHtml(noteSvgLabel(parts[2] || "")) + '</text>');
+        } else if (command === "SEGMENT_LABEL") {
+          const first = getPoint(commandParts.join(" "));
+          const second = getPoint(parts[1]);
+          if (!first || !second) return;
+          svg.push('<text x="' + ((first.x + second.x) / 2).toFixed(2) + '" y="' + (((first.y + second.y) / 2) - 9).toFixed(2) + '" text-anchor="middle" font-size="14" font-weight="400" fill="' + (minimalTheme ? "#111827" : "#0b5fa5") + '" style="paint-order:stroke;stroke:#fff;stroke-width:4px">' + escapeHtml(noteSvgLabel(parts[2] || "")) + '</text>');
+        }
+      });
+      Object.entries(points).forEach(([label, point]) => {
+        const dx = point.x - cx;
+        const dy = point.y - cy;
+        const norm = Math.hypot(dx, dy) || 1;
+        svg.push('<circle cx="' + point.x.toFixed(2) + '" cy="' + point.y.toFixed(2) + '" r="5" fill="#0f172a" />');
+        svg.push('<text x="' + (point.x + dx / norm * 18).toFixed(2) + '" y="' + (point.y + dy / norm * 18 + 5).toFixed(2) + '" text-anchor="middle" font-size="14" font-weight="400" style="paint-order:stroke;stroke:#fff;stroke-width:4px">' + escapeHtml(label) + '</text>');
+      });
+      return '<div class="noteVisualBlock' + (minimalTheme ? ' minimalDiagramTheme' : '') + '"><div class="noteVisualTitle">' + renderNoteVisualTitle(title) + '</div><div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram" viewBox="0 0 760 440" role="img" aria-label="' + escapeHtml(title) + '">' + svg.join("") + '</svg></div></div>';
+    }
+
+    function renderGeometryBlock(rawAttributes, bodyText){
+      const attributes = readNoteVisualAttributes(rawAttributes);
+      const minimalTheme = useMinimalAssessmentVisualTheme(attributes);
+      const requestedTitle = Object.prototype.hasOwnProperty.call(attributes, "title")
+        ? String(attributes.title || "").trim()
+        : "Geometry diagram";
+      const showTitle = !/^(?:0|false|no|off|hide|none)$/i.test(
+        String(attributes.show_title ?? attributes.showtitle ?? "true").trim()
+      );
+      const title = showTitle ? requestedTitle : "";
+      const accessibleTitle = requestedTitle || "Geometry diagram";
+      const width = 760;
+      const requestedHeight = parseNoteGraphNumber(attributes.height);
+      const height = requestedHeight === null
+        ? 500
+        : Math.max(360, Math.min(680, requestedHeight));
+      const margin = { left: 38, right: 38, top: 30, bottom: 34 };
+      const plotWidth = width - margin.left - margin.right;
+      const plotHeight = height - margin.top - margin.bottom;
+      const xMin = noteVisualNumber(attributes, "xmin", -10);
+      const xMax = noteVisualNumber(attributes, "xmax", 10);
+      const yMin = noteVisualNumber(attributes, "ymin", -7);
+      const yMax = noteVisualNumber(attributes, "ymax", 9);
+      if (!(xMax > xMin) || !(yMax > yMin)) {
+        return noteVisualError("The geometry diagram needs xmin < xmax and ymin < ymax.");
+      }
+
+      const showAxes = /^(?:1|true|yes|on)$/i.test(String(attributes.axes || "false"));
+      const showAxisLabels = /^(?:1|true|yes|on)$/i.test(String(attributes.axis_labels || attributes.axislabels || "false"));
+      const worldWidth = xMax - xMin;
+      const worldHeight = yMax - yMin;
+      const scale = Math.min(plotWidth / worldWidth, plotHeight / worldHeight);
+      const usedWidth = worldWidth * scale;
+      const usedHeight = worldHeight * scale;
+      const offsetX = margin.left + (plotWidth - usedWidth) / 2;
+      const offsetY = margin.top + (plotHeight - usedHeight) / 2;
+      const toX = value => offsetX + (Number(value) - xMin) * scale;
+      const toY = value => offsetY + (yMax - Number(value)) * scale;
+      const points = {};
+      const commands = [];
+
+      getNoteVisualLines(bodyText).forEach(line => {
+        const parts = line.split("|").map(part => String(part || "").trim());
+        const commandParts = String(parts.shift() || "").split(/\s+/).filter(Boolean);
+        const command = String(commandParts.shift() || "").toUpperCase();
+        const subject = noteSvgLabel(commandParts.join(" "));
+
+        if (["POINT", "COORD_POINT"].includes(command)) {
+          const x = parseNoteGraphNumber(parts[0]);
+          const y = parseNoteGraphNumber(parts[1]);
+          if (!subject || x === null || y === null) return;
+          const coordinateLabel = subject + "(" + Number(x.toFixed(3)) + "; " + Number(y.toFixed(3)) + ")";
+          const rawLabel = noteSvgLabel(parts[2] || (command === "COORD_POINT" ? coordinateLabel : subject));
+          const parsedDx = parseNoteGraphNumber(parts[3]);
+          const parsedDy = parseNoteGraphNumber(parts[4]);
+          points[subject] = {
+            name: subject,
+            x,
+            y,
+            label: /^(?:none|hide|no-label|nolabel)$/i.test(rawLabel) ? "" : rawLabel,
+            dx: parsedDx ?? 8,
+            dy: parsedDy ?? -8,
+            autoLabel: parsedDx === null && parsedDy === null,
+            showDot: !/^(?:0|false|no|off|nodot|no-dot)$/i.test(String(parts[5] || ""))
+          };
+          return;
+        }
+
+        if (command) commands.push({ command, subject, parts });
+      });
+
+      if (!Object.keys(points).length) {
+        return noteVisualError("Add geometry points as: POINT A | x | y | label | label dx | label dy, or COORD_POINT A | x | y.");
+      }
+
+      const svg = [];
+      const axisMarkerId = "geometryAxisArrow" + (++noteVisualSvgSequence);
+      const lineMarkerId = "geometryLineArrow" + (++noteVisualSvgSequence);
+      const stroke = minimalTheme ? "#111827" : "#1f2937";
+      svg.push(
+        '<defs>' +
+          '<marker id="' + axisMarkerId + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="2.35" markerHeight="2.35" orient="auto"><path d="M 1 1 L 9 5 L 1 9 z" fill="#111827" /></marker>' +
+          '<marker id="' + lineMarkerId + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="2.4" markerHeight="2.4" orient="auto"><path d="M 1 1 L 9 5 L 1 9 z" fill="' + stroke + '" /></marker>' +
+        '</defs>'
+      );
+      svg.push('<g font-family="Times New Roman, Times, serif" fill="#111827">');
+
+      const pointFor = rawName => points[noteSvgLabel(rawName || "")];
+      const canvasPoint = point => point ? { x: toX(point.x), y: toY(point.y) } : null;
+      const addText = (x, y, text, anchor, size, options) => {
+        const value = noteSvgLabel(text || "");
+        if (!value) return;
+        const safeAnchor = ["start", "middle", "end"].includes(anchor) ? anchor : "middle";
+        const settings = options || {};
+        svg.push(
+          '<text x="' + Number(x).toFixed(2) + '" y="' + Number(y).toFixed(2) +
+          '" text-anchor="' + safeAnchor + '" font-size="' + Number(size || 13) +
+          '" font-weight="400" font-style="' + (settings.italic ? "italic" : "normal") + '" fill="#111827" style="paint-order:stroke;stroke:#fff;stroke-width:2.2px;stroke-linejoin:round">' +
+          escapeHtml(value) + '</text>'
+        );
+      };
+      const addLine = (first, second, options) => {
+        if (!first || !second) return;
+        const settings = options || {};
+        svg.push(
+          '<line x1="' + first.x.toFixed(2) + '" y1="' + first.y.toFixed(2) +
+          '" x2="' + second.x.toFixed(2) + '" y2="' + second.y.toFixed(2) +
+          '" stroke="' + escapeHtml(settings.colour || stroke) +
+          '" stroke-width="' + Number(settings.width || 1.15) +
+          '" vector-effect="non-scaling-stroke"' +
+          (settings.dash ? ' stroke-dasharray="' + escapeHtml(settings.dash) + '"' : '') +
+          (settings.arrow ? ' marker-end="url(#' + lineMarkerId + ')"' : '') +
+          ' />'
+        );
+      };
+      const extendedWorldLine = (first, second, startExtension, endExtension) => {
+        const dx = second.x - first.x;
+        const dy = second.y - first.y;
+        const length = Math.hypot(dx, dy) || 1;
+        const ux = dx / length;
+        const uy = dy / length;
+        return [
+          { x: first.x - ux * startExtension, y: first.y - uy * startExtension },
+          { x: second.x + ux * endExtension, y: second.y + uy * endExtension }
+        ];
+      };
+
+      if (showAxes) {
+        if (yMin <= 0 && yMax >= 0) {
+          const axisY = toY(0);
+          addLine(
+            { x: toX(xMin), y: axisY },
+            { x: toX(xMax), y: axisY },
+            { width: 1.05, arrow: true }
+          );
+          if (showAxisLabels) addText(toX(xMax) + 13, axisY + 4, attributes.x_label || attributes.xlabel || "x", "start", 13, { italic:true });
+        }
+        if (xMin <= 0 && xMax >= 0) {
+          const axisX = toX(0);
+          addLine(
+            { x: axisX, y: toY(yMin) },
+            { x: axisX, y: toY(yMax) },
+            { width: 1.05, arrow: true }
+          );
+          if (showAxisLabels) addText(axisX + 9, toY(yMax) - 8, attributes.y_label || attributes.ylabel || "y", "start", 13, { italic:true });
+        }
+      }
+
+      commands.filter(item => item.command === "CIRCLE").forEach(item => {
+        const centre = pointFor(item.subject);
+        const radius = parseNoteGraphNumber(item.parts[0]);
+        if (!centre || radius === null || radius <= 0) return;
+        const centreCanvas = canvasPoint(centre);
+        svg.push(
+          '<circle cx="' + centreCanvas.x.toFixed(2) + '" cy="' + centreCanvas.y.toFixed(2) +
+          '" r="' + (radius * scale).toFixed(2) +
+          '" fill="none" stroke="' + stroke + '" stroke-width="1.15" vector-effect="non-scaling-stroke" />'
+        );
+      });
+
+      commands.filter(item => ["POLYGON", "SHADE_POLYGON", "FILLED_POLYGON"].includes(item.command)).forEach(item => {
+        const names = [item.subject, ...item.parts].map(noteSvgLabel).filter(Boolean);
+        const polygonPoints = names.map(pointFor).filter(Boolean).map(canvasPoint);
+        if (polygonPoints.length < 3) return;
+        const shaded = ["SHADE_POLYGON", "FILLED_POLYGON"].includes(item.command);
+        svg.push(
+          '<polygon points="' + polygonPoints.map(point => point.x.toFixed(2) + ',' + point.y.toFixed(2)).join(' ') +
+          '" fill="' + (shaded ? (minimalTheme ? "#e5e7eb" : "#dbeafe") : "none") +
+          '" fill-opacity="' + (shaded ? ".82" : "1") +
+          '" stroke="' + stroke + '" stroke-width="1.15" vector-effect="non-scaling-stroke" stroke-linejoin="round" />'
+        );
+      });
+
+      commands.filter(item => item.command === "HELICOPTER").forEach(item => {
+        const anchor = canvasPoint(pointFor(item.subject));
+        if (!anchor) return;
+        const iconScale = Math.max(.55, Math.min(1.8, parseNoteGraphNumber(item.parts[0]) ?? 1));
+        const dx = parseNoteGraphNumber(item.parts[1]) ?? 0;
+        const dy = parseNoteGraphNumber(item.parts[2]) ?? -58;
+        const x = anchor.x + dx;
+        const y = anchor.y + dy;
+        svg.push(
+          '<g data-geometry-icon="helicopter" transform="translate(' + x.toFixed(2) + ' ' + y.toFixed(2) + ') scale(' + iconScale.toFixed(2) + ')" ' +
+          'fill="none" stroke="' + stroke + '" stroke-width="1.1" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round">' +
+            '<path d="M -28 0 C -25 -13 -14 -19 1 -17 C 12 -16 19 -10 22 -2 C 14 4 -1 6 -18 4 Z" />' +
+            '<path d="M -12 -16 L -6 -5 L 7 -5 L 12 -14" />' +
+            '<path d="M 20 -4 L 43 -14 L 48 -12 L 28 1" />' +
+            '<path d="M 45 -22 L 45 -4 M 39 -13 L 52 -13" />' +
+            '<path d="M -4 -18 L -4 -25 M -36 -25 L 29 -25 M -19 -29 L 17 -21" />' +
+            '<path d="M -17 5 L -20 12 M 10 5 L 13 12 M -27 12 L 21 12" />' +
+            '<circle cx="-17" cy="-3" r="2.3" fill="' + (minimalTheme ? "#d1d5db" : "#bfdbfe") + '" />' +
+          '</g>'
+        );
+      });
+
+      commands.filter(item => ["SEGMENT", "CHORD", "DIAMETER", "RADIUS", "DASHED", "ARROW", "RAY", "LINE", "TANGENT"].includes(item.command)).forEach(item => {
+        const first = pointFor(item.subject);
+        const second = pointFor(item.parts[0]);
+        if (!first || !second) return;
+        let worldFirst = first;
+        let worldSecond = second;
+        let labelIndex = 1;
+
+        if (["LINE", "TANGENT"].includes(item.command)) {
+          const startExtension = Math.max(0, parseNoteGraphNumber(item.parts[1]) ?? 0);
+          const endExtension = Math.max(0, parseNoteGraphNumber(item.parts[2]) ?? 0);
+          [worldFirst, worldSecond] = extendedWorldLine(first, second, startExtension, endExtension);
+          labelIndex = 3;
+        }
+
+        const firstCanvas = { x: toX(worldFirst.x), y: toY(worldFirst.y) };
+        const secondCanvas = { x: toX(worldSecond.x), y: toY(worldSecond.y) };
+        addLine(firstCanvas, secondCanvas, {
+          dash: item.command === "DASHED" ? "6 5" : "",
+          arrow: ["ARROW", "RAY"].includes(item.command),
+          width: item.command === "DIAMETER" ? 1.25 : 1.15
+        });
+
+        const label = noteSvgLabel(item.parts[labelIndex] || "");
+        if (label) {
+          const dx = parseNoteGraphNumber(item.parts[labelIndex + 1]) ?? 0;
+          const dy = parseNoteGraphNumber(item.parts[labelIndex + 2]) ?? -8;
+          addText((firstCanvas.x + secondCanvas.x) / 2 + dx, (firstCanvas.y + secondCanvas.y) / 2 + dy, label, "middle", 13);
+        }
+      });
+
+      const drawAngle = (first, vertex, second, label, radius, labelDx, labelDy, options) => {
+        const a = canvasPoint(first);
+        const b = canvasPoint(vertex);
+        const c = canvasPoint(second);
+        if (!a || !b || !c) return;
+        const settings = options || {};
+        let startAngle = Math.atan2(a.y - b.y, a.x - b.x);
+        let endAngle = Math.atan2(c.y - b.y, c.x - b.x);
+        let delta = endAngle - startAngle;
+        while (delta > Math.PI) delta -= 2 * Math.PI;
+        while (delta < -Math.PI) delta += 2 * Math.PI;
+        if (settings.reflex) {
+          delta = delta >= 0 ? delta - 2 * Math.PI : delta + 2 * Math.PI;
+        }
+        const arcRadius = Math.max(10, Math.min(55, radius || 24));
+        const startPoint = { x: b.x + arcRadius * Math.cos(startAngle), y: b.y + arcRadius * Math.sin(startAngle) };
+        const endPoint = { x: b.x + arcRadius * Math.cos(startAngle + delta), y: b.y + arcRadius * Math.sin(startAngle + delta) };
+        svg.push(
+          '<path d="M ' + startPoint.x.toFixed(2) + ' ' + startPoint.y.toFixed(2) +
+          ' A ' + arcRadius + ' ' + arcRadius + ' 0 ' + (Math.abs(delta) > Math.PI ? 1 : 0) + ' ' + (delta >= 0 ? 1 : 0) + ' ' +
+          endPoint.x.toFixed(2) + ' ' + endPoint.y.toFixed(2) +
+          '" fill="none" stroke="' + stroke + '" stroke-width="1.05" vector-effect="non-scaling-stroke"' +
+          (settings.arrow ? ' marker-end="url(#' + lineMarkerId + ')"' : '') + ' />'
+        );
+        const middle = startAngle + delta / 2;
+        if (label) {
+          addText(
+            b.x + (arcRadius + 13) * Math.cos(middle) + (labelDx || 0),
+            b.y + (arcRadius + 13) * Math.sin(middle) + (labelDy || 0) + 4,
+            label,
+            "middle",
+            13
+          );
+        }
+      };
+
+      commands.filter(item => ["ANGLE", "ARC", "ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command)).forEach(item => {
+        const first = pointFor(item.subject);
+        const vertex = pointFor(item.parts[0]);
+        const second = pointFor(item.parts[1]);
+        const label = noteSvgLabel(item.parts[2] || "");
+        const radius = parseNoteGraphNumber(item.parts[3]) ?? 24;
+        const labelDx = parseNoteGraphNumber(item.parts[4]) ?? 0;
+        const labelDy = parseNoteGraphNumber(item.parts[5]) ?? 0;
+        drawAngle(first, vertex, second, label, radius, labelDx, labelDy, {
+          reflex: item.command === "REFLEX_ANGLE",
+          arrow: ["ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command)
+        });
+      });
+
+      commands.filter(item => item.command === "RIGHT_ANGLE").forEach(item => {
+        const first = canvasPoint(pointFor(item.subject));
+        const vertex = canvasPoint(pointFor(item.parts[0]));
+        const second = canvasPoint(pointFor(item.parts[1]));
+        if (!first || !vertex || !second) return;
+        const size = Math.max(7, Math.min(22, parseNoteGraphNumber(item.parts[2]) ?? 11));
+        const firstLength = Math.hypot(first.x - vertex.x, first.y - vertex.y) || 1;
+        const secondLength = Math.hypot(second.x - vertex.x, second.y - vertex.y) || 1;
+        const u = { x: (first.x - vertex.x) / firstLength, y: (first.y - vertex.y) / firstLength };
+        const v = { x: (second.x - vertex.x) / secondLength, y: (second.y - vertex.y) / secondLength };
+        const p1 = { x: vertex.x + u.x * size, y: vertex.y + u.y * size };
+        const p2 = { x: p1.x + v.x * size, y: p1.y + v.y * size };
+        const p3 = { x: vertex.x + v.x * size, y: vertex.y + v.y * size };
+        svg.push(
+          '<path d="M ' + p1.x.toFixed(2) + ' ' + p1.y.toFixed(2) +
+          ' L ' + p2.x.toFixed(2) + ' ' + p2.y.toFixed(2) +
+          ' L ' + p3.x.toFixed(2) + ' ' + p3.y.toFixed(2) +
+          '" fill="none" stroke="' + stroke + '" stroke-width="1.05" vector-effect="non-scaling-stroke" />'
+        );
+      });
+
+      commands.filter(item => ["EQUAL", "PARALLEL"].includes(item.command)).forEach(item => {
+        const first = canvasPoint(pointFor(item.subject));
+        const second = canvasPoint(pointFor(item.parts[0]));
+        if (!first || !second) return;
+        const count = Math.max(1, Math.min(3, Math.round(parseNoteGraphNumber(item.parts[1]) ?? 1)));
+        const dx = second.x - first.x;
+        const dy = second.y - first.y;
+        const length = Math.hypot(dx, dy) || 1;
+        const u = { x: dx / length, y: dy / length };
+        const n = { x: -u.y, y: u.x };
+        const positionRatio = Math.max(.15, Math.min(.85, parseNoteGraphNumber(item.parts[2]) ?? .5));
+        const middle = {
+          x: first.x + (second.x - first.x) * positionRatio,
+          y: first.y + (second.y - first.y) * positionRatio
+        };
+
+        for (let index = 0; index < count; index += 1) {
+          const along = (index - (count - 1) / 2) * 8;
+          const centre = { x: middle.x + u.x * along, y: middle.y + u.y * along };
+          if (item.command === "EQUAL") {
+            addLine(
+              { x: centre.x - n.x * 5, y: centre.y - n.y * 5 },
+              { x: centre.x + n.x * 5, y: centre.y + n.y * 5 },
+              { width: 1.1 }
+            );
+          } else {
+            const tip = { x: centre.x + u.x * 5, y: centre.y + u.y * 5 };
+            const back = { x: centre.x - u.x * 5, y: centre.y - u.y * 5 };
+            svg.push(
+              '<path d="M ' + (back.x + n.x * 3.3).toFixed(2) + ' ' + (back.y + n.y * 3.3).toFixed(2) +
+              ' L ' + tip.x.toFixed(2) + ' ' + tip.y.toFixed(2) +
+              ' L ' + (back.x - n.x * 3.3).toFixed(2) + ' ' + (back.y - n.y * 3.3).toFixed(2) +
+              ' Z" fill="' + stroke + '" stroke="none" />'
+            );
+          }
+        }
+      });
+
+      commands.filter(item => item.command === "TEXT").forEach(item => {
+        const x = parseNoteGraphNumber(item.subject);
+        const y = parseNoteGraphNumber(item.parts[0]);
+        if (x === null || y === null) return;
+        const dx = parseNoteGraphNumber(item.parts[2]) ?? 0;
+        const dy = parseNoteGraphNumber(item.parts[3]) ?? 0;
+        const anchor = String(item.parts[4] || "middle").toLowerCase();
+        addText(toX(x) + dx, toY(y) + dy, item.parts[1] || "", anchor, 13);
+      });
+
+      Object.values(points).forEach(point => {
+        const canvas = canvasPoint(point);
+        if (point.showDot) {
+          svg.push('<circle cx="' + canvas.x.toFixed(2) + '" cy="' + canvas.y.toFixed(2) + '" r="2.1" fill="#111827" />');
+        }
+      });
+
+      const placedLabelBoxes = [];
+      const diagramCentre = { x: offsetX + usedWidth / 2, y: offsetY + usedHeight / 2 };
+      const labelBoxFor = (x, y, width, anchor) => ({
+        left: anchor === "end" ? x - width : anchor === "middle" ? x - width / 2 : x,
+        right: anchor === "end" ? x : anchor === "middle" ? x + width / 2 : x + width,
+        top: y - 13,
+        bottom: y + 4
+      });
+      const boxesOverlap = (first, second) => !(
+        first.right + 3 < second.left || first.left - 3 > second.right ||
+        first.bottom + 2 < second.top || first.top - 2 > second.bottom
+      );
+      Object.values(points).forEach(point => {
+        if (!point.label) return;
+        const canvas = canvasPoint(point);
+        let dx = point.dx;
+        let dy = point.dy;
+        let anchor = dx < 0 ? "end" : "start";
+        const textWidth = Math.max(8, Array.from(point.label).length * 6.4);
+
+        if (point.autoLabel) {
+          const vx = canvas.x - diagramCentre.x;
+          const vy = canvas.y - diagramCentre.y;
+          const length = Math.hypot(vx, vy);
+          const outward = length > 10
+            ? { x: vx / length * 12, y: vy / length * 12 + 4 }
+            : { x: 10, y: -9 };
+          const candidates = [
+            outward,
+            { x: 10, y: -9 }, { x: -10, y: -9 },
+            { x: 10, y: 17 }, { x: -10, y: 17 },
+            { x: 0, y: -11 }, { x: 0, y: 18 }
+          ];
+          for (const candidate of candidates) {
+            const candidateAnchor = Math.abs(candidate.x) < 4 ? "middle" : candidate.x < 0 ? "end" : "start";
+            const candidateBox = labelBoxFor(canvas.x + candidate.x, canvas.y + candidate.y, textWidth, candidateAnchor);
+            const inside = candidateBox.left >= offsetX - 6 && candidateBox.right <= offsetX + usedWidth + 6 &&
+              candidateBox.top >= offsetY - 8 && candidateBox.bottom <= offsetY + usedHeight + 8;
+            if (inside && !placedLabelBoxes.some(box => boxesOverlap(candidateBox, box))) {
+              dx = candidate.x;
+              dy = candidate.y;
+              anchor = candidateAnchor;
+              break;
+            }
+          }
+        }
+
+        const labelX = canvas.x + dx;
+        const labelY = canvas.y + dy;
+        addText(labelX, labelY, point.label, anchor, 13);
+        placedLabelBoxes.push(labelBoxFor(labelX, labelY, textWidth, anchor));
+      });
+
+      svg.push('</g>');
+      return '<div class="noteVisualBlock' + (minimalTheme ? ' minimalDiagramTheme' : '') + '">' +
+        (title ? '<div class="noteVisualTitle">' + renderNoteVisualTitle(title) + '</div>' : '') +
+        '<div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="' + escapeHtml(accessibleTitle) + '">' + svg.join("") + '</svg></div></div>';
+    }
+
+    function renderStructuredNotePreview(rawText){
+      const raw = String(rawText || "").replace(/\r/g, "").trim();
+      if (!raw) return "";
+
+      const blockPattern =
+        /\[\[(FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)([^\]]*)\]\]([\s\S]*?)\[\[\/\1\]\]/gi;
+
+      const html = [];
+      let cursor = 0;
+      let foundBlock = false;
+      let match;
+
+      const defaultVisualIntroduction = blockType => {
+        const introductions = {
+          TABLE: "Use the table below to answer the next question.",
+          FREQUENCY_TABLE: "Use the frequency table below to answer the next question.",
+          BOX_PLOT: "Use the box-and-whisker plots below to answer the next question.",
+          BOX_WHISKER: "Use the box-and-whisker plots below to answer the next question.",
+          GRAPH: "Use the graph below to answer the next question.",
+          HISTOGRAM: "Use the histogram below to answer the next question.",
+          FUNCTION_GRAPH: "Use the graph below to answer the next question.",
+          TRIG_GRAPH: "Use the trigonometric graph below to answer the next question.",
+          VENN: "Use the Venn diagram below to answer the next question.",
+          TREE: "Use the tree diagram below to answer the next question.",
+          CIRCLE: "Use the circle geometry diagram below to answer the next question.",
+          GEOMETRY: "Use the geometry diagram below to answer the next question."
+        };
+        return introductions[blockType] || "Use the visual below to answer the next question.";
+      };
+
+      while ((match = blockPattern.exec(raw)) !== null) {
+        foundBlock = true;
+        const plainText = raw.slice(cursor, match.index).trim();
+        const blockType = String(match[1] || "").toUpperCase();
+        const attributes = match[2] || "";
+        const body = match[3] || "";
+
+        const visualRenderers = {
+          TABLE: renderNoteTableBlock,
+          FREQUENCY_TABLE: renderNoteTableBlock,
+          BOX_PLOT: renderBoxPlotBlock,
+          BOX_WHISKER: renderBoxPlotBlock,
+          GRAPH: renderNoteGraphBlock,
+          HISTOGRAM: renderHistogramBlock,
+          FUNCTION_GRAPH: renderFunctionGraphBlock,
+          TRIG_GRAPH: renderTrigGraphBlock,
+          VENN: renderVennBlock,
+          TREE: renderTreeBlock,
+          CIRCLE: renderCircleBlock,
+          GEOMETRY: renderGeometryBlock
+        };
+        const visualHtml = visualRenderers[blockType](attributes, body);
+        const formalAssessmentVisual = isFormalAssessmentVisual();
+
+        if (formalAssessmentVisual) {
+          const introduction = plainText || defaultVisualIntroduction(blockType);
+          html.push(
+            '<div class="assessmentVisualFrame">' +
+              renderStructuredNoteTextPreview(introduction) +
+              visualHtml +
+            '</div>'
+          );
+        } else {
+          if (plainText) html.push(renderStructuredNoteTextPreview(plainText));
+          html.push(visualHtml);
+        }
+
+        cursor = blockPattern.lastIndex;
+      }
+
+      const remainingText = raw.slice(cursor).trim();
+      if (remainingText) {
+        html.push(renderStructuredNoteTextPreview(remainingText));
+      }
+
+      return foundBlock
+        ? html.join("")
+        : renderStructuredNoteTextPreview(raw);
+    }
+
+    /*
+     * Geometry-first admin renderer.
+     *
+     * Imported geometry notes must be handled before the ordinary note and
+     * mixed-maths path. This deliberately uses a tolerant GEOMETRY matcher so
+     * harmless spaces, wrapped attributes or invisible copy/paste characters
+     * cannot make the commands appear as learner-facing text.
+     */
+    function containsNativeGeometryBlock(rawText){
+      return /\[\[\s*GEOMETRY\b[\s\S]*?\]\][\s\S]*?\[\[\s*\/\s*GEOMETRY\s*\]\]/i.test(
+        String(rawText || "").replace(/[\u200B-\u200D\uFEFF]/g, "")
+      );
+    }
+
+    function renderNativeGeometryNotePreview(rawText){
+      const raw = String(rawText || "")
+        .replace(/\r/g, "")
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        .trim();
+
+      if (!raw) return "";
+      if (!containsNativeGeometryBlock(raw)) {
+        return renderStructuredNotePreview(raw);
+      }
+
+      const geometryPattern =
+        /\[\[\s*GEOMETRY\b([^\]]*)\]\]([\s\S]*?)\[\[\s*\/\s*GEOMETRY\s*\]\]/gi;
+      const html = [];
+      let cursor = 0;
+      let match;
+
+      while ((match = geometryPattern.exec(raw)) !== null) {
+        const introductionText = raw.slice(cursor, match.index).trim();
+        const introduction = introductionText ||
+          "Use the geometry diagram below to answer the next question.";
+        const visualHtml = renderGeometryBlock(match[1] || "", match[2] || "");
+
+        if (isFormalAssessmentVisual()) {
+          html.push(
+            '<div class="assessmentVisualFrame">' +
+              renderStructuredNoteTextPreview(introduction) +
+              visualHtml +
+            '</div>'
+          );
+        } else {
+          if (introductionText) {
+            html.push(renderStructuredNoteTextPreview(introductionText));
+          }
+          html.push(visualHtml);
+        }
+
+        cursor = geometryPattern.lastIndex;
+      }
+
+      const remainingText = raw.slice(cursor).trim();
+      if (remainingText) {
+        html.push(renderStructuredNoteTextPreview(remainingText));
+      }
+
+      return html.join("");
+    }
+
+    function renderAdminNotePreview(rawText){
+      const source = String(rawText || "");
+      try {
+        return containsNativeGeometryBlock(source)
+          ? renderNativeGeometryNotePreview(source)
+          : renderStructuredNotePreview(source);
+      } catch (error) {
+        console.error("Visual preview could not be drawn:", error);
+        const directiveStart = source.search(
+          /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i
+        );
+        const introduction = (directiveStart >= 0 ? source.slice(0, directiveStart) : source).trim();
+        return (introduction ? renderStructuredNoteTextPreview(introduction) : "") +
+          noteVisualError("This visual could not be previewed. Open this shared diagram block and check its values.");
+      }
+    }
+
+    /* Final safety pass for any older admin preview branch that already
+       printed a native geometry block as text before this renderer ran. */
+    function hydrateNativeGeometryPreview(root){
+      if (!root?.querySelectorAll) return;
+      root.querySelectorAll(".noteBox").forEach(noteBox => {
+        if (noteBox.querySelector("svg.generatedNoteDiagram")) return;
+        const source = String(noteBox.innerText || noteBox.textContent || "").trim();
+        if (!containsNativeGeometryBlock(source)) return;
+        noteBox.innerHTML = renderNativeGeometryNotePreview(source);
+      });
+    }
+
     function renderPreviewQuestionHead(label,questionText,points){
       return `<div class="qHead"><div class="qTitle"><span class="qNo">${escapeHtml(label)}</span><span class="qTextPaper">${renderStructuredQuestionText(questionText, renderMixedMathPreview)}</span></div><div class="marksMetaPaper">${escapeHtml(points)}</div></div>`;
     }
@@ -2551,6 +5294,17 @@ function escapeHtml(str){
       return `assessment-block-${index}`;
     }
 
+    function previewNavigationAttributes(key, number=""){
+      const cleanNumber = cleanSpaces(number || "");
+      const label = cleanNumber ? `Edit ${cleanNumber}` : "Edit this preview item";
+      return `data-preview-key="${escapeAttr(key)}"${cleanNumber ? ` data-preview-number="${escapeAttr(cleanNumber)}"` : ""} role="button" tabindex="0" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}"`;
+    }
+
+    function renderSharedPreviewReference(mainNumber, hasDiagram){
+      const number = Math.max(1, Number(mainNumber) || 1);
+      return `<div class="previewSharedReference"><span class="previewSharedReferenceNo">QUESTION ${number}</span><span class="previewSharedReferenceKind">${hasDiagram ? "Shared diagram" : "Shared information"}</span></div>`;
+    }
+
     function clearPreviewNavigationHighlight(){
       document.querySelectorAll(".previewNavActive").forEach(el => el.classList.remove("previewNavActive"));
     }
@@ -2558,6 +5312,7 @@ function escapeHtml(str){
     function navigateToEditorBlock(key){
       const card = questionsWrap.querySelector(`.qcard[data-preview-key="${CSS.escape(key)}"]`);
       if (!card) return;
+      if (paperPreviewModal?.style.display === "flex") closePreview();
       clearPreviewNavigationHighlight();
       card.classList.add("previewNavActive");
       card.scrollIntoView({behavior:"smooth", block:"center"});
@@ -2659,7 +5414,7 @@ function escapeHtml(str){
       const instructions=cleanMultilinePreview(instructionsEl.value||"");
       const parts=[`<div class="examPaper"><div class="paperMeta"><div style="font-size:14px;font-weight:400;margin:0 0 2px;line-height:1.5;">${escapeHtml(title)}</div><div class="paperMetaRow"><div>${escapeHtml([grade,topic].filter(Boolean).join(" • "))}</div><div class="paperMetaRight">Time limit: ${escapeHtml(time)} minutes</div></div></div>`];
 
-      if(instructions)parts.push(`<div class="q previewNoteRow"><div class="noteBox">${renderStructuredNotePreview(`Assessment Instructions\n${instructions}`)}</div></div>`);
+      if(instructions)parts.push(`<div class="q previewNoteRow"><div class="noteBox">${renderAdminNotePreview(`Assessment Instructions\n${instructions}`)}</div></div>`);
 
       let mainNo=0,topNo=0,subParent=null,childNo=0;
       const ensureMain=()=>{if(mainNo===0){mainNo=1;topNo=0;subParent=null;childNo=0;parts.push(`<div class="q previewHeadingRow"><div class="qMainHeading">QUESTION 1</div></div>`)}};
@@ -2673,14 +5428,14 @@ function escapeHtml(str){
 
         if(type==="group"){
           mainNo+=1;topNo=0;subParent=null;childNo=0;
-          parts.push(`<div class="q previewHeadingRow previewLinkedItem" data-preview-key="${escapeAttr(previewKey)}"><div class="qMainHeading">QUESTION ${mainNo}</div></div>`);
+          parts.push(`<div class="q previewHeadingRow previewLinkedItem" ${previewNavigationAttributes(previewKey, `QUESTION ${mainNo}`)}><div class="qMainHeading">QUESTION ${mainNo}</div></div>`);
           continue;
         }
 
         if(type==="section"){
           ensureMain();topNo+=1;subParent=topNo;childNo=0;
           const txt=cleanMultilinePreview(card.querySelector(".sectionText")?.value||"");
-          parts.push(`<div class="q previewSectionRow previewLinkedItem" data-preview-key="${escapeAttr(previewKey)}"><div class="qSectionStem"><div class="qSectionLeft"><div class="qSectionNo">${mainNo}.${subParent}</div><div class="qSectionText">${renderMixedMathPreview(txt)}</div></div></div></div>`);
+          parts.push(`<div class="q previewSectionRow previewLinkedItem" ${previewNavigationAttributes(previewKey, `${mainNo}.${subParent}`)}><div class="qSectionStem"><div class="qSectionLeft"><div class="qSectionNo">${mainNo}.${subParent}</div><div class="qSectionText">${renderAdminNotePreview(txt)}</div></div></div></div>`);
           continue;
         }
 
@@ -2691,14 +5446,13 @@ function escapeHtml(str){
           const img=role==="information"?cleanSpaces(card.querySelector(".noteImage")?.value||card.dataset.imageUrl||""):"";
 
           if(role==="instruction"){
-            if(txt)parts.push(`<div class="q previewNoteRow previewLinkedItem" data-preview-key="${escapeAttr(previewKey)}"><div class="noteBox">${renderStructuredNotePreview(txt)}</div></div>`);
+            if(txt)parts.push(`<div class="q previewNoteRow previewLinkedItem" ${previewNavigationAttributes(previewKey, "INTRODUCTION")}><div class="noteBox">${renderAdminNotePreview(txt)}</div></div>`);
             continue;
           }
           if(role==="main"){
             mainNo+=1;topNo=0;subParent=null;childNo=0;
-            parts.push(`<div class="q previewHeadingRow previewLinkedItem" data-preview-key="${escapeAttr(previewKey)}"><div class="qMainHeading">QUESTION ${mainNo}</div></div>`);
             const body=txt.replace(/^QUESTION\s+\d+\s*[:.-]?\s*/i,"").trim();
-            if(body)parts.push(`<div class="q previewNoteRow"><div class="noteBox">${renderStructuredNotePreview(body)}</div></div>`);
+            parts.push(`<div class="q previewHeadingRow previewLinkedItem" ${previewNavigationAttributes(previewKey, `QUESTION ${mainNo}`)}><div class="qMainHeading">QUESTION ${mainNo}</div>${body ? `<div class="noteBox">${renderAdminNotePreview(body)}</div>` : ""}</div>`);
             continue;
           }
 
@@ -2706,9 +5460,11 @@ function escapeHtml(str){
           const imageHtml=previewImageHtml(img,"Diagram",previewKey);
           if(role==="subquestion"){
             topNo+=1;subParent=topNo;childNo=0;
-            parts.push(`<div class="q previewSectionRow previewLinkedItem" data-preview-key="${escapeAttr(previewKey)}"><div class="qSectionStem"><div class="qSectionLeft"><div class="qSectionNo">${mainNo}.${subParent}</div><div class="qSectionText">${renderStructuredNotePreview(txt)}</div></div></div>${imageHtml}</div>`);
+            parts.push(`<div class="q previewSectionRow previewLinkedItem" ${previewNavigationAttributes(previewKey, `${mainNo}.${subParent}`)}><div class="qSectionStem"><div class="qSectionLeft"><div class="qSectionNo">${mainNo}.${subParent}</div><div class="qSectionText">${renderAdminNotePreview(txt)}</div></div></div>${imageHtml}</div>`);
           }else{
-            parts.push(`<div class="q previewNoteRow"><div class="noteBox">${renderStructuredNotePreview(txt)}</div>${imageHtml}</div>`);
+            const hasSharedDiagram = !!img || /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(txt);
+            const sharedReference = renderSharedPreviewReference(mainNo, hasSharedDiagram);
+            parts.push(`<div class="q previewNoteRow previewLinkedItem" ${previewNavigationAttributes(previewKey, `QUESTION ${mainNo}`)}>${sharedReference}<div class="noteBox">${renderAdminNotePreview(txt)}</div>${imageHtml}</div>`);
           }
           continue;
         }
@@ -2741,23 +5497,31 @@ function escapeHtml(str){
             const suffix=cleanSpaces(row.querySelector(".answerFieldSuffix")?.value||"");
             return `<div class="answerPreviewRow" style="margin-left:68px;display:flex;align-items:center;gap:8px;margin-top:8px;">${prefix?`<span>${renderMixedMathPreview(prefix)}</span>`:""}<input class="textAnswerPaper" style="margin:0;width:150px;" disabled>${suffix?`<span>${renderMixedMathPreview(suffix)}</span>`:""}</div>`;
           }).join(""):`<input class="textAnswerPaper" disabled>`;
-          parts.push(`<div class="q previewLinkedItem" data-preview-key="${escapeAttr(previewKey)}">${questionAndImageHtml}${answers}${hint?`<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>`:""}${currentFullPreviewMode==="review"&&solution?formatSolutionHtmlPreview(solution):""}</div>`);
+          parts.push(`<div class="q previewLinkedItem" ${previewNavigationAttributes(previewKey, label)}>${questionAndImageHtml}${answers}${hint?`<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>`:""}${currentFullPreviewMode==="review"&&solution?formatSolutionHtmlPreview(solution):""}</div>`);
         }else{
           const opts=[...card.querySelectorAll(".optRow")].map(row=>cleanSpaces(row.querySelector(".optInput")?.value||"")).filter(Boolean);
-          parts.push(`<div class="q previewLinkedItem" data-preview-key="${escapeAttr(previewKey)}">${questionAndImageHtml}${opts.map(o=>`<div class="optPaper"><span class="optBullet">○</span><span class="optTextPaper">${renderMixedMathPreview(o)}</span></div>`).join("")}${hint?`<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>`:""}${currentFullPreviewMode==="review"&&solution?formatSolutionHtmlPreview(solution):""}</div>`);
+          parts.push(`<div class="q previewLinkedItem" ${previewNavigationAttributes(previewKey, label)}>${questionAndImageHtml}${opts.map(o=>`<div class="optPaper"><span class="optBullet">○</span><span class="optTextPaper">${renderMixedMathPreview(o)}</span></div>`).join("")}${hint?`<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>`:""}${currentFullPreviewMode==="review"&&solution?formatSolutionHtmlPreview(solution):""}</div>`);
         }
       }
       parts.push(`</div>`);
       target.innerHTML=parts.join("");
+      hydrateNativeGeometryPreview(target);
       typesetMath(target);
     }
 
 
-    fullLearnerPreview?.addEventListener("click", event => {
+    function handleLearnerPreviewNavigation(event){
       const linked = event.target.closest("[data-preview-key]");
-      if (!linked) return;
+      if (!linked || !event.currentTarget.contains(linked)) return;
+      if (event.type === "keydown" && !["Enter", " "].includes(event.key)) return;
+      if (event.type === "keydown") event.preventDefault();
       const key = linked.dataset.previewKey;
       if (key) navigateToEditorBlock(key);
+    }
+
+    [fullLearnerPreview, paperPreviewContent].forEach(preview => {
+      preview?.addEventListener("click", handleLearnerPreviewNavigation);
+      preview?.addEventListener("keydown", handleLearnerPreviewNavigation);
     });
 
     questionsWrap.addEventListener("dblclick", event => {
@@ -4198,12 +6962,33 @@ function escapeHtml(str){
       return normalized;
     }
 
-    function renderCardPreview(card){
+    function renderCardPreview(card, { refreshPaper=true } = {}){
       const type = card.getAttribute("data-type") || "mcq";
 
       if (type === "note") {
-        const t = autoConvertMixedLatex(cleanSpaces(card.querySelector(".noteText")?.value || ""));
-        setPreviewText(card.querySelector(".prevNote"), t || "(Note preview)");
+        const raw = cleanMultilinePreview(card.querySelector(".noteText")?.value || "");
+        const t = containsNativeGeometryBlock(raw) ? raw : autoConvertMixedLatex(raw);
+        const role = card.querySelector(".noteRole")?.value || "information";
+        const preview = card.querySelector(".prevNote");
+        const mainNumber = Math.max(1, Number(card.dataset.mainNumber) || 1);
+        const fullNumber = cleanSpaces(card.dataset.fullNumber || "");
+        const hasNativeVisual = /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(t);
+        const hasDiagram = hasNativeVisual || !!cleanSpaces(card.querySelector(".noteImage")?.value || "");
+        let reference = "";
+
+        if (role === "main") reference = `QUESTION ${mainNumber}`;
+        else if (role === "subquestion") reference = fullNumber || `${mainNumber}.1`;
+        else if (role === "information") reference = `QUESTION ${mainNumber} — ${hasDiagram ? "SHARED DIAGRAM" : "SHARED INFORMATION"}`;
+        else if (role === "instruction") reference = "INTRODUCTION";
+
+        if (preview) {
+          preview.classList.toggle("hasNativeNoteVisual", hasNativeVisual);
+          preview.innerHTML =
+            (reference ? `<div class="livePreviewReference">${escapeHtml(reference)}</div>` : "") +
+            (t ? renderAdminNotePreview(t) : '<span class="muted">(Note preview)</span>');
+          hydrateNativeGeometryPreview(preview);
+          typesetMath(preview);
+        }
         return;
       }
 
@@ -4215,9 +7000,16 @@ function escapeHtml(str){
 
       if (type === "section") {
         const label = cleanSpaces(card.querySelector(".cardLabel")?.textContent || "");
-        const t = autoConvertMixedLatex(cleanSpaces(card.querySelector(".sectionText")?.value || ""));
-        const full = label ? `${label} ${t}` : t;
-        setPreviewText(card.querySelector(".prevSection"), full || "(Section preview)");
+        const raw = cleanMultilinePreview(card.querySelector(".sectionText")?.value || "");
+        const t = containsNativeGeometryBlock(raw) ? raw : autoConvertMixedLatex(raw);
+        const preview = card.querySelector(".prevSection");
+        if (preview) {
+          preview.innerHTML =
+            (label ? `<div class="livePreviewReference">${escapeHtml(label)}</div>` : "") +
+            (t ? renderAdminNotePreview(t) : '<span class="muted">(Section preview)</span>');
+          hydrateNativeGeometryPreview(preview);
+          typesetMath(preview);
+        }
         return;
       }
 
@@ -4248,7 +7040,7 @@ function escapeHtml(str){
         const ans = cleanSpaces(card.querySelector(".correctText")?.value || "");
         setPreviewText(card.querySelector(".prevAns"), ans || "(Expected answer preview)");
       }
-      refreshFullLearnerPreview();
+      if (refreshPaper) refreshFullLearnerPreview();
     }
 
     function relabelOptions(card){
@@ -4322,119 +7114,158 @@ function escapeHtml(str){
 
     function renumberCards(){
       const cards = [...questionsWrap.querySelectorAll(".qcard")];
-      let blockNum = 0;
-      let mainNum = 1;
-      let sectionNum = 0;
-      let itemNum = 0;
-      let hasManualMainMarker = false;
+      const scorableTypes = new Set(["mcq", "text"]);
       const mainTotals = new Map();
       const sectionTotals = new Map();
 
-      function getPoints(card){
-        const type = (card.getAttribute("data-type") || "").toLowerCase();
-        if (type !== "mcq" && type !== "text") return 0;
-        const raw = Number(card.querySelector(".qPoints")?.value || 0);
-        return Number.isFinite(raw) && raw > 0 ? raw : 0;
+      function pointsOf(card){
+        const type = String(card.dataset.type || "").toLowerCase();
+        if (!scorableTypes.has(type)) return 0;
+        const value = Number(card.querySelector(".qPoints")?.value || 0);
+        return Number.isFinite(value) && value > 0 ? value : 0;
       }
 
-      for (const card of cards){
-        const type = (card.getAttribute("data-type") || "mcq").toLowerCase();
+      function noteRoleOf(card){
+        const selected = card.querySelector(".noteRole")?.value;
+        return ["instruction", "main", "information", "subquestion"].includes(selected)
+          ? selected
+          : "information";
+      }
 
-        if (type === "group") {
-          hasManualMainMarker = true;
-          const manualMain = Number(card.dataset.manualNumber || "");
-          mainNum = Number.isFinite(manualMain) && manualMain > 0 ? manualMain : mainNum + 1;
-          sectionNum = 0;
-          itemNum = 0;
-          continue;
-        }
+      function walkCards(visitor){
+        let mainNo = 0;
+        let topNo = 0;
+        let subParent = null;
+        let childNo = 0;
 
-        if (type === "section") {
-          const manualSection = cleanSpaces(card.dataset.manualNumber || "");
-          if (/^\d+\.\d+$/.test(manualSection)) {
-            const [mNo, sNo] = manualSection.split(".").map(Number);
-            if (Number.isFinite(mNo) && mNo > 0) mainNum = mNo;
-            if (Number.isFinite(sNo) && sNo > 0) sectionNum = sNo;
-          } else {
-            sectionNum = sectionNum < 1 ? 1 : sectionNum + 1;
+        for (const card of cards){
+          const type = String(card.dataset.type || "").toLowerCase();
+
+          if (type === "group"){
+            mainNo += 1;
+            topNo = 0;
+            subParent = null;
+            childNo = 0;
+            visitor({ card, type, mainNo, topNo, subParent, childNo, number:"QUESTION " + mainNo });
+            continue;
           }
-          itemNum = 0;
-          sectionTotals.set(`${mainNum}.${sectionNum}`, 0);
-          continue;
-        }
 
-        if (type === "mcq" || type === "text") {
-          if (sectionNum < 1) sectionNum = 1;
-          const key = `${mainNum}.${sectionNum}`;
-          const points = getPoints(card);
-          mainTotals.set(mainNum, (mainTotals.get(mainNum) || 0) + points);
-          sectionTotals.set(key, (sectionTotals.get(key) || 0) + points);
+          if (type === "section"){
+            if (mainNo === 0) mainNo = 1;
+            topNo += 1;
+            subParent = topNo;
+            childNo = 0;
+            visitor({ card, type, mainNo, topNo, subParent, childNo, number:mainNo + "." + subParent });
+            continue;
+          }
+
+          if (type === "note"){
+            const role = noteRoleOf(card);
+
+            if (role === "main"){
+              mainNo += 1;
+              topNo = 0;
+              subParent = null;
+              childNo = 0;
+              visitor({ card, type, role, mainNo, topNo, subParent, childNo, number:"QUESTION " + mainNo });
+            } else if (role === "instruction"){
+              visitor({ card, type, role, mainNo, topNo, subParent, childNo, number:"INTRODUCTION" });
+            } else if (role === "subquestion"){
+              if (mainNo === 0) mainNo = 1;
+              topNo += 1;
+              subParent = topNo;
+              childNo = 0;
+              visitor({ card, type, role, mainNo, topNo, subParent, childNo, number:mainNo + "." + subParent });
+            } else {
+              if (mainNo === 0) mainNo = 1;
+              subParent = null;
+              childNo = 0;
+              visitor({ card, type, role, mainNo, topNo, subParent, childNo, number:"QUESTION " + mainNo });
+            }
+            continue;
+          }
+
+          if (!scorableTypes.has(type)) continue;
+          if (mainNo === 0) mainNo = 1;
+
+          let number;
+          let sectionKey;
+
+          if (subParent !== null){
+            childNo += 1;
+            number = mainNo + "." + subParent + "." + childNo;
+            sectionKey = mainNo + "." + subParent;
+          } else {
+            topNo += 1;
+            number = mainNo + "." + topNo;
+            sectionKey = number;
+          }
+
+          visitor({ card, type, mainNo, topNo, subParent, childNo, number, sectionKey });
         }
       }
 
-      mainNum = hasManualMainMarker ? 0 : 1;
-      sectionNum = 0;
-      itemNum = 0;
+      walkCards(({ card, type, mainNo, number, sectionKey }) => {
+        if (!scorableTypes.has(type)) return;
+        const points = pointsOf(card);
+        mainTotals.set(mainNo, (mainTotals.get(mainNo) || 0) + points);
+        sectionTotals.set(sectionKey, (sectionTotals.get(sectionKey) || 0) + points);
+      });
 
-      for (const card of cards){
-        const type = (card.getAttribute("data-type") || "mcq").toLowerCase();
+      walkCards(({ card, type, role, mainNo, number, sectionKey }) => {
         const labelEl = card.querySelector(".cardLabel");
         const subqEl = card.querySelector(".subqLabel");
         const marksEl = card.querySelector(".marksMeta");
-        if (!labelEl) continue;
 
-        if (type === "group") {
-          const manualMain = Number(card.dataset.manualNumber || "");
-          mainNum = Number.isFinite(manualMain) && manualMain > 0 ? manualMain : mainNum + 1;
-          sectionNum = 0;
-          itemNum = 0;
-          labelEl.textContent = `QUESTION ${mainNum}`;
-          continue;
-        }
+        card.dataset.mainNumber = mainNo > 0 ? String(mainNo) : "";
 
-        if (type === "note") {
-          blockNum += 1;
-          labelEl.textContent = `Block ${blockNum}`;
+        if (type === "group"){
+          if (labelEl) labelEl.textContent = number;
+          card.dataset.fullNumber = "";
+        } else if (type === "section"){
+          if (labelEl) labelEl.textContent = number;
+          card.dataset.fullNumber = number;
+          card.dataset.sectionTotal = String(sectionTotals.get(number) || 0);
+        } else if (type === "note"){
+          card.dataset.standardRole = role;
+
+          if (role === "main"){
+            if (labelEl) labelEl.textContent = number;
+            card.dataset.fullNumber = "";
+          } else if (role === "instruction"){
+            if (labelEl) labelEl.textContent = "Instruction / Objective";
+            card.dataset.fullNumber = "";
+          } else if (role === "subquestion"){
+            if (labelEl) labelEl.textContent = number + " — Subquestion Information";
+            card.dataset.fullNumber = number;
+          } else {
+            if (labelEl) labelEl.textContent = number + " — Question Information";
+            card.dataset.fullNumber = "";
+          }
+
           if (subqEl) subqEl.textContent = "";
           if (marksEl) marksEl.textContent = "";
-          continue;
-        }
+        } else if (scorableTypes.has(type)){
+          const points = pointsOf(card);
+          const sectionTotal = sectionTotals.get(sectionKey) || points;
+          const questionTotal = mainTotals.get(mainNo) || points;
 
-        if (type === "section") {
-          const manualSection = cleanSpaces(card.dataset.manualNumber || "");
-          if (/^\d+\.\d+$/.test(manualSection)) {
-            const [mNo, sNo] = manualSection.split(".").map(Number);
-            if (Number.isFinite(mNo) && mNo > 0) mainNum = mNo;
-            sectionNum = Number.isFinite(sNo) && sNo > 0 ? sNo : (sectionNum < 1 ? 1 : sectionNum + 1);
-          } else {
-            sectionNum = sectionNum < 1 ? 1 : sectionNum + 1;
+          if (labelEl) labelEl.textContent = number;
+          if (subqEl) subqEl.textContent = "QUESTION " + mainNo;
+          if (marksEl) {
+            marksEl.textContent = points + " mark" + (points === 1 ? "" : "s") +
+              " • Section total: " + sectionTotal +
+              " • Question total: " + questionTotal;
           }
-          itemNum = 0;
-          const key = `${mainNum}.${sectionNum}`;
-          const sectionTotal = sectionTotals.get(key) || 0;
-          labelEl.textContent = key;
-          card.dataset.fullNumber = key;
-          card.dataset.sectionTotal = String(sectionTotal);
-          renderCardPreview(card);
-          continue;
-        }
 
-        if (sectionNum < 1) sectionNum = 1;
-        itemNum += 1;
-        const fullNumber = `${mainNum}.${sectionNum}.${itemNum}`;
-        const sectionKey = `${mainNum}.${sectionNum}`;
-        const points = getPoints(card);
-        const sectionTotal = sectionTotals.get(sectionKey) || 0;
-        const questionTotal = mainTotals.get(mainNum) || 0;
-        labelEl.textContent = fullNumber;
-        if (subqEl) subqEl.textContent = `Section ${sectionKey} • QUESTION ${mainNum}`;
-        if (marksEl) marksEl.textContent = `${points} mark${points === 1 ? "" : "s"} • Section total: ${sectionTotal} • Question total: ${questionTotal}`;
-        card.dataset.fullNumber = fullNumber;
-      }
+          card.dataset.fullNumber = number;
+        }
+      });
+
       updateGeneratedQuestionLinks();
+      cards.forEach(card => renderCardPreview(card, { refreshPaper:false }));
       refreshFullLearnerPreview();
     }
-
     let draggedCard = null;
 
     function setupDragAndDrop(){
@@ -6119,9 +8950,16 @@ function escapeHtml(str){
       if (!res.ok) return setMsg("Could not load assessment.", "error");
       currentQuiz = await res.json().catch(() => null);
       if (!currentQuiz) return setMsg("Could not read assessment data.", "error");
-      fillAssessmentForm(quizToParsedAssessment(currentQuiz));
-      updateAvailabilityUi();
-      captureOriginalSnapshot();
+      try {
+        fillAssessmentForm(quizToParsedAssessment(currentQuiz));
+        updateAvailabilityUi();
+        captureOriginalSnapshot();
+      } catch (error) {
+        console.error("Assessment editor could not finish rendering:", error);
+        updateAvailabilityUi();
+        setMsg("The assessment data loaded, but the editor could not draw one preview block. Open the browser console for the exact block error.", "error");
+        return;
+      }
 
       try {
         localStorage.setItem(
