@@ -6337,6 +6337,11 @@ mjx-container[jax="SVG"] svg{
   box-shadow:none !important;
   overflow:visible !important;
 }
+/* Question navigation must take priority over the visual layout rule above.
+   Without this selector, every native diagram remains visible on every page. */
+.examPaper .q.nativeVisualContext.quiz-page-hidden{
+  display:none !important;
+}
 .examPaper .q.nativeVisualContext > .noteBox,
 .examPaper .q.nativeVisualContext > .noteBox.nativeVisualNote{
   display:block !important;
@@ -6492,7 +6497,7 @@ mjx-container[jax="SVG"] svg{
   border:1px solid #9ca3af;
   border-radius:0;
   background:#fff;
-  overflow-x:auto;
+  overflow-x:hidden;
   overflow-y:hidden;
   overscroll-behavior-inline:contain;
   -webkit-overflow-scrolling:touch;
@@ -6508,7 +6513,7 @@ mjx-container[jax="SVG"] svg{
   border-radius:0 !important;
   background:#fff !important;
   box-shadow:none !important;
-  overflow-x:auto !important;
+  overflow-x:hidden !important;
   overflow-y:hidden !important;
   box-sizing:border-box !important;
 }
@@ -6516,7 +6521,8 @@ mjx-container[jax="SVG"] svg{
 .generatedNoteGraph{
   display:block;
   width:100%;
-  max-width:100%;
+  max-width:720px;
+  min-width:0;
   height:auto;
   min-height:0;
   margin:0 auto;
@@ -6593,18 +6599,31 @@ mjx-container[jax="SVG"] svg{
   .assessmentVisualFrame .generatedNoteGraphWrap,
   .assessmentVisualFrame .noteTableScroll{
     padding:10px !important;
-    scrollbar-gutter:stable;
+    overflow-x:hidden !important;
   }
   .generatedNoteDiagram,
   .generatedNoteGraph{
-    width:680px !important;
-    min-width:680px !important;
-    max-width:none !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
     height:auto !important;
     min-height:0 !important;
   }
+  .generatedNoteDiagram text,
+  .generatedNoteGraph text{
+    font-size:20px !important;
+  }
   .generatedNoteTable{
-    min-width:620px;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    table-layout:fixed;
+    font-size:11px;
+  }
+  .generatedNoteTable th,
+  .generatedNoteTable td{
+    padding:6px 5px;
+    overflow-wrap:anywhere;
   }
 }
 
@@ -6613,7 +6632,7 @@ mjx-container[jax="SVG"] svg{
   .generatedNoteGraph{
     width:100% !important;
     min-width:0 !important;
-    max-width:100% !important;
+    max-width:720px !important;
   }
 }
 
