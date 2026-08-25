@@ -6616,6 +6616,57 @@ mjx-container[jax="SVG"] svg{
     max-width:100% !important;
   }
 }
+
+/* ===== CLEAN INLINE QUESTION NAVIGATION =====
+   During an attempt, Back / counter / Next sits immediately below the
+   Check Answer row. Fixed paper and card heights are removed so no empty
+   panel is created between the actions and navigation. */
+.paperShell:not(.loading),
+.examPaper{
+  min-height:0 !important;
+}
+.q[data-scorable="1"]{
+  min-height:0 !important;
+  height:auto !important;
+}
+.q[data-scorable="1"] > .quizNavigation.show{
+  display:flex !important;
+  width:100% !important;
+  min-height:0 !important;
+  margin:14px 0 0 !important;
+  padding:12px 0 0 !important;
+  border:0 !important;
+  border-top:1px solid #e5e7eb !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+
+@media(max-width:640px){
+  .q[data-scorable="1"] > .quizNavigation.show{
+    display:grid !important;
+    grid-template-columns:minmax(78px,auto) minmax(64px,1fr) minmax(78px,auto) !important;
+    align-items:center !important;
+    gap:8px !important;
+  }
+  .q[data-scorable="1"] > .quizNavigation .questionCounter{
+    grid-column:2 !important;
+    grid-row:1 !important;
+    width:auto !important;
+    min-width:0 !important;
+    order:0 !important;
+  }
+  .q[data-scorable="1"] > .quizNavigation #prevQuestionBtn{
+    grid-column:1 !important;
+    grid-row:1 !important;
+    min-width:78px !important;
+  }
+  .q[data-scorable="1"] > .quizNavigation #nextQuestionBtn{
+    grid-column:3 !important;
+    grid-row:1 !important;
+    min-width:78px !important;
+  }
+}
 </style>
 </head>
 
@@ -7274,6 +7325,10 @@ function inlineQuizLoadingHtml(){
       quizNavigation.classList.toggle("show", !blocked && questionPageGroups.length > 0);
     }
 
+    if (!submitted) {
+      placeAttemptNavigationBelowCheckAnswer();
+    }
+
     if (submitBtn && !submitted && !blocked) {
       /* The final navigation button is the single visible Submit action. */
       submitBtn.style.display = "none";
@@ -7287,19 +7342,44 @@ function inlineQuizLoadingHtml(){
     }
   }
 
+  function getActiveScorableQuestion(){
+    const activeGroup = questionPageGroups[currentQuestionPage] || [];
+    return activeGroup.find(row => row?.dataset?.scorable === "1") || null;
+  }
+
+  function placeAttemptNavigationBelowCheckAnswer(){
+    if (!quizNavigation) return;
+    const activeQuestion = getActiveScorableQuestion();
+    if (!activeQuestion) return;
+
+    const actions = activeQuestion.querySelector(".qLocalActions");
+    if (actions) {
+      actions.insertAdjacentElement("afterend", quizNavigation);
+    } else {
+      activeQuestion.appendChild(quizNavigation);
+    }
+
+    quizNavigation.classList.add("show");
+    quizNavigation.hidden = false;
+    quizNavigation.removeAttribute("aria-hidden");
+    quizNavigation.style.removeProperty("display");
+  }
+
   function placeReviewNavigationBelowQuestion(){
     if (!quizNavigation || !questionsWrap) return;
 
-    if (quizNavigation.parentElement !== questionsWrap) {
+    const activeQuestion = getActiveScorableQuestion();
+
+    if (activeQuestion) {
+      activeQuestion.appendChild(quizNavigation);
+    } else if (quizNavigation.parentElement !== questionsWrap) {
       questionsWrap.appendChild(quizNavigation);
     }
 
     quizNavigation.classList.add("show");
     quizNavigation.hidden = false;
     quizNavigation.removeAttribute("aria-hidden");
-    quizNavigation.style.display = window.matchMedia("(max-width:640px)").matches
-      ? "grid"
-      : "flex";
+    quizNavigation.style.removeProperty("display");
   }
 
   function placeQuestionProgressBelowTotalMarks(){
