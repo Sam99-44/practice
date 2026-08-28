@@ -5748,18 +5748,20 @@ mjx-container[jax="SVG"] svg{
   margin-bottom:0 !important;
 }
 
-/* A simple one-line note should be vertically centred with the icon */
+/* Keep the information icon aligned with the first line of every note.
+   The old empty-title rule centred it against the full paragraph, which
+   placed the icon beside the second line in longer information notes. */
 .examPaper .noteBox .noteSection:has(.noteSectionTitle:empty){
-  align-items:center !important;
+  align-items:start !important;
 }
 
 .examPaper .noteBox .noteSection:has(.noteSectionTitle:empty) .noteSectionIcon,
 .examPaper .noteBox .noteSection:has(.noteSectionTitle:empty) > div:last-child{
-  align-self:center !important;
+  align-self:start !important;
 }
 
 .examPaper .noteBox .noteSection:has(.noteSectionTitle:empty) .noteSectionBody{
-  padding-top:0 !important;
+  padding-top:1px !important;
 }
 
 /* Maths remains inside the text line without moving the icon or paragraph */
@@ -5809,35 +5811,6 @@ mjx-container[jax="SVG"] svg{
 
 
 
-
-/* ===== FINAL NOTE INLINE-MATH BASELINE FIX =====
-   Only aligns inline maths with surrounding note text.
-   Questions and all other layouts remain unchanged. */
-
-.examPaper .noteBox .noteSectionBody mjx-container[jax="SVG"],
-.examPaper .noteBox .noteParagraph mjx-container[jax="SVG"],
-.examPaper .noteBox .noteLine mjx-container[jax="SVG"]{
-  display:inline-block !important;
-  position:relative !important;
-  top:0 !important;
-  transform:translateY(-0.08em) !important;
-  vertical-align:baseline !important;
-
-  margin:0 .02em !important;
-  padding:0 !important;
-  line-height:1 !important;
-  font-size:1em !important;
-  font-weight:400 !important;
-}
-
-.examPaper .noteBox .noteSectionBody mjx-container[jax="SVG"] svg,
-.examPaper .noteBox .noteParagraph mjx-container[jax="SVG"] svg,
-.examPaper .noteBox .noteLine mjx-container[jax="SVG"] svg{
-  display:inline-block !important;
-  vertical-align:0 !important;
-  overflow:visible !important;
-  transform:none !important;
-}
 
 /* Display equations remain normal blocks */
 .examPaper .noteBox mjx-container[display="true"]{
@@ -6391,7 +6364,7 @@ mjx-container[jax="SVG"] svg{
   display:grid !important;
   grid-template-columns:28px minmax(0,1fr) !important;
   column-gap:12px !important;
-  align-items:center !important;
+  align-items:start !important;
   width:100% !important;
   min-width:0 !important;
   margin:0 !important;
@@ -6406,9 +6379,9 @@ mjx-container[jax="SVG"] svg{
 .examPaper .qSectionText .assessmentVisualFrame .noteSectionIcon{
   grid-column:1 !important;
   display:flex !important;
-  align-items:center !important;
+  align-items:flex-start !important;
   justify-content:center !important;
-  align-self:center !important;
+  align-self:start !important;
   width:24px !important;
   height:24px !important;
   min-width:24px !important;
@@ -6685,6 +6658,164 @@ mjx-container[jax="SVG"] svg{
     grid-row:1 !important;
     min-width:78px !important;
   }
+}
+
+/* ===== PRODUCTION INFORMATION-NOTE STANDARD =====
+   This final rule is shared by ordinary notes and shared-diagram notes.
+   It deliberately excludes question text so every note remains identical
+   without changing the established question alignment. */
+.examPaper .noteBox .noteSection,
+.examPaper .noteBox .assessmentVisualFrame > .noteSection,
+.examPaper .qSectionText .assessmentVisualFrame > .noteSection{
+  align-items:start !important;
+}
+
+.examPaper .noteBox .noteSectionIcon,
+.examPaper .noteBox .assessmentVisualFrame .noteSectionIcon,
+.examPaper .qSectionText .assessmentVisualFrame .noteSectionIcon{
+  align-self:start !important;
+  align-items:flex-start !important;
+  justify-content:center !important;
+  top:0 !important;
+  transform:none !important;
+  width:24px !important;
+  height:24px !important;
+  min-width:24px !important;
+  min-height:24px !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+
+.examPaper .noteBox .noteSectionIcon img,
+.examPaper .noteBox .assessmentVisualFrame .noteSectionIcon img,
+.examPaper .qSectionText .assessmentVisualFrame .noteSectionIcon img{
+  display:block !important;
+  width:22px !important;
+  height:22px !important;
+  min-width:22px !important;
+  max-width:22px !important;
+  min-height:22px !important;
+  max-height:22px !important;
+  margin:0 !important;
+  padding:0 !important;
+  transform:none !important;
+}
+
+.examPaper .noteBox .noteSectionContent,
+.examPaper .noteBox .assessmentVisualFrame .noteSectionContent,
+.examPaper .qSectionText .assessmentVisualFrame .noteSectionContent{
+  align-self:start !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+
+.examPaper .noteBox .noteSectionBody,
+.examPaper .noteBox .assessmentVisualFrame .noteSectionBody,
+.examPaper .qSectionText .assessmentVisualFrame .noteSectionBody{
+  align-self:start !important;
+  margin:0 !important;
+  padding:1px 0 0 !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:14px !important;
+  font-weight:400 !important;
+  line-height:1.55 !important;
+}
+
+.examPaper .noteBox mjx-container[jax="SVG"]:not([display="true"]),
+.examPaper .qSectionText .assessmentVisualFrame mjx-container[jax="SVG"]:not([display="true"]){
+  display:inline-block !important;
+  position:relative !important;
+  top:-0.07em !important;
+  vertical-align:baseline !important;
+  margin:0 .02em !important;
+  padding:0 !important;
+  line-height:1 !important;
+  font-size:1em !important;
+  font-weight:400 !important;
+}
+
+.examPaper .noteMathInline{
+  display:inline !important;
+  position:static !important;
+  top:auto !important;
+  transform:none !important;
+  vertical-align:baseline !important;
+  margin:0 .02em !important;
+  padding:0 !important;
+  /* Native text participates in the browser's real line baseline. Times gives
+     the familiar DBE mathematical appearance without SVG box drift. */
+  font-family:"Times New Roman", Times, serif !important;
+  font-size:1em !important;
+  font-style:normal !important;
+  font-weight:400 !important;
+  line-height:inherit !important;
+  white-space:nowrap !important;
+}
+
+.examPaper .noteMathInline .noteMathVariable{
+  display:inline !important;
+  position:static !important;
+  top:auto !important;
+  transform:none !important;
+  vertical-align:baseline !important;
+  font-family:inherit !important;
+  font-size:inherit !important;
+  font-style:italic !important;
+  font-weight:400 !important;
+  line-height:inherit !important;
+}
+
+.examPaper .noteMathInline .noteMathRoman{
+  display:inline !important;
+  position:static !important;
+  top:auto !important;
+  transform:none !important;
+  vertical-align:baseline !important;
+  font-family:inherit !important;
+  font-size:inherit !important;
+  font-style:normal !important;
+  font-weight:400 !important;
+  line-height:inherit !important;
+}
+
+/* An angle-name accent is drawn outside the line box. The three letters keep
+   the same baseline as surrounding text while the hat sits above the vertex. */
+.examPaper .noteMathAccentedVertex{
+  display:inline-block !important;
+  position:relative !important;
+  top:auto !important;
+  transform:none !important;
+  vertical-align:baseline !important;
+  line-height:inherit !important;
+}
+
+.examPaper .noteMathAccentMark{
+  position:absolute !important;
+  left:50% !important;
+  top:-.48em !important;
+  transform:translateX(-50%) !important;
+  font-family:"Times New Roman", Times, serif !important;
+  font-size:.72em !important;
+  font-style:normal !important;
+  font-weight:400 !important;
+  line-height:1 !important;
+  pointer-events:none !important;
+}
+
+/* Use the same post-typeset baseline correction as question text. This
+   selector is intentionally specific enough to override all legacy note
+   rules, so every note is aligned by measurement rather than by content. */
+.examPaper .noteBox mjx-container.inlineMathAutoBaseline[jax="SVG"]:not([display="true"]),
+.examPaper .qSectionText .assessmentVisualFrame mjx-container.inlineMathAutoBaseline[jax="SVG"]:not([display="true"]){
+  top:0 !important;
+  transform:translateY(var(--inline-math-baseline-shift, 0px)) !important;
+  vertical-align:baseline !important;
+}
+
+.examPaper .noteBox mjx-container[display="true"],
+.examPaper .qSectionText .assessmentVisualFrame mjx-container[display="true"]{
+  top:0 !important;
+  transform:none !important;
 }
 </style>
 </head>
@@ -7068,13 +7199,15 @@ const postSubmitOverlay = document.getElementById("postSubmitOverlay");
 
   function alignCompactInlineMath(root=document){
     const scope = root?.querySelectorAll ? root : document;
+
     const maths = scope.querySelectorAll(
       '.examPaper .qText mjx-container[jax="SVG"]:not([display="true"]),' +
       '.examPaper .questionContinuation mjx-container[jax="SVG"]:not([display="true"]),' +
       '.examPaper .optText mjx-container[jax="SVG"]:not([display="true"]),' +
-      '.examPaper .noteBox mjx-container[jax="SVG"]:not([display="true"]),' +
       '.examPaper .hintText mjx-container[jax="SVG"]:not([display="true"]),' +
-      '.examPaper .solutionBody mjx-container[jax="SVG"]:not([display="true"])'
+      '.examPaper .solutionBody mjx-container[jax="SVG"]:not([display="true"]),' +
+      '.examPaper .noteBox mjx-container[jax="SVG"]:not([display="true"]),' +
+      '.examPaper .qSectionText .assessmentVisualFrame mjx-container[jax="SVG"]:not([display="true"])'
     );
 
     maths.forEach(math => {
@@ -7113,7 +7246,17 @@ const postSubmitOverlay = document.getElementById("postSubmitOverlay");
       if (!textRect.height || !mathRect.height) return;
       const textMiddle = textRect.top + (textRect.height / 2);
       const mathMiddle = mathRect.top + (mathRect.height / 2);
-      const measuredShift = Math.max(-4, Math.min(4, textMiddle - mathMiddle));
+      /* Compact note mathematics is baseline-native text. Any expression that
+         legitimately remains MathJax uses one uniform note correction; there
+         are no topic-, symbol- or question-specific exceptions. */
+      const isInformationNote = Boolean(math.closest(
+        '.noteBox, .qSectionText .assessmentVisualFrame'
+      ));
+      const opticalNoteShift = isInformationNote ? 1 : 0;
+      const measuredShift = Math.max(
+        -4,
+        Math.min(4, (textMiddle - mathMiddle) + opticalNoteShift)
+      );
       math.style.setProperty('--inline-math-baseline-shift', `${measuredShift.toFixed(2)}px`);
     });
   }
@@ -8041,10 +8184,10 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     const renderDropdownLine = sourceValue => {
       const source = String(sourceValue || "");
       const marker = source.match(/\[\s*\?\s*\]/);
-      if (!marker) return renderMixedMath(source);
+      if (!marker) return renderQuestionMixedMath(source);
       const markerIndex = marker.index || 0;
       selectUsed = true;
-      return `${renderMixedMath(source.slice(0, markerIndex))}${selectHtml}${renderMixedMath(source.slice(markerIndex + marker[0].length))}`;
+      return `${renderQuestionMixedMath(source.slice(0, markerIndex))}${selectHtml}${renderQuestionMixedMath(source.slice(markerIndex + marker[0].length))}`;
     };
     let bodyHtml = renderDropdownLine(body || firstLine);
     let continuationHtml = "";
@@ -8096,13 +8239,13 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       let lastIndex = 0, html = "", match;
       while ((match = blankPattern.exec(source)) !== null) {
         const before = source.slice(lastIndex, match.index);
-        if (before) html += renderMixedMath(before);
+        if (before) html += renderQuestionMixedMath(before);
         html += `<span class="fillInlineWrap"><input class="fillAnswerInput" type="text" inputmode="text" autocomplete="off" data-qindex="${qIndex}" data-blank-index="${blankIndex}" aria-label="Blank ${blankIndex + 1}"></span>`;
         blankIndex += 1;
         lastIndex = match.index + match[0].length;
       }
       const after = source.slice(lastIndex);
-      if (after) html += renderMixedMath(after);
+      if (after) html += renderQuestionMixedMath(after);
       return html;
     };
     let bodyHtml = renderFillLine(body || firstLine);
@@ -12101,44 +12244,164 @@ function hasInlineLatexMathOnly(text){
     return sharedRenderMixedMath(text);
   }
 
-  function renderNoteMixedMath(text){
-    let rendered = renderMixedMath(text);
-    const nativeDefinition = (whole, variable, description) => {
-      let cleanDescription = String(description || "")
-        .replace(/\\text\s*\{([^{}]*)\}/g, "$1")
-        .replace(/\\mathrm\s*\{([^{}]*)\}/g, "$1")
-        .replace(/\\operatorname\s*\{([^{}]*)\}/g, "$1")
-        .replace(/\\,/g, " ")
-        .replace(/\\!/g, "")
-        .replace(/\s+/g, " ")
-        .trim();
-      if (!/[A-Za-z]{3,}/.test(cleanDescription) || /[+*/^]/.test(cleanDescription)) return whole;
-      return `<span class="noteDefinitionInline"><span class="inlineVariable" data-native-variable="1">${sharedEscapeHtml(variable)}</span> = ${sharedEscapeHtml(cleanDescription)}</span>`;
+  function sharedNativeNoteMathToken(body){
+    let value = String(body || "").trim();
+    if (!value) return "";
+
+    /* Fractions, roots, matrices and other stacked notation remain MathJax. */
+    if (/\\(?:d?frac|tfrac|sqrt|begin|end|matrix|sum|prod|int|lim|overline|vec|bar|cases)\b/i.test(value)) {
+      return "";
+    }
+    if (/\//.test(value)) return "";
+
+    const romanParts = [];
+    value = value.replace(/\\(?:text|mathrm|operatorname)\s*\{([^{}]*)\}/g, (_, word) => {
+      const index = romanParts.push(String(word || "")) - 1;
+      return `\uE000${index}\uE001`;
+    });
+    value = value.replace(/\\(sin|cos|tan|cot|sec|csc|log|ln)\b/g, (_, word) => {
+      const index = romanParts.push(String(word || "")) - 1;
+      return `\uE000${index}\uE001`;
+    });
+
+    /* Keep angle accents outside the text line box so AOB remains anchored to
+       the same baseline as ordinary geometry labels. */
+    const angleAccentParts = [];
+    value = value.replace(/\\(?:widehat|hat)\s*\{([A-Za-z]{3})\}/g, (_, name) => {
+      const index = angleAccentParts.push(String(name || "")) - 1;
+      return `\uE100${index}\uE101`;
+    });
+
+    value = value
+      .replace(/\\left|\\right/g, "")
+      .replace(/\^\{?\\circ\}?/g, "°")
+      .replace(/\^\{?2\}?/g, "²")
+      .replace(/\^\{?3\}?/g, "³")
+      .replace(/_\{?0\}?/g, "₀")
+      .replace(/_\{?1\}?/g, "₁")
+      .replace(/_\{?2\}?/g, "₂")
+      .replace(/_\{?3\}?/g, "₃")
+      .replace(/\\[,!;:]/g, " ");
+
+    const subscriptCharacters = {
+      0:"₀", 1:"₁", 2:"₂", 3:"₃", 4:"₄",
+      5:"₅", 6:"₆", 7:"₇", 8:"₈", 9:"₉",
+      a:"ₐ", e:"ₑ", h:"ₕ", i:"ᵢ", j:"ⱼ", k:"ₖ",
+      l:"ₗ", m:"ₘ", n:"ₙ", o:"ₒ", p:"ₚ", r:"ᵣ",
+      s:"ₛ", t:"ₜ", u:"ᵤ", v:"ᵥ", x:"ₓ",
+      '+':"₊", '-':"₋", '=':"₌", '(':"₍", ')':"₎"
     };
-    rendered = rendered.replace(/\$\s*([A-Za-z])\s*=\s*([^$]+?)\s*\$/g, nativeDefinition);
-    rendered = rendered.replace(/\\\(\s*([A-Za-z])\s*=\s*([^\n]+?)\s*\\\)/g, nativeDefinition);
-    const nativeValue = (_, value) => {
-      const cleanValue = String(value || "").replace(/\\%/g, "%");
-      return `<span class="noteValueInline" data-native-note-value="1">${sharedEscapeHtml(cleanValue)}</span>`;
+    value = value.replace(/_\{([A-Za-z0-9+\-=()]{1,8})\}|_([A-Za-z0-9])/g, (whole, braced, single) => {
+      const sequence = braced || single || "";
+      const converted = [...String(sequence || "").toLowerCase()]
+        .map(character => subscriptCharacters[character]);
+      return converted.every(Boolean) ? converted.join("") : whole;
+    });
+
+    const commands = {
+      alpha:"α", beta:"β", gamma:"γ", delta:"δ", epsilon:"ε",
+      theta:"θ", lambda:"λ", mu:"μ", pi:"π", rho:"ρ", sigma:"σ",
+      phi:"φ", omega:"ω", Alpha:"Α", Beta:"Β", Gamma:"Γ", Delta:"Δ",
+      Theta:"Θ", Lambda:"Λ", Pi:"Π", Sigma:"Σ", Phi:"Φ", Omega:"Ω",
+      parallel:"∥", perp:"⊥", angle:"∠", neq:"≠", ne:"≠",
+      le:"≤", leq:"≤", ge:"≥", geq:"≥", approx:"≈", pm:"±",
+      times:"×", div:"÷", cdot:"·", in:"∈", cap:"∩", cup:"∪",
+      prime:"′", triangle:"△", infty:"∞", therefore:"∴",
+      ldots:"…", cdots:"⋯"
+    };
+    value = value.replace(/\\([A-Za-z]+)\b/g, (whole, name) => {
+      return Object.prototype.hasOwnProperty.call(commands, name) ? commands[name] : whole;
+    });
+
+    value = value
+      .replace(/'/g, "′")
+      .replace(/-/g, "−")
+      .replace(/\s*([=+×÷·±≠≤≥≈∥⊥∈∩∪])\s*/g, " $1 ")
+      .replace(/\(\s+/g, "(")
+      .replace(/\s+\)/g, ")")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    /* Unknown commands or unresolved TeX stay in MathJax. */
+    if (/\\[A-Za-z]+|[{}_^]/.test(value)) return "";
+
+    const renderVariablePart = (part) => {
+      const source = String(part || "");
+      const variablePattern = /[A-Za-z\u0370-\u03FF][A-Za-z\u0370-\u03FF\u0300-\u036F]*/g;
+      let html = "";
+      let lastIndex = 0;
+      let match;
+
+      const renderRoman = value => value
+        ? `<span class="noteMathRoman">${sharedEscapeHtml(value)}</span>`
+        : "";
+
+      while ((match = variablePattern.exec(source))) {
+        html += renderRoman(source.slice(lastIndex, match.index));
+        html += `<span class="noteMathVariable">${sharedEscapeHtml(match[0])}</span>`;
+        lastIndex = match.index + match[0].length;
+      }
+      html += renderRoman(source.slice(lastIndex));
+      return html;
     };
 
-    /* Numeric-only values in prose notes are text values, not displayed
-       equations. Replace their delimiters before MathJax typesets the note. */
+    const html = value
+      .split(/(\uE000\d+\uE001|\uE100\d+\uE101)/g)
+      .map(part => {
+        const roman = part.match(/^\uE000(\d+)\uE001$/);
+        if (roman) {
+          return `<span class="noteMathRoman">${sharedEscapeHtml(romanParts[Number(roman[1])] || "")}</span>`;
+        }
+        const accented = part.match(/^\uE100(\d+)\uE101$/);
+        if (accented) {
+          const name = angleAccentParts[Number(accented[1])] || "";
+          return `<span class="noteMathVariable noteMathAngleName">${sharedEscapeHtml(name[0] || "")}<span class="noteMathAccentedVertex">${sharedEscapeHtml(name[1] || "")}<span class="noteMathAccentMark" aria-hidden="true">ˆ</span></span>${sharedEscapeHtml(name[2] || "")}</span>`;
+        }
+        return renderVariablePart(part);
+      })
+      .join("");
+
+    return `<span class="noteMathInline" data-native-note-math="1">${html}</span>`;
+  }
+
+  function renderBaselineMixedMath(text){
+    let rendered = renderMixedMath(text);
+
+    /* A standalone variable may already have been made native by the shared
+       renderer. Put it into the same mathematical font as every note token. */
     rendered = rendered.replace(
-      /\$\s*([-+−]?\d+(?:\.\d+)?(?:\\%|%)?)\s*\$/g,
-      nativeValue
+      /<span class="inlineVariable" data-native-variable="1">([A-Za-z\u0370-\u03FF][A-Za-z\u0370-\u03FF\u0300-\u036F]*)<\/span>/g,
+      (whole, variable) => sharedNativeNoteMathToken(variable) || whole
     );
-    rendered = rendered.replace(
-      /\\\(\s*([-+−]?\d+(?:\.\d+)?(?:\\%|%)?)\s*\\\)/g,
-      nativeValue
-    );
+
+    /* Geometry labels, coordinates, equations, trigonometric functions,
+       pattern notation and graph notation all become true inline text. Only
+       stacked/complex expressions rejected by sharedNativeNoteMathToken stay
+       with MathJax. */
+    rendered = rendered.replace(/(^|[^$])\$([^$\n]+)\$(?!\$)/g, (whole, prefix, body) => {
+      const token = sharedNativeNoteMathToken(body);
+      return token ? prefix + token : whole;
+    });
+    rendered = rendered.replace(/\\\(([^\n]+?)\\\)/g, (whole, body) => {
+      return sharedNativeNoteMathToken(body) || whole;
+    });
+
     return rendered;
+  }
+
+  function renderNoteMixedMath(text){
+    return renderBaselineMixedMath(text);
+  }
+
+  function renderQuestionMixedMath(text){
+    return renderBaselineMixedMath(text);
   }
 
   function renderAnswerChoice(text){
     const choice = cleanSpaces(text);
-    const containsMathMarkup = /(?:\$|\\\(|\\\[|\\frac|\\sqrt|\\times|\\div|[=<>≤≥±×÷√^])/i.test(choice);
-    return containsMathMarkup ? renderMixedMath(choice) : escapeHtml(choice);
+    const containsMathMarkup = sharedHasLatexSyntax(choice) ||
+      /(?:\$|\\\(|\\\[|\\frac|\\sqrt|\\times|\\div|[=<>≤≥±×÷√^])/i.test(choice);
+    return containsMathMarkup ? renderQuestionMixedMath(choice) : escapeHtml(choice);
   }
 
   function renderNoteVisualTitle(title){
@@ -14693,7 +14956,7 @@ function formatSolutionHtml(solutionText){
     const visibleBody = String(body || firstLine)
       .replace(/\[\s*\[\s*\]\s*\]/g, "........");
 
-    const renderQuestionLine = value => renderMixedMath(String(value || "").replace(/\[\s*\[\s*\]\s*\]/g, "........"))
+    const renderQuestionLine = value => renderQuestionMixedMath(String(value || "").replace(/\[\s*\[\s*\]\s*\]/g, "........"))
       .replace(/\[\s*\?\s*\]/g, '<span class="dropdownQuestionPlaceholder">[ ? ]</span>');
     let continuationHtml = "";
     let bulletItems = [];
