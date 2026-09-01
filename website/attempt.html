@@ -1073,9 +1073,13 @@ body.submitted-state .solutionBox{display:none!important;}
       margin-bottom:14px;
     }
 
-    .postSubmitGrid.pendingRelease{
-      grid-template-columns:repeat(2, minmax(0, 1fr));
-    }
+.postSubmitGrid.pendingRelease{
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+}
+
+.postSubmitGrid.noRank{
+  grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+}
 
     .postSubmitGrid.pendingRelease #postSubmitRankStat{
       display:none;
@@ -7084,6 +7088,612 @@ mjx-container[jax="SVG"] svg{
     overflow-wrap:anywhere !important;
   }
 }
+
+/* =====================================================================
+   FINAL UNIFORM INFORMATION-NOTE STANDARD
+   The compact square note is the single production reference for every
+   information note, including the introduction above a table or diagram.
+   ===================================================================== */
+.examPaper .q:not([data-scorable="1"]) > .noteBox{
+  width:100% !important;
+  min-width:0 !important;
+  height:auto !important;
+  min-height:68px !important;
+  margin:12px 0 18px !important;
+  padding:0 !important;
+  border:1px solid #d7dee8 !important;
+  border-radius:0 !important;
+  background:#f8fafc !important;
+  box-shadow:none !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+
+/* Native visual notes keep the same compact information row, while the
+   diagram/table remains open beneath it without a second outer border. */
+.examPaper .q.nativeVisualContext > .noteBox,
+.examPaper .noteBox:has(.assessmentVisualFrame){
+  height:auto !important;
+  min-height:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  overflow:visible !important;
+}
+
+.examPaper .noteBox .noteSection,
+.examPaper .noteBox .assessmentVisualFrame > .noteSection,
+.examPaper .qSectionText .assessmentVisualFrame > .noteSection{
+  display:grid !important;
+  grid-template-columns:28px minmax(0,1fr) !important;
+  column-gap:12px !important;
+  row-gap:0 !important;
+  align-items:start !important;
+  width:100% !important;
+  min-width:0 !important;
+  height:auto !important;
+  min-height:68px !important;
+  margin:0 !important;
+  padding:20px 20px !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  box-sizing:border-box !important;
+}
+
+.examPaper .noteBox > .noteSection{
+  border:0 !important;
+  background:transparent !important;
+}
+
+.examPaper .noteBox .assessmentVisualFrame > .noteSection,
+.examPaper .qSectionText .assessmentVisualFrame > .noteSection{
+  border:1px solid #d7dee8 !important;
+  background:#f8fafc !important;
+}
+
+.examPaper .noteBox .noteSectionIcon,
+.examPaper .noteBox .assessmentVisualFrame .noteSectionIcon,
+.examPaper .qSectionText .assessmentVisualFrame .noteSectionIcon{
+  grid-column:1 !important;
+  width:24px !important;
+  height:24px !important;
+  min-width:24px !important;
+  min-height:24px !important;
+  margin:0 !important;
+  padding:0 !important;
+  align-self:start !important;
+  justify-self:start !important;
+}
+
+.examPaper .noteBox .noteSectionIcon img,
+.examPaper .noteBox .assessmentVisualFrame .noteSectionIcon img,
+.examPaper .qSectionText .assessmentVisualFrame .noteSectionIcon img{
+  display:block !important;
+  width:22px !important;
+  height:22px !important;
+  min-width:22px !important;
+  max-width:22px !important;
+  min-height:22px !important;
+  max-height:22px !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+
+.examPaper .noteBox .noteSectionContent,
+.examPaper .noteBox .noteSection > div:last-child,
+.examPaper .noteBox .assessmentVisualFrame .noteSectionContent,
+.examPaper .qSectionText .assessmentVisualFrame .noteSectionContent{
+  grid-column:2 !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  align-self:start !important;
+}
+
+@media(max-width:640px){
+  .examPaper .noteBox .noteSection,
+  .examPaper .noteBox .assessmentVisualFrame > .noteSection,
+  .examPaper .qSectionText .assessmentVisualFrame > .noteSection{
+    grid-template-columns:24px minmax(0,1fr) !important;
+    column-gap:10px !important;
+    height:auto !important;
+    min-height:60px !important;
+    padding:16px 12px !important;
+  }
+}
+
+/* Padding ownership correction: ordinary notes place their breathing space
+   on the same element that draws the border. This prevents a moved/cloned
+   shared note row from collapsing its inner grid padding. */
+html body .examPaper .q:not([data-scorable="1"]) > .noteBox:not(.nativeVisualNote){
+  display:block !important;
+  height:auto !important;
+  min-height:68px !important;
+  padding:20px !important;
+  border:1px solid #d7dee8 !important;
+  border-radius:0 !important;
+  background:#f8fafc !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+
+html body .examPaper .q:not([data-scorable="1"]) > .noteBox:not(.nativeVisualNote) > .noteSection{
+  display:grid !important;
+  grid-template-columns:28px minmax(0,1fr) !important;
+  column-gap:12px !important;
+  row-gap:0 !important;
+  width:100% !important;
+  min-width:0 !important;
+  height:auto !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  position:relative !important;
+  inset:auto !important;
+  transform:none !important;
+}
+
+html body .examPaper .q:not([data-scorable="1"]) > .noteBox:not(.nativeVisualNote) > .noteSection + .noteSection{
+  margin-top:16px !important;
+}
+
+@media(max-width:640px){
+  html body .examPaper .q:not([data-scorable="1"]) > .noteBox:not(.nativeVisualNote){
+    min-height:60px !important;
+    padding:16px 12px !important;
+  }
+}
+
+/* =====================================================================
+   FINAL PROFESSIONAL ASSESSMENT TOOLBAR
+   Availability, timer and quiz-to-quiz navigation share one compact row
+   aligned to the exact width of the assessment paper.
+   ===================================================================== */
+.sectionHead{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  width:100% !important;
+  max-width:960px !important;
+  min-height:0 !important;
+  margin:14px auto 10px !important;
+  padding:0 !important;
+  border:0 !important;
+  background:transparent !important;
+  box-sizing:border-box !important;
+}
+
+.sectionHead .metaRight{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  width:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  gap:10px !important;
+}
+
+.sectionHead .statusText{
+  align-items:center !important;
+  justify-content:flex-start !important;
+  height:38px !important;
+  min-height:38px !important;
+  margin:0 !important;
+  padding:0 6px !important;
+  border:0 !important;
+  background:transparent !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:11px !important;
+  font-weight:700 !important;
+  line-height:1 !important;
+  letter-spacing:.05em !important;
+  white-space:nowrap !important;
+  box-sizing:border-box !important;
+}
+
+.sectionHead .statusText::before{
+  content:"" !important;
+  display:block !important;
+  flex:0 0 7px !important;
+  width:7px !important;
+  height:7px !important;
+  margin:0 7px 0 0 !important;
+  border-radius:50% !important;
+  background:currentColor !important;
+}
+
+.sectionHead .timeText{
+  align-items:center !important;
+  justify-content:flex-start !important;
+  height:38px !important;
+  min-height:38px !important;
+  min-width:112px !important;
+  margin:0 !important;
+  padding:0 12px !important;
+  border:1px solid #111827 !important;
+  background:#111827 !important;
+  color:#ffffff !important;
+  font-family:"Courier New", Consolas, ui-monospace, monospace !important;
+  font-size:13px !important;
+  font-weight:700 !important;
+  line-height:1 !important;
+  letter-spacing:.07em !important;
+  text-align:center !important;
+  white-space:nowrap !important;
+  box-sizing:border-box !important;
+}
+
+.sectionHead .timeText.warn{
+  border-color:#b91c1c !important;
+  background:#b91c1c !important;
+  color:#ffffff !important;
+  font-weight:700 !important;
+}
+
+.sectionHead .topQuizControls{
+  display:flex !important;
+  flex:0 0 auto !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  gap:0 !important;
+  flex-wrap:nowrap !important;
+  border:1px solid #cbd5e1 !important;
+  background:#ffffff !important;
+  overflow:hidden !important;
+}
+
+.sectionHead .topQuizSquareBtn{
+  display:inline-flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:auto !important;
+  min-width:106px !important;
+  height:38px !important;
+  min-height:38px !important;
+  margin:0 !important;
+  padding:0 12px !important;
+  gap:7px !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:#ffffff !important;
+  color:#172033 !important;
+  box-shadow:none !important;
+  font-family:Arial, Helvetica, sans-serif !important;
+  font-size:12px !important;
+  font-weight:600 !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+  box-sizing:border-box !important;
+}
+
+.sectionHead .topQuizSquareBtn + .topQuizSquareBtn{
+  border-left:1px solid #e2e8f0 !important;
+}
+
+.sectionHead .topQuizSquareBtn.hidden{
+  display:none !important;
+}
+
+.sectionHead .topQuizSquareBtn img{
+  display:block !important;
+  flex:0 0 14px !important;
+  width:14px !important;
+  height:14px !important;
+  margin:0 !important;
+}
+
+.sectionHead .topQuizSquareBtn:hover:not(:disabled){
+  background:#eef2ff !important;
+}
+
+.sectionHead .topQuizSquareBtn.next:not(:disabled),
+.sectionHead .topQuizSquareBtn.primary:not(:disabled){
+  background:#1b1648 !important;
+  color:#ffffff !important;
+}
+
+.sectionHead .topQuizSquareBtn.next:not(:disabled) img,
+.sectionHead .topQuizSquareBtn.primary:not(:disabled) img{
+  filter:brightness(0) invert(1) !important;
+}
+
+.sectionHead .topQuizSquareBtn:disabled{
+  background:#f8fafc !important;
+  color:#94a3b8 !important;
+  opacity:1 !important;
+}
+
+@media(max-width:640px){
+  .sectionHead{
+    margin:10px auto 8px !important;
+    padding:0 !important;
+  }
+
+  .sectionHead .metaRight{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) auto !important;
+    align-items:center !important;
+    gap:8px 10px !important;
+  }
+
+  .sectionHead .statusText,
+  .sectionHead .timeText{
+    height:30px !important;
+    min-height:30px !important;
+  }
+
+  .sectionHead .timeText{
+    min-width:0 !important;
+    padding:0 10px !important;
+  }
+
+  .sectionHead .topQuizControls{
+    grid-column:1 / -1 !important;
+    width:100% !important;
+    gap:0 !important;
+  }
+
+  .sectionHead .topQuizSquareBtn{
+    flex:1 1 0 !important;
+    width:auto !important;
+    min-width:0 !important;
+    height:38px !important;
+    min-height:38px !important;
+  }
+}
+
+/* =====================================================================
+   FINAL CLEAN TEXT TOOLBAR
+   Keep navigation light: coloured icons and text, with a compact blue
+   Start Quiz action. Availability is intentionally omitted.
+   ===================================================================== */
+.sectionHead .statusText{
+  display:none !important;
+}
+
+.sectionHead .metaRight{
+  gap:14px !important;
+}
+
+.sectionHead .topQuizControls{
+  width:auto !important;
+  gap:14px !important;
+  border:0 !important;
+  background:transparent !important;
+  overflow:visible !important;
+}
+
+.sectionHead .topQuizSquareBtn,
+.sectionHead .topQuizSquareBtn + .topQuizSquareBtn{
+  flex:0 0 auto !important;
+  min-width:auto !important;
+  height:32px !important;
+  min-height:32px !important;
+  padding:0 3px !important;
+  gap:6px !important;
+  border:0 !important;
+  background:transparent !important;
+  color:#334155 !important;
+  box-shadow:none !important;
+}
+
+.sectionHead .topQuizSquareBtn img{
+  width:13px !important;
+  height:13px !important;
+  flex-basis:13px !important;
+  filter:brightness(0) saturate(100%) invert(31%) sepia(16%) saturate(844%) hue-rotate(176deg) brightness(91%) contrast(88%) !important;
+}
+
+.sectionHead .topQuizSquareBtn.next:not(:disabled){
+  background:transparent !important;
+  color:#075fca !important;
+}
+
+.sectionHead .topQuizSquareBtn.next:not(:disabled) img{
+  filter:brightness(0) saturate(100%) invert(31%) sepia(97%) saturate(1662%) hue-rotate(194deg) brightness(87%) contrast(101%) !important;
+}
+
+.sectionHead .topQuizSquareBtn:hover:not(:disabled){
+  background:transparent !important;
+  color:#075fca !important;
+  text-decoration:underline !important;
+  text-underline-offset:3px !important;
+}
+
+.sectionHead .topQuizSquareBtn.primary:not(:disabled){
+  min-width:auto !important;
+  height:32px !important;
+  padding:0 13px !important;
+  border:1px solid #0b6ff4 !important;
+  border-radius:3px !important;
+  background:#0b6ff4 !important;
+  color:#ffffff !important;
+  text-decoration:none !important;
+}
+
+.sectionHead .topQuizSquareBtn.primary:hover:not(:disabled){
+  border-color:#075fca !important;
+  background:#075fca !important;
+  color:#ffffff !important;
+  text-decoration:none !important;
+}
+
+.sectionHead .topQuizSquareBtn:disabled{
+  border:0 !important;
+  background:transparent !important;
+  color:#94a3b8 !important;
+}
+
+.sectionHead .topQuizSquareBtn:disabled img{
+  filter:grayscale(1) opacity(.55) !important;
+}
+
+/* Clean submitted marking register. */
+.postSubmitPanel{
+  width:min(100%, 640px) !important;
+  max-height:min(88vh, 760px) !important;
+  overflow:auto !important;
+  border-radius:6px !important;
+  padding:20px 22px 18px !important;
+}
+
+.postSubmitGrid{
+  gap:0 !important;
+  margin:4px 0 16px !important;
+  border-top:1px solid #e2e8f0 !important;
+  border-bottom:1px solid #e2e8f0 !important;
+}
+
+.postSubmitStat{
+  min-height:66px !important;
+  padding:10px 12px !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:#ffffff !important;
+}
+
+.postSubmitStat + .postSubmitStat{
+  border-left:1px solid #e2e8f0 !important;
+}
+
+.postSubmitValue{
+  color:#102a56 !important;
+}
+
+.postSubmitBreakdown{
+  margin:0 0 14px;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.postSubmitBreakdown[hidden]{
+  display:none !important;
+}
+
+.postSubmitBreakdownTitle{
+  margin:0 0 8px;
+  color:#111827;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.4;
+}
+
+.postSubmitBreakdownHead,
+.postSubmitBreakdownRow{
+  display:grid;
+  grid-template-columns:minmax(72px,.75fr) minmax(108px,1.15fr) minmax(98px,1fr) minmax(68px,.65fr);
+  align-items:center;
+  column-gap:12px;
+}
+
+.postSubmitBreakdownHead{
+  padding:7px 8px;
+  border-bottom:1px solid #cbd5e1;
+  color:#64748b;
+  font-size:10px;
+  font-weight:700;
+  line-height:1.25;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+.postSubmitBreakdownList{
+  max-height:240px;
+  overflow:auto;
+}
+
+.postSubmitBreakdownRow{
+  min-height:36px;
+  padding:6px 8px;
+  border-bottom:1px solid #eef2f7;
+  color:#334155;
+  font-size:12px;
+  line-height:1.35;
+}
+
+.postSubmitBreakdownRow:last-child{
+  border-bottom:0;
+}
+
+.postSubmitQuestionNo{
+  color:#111827;
+  font-weight:700;
+}
+
+.postSubmitState{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+}
+
+.postSubmitState::before{
+  content:"";
+  flex:0 0 7px;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:currentColor;
+}
+
+.postSubmitState.answered{ color:#075fca; }
+.postSubmitState.correct{ color:#078047; }
+.postSubmitState.incorrect{ color:#c62828; }
+.postSubmitState.unanswered{ color:#64748b; }
+
+.postSubmitMark{
+  color:#111827;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+
+@media(max-width:640px){
+  .sectionHead .metaRight{
+    display:flex !important;
+    flex-wrap:wrap !important;
+    justify-content:flex-start !important;
+    gap:8px 14px !important;
+  }
+
+  .sectionHead .topQuizControls{
+    width:auto !important;
+    gap:12px !important;
+  }
+
+  .sectionHead .topQuizSquareBtn{
+    flex:0 0 auto !important;
+    width:auto !important;
+  }
+
+  .postSubmitPanel{
+    padding:17px 14px 15px !important;
+  }
+
+  .postSubmitStat + .postSubmitStat{
+    border-left:0 !important;
+    border-top:1px solid #eef2f7 !important;
+  }
+
+  .postSubmitBreakdownHead,
+  .postSubmitBreakdownRow{
+    grid-template-columns:54px minmax(84px,1fr) minmax(78px,1fr) 60px;
+    column-gap:7px;
+  }
+
+  .postSubmitBreakdownHead{
+    padding:7px 4px;
+    font-size:9px;
+  }
+
+  .postSubmitBreakdownRow{
+    padding:7px 4px;
+    font-size:11px;
+  }
+}
 </style>
 </head>
 
@@ -7169,21 +7779,21 @@ mjx-container[jax="SVG"] svg{
     <div class="sectionHead">
       <div class="metaRight">
         <div class="statusText" id="statusText" style="display:none;">—</div>
-        <div class="timeText" id="timeText" style="display:none;">Time: 00:00</div>
+    <div class="timeText" id="timeText" style="display:none;" aria-label="Time remaining">00:00:00</div>
 
-        <div id="topQuizControls" class="topQuizControls" aria-label="Quiz controls">
+    <div id="topQuizControls" class="topQuizControls" aria-label="Previous or next quiz">
           <button id="previousQuizTopBtn" class="topQuizSquareBtn prev" type="button" disabled title="Previous quiz">
             <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">
-            <span>Previous Quiz</span>
+        <span>Previous</span>
           </button>
 
-          <button id="startQuizBtn" class="topQuizSquareBtn primary hidden" type="button" title="Assessment starts automatically" aria-hidden="true" tabindex="-1">
-            <span>Start</span>
+      <button id="startQuizBtn" class="topQuizSquareBtn primary hidden" type="button" title="Assessment starts automatically" aria-hidden="true" tabindex="-1">
+        <span>Start Quiz</span>
           </button>
 
           <button id="nextQuizTopBtn" class="topQuizSquareBtn next" type="button" disabled title="Next quiz">
             <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">
-            <span>Next Quiz</span>
+        <span>Next</span>
           </button>
         </div>
       </div>
@@ -7254,6 +7864,17 @@ mjx-container[jax="SVG"] svg{
               <div class="postSubmitLabel">Position</div>
               <div class="postSubmitValue" id="postSubmitRank">—</div>
             </div>
+          </div>
+
+          <div class="postSubmitBreakdown" id="postSubmitBreakdown" hidden>
+            <div class="postSubmitBreakdownTitle">Question-by-question results</div>
+            <div class="postSubmitBreakdownHead" aria-hidden="true">
+              <span>Question</span>
+              <span>Answer status</span>
+              <span>Result</span>
+              <span>Marks</span>
+            </div>
+            <div class="postSubmitBreakdownList" id="postSubmitBreakdownList"></div>
           </div>
 
           <div class="postSubmitActions">
@@ -7406,6 +8027,8 @@ const postSubmitOverlay = document.getElementById("postSubmitOverlay");
   const postSubmitScore = document.getElementById("postSubmitScore");
   const postSubmitPercent = document.getElementById("postSubmitPercent");
   const postSubmitRank = document.getElementById("postSubmitRank");
+  const postSubmitBreakdown = document.getElementById("postSubmitBreakdown");
+  const postSubmitBreakdownList = document.getElementById("postSubmitBreakdownList");
   const postSubmitResultsBtn = document.getElementById("postSubmitResultsBtn");
   const postSubmitNextQuizBtn = document.getElementById("postSubmitNextQuizBtn");
   const postSubmitNextQuizInfo = document.getElementById("postSubmitNextQuizInfo");
@@ -7645,9 +8268,16 @@ function inlineQuizLoadingHtml(){
         }
 
         /* A diagram context row replaces the previous diagram for this section.
-           This fixes DBE-style papers where 1.1.1 and 1.1.2 use diagram A,
-           then 1.1.3 starts using diagram B. */
+           When it appears after one or more questions, it starts a completely
+           new shared context. Clear the previous text/stem as well; otherwise
+           an old note is carried into the new table/diagram question. A note
+           immediately followed by its diagram is still kept because no
+           question has been built between those two rows. */
         if (row.dataset.contextKind === "diagram" || row.querySelector(".qImageWrap, .qimg")) {
+          if (hasBuiltQuestionForContext) {
+            currentSectionStemRows = [];
+            currentTextContextRows = [];
+          }
           currentDiagramRows = [row];
           hasBuiltQuestionForContext = false;
           return;
@@ -7657,6 +8287,7 @@ function inlineQuizLoadingHtml(){
            If a new instruction appears after a question has already been shown,
            it starts a new diagram/stem context, so the previous stem is removed. */
         if (hasBuiltQuestionForContext) {
+          currentSectionStemRows = [];
           currentTextContextRows = [row];
           currentDiagramRows = row.querySelector(".qImageWrap, .qimg") ? [row] : [];
           hasBuiltQuestionForContext = false;
@@ -9067,7 +9698,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   }
 
   function setAvailability(isAvailable){
-    statusText.style.display = "block";
+    statusText.style.display = "inline-flex";
     if (isAvailable){
       statusText.textContent = "AVAILABLE";
       statusText.className = "statusText available";
@@ -9630,16 +10261,17 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     startQuizBtn.classList.toggle("started", quizStarted);
     startQuizBtn.innerHTML = quizStarted
       ? `<span>Started</span>`
-      : `<span>Start</span>`;
+      : `<span>Start Quiz</span>`;
   }
 
   function lockQuizBeforeStart(){
     quizStarted = false;
 
     if (timeText) {
-      timeText.style.display = "block";
+      timeText.style.display = "inline-flex";
       timeText.classList.remove("warn");
-      timeText.textContent = "Time: Not started";
+      timeText.textContent = "--:--:--";
+      timeText.setAttribute("aria-label", "Timer not started");
     }
 
     disableAllInputs();
@@ -9744,11 +10376,12 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       localStorage.setItem(END_KEY, String(quizEndAtMs));
     }
 
-    timeText.style.display = "block";
+    timeText.style.display = "inline-flex";
     timeText.classList.remove("warn");
 
     if (quizEndAtMs <= now) {
-      timeText.textContent = "Time: 00:00";
+      timeText.textContent = "00:00:00";
+      timeText.setAttribute("aria-label", "Time remaining: zero");
       timeText.classList.add("warn");
       msgEl.className = "error";
       msgEl.textContent = "Time is up. Submitting…";
@@ -9767,7 +10400,8 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     const remainingMs = quizEndAtMs - Date.now();
 
     if (remainingMs <= 0) {
-      timeText.textContent = "Time: 00:00";
+      timeText.textContent = "00:00:00";
+      timeText.setAttribute("aria-label", "Time remaining: zero");
       timeText.classList.add("warn");
 
       clearInterval(timerInterval);
@@ -9781,10 +10415,12 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     }
 
     const remainingSec = Math.ceil(remainingMs / 1000);
-    const mm = String(Math.floor(remainingSec / 60)).padStart(2, "0");
+    const hh = String(Math.floor(remainingSec / 3600)).padStart(2, "0");
+    const mm = String(Math.floor((remainingSec % 3600) / 60)).padStart(2, "0");
     const ss = String(remainingSec % 60).padStart(2, "0");
 
-    timeText.textContent = `Time: ${mm}:${ss}`;
+    timeText.textContent = `${hh}:${mm}:${ss}`;
+    timeText.setAttribute("aria-label", `Time remaining: ${hh} hours, ${mm} minutes, ${ss} seconds`);
 
     if (remainingSec <= 60) timeText.classList.add("warn");
     else timeText.classList.remove("warn");
@@ -10146,6 +10782,9 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     postSubmitScore.textContent = "—";
     postSubmitPercent.textContent = "—";
     postSubmitRank.textContent = "—";
+    postSubmitGrid?.classList.remove("noRank");
+    if (postSubmitBreakdown) postSubmitBreakdown.hidden = true;
+    if (postSubmitBreakdownList) postSubmitBreakdownList.innerHTML = "";
     if (postSubmitMessage) {
       postSubmitMessage.textContent = "";
       postSubmitMessage.classList.remove("show");
@@ -10260,6 +10899,9 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       }
 
       postSubmitGrid?.classList.add("pendingRelease");
+      postSubmitGrid?.classList.remove("noRank");
+      if (postSubmitBreakdown) postSubmitBreakdown.hidden = true;
+      if (postSubmitBreakdownList) postSubmitBreakdownList.innerHTML = "";
       if (postSubmitRankStat) postSubmitRankStat.hidden = true;
 
       postSubmitPercent.textContent = "Pending";
@@ -10290,6 +10932,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     }
 
     postSubmitGrid?.classList.remove("pendingRelease");
+    postSubmitGrid?.classList.remove("noRank");
     if (postSubmitRankStat) postSubmitRankStat.hidden = false;
 
     if (postSubmitResultsBtn) {
@@ -10351,6 +10994,56 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     }
   }
 
+  function formatBreakdownMark(value){
+    const number = Number(value || 0);
+    if (!Number.isFinite(number)) return "0";
+    const rounded = Math.round((number + Number.EPSILON) * 100) / 100;
+    return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+  }
+
+  function getBreakdownQuestionLabel(questionIndex, fallbackNumber){
+    const row = questionsDiv.querySelector(`.q[data-qindex="${questionIndex}"]`);
+    const label = row?.querySelector(".qNo")?.textContent?.trim();
+    return label || String(fallbackNumber);
+  }
+
+  function renderPostSubmitBreakdown(){
+    if (!postSubmitBreakdown || !postSubmitBreakdownList || !quizData) return;
+
+    const rows = [];
+    let displayNumber = 0;
+
+    (quizData.questions || []).forEach((question, questionIndex) => {
+      if (String(question?.type || "mcq").toLowerCase() === "note") return;
+
+      displayNumber += 1;
+      const result = getSingleQuestionResult(question, questionIndex);
+      const points = Math.max(1, Math.round(Number(question?.points || 1)));
+      const earned = Number.isFinite(Number(result?.earnedPoints))
+        ? Math.max(0, Math.min(points, Number(result.earnedPoints)))
+        : (result?.correct ? points : 0);
+      const label = getBreakdownQuestionLabel(questionIndex, displayNumber);
+      const answered = Boolean(result?.answered);
+      const correct = answered && Boolean(result?.correct);
+      const answerClass = answered ? "answered" : "unanswered";
+      const answerText = answered ? "Answered" : "Not answered";
+      const resultClass = !answered ? "unanswered" : (correct ? "correct" : "incorrect");
+      const resultText = !answered ? "Not marked" : (correct ? "Correct" : "Incorrect");
+
+      rows.push(`
+        <div class="postSubmitBreakdownRow">
+          <span class="postSubmitQuestionNo">${escapeHtml(label)}</span>
+          <span class="postSubmitState ${answerClass}">${answerText}</span>
+          <span class="postSubmitState ${resultClass}">${resultText}</span>
+          <span class="postSubmitMark">${formatBreakdownMark(earned)} / ${formatBreakdownMark(points)}</span>
+        </div>
+      `);
+    });
+
+    postSubmitBreakdownList.innerHTML = rows.join("");
+    postSubmitBreakdown.hidden = rows.length === 0;
+  }
+
   function renderPostSubmitSummary(savedData, rankedData){
     const pendingMarksRelease = applyMarksReleaseMessage();
 
@@ -10374,12 +11067,15 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       postSubmitScore.textContent = score;
       postSubmitPercent.textContent = percent;
       if (postSubmitRankStat) postSubmitRankStat.hidden = !canShowPosition;
+      postSubmitGrid?.classList.toggle("noRank", !canShowPosition);
 
       if (canShowPosition && rankedData && rankedData.rank) {
         postSubmitRank.textContent = `#${rankedData.rank}`;
       } else {
         postSubmitRank.textContent = "#-";
       }
+
+      renderPostSubmitBreakdown();
     }
 
     if (ratingCommentInline) ratingCommentInline.disabled = false;
@@ -10404,6 +11100,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     const canShowPosition = !practiceMode && Number.isFinite(percentValue) && percentValue >= 50;
 
     if (postSubmitRankStat) postSubmitRankStat.hidden = !canShowPosition;
+    postSubmitGrid?.classList.toggle("noRank", !canShowPosition);
     if (!canShowPosition) {
       postSubmitRank.textContent = "#-";
       return;
@@ -11826,23 +12523,16 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
           }
 
           if (legacyParsed.kind === "main") {
-            // Old files often place NOTE: QUESTION 3, QUESTION 6, etc. before
-            // every subquestion even though all questions share one diagram.
-            // Only the first legacy QUESTION note starts the main question.
-            // Later legacy QUESTION notes are separators and do not increment
-            // the main number. Use [[NOTE_ROLE:main]] for a genuine new main
-            // question group.
-            if (standardMainNo === 0) {
-              standardMainNo = 1;
-              standardTopNo = 0;
-              standardSubParent = null;
-              standardChildNo = 0;
-              standardHeadingShown = true;
+            // A saved main marker must advance in source order exactly as it
+            // does in the admin preview. Its typed number is deliberately not
+            // trusted; the renderer generates 1, 2, 3... from the same order.
+            standardMainNo += 1;
+            standardTopNo = 0;
+            standardSubParent = null;
+            standardChildNo = 0;
+            standardHeadingShown = true;
 
-              return `<div class="q"><div class="qMainHeading">QUESTION 1</div></div>`;
-            }
-
-            return "";
+            return `<div class="q"><div class="qMainHeading">QUESTION ${standardMainNo}</div></div>`;
           }
 
           if (standardMainNo === 0) standardMainNo = 1;
