@@ -862,50 +862,300 @@ body.submitted-state .solutionBox{display:none!important;}
     }
 
 
+    /* ===== CLEAN SUBMISSION REVIEW SCREEN ===== */
     .confirmOverlay{
       position:fixed;
       inset:0;
-      background:rgba(15,23,42,.42);
+      background:#ffffff;
       display:flex;
-      align-items:center;
+      align-items:flex-start;
       justify-content:center;
-      padding:18px;
+      padding:34px 18px 48px;
+      overflow-y:auto;
       z-index:3000;
     }
 
     .confirmCard{
-      width:min(100%, 430px);
+      width:min(100%, 820px);
       background:#fff;
-      border:1px solid #dfe5ec;
-      border-radius:7px;
-      box-shadow:0 18px 48px rgba(15,23,42,.20);
-      padding:22px 22px 18px;
+      border:none;
+      border-radius:0;
+      box-shadow:none;
+      padding:0;
       font-family:Arial, Helvetica, sans-serif;
       color:#111827;
     }
 
     .confirmTitle{
-      font-size:16px;
-      font-weight:600;
-      margin:0 0 9px;
-      color:#102a56;
+      font-size:18px;
+      font-weight:700;
+      margin:0 0 8px;
+      color:#111827;
       line-height:1.4;
     }
 
     .confirmText{
       font-size:13px;
-      line-height:1.65;
-      color:#334155;
+      line-height:1.55;
+      color:#475569;
+      margin:0 0 18px;
+    }
+
+    .submitReviewTable{
+      width:100%;
+      border:1px solid #dfe3e8;
+      border-bottom:none;
+      background:#fff;
+    }
+
+    .submitReviewRow{
+      min-height:34px;
+      width:100%;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 160px;
+      align-items:center;
+      border:0;
+      border-bottom:1px solid #dfe3e8;
+      padding:0;
       margin:0;
-      white-space:pre-line;
+      background:#fff;
+      font:14px/1.25 Arial, Helvetica, sans-serif;
+      color:#374151;
+      text-align:left;
+      cursor:pointer;
+    }
+
+    .submitReviewRow:hover{
+      background:#f8fafc;
+    }
+
+    .submitReviewRow:focus-visible{
+      outline:2px solid #94a3b8;
+      outline-offset:-2px;
+    }
+
+    .submitReviewNo{
+      padding:7px 12px;
+      font-weight:400;
+    }
+
+    .submitReviewStatus{
+      align-self:stretch;
+      display:flex;
+      align-items:center;
+      padding:7px 12px;
+      border-left:1px solid #dfe3e8;
+      font-weight:400;
+      color:#374151;
+      background:transparent;
+    }
+
+    .submitReviewStatus.answered{
+      text-decoration:underline;
+      text-underline-offset:2px;
+    }
+
+    .submitReviewStatus.unanswered{
+      color:#991b1b;
+    }
+
+    /* ===== SAME-PAGE FINAL MARKING ===== */
+    .submitReviewSummary{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+      margin:0 0 14px;
+    }
+
+    .submitReviewSummary[hidden]{display:none !important;}
+
+    .submitReviewSummaryCard{
+      border:none;
+      background:transparent;
+      padding:2px 0 6px;
+      min-height:0;
+    }
+
+    .submitReviewSummaryLabel{
+      display:block;
+      font-size:12px;
+      line-height:1.2;
+      color:#64748b;
+      margin-bottom:3px;
+      font-weight:600;
+    }
+
+    .submitReviewSummaryValue{
+      display:block;
+      font-size:19px;
+      line-height:1.2;
+      font-weight:700;
+      color:#17365d;
+    }
+
+    .submitReviewSummaryCard:first-child .submitReviewSummaryValue{
+      color:#1d4ed8;
+    }
+
+    .submitReviewSummaryCard:last-child .submitReviewSummaryValue{
+      color:#0f766e;
+    }
+
+    /* FINAL MARKING TABLE: Question | Correct | Incorrect | Marks */
+    .submitReviewFinalHead,
+    .submitReviewRow.finalResult{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 92px 92px 90px;
+      align-items:stretch;
+      width:100%;
+    }
+
+    .submitReviewFinalHead{
+      min-height:27px;
+      border-bottom:1px solid #dfe3e8;
+      background:#f8fafc;
+      font:700 12px/1.2 Arial, Helvetica, sans-serif;
+      color:#475569;
+    }
+
+    .submitReviewFinalHead > span{
+      display:flex;
+      align-items:center;
+      padding:4px 9px;
+    }
+
+    .submitReviewFinalHead > span:not(:first-child){
+      justify-content:center;
+      border-left:1px solid #dfe3e8;
+    }
+
+    .submitReviewRow.finalResult{
+      min-height:27px;
+      cursor:default;
+    }
+
+    .submitReviewRow.finalResult:hover{background:#fff;}
+
+    .submitReviewResultCell{
+      align-self:stretch;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:3px 6px;
+      border-left:1px solid #dfe3e8;
+      min-width:0;
+    }
+
+    .submitReviewResultIcon{
+      width:14px;
+      height:14px;
+      display:block;
+      flex:0 0 14px;
+    }
+
+    .submitReviewResultCell.correctCell .submitReviewResultIcon{
+      filter:brightness(0) saturate(100%) invert(43%) sepia(91%) saturate(700%) hue-rotate(83deg) brightness(82%) contrast(110%) drop-shadow(.35px 0 0 #16a34a) drop-shadow(-.35px 0 0 #16a34a);
+    }
+
+    .submitReviewResultCell.incorrectCell .submitReviewResultIcon{
+      filter:brightness(0) saturate(100%) invert(20%) sepia(93%) saturate(4300%) hue-rotate(352deg) brightness(82%) contrast(110%) drop-shadow(.35px 0 0 #dc2626) drop-shadow(-.35px 0 0 #dc2626);
+    }
+
+    .submitReviewResultPlaceholder{
+      width:17px;
+      height:17px;
+      display:block;
+    }
+
+    .submitReviewMark{
+      align-self:stretch;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:5px 8px;
+      border-left:1px solid #dfe3e8;
+      color:#374151;
+      white-space:nowrap;
+    }
+
+    .submitReviewSummaryRow{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 92px 92px 90px;
+      align-items:stretch;
+      min-height:29px;
+      width:100%;
+      border-bottom:1px solid #dfe3e8;
+      background:#f8fafc;
+      font:700 13px/1.25 Arial, Helvetica, sans-serif;
+    }
+
+    .submitReviewSummaryRow .summaryLabel{
+      grid-column:1 / 4;
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      padding:4px 9px;
+      color:#475569;
+    }
+
+    .submitReviewSummaryRow .summaryValue{
+      grid-column:4;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:4px 6px;
+      border-left:1px solid #dfe3e8;
+      white-space:nowrap;
+      font-size:13px;
+    }
+
+    .submitReviewSummaryRow .summaryValue{color:#111827;}
+
+    @media(max-width:640px){
+      .submitReviewFinalHead,
+      .submitReviewRow.finalResult{
+        grid-template-columns:minmax(0,1fr) 66px 66px 66px;
+      }
+      .submitReviewFinalHead > span{padding:3px 4px;font-size:10px;}
+      .submitReviewRow.finalResult{min-height:25px;}
+      .submitReviewResultCell,.submitReviewMark{padding:2px 3px;}
+      .submitReviewNo{padding:3px 7px;}
+      .submitReviewResultIcon{width:13px;height:13px;flex-basis:13px;}
+      .submitReviewSummaryRow{grid-template-columns:minmax(0,1fr) 66px 66px 66px;}
+      .submitReviewSummaryRow{min-height:27px;}
+      .submitReviewSummaryRow .summaryLabel{padding:3px 7px;}
+      .submitReviewSummaryRow .summaryValue{padding:3px 4px;font-size:12px;}
     }
 
     .confirmActions{
       display:flex;
-      justify-content:flex-end;
-      gap:10px;
-      margin-top:16px;
+      justify-content:center;
+      align-items:center;
+      gap:12px;
+      margin-top:24px;
       flex-wrap:wrap;
+    }
+
+    #confirmCancelBtn,
+    #confirmSubmitBtn{
+      min-width:150px;
+      height:38px;
+      border-radius:5px !important;
+      font-size:13px !important;
+      font-weight:700 !important;
+    }
+
+    #confirmCancelBtn{
+      background:#64748b !important;
+      border-color:#64748b !important;
+      color:#fff !important;
+    }
+
+    @media(max-width:640px){
+      .confirmOverlay{padding:20px 12px 32px;}
+      .submitReviewRow{grid-template-columns:minmax(0,1fr) 128px;min-height:32px;}
+      .submitReviewNo,.submitReviewStatus{padding:6px 10px;}
+      #confirmCancelBtn,#confirmSubmitBtn{min-width:135px;}
     }
 
     #submitBtn,
@@ -7694,6 +7944,197 @@ html body .examPaper .q:not([data-scorable="1"]) > .noteBox:not(.nativeVisualNot
     font-size:11px;
   }
 }
+
+/* ===== FINAL CLEAN SUBMISSION SUMMARY ===== */
+.sectionHead .statusText.available{
+  display:none !important;
+}
+
+.postSubmitPanel{
+  width:min(100%, 620px) !important;
+  padding:20px 22px 18px !important;
+}
+
+.postSubmitTitle{
+  margin-bottom:5px !important;
+}
+
+.postSubmitMessage{
+  margin-bottom:14px !important;
+}
+
+.postSubmitGrid{
+  margin:0 0 16px !important;
+}
+
+.postSubmitLabel{
+  font-size:11px !important;
+  color:#64748b !important;
+}
+
+#postSubmitPercent{
+  font-size:22px !important;
+  font-weight:700 !important;
+}
+
+.postSubmitBreakdownTitle{
+  margin-bottom:6px !important;
+  font-size:13px !important;
+}
+
+.postSubmitBreakdownHead,
+.postSubmitBreakdownRow{
+  grid-template-columns:72px minmax(90px,1fr) minmax(90px,1fr) 72px !important;
+}
+
+.postSubmitBreakdownList{
+  max-height:270px !important;
+}
+
+.postSubmitBreakdownRow{
+  min-height:34px !important;
+  padding:6px 8px !important;
+}
+
+@media(max-width:640px){
+  .postSubmitPanel{
+    width:100% !important;
+    padding:16px 13px 14px !important;
+  }
+
+  .postSubmitBreakdownHead,
+  .postSubmitBreakdownRow{
+    grid-template-columns:50px minmax(76px,1fr) minmax(72px,1fr) 58px !important;
+    column-gap:6px !important;
+  }
+}
+
+
+
+/* ===== FINAL SUBMISSION RESULTS: ONE-BY-ONE TICK / CROSS ===== */
+.postSubmitBreakdownHead,
+.postSubmitBreakdownRow{
+  grid-template-columns:minmax(72px,.8fr) minmax(150px,1.5fr) 86px !important;
+  column-gap:12px !important;
+}
+
+.postSubmitBreakdownList{
+  max-height:320px !important;
+  overflow:auto !important;
+}
+
+.postSubmitBreakdownRow{
+  min-height:34px !important;
+  padding:5px 8px !important;
+}
+
+.postSubmitFinalResult{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+  font-weight:600;
+}
+
+.postSubmitFinalResult.correct{
+  color:#08783e;
+}
+
+.postSubmitFinalResult.incorrect{
+  color:#b4232c;
+}
+
+.postSubmitResultIcon{
+  width:15px;
+  height:15px;
+  flex:0 0 15px;
+  display:block;
+  object-fit:contain;
+}
+
+.postSubmitBreakdownRow.correct .postSubmitQuestionNo{
+  color:#111827;
+}
+
+.postSubmitBreakdownRow.incorrect .postSubmitQuestionNo{
+  color:#111827;
+}
+
+#postSubmitPercent{
+  font-size:24px !important;
+  font-weight:800 !important;
+}
+
+#postSubmitScore{
+  font-size:20px !important;
+  font-weight:700 !important;
+}
+
+@media(max-width:640px){
+  .postSubmitBreakdownHead,
+  .postSubmitBreakdownRow{
+    grid-template-columns:54px minmax(112px,1fr) 64px !important;
+    column-gap:7px !important;
+  }
+
+  .postSubmitBreakdownRow{
+    padding:5px 4px !important;
+    font-size:11px !important;
+  }
+
+  .postSubmitResultIcon{
+    width:14px;
+    height:14px;
+    flex-basis:14px;
+  }
+}
+
+
+/* ===== SIMPLE CLEAN QUESTION PROGRESS ===== */
+.simpleQuestionProgress{
+  width:100%;
+  max-width:none;
+  margin:16px 0 0;
+  padding:0 0 4px;
+  font-family:Arial, Helvetica, sans-serif;
+}
+.simpleQuestionProgressText{
+  font-size:14px;
+  line-height:1.4;
+  font-weight:400;
+  color:#111827;
+  margin:0 0 10px;
+}
+.simpleQuestionProgressTrack{
+  width:100%;
+  height:4px;
+  background:#eeeeee;
+  border-radius:999px;
+  overflow:hidden;
+}
+.simpleQuestionProgressBar{
+  width:0;
+  height:100%;
+  background:#1677c8;
+  border-radius:999px;
+  transition:width .18s ease;
+}
+#questionProgressCard{
+  display:none !important;
+}
+.quizNavigation{
+  grid-template-columns:auto auto !important;
+  justify-content:space-between !important;
+}
+@media(max-width:640px){
+  .simpleQuestionProgress{
+    margin-bottom:14px;
+  }
+  .simpleQuestionProgressText{
+    font-size:13px;
+    margin-bottom:8px;
+  }
+}
 </style>
 </head>
 
@@ -7804,23 +8245,15 @@ html body .examPaper .q:not([data-scorable="1"]) > .noteBox:not(.nativeVisualNot
         <div id="statusBox" class="statusBox loading">Loading assessment status...</div>
       </div>
 
-      <div id="questionProgressCard" class="questionProgressCard hidden">
-        <div class="questionProgressTitle">Question Progress</div>
-        <div id="questionProgressList" class="questionProgressList"></div>
-        <div class="questionProgressLegend" aria-label="Question progress legend">
-          <span class="progressLegendItem">
-            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784922756/correct-right-arrow-direction-left-down-up_lt6cfc.svg" alt="">
-            Answered Correctly
-          </span>
-          <span class="progressLegendItem">
-            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784922779/wrong-delete-remove-trash-minus-cancel-close_jtaf7c.svg" alt="">
-            Answered Incorrectly
-          </span>
-          <span class="progressLegendItem">
-            <span class="legendPendingCircle" aria-hidden="true"></span>
-            Not Answered Yet
-          </span>
+      <div id="simpleQuestionProgress" class="simpleQuestionProgress hidden" aria-label="Question progress">
+        <div id="questionCounter" class="simpleQuestionProgressText">Question 1 of 1</div>
+        <div class="simpleQuestionProgressTrack" aria-hidden="true">
+          <div id="simpleQuestionProgressBar" class="simpleQuestionProgressBar"></div>
         </div>
+      </div>
+
+      <div id="questionProgressCard" class="questionProgressCard hidden" aria-hidden="true">
+        <div id="questionProgressList" class="questionProgressList"></div>
       </div>
 
       <div id="questionsWrap" class="paperShell loading">
@@ -7829,7 +8262,6 @@ html body .examPaper .q:not([data-scorable="1"]) > .noteBox:not(.nativeVisualNot
 
       <div id="quizNavigation" class="quizNavigation" aria-label="Question navigation">
         <button id="prevQuestionBtn" class="btn2 quizNavBtn prev" type="button"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">Back</button>
-        <span id="questionCounter" class="questionCounter">Question 1 of 1</span>
         <button id="nextQuestionBtn" class="btn2 quizNavBtn next" type="button">Next<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt=""></button>
       </div>
 
@@ -7867,10 +8299,9 @@ html body .examPaper .q:not([data-scorable="1"]) > .noteBox:not(.nativeVisualNot
           </div>
 
           <div class="postSubmitBreakdown" id="postSubmitBreakdown" hidden>
-            <div class="postSubmitBreakdownTitle">Question-by-question results</div>
+            <div class="postSubmitBreakdownTitle">Question results</div>
             <div class="postSubmitBreakdownHead" aria-hidden="true">
               <span>Question</span>
-              <span>Answer status</span>
               <span>Result</span>
               <span>Marks</span>
             </div>
@@ -7925,11 +8356,12 @@ html body .examPaper .q:not([data-scorable="1"]) > .noteBox:not(.nativeVisualNot
 
       <div id="submitConfirmModal" class="confirmOverlay hidden" aria-hidden="true">
         <div class="confirmCard" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
-          <h3 class="confirmTitle" id="confirmTitle">Are you sure you want to submit?</h3>
-          <p class="confirmText" id="confirmText">After submitting, you can move through the questions and view the workings for any answers you got wrong.</p>
+          <h3 class="confirmTitle" id="confirmTitle">Submission status</h3>
+          <p class="confirmText" id="confirmText">Review the status of your answers before submitting the assessment.</p>
+          <div class="submitReviewTable" id="submitReviewTable"></div>
           <div class="confirmActions">
-            <button class="btn2" id="confirmCancelBtn" type="button">Cancel</button>
-            <button class="btn" id="confirmSubmitBtn" type="button">Continue with Submission</button>
+            <button class="btn2" id="confirmCancelBtn" type="button">Return to attempt</button>
+            <button class="btn" id="confirmSubmitBtn" type="button">Submit all and finish</button>
           </div>
         </div>
       </div>
@@ -8051,6 +8483,9 @@ const postSubmitOverlay = document.getElementById("postSubmitOverlay");
   const confirmTextEl = document.getElementById("confirmText");
   const confirmCancelBtn = document.getElementById("confirmCancelBtn");
   const confirmSubmitBtn = document.getElementById("confirmSubmitBtn");
+  const submitReviewSummary = document.getElementById("submitReviewSummary");
+  const submitReviewFinalPercent = document.getElementById("submitReviewFinalPercent");
+  const submitReviewFinalScore = document.getElementById("submitReviewFinalScore");
 
   let timerInterval = null;
   let quizEndAtMs = null;
@@ -8061,6 +8496,8 @@ const postSubmitOverlay = document.getElementById("postSubmitOverlay");
 
   let submitted = false;
   let blocked = false;
+  let samePageResultsReady = false;
+  let samePageResultsDismissed = false;
   let autosaveTimer = null;
   let selectedInlineRating = 0;
   let nextQuizData = null;
@@ -8335,9 +8772,20 @@ function inlineQuizLoadingHtml(){
     });
 
     if (questionCounter) {
-      const visibleQuestion = questionPageGroups[currentQuestionPage].find(row => row.dataset.scorable === "1");
-      const label = getRowQuestionLabel(visibleQuestion, `Question ${currentQuestionPage + 1}`);
-      questionCounter.textContent = `(${currentQuestionPage + 1} of ${questionPageGroups.length})`;
+      questionCounter.textContent = `Question ${currentQuestionPage + 1} of ${questionPageGroups.length}`;
+    }
+
+    placeSimpleQuestionProgressBelowTotalMarks();
+    const simpleProgress = document.getElementById("simpleQuestionProgress");
+    const simpleProgressBar = document.getElementById("simpleQuestionProgressBar");
+    if (simpleProgress) {
+      simpleProgress.classList.toggle("hidden", blocked || questionPageGroups.length <= 0);
+    }
+    if (simpleProgressBar) {
+      const progressPercent = questionPageGroups.length
+        ? ((currentQuestionPage + 1) / questionPageGroups.length) * 100
+        : 0;
+      simpleProgressBar.style.width = `${Math.max(0, Math.min(100, progressPercent))}%`;
     }
 
     updateQuestionProgressActive();
@@ -8450,6 +8898,15 @@ function inlineQuizLoadingHtml(){
     }
   }
 
+  function placeSimpleQuestionProgressBelowTotalMarks(){
+    const simpleProgress = document.getElementById("simpleQuestionProgress");
+    if (!simpleProgress || !questionsDiv) return;
+    const paperMeta = questionsDiv.querySelector(".paperMeta");
+    if (paperMeta && simpleProgress.parentElement !== paperMeta) {
+      paperMeta.appendChild(simpleProgress);
+    }
+  }
+
   function buildQuestionProgressCard(){
     if (!questionProgressCard || !questionProgressList) return;
 
@@ -8484,8 +8941,7 @@ function inlineQuizLoadingHtml(){
       });
     });
 
-    questionProgressCard.classList.remove("hidden");
-    placeQuestionProgressBelowTotalMarks();
+    questionProgressCard.classList.add("hidden");
     updateQuestionProgressActive();
   }
 
@@ -9439,12 +9895,224 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     attachMathInputBehaviour();
   }
 
-  function showSubmitConfirm(message, title="Are you sure you want to submit?"){
-    confirmTitleEl.textContent = title;
-    confirmTextEl.textContent = message;
+  function buildSubmitReviewRows(){
+    const table = document.getElementById("submitReviewTable");
+    if (!table || !Array.isArray(quizData?.questions)) return;
+
+    const rows = [];
+    let displayNumber = 0;
+
+    quizData.questions.forEach((q, i) => {
+      if (String(q?.type || "mcq").toLowerCase() === "note") return;
+      displayNumber += 1;
+
+      const result = getSingleQuestionResult(q, i);
+      const label = typeof getBreakdownQuestionLabel === "function"
+        ? getBreakdownQuestionLabel(i, displayNumber)
+        : String(displayNumber);
+      const answered = Boolean(result?.answered);
+
+      rows.push(`
+        <button type="button" class="submitReviewRow" data-qindex="${i}" aria-label="Go to question ${escapeAttr(label)}">
+          <span class="submitReviewNo">${escapeHtml(label)}</span>
+          <span class="submitReviewStatus ${answered ? "answered" : "unanswered"}">${answered ? "Answer saved" : "Not yet answered"}</span>
+        </button>
+      `);
+    });
+
+    table.innerHTML = rows.join("");
+
+    table.querySelectorAll(".submitReviewRow").forEach(row => {
+      row.addEventListener("click", () => {
+        const qIndex = Number(row.dataset.qindex);
+        if (!Number.isInteger(qIndex)) return;
+
+        buildQuestionPageGroups();
+        const pageIndex = questionPageGroups.findIndex(group =>
+          group.some(item => Number(item?.dataset?.qindex) === qIndex)
+        );
+
+        hideSubmitConfirm();
+        if (pageIndex >= 0) {
+          showQuestionPage(pageIndex);
+          saveAnswersToStorage();
+        }
+      });
+    });
+  }
+
+  function showSubmitConfirm(){
+    if (confirmTitleEl) confirmTitleEl.textContent = "Submission status";
+    if (confirmTextEl) confirmTextEl.textContent = "Review the status of your answers before submitting the assessment.";
+    if (submitReviewSummary) submitReviewSummary.hidden = true;
+    if (confirmCancelBtn) {
+      confirmCancelBtn.style.display = "";
+      confirmCancelBtn.textContent = "Return to attempt";
+
+      confirmCancelBtn.style.position = "";
+      confirmCancelBtn.style.top = "";
+      confirmCancelBtn.style.right = "";
+      confirmCancelBtn.style.zIndex = "";
+      confirmCancelBtn.style.minWidth = "";
+      confirmCancelBtn.style.padding = "";
+      confirmCancelBtn.style.margin = "";
+    }
+    if (confirmSubmitBtn) { confirmSubmitBtn.style.display = ""; confirmSubmitBtn.disabled = false; confirmSubmitBtn.textContent = "Submit all and finish"; }
+    buildSubmitReviewRows();
     submitConfirmModal.classList.remove("hidden");
     submitConfirmModal.setAttribute("aria-hidden", "false");
     window.setTimeout(() => confirmCancelBtn?.focus(), 0);
+  }
+
+  function computeLocalSubmissionSummary(){
+    if (!quizData || !Array.isArray(quizData.questions)) {
+      return { score:0, total:0, percent:0 };
+    }
+
+    let score = 0;
+    let total = 0;
+
+    quizData.questions.forEach((q, i) => {
+      if (String(q?.type || "mcq").toLowerCase() === "note") return;
+
+      const points = Math.max(1, Math.round(Number(q?.points || 1)));
+      const result = getSingleQuestionResult(q, i) || {};
+      const earned = Number.isFinite(Number(result?.earnedPoints))
+        ? Math.max(0, Math.min(points, Number(result.earnedPoints)))
+        : (result?.correct ? points : 0);
+
+      total += points;
+      score += earned;
+    });
+
+    const percent = total > 0 ? Math.round((score / total) * 100) : 0;
+    return { score, total, percent };
+  }
+
+  function normalizeSamePageSummary(savedData){
+    const local = computeLocalSubmissionSummary();
+    const rawScore = Number(savedData?.score);
+    const rawTotal = Number(savedData?.total);
+    const rawPercent = Number(savedData?.percent);
+
+    const score = Number.isFinite(rawScore) ? rawScore : local.score;
+    const total = Number.isFinite(rawTotal) && rawTotal > 0 ? rawTotal : local.total;
+    const percent = Number.isFinite(rawPercent)
+      ? rawPercent
+      : (total > 0 ? Math.round((score / total) * 100) : local.percent);
+
+    return { score, total, percent };
+  }
+
+  function renderSamePageFinalMarking(savedData, options = {}){
+    const table = document.getElementById("submitReviewTable");
+    if (!table || !Array.isArray(quizData?.questions)) return;
+
+    /* Use the exact same green tick and red cross as Check Answer. */
+    const CORRECT_ICON = "https://res.cloudinary.com/dopoxadlr/image/upload/v1784922756/correct-right-arrow-direction-left-down-up_lt6cfc.svg";
+    const WRONG_ICON = "https://res.cloudinary.com/dopoxadlr/image/upload/v1784922779/wrong-delete-remove-trash-minus-cancel-close_jtaf7c.svg";
+    const rows = [];
+    let displayNumber = 0;
+
+    quizData.questions.forEach((q, i) => {
+      if (String(q?.type || "mcq").toLowerCase() === "note") return;
+      displayNumber += 1;
+
+      const result = getSingleQuestionResult(q, i);
+      const points = Math.max(1, Math.round(Number(q?.points || 1)));
+      const earned = Number.isFinite(Number(result?.earnedPoints))
+        ? Math.max(0, Math.min(points, Number(result.earnedPoints)))
+        : (result?.correct ? points : 0);
+      const label = typeof getBreakdownQuestionLabel === "function"
+        ? getBreakdownQuestionLabel(i, displayNumber)
+        : String(displayNumber);
+      const correct = Boolean(result?.answered) && Boolean(result?.correct);
+      const answered = Boolean(result?.answered);
+      const incorrectLabel = answered ? "Incorrect" : "Unanswered";
+
+      rows.push(`
+        <div class="submitReviewRow finalResult ${correct ? "correct" : "incorrect"}">
+          <span class="submitReviewNo">${escapeHtml(label)}</span>
+          <span class="submitReviewResultCell correctCell" aria-label="${correct ? "Correct" : ""}">
+            ${correct
+              ? `<img class="submitReviewResultIcon" src="${CORRECT_ICON}" alt="Correct">`
+              : `<span class="submitReviewResultPlaceholder" aria-hidden="true"></span>`}
+          </span>
+          <span class="submitReviewResultCell incorrectCell" aria-label="${correct ? "" : incorrectLabel}">
+            ${!correct
+              ? `<img class="submitReviewResultIcon" src="${WRONG_ICON}" alt="${incorrectLabel}" title="${incorrectLabel}">`
+              : `<span class="submitReviewResultPlaceholder" aria-hidden="true"></span>`}
+          </span>
+          <span class="submitReviewMark">${formatBreakdownMark(earned)} / ${formatBreakdownMark(points)}</span>
+        </div>
+      `);
+    });
+
+    const summary = normalizeSamePageSummary(savedData);
+    const score = summary.score;
+    const total = summary.total;
+    const percent = summary.percent;
+
+    table.innerHTML = `
+      <div class="submitReviewFinalHead" aria-hidden="true">
+        <span>Question</span>
+        <span>Correct</span>
+        <span>Incorrect</span>
+        <span>Marks</span>
+      </div>
+      ${rows.join("")}
+      <div class="submitReviewSummaryRow totalScore">
+        <span class="summaryLabel">Total score</span>
+        <span class="summaryValue" id="submitReviewFinalScore">${formatBreakdownMark(score)} / ${formatBreakdownMark(total)}</span>
+      </div>
+      <div class="submitReviewSummaryRow percentage">
+        <span class="summaryLabel">Percentage</span>
+        <span class="summaryValue" id="submitReviewFinalPercent">${percent}%</span>
+      </div>
+    `;
+
+    if (confirmTitleEl) confirmTitleEl.textContent = "Assessment results";
+    if (confirmTextEl) confirmTextEl.textContent = "Your assessment has been marked. Review each question result below.";
+
+    /*
+      Result visibility is independent from the background save request.
+      Once marking has been rendered, the result window remains open until
+      the learner deliberately closes it.
+    */
+    samePageResultsReady = true;
+
+    if (confirmCancelBtn) {
+      confirmCancelBtn.style.display = "inline-flex";
+      confirmCancelBtn.textContent = "Close results";
+      confirmCancelBtn.disabled = false;
+
+      confirmCancelBtn.style.position = "absolute";
+      confirmCancelBtn.style.top = "8px";
+      confirmCancelBtn.style.right = "10px";
+      confirmCancelBtn.style.zIndex = "3";
+      confirmCancelBtn.style.minWidth = "auto";
+      confirmCancelBtn.style.width = "auto";
+      confirmCancelBtn.style.height = "30px";
+      confirmCancelBtn.style.padding = "0 11px";
+      confirmCancelBtn.style.margin = "0";
+      confirmCancelBtn.style.background = "#dc2626";
+      confirmCancelBtn.style.borderColor = "#dc2626";
+      confirmCancelBtn.style.color = "#ffffff";
+      confirmCancelBtn.style.fontSize = "12px";
+      confirmCancelBtn.style.fontWeight = "700";
+    }
+    if (confirmSubmitBtn) {
+      confirmSubmitBtn.style.display = "none";
+      confirmSubmitBtn.disabled = true;
+    }
+
+    ensureResultsCloseButton();
+
+    if (!samePageResultsDismissed) {
+      submitConfirmModal.classList.remove("hidden");
+      submitConfirmModal.setAttribute("aria-hidden", "false");
+      submitConfirmModal.scrollTop = 0;
+    }
   }
 
   function hideSubmitConfirm(){
@@ -9500,7 +10168,24 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   });
 
   submitConfirmModal.addEventListener("click", function(e){
-    if (e.target === submitConfirmModal) hideSubmitConfirm();
+    /*
+      While final Assessment results are open, backdrop clicks must NOT close
+      the results. The learner must use Close results or the × button.
+      Before final submission, preserve the normal click-outside behaviour.
+    */
+    if (e.target !== submitConfirmModal) return;
+    if (samePageResultsReady) return;
+    hideSubmitConfirm();
+  });
+
+  submitConfirmModal.addEventListener("dblclick", function(e){
+    /*
+      Prevent accidental double-clicks on the results overlay from dismissing
+      or toggling the final results state.
+    */
+    if (!samePageResultsReady) return;
+    e.preventDefault();
+    e.stopPropagation();
   });
 
   if (postSubmitResultsBtn) {
@@ -9523,15 +10208,314 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     startQuizBtn.addEventListener("click", () => startQuizAttempt(true));
   }
 
+  /* ===== RESULTS CLOSE + COMPACT FOLLOW-UP ===== */
+  let resultsFollowupOverlay = null;
+
+  function ensureResultsCloseButton(){
+    const card = submitConfirmModal?.querySelector?.(".confirmCard");
+    if (!card) return null;
+    card.style.position = "relative";
+    let btn = card.querySelector(".resultsCloseX");
+    if (!btn) {
+      btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "resultsCloseX";
+      btn.setAttribute("aria-label", "Close results");
+      btn.title = "Close results";
+      btn.textContent = "×";
+      btn.style.cssText = "position:absolute;top:10px;right:12px;width:30px;height:30px;border:0;background:transparent;color:#475569;font:700 22px/1 Arial,Helvetica,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;";
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeResultsAndOfferNext();
+      });
+      card.appendChild(btn);
+    }
+    btn.style.display = "none";
+    return btn;
+  }
+
+  function ensureResultsFollowupPopup(){
+    if (resultsFollowupOverlay) return resultsFollowupOverlay;
+    resultsFollowupOverlay = document.createElement("div");
+    resultsFollowupOverlay.setAttribute("aria-hidden", "true");
+    resultsFollowupOverlay.style.cssText = "position:fixed;inset:0;z-index:3600;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(15,23,42,.28);font-family:inherit;";
+    resultsFollowupOverlay.innerHTML = `
+      <div role="dialog" aria-modal="true" style="width:min(100%,350px);background:#fff;border:1px solid #dfe5ec;border-radius:6px;box-shadow:0 14px 34px rgba(15,23,42,.16);padding:14px;color:#111827;font-family:inherit;">
+        <h3 style="margin:0 0 3px;font-size:16px;line-height:1.25;font-weight:700;color:#111827;font-family:inherit;">Continue learning</h3>
+        <p style="margin:0 0 10px;font-size:13px;line-height:1.35;color:#475569;font-family:inherit;">Choose what you would like to do next.</p>
+        <div style="display:grid;gap:6px;">
+          <button type="button" data-result-action="retry" style="height:32px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;color:#111827;font:700 12px/1 inherit;cursor:pointer;">Retry quiz</button>
+          <button type="button" data-result-action="next" style="height:32px;border:1px solid #2563eb;border-radius:5px;background:#2563eb;color:#fff;font:700 12px/1 inherit;cursor:pointer;">Next suggested quiz</button>
+          <button type="button" data-result-action="workings" style="height:32px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;color:#111827;font:700 12px/1 inherit;cursor:pointer;">Workings</button>
+          <button type="button" data-result-action="rate" style="height:32px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;color:#111827;font:700 12px/1 inherit;cursor:pointer;">Rate this quiz</button>
+        </div>
+        <button type="button" data-result-action="dismiss" style="margin-top:7px;width:100%;height:27px;border:0;background:transparent;color:#64748b;font:600 12px/1 inherit;cursor:pointer;">Not now</button>
+      </div>`;
+    document.body.appendChild(resultsFollowupOverlay);
+
+    resultsFollowupOverlay.addEventListener("click", async (e) => {
+      if (e.target === resultsFollowupOverlay) {
+        hideResultsFollowupPopup();
+        showCompletedAssessmentState();
+        return;
+      }
+      const btn = e.target.closest("[data-result-action]");
+      if (!btn) return;
+      const action = btn.dataset.resultAction;
+      if (action === "dismiss") {
+        hideResultsFollowupPopup();
+        showCompletedAssessmentState();
+      } else if (action === "retry") {
+        hideResultsFollowupPopup();
+        hideCompletedAssessmentState();
+        startPracticeMode();
+      } else if (action === "next") {
+        const nextBtn = btn;
+        nextBtn.disabled = true;
+        const oldText = nextBtn.textContent;
+        nextBtn.textContent = "Opening next quiz…";
+        try {
+          if (!nextQuizData) await prepareNextQuizButton();
+          if (nextQuizData) {
+            hideResultsFollowupPopup();
+            hideCompletedAssessmentState();
+            goToNextQuiz();
+            return;
+          }
+          nextBtn.textContent = "No next quiz available";
+          nextBtn.title = "There is no next suggested quiz available right now.";
+          window.setTimeout(() => {
+            nextBtn.disabled = false;
+            nextBtn.textContent = oldText;
+          }, 1800);
+        } catch (_) {
+          nextBtn.disabled = false;
+          nextBtn.textContent = oldText;
+        }
+      } else if (action === "workings") {
+        hideResultsFollowupPopup();
+        hideCompletedAssessmentState();
+        setCompletedFollowupView(false);
+
+        /* Open the first question in submitted review mode with workings visible. */
+        submitted = true;
+        currentQuestionPage = 0;
+        showQuestionPage(0, false);
+
+        const firstGroup = questionPageGroups[0] || [];
+        const firstScorable = firstGroup.find(row => row?.dataset?.scorable === "1");
+        if (firstScorable) {
+          const solution = firstScorable.querySelector(".solutionHolder");
+          const workingsButton = firstScorable.querySelector(".qShowAnswerBtn");
+
+          if (solution && solution.innerHTML.trim()) {
+            solution.classList.remove("hidden");
+            typesetMath(solution);
+          }
+          if (workingsButton) {
+            workingsButton.classList.add("visible");
+            workingsButton.textContent = "Workings Shown";
+            workingsButton.disabled = true;
+          }
+        }
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (action === "rate") {
+        hideResultsFollowupPopup();
+        hideCompletedAssessmentState();
+        /* Reuse the existing rating panel; keep it compact and rating-focused. */
+        if (postSubmitGrid) postSubmitGrid.style.display = "none";
+        if (postSubmitBreakdown) postSubmitBreakdown.style.display = "none";
+        if (postSubmitMessage) postSubmitMessage.style.display = "none";
+        if (marksReleaseNotice) marksReleaseNotice.style.display = "none";
+        if (postSubmitNextQuizInfo) postSubmitNextQuizInfo.style.display = "none";
+        if (postSubmitTitle) postSubmitTitle.textContent = "Rate this quiz";
+        showPostSubmitPanel();
+      }
+    });
+    return resultsFollowupOverlay;
+  }
+
+  function showResultsFollowupPopup(){
+    const overlay = ensureResultsFollowupPopup();
+    const retry = overlay.querySelector('[data-result-action="retry"]');
+    const next = overlay.querySelector('[data-result-action="next"]');
+    const workings = overlay.querySelector('[data-result-action="workings"]');
+    const rate = overlay.querySelector('[data-result-action="rate"]');
+
+    /* Always show the four learner choices after results are closed. */
+    if (retry) retry.style.display = "";
+    if (next) {
+      next.style.display = "";
+      next.disabled = false;
+      next.textContent = "Next suggested quiz";
+      next.removeAttribute("title");
+    }
+    if (workings) workings.style.display = "";
+    if (rate) rate.style.display = "";
+
+    overlay.style.display = "flex";
+    overlay.setAttribute("aria-hidden", "false");
+  }
+
+  function hideResultsFollowupPopup(){
+    if (!resultsFollowupOverlay) return;
+    resultsFollowupOverlay.style.display = "none";
+    resultsFollowupOverlay.setAttribute("aria-hidden", "true");
+  }
+
+  function ensureCompletedAssessmentState(){
+    let panel = document.getElementById("completedAssessmentState");
+    if (panel) return panel;
+
+    panel = document.createElement("section");
+    panel.id = "completedAssessmentState";
+    panel.setAttribute("aria-live", "polite");
+    panel.style.cssText = [
+      "display:none",
+      "max-width:820px",
+      "margin:26px auto",
+      "padding:20px 22px",
+      "border:1px solid #dfe3e8",
+      "background:#fff",
+      "font-family:inherit",
+      "color:#111827"
+    ].join(";");
+
+    panel.innerHTML = `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;">
+        <div style="min-width:0;">
+          <h2 style="margin:0 0 6px;font-family:inherit;font-size:19px;line-height:1.3;font-weight:700;color:#111827;">Assessment completed</h2>
+          <p style="margin:0;font-family:inherit;font-size:13px;line-height:1.5;color:#475569;">Your assessment has been submitted and saved.</p>
+        </div>
+        <button type="button" id="completedSeeSolutionBtn"
+          style="height:34px;padding:0 14px;border:1px solid #2563eb;border-radius:4px;background:#2563eb;color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
+          See solution
+        </button>
+      </div>
+      <div id="completedAssessmentScore" style="margin-top:16px;padding-top:14px;border-top:1px solid #e5e7eb;display:flex;gap:28px;flex-wrap:wrap;font-family:inherit;font-size:13px;color:#111827;"></div>
+    `;
+
+    if (questionsWrap?.parentElement) {
+      questionsWrap.parentElement.insertBefore(panel, questionsWrap);
+    } else {
+      document.body.appendChild(panel);
+    }
+
+    const seeSolutionBtn = panel.querySelector("#completedSeeSolutionBtn");
+    seeSolutionBtn?.addEventListener("click", () => {
+      panel.style.display = "none";
+      setCompletedFollowupView(false);
+
+      /* Submitted review mode: jump to the first question and open its workings. */
+      submitted = true;
+      currentQuestionPage = 0;
+      showQuestionPage(0, false);
+
+      const firstGroup = questionPageGroups[0] || [];
+      const firstScorable = firstGroup.find(row => row?.dataset?.scorable === "1");
+      if (firstScorable) {
+        const qIndex = Number(firstScorable.dataset.qindex);
+        if (Number.isInteger(qIndex)) {
+          const solution = firstScorable.querySelector(".solutionHolder");
+          const workingsButton = firstScorable.querySelector(".qShowAnswerBtn");
+
+          if (solution && solution.innerHTML.trim()) {
+            solution.classList.remove("hidden");
+            typesetMath(solution);
+          }
+          if (workingsButton) {
+            workingsButton.classList.add("visible");
+            workingsButton.textContent = "Workings Shown";
+            workingsButton.disabled = true;
+          }
+        }
+      }
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    return panel;
+  }
+
+  function showCompletedAssessmentState(){
+    setCompletedFollowupView(true);
+
+    const panel = ensureCompletedAssessmentState();
+    const summary = computeLocalSubmissionSummary();
+    const scoreEl = panel.querySelector("#completedAssessmentScore");
+
+    if (scoreEl) {
+      scoreEl.innerHTML = `
+        <span><strong>Total score:</strong> ${formatBreakdownMark(summary.score)} / ${formatBreakdownMark(summary.total)}</span>
+        <span><strong>Percentage:</strong> ${Math.round(Number(summary.percent || 0))}%</span>
+      `;
+    }
+
+    panel.style.display = "block";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function hideCompletedAssessmentState(){
+    const panel = document.getElementById("completedAssessmentState");
+    if (panel) panel.style.display = "none";
+  }
+
+  function setCompletedFollowupView(active){
+    const simpleProgress = document.getElementById("simpleQuestionProgress");
+    if (questionsWrap) questionsWrap.style.display = active ? "none" : "";
+    if (quizNavigation) quizNavigation.style.display = active ? "none" : "";
+    if (simpleProgress) simpleProgress.style.display = active ? "none" : "";
+
+    /* Keep the learner out of the submitted question paper until Retry is chosen. */
+    if (submitBtn) submitBtn.style.display = active ? "none" : submitBtn.style.display;
+  }
+
+  function closeResultsAndOfferNext(){
+    samePageResultsDismissed = true;
+    hideSubmitConfirm();
+    samePageResultsReady = false;
+    const closeX = submitConfirmModal?.querySelector?.(".resultsCloseX");
+    if (closeX) closeX.style.display = "none";
+
+    /* After reviewing results, do not fall back to the last question. */
+    setCompletedFollowupView(true);
+    window.setTimeout(showResultsFollowupPopup, 60);
+  }
+
   postSubmitOverlay.addEventListener("click", function(e){
     if (e.target === postSubmitOverlay) return;
   });
 
-  confirmCancelBtn.addEventListener("click", hideSubmitConfirm);
-
-  confirmSubmitBtn.addEventListener("click", function(){
+  confirmCancelBtn.addEventListener("click", function(){
+    if (samePageResultsReady) {
+      closeResultsAndOfferNext();
+      return;
+    }
     hideSubmitConfirm();
-    submitQuiz("manual", { skipConfirm: true });
+  });
+
+  confirmSubmitBtn.addEventListener("click", async function(){
+    if (samePageResultsReady) {
+      goToNextQuiz();
+      return;
+    }
+
+    samePageResultsDismissed = false;
+    confirmSubmitBtn.disabled = true;
+    confirmSubmitBtn.textContent = "Submitting…";
+    if (confirmCancelBtn) confirmCancelBtn.disabled = true;
+
+    const ok = await submitQuiz("manual", { skipConfirm: true, samePageFinal: true });
+
+    if (!ok) {
+      if (confirmSubmitBtn.style.display !== "none") {
+        confirmSubmitBtn.disabled = false;
+        confirmSubmitBtn.textContent = "Submit all and finish";
+      }
+      if (confirmCancelBtn) confirmCancelBtn.disabled = false;
+    }
   });
 
   ratingStarsInline.addEventListener("click", function(e){
@@ -9698,13 +10682,16 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   }
 
   function setAvailability(isAvailable){
-    statusText.style.display = "inline-flex";
+    /* Keep the toolbar clean: do not show a green AVAILABLE label.
+       Only show a status when the assessment is unavailable. */
     if (isAvailable){
-      statusText.textContent = "AVAILABLE";
+      statusText.textContent = "";
       statusText.className = "statusText available";
+      statusText.style.display = "none";
     } else {
       statusText.textContent = "UNAVAILABLE";
       statusText.className = "statusText unavailable";
+      statusText.style.display = "inline-flex";
     }
   }
 
@@ -10774,6 +11761,46 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   }
 
 
+  function showSamePagePostSubmitActions(){
+    samePageResultsReady = true;
+
+    /* Close controls are immediately available and never wait on network work. */
+    if (confirmCancelBtn) {
+      confirmCancelBtn.style.display = "inline-flex";
+      confirmCancelBtn.disabled = false;
+      confirmCancelBtn.textContent = "Close results";
+
+      confirmCancelBtn.style.position = "absolute";
+      confirmCancelBtn.style.top = "8px";
+      confirmCancelBtn.style.right = "10px";
+      confirmCancelBtn.style.zIndex = "3";
+      confirmCancelBtn.style.minWidth = "auto";
+      confirmCancelBtn.style.width = "auto";
+      confirmCancelBtn.style.height = "30px";
+      confirmCancelBtn.style.padding = "0 11px";
+      confirmCancelBtn.style.margin = "0";
+      confirmCancelBtn.style.background = "#dc2626";
+      confirmCancelBtn.style.borderColor = "#dc2626";
+      confirmCancelBtn.style.color = "#ffffff";
+      confirmCancelBtn.style.fontSize = "12px";
+      confirmCancelBtn.style.fontWeight = "700";
+    }
+
+    if (confirmSubmitBtn) {
+      confirmSubmitBtn.style.display = "none";
+      confirmSubmitBtn.disabled = true;
+      confirmSubmitBtn.removeAttribute("title");
+    }
+
+    ensureResultsCloseButton();
+
+    /* Resolve the next quiz in the background; never control results visibility. */
+    Promise.resolve()
+      .then(() => prepareNextQuizButton())
+      .catch(() => {});
+  }
+
+
   function hidePostSubmitPanel(){
     if (!postSubmitPanel || !postSubmitOverlay) return;
     postSubmitOverlay.classList.add("hidden");
@@ -11010,6 +12037,9 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   function renderPostSubmitBreakdown(){
     if (!postSubmitBreakdown || !postSubmitBreakdownList || !quizData) return;
 
+    const CORRECT_ICON = "https://res.cloudinary.com/dopoxadlr/image/upload/v1773875245/tick_sklwla.svg";
+    const WRONG_ICON = "https://res.cloudinary.com/dopoxadlr/image/upload/v1773875245/cross_hznn67.svg";
+
     const rows = [];
     let displayNumber = 0;
 
@@ -11025,16 +12055,17 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       const label = getBreakdownQuestionLabel(questionIndex, displayNumber);
       const answered = Boolean(result?.answered);
       const correct = answered && Boolean(result?.correct);
-      const answerClass = answered ? "answered" : "unanswered";
-      const answerText = answered ? "Answered" : "Not answered";
-      const resultClass = !answered ? "unanswered" : (correct ? "correct" : "incorrect");
-      const resultText = !answered ? "Not marked" : (correct ? "Correct" : "Incorrect");
+      const resultClass = correct ? "correct" : "incorrect";
+      const resultText = correct ? "Correct" : (answered ? "Incorrect" : "Unanswered");
+      const resultIcon = correct ? CORRECT_ICON : WRONG_ICON;
 
       rows.push(`
-        <div class="postSubmitBreakdownRow">
+        <div class="postSubmitBreakdownRow ${resultClass}">
           <span class="postSubmitQuestionNo">${escapeHtml(label)}</span>
-          <span class="postSubmitState ${answerClass}">${answerText}</span>
-          <span class="postSubmitState ${resultClass}">${resultText}</span>
+          <span class="postSubmitFinalResult ${resultClass}">
+            <img class="postSubmitResultIcon" src="${resultIcon}" alt="" aria-hidden="true">
+            <span>${resultText}</span>
+          </span>
           <span class="postSubmitMark">${formatBreakdownMark(earned)} / ${formatBreakdownMark(points)}</span>
         </div>
       `);
@@ -11170,6 +12201,9 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   function startPracticeMode(){
     if (!quizData) return;
 
+    hideCompletedAssessmentState();
+    samePageResultsDismissed = false;
+    setCompletedFollowupView(false);
     practiceMode = true;
     blocked = false;
     submitted = false;
@@ -11960,8 +12994,22 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       return;
     }
 
-    /* Bottom Submit: check all questions at once and show workings */
+    /* Bottom Submit: mark all questions from the learner's current answers. */
     submitAllQuestionsFromBottom();
+
+    /*
+      SAME-PAGE FINAL MARKING:
+      Do not wait for the /api/results request before showing the marks.
+      The learner's answers are already present in this page, so calculate the
+      question results and total immediately, then save the attempt to the server.
+    */
+    const localSamePageSummary = options.samePageFinal
+      ? computeLocalSubmissionSummary()
+      : null;
+
+    if (options.samePageFinal) {
+      renderSamePageFinalMarking(localSamePageSummary, { saving:true });
+    }
 
     submitted = true;
     document.body.classList.add("submitted-state");
@@ -11987,10 +13035,15 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
         msgEl.textContent = `Outcome: ${r.percent}%. You are getting there, please retry again until you get to 100%.`;
       }
 
-      renderPostSubmitSummary(
-        { score: r.scorePoints, total: r.totalPoints, percent: r.percent },
-        null
-      );
+      if (options.samePageFinal) {
+        renderSamePageFinalMarking({ score: r.scorePoints, total: r.totalPoints, percent: r.percent });
+        showSamePagePostSubmitActions();
+      } else {
+        renderPostSubmitSummary(
+          { score: r.scorePoints, total: r.totalPoints, percent: r.percent },
+          null
+        );
+      }
       /* Retry becomes available AFTER first completed attempt */
       /* After bottom Submit, unlock Practice Mode */
       retryBtn.disabled = false;
@@ -12005,7 +13058,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       disableAllInputs();
       /* Keep workings visible after bottom submit */
       clearSavedAnswers();
-      return;
+      return true;
     }
 
     if (alreadyAttempted) {
@@ -12045,10 +13098,14 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       });
     }catch{
       msgEl.className = "error";
-      msgEl.textContent = "Network error. Please try again.";
+      msgEl.textContent = "The answers were marked, but the attempt could not be saved. Please try submitting again.";
       submitted = false;
       submitBtn.disabled = false;
-      return;
+      if (options.samePageFinal) {
+        renderSamePageFinalMarking(localSamePageSummary);
+        if (confirmTextEl) confirmTextEl.textContent = "Your answers were marked, but the attempt was not saved. Return to the attempt and submit again when the connection is available.";
+      }
+      return false;
     }
 
     if (res.status === 409) {
@@ -12066,16 +13123,20 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       viewResultsBtn.disabled = false;
       viewResultsBtn.onclick = () => window.location.href = "results.html";
       showBottomResultsButton();
-      return;
+      return false;
     }
 
     if (!res.ok) {
       const data = await res.json().catch(()=>({}));
       msgEl.className = "error";
-      msgEl.textContent = data.message || "Could not save attempt. Please try again.";
+      msgEl.textContent = data.message || "The answers were marked, but the attempt could not be saved. Please try again.";
       submitted = false;
       submitBtn.disabled = false;
-      return;
+      if (options.samePageFinal) {
+        renderSamePageFinalMarking(localSamePageSummary);
+        if (confirmTextEl) confirmTextEl.textContent = "Your answers were marked, but the attempt was not saved. Return to the attempt and submit again.";
+      }
+      return false;
     }
 
     alreadyAttempted = true;
@@ -12092,7 +13153,33 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     clearSavedAnswers();
 
     const savedData = await res.json().catch(() => ({}));
-    renderPostSubmitSummary(savedData, null);
+    if (options.samePageFinal && !isMarksReleasePending()) {
+      renderSamePageFinalMarking({
+        score: Number.isFinite(Number(savedData?.score)) ? Number(savedData.score) : localSamePageSummary?.score,
+        total: Number.isFinite(Number(savedData?.total)) ? Number(savedData.total) : localSamePageSummary?.total,
+        percent: Number.isFinite(Number(savedData?.percent)) ? Number(savedData.percent) : localSamePageSummary?.percent
+      });
+      showSamePagePostSubmitActions();
+    } else if (options.samePageFinal && isMarksReleasePending()) {
+      if (confirmTitleEl) confirmTitleEl.textContent = "Assessment submitted";
+      if (confirmTextEl) confirmTextEl.textContent = msgEl.textContent;
+      if (confirmSubmitBtn) confirmSubmitBtn.style.display = "none";
+      if (confirmCancelBtn) {
+        confirmCancelBtn.disabled = false;
+        confirmCancelBtn.textContent = "Return to attempt";
+
+      confirmCancelBtn.style.position = "";
+      confirmCancelBtn.style.top = "";
+      confirmCancelBtn.style.right = "";
+      confirmCancelBtn.style.zIndex = "";
+      confirmCancelBtn.style.minWidth = "";
+      confirmCancelBtn.style.padding = "";
+      confirmCancelBtn.style.margin = "";
+      }
+      submitConfirmModal.classList.remove("hidden");
+    } else {
+      renderPostSubmitSummary(savedData, null);
+    }
 
     loadLatestQuizPosition().then((rankedData) => {
       updatePostSubmitRankOnly(rankedData);
@@ -12117,6 +13204,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     showQuestionPage(currentQuestionPage, false);
     showAllWorkingsButtons();
     showAllWorkingsAfterFinish();
+    return true;
   }
 
 
