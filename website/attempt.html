@@ -8813,7 +8813,7 @@ function inlineQuizLoadingHtml(){
       });
     }
 
-    if (prevQuestionBtn) prevQuestionBtn.disabled = !quizStarted || currentQuestionPage === 0;
+    if (prevQuestionBtn) prevQuestionBtn.disabled = (!quizStarted && !submitted) || currentQuestionPage === 0;
 
     if (nextQuestionBtn) {
       const isLast = currentQuestionPage === questionPageGroups.length - 1;
@@ -8996,7 +8996,7 @@ function inlineQuizLoadingHtml(){
 
     if (prevQuestionBtn) {
       prevQuestionBtn.onclick = () => {
-        if (!quizStarted) return;
+        if (!quizStarted && !submitted) return;
         if (currentQuestionPage > 0) {
           saveAnswersToStorage();
           showQuestionPage(currentQuestionPage - 1);
@@ -9007,7 +9007,7 @@ function inlineQuizLoadingHtml(){
 
     if (nextQuestionBtn) {
       nextQuestionBtn.onclick = () => {
-        if (!quizStarted) return;
+        if (!quizStarted && !submitted) return;
         saveAnswersToStorage();
         if (currentQuestionPage < questionPageGroups.length - 1) {
           showQuestionPage(currentQuestionPage + 1);
@@ -10242,19 +10242,143 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     resultsFollowupOverlay.style.cssText = "position:fixed;inset:0;z-index:3600;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(15,23,42,.28);font-family:inherit;";
     resultsFollowupOverlay.innerHTML = `
       <div role="dialog" aria-modal="true" style="width:min(100%,350px);background:#fff;border:1px solid #dfe5ec;border-radius:6px;box-shadow:0 14px 34px rgba(15,23,42,.16);padding:14px;color:#111827;font-family:inherit;">
-        <h3 style="margin:0 0 3px;font-size:16px;line-height:1.25;font-weight:700;color:#111827;font-family:inherit;">Continue learning</h3>
-        <p style="margin:0 0 10px;font-size:13px;line-height:1.35;color:#475569;font-family:inherit;">Choose what you would like to do next.</p>
+        <h3 style="margin:0 0 4px;font-size:16px;line-height:1.25;font-weight:700;color:#111827;font-family:inherit;">Rate this quiz</h3>
+        <p style="margin:0 0 8px;font-size:13px;line-height:1.35;color:#475569;font-family:inherit;">Tell us how you found this assessment.</p>
         <div style="display:grid;gap:6px;">
-          <button type="button" data-result-action="retry" style="height:32px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;color:#111827;font:700 12px/1 inherit;cursor:pointer;">Retry quiz</button>
-          <button type="button" data-result-action="next" style="height:32px;border:1px solid #2563eb;border-radius:5px;background:#2563eb;color:#fff;font:700 12px/1 inherit;cursor:pointer;">Next suggested quiz</button>
-          <button type="button" data-result-action="workings" style="height:32px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;color:#111827;font:700 12px/1 inherit;cursor:pointer;">Workings</button>
-          <button type="button" data-result-action="rate" style="height:32px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;color:#111827;font:700 12px/1 inherit;cursor:pointer;">Rate this quiz</button>
+          <button type="button" data-result-action="retry" style="display:none;">Retry quiz</button>
+          <button type="button" data-result-action="next" style="display:none;">Next suggested quiz</button>
+          <button type="button" data-result-action="workings" style="display:none;">Workings</button>
+          <button type="button" data-result-action="rate" style="display:none;">Rate this quiz</button>
+
+          <div data-result-rating-panel style="display:block;padding:7px 4px 2px;text-align:center;font-family:inherit;">
+            <div style="font-size:12px;color:#475569;margin-bottom:7px;">Choose from 1 to 5 stars</div>
+            <div data-result-stars style="display:flex;align-items:center;justify-content:center;gap:8px;">
+              <button type="button" data-result-star="1" aria-label="1 star" style="width:32px;height:32px;padding:0;border:0;background:transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1783957984/star_g4g5kh.svg" alt="" aria-hidden="true" style="width:25px;height:25px;display:block;opacity:.32;filter:grayscale(1) brightness(.9);transition:filter .15s ease,opacity .15s ease,transform .15s ease;"></button><button type="button" data-result-star="2" aria-label="2 stars" style="width:32px;height:32px;padding:0;border:0;background:transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1783957984/star_g4g5kh.svg" alt="" aria-hidden="true" style="width:25px;height:25px;display:block;opacity:.32;filter:grayscale(1) brightness(.9);transition:filter .15s ease,opacity .15s ease,transform .15s ease;"></button><button type="button" data-result-star="3" aria-label="3 stars" style="width:32px;height:32px;padding:0;border:0;background:transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1783957984/star_g4g5kh.svg" alt="" aria-hidden="true" style="width:25px;height:25px;display:block;opacity:.32;filter:grayscale(1) brightness(.9);transition:filter .15s ease,opacity .15s ease,transform .15s ease;"></button><button type="button" data-result-star="4" aria-label="4 stars" style="width:32px;height:32px;padding:0;border:0;background:transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1783957984/star_g4g5kh.svg" alt="" aria-hidden="true" style="width:25px;height:25px;display:block;opacity:.32;filter:grayscale(1) brightness(.9);transition:filter .15s ease,opacity .15s ease,transform .15s ease;"></button><button type="button" data-result-star="5" aria-label="5 stars" style="width:32px;height:32px;padding:0;border:0;background:transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1783957984/star_g4g5kh.svg" alt="" aria-hidden="true" style="width:25px;height:25px;display:block;opacity:.32;filter:grayscale(1) brightness(.9);transition:filter .15s ease,opacity .15s ease,transform .15s ease;"></button>
+            </div>
+            <div data-result-rating-label style="font-size:12px;color:#475569;margin-top:5px;">Choose a rating</div>
+            <button type="button" data-result-rating-save disabled style="margin-top:8px;height:30px;padding:0 14px;border:1px solid #2563eb;border-radius:5px;background:#2563eb;color:#fff;font:700 12px/1 inherit;cursor:pointer;opacity:.55;">Send rating</button>
+            <div data-result-rating-status style="min-height:17px;margin-top:5px;font-size:12px;color:#475569;"></div>
+          </div>
         </div>
         <button type="button" data-result-action="dismiss" style="margin-top:7px;width:100%;height:27px;border:0;background:transparent;color:#64748b;font:600 12px/1 inherit;cursor:pointer;">Not now</button>
       </div>`;
+    let followupSelectedRating = 0;
+
+    function updateFollowupRatingStars(){
+      const panel = resultsFollowupOverlay.querySelector("[data-result-rating-panel]");
+      if (!panel) return;
+      const labels = {
+        0: "Choose a rating",
+        1: "Poor",
+        2: "Fair",
+        3: "Good",
+        4: "Very good",
+        5: "Excellent"
+      };
+      panel.querySelectorAll("[data-result-star]").forEach((button) => {
+        const value = Number(button.dataset.resultStar || 0);
+        const image = button.querySelector("img");
+        const active = value > 0 && value <= followupSelectedRating;
+        if (image) {
+          image.style.opacity = active ? "1" : ".32";
+          image.style.transform = active ? "scale(1.06)" : "scale(1)";
+          image.style.filter = active
+            ? "brightness(0) saturate(100%) invert(72%) sepia(93%) saturate(946%) hue-rotate(354deg) brightness(101%) contrast(101%)"
+            : "grayscale(1) brightness(.9)";
+        }
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+
+      const label = panel.querySelector("[data-result-rating-label]");
+      if (label) label.textContent = labels[followupSelectedRating] || "Choose a rating";
+
+      const save = panel.querySelector("[data-result-rating-save]");
+      if (save) {
+        save.disabled = !followupSelectedRating;
+        save.style.opacity = followupSelectedRating ? "1" : ".55";
+      }
+    }
+
+    async function saveFollowupRating(){
+      const panel = resultsFollowupOverlay.querySelector("[data-result-rating-panel]");
+      if (!panel || !followupSelectedRating) return;
+
+      const status = panel.querySelector("[data-result-rating-status]");
+      const save = panel.querySelector("[data-result-rating-save]");
+      const stars = panel.querySelectorAll("[data-result-star]");
+
+      if (save) {
+        save.disabled = true;
+        save.textContent = "Saving…";
+      }
+      stars.forEach(btn => btn.disabled = true);
+      if (status) {
+        status.textContent = "";
+        status.style.color = "#475569";
+      }
+
+      try{
+        const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(quizId)}/rate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token
+          },
+          body: JSON.stringify({
+            rating: followupSelectedRating,
+            comment: ""
+          })
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || "Could not save your rating.");
+        }
+
+        if (status) {
+          status.textContent = `Thank you — ${followupSelectedRating}/5 saved.`;
+          status.style.color = "#166534";
+        }
+        if (save) {
+          save.textContent = "Rating saved";
+          save.disabled = true;
+        }
+
+        /* Keep the gold stars visible briefly, then close only the rating popup.
+           The Assessment completed state remains visible underneath. */
+        window.setTimeout(() => {
+          hideResultsFollowupPopup();
+          showCompletedAssessmentState();
+        }, 700);
+      }catch(err){
+        if (status) {
+          status.textContent = err?.message || "Could not save your rating.";
+          status.style.color = "#b91c1c";
+        }
+        if (save) {
+          save.disabled = false;
+          save.textContent = "Send rating";
+        }
+        stars.forEach(btn => btn.disabled = false);
+      }
+    }
+
     document.body.appendChild(resultsFollowupOverlay);
 
     resultsFollowupOverlay.addEventListener("click", async (e) => {
+      const star = e.target.closest("[data-result-star]");
+      if (star) {
+        if (star.disabled) return;
+        followupSelectedRating = Number(star.dataset.resultStar || 0);
+        updateFollowupRatingStars();
+        return;
+      }
+
+      const ratingSave = e.target.closest("[data-result-rating-save]");
+      if (ratingSave) {
+        if (!ratingSave.disabled) await saveFollowupRating();
+        return;
+      }
       if (e.target === resultsFollowupOverlay) {
         hideResultsFollowupPopup();
         showCompletedAssessmentState();
@@ -10301,6 +10425,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
         /* Open the first question in submitted review mode with workings visible. */
         submitted = true;
         currentQuestionPage = 0;
+        initQuestionNavigation(0);
         showQuestionPage(0, false);
 
         const firstGroup = questionPageGroups[0] || [];
@@ -10322,16 +10447,14 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else if (action === "rate") {
-        hideResultsFollowupPopup();
-        hideCompletedAssessmentState();
-        /* Reuse the existing rating panel; keep it compact and rating-focused. */
-        if (postSubmitGrid) postSubmitGrid.style.display = "none";
-        if (postSubmitBreakdown) postSubmitBreakdown.style.display = "none";
-        if (postSubmitMessage) postSubmitMessage.style.display = "none";
-        if (marksReleaseNotice) marksReleaseNotice.style.display = "none";
-        if (postSubmitNextQuizInfo) postSubmitNextQuizInfo.style.display = "none";
-        if (postSubmitTitle) postSubmitTitle.textContent = "Rate this quiz";
-        showPostSubmitPanel();
+        const panel = resultsFollowupOverlay.querySelector("[data-result-rating-panel]");
+        if (panel) {
+          panel.style.display = panel.style.display === "none" ? "block" : "none";
+          if (panel.style.display === "block") {
+            const firstStar = panel.querySelector("[data-result-star]");
+            firstStar?.focus();
+          }
+        }
       }
     });
     return resultsFollowupOverlay;
@@ -10339,21 +10462,50 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
   function showResultsFollowupPopup(){
     const overlay = ensureResultsFollowupPopup();
+
     const retry = overlay.querySelector('[data-result-action="retry"]');
     const next = overlay.querySelector('[data-result-action="next"]');
     const workings = overlay.querySelector('[data-result-action="workings"]');
     const rate = overlay.querySelector('[data-result-action="rate"]');
 
-    /* Always show the four learner choices after results are closed. */
-    if (retry) retry.style.display = "";
-    if (next) {
-      next.style.display = "";
-      next.disabled = false;
-      next.textContent = "Next suggested quiz";
-      next.removeAttribute("title");
+    /* This stage is rating-only. No Continue learning choices are shown here. */
+    if (retry) retry.style.display = "none";
+    if (next) next.style.display = "none";
+    if (workings) workings.style.display = "none";
+    if (rate) rate.style.display = "none";
+
+    const heading = overlay.querySelector("h3");
+    const intro = overlay.querySelector("p");
+    if (heading) heading.textContent = "Rate this quiz";
+    if (intro) intro.textContent = "Tell us how you found this assessment.";
+
+    const ratingPanel = overlay.querySelector("[data-result-rating-panel]");
+    if (ratingPanel) {
+      ratingPanel.style.display = "block";
+
+      const status = ratingPanel.querySelector("[data-result-rating-status]");
+      if (status) status.textContent = "";
+
+      const saveRating = ratingPanel.querySelector("[data-result-rating-save]");
+      if (saveRating) {
+        saveRating.textContent = "Send rating";
+        saveRating.disabled = true;
+        saveRating.style.opacity = ".55";
+      }
+
+      ratingPanel.querySelectorAll("[data-result-star]").forEach(btn => {
+        btn.disabled = false;
+        btn.setAttribute("aria-pressed", "false");
+      });
+      ratingPanel.querySelectorAll("[data-result-star] img").forEach(img => {
+        img.style.opacity = ".32";
+        img.style.transform = "scale(1)";
+        img.style.filter = "grayscale(1) brightness(.9)";
+      });
+
+      const label = ratingPanel.querySelector("[data-result-rating-label]");
+      if (label) label.textContent = "Choose a rating";
     }
-    if (workings) workings.style.display = "";
-    if (rate) rate.style.display = "";
 
     overlay.style.display = "flex";
     overlay.setAttribute("aria-hidden", "false");
@@ -10389,10 +10541,16 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
           <h2 style="margin:0 0 6px;font-family:inherit;font-size:19px;line-height:1.3;font-weight:700;color:#111827;">Assessment completed</h2>
           <p style="margin:0;font-family:inherit;font-size:13px;line-height:1.5;color:#475569;">Your assessment has been submitted and saved.</p>
         </div>
-        <button type="button" id="completedSeeSolutionBtn"
-          style="height:34px;padding:0 14px;border:1px solid #2563eb;border-radius:4px;background:#2563eb;color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
-          See solution
-        </button>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <button type="button" id="completedRetryBtn"
+            style="height:34px;padding:0 14px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;color:#111827;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
+            Retry quiz
+          </button>
+          <button type="button" id="completedSeeSolutionBtn"
+            style="height:34px;padding:0 14px;border:1px solid #2563eb;border-radius:4px;background:#2563eb;color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
+            See solution
+          </button>
+        </div>
       </div>
       <div id="completedAssessmentScore" style="margin-top:16px;padding-top:14px;border-top:1px solid #e5e7eb;display:flex;gap:28px;flex-wrap:wrap;font-family:inherit;font-size:13px;color:#111827;"></div>
     `;
@@ -10403,6 +10561,13 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       document.body.appendChild(panel);
     }
 
+    const retryBtn = panel.querySelector("#completedRetryBtn");
+    retryBtn?.addEventListener("click", () => {
+      hideResultsFollowupPopup();
+      panel.style.display = "none";
+      startPracticeMode();
+    });
+
     const seeSolutionBtn = panel.querySelector("#completedSeeSolutionBtn");
     seeSolutionBtn?.addEventListener("click", () => {
       panel.style.display = "none";
@@ -10411,6 +10576,12 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       /* Submitted review mode: jump to the first question and open its workings. */
       submitted = true;
       currentQuestionPage = 0;
+
+      /*
+        Solution review is not a live attempt, but Back/Next must remain usable.
+        Reinitialise the question navigation in submitted-review mode.
+      */
+      initQuestionNavigation(0);
       showQuestionPage(0, false);
 
       const firstGroup = questionPageGroups[0] || [];
@@ -10479,9 +10650,13 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     const closeX = submitConfirmModal?.querySelector?.(".resultsCloseX");
     if (closeX) closeX.style.display = "none";
 
-    /* After reviewing results, do not fall back to the last question. */
-    setCompletedFollowupView(true);
-    window.setTimeout(showResultsFollowupPopup, 60);
+    /*
+      Final flow:
+      Results -> Assessment completed state -> rating-only popup.
+      Never fall back to the last question and never show Continue learning here.
+    */
+    showCompletedAssessmentState();
+    window.setTimeout(showResultsFollowupPopup, 90);
   }
 
   postSubmitOverlay.addEventListener("click", function(e){
