@@ -3673,6 +3673,624 @@ textarea{
 }
 </style>
 
+
+<style>
+/* Quizzes loader — same three-dot pattern as Results and Announcements */
+.quizzes-full-loader{
+  min-height:260px;
+  width:100%;
+  max-width:892px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#fff;
+}
+
+.quizzes-loaded-content[hidden]{
+  display:none !important;
+}
+
+.quizzes-loaded-content{
+  display:block;
+  width:100%;
+  max-width:930px;
+}
+
+@media(max-width:760px){
+  .quizzes-full-loader{
+    min-height:180px;
+    max-width:100%;
+  }
+
+  .quizzes-loaded-content{
+    max-width:100%;
+  }
+}
+</style>
+
+
+<style>
+/* Quiz sorting: newest first by default */
+#quizzesPanel .embedded-quiz-controls{
+  grid-template-columns:minmax(260px,340px) minmax(190px,250px) 150px 150px !important;
+  column-gap:10px !important;
+  align-items:end !important;
+}
+
+#quizzesPanel .quiz-sort-field{
+  width:150px !important;
+  max-width:150px !important;
+}
+
+#quizzesPanel .quiz-sort-select-wrap{
+  position:relative;
+  width:100%;
+}
+
+#quizzesPanel .quiz-sort-icon{
+  position:absolute;
+  left:10px;
+  top:50%;
+  transform:translateY(-50%);
+  width:16px;
+  height:16px;
+  object-fit:contain;
+  pointer-events:none;
+  z-index:2;
+}
+
+#quizzesPanel #quizSortOrder{
+  width:100% !important;
+  height:38px !important;
+  padding:0 8px 0 32px !important;
+  border:1px solid #cbd5e1 !important;
+  border-radius:3px !important;
+  background:#fff !important;
+  color:#111827 !important;
+  font-size:10px !important;
+  font-weight:400 !important;
+  cursor:pointer;
+}
+
+@media(max-width:900px){
+  #quizzesPanel .embedded-quiz-controls{
+    grid-template-columns:1fr 1fr !important;
+  }
+
+  #quizzesPanel .quiz-sort-field{
+    width:100% !important;
+    max-width:220px !important;
+  }
+}
+
+@media(max-width:760px){
+  #quizzesPanel .embedded-quiz-controls{
+    grid-template-columns:1fr !important;
+  }
+
+  #quizzesPanel .quiz-sort-field{
+    width:100% !important;
+    max-width:100% !important;
+  }
+
+  #quizzesPanel #quizSortOrder{
+    height:42px !important;
+    min-height:42px !important;
+    border-radius:6px !important;
+    font-size:12px !important;
+    padding-left:34px !important;
+  }
+
+  #quizzesPanel .quiz-sort-icon{
+    width:17px;
+    height:17px;
+    left:11px;
+  }
+}
+</style>
+
+
+<style>
+/* =========================================================
+   ICON-ONLY NEWEST / OLDEST SORTING
+   No badge, dropdown or text control.
+   ========================================================= */
+
+.sort-accessible-label{
+  position:absolute !important;
+  width:1px !important;
+  height:1px !important;
+  padding:0 !important;
+  margin:-1px !important;
+  overflow:hidden !important;
+  clip:rect(0,0,0,0) !important;
+  white-space:nowrap !important;
+  border:0 !important;
+}
+
+/* Quizzes: icon sits directly after Mode */
+#quizzesPanel .embedded-quiz-controls{
+  grid-template-columns:minmax(260px,340px) minmax(190px,250px) 150px 40px !important;
+  column-gap:10px !important;
+  align-items:end !important;
+}
+
+#quizzesPanel .quiz-sort-field{
+  position:relative !important;
+  width:40px !important;
+  max-width:40px !important;
+  display:flex !important;
+  align-items:flex-end !important;
+  justify-content:flex-start !important;
+}
+
+/* Remove every visual trace of the old sort dropdown */
+#quizzesPanel .quiz-sort-select-wrap,
+#quizzesPanel #quizSortOrder,
+#quizzesPanel .quiz-sort-field > label{
+  display:none !important;
+}
+
+.sort-icon-btn{
+  width:38px !important;
+  height:38px !important;
+  min-width:38px !important;
+  min-height:38px !important;
+  padding:0 !important;
+  margin:0 !important;
+  border:0 !important;
+  border-radius:4px !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  cursor:pointer !important;
+  color:#111827 !important;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.sort-icon-btn:hover{
+  background:#f8fafc !important;
+}
+
+.sort-icon-btn:focus-visible{
+  outline:2px solid #94a3b8 !important;
+  outline-offset:2px !important;
+}
+
+.sort-icon-btn img{
+  position:static !important;
+  width:20px !important;
+  height:20px !important;
+  display:block !important;
+  object-fit:contain !important;
+  pointer-events:none !important;
+  transition:transform .16s ease !important;
+}
+
+/* Requested direction:
+   Newest = points UP
+   Oldest = points DOWN */
+.sort-icon-btn.is-newest img{
+  transform:rotate(0deg) !important;
+}
+
+.sort-icon-btn.is-oldest img{
+  transform:rotate(180deg) !important;
+}
+
+/* Results gets the same icon-only interaction */
+#resultsPanel .results-filter-row{
+  grid-template-columns:minmax(320px,1fr) 150px 150px 40px !important;
+  gap:10px !important;
+  align-items:center !important;
+}
+
+#resultsPanel .results-sort-toggle{
+  justify-self:start !important;
+  align-self:center !important;
+}
+
+/* Tablet */
+@media(max-width:900px){
+  #quizzesPanel .embedded-quiz-controls{
+    grid-template-columns:1fr 1fr !important;
+  }
+
+  #quizzesPanel .quiz-sort-field{
+    width:40px !important;
+    max-width:40px !important;
+  }
+}
+
+/* Phone */
+@media(max-width:760px){
+  #quizzesPanel .embedded-quiz-controls{
+    grid-template-columns:1fr !important;
+  }
+
+  #quizzesPanel .quiz-sort-field{
+    width:40px !important;
+    max-width:40px !important;
+  }
+
+  .sort-icon-btn{
+    width:40px !important;
+    height:40px !important;
+    min-width:40px !important;
+    min-height:40px !important;
+  }
+
+  .sort-icon-btn img{
+    width:21px !important;
+    height:21px !important;
+  }
+
+  #resultsPanel .results-filter-row{
+    grid-template-columns:1fr 1fr !important;
+  }
+
+  #resultsPanel .results-search-wrap{
+    grid-column:1 / -1 !important;
+  }
+
+  #resultsPanel .results-sort-toggle{
+    grid-column:auto !important;
+    justify-self:start !important;
+  }
+}
+
+@media(max-width:480px){
+  #resultsPanel .results-filter-row{
+    grid-template-columns:1fr 40px !important;
+  }
+
+  #resultsPanel .results-search-wrap,
+  #resultsPanel .results-filter-field{
+    grid-column:1 / -1 !important;
+  }
+
+  #resultsPanel .results-sort-toggle{
+    grid-column:1 !important;
+  }
+}
+</style>
+
+
+<style>
+/* Refine sort icons: no visible rotation animation + align Quizzes like Results */
+
+/* Remove animated rotation effect */
+.sort-icon-btn img{
+  transition:none !important;
+}
+
+/* Quizzes: make sort icon sit cleanly in the filter row like Results */
+#quizzesPanel .embedded-quiz-controls{
+  grid-template-columns:minmax(260px,340px) minmax(190px,250px) 150px 40px !important;
+  align-items:end !important;
+}
+
+#quizzesPanel .quiz-sort-field{
+  width:40px !important;
+  max-width:40px !important;
+  height:38px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  align-self:end !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+
+#quizzesPanel .quiz-sort-field .sort-icon-btn{
+  width:38px !important;
+  height:38px !important;
+  min-width:38px !important;
+  min-height:38px !important;
+  margin:0 !important;
+  align-self:center !important;
+}
+
+/* Keep the icon visual consistent with Results */
+#quizzesPanel .quiz-sort-field .sort-icon-btn img,
+#resultsPanel .results-sort-toggle img{
+  width:20px !important;
+  height:20px !important;
+}
+
+/* State changes are instant */
+.sort-icon-btn.is-newest img{
+  transform:rotate(0deg) !important;
+}
+
+.sort-icon-btn.is-oldest img{
+  transform:rotate(180deg) !important;
+}
+
+/* Results alignment reference */
+#resultsPanel .results-sort-toggle{
+  width:38px !important;
+  height:38px !important;
+  min-width:38px !important;
+  min-height:38px !important;
+  align-self:center !important;
+  justify-self:start !important;
+  margin:0 !important;
+}
+
+/* Mobile: same compact placement */
+@media(max-width:760px){
+  #quizzesPanel .quiz-sort-field{
+    width:40px !important;
+    max-width:40px !important;
+    height:40px !important;
+    justify-self:start !important;
+  }
+
+  #quizzesPanel .quiz-sort-field .sort-icon-btn,
+  #resultsPanel .results-sort-toggle{
+    width:40px !important;
+    height:40px !important;
+    min-width:40px !important;
+    min-height:40px !important;
+  }
+
+  #quizzesPanel .quiz-sort-field .sort-icon-btn img,
+  #resultsPanel .results-sort-toggle img{
+    width:21px !important;
+    height:21px !important;
+  }
+}
+</style>
+
+
+<style>
+/* Final Quizzes filter alignment */
+#quizzesPanel .embedded-quiz-controls{
+  width:100% !important;
+  max-width:892px !important;
+  grid-template-columns:
+    minmax(260px,340px)
+    minmax(190px,250px)
+    155px
+    40px !important;
+  column-gap:14px !important;
+  align-items:end !important;
+  justify-content:start !important;
+}
+
+/* Give Mode a little more breathing room to the right */
+#quizzesPanel .control-field:has(#modeFilter){
+  width:155px !important;
+  max-width:155px !important;
+  margin-left:6px !important;
+}
+
+/* Push sort icon cleanly to the right edge of the filter group */
+#quizzesPanel .quiz-sort-field{
+  width:40px !important;
+  max-width:40px !important;
+  margin-left:6px !important;
+  justify-self:end !important;
+  align-self:end !important;
+}
+
+/* Keep icon vertically aligned with the filter inputs */
+#quizzesPanel .quiz-sort-field .sort-icon-btn{
+  width:38px !important;
+  height:38px !important;
+  min-width:38px !important;
+  min-height:38px !important;
+}
+
+/* Tablet */
+@media(max-width:900px){
+  #quizzesPanel .embedded-quiz-controls{
+    grid-template-columns:1fr 1fr !important;
+    column-gap:10px !important;
+  }
+
+  #quizzesPanel .control-field:has(#modeFilter){
+    width:100% !important;
+    max-width:100% !important;
+    margin-left:0 !important;
+  }
+
+  #quizzesPanel .quiz-sort-field{
+    margin-left:0 !important;
+    justify-self:start !important;
+  }
+}
+
+/* Phone */
+@media(max-width:760px){
+  #quizzesPanel .embedded-quiz-controls{
+    grid-template-columns:1fr !important;
+  }
+
+  #quizzesPanel .control-field:has(#modeFilter){
+    width:100% !important;
+    max-width:100% !important;
+  }
+
+  #quizzesPanel .quiz-sort-field{
+    width:40px !important;
+    max-width:40px !important;
+    justify-self:end !important;
+    margin-left:0 !important;
+    margin-right:2px !important;
+  }
+}
+</style>
+
+
+<style>
+/* =========================================================
+   QUIZZES FILTER ROW — FINAL RIGHT ALIGNMENT
+   Assessment Code + Topic stay left.
+   Mode + sort icon sit together at the far right.
+   ========================================================= */
+
+#quizzesPanel .embedded-quiz-controls{
+  width:100% !important;
+  max-width:892px !important;
+  display:grid !important;
+  grid-template-columns:340px 250px minmax(155px,1fr) 40px !important;
+  column-gap:14px !important;
+  align-items:end !important;
+  justify-content:stretch !important;
+  margin-left:0 !important;
+  margin-right:0 !important;
+}
+
+/* Assessment code */
+#quizzesPanel .embedded-quiz-controls > .control-field:nth-of-type(1){
+  width:340px !important;
+  max-width:340px !important;
+}
+
+/* Topic */
+#quizzesPanel .embedded-quiz-controls > .control-field:nth-of-type(2){
+  width:250px !important;
+  max-width:250px !important;
+}
+
+/* Mode: use the flexible third column but keep the select compact,
+   anchored to the RIGHT side of that column. */
+#quizzesPanel .control-field:has(#modeFilter){
+  width:155px !important;
+  max-width:155px !important;
+  margin:0 !important;
+  justify-self:end !important;
+}
+
+/* Sort icon: directly after Mode, at the outer right edge */
+#quizzesPanel .quiz-sort-field{
+  width:40px !important;
+  max-width:40px !important;
+  height:38px !important;
+  margin:0 !important;
+  padding:0 !important;
+  justify-self:end !important;
+  align-self:end !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+#quizzesPanel .quiz-sort-field .sort-icon-btn{
+  width:38px !important;
+  height:38px !important;
+  min-width:38px !important;
+  min-height:38px !important;
+  margin:0 !important;
+}
+
+/* Tablet */
+@media(max-width:900px){
+  #quizzesPanel .embedded-quiz-controls{
+    grid-template-columns:1fr 1fr !important;
+    width:100% !important;
+    max-width:100% !important;
+    column-gap:10px !important;
+  }
+
+  #quizzesPanel .embedded-quiz-controls > .control-field:nth-of-type(1),
+  #quizzesPanel .embedded-quiz-controls > .control-field:nth-of-type(2),
+  #quizzesPanel .control-field:has(#modeFilter){
+    width:100% !important;
+    max-width:100% !important;
+    justify-self:stretch !important;
+  }
+
+  #quizzesPanel .quiz-sort-field{
+    justify-self:end !important;
+  }
+}
+
+/* Phone */
+@media(max-width:760px){
+  #quizzesPanel .embedded-quiz-controls{
+    grid-template-columns:1fr !important;
+  }
+
+  #quizzesPanel .quiz-sort-field{
+    width:40px !important;
+    max-width:40px !important;
+    justify-self:end !important;
+  }
+}
+</style>
+
+
+<style>
+/* Refine Quizzes filter spacing: reduce Topic -> Level gap */
+#quizzesPanel .embedded-quiz-controls{
+  grid-template-columns:340px 250px 155px 40px !important;
+  column-gap:12px !important;
+  justify-content:start !important;
+}
+
+/* Remove the extra spacing that was pushing Level too far right */
+#quizzesPanel .control-field:has(#modeFilter){
+  margin-left:0 !important;
+  justify-self:start !important;
+}
+
+/* Keep sort icon directly after Level */
+#quizzesPanel .quiz-sort-field{
+  margin-left:0 !important;
+  justify-self:start !important;
+}
+
+@media(max-width:900px){
+  #quizzesPanel .embedded-quiz-controls{
+    grid-template-columns:1fr 1fr !important;
+    column-gap:10px !important;
+  }
+}
+
+@media(max-width:760px){
+  #quizzesPanel .embedded-quiz-controls{
+    grid-template-columns:1fr !important;
+  }
+}
+</style>
+
+
+<style>
+/* Stretch Topic further to the right while keeping the rest unchanged */
+#quizzesPanel .embedded-quiz-controls{
+  grid-template-columns:340px 315px 155px 40px !important;
+  column-gap:12px !important;
+  justify-content:start !important;
+}
+
+#quizzesPanel .embedded-quiz-controls > .control-field:nth-of-type(2){
+  width:315px !important;
+  max-width:315px !important;
+}
+
+@media(max-width:900px){
+  #quizzesPanel .embedded-quiz-controls{
+    grid-template-columns:1fr 1fr !important;
+  }
+
+  #quizzesPanel .embedded-quiz-controls > .control-field:nth-of-type(2){
+    width:100% !important;
+    max-width:100% !important;
+  }
+}
+
+@media(max-width:760px){
+  #quizzesPanel .embedded-quiz-controls{
+    grid-template-columns:1fr !important;
+  }
+}
+</style>
+
 </head>
 <body>
 <header class="topbar"><div class="topbar-inner"><div class="accountLeft"><img class="accountIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="Account"><div class="accountMeta"><div class="accountName" id="accountName">Loading...</div><div class="accountType" id="accountType">Account</div></div></div><div class="topbarRight"><a href="learning-content.html#announcements" data-top-tab="announcements" class="iconBtn" title="Announcements" aria-label="Announcements"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt=""><span class="navBadge" id="navAnnouncementBadge">0</span></a><button class="menuBtn" id="menuToggleBtn" type="button"><span class="menuBtnText">Menu</span><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt=""></button><div class="menuDropdown" id="menuDropdown">
@@ -3716,6 +4334,18 @@ textarea{
   <div class="content-area">
 
     <div id="quizzesPanel" class="portal-panel active">
+      <div id="portalQuizzesLoadingScreen" class="quizzes-full-loader">
+        <div class="portal-results-loading-inner">
+          <div class="portal-results-loading-dots" aria-hidden="true">
+            <span class="portal-results-loading-dot"></span>
+            <span class="portal-results-loading-dot"></span>
+            <span class="portal-results-loading-dot"></span>
+          </div>
+          <p class="portal-results-loading-text">Loading quizzes...</p>
+        </div>
+      </div>
+
+      <div id="portalQuizzesContent" class="quizzes-loaded-content" hidden>
       <div class="quiz-card-shell">
 
     <div id="gradeText" style="display:none">Loading...</div>
@@ -3735,13 +4365,26 @@ textarea{
       </div>
 
       <div class="control-field">
-        <label for="modeFilter">Mode</label>
+        <label for="modeFilter">Level</label>
         <select id="modeFilter">
           <option value="all">All modes</option>
           <option value="easy">Easy</option>
           <option value="moderate">Medium</option>
           <option value="hard">Hard</option>
         </select>
+      </div>
+
+      <div class="control-field quiz-sort-field">
+        <span class="sort-accessible-label">Sort quizzes</span>
+        <button
+          id="quizSortToggle"
+          class="sort-icon-btn is-newest"
+          type="button"
+          aria-label="Newest first. Tap to show oldest first."
+          title="Newest first"
+        >
+          <img src="data:image/svg+xml;charset=UTF-8,%3C?xml%20version=%221.0%22%20encoding=%22iso-8859-1%22?%3E%0A%3C!--%20Uploaded%20to:%20SVG%20Repo,%20www.svgrepo.com,%20Generator:%20SVG%20Repo%20Mixer%20Tools%20--%3E%0A%3C!DOCTYPE%20svg%20PUBLIC%20%22-//W3C//DTD%20SVG%201.1//EN%22%20%22http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd%22%3E%0A%3Csvg%20fill=%22%23000000%22%20height=%22800px%22%20width=%22800px%22%20version=%221.1%22%20id=%22Capa_1%22%20xmlns=%22http://www.w3.org/2000/svg%22%20xmlns:xlink=%22http://www.w3.org/1999/xlink%22%20%0A%09%20viewBox=%220%200%20301.219%20301.219%22%20xml:space=%22preserve%22%3E%0A%3Cg%3E%0A%09%3Cpath%20d=%22M159.365,23.736v-10c0-5.523-4.477-10-10-10H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h139.365%0A%09%09C154.888,33.736,159.365,29.259,159.365,23.736z%22/%3E%0A%09%3Cpath%20d=%22M130.586,66.736H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h120.586c5.523,0,10-4.477,10-10v-10%0A%09%09C140.586,71.213,136.109,66.736,130.586,66.736z%22/%3E%0A%09%3Cpath%20d=%22M111.805,129.736H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h101.805c5.523,0,10-4.477,10-10v-10%0A%09%09C121.805,134.213,117.328,129.736,111.805,129.736z%22/%3E%0A%09%3Cpath%20d=%22M93.025,199.736H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h83.025c5.522,0,10-4.477,10-10v-10%0A%09%09C103.025,204.213,98.548,199.736,93.025,199.736z%22/%3E%0A%09%3Cpath%20d=%22M74.244,262.736H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h64.244c5.522,0,10-4.477,10-10v-10%0A%09%09C84.244,267.213,79.767,262.736,74.244,262.736z%22/%3E%0A%09%3Cpath%20d=%22M298.29,216.877l-7.071-7.071c-1.875-1.875-4.419-2.929-7.071-2.929c-2.652,0-5.196,1.054-7.072,2.929l-34.393,34.393%0A%09%09V18.736c0-5.523-4.477-10-10-10h-10c-5.523,0-10,4.477-10,10v225.462l-34.393-34.393c-1.876-1.875-4.419-2.929-7.071-2.929%0A%09%09c-2.652,0-5.196,1.054-7.071,2.929l-7.072,7.071c-3.904,3.905-3.904,10.237,0,14.142l63.536,63.536%0A%09%09c1.953,1.953,4.512,2.929,7.071,2.929c2.559,0,5.119-0.976,7.071-2.929l63.536-63.536%0A%09%09C302.195,227.113,302.195,220.781,298.29,216.877z%22/%3E%0A%3C/g%3E%0A%3C/svg%3E" alt="" aria-hidden="true">
+        </button>
       </div>
 <!-- Kept hidden so the existing quiz filtering logic continues to work. -->
       <select id="paperFilter" hidden><option value="all">All Papers</option></select>
@@ -3818,7 +4461,8 @@ textarea{
     </div>
     </div>
 
-    <div id="grade-challengePanel" class="portal-panel native-portal-panel">
+          </div>
+<div id="grade-challengePanel" class="portal-panel native-portal-panel">
       <div class="native-panel-inner">
         <div id="gradeChallengeList" class="grade-challenge-list">
           <div class="portal-results-loading-inner grade-challenge-loading">
@@ -3875,6 +4519,15 @@ textarea{
               <option value="month">This Month</option>
             </select>
           </div>
+          <button
+            id="portalResultsSortToggle"
+            class="sort-icon-btn results-sort-toggle is-newest"
+            type="button"
+            aria-label="Newest first. Tap to show oldest first."
+            title="Newest first"
+          >
+            <img src="data:image/svg+xml;charset=UTF-8,%3C?xml%20version=%221.0%22%20encoding=%22iso-8859-1%22?%3E%0A%3C!--%20Uploaded%20to:%20SVG%20Repo,%20www.svgrepo.com,%20Generator:%20SVG%20Repo%20Mixer%20Tools%20--%3E%0A%3C!DOCTYPE%20svg%20PUBLIC%20%22-//W3C//DTD%20SVG%201.1//EN%22%20%22http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd%22%3E%0A%3Csvg%20fill=%22%23000000%22%20height=%22800px%22%20width=%22800px%22%20version=%221.1%22%20id=%22Capa_1%22%20xmlns=%22http://www.w3.org/2000/svg%22%20xmlns:xlink=%22http://www.w3.org/1999/xlink%22%20%0A%09%20viewBox=%220%200%20301.219%20301.219%22%20xml:space=%22preserve%22%3E%0A%3Cg%3E%0A%09%3Cpath%20d=%22M159.365,23.736v-10c0-5.523-4.477-10-10-10H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h139.365%0A%09%09C154.888,33.736,159.365,29.259,159.365,23.736z%22/%3E%0A%09%3Cpath%20d=%22M130.586,66.736H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h120.586c5.523,0,10-4.477,10-10v-10%0A%09%09C140.586,71.213,136.109,66.736,130.586,66.736z%22/%3E%0A%09%3Cpath%20d=%22M111.805,129.736H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h101.805c5.523,0,10-4.477,10-10v-10%0A%09%09C121.805,134.213,117.328,129.736,111.805,129.736z%22/%3E%0A%09%3Cpath%20d=%22M93.025,199.736H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h83.025c5.522,0,10-4.477,10-10v-10%0A%09%09C103.025,204.213,98.548,199.736,93.025,199.736z%22/%3E%0A%09%3Cpath%20d=%22M74.244,262.736H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h64.244c5.522,0,10-4.477,10-10v-10%0A%09%09C84.244,267.213,79.767,262.736,74.244,262.736z%22/%3E%0A%09%3Cpath%20d=%22M298.29,216.877l-7.071-7.071c-1.875-1.875-4.419-2.929-7.071-2.929c-2.652,0-5.196,1.054-7.072,2.929l-34.393,34.393%0A%09%09V18.736c0-5.523-4.477-10-10-10h-10c-5.523,0-10,4.477-10,10v225.462l-34.393-34.393c-1.876-1.875-4.419-2.929-7.071-2.929%0A%09%09c-2.652,0-5.196,1.054-7.071,2.929l-7.072,7.071c-3.904,3.905-3.904,10.237,0,14.142l63.536,63.536%0A%09%09c1.953,1.953,4.512,2.929,7.071,2.929c2.559,0,5.119-0.976,7.071-2.929l63.536-63.536%0A%09%09C302.195,227.113,302.195,220.781,298.29,216.877z%22/%3E%0A%3C/g%3E%0A%3C/svg%3E" alt="" aria-hidden="true">
+          </button>
         </div>
 
         <div class="portal-results-table-wrap">
@@ -4037,6 +4690,7 @@ const API=window.API||"https://api.practiceonline.co.za";const token=localStorag
 const searchEl = document.getElementById("search");
 const topicFilter = document.getElementById("topicFilter");
 const modeFilter = document.getElementById("modeFilter");
+const quizSortToggle = document.getElementById("quizSortToggle");
 const paperFilter = document.getElementById("paperFilter");
 const periodFilter = document.getElementById("periodFilter");
 const accessFilter = document.getElementById("accessFilter");
@@ -4050,6 +4704,7 @@ let ratingsMap = {};
 let diff = "all";
 let renderToken = 0;
 let groupedByTopic = [];
+let quizSortOrder = "newest";
 let filterTimer = null;
 let lastRenderedGroups = [];
 let manualExpand = false;
@@ -4336,12 +4991,26 @@ function rebuildGroupedTopics(){
     groups[topic].push(q);
   }
 
+  const direction = quizSortOrder === "oldest" ? 1 : -1;
+
   groupedByTopic = Object.keys(groups)
-    .sort((a, b) => a.localeCompare(b))
     .map(topic => ({
       topic,
-      quizzes: groups[topic].sort((a, b) => a._timeValue - b._timeValue)
-    }));
+      quizzes: groups[topic].slice().sort((a, b) => {
+        const at = Number(a._timeValue || 0);
+        const bt = Number(b._timeValue || 0);
+        if(at !== bt) return direction * (at - bt);
+        return String(a._assessmentCode || a.title || "").localeCompare(
+          String(b._assessmentCode || b.title || "")
+        );
+      })
+    }))
+    .sort((a, b) => {
+      const at = Number(a.quizzes[0]?._timeValue || 0);
+      const bt = Number(b.quizzes[0]?._timeValue || 0);
+      if(at !== bt) return direction * (at - bt);
+      return a.topic.localeCompare(b.topic);
+    });
 }
 
 function apply(){
@@ -4577,6 +5246,26 @@ searchEl.oninput = () => {
 
 topicFilter.onchange = apply;
 if(modeFilter) modeFilter.onchange = apply;
+if(quizSortToggle){
+  quizSortToggle.addEventListener("click", ()=>{
+    quizSortOrder = quizSortOrder === "newest" ? "oldest" : "newest";
+
+    quizSortToggle.classList.toggle("is-newest", quizSortOrder === "newest");
+    quizSortToggle.classList.toggle("is-oldest", quizSortOrder === "oldest");
+
+    const newest = quizSortOrder === "newest";
+    quizSortToggle.title = newest ? "Newest first" : "Oldest first";
+    quizSortToggle.setAttribute(
+      "aria-label",
+      newest
+        ? "Newest first. Tap to show oldest first."
+        : "Oldest first. Tap to show newest first."
+    );
+
+    rebuildGroupedTopics();
+    apply();
+  });
+}
 paperFilter.onchange = apply;
 periodFilter.onchange = apply;
 accessFilter.onchange = apply;
@@ -4620,11 +5309,23 @@ if(gradeChallengeListEl){
 }
 
 
+
+function renderPortalQuizzesLoading(){
+  const loading = document.getElementById("portalQuizzesLoadingScreen");
+  const content = document.getElementById("portalQuizzesContent");
+  if(loading) loading.style.display = "flex";
+  if(content) content.hidden = true;
+}
+
+function showPortalQuizzesContent(){
+  const loading = document.getElementById("portalQuizzesLoadingScreen");
+  const content = document.getElementById("portalQuizzesContent");
+  if(loading) loading.style.display = "none";
+  if(content) content.hidden = false;
+}
+
 async function loadPage(){
-  const cached = loadQuizCache();
-  if(cached){
-    hydrateFromPayload({ grade: cached.grade }, cached.quizzes, cached.results, true);
-  }
+  renderPortalQuizzesLoading();
 
   try{
     const headers = { Authorization: `Bearer ${token}` };
@@ -4667,10 +5368,18 @@ async function loadPage(){
 
     hydrateFromPayload(me, rawQuizzes, results, true);
     saveQuizCache(me, rawQuizzes, results);
+
   }catch(err){
-    if(!cached){
+    console.error("Quizzes panel:", err);
+
+    const cached = loadQuizCache();
+    if(cached){
+      hydrateFromPayload({ grade: cached.grade }, cached.quizzes, cached.results, true);
+    }else if(quizListEl){
       quizListEl.innerHTML = `<div class="empty">Could not load quizzes.</div>`;
     }
+  }finally{
+    showPortalQuizzesContent();
   }
 }
 
@@ -4762,6 +5471,7 @@ function hydrateGradeChallengePanel(){
 }
 
 let portalResultsData = [];
+let portalResultsSortOrder = "newest";
 
 function portalResultDateValue(r){
   return new Date(r?.attemptedAt || r?.submittedAt || r?.createdAt || 0).getTime() || 0;
@@ -4820,6 +5530,10 @@ function renderPortalResults(){
     const matchesTime = portalResultWithinTime(r, period);
 
     return matchesSearch && matchesTopic && matchesTime;
+  }).sort((a,b)=>{
+    const at = portalResultDateValue(a);
+    const bt = portalResultDateValue(b);
+    return portalResultsSortOrder === "oldest" ? at - bt : bt - at;
   });
 
   if(!filtered.length){
@@ -5270,6 +5984,7 @@ window.addEventListener("load", () => {
 const portalResultsSearch = document.getElementById("portalResultsSearch");
 const portalResultsTopicFilter = document.getElementById("portalResultsTopicFilter");
 const portalResultsTimeFilter = document.getElementById("portalResultsTimeFilter");
+const portalResultsSortToggle = document.getElementById("portalResultsSortToggle");
 
 let portalResultsSearchTimer = null;
 
@@ -5290,6 +6005,26 @@ if(portalResultsTopicFilter){
 
 if(portalResultsTimeFilter){
   portalResultsTimeFilter.addEventListener("change", ()=>{
+    if(typeof renderPortalResults === "function") renderPortalResults();
+  });
+}
+
+if(portalResultsSortToggle){
+  portalResultsSortToggle.addEventListener("click", ()=>{
+    portalResultsSortOrder = portalResultsSortOrder === "newest" ? "oldest" : "newest";
+
+    portalResultsSortToggle.classList.toggle("is-newest", portalResultsSortOrder === "newest");
+    portalResultsSortToggle.classList.toggle("is-oldest", portalResultsSortOrder === "oldest");
+
+    const newest = portalResultsSortOrder === "newest";
+    portalResultsSortToggle.title = newest ? "Newest first" : "Oldest first";
+    portalResultsSortToggle.setAttribute(
+      "aria-label",
+      newest
+        ? "Newest first. Tap to show oldest first."
+        : "Oldest first. Tap to show newest first."
+    );
+
     if(typeof renderPortalResults === "function") renderPortalResults();
   });
 }
