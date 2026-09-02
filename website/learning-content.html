@@ -5341,8 +5341,12 @@ if(portalResultsListEl){
       const opened = openQuizUsingExistingCardAction(quizId);
 
       if(!opened){
-        console.error("Could not find the matching quiz card for Retry:", quizId);
-        alert("This quiz could not be opened from Results. Please open it from Quizzes.");
+        /*
+          Mobile-safe fallback:
+          use the exact same route already used by the working
+          Start Quiz / Retake buttons in the Quizzes section.
+        */
+        location.href = `attempt.html?quizId=${encodeURIComponent(quizId)}`;
       }
       return;
     }
