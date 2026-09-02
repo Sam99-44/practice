@@ -8139,161 +8139,174 @@ html body .examPaper .q:not([data-scorable="1"]) > .noteBox:not(.nativeVisualNot
 
 <style>
 /* =========================================================
-   MOBILE HORIZONTAL-SLIDE FIX
-   Keeps the current attempt layout and behaviour unchanged.
+   MATHLIVE FRACTION FIELD ALIGNMENT
+   Gives stacked fractions enough vertical room without
+   changing the rest of the typed-answer layout.
    ========================================================= */
 
-html,
-body{
-  width:100% !important;
-  max-width:100% !important;
-  overflow-x:hidden !important;
-  overscroll-behavior-x:none !important;
+math-field.mathAnswerField{
+  height:50px !important;
+  min-height:50px !important;
+  padding:7px 10px !important;
+  line-height:1.25 !important;
+  overflow:visible !important;
+  vertical-align:middle !important;
 }
 
-body{
-  position:relative !important;
+/* MathLive exposes its editable content as a part in supported browsers. */
+math-field.mathAnswerField::part(content){
+  padding-top:2px !important;
+  padding-bottom:2px !important;
+  align-self:center !important;
 }
 
-*,
-*::before,
-*::after{
-  box-sizing:border-box !important;
-}
-
-img,
-svg,
-canvas,
-video{
-  max-width:100% !important;
-}
-
-/* Main assessment containers must never exceed the viewport */
-.wrap,
-.section,
-.sectionBody,
-.paperShell,
-.examPaper,
-.paperMeta,
-.q,
-.qHead,
-.qTitle,
-.qText,
-.qSectionStem,
-.qSectionLeft,
-.qSectionText,
-.noteBox,
-.opt,
-.optText,
-.textAnswer,
-.hint,
-.solutionBox,
-.typedAnswerRow,
-.answerArea{
-  min-width:0 !important;
-  max-width:100% !important;
-}
-
-.examPaper{
-  width:100% !important;
-  margin-left:auto !important;
-  margin-right:auto !important;
-}
-
-/* Keep diagrams responsive */
-.qimg{
-  height:auto !important;
-}
-
-/* Wide content can scroll inside itself instead of moving the whole page */
-.qImageWrap,
-.noteDiagramPreview,
-.mathPreview,
-.paperMeta .questionProgressList,
-mjx-container[display="true"]{
-  max-width:100% !important;
-  overscroll-behavior-x:contain !important;
-  -webkit-overflow-scrolling:touch;
-}
-
-/* Long text or maths must wrap inside the available width */
-.qText,
-.qSectionText,
-.optText,
-.noteBox,
-.solutionStepBody,
-.finalAnswerText{
-  overflow-wrap:anywhere !important;
-  word-break:normal !important;
+/* Keep the caret and stacked maths safely inside the field. */
+math-field.mathAnswerField:focus{
+  overflow:visible !important;
 }
 
 @media(max-width:640px){
-
-  html,
-  body{
-    width:100% !important;
-    max-width:100% !important;
-    overflow-x:hidden !important;
+  math-field.mathAnswerField{
+    height:52px !important;
+    min-height:52px !important;
+    padding:8px 10px !important;
   }
+}
+</style>
 
-  .wrap{
-    width:100% !important;
-    max-width:100% !important;
-    padding-left:10px !important;
-    padding-right:10px !important;
-  }
 
-  .section,
-  .sectionBody,
-  .paperShell{
-    width:100% !important;
-    max-width:100% !important;
-  }
+<style>
+/* =========================================================
+   MATHLIVE LARGE FRACTION / EXPRESSION ALIGNMENT
+   Keeps the full expression inside the field.
+   ========================================================= */
 
-  .examPaper{
-    width:100% !important;
-    max-width:100% !important;
-    padding-left:12px !important;
-    padding-right:12px !important;
-  }
+math-field.mathAnswerField{
+  height:58px !important;
+  min-height:58px !important;
+  padding:8px 12px !important;
+  line-height:1.2 !important;
+  overflow:hidden !important;
+  display:flex !important;
+  align-items:center !important;
+}
 
-  /* Prevent question content from extending beyond the phone */
-  .q,
-  .qHead,
-  .qSectionStem,
-  .qTitle,
-  .qText,
-  .noteBox,
-  .opt,
-  .typedAnswerRow,
-  .btnRow,
-  .qLocalActions,
-  .quizNavigation{
-    width:100% !important;
-    max-width:100% !important;
-  }
+/* Center MathLive's editable content vertically */
+math-field.mathAnswerField::part(content){
+  min-height:0 !important;
+  padding-top:3px !important;
+  padding-bottom:3px !important;
+  display:flex !important;
+  align-items:center !important;
+}
 
-  /* Existing question indentation is kept, but constrained */
-  .textAnswer{
-    max-width:calc(100% - 56px) !important;
-  }
+/* Keep the internal math baseline away from the top border */
+math-field.mathAnswerField::part(container){
+  display:flex !important;
+  align-items:center !important;
+  min-height:100% !important;
+}
 
-  .qimg{
-    max-width:calc(100% - 56px) !important;
-    height:auto !important;
+@media(max-width:640px){
+  math-field.mathAnswerField{
+    height:60px !important;
+    min-height:60px !important;
+    padding:9px 11px !important;
   }
+}
+</style>
 
-  /* Only these areas may scroll horizontally when genuinely necessary */
-  .paperMeta .questionProgressList,
-  .mathPreview,
-  .qImageWrap,
-  .noteDiagramPreview,
-  mjx-container[display="true"]{
-    overflow-x:auto !important;
-    overflow-y:hidden !important;
-    max-width:100% !important;
-    overscroll-behavior-x:contain !important;
-  }
+
+<style>
+/* =========================================================
+   CLEAN QUIZ TABLES + HIDE QUIZ TITLE
+   ========================================================= */
+
+/* Hide only the quiz title from the learner attempt view */
+.paperTitle{
+  display:none !important;
+}
+
+/* Clean black table lines everywhere in learner-facing quiz content */
+.examPaper table,
+.noteBox table,
+.qText table,
+.qSectionText table,
+.solutionBox table,
+.solutionBody table,
+.confirmCard table{
+  border-collapse:collapse !important;
+  border-spacing:0 !important;
+  border:1px solid #000 !important;
+  background:#fff !important;
+  box-shadow:none !important;
+}
+
+/* Every table cell uses a crisp black outline */
+.examPaper table th,
+.examPaper table td,
+.noteBox table th,
+.noteBox table td,
+.qText table th,
+.qText table td,
+.qSectionText table th,
+.qSectionText table td,
+.solutionBox table th,
+.solutionBox table td,
+.solutionBody table th,
+.solutionBody table td,
+.confirmCard table th,
+.confirmCard table td{
+  border:1px solid #000 !important;
+  background:#fff !important;
+  color:#111827 !important;
+  box-shadow:none !important;
+}
+
+/* Keep headings clean and restrained */
+.examPaper table th,
+.noteBox table th,
+.qText table th,
+.qSectionText table th,
+.solutionBox table th,
+.solutionBody table th,
+.confirmCard table th{
+  font-weight:700 !important;
+}
+
+/* Remove decorative rounded styling from tables */
+.examPaper table,
+.noteBox table,
+.qText table,
+.qSectionText table,
+.solutionBox table,
+.solutionBody table,
+.confirmCard table,
+.examPaper table th,
+.examPaper table td,
+.noteBox table th,
+.noteBox table td,
+.qText table th,
+.qText table td,
+.qSectionText table th,
+.qSectionText table td,
+.solutionBox table th,
+.solutionBox table td,
+.solutionBody table th,
+.solutionBody table td{
+  border-radius:0 !important;
+}
+</style>
+
+
+<style>
+/* Keep Assessment Code and Topic; hide only the quiz Title */
+.paperMeta .paperTitle{
+  display:block !important;
+}
+
+.paperMeta .paperAssessmentTitle{
+  display:none !important;
 }
 </style>
 
@@ -8917,6 +8930,26 @@ function inlineQuizLoadingHtml(){
     questionPageGroups = applyRandomQuestionOrder(groups);
   }
 
+
+  function focusActiveMathAnswerField(){
+    if (!quizStarted || submitted || blocked) return;
+
+    const activeGroup = questionPageGroups[currentQuestionPage] || [];
+    const activeQuestion = activeGroup.find(row => row?.dataset?.scorable === "1");
+    if (!activeQuestion) return;
+
+    const mathField = activeQuestion.querySelector("math-field.mathAnswerField");
+    if (!mathField || mathField.disabled) return;
+
+    requestAnimationFrame(() => {
+      try{
+        mathField.focus({ preventScroll:true });
+      }catch(_){
+        try{ mathField.focus(); }catch(__){}
+      }
+    });
+  }
+
   function showQuestionPage(index, shouldScroll = true){
     buildQuestionPageGroups();
 
@@ -9004,6 +9037,9 @@ function inlineQuizLoadingHtml(){
     }
 
     typesetMathSoon(questionsDiv);
+
+    /* Put the cursor directly in the active MathLive answer box. */
+    focusActiveMathAnswerField();
 
     if (shouldScroll) {
       const top = Math.max(0, questionsWrap.getBoundingClientRect().top + window.scrollY - 85);
@@ -9558,7 +9594,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
        */
       const prefix = learnerVisibleAnswerLabel(field, fieldIndex);
       const suffix = field.suffix || "";
-      const placeholder = "Enter your answer";
+      const placeholder = useMathLive ? "" : "Enter your answer";
 
       const inputHtml = useMathLive
         ? `
@@ -10700,7 +10736,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;">
         <div style="min-width:0;">
           <h2 style="margin:0 0 6px;font-family:inherit;font-size:19px;line-height:1.3;font-weight:700;color:#111827;">Assessment completed</h2>
-          <p style="margin:0;font-family:inherit;font-size:13px;line-height:1.5;color:#475569;">Your assessment has been submitted and saved.</p>
+          <p style="margin:0;font-family:inherit;font-size:13px;line-height:1.5;color:#475569;">Your assessment has been submitted and graded.</p>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <button type="button" id="completedRetryBtn"
@@ -17312,7 +17348,7 @@ function formatSolutionHtml(solutionText){
     <div class="paperMeta">
       ${assessmentCode ? `<div class="paperTitle"><b>Assessment Code:</b> ${escapeHtml(assessmentCode)}</div>` : ``}
       ${topic ? `<div class="paperTitle"><b>Topic:</b> ${escapeHtml(topic)}</div>` : ``}
-      <div class="paperTitle"><b>Title:</b> ${escapeHtml(title)}</div>
+      <div class="paperTitle paperAssessmentTitle"><b>Title:</b> ${escapeHtml(title)}</div>
 
       <div class="paperMetaRow">
         <div class="paperMetaLeft"><b>Questions:</b> ${questionCount}</div>
