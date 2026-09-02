@@ -8362,6 +8362,128 @@ math-field.mathAnswerField::part(container){
 }
 </style>
 
+
+<style>
+/* =========================================================
+   PHONE ANSWER ALIGNMENT + KEYBOARD FIT
+   Only affects phones. Everything else stays unchanged.
+   ========================================================= */
+@media(max-width:640px){
+
+  /* Align the label with the answer field edge */
+  .enterAnswerLabel{
+    margin-left:0 !important;
+    margin-right:0 !important;
+    width:100% !important;
+    max-width:100% !important;
+    padding-left:0 !important;
+  }
+
+  .typedAnswerBlock,
+  .typedFields,
+  .typedFieldItem,
+  .typedAnswerRow{
+    margin-left:0 !important;
+    margin-right:0 !important;
+    width:100% !important;
+    max-width:100% !important;
+  }
+
+  math-field.mathAnswerField,
+  .mathAnswerField,
+  .plainTypedInput{
+    margin-left:0 !important;
+    margin-right:0 !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+  }
+
+  /* Keep MathLive keyboard fixed to the visible phone extent */
+  math-virtual-keyboard,
+  .ML__virtual-keyboard{
+    position:fixed !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    margin:0 !important;
+    padding:0 !important;
+    box-sizing:border-box !important;
+    overflow-x:hidden !important;
+    overflow-y:visible !important;
+    transform:none !important;
+    z-index:5000 !important;
+
+    /* Slightly smaller keyboard so all keys fit without side scrolling */
+    font-size:14px !important;
+    --keycap-font-size:14px;
+    --keycap-small-font-size:11px;
+    --keycap-height:38px;
+    --keycap-gap:2px;
+  }
+
+  /* Constrain MathLive's internal keyboard panels/rows to the viewport */
+  math-virtual-keyboard *,
+  .ML__virtual-keyboard *{
+    box-sizing:border-box !important;
+    max-width:100% !important;
+    -webkit-text-size-adjust:100% !important;
+    text-size-adjust:100% !important;
+  }
+
+  .ML__keyboard,
+  .ML__keyboard-layer,
+  .ML__keyboard-layout,
+  .ML__keyboard-row{
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+    box-sizing:border-box !important;
+  }
+
+  .ML__keyboard{
+    overflow-x:hidden !important;
+  }
+
+  /* Allow key rows to compress evenly instead of overflowing sideways */
+  .ML__keyboard-row{
+    display:flex !important;
+    justify-content:center !important;
+    gap:2px !important;
+    padding-left:2px !important;
+    padding-right:2px !important;
+  }
+
+  .ML__keyboard-row > *{
+    min-width:0 !important;
+    flex-shrink:1 !important;
+  }
+}
+
+/* Extra-small phones */
+@media(max-width:390px){
+  math-virtual-keyboard,
+  .ML__virtual-keyboard{
+    font-size:13px !important;
+    --keycap-font-size:13px;
+    --keycap-small-font-size:10px;
+    --keycap-height:36px;
+    --keycap-gap:1px;
+  }
+
+  .ML__keyboard-row{
+    gap:1px !important;
+    padding-left:1px !important;
+    padding-right:1px !important;
+  }
+}
+</style>
+
 </head>
 
 <body>
