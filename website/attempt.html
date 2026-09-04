@@ -9201,6 +9201,37 @@ body.assessment-loading .inlineLoaderDots{
 }
 </style>
 
+
+<style>
+/* =========================================================
+   FINAL: NO LOADING TEXT FLASH
+   Only the circular loader is visible while loading.
+   ========================================================= */
+.inlineQuizLoadingText,
+#questions > .muted{
+  display:none !important;
+}
+</style>
+
+
+<style>
+/* =========================================================
+   FINAL START / RETAKE LOADING CLEANUP
+   From the first frame, show only the circular loader.
+   ========================================================= */
+body.assessment-loading #statusArea,
+body.assessment-loading #statusBox,
+body.assessment-loading .inlineQuizLoadingText,
+body.assessment-loading #questions > .muted{
+  display:none !important;
+}
+
+/* Never render legacy loading wording even during the first paint. */
+.inlineQuizLoadingText{
+  display:none !important;
+}
+</style>
+
 </head>
 
 <body class="assessment-loading">
@@ -9307,7 +9338,7 @@ body.assessment-loading .inlineLoaderDots{
 
     <div class="sectionBody">
       <div id="statusArea" class="statusArea">
-        <div id="statusBox" class="statusBox loading">Loading assessment status...</div>
+        <div id="statusBox" class="statusBox loading"></div>
       </div>
 
       <div id="simpleQuestionProgress" class="simpleQuestionProgress hidden" aria-label="Question progress">
@@ -9322,7 +9353,7 @@ body.assessment-loading .inlineLoaderDots{
       </div>
 
       <div id="questionsWrap" class="paperShell loading">
-        <div id="questions" class="examPaper"><div class="muted">Loading assessment...</div></div>
+        <div id="questions" class="examPaper"></div>
       </div>
 
       <div id="quizNavigation" class="quizNavigation" aria-label="Question navigation">
@@ -9669,10 +9700,10 @@ function inlineQuizLoadingHtml(){
     `<span style="--loader-index:${index}"></span>`
   ).join("");
   return `
-    <div class="inlineQuizLoading" role="status" aria-live="polite" aria-label="Loading assessment">
+    <div class="inlineQuizLoading" role="status" aria-live="polite" aria-label="Loading">
       <div class="inlineQuizLoadingContent">
         <div class="inlineLoaderDots" aria-hidden="true">${dots}</div>
-        <div class="inlineQuizLoadingText">Loading assessment…</div>
+        
       </div>
     </div>
   `;
@@ -14690,7 +14721,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     practiceMode = false;
     hideBottomResultsButton();
     hidePostSubmitPanel();
-    setStatusMessage("Loading assessment status...", "loading");
+    setStatusMessage("", "loading");
     showQuestionsShell();
 
     let res;
@@ -19152,6 +19183,56 @@ window.addEventListener("DOMContentLoaded", () => {
     { passive:true }
   );
 
+  document.addEventListener(
+    "pointerup",
+    (event) => {
+      const field = event.target?.closest?.(
+        "math-field.mathAnswerField"
+      );
+
+      if (!field || !isPhone()) return;
+
+      /*
+       * Most phones will already have fired focusin. This is only a
+       * one-shot fallback for browsers that do not reveal MathLive's
+       * keyboard from focus alone.
+       */
+      setTimeout(() => {
+        if (document.activeElement === field || field.matches(":focus-within")){
+          try{
+            window.mathVirtualKeyboard?.show?.();
+          }catch(_){}
+          settleKeyboard();
+        }
+      }, 0);
+    },
+    { passive:true }
+  );
+
+  function openPhoneMathKeyboard(field){
+    if (!field || !isPhone()) return;
+
+    activeField = field;
+    prepareField(field);
+
+    /*
+     * One explicit request only.
+     * This fixes phones where "onfocus" focuses the MathLive field
+     * but does not actually reveal the virtual keyboard.
+     */
+    requestAnimationFrame(() => {
+      try{
+        window.mathVirtualKeyboard?.show?.();
+      }catch(_){}
+
+      /*
+       * If MathLive has already created the keyboard, measure it once.
+       * No repeated show() loop and no heavy keyboard observer.
+       */
+      settleKeyboard();
+    });
+  }
+
   document.addEventListener("focusin", (event) => {
     const field = event.target?.closest?.(
       "math-field.mathAnswerField"
@@ -19159,14 +19240,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     if (!field || !isPhone()) return;
 
-    activeField = field;
-    prepareField(field);
-
-    /*
-     * MathLive's onfocus keyboard handles the opening.
-     * Only one lightweight settle pass runs after focus.
-     */
-    settleKeyboard();
+    openPhoneMathKeyboard(field);
   });
 
   document.addEventListener("focusout", (event) => {
