@@ -4343,6 +4343,518 @@ textarea{
 }
 </style>
 
+
+<style>
+/* =========================================================
+   CLEAN MINIMAL PORTAL LOADERS
+   Same clean loading treatment as the assessment page.
+   ========================================================= */
+
+/* Remove all loading wording */
+.portal-results-loading-text{
+  display:none !important;
+}
+
+/* No loader cards, borders or background boxes */
+.quizzes-full-loader,
+.results-full-loader,
+.announcements-full-loader,
+.portal-results-loading,
+.grade-challenge-loading{
+  min-height:180px !important;
+  width:100% !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+/* Keep only the small centered animation */
+.portal-results-loading-inner{
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  gap:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+/* Smaller dots */
+.portal-results-loading-dots{
+  height:12px !important;
+  gap:5px !important;
+  margin:0 !important;
+}
+
+.portal-results-loading-dot{
+  width:6px !important;
+  height:6px !important;
+}
+
+/* Grade Challenge's loader should not leave a card-like space */
+#gradeChallengeList:has(.grade-challenge-loading){
+  min-height:180px !important;
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+
+/* Phone: even more compact */
+@media(max-width:640px){
+  .quizzes-full-loader,
+  .results-full-loader,
+  .announcements-full-loader,
+  .portal-results-loading,
+  .grade-challenge-loading{
+    min-height:140px !important;
+  }
+
+  #gradeChallengeList:has(.grade-challenge-loading){
+    min-height:140px !important;
+  }
+
+  .portal-results-loading-dots{
+    gap:4px !important;
+    height:10px !important;
+  }
+
+  .portal-results-loading-dot{
+    width:5px !important;
+    height:5px !important;
+  }
+}
+</style>
+
+
+<style>
+/* =========================================================
+   NEW PORTAL LOADING SYSTEM
+   Matches the approved assessment-page circular loader.
+   ========================================================= */
+
+/* Old loader hidden completely */
+.portal-results-loading-inner,
+.portal-results-loading-dots,
+.portal-results-loading-dot,
+.portal-results-loading-text{
+  display:none !important;
+}
+
+/* All portal loading containers: clean, borderless, centered */
+.quizzes-full-loader,
+.results-full-loader,
+.announcements-full-loader,
+.portal-results-loading,
+.grade-challenge-loading{
+  min-height:180px !important;
+  width:100% !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+.portal-new-loader{
+  width:100%;
+  min-height:180px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:transparent;
+  border:0;
+  box-shadow:none;
+}
+
+.portal-new-loader-ring{
+  --loader-dot-size:6px;
+  --loader-radius:27px;
+  position:relative;
+  width:68px;
+  height:68px;
+  margin:0;
+}
+
+.portal-new-loader-ring span{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:var(--loader-dot-size);
+  height:var(--loader-dot-size);
+  margin-left:calc(var(--loader-dot-size) / -2);
+  margin-top:calc(var(--loader-dot-size) / -2);
+  border-radius:50%;
+  background:#1b1648;
+  opacity:.18;
+  transform:
+    rotate(calc(var(--loader-index) * 15deg))
+    translateY(calc(var(--loader-radius) * -1));
+  animation:portalCircularLoader 1.2s linear infinite;
+  animation-delay:calc(var(--loader-index) * -0.05s);
+}
+
+@keyframes portalCircularLoader{
+  0%{ opacity:1; }
+  22%{ opacity:.72; }
+  48%{ opacity:.34; }
+  100%{ opacity:.18; }
+}
+
+/* Avoid any leftover loading-card appearance */
+#portalQuizzesLoadingScreen,
+#portalResultsLoadingScreen,
+#portalAnnouncementsLoadingScreen,
+#gradeChallengeList:has(.portal-new-loader){
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+
+@media(max-width:640px){
+  .quizzes-full-loader,
+  .results-full-loader,
+  .announcements-full-loader,
+  .portal-results-loading,
+  .grade-challenge-loading,
+  .portal-new-loader{
+    min-height:140px !important;
+  }
+
+  .portal-new-loader-ring{
+    --loader-dot-size:5px;
+    --loader-radius:23px;
+    width:58px;
+    height:58px;
+  }
+}
+</style>
+
+
+<style>
+/* =========================================================
+   FINAL PORTAL LOADER — EXACT ATTEMPT-PAGE MATCH
+   ========================================================= */
+
+/* hidden always wins once a section has finished loading */
+#portalQuizzesLoadingScreen[hidden],
+#portalResultsLoadingScreen[hidden],
+#portalAnnouncementsLoadingScreen[hidden]{
+  display:none !important;
+}
+
+/* Same clean loader footprint as the approved attempt page */
+.quizzes-full-loader,
+.results-full-loader,
+.announcements-full-loader,
+.portal-results-loading,
+.grade-challenge-loading,
+.portal-new-loader{
+  min-height:260px !important;
+  width:100% !important;
+  max-width:none !important;
+  padding:0 !important;
+  margin:0 !important;
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+/* EXACT desktop size from the approved attempt loader */
+.portal-new-loader-ring{
+  --loader-dot-size:7px !important;
+  --loader-radius:31px !important;
+  position:relative !important;
+  width:78px !important;
+  height:78px !important;
+  flex:0 0 78px !important;
+  margin:0 !important;
+}
+
+/* EXACT colour cycle and timing from the attempt loader */
+.portal-new-loader-ring span{
+  position:absolute !important;
+  left:50% !important;
+  top:50% !important;
+  width:var(--loader-dot-size) !important;
+  height:var(--loader-dot-size) !important;
+  margin-left:calc(var(--loader-dot-size) * -0.5) !important;
+  margin-top:calc(var(--loader-dot-size) * -0.5) !important;
+  border-radius:50% !important;
+  background:#dfe5ec;
+  opacity:.72;
+  transform:
+    rotate(calc(var(--loader-index) * 15deg))
+    translateY(calc(var(--loader-radius) * -1)) !important;
+  transform-origin:center !important;
+  animation:portalAttemptCircularPulse 1.45s linear infinite !important;
+  animation-delay:calc(var(--loader-index) * -0.06s) !important;
+}
+
+@keyframes portalAttemptCircularPulse{
+  0%,100%{background:#dfe5ec;opacity:.72;}
+  12%{background:#2563eb;opacity:1;}
+  24%{background:#1b1648;opacity:1;}
+  42%,80%{background:#cbd5e1;opacity:.65;}
+}
+
+/* Phone size also exactly matches the approved attempt loader */
+@media(max-width:640px){
+  .quizzes-full-loader,
+  .results-full-loader,
+  .announcements-full-loader,
+  .portal-results-loading,
+  .grade-challenge-loading,
+  .portal-new-loader{
+    min-height:210px !important;
+  }
+
+  .portal-new-loader-ring{
+    --loader-dot-size:6px !important;
+    --loader-radius:27px !important;
+    width:68px !important;
+    height:68px !important;
+    flex-basis:68px !important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .portal-new-loader-ring span{
+    animation-duration:2.4s !important;
+  }
+}
+</style>
+
+
+<style>
+/* =========================================================
+   FINAL PORTAL LOADER COLOUR FIX
+   Allow the keyframes to control dot colours.
+   ========================================================= */
+
+.portal-new-loader-ring span{
+  background:#dfe5ec !important;
+  opacity:.72 !important;
+  animation-name:portalAttemptCircularPulseFinal !important;
+  animation-duration:1.45s !important;
+  animation-timing-function:linear !important;
+  animation-iteration-count:infinite !important;
+  animation-delay:calc(var(--loader-index) * -0.06s) !important;
+}
+
+@keyframes portalAttemptCircularPulseFinal{
+  0%,100%{
+    background:#dfe5ec;
+    opacity:.72;
+  }
+  12%{
+    background:#4f8df7;
+    opacity:1;
+  }
+  24%{
+    background:#1b1648;
+    opacity:1;
+  }
+  42%{
+    background:#8f93ad;
+    opacity:.9;
+  }
+  62%{
+    background:#cbd5e1;
+    opacity:.7;
+  }
+  82%{
+    background:#e2e8f0;
+    opacity:.65;
+  }
+}
+
+/*
+ * Keyframe values need to win over the static colour.
+ * Use currentColor for the dot and animate color itself.
+ */
+.portal-new-loader-ring span{
+  background:currentColor !important;
+}
+
+@keyframes portalAttemptCircularPulseFinal{
+  0%,100%{
+    color:#dfe5ec;
+    opacity:.72;
+  }
+  12%{
+    color:#4f8df7;
+    opacity:1;
+  }
+  24%{
+    color:#1b1648;
+    opacity:1;
+  }
+  42%{
+    color:#8f93ad;
+    opacity:.9;
+  }
+  62%{
+    color:#cbd5e1;
+    opacity:.7;
+  }
+  82%{
+    color:#e2e8f0;
+    opacity:.65;
+  }
+}
+</style>
+
+
+<style>
+/* =========================================================
+   FINAL PORTAL LOADER MATCH
+   Exact attempt-loader size, colours and true page centering.
+   ========================================================= */
+
+/*
+ * Centre the loader in the learner content viewport:
+ * desktop sidebar = 220px, top bar ≈ 78px.
+ */
+.portal-new-loader{
+  position:fixed !important;
+  left:220px !important;
+  right:0 !important;
+  top:78px !important;
+  bottom:0 !important;
+  width:auto !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  pointer-events:none !important;
+  z-index:20 !important;
+}
+
+/* Exact approved attempt-loader dimensions */
+.portal-new-loader-ring{
+  --loader-dot-size:7px !important;
+  --loader-radius:31px !important;
+  position:relative !important;
+  width:78px !important;
+  height:78px !important;
+  flex:0 0 78px !important;
+  margin:0 !important;
+}
+
+/* Exact attempt-loader dot geometry */
+.portal-new-loader-ring span{
+  position:absolute !important;
+  left:50% !important;
+  top:50% !important;
+  width:var(--loader-dot-size) !important;
+  height:var(--loader-dot-size) !important;
+  margin-left:calc(var(--loader-dot-size) * -0.5) !important;
+  margin-top:calc(var(--loader-dot-size) * -0.5) !important;
+  border-radius:50% !important;
+  transform:
+    rotate(calc(var(--loader-index) * 15deg))
+    translateY(calc(var(--loader-radius) * -1)) !important;
+  transform-origin:center !important;
+  background:#dfe5ec !important;
+  opacity:.72;
+  animation:portalExactAttemptPulse 1.45s linear infinite !important;
+  animation-delay:calc(var(--loader-index) * -0.06s) !important;
+}
+
+/*
+ * Exact colours from the approved attempt file:
+ * #dfe5ec -> #2563eb -> #1b1648 -> #cbd5e1
+ */
+@keyframes portalExactAttemptPulse{
+  0%,100%{
+    background:#dfe5ec;
+    opacity:.72;
+  }
+  12%{
+    background:#2563eb;
+    opacity:1;
+  }
+  24%{
+    background:#1b1648;
+    opacity:1;
+  }
+  42%,80%{
+    background:#cbd5e1;
+    opacity:.65;
+  }
+}
+
+/*
+ * Use currentColor so keyframes can override the earlier static
+ * background !important declarations safely.
+ */
+.portal-new-loader-ring span{
+  background:currentColor !important;
+}
+
+@keyframes portalExactAttemptPulse{
+  0%,100%{
+    color:#dfe5ec;
+    opacity:.72;
+  }
+  12%{
+    color:#2563eb;
+    opacity:1;
+  }
+  24%{
+    color:#1b1648;
+    opacity:1;
+  }
+  42%,80%{
+    color:#cbd5e1;
+    opacity:.65;
+  }
+}
+
+/* Tablet sidebar */
+@media(max-width:900px) and (min-width:641px){
+  .portal-new-loader{
+    left:190px !important;
+  }
+}
+
+/* Phone portal has no fixed left sidebar */
+@media(max-width:640px){
+  .portal-new-loader{
+    left:0 !important;
+    top:70px !important;
+  }
+
+  .portal-new-loader-ring{
+    --loader-dot-size:6px !important;
+    --loader-radius:27px !important;
+    width:68px !important;
+    height:68px !important;
+    flex-basis:68px !important;
+  }
+}
+</style>
+
 </head>
 <body>
 <header class="topbar"><div class="topbar-inner"><div class="accountLeft"><img class="accountIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="Account"><div class="accountMeta"><div class="accountName" id="accountName">Loading...</div><div class="accountType" id="accountType">Account</div></div></div><div class="topbarRight"><a href="learning-content.html#announcements" data-top-tab="announcements" class="iconBtn" title="Announcements" aria-label="Announcements"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt=""><span class="navBadge" id="navAnnouncementBadge">0</span></a><button class="menuBtn" id="menuToggleBtn" type="button"><span class="menuBtnText">Menu</span><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt=""></button><div class="menuDropdown" id="menuDropdown">
@@ -4387,14 +4899,11 @@ textarea{
 
     <div id="quizzesPanel" class="portal-panel active">
       <div id="portalQuizzesLoadingScreen" class="quizzes-full-loader">
-        <div class="portal-results-loading-inner">
-          <div class="portal-results-loading-dots" aria-hidden="true">
-            <span class="portal-results-loading-dot"></span>
-            <span class="portal-results-loading-dot"></span>
-            <span class="portal-results-loading-dot"></span>
-          </div>
-          <p class="portal-results-loading-text">Loading quizzes...</p>
-        </div>
+        <div class="portal-new-loader" role="status" aria-label="Loading">
+  <div class="portal-new-loader-ring" aria-hidden="true">
+    <span style="--loader-index:0"></span><span style="--loader-index:1"></span><span style="--loader-index:2"></span><span style="--loader-index:3"></span><span style="--loader-index:4"></span><span style="--loader-index:5"></span><span style="--loader-index:6"></span><span style="--loader-index:7"></span><span style="--loader-index:8"></span><span style="--loader-index:9"></span><span style="--loader-index:10"></span><span style="--loader-index:11"></span><span style="--loader-index:12"></span><span style="--loader-index:13"></span><span style="--loader-index:14"></span><span style="--loader-index:15"></span><span style="--loader-index:16"></span><span style="--loader-index:17"></span><span style="--loader-index:18"></span><span style="--loader-index:19"></span><span style="--loader-index:20"></span><span style="--loader-index:21"></span><span style="--loader-index:22"></span><span style="--loader-index:23"></span>
+  </div>
+</div>
       </div>
 
       <div id="portalQuizzesContent" class="quizzes-loaded-content" hidden>
@@ -4517,14 +5026,11 @@ textarea{
 <div id="grade-challengePanel" class="portal-panel native-portal-panel">
       <div class="native-panel-inner">
         <div id="gradeChallengeList" class="grade-challenge-list">
-          <div class="portal-results-loading-inner grade-challenge-loading">
-            <div class="portal-results-loading-dots" aria-hidden="true">
-              <span class="portal-results-loading-dot"></span>
-              <span class="portal-results-loading-dot"></span>
-              <span class="portal-results-loading-dot"></span>
-            </div>
-            <p class="portal-results-loading-text">Loading challenges...</p>
-          </div>
+          <div class="portal-new-loader" role="status" aria-label="Loading">
+  <div class="portal-new-loader-ring" aria-hidden="true">
+    <span style="--loader-index:0"></span><span style="--loader-index:1"></span><span style="--loader-index:2"></span><span style="--loader-index:3"></span><span style="--loader-index:4"></span><span style="--loader-index:5"></span><span style="--loader-index:6"></span><span style="--loader-index:7"></span><span style="--loader-index:8"></span><span style="--loader-index:9"></span><span style="--loader-index:10"></span><span style="--loader-index:11"></span><span style="--loader-index:12"></span><span style="--loader-index:13"></span><span style="--loader-index:14"></span><span style="--loader-index:15"></span><span style="--loader-index:16"></span><span style="--loader-index:17"></span><span style="--loader-index:18"></span><span style="--loader-index:19"></span><span style="--loader-index:20"></span><span style="--loader-index:21"></span><span style="--loader-index:22"></span><span style="--loader-index:23"></span>
+  </div>
+</div>
         </div>
       </div>
     </div>
@@ -4532,14 +5038,11 @@ textarea{
     <div id="resultsPanel" class="portal-panel native-portal-panel">
       <div class="native-panel-inner results-native-panel">
 <div id="portalResultsLoadingScreen" class="results-full-loader">
-          <div class="portal-results-loading-inner">
-            <div class="portal-results-loading-dots" aria-hidden="true">
-              <span class="portal-results-loading-dot"></span>
-              <span class="portal-results-loading-dot"></span>
-              <span class="portal-results-loading-dot"></span>
-            </div>
-            <p class="portal-results-loading-text">Loading results...</p>
-          </div>
+          <div class="portal-new-loader" role="status" aria-label="Loading">
+  <div class="portal-new-loader-ring" aria-hidden="true">
+    <span style="--loader-index:0"></span><span style="--loader-index:1"></span><span style="--loader-index:2"></span><span style="--loader-index:3"></span><span style="--loader-index:4"></span><span style="--loader-index:5"></span><span style="--loader-index:6"></span><span style="--loader-index:7"></span><span style="--loader-index:8"></span><span style="--loader-index:9"></span><span style="--loader-index:10"></span><span style="--loader-index:11"></span><span style="--loader-index:12"></span><span style="--loader-index:13"></span><span style="--loader-index:14"></span><span style="--loader-index:15"></span><span style="--loader-index:16"></span><span style="--loader-index:17"></span><span style="--loader-index:18"></span><span style="--loader-index:19"></span><span style="--loader-index:20"></span><span style="--loader-index:21"></span><span style="--loader-index:22"></span><span style="--loader-index:23"></span>
+  </div>
+</div>
         </div>
 
         <div id="portalResultsContent" class="results-loaded-content" hidden>
@@ -4600,14 +5103,11 @@ textarea{
 
     <div id="announcementsPanel" class="portal-panel native-portal-panel">
       <div id="portalAnnouncementsLoadingScreen" class="announcements-full-loader">
-        <div class="portal-results-loading-inner">
-          <div class="portal-results-loading-dots" aria-hidden="true">
-            <span class="portal-results-loading-dot"></span>
-            <span class="portal-results-loading-dot"></span>
-            <span class="portal-results-loading-dot"></span>
-          </div>
-          <p class="portal-results-loading-text">Loading announcements...</p>
-        </div>
+        <div class="portal-new-loader" role="status" aria-label="Loading">
+  <div class="portal-new-loader-ring" aria-hidden="true">
+    <span style="--loader-index:0"></span><span style="--loader-index:1"></span><span style="--loader-index:2"></span><span style="--loader-index:3"></span><span style="--loader-index:4"></span><span style="--loader-index:5"></span><span style="--loader-index:6"></span><span style="--loader-index:7"></span><span style="--loader-index:8"></span><span style="--loader-index:9"></span><span style="--loader-index:10"></span><span style="--loader-index:11"></span><span style="--loader-index:12"></span><span style="--loader-index:13"></span><span style="--loader-index:14"></span><span style="--loader-index:15"></span><span style="--loader-index:16"></span><span style="--loader-index:17"></span><span style="--loader-index:18"></span><span style="--loader-index:19"></span><span style="--loader-index:20"></span><span style="--loader-index:21"></span><span style="--loader-index:22"></span><span style="--loader-index:23"></span>
+  </div>
+</div>
       </div>
 
       <div id="portalAnnouncementsContent" class="announcements-loaded-content" hidden>
@@ -5365,14 +5865,17 @@ if(gradeChallengeListEl){
 function renderPortalQuizzesLoading(){
   const loading = document.getElementById("portalQuizzesLoadingScreen");
   const content = document.getElementById("portalQuizzesContent");
-  if(loading) loading.style.display = "flex";
+  if(loading){
+    loading.hidden = false;
+    loading.style.removeProperty("display");
+  }
   if(content) content.hidden = true;
 }
 
 function showPortalQuizzesContent(){
   const loading = document.getElementById("portalQuizzesLoadingScreen");
   const content = document.getElementById("portalQuizzesContent");
-  if(loading) loading.style.display = "none";
+  if(loading) loading.hidden = true;
   if(content) content.hidden = false;
 }
 
@@ -5704,7 +6207,10 @@ function renderPortalResultsLoading(){
   const loading = document.getElementById("portalResultsLoadingScreen");
   const content = document.getElementById("portalResultsContent");
 
-  if(loading) loading.style.display = "flex";
+  if(loading){
+    loading.hidden = false;
+    loading.style.removeProperty("display");
+  }
   if(content) content.hidden = true;
 }
 
@@ -5712,7 +6218,7 @@ function showPortalResultsContent(){
   const loading = document.getElementById("portalResultsLoadingScreen");
   const content = document.getElementById("portalResultsContent");
 
-  if(loading) loading.style.display = "none";
+  if(loading) loading.hidden = true;
   if(content) content.hidden = false;
 }
 
@@ -5779,7 +6285,10 @@ function renderPortalAnnouncementsLoading(){
   const loading = document.getElementById("portalAnnouncementsLoadingScreen");
   const content = document.getElementById("portalAnnouncementsContent");
 
-  if(loading) loading.style.display = "flex";
+  if(loading){
+    loading.hidden = false;
+    loading.style.removeProperty("display");
+  }
   if(content) content.hidden = true;
 }
 
@@ -5787,7 +6296,7 @@ function showPortalAnnouncementsContent(){
   const loading = document.getElementById("portalAnnouncementsLoadingScreen");
   const content = document.getElementById("portalAnnouncementsContent");
 
-  if(loading) loading.style.display = "none";
+  if(loading) loading.hidden = true;
   if(content) content.hidden = false;
 }
 
