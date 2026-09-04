@@ -63,9 +63,12 @@ window.addEventListener("load", () => {
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
   <script type="module">
-    import { MathfieldElement } from "https://cdn.jsdelivr.net/npm/mathlive@0.110.0/+esm";
+    import { MathfieldElement } from "https://cdn.jsdelivr.net/npm/mathlive@0.110.0/mathlive.min.mjs";
+
     MathfieldElement.fontsDirectory =
       "https://cdn.jsdelivr.net/npm/mathlive@0.110.0/fonts";
+
+    window.dispatchEvent(new Event("practice-mathlive-ready"));
   </script>
 
   <style>
@@ -9278,6 +9281,44 @@ body.assessment-loading #questions > .muted{
 }
 </style>
 
+
+<style>
+/* =========================================================
+   FINAL PHONE MATHLIVE KEYBOARD SHELL
+   Do not force display/visibility. MathLive owns that state.
+   ========================================================= */
+@media(max-width:640px){
+  math-virtual-keyboard,
+  .ML__virtual-keyboard{
+    position:fixed !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+    width:100dvw !important;
+    max-width:100dvw !important;
+    min-width:0 !important;
+    margin:0 !important;
+    box-sizing:border-box !important;
+    z-index:99999 !important;
+  }
+
+  math-field.mathAnswerField{
+    pointer-events:auto !important;
+    touch-action:manipulation !important;
+  }
+}
+
+@supports not (width:100dvw){
+  @media(max-width:640px){
+    math-virtual-keyboard,
+    .ML__virtual-keyboard{
+      width:100vw !important;
+      max-width:100vw !important;
+    }
+  }
+}
+</style>
+
 </head>
 
 <body class="assessment-loading">
@@ -10583,7 +10624,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
             data-qindex="${qIndex}"
             data-field-key="${escapeAttr(field.key)}"
             data-preview-id="${escapeAttr(previewId)}"
-            virtual-keyboard-mode="onfocus"
+            math-virtual-keyboard-policy="auto"
             smart-mode="true"
             smart-fence="true"
             placeholder="${escapeAttr(placeholder)}"
@@ -19092,60 +19133,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
 
 
-<script>
-/* ===== SAFE PHONE MATHLIVE INPUT ===== */
-(() => {
-  const isPhone = () => window.matchMedia("(max-width:640px)").matches;
 
-  function prepareField(field){
-    if (!field || !isPhone()) return;
-
-    /* Keep MathLive in its normal supported phone mode. */
-    field.setAttribute("virtual-keyboard-mode", "onfocus");
-    field.removeAttribute("read-only");
-    field.removeAttribute("readonly");
-    field.setAttribute("enterkeyhint", "done");
-  }
-
-  function prepareAll(root = document){
-    if (!isPhone()) return;
-
-    root.querySelectorAll?.("math-field.mathAnswerField").forEach((field) => {
-      prepareField(field);
-    });
-  }
-
-  function begin(){
-    prepareAll();
-
-    const questionsRoot =
-      document.getElementById("questions") ||
-      document.getElementById("questionsDiv");
-
-    if (questionsRoot){
-      new MutationObserver(() => {
-        prepareAll(questionsRoot);
-      }).observe(questionsRoot, {
-        childList:true,
-        subtree:true
-      });
-    }
-  }
-
-  document.addEventListener("focusin", (event) => {
-    const field = event.target?.closest?.("math-field.mathAnswerField");
-    if (!field || !isPhone()) return;
-
-    prepareField(field);
-  });
-
-  if (document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", begin, { once:true });
-  }else{
-    begin();
-  }
-})();
-</script>
 
 <script>
 /* Final production display correction for typed-answer questions. */
@@ -19234,110 +19222,83 @@ window.addEventListener("DOMContentLoaded", () => {
 </script>
 
 
+
+
+
 <script>
-/* ===== PHONE MATHLIVE KEYBOARD BUTTON FIX ===== */
+/* ===== OFFICIAL MATHLIVE PHONE KEYBOARD SETUP ===== */
 (() => {
   const isPhone = () => window.matchMedia("(max-width:640px)").matches;
 
-  function preparePhoneMathField(field){
+  function configureField(field){
     if (!field || !isPhone()) return;
 
-    field.setAttribute("virtual-keyboard-mode", "manual");
+    /* MathLive 0.110 supported mobile policy */
+    try{
+      field.mathVirtualKeyboardPolicy = "auto";
+    }catch(_){}
+
+    field.setAttribute("math-virtual-keyboard-policy", "auto");
+    field.removeAttribute("virtual-keyboard-mode");
     field.removeAttribute("read-only");
     field.removeAttribute("readonly");
   }
 
-  function openKeyboardFromField(field){
-    if (!field || !isPhone()) return;
-
-    preparePhoneMathField(field);
-
-    try{
-      field.focus({ preventScroll:true });
-    }catch(_){
-      try{ field.focus(); }catch(__){}
-    }
-
-    /*
-     * Use MathLive's own field command. This does not depend on
-     * window.mathVirtualKeyboard or a named module export.
-     */
-    try{
-      field.executeCommand("showVirtualKeyboard");
-      return;
-    }catch(_){}
-
-    try{
-      field.executeCommand("toggleVirtualKeyboard");
-    }catch(_){}
+  function configureAll(root = document){
+    if (!isPhone()) return;
+    root.querySelectorAll?.("math-field.mathAnswerField").forEach(configureField);
   }
 
-  function findMathFieldFromEvent(event){
-    const direct = event.target?.closest?.("math-field.mathAnswerField");
-    if (direct) return direct;
+  function start(){
+    configureAll();
+
+    const questionsRoot =
+      document.getElementById("questions") ||
+      document.getElementById("questionsDiv");
+
+    if (questionsRoot){
+      new MutationObserver(() => {
+        configureAll(questionsRoot);
+      }).observe(questionsRoot, {
+        childList:true,
+        subtree:true
+      });
+    }
+  }
+
+  /*
+   * "auto" should open the keyboard on touch devices.
+   * This single focus fallback uses MathLive's documented global keyboard
+   * object if the browser did not reveal it automatically.
+   */
+  document.addEventListener("focusin", (event) => {
+    if (!isPhone()) return;
 
     const path = typeof event.composedPath === "function"
       ? event.composedPath()
       : [];
 
-    return path.find(
-      node => node?.matches?.("math-field.mathAnswerField")
-    ) || null;
-  }
+    const field =
+      event.target?.closest?.("math-field.mathAnswerField") ||
+      path.find(node => node?.matches?.("math-field.mathAnswerField"));
 
-  /*
-   * Catch taps inside MathLive's shadow DOM, including its keyboard icon.
-   * composedPath() lets us resolve the parent math-field.
-   */
-  document.addEventListener(
-    "pointerup",
-    (event) => {
-      if (!isPhone()) return;
+    if (!field) return;
 
-      const field = findMathFieldFromEvent(event);
-      if (!field) return;
+    configureField(field);
 
-      openKeyboardFromField(field);
-    },
-    { passive:true, capture:true }
-  );
-
-  document.addEventListener(
-    "focusin",
-    (event) => {
-      if (!isPhone()) return;
-
-      const field = findMathFieldFromEvent(event);
-      if (!field) return;
-
-      preparePhoneMathField(field);
-    },
-    true
-  );
-
-  function prepareAll(){
-    if (!isPhone()) return;
-
-    document.querySelectorAll("math-field.mathAnswerField").forEach(
-      preparePhoneMathField
-    );
-  }
-
-  if (document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", prepareAll, { once:true });
-  }else{
-    prepareAll();
-  }
-
-  const questionsRoot =
-    document.getElementById("questions") ||
-    document.getElementById("questionsDiv");
-
-  if (questionsRoot){
-    new MutationObserver(prepareAll).observe(questionsRoot, {
-      childList:true,
-      subtree:true
+    requestAnimationFrame(() => {
+      try{
+        window.mathVirtualKeyboard?.show?.();
+      }catch(_){}
     });
+  }, true);
+
+  window.addEventListener("practice-mathlive-ready", start, { once:true });
+
+  if (customElements.get("math-field")){
+    start();
+  }else{
+    customElements.whenDefined("math-field").then(start);
   }
 })();
 </script>
