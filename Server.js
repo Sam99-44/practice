@@ -1,45 +1,3 @@
-// server.js (FULL UPDATED - COPY & PASTE)
-// ✅ Adds profile routes.
-// ✅ Adds profile photo upload/remove
-// ✅ Adds profile info update
-// ✅ Adds static /uploads serving
-// ✅ Keeps current studentNumber system
-// ✅ Adds MCQ MULTI-SELECT support (chosenIndexes + correctIndexes)
-// ✅ Auto-detects multi-select when correctIndexes has 2+ items OR isMultiSelect true
-// ✅ Saves multi-select properly into Result for review/results
-// ✅ Saves and marks single + multiple typed-answer fields
-// ✅ Supports instructions, labels, units, x/y/z values and review snapshots
-// ✅ Adds safe Math.js expression equivalence checking
-// ✅ Accepts equivalent MathLive/LaTeX forms and ignores configured units during marking
-// ✅ Uses Decimal.js for reliable number-tolerance comparisons
-// ✅ Backward compatible with old single-correct fields (chosenIndex/correctIndex)
-// ✅ Saves + returns quiz difficulty (easy/moderate/hard)
-// ✅ Saves + returns quiz paper (paper1/paper2)
-// ✅ PayFast monthly payments
-// ✅ Returns subscription info on /api/auth/me
-// ✅ Strong email validation.
-// ✅ Email verification routes
-// ✅ Login blocks unverified users
-// ✅ Register route protection with express-rate-limit
-// ✅ Free trial system 
-// ✅ Access-status routes
-// ✅ Manual payment routes
-// ✅ Admin leaderboard filters
-// ✅ Admin leaderboard statistics
-// ✅ Admin sees all pages
-// ✅ Tester sees all pages
-// ✅ Tester can test subscription/payments/features
-// ✅ Editor can add/edit quizzes
-// ✅ Learners can practice without subscription during development
-// ✅ Draft / publish / scheduled publish support
-// ✅ Available from / until support
-// ✅ Optional learner email on publish
-// ✅ Auto-publish scheduled quizzes
-// ✅ Final PUT route fixed so edit page updates MongoDB correctly
-// ✅  system added
-// ✅ Profile  summary added.
-// ✅ Class RSVP (accept/reject) added.
-
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -4632,6 +4590,119 @@ function stripConfiguredUnit(value, unitCandidates = []) {
   return answer;
 }
 
+
+/* =========================================================
+   FLEXIBLE LEARNER MATH ANSWERS
+   - Coordinate pairs may use ; , or : separators.
+   - Optional point labels / brackets are accepted.
+   - Decimal comma is accepted when ; or : separates coordinates.
+   - Juxtaposed algebra letters such as xyz are treated as x*y*z.
+   ========================================================= */
+
+function splitCoordinateAnswer(value) {
+  let raw = String(value ?? "")
+    .trim()
+    .replace(/\u2212|[–—]/g, "-")
+    .replace(/\s+/g, "");
+
+  if (!raw) return null;
+
+  /* Optional point label: E(...), P(...), A(...), etc. */
+  raw = raw.replace(/^[A-Za-z][A-Za-z0-9_]*(?=\()/, "");
+
+  /* Accept a missing closing bracket as long as the pair itself is clear. */
+  if (raw.startsWith("(")) raw = raw.slice(1);
+  if (raw.endsWith(")")) raw = raw.slice(0, -1);
+
+  let separator = null;
+
+  if ((raw.match(/;/g) || []).length === 1) {
+    separator = ";";
+  } else if ((raw.match(/:/g) || []).length === 1) {
+    separator = ":";
+  } else if ((raw.match(/,/g) || []).length === 1) {
+    separator = ",";
+  } else {
+    return null;
+  }
+
+  const parts = raw.split(separator);
+  if (parts.length !== 2 || parts.some((part) => !part)) return null;
+
+  /* With ; or : as the pair separator, commas inside values are decimals. */
+  if (separator === ";" || separator === ":") {
+    parts[0] = parts[0].replace(/,/g, ".");
+    parts[1] = parts[1].replace(/,/g, ".");
+  }
+
+  return parts.map((part) => part.trim());
+}
+
+function coordinateComponentsEquivalent(left, right) {
+  if (compareTextAnswer(left, right, "exact", 0)) return true;
+
+  const leftDecimal = decimalFromAnswer(left);
+  const rightDecimal = decimalFromAnswer(right);
+
+  if (leftDecimal && rightDecimal) {
+    try {
+      return leftDecimal.equals(rightDecimal);
+    } catch {}
+  }
+
+  return areExpressionsEquivalent(left, right);
+}
+
+function coordinateAnswersEquivalent(learnerAnswer, correctAnswer) {
+  const learnerPair = splitCoordinateAnswer(learnerAnswer);
+  const correctPair = splitCoordinateAnswer(correctAnswer);
+
+  if (!learnerPair || !correctPair) return false;
+
+  return (
+    coordinateComponentsEquivalent(learnerPair[0], correctPair[0]) &&
+    coordinateComponentsEquivalent(learnerPair[1], correctPair[1])
+  );
+}
+
+function expandImplicitSingleLetterProducts(value) {
+  const protectedNames = new Set([
+    "sqrt", "sin", "cos", "tan", "asin", "acos", "atan",
+    "sinh", "cosh", "tanh", "log", "ln", "exp", "abs",
+    "pi", "theta", "Infinity", "NaN"
+  ]);
+
+  return String(value || "").replace(/[A-Za-z]+/g, (word) => {
+    if (protectedNames.has(word)) return word;
+
+    /*
+     * Educational algebra normally uses single-letter variables.
+     * Therefore xyz, zxy, yxz, ab, etc. represent products rather
+     * than one multi-letter symbol.
+     */
+    if (word.length >= 2) {
+      return word.split("").join("*");
+    }
+
+    return word;
+  });
+}
+
+function equationRightSide(value) {
+  const normalized = normalizeMathExpression(value);
+  if (!normalized) return null;
+
+  const matches = [...normalized.matchAll(/(?<![<>=!])=(?!=)/g)];
+  if (matches.length !== 1) return null;
+
+  const index = matches[0].index;
+  const left = normalized.slice(0, index);
+  const right = normalized.slice(index + 1);
+
+  if (!left || !right) return null;
+  return { left, right };
+}
+
 function prepareTypedAnswerForComparison(value, unitCandidates = []) {
   return stripConfiguredUnit(value, unitCandidates)
     .replace(/\s+$/g, "")
@@ -4692,6 +4763,12 @@ function normalizeMathExpression(value) {
     .replace(/\^\{([^{}]+)\}/g, "^($1)")
     .replace(/\{([^{}]+)\}/g, "($1)")
     .replace(/\s+/g, "");
+
+  /* Convert common implicit products: 4xyz -> 4*x*y*z, 3x -> 3*x. */
+  expression = expandImplicitSingleLetterProducts(expression)
+    .replace(/(\d|\))(?=[A-Za-z(])/g, "$1*")
+    .replace(/([A-Za-z]|\))(?=\d)/g, "$1*")
+    .replace(/\)(?=[A-Za-z0-9(])/g, ")*");
 
   return expression;
 }
@@ -5030,7 +5107,6 @@ function compareDecimalWithTolerance(
 ) {
   const learner = decimalFromAnswer(learnerAnswer);
   const correct = decimalFromAnswer(correctAnswer);
-
   if (!learner || !correct) return false;
 
   try {
@@ -5043,6 +5119,10 @@ function compareDecimalWithTolerance(
       configuredTolerance
     );
 
+    /*
+     * Standard decimal equivalence:
+     * 4566.2 = 4566.20, comma/dot variants, etc.
+     */
     if (
       learner
         .toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
@@ -5053,6 +5133,51 @@ function compareDecimalWithTolerance(
       return true;
     }
 
+    /*
+     * MAIN-WHOLE-NUMBER ACCEPTANCE
+     *
+     * If the official answer contains a decimal part, allow a learner to
+     * enter the main whole-number amount without the decimal portion.
+     *
+     * Example:
+     *   official: 4566.20
+     *   accepted: 4566
+     *
+     * This is deliberately narrow:
+     * - the learner must have entered a whole number;
+     * - that whole number must equal the integer part of the correct answer.
+     *
+     * Decimal attempts still use the normal configured tolerance below,
+     * so this does not make all decimal answers broadly loose.
+     */
+    const learnerRaw = String(learnerAnswer ?? "")
+      .trim()
+      .replace(/\s+/g, "")
+      .replace(",", ".");
+
+    const correctRaw = String(correctAnswer ?? "")
+      .trim()
+      .replace(/\s+/g, "")
+      .replace(",", ".");
+
+    const learnerEnteredWholeNumber = /^[-+]?\d+$/.test(learnerRaw);
+    const correctContainsDecimal =
+      /^[-+]?\d+\.\d+$/.test(correctRaw) &&
+      !correct.equals(correct.trunc());
+
+    if (
+      learnerEnteredWholeNumber &&
+      correctContainsDecimal &&
+      learner.equals(correct.trunc())
+    ) {
+      return true;
+    }
+
+    /*
+     * Existing configured/flexible tolerance remains in place for decimal
+     * responses. This keeps answers such as 9.13–9.20 support where the quiz
+     * has an appropriate tolerance, without weakening unrelated questions.
+     */
     const difference = learner.minus(correct);
 
     return (
@@ -5088,6 +5213,29 @@ function compareTypedAnswerValue(
   const normalizedMode = String(mode || "exact")
     .toLowerCase()
     .trim();
+
+  /* Coordinate notation is presentation-flexible but value-strict. */
+  if (coordinateAnswersEquivalent(learnerValue, correctValue)) {
+    return true;
+  }
+
+  /*
+   * If one response includes "y =" (or another single equation label) and
+   * the other gives only the equivalent right-hand expression, accept the
+   * mathematical content. This supports answers such as:
+   *   y = 4xyz - 3x
+   *   4yxz - 3x
+   */
+  const learnerEquation = equationRightSide(learnerValue);
+  const correctEquation = equationRightSide(correctValue);
+
+  if (learnerEquation && !correctEquation) {
+    if (areExpressionsEquivalent(learnerEquation.right, correctValue)) return true;
+  }
+
+  if (!learnerEquation && correctEquation) {
+    if (areExpressionsEquivalent(learnerValue, correctEquation.right)) return true;
+  }
 
   if (normalizedMode === "unordered") {
     return compareUnorderedTypedAnswer(
@@ -6693,3 +6841,5 @@ mongoose
     app.listen(PORT, () => console.log(`Server running on ${PORT}`));
   })
   .catch((err) => console.error("Mongo error:", err.message));
+  
+  
