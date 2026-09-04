@@ -4855,15 +4855,185 @@ textarea{
 }
 </style>
 
+
+<style>
+/* =========================================================
+   UPDATED LEARNER TOP MENU
+   Matches the cleaner rounded menu reference.
+   ========================================================= */
+.menuDropdown.learnerMenuUpdated{
+  top:52px !important;
+  right:0 !important;
+  width:264px !important;
+  padding:10px 0 8px !important;
+  background:#f7f7f8 !important;
+  border:1px solid #d9dee7 !important;
+  border-radius:20px !important;
+  box-shadow:0 16px 34px rgba(15,23,42,.16) !important;
+  overflow:hidden !important;
+}
+
+.learnerMenuUpdated .menuItem{
+  min-height:48px !important;
+  padding:10px 22px !important;
+  gap:14px !important;
+  font-size:16px !important;
+  line-height:1.2 !important;
+  font-weight:700 !important;
+  color:#171b2b !important;
+  border-radius:0 !important;
+}
+
+.learnerMenuUpdated .menuItem:hover{
+  background:#eef2f7 !important;
+}
+
+.learnerMenuUpdated .menuItem img,
+.learnerMenuUpdated .menuInlineIcon{
+  width:22px !important;
+  height:22px !important;
+  flex:0 0 22px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  object-fit:contain !important;
+}
+
+.learnerMenuUpdated .menuInlineIcon svg{
+  width:22px !important;
+  height:22px !important;
+  display:block !important;
+}
+
+.learnerMenuUpdated .trophyIcon{
+  color:#9a5a25 !important;
+}
+
+.learnerMenuUpdated .profileTextOnly{
+  padding-left:48px !important;
+}
+
+.learnerMenuUpdated .menuDivider{
+  margin:8px 0 6px !important;
+  background:#d9dee7 !important;
+}
+
+.learnerMenuUpdated .logoutMenuBtn{
+  min-height:56px !important;
+}
+
+@media(max-width:640px){
+  .menuDropdown.learnerMenuUpdated{
+    width:264px !important;
+    max-width:calc(100vw - 24px) !important;
+    right:0 !important;
+    border-radius:20px !important;
+  }
+
+  .learnerMenuUpdated .menuItem{
+    min-height:46px !important;
+    padding:9px 20px !important;
+    font-size:15px !important;
+  }
+
+  .learnerMenuUpdated .profileTextOnly{
+    padding-left:46px !important;
+  }
+}
+</style>
+
+
+<style>
+.activeQuizGuardOverlay{
+  position:fixed; inset:0; z-index:5000; display:none;
+  align-items:center; justify-content:center; padding:18px;
+  background:rgba(15,23,42,.38);
+  font-family:Arial,Helvetica,sans-serif;
+}
+.activeQuizGuardOverlay.show{display:flex;}
+.activeQuizGuardCard{
+  width:min(100%,420px); background:#fff; border:1px solid #d9dee7;
+  border-radius:14px; box-shadow:0 18px 45px rgba(15,23,42,.18);
+  padding:22px; color:#111827;
+}
+.activeQuizGuardCard h3{margin:0 0 8px;font-size:18px;line-height:1.35;font-weight:700;}
+.activeQuizGuardNote{margin:0 0 16px;font-size:13px;line-height:1.55;color:#475569;}
+.activeQuizGuardCodeRow{
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  padding:12px 0; border-top:1px solid #e5e7eb; border-bottom:1px solid #e5e7eb;
+  font-size:13px;
+}
+.activeQuizGuardCodeRow span{color:#475569;}
+.activeQuizGuardCodeRow strong{color:#1b1648;font-size:14px;white-space:nowrap;}
+.activeQuizGuardActions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px;flex-wrap:wrap;}
+.activeQuizGuardReturn,.activeQuizGuardStay{
+  height:38px;min-width:122px;padding:0 15px;border-radius:5px;
+  font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,Helvetica,sans-serif;
+}
+.activeQuizGuardReturn{background:#64748b;border:1px solid #64748b;color:#fff;}
+.activeQuizGuardStay{background:#fff;border:1px solid #cbd5e1;color:#334155;}
+@media(max-width:640px){
+  .activeQuizGuardOverlay{padding:14px;}
+  .activeQuizGuardCard{padding:18px;}
+  .activeQuizGuardActions{display:grid;grid-template-columns:1fr;}
+  .activeQuizGuardReturn,.activeQuizGuardStay{width:100%;}
+}
+</style>
+
 </head>
 <body>
-<header class="topbar"><div class="topbar-inner"><div class="accountLeft"><img class="accountIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="Account"><div class="accountMeta"><div class="accountName" id="accountName">Loading...</div><div class="accountType" id="accountType">Account</div></div></div><div class="topbarRight"><a href="learning-content.html#announcements" data-top-tab="announcements" class="iconBtn" title="Announcements" aria-label="Announcements"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt=""><span class="navBadge" id="navAnnouncementBadge">0</span></a><button class="menuBtn" id="menuToggleBtn" type="button"><span class="menuBtnText">Menu</span><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt=""></button><div class="menuDropdown" id="menuDropdown">
-<a class="menuItem" href="learning-content.html#quizzes" data-top-tab="quizzes"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777660/practice_ubgfso.svg" alt=""><span>Quizzes</span></a>
-<a class="menuItem" href="learning-content.html#grade-challenge" data-top-tab="grade-challenge"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781992962/content-small_g4whkt.svg" alt=""><span>Grade Challenge</span></a>
-<a class="menuItem" href="learning-content.html#results" data-top-tab="results"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt=""><span>Results</span></a>
+<header class="topbar"><div class="topbar-inner"><div class="accountLeft"><img class="accountIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773933113/account_m5xpia.svg" alt="Account"><div class="accountMeta"><div class="accountName" id="accountName">Loading...</div><div class="accountType" id="accountType">Account</div></div></div><div class="topbarRight"><a href="learning-content.html#announcements" data-top-tab="announcements" class="iconBtn" title="Announcements" aria-label="Announcements"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt=""><span class="navBadge" id="navAnnouncementBadge">0</span></a><button class="menuBtn" id="menuToggleBtn" type="button"><span class="menuBtnText">Menu</span><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773952155/menu_q2xag6.svg" alt=""></button><div class="menuDropdown learnerMenuUpdated" id="menuDropdown">
 <a class="menuItem profileTextOnly" href="learning-content.html#profile" data-top-tab="profile"><span>Profile</span></a>
-<a class="menuItem" href="learning-content.html#support" data-top-tab="support"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/support_bs175s.svg" alt=""><span>Support</span></a>
-<div class="menuDivider"></div><button class="menuItem logoutMenuBtn" id="logoutBtn" type="button"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773768418/logout_uay6y8.svg" alt=""><span>Logout</span></button></div></div></div></header>
+
+<a class="menuItem" href="learning-content.html#quizzes" data-top-tab="quizzes">
+  <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777660/practice_ubgfso.svg" alt="">
+  <span>Practice</span>
+</a>
+
+<a class="menuItem" href="learning-content.html#results" data-top-tab="results">
+  <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/results_qgdct1.svg" alt="">
+  <span>Results</span>
+</a>
+
+<a class="menuItem" href="progress-dashboard.html">
+  <span class="menuInlineIcon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.7"/>
+      <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.7"/>
+      <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.7"/>
+      <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.7"/>
+    </svg>
+  </span>
+  <span>Dashboard</span>
+</a>
+
+<a class="menuItem" href="leaderboard.html">
+  <span class="menuInlineIcon trophyIcon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M8 4h8v4c0 3-1.8 5.2-4 6-2.2-.8-4-3-4-6V4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+      <path d="M8 6H5v1c0 2.2 1.2 3.7 3.2 4.2M16 6h3v1c0 2.2-1.2 3.7-3.2 4.2M12 14v3M9 20h6M10 17h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    </svg>
+  </span>
+  <span>Leaderboard</span>
+</a>
+
+<a class="menuItem" href="learning-content.html#support" data-top-tab="support">
+  <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773777659/support_bs175s.svg" alt="">
+  <span>Support</span>
+</a>
+
+<a class="menuItem" href="learning-content.html#announcements" data-top-tab="announcements">
+  <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773864086/announcement2_upwybn.svg" alt="">
+  <span>Announcements</span>
+</a>
+
+<div class="menuDivider"></div>
+
+<button class="menuItem logoutMenuBtn" id="logoutBtn" type="button">
+  <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1773768418/logout_uay6y8.svg" alt="">
+  <span>Logout</span>
+</button>
+</div></div></div></header>
 <!-- learning-content.html is the canonical learner portal. Default route: #quizzes -->
 <!--
   CANONICAL LEARNER SHELL:
@@ -5266,6 +5436,11 @@ const QUIZ_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
 
 if(logoutBtn){
   logoutBtn.onclick = () => {
+    try{
+      localStorage.removeItem(
+        `po_active_quiz_${localStorage.getItem("username") || "user"}`
+      );
+    }catch(_){}
     localStorage.removeItem("token");
     localStorage.removeItem("username");
     localStorage.removeItem("me_cache");
@@ -5839,7 +6014,7 @@ quizListEl.addEventListener("click", function(e){
     return;
   }
 
-  location.href = `attempt.html?quizId=${encodeURIComponent(quizId)}`;
+  window.openLearnerQuizSafely(quizId);
 });
 
 if(gradeChallengeListEl){
@@ -5856,7 +6031,7 @@ if(gradeChallengeListEl){
       return;
     }
 
-    location.href = `attempt.html?quizId=${encodeURIComponent(quizId)}`;
+    window.openLearnerQuizSafely(quizId);
   });
 }
 
@@ -6642,7 +6817,7 @@ if(portalResultsListEl){
           use the exact same route already used by the working
           Start Quiz / Retake buttons in the Quizzes section.
         */
-        location.href = `attempt.html?quizId=${encodeURIComponent(quizId)}`;
+        window.openLearnerQuizSafely(quizId);
       }
       return;
     }
@@ -6688,6 +6863,158 @@ if(portalResultsListEl){
 
     window.location.href = "index.html";
   });
+})();
+</script>
+
+
+<script>
+(() => {
+  const MAX_AGE = 12 * 60 * 60 * 1000;
+  const KEY = `po_active_quiz_${localStorage.getItem("username") || "user"}`;
+
+  function readLock(){
+    try{
+      const raw = JSON.parse(localStorage.getItem(KEY) || "null");
+      if(!raw || !raw.quizId) return null;
+
+      const updatedAt = Number(raw.updatedAt || raw.startedAt || 0);
+      if(updatedAt && Date.now() - updatedAt > MAX_AGE){
+        localStorage.removeItem(KEY);
+        return null;
+      }
+
+      return {
+        quizId:String(raw.quizId),
+        code:String(raw.code || "Active quiz").toUpperCase(),
+        href:String(raw.href || `attempt.html?quizId=${encodeURIComponent(raw.quizId)}`),
+        startedAt:Number(raw.startedAt || Date.now()),
+        updatedAt:updatedAt || Date.now()
+      };
+    }catch(_){ return null; }
+  }
+
+  function getCode(quizId){
+    const id = String(quizId || "");
+    try{
+      const all = [
+        ...(Array.isArray(quizzes) ? quizzes : []),
+        ...(Array.isArray(gradeChallenges) ? gradeChallenges : [])
+      ];
+      const q = all.find(x => String(x?._id || "") === id);
+      const code = String(
+        q?._assessmentCode || q?.assessmentCode || q?.quizCode ||
+        q?.examCode || q?.code || ""
+      ).trim();
+      if(code) return code.toUpperCase();
+    }catch(_){}
+
+    const btn = [...document.querySelectorAll('[data-action="open"][data-quiz-id]')]
+      .find(b => {
+        try{ return decodeURIComponent(String(b.dataset.quizId || "")) === id; }
+        catch(_){ return String(b.dataset.quizId || "") === id; }
+      });
+
+    return String(
+      btn?.closest?.(".assessment-card")
+        ?.querySelector?.(".assessment-code")
+        ?.textContent || "Active quiz"
+    ).trim().toUpperCase();
+  }
+
+  function saveLock(quizId){
+    const id = String(quizId || "").trim();
+    if(!id) return null;
+
+    const now = Date.now();
+    const lock = {
+      quizId:id,
+      code:getCode(id),
+      href:`attempt.html?quizId=${encodeURIComponent(id)}`,
+      startedAt:now,
+      updatedAt:now
+    };
+
+    try{ localStorage.setItem(KEY, JSON.stringify(lock)); }catch(_){}
+    return lock;
+  }
+
+  function ensurePopup(){
+    let el = document.getElementById("activeQuizGuardOverlay");
+    if(el) return el;
+
+    el = document.createElement("div");
+    el.id = "activeQuizGuardOverlay";
+    el.className = "activeQuizGuardOverlay";
+    el.setAttribute("aria-hidden","true");
+
+    el.innerHTML = `
+      <div class="activeQuizGuardCard" role="dialog" aria-modal="true">
+        <h3>Quiz already in progress</h3>
+        <p class="activeQuizGuardNote">
+          You already have an active quiz. Only one quiz can be open at a time.
+          Return to the active quiz before starting or retaking another one.
+        </p>
+        <div class="activeQuizGuardCodeRow">
+          <span>Active assessment code</span>
+          <strong id="activeQuizGuardCode">—</strong>
+        </div>
+        <div class="activeQuizGuardActions">
+          <button class="activeQuizGuardReturn" id="activeQuizGuardReturn" type="button">Return to quiz</button>
+          <button class="activeQuizGuardStay" id="activeQuizGuardStay" type="button">Stay here</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(el);
+
+    el.querySelector("#activeQuizGuardStay")?.addEventListener("click", () => {
+      el.classList.remove("show");
+      el.setAttribute("aria-hidden","true");
+    });
+
+    return el;
+  }
+
+  function showPopup(lock){
+    const el = ensurePopup();
+    const code = el.querySelector("#activeQuizGuardCode");
+    const ret = el.querySelector("#activeQuizGuardReturn");
+
+    if(code) code.textContent = lock?.code || "Active quiz";
+    if(ret){
+      ret.onclick = () => {
+        location.href = lock?.href ||
+          `attempt.html?quizId=${encodeURIComponent(lock?.quizId || "")}`;
+      };
+    }
+
+    el.classList.add("show");
+    el.setAttribute("aria-hidden","false");
+    requestAnimationFrame(() => ret?.focus());
+  }
+
+  window.openLearnerQuizSafely = function(quizId){
+    const id = String(quizId || "").trim();
+    if(!id) return false;
+
+    const active = readLock();
+
+    if(active && active.quizId !== id){
+      showPopup(active);
+      return false;
+    }
+
+    if(active && active.quizId === id){
+      location.href = active.href || `attempt.html?quizId=${encodeURIComponent(id)}`;
+      return true;
+    }
+
+    const lock = saveLock(id);
+    location.href = lock?.href || `attempt.html?quizId=${encodeURIComponent(id)}`;
+    return true;
+  };
+
+  window.getLearnerActiveQuiz = readLock;
 })();
 </script>
 
