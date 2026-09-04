@@ -2848,6 +2848,14 @@ body > .card:last-of-type{
   min-height:0;
   shape-rendering:geometricPrecision;
 }
+.generatedNotePattern{
+  min-height:0;
+  shape-rendering:geometricPrecision;
+}
+.generatedNoteRule{
+  min-height:0;
+  shape-rendering:geometricPrecision;
+}
 .generatedNoteDiagram{
   display:block;
   width:100%;
@@ -3029,6 +3037,12 @@ body > .card:last-of-type{
   }
   .generatedNoteDiagram{
     min-height:240px;
+  }
+  .generatedNotePattern{
+    min-height:0;
+  }
+  .generatedNoteRule{
+    min-height:0;
   }
   .attemptPaperPreview .assessmentVisualFrame > .noteSection,
   #paperPreviewContent .assessmentVisualFrame > .noteSection{
@@ -5688,6 +5702,11 @@ function escapeHtml(str){
       const legendStartX = legendColumns === 2 ? 336 : 414;
       const legendColumnWidth = legendColumns === 2 ? 202 : 310;
       const legendLabelLimit = legendColumns === 2 ? 20 : 32;
+      const legendItemGap = 38;
+      const legendContentHeight = legendRows > 0
+        ? (legendRows - 1) * legendItemGap + 18
+        : 0;
+      const legendStartY = Math.max(18, Math.round((height - legendContentHeight) / 2));
       const svg = [];
 
       const wrapLegendLabel = label => {
@@ -5750,7 +5769,8 @@ function escapeHtml(str){
             );
           }
 
-          if (labelsMode !== "none" && fraction >= 0.055) {
+          const minimumLabelFraction = labelsMode === "category" ? 0.08 : 0.035;
+          if (labelsMode !== "none" && fraction >= minimumLabelFraction) {
             let dataLabel = formatPiePercent(percent) + "%";
             if (labelsMode === "value") dataLabel = formatPieValue(segment.value);
             if (labelsMode === "both") {
@@ -5783,11 +5803,10 @@ function escapeHtml(str){
           const column = Math.floor(index / legendRows);
           const row = index % legendRows;
           const itemX = legendStartX + column * legendColumnWidth;
-          const itemY = 30 + row * 52;
+          const itemY = legendStartY + row * legendItemGap;
           const fill = colourPalette[index % colourPalette.length];
-          const percent = (segment.value / total) * 100;
-          const labelLines = wrapLegendLabel(segment.label);
-          const detail = formatPieValue(segment.value) + " (" + formatPiePercent(percent) + "%)";
+          const legendText = segment.label + " " + formatPieValue(segment.value);
+          const labelLines = wrapLegendLabel(legendText);
 
           svg.push(
             '<rect x="' + itemX + '" y="' + itemY +
@@ -5803,11 +5822,6 @@ function escapeHtml(str){
             );
           });
 
-          svg.push(
-            '<text x="' + (itemX + 21) + '" y="' + (itemY + 42) +
-            '" font-size="10.5" font-weight="400" fill="#475569">' +
-            escapeHtml(detail) + '</text>'
-          );
         });
       }
 
@@ -5819,6 +5833,306 @@ function escapeHtml(str){
           '<div class="generatedNoteGraphWrap">' +
             '<svg class="generatedNoteGraph generatedNotePie" viewBox="0 0 ' + width + ' ' + height +
             '" role="img" aria-label="' + escapeHtml(accessibleTitle + ". Total " + formatPieValue(total)) + '">' +
+              svg.join("") +
+            '</svg>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    function renderPatternBlock(rawAttributes, bodyText){
+      const attributes = readNoteVisualAttributes(rawAttributes);
+      const minimalTheme = useMinimalAssessmentVisualTheme(attributes);
+      const requestedTitle = String(attributes.title || "Geometric pattern").trim();
+      const showTitle = !/^(?:0|false|no|off|hide|none)$/i.test(
+        String(attributes.show_title ?? attributes.showtitle ?? "true").trim()
+      );
+      const title = showTitle ? requestedTitle : "";
+      const rawShape = String(attributes.shape || attributes.type || "matchstick_chain")
+        .trim().toLowerCase().replace(/[\s-]+/g, "_");
+      const shapeAliases = {
+        matchstick: "matchstick_chain",
+        matchsticks: "matchstick_chain",
+        matchstick_pattern: "matchstick_chain",
+        triangle: "matchstick_chain",
+        triangles: "matchstick_chain",
+        triangle_pattern: "matchstick_chain",
+        triangle_chain: "matchstick_chain",
+        hexagon: "matchstick_chain",
+        hexagons: "matchstick_chain",
+        hexagon_pattern: "matchstick_chain",
+        hexagon_chain: "matchstick_chain",
+        rack: "matchstick_chain",
+        racks: "matchstick_chain"
+      };
+      const shape = shapeAliases[rawShape] || rawShape;
+
+      if (shape !== "matchstick_chain") {
+        return noteVisualError(
+          'Pattern shape must be "matchstick_chain".'
+        );
+      }
+
+      const sourceLines = getNoteVisualLines(bodyText);
+      const stages = [];
+      const invalidRows = [];
+      sourceLines.forEach((line, index) => {
+        const parts = line.split("|").map(part => String(part || "").trim());
+        const caption = parts.length > 1
+          ? (parts[0] || "Pattern " + (index + 1))
+          : "Pattern " + (index + 1);
+        const rawCount = parts.length > 1 ? parts[1] : parts[0];
+        const parsedCount = parseNoteGraphNumber(rawCount);
+        const count = parsedCount === null ? null : Math.round(parsedCount);
+        if (count === null || count < 1 || count > 12 || Math.abs(parsedCount - count) > 0.000001) {
+          invalidRows.push(index + 1);
+          return;
+        }
+        stages.push({ caption, count });
+      });
+
+      if (!sourceLines.length) {
+        return noteVisualError(
+          "This pattern has no stages. Add each stage as: Pattern 1 | 1."
+        );
+      }
+      if (invalidRows.length) {
+        return noteVisualError(
+          "Pattern row" + (invalidRows.length === 1 ? " " : "s ") +
+          invalidRows.join(", ") +
+          " must contain a whole-number shape count from 1 to 12."
+        );
+      }
+      if (stages.length > 6) {
+        return noteVisualError(
+          "Use no more than 6 stages so that the complete pattern remains readable."
+        );
+      }
+
+      const matchstickSide = 58;
+      const arrowLength = 46;
+      const shapeHeight = matchstickSide;
+      const diagramWidthFor = count => matchstickSide * count + arrowLength;
+      const cellPadding = 34;
+      const stageGap = 28;
+      const stageWidths = stages.map(stage => diagramWidthFor(stage.count) + cellPadding);
+      const contentWidth = stageWidths.reduce((sum, value) => sum + value, 0) +
+        stageGap * Math.max(0, stages.length - 1);
+      const width = Math.max(760, contentWidth + 48);
+      const diagramTop = 26;
+      const captionY = diagramTop + shapeHeight + 30;
+      const height = captionY + 24;
+      const requestedStrokeWidth = parseNoteGraphNumber(attributes.stroke_width || attributes.strokewidth);
+      const strokeWidth = requestedStrokeWidth === null
+        ? 3
+        : Math.max(1.8, Math.min(4, requestedStrokeWidth));
+      const stroke = "#4b5563";
+      const svg = [];
+      let cursorX = (width - contentWidth) / 2;
+
+      const pointKey = point => Number(point.x).toFixed(2) + "," + Number(point.y).toFixed(2);
+      const edgeKey = (first, second) => {
+        const keys = [pointKey(first), pointKey(second)].sort();
+        return keys[0] + "|" + keys[1];
+      };
+
+      stages.forEach((stage, stageIndex) => {
+        const cellWidth = stageWidths[stageIndex];
+        const diagramWidth = diagramWidthFor(stage.count);
+        const stageX = cursorX + (cellWidth - diagramWidth) / 2;
+        const edges = new Map();
+        const joints = new Map();
+        const addEdge = (first, second) => {
+          const key = edgeKey(first, second);
+          if (!edges.has(key)) edges.set(key, [first, second]);
+          joints.set(pointKey(first), first);
+          joints.set(pointKey(second), second);
+        };
+
+        const top = diagramTop;
+        const bottom = diagramTop + matchstickSide;
+        for (let index = 0; index < stage.count; index += 1) {
+          const left = stageX + index * matchstickSide;
+          const right = left + matchstickSide;
+          addEdge({ x:left, y:top }, { x:right, y:top });
+          addEdge({ x:right, y:top }, { x:right, y:bottom });
+          addEdge({ x:right, y:bottom }, { x:left, y:bottom });
+          addEdge({ x:left, y:bottom }, { x:left, y:top });
+        }
+        const arrowBaseX = stageX + stage.count * matchstickSide;
+        const arrowTip = { x:arrowBaseX + arrowLength, y:diagramTop + matchstickSide / 2 };
+        addEdge({ x:arrowBaseX, y:top }, arrowTip);
+        addEdge(arrowTip, { x:arrowBaseX, y:bottom });
+
+        edges.forEach(edge => {
+          const first = edge[0];
+          const second = edge[1];
+          svg.push(
+            '<line x1="' + first.x.toFixed(2) + '" y1="' + first.y.toFixed(2) +
+            '" x2="' + second.x.toFixed(2) + '" y2="' + second.y.toFixed(2) +
+            '" stroke="' + stroke + '" stroke-width="' + strokeWidth +
+            '" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" />'
+          );
+        });
+
+        joints.forEach(joint => {
+          svg.push(
+            '<circle cx="' + joint.x.toFixed(2) + '" cy="' + joint.y.toFixed(2) +
+            '" r="2.8" fill="#d1d5db" stroke="#111827" stroke-width="0.65" vector-effect="non-scaling-stroke" />'
+          );
+        });
+
+        svg.push(
+          '<text x="' + (cursorX + cellWidth / 2).toFixed(2) + '" y="' + captionY +
+          '" text-anchor="middle" font-family="Times New Roman, Times, serif" font-size="14" font-weight="400" fill="#111827">' +
+          escapeHtml(stage.caption) + '</text>'
+        );
+        cursorX += cellWidth + stageGap;
+      });
+
+      const accessibleTitle = requestedTitle || "Geometric pattern";
+      return (
+        '<div class="noteVisualBlock notePatternBlock' + (minimalTheme ? ' minimalDiagramTheme' : '') + '">' +
+          (title ? '<div class="noteVisualTitle">' + renderNoteVisualTitle(title) + '</div>' : '') +
+          '<div class="generatedNoteGraphWrap">' +
+            '<svg class="generatedNoteDiagram generatedNotePattern" viewBox="0 0 ' + width + ' ' + height +
+            '" role="img" aria-label="' + escapeHtml(accessibleTitle) + '">' +
+              svg.join("") +
+            '</svg>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    function renderRuleDiagramBlock(rawAttributes, bodyText){
+      const attributes = readNoteVisualAttributes(rawAttributes);
+      const minimalTheme = useMinimalAssessmentVisualTheme(attributes);
+      const requestedTitle = String(attributes.title || "Input-output rule").trim();
+      const showTitle = !/^(?:0|false|no|off|hide|none)$/i.test(
+        String(attributes.show_title ?? attributes.showtitle ?? "true").trim()
+      );
+      const title = showTitle ? requestedTitle : "";
+      const inputLabel = noteSvgLabel(attributes.input_label || attributes.input || "x");
+      const outputLabel = noteSvgLabel(attributes.output_label || attributes.output || "y");
+      const ruleLabel = noteSvgLabel(attributes.rule || attributes.formula || "3x + 1")
+        .replace(/^\$|\$$/g, "");
+      const rows = [];
+      const invalidRows = [];
+
+      getNoteVisualLines(bodyText).forEach((line, index) => {
+        const parts = line.split("|").map(part => String(part || "").trim());
+        if (parts.length < 2 || !parts[0] || !parts[1]) {
+          invalidRows.push(index + 1);
+          return;
+        }
+        rows.push({ input:noteSvgLabel(parts[0]), output:noteSvgLabel(parts[1]) });
+      });
+
+      if (!rows.length && !invalidRows.length) {
+        return noteVisualError(
+          "This rule diagram has no values. Add each mapping as: input | output."
+        );
+      }
+      if (invalidRows.length) {
+        return noteVisualError(
+          "Rule-diagram row" + (invalidRows.length === 1 ? " " : "s ") +
+          invalidRows.join(", ") + " must use: input | output."
+        );
+      }
+      if (rows.length > 8) {
+        return noteVisualError(
+          "Use no more than 8 input-output rows so that the rule diagram remains readable."
+        );
+      }
+
+      const width = 760;
+      const tableWidth = 76;
+      const rowHeight = 34;
+      const headerHeight = 34;
+      const diagramTop = 26;
+      const leftX = 88;
+      const rightX = width - leftX - tableWidth;
+      const tableHeight = headerHeight + rows.length * rowHeight;
+      const height = diagramTop + tableHeight + 28;
+      const centreY = diagramTop + headerHeight + rows.length * rowHeight / 2;
+      const ruleBoxWidth = Math.max(96, Math.min(176, Array.from(ruleLabel).length * 8 + 32));
+      const ruleBoxHeight = 42;
+      const ruleLeft = width / 2 - ruleBoxWidth / 2;
+      const ruleRight = width / 2 + ruleBoxWidth / 2;
+      const ruleTop = centreY - ruleBoxHeight / 2;
+      const markerId = "ruleArrow" + (++noteVisualSvgSequence);
+      const svg = [];
+
+      svg.push(
+        '<defs><marker id="' + markerId + '" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="3" markerHeight="3" orient="auto">' +
+          '<path d="M 1 1 L 9 5 L 1 9 z" fill="#000000" />' +
+        '</marker></defs>'
+      );
+
+      rows.forEach((row, index) => {
+        const rowY = diagramTop + headerHeight + index * rowHeight + rowHeight / 2;
+        const leftControlX = leftX + tableWidth + (ruleLeft - leftX - tableWidth) * 0.58;
+        const rightControlX = ruleRight + (rightX - ruleRight) * 0.42;
+        svg.push(
+          '<path d="M ' + (leftX + tableWidth).toFixed(2) + ' ' + rowY.toFixed(2) +
+          ' C ' + leftControlX.toFixed(2) + ' ' + rowY.toFixed(2) + ', ' +
+          (ruleLeft - 20).toFixed(2) + ' ' + centreY.toFixed(2) + ', ' +
+          ruleLeft.toFixed(2) + ' ' + centreY.toFixed(2) +
+          '" fill="none" stroke="#000000" stroke-width="1" vector-effect="non-scaling-stroke" />'
+        );
+        svg.push(
+          '<path d="M ' + ruleRight.toFixed(2) + ' ' + centreY.toFixed(2) +
+          ' C ' + (ruleRight + 20).toFixed(2) + ' ' + centreY.toFixed(2) + ', ' +
+          rightControlX.toFixed(2) + ' ' + rowY.toFixed(2) + ', ' +
+          rightX.toFixed(2) + ' ' + rowY.toFixed(2) +
+          '" fill="none" stroke="#000000" stroke-width="1" vector-effect="non-scaling-stroke" marker-end="url(#' + markerId + ')" />'
+        );
+      });
+
+      const drawTable = (x, heading, key) => {
+        svg.push(
+          '<rect x="' + x + '" y="' + diagramTop + '" width="' + tableWidth + '" height="' + headerHeight +
+          '" fill="#ffffff" stroke="#000000" stroke-width="1" vector-effect="non-scaling-stroke" />'
+        );
+        svg.push(
+          '<text x="' + (x + tableWidth / 2) + '" y="' + (diagramTop + 22) +
+          '" text-anchor="middle" font-family="Times New Roman, Times, serif" font-size="14" font-style="italic" font-weight="400" fill="#111827">' +
+          escapeHtml(heading) + '</text>'
+        );
+        rows.forEach((row, index) => {
+          const y = diagramTop + headerHeight + index * rowHeight;
+          svg.push(
+            '<rect x="' + x + '" y="' + y + '" width="' + tableWidth + '" height="' + rowHeight +
+            '" fill="#ffffff" stroke="#000000" stroke-width="1" vector-effect="non-scaling-stroke" />'
+          );
+          svg.push(
+            '<text x="' + (x + tableWidth / 2) + '" y="' + (y + 22) +
+            '" text-anchor="middle" font-family="Times New Roman, Times, serif" font-size="13" font-weight="400" fill="#111827">' +
+            escapeHtml(row[key]) + '</text>'
+          );
+        });
+      };
+
+      drawTable(leftX, inputLabel, "input");
+      drawTable(rightX, outputLabel, "output");
+      svg.push(
+        '<rect x="' + ruleLeft.toFixed(2) + '" y="' + ruleTop.toFixed(2) +
+        '" width="' + ruleBoxWidth.toFixed(2) + '" height="' + ruleBoxHeight +
+        '" fill="#ffffff" stroke="#000000" stroke-width="1.1" vector-effect="non-scaling-stroke" />'
+      );
+      svg.push(
+        '<text x="' + (width / 2).toFixed(2) + '" y="' + (centreY + 5).toFixed(2) +
+        '" text-anchor="middle" font-family="Times New Roman, Times, serif" font-size="16" font-weight="400" fill="#111827">' +
+        escapeHtml(ruleLabel) + '</text>'
+      );
+
+      const accessibleTitle = requestedTitle || "Input-output rule";
+      return (
+        '<div class="noteVisualBlock noteRuleBlock' + (minimalTheme ? ' minimalDiagramTheme' : '') + '">' +
+          (title ? '<div class="noteVisualTitle">' + renderNoteVisualTitle(title) + '</div>' : '') +
+          '<div class="generatedNoteGraphWrap">' +
+            '<svg class="generatedNoteDiagram generatedNoteRule" viewBox="0 0 ' + width + ' ' + height +
+            '" role="img" aria-label="' + escapeHtml(accessibleTitle + ". Rule " + ruleLabel) + '">' +
               svg.join("") +
             '</svg>' +
           '</div>' +
@@ -6919,11 +7233,14 @@ function escapeHtml(str){
     }
 
     function renderStructuredNotePreview(rawText){
-      const raw = String(rawText || "").replace(/\r/g, "").trim();
+      const raw = String(rawText || "")
+        .replace(/\r/g, "")
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        .trim();
       if (!raw) return "";
 
       const blockPattern =
-        /\[\[(FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)([^\]]*)\]\]([\s\S]*?)\[\[\/\1\]\]/gi;
+        /\[\[\s*(FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|RULE_DIAGRAM|RULE|PATTERN|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b([^\]]*)\]\]([\s\S]*?)\[\[\s*\/\s*\1\s*\]\]/gi;
 
       const html = [];
       let cursor = 0;
@@ -6940,6 +7257,9 @@ function escapeHtml(str){
           HISTOGRAM: "Use the histogram below to answer the next question.",
           PIE_CHART: "Use the pie chart below to answer the next question.",
           PIE: "Use the pie chart below to answer the next question.",
+          RULE_DIAGRAM: "Use the rule diagram below to answer the next question.",
+          RULE: "Use the rule diagram below to answer the next question.",
+          PATTERN: "Use the pattern below to answer the next question.",
           FUNCTION_GRAPH: "Use the graph below to answer the next question.",
           TRIG_GRAPH: "Use the trigonometric graph below to answer the next question.",
           VENN: "Use the Venn diagram below to answer the next question.",
@@ -6966,6 +7286,9 @@ function escapeHtml(str){
           HISTOGRAM: renderHistogramBlock,
           PIE_CHART: renderPieChartBlock,
           PIE: renderPieChartBlock,
+          RULE_DIAGRAM: renderRuleDiagramBlock,
+          RULE: renderRuleDiagramBlock,
+          PATTERN: renderPatternBlock,
           FUNCTION_GRAPH: renderFunctionGraphBlock,
           TRIG_GRAPH: renderTrigGraphBlock,
           VENN: renderVennBlock,
@@ -7010,6 +7333,12 @@ function escapeHtml(str){
      * harmless spaces, wrapped attributes or invisible copy/paste characters
      * cannot make the commands appear as learner-facing text.
      */
+    function containsNativeAssessmentVisualBlock(rawText){
+      return /\[\[\s*(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|RULE_DIAGRAM|RULE|PATTERN|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b[\s\S]*?\]\][\s\S]*?\[\[\s*\/\s*(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|RULE_DIAGRAM|RULE|PATTERN|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\s*\]\]/i.test(
+        String(rawText || "").replace(/[\u200B-\u200D\uFEFF]/g, "")
+      );
+    }
+
     function containsNativeGeometryBlock(rawText){
       return /\[\[\s*GEOMETRY\b[\s\S]*?\]\][\s\S]*?\[\[\s*\/\s*GEOMETRY\s*\]\]/i.test(
         String(rawText || "").replace(/[\u200B-\u200D\uFEFF]/g, "")
@@ -7070,15 +7399,15 @@ function escapeHtml(str){
         : renderStructuredNotePreview(rawText);
     }
 
-    /* Final safety pass for any older admin preview branch that already
-       printed a native geometry block as text before this renderer ran. */
+    /* Final safety pass for any preview branch that printed a native visual
+       block as text before the structured renderer ran. */
     function hydrateNativeGeometryPreview(root){
       if (!root?.querySelectorAll) return;
       root.querySelectorAll(".noteBox").forEach(noteBox => {
-        if (noteBox.querySelector("svg.generatedNoteDiagram")) return;
+        if (noteBox.querySelector("svg.generatedNoteDiagram, svg.generatedNoteGraph, table.generatedNoteTable")) return;
         const source = String(noteBox.innerText || noteBox.textContent || "").trim();
-        if (!containsNativeGeometryBlock(source)) return;
-        noteBox.innerHTML = renderNativeGeometryNotePreview(source);
+        if (!containsNativeAssessmentVisualBlock(source)) return;
+        noteBox.innerHTML = renderAdminNotePreview(source);
       });
     }
 
@@ -7097,7 +7426,7 @@ function escapeHtml(str){
       }
 
       if (parsed.kind === "section") {
-        const sectionBodyHtml = /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(parsed.body)
+        const sectionBodyHtml = /\[\[\s*(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|RULE_DIAGRAM|RULE|PATTERN|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(parsed.body)
           ? renderAdminNotePreview(parsed.body)
           : renderMixedMathPreview(parsed.body);
         return `
@@ -7274,7 +7603,7 @@ function escapeHtml(str){
           } else {
             previewSubParent = null;
             previewChild = 0;
-            const hasSharedDiagram = !!img || /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(txt);
+            const hasSharedDiagram = !!img || /\[\[\s*(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|RULE_DIAGRAM|RULE|PATTERN|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(txt);
             const sharedReference = renderSharedPreviewReference(previewMain, hasSharedDiagram);
             parts.push(renderPreviewEditorJump(cardIndex, `<div class="q previewNoteRow">${sharedReference}<div class="noteBox">${renderAdminNotePreview(txt)}</div>${imageHtml}</div>`, hasSharedDiagram ? "shared diagram" : "shared information", `QUESTION ${previewMain}`));
           }
@@ -7558,6 +7887,8 @@ function escapeHtml(str){
             <button type="button" class="noteVisualInsertBtn insertNoteGraphBtn" data-graph-type="line">+ Line Graph</button>
             <button type="button" class="noteVisualInsertBtn insertNoteGraphBtn" data-graph-type="bar">+ Bar Graph</button>
             <button type="button" class="noteVisualInsertBtn insertNoteAdvancedBtn" data-visual-type="pie">+ Pie Chart</button>
+            <button type="button" class="noteVisualInsertBtn insertNoteAdvancedBtn" data-visual-type="matchstickpattern">+ Matchstick Pattern</button>
+            <button type="button" class="noteVisualInsertBtn insertNoteAdvancedBtn" data-visual-type="rule">+ Rule Diagram</button>
             <button type="button" class="noteVisualInsertBtn insertNoteGraphBtn" data-graph-type="scatter">+ Scatter Graph</button>
             <button type="button" class="noteVisualInsertBtn insertNoteAdvancedBtn" data-visual-type="function">+ Function Graph</button>
             <button type="button" class="noteVisualInsertBtn insertNoteAdvancedBtn" data-visual-type="combined">+ Combined Graph</button>
@@ -7632,6 +7963,27 @@ function escapeHtml(str){
           "Bus | 10",
           "Car | 5",
           "[[/PIE_CHART]]"
+        ].join("\n");
+      }
+
+      if (normalisedType === "matchstickpattern") {
+        return [
+          '[[PATTERN shape="matchstick_chain" title="Growing matchstick pattern" show_title="false" stroke_width="3"]]',
+          "Figure 1 | 1",
+          "Figure 2 | 2",
+          "Figure 3 | 3",
+          "[[/PATTERN]]"
+        ].join("\n");
+      }
+
+      if (normalisedType === "rule") {
+        return [
+          '[[RULE_DIAGRAM title="Input-output rule" show_title="false" input_label="x" output_label="y" rule="3x + 1"]]',
+          "-1 | -2",
+          "1 | 4",
+          "3 | 10",
+          "5 | 16",
+          "[[/RULE_DIAGRAM]]"
         ].join("\n");
       }
 
@@ -9114,12 +9466,12 @@ function escapeHtml(str){
         const noteSource = cleanMultiline(
           card.querySelector(".noteText")?.value || ""
         );
-        const t = containsNativeGeometryBlock(noteSource)
+        const t = containsNativeAssessmentVisualBlock(noteSource)
           ? noteSource
           : autoConvertMixedLatex(noteSource);
         const preview = card.querySelector(".prevNote");
         if (preview) {
-          const hasNativeVisual = /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(t);
+          const hasNativeVisual = /\[\[\s*(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|RULE_DIAGRAM|RULE|PATTERN|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(t);
           const hasDiagram = hasNativeVisual || !!readCardImage(card);
           const mainNumber = Math.max(1, Number(card.dataset.mainNumber) || 1);
           const fullNumber = cleanSpaces(card.dataset.fullNumber || "");
@@ -9913,7 +10265,7 @@ function escapeHtml(str){
 
       return {
         type: "note",
-        text: containsNativeGeometryBlock(multilineText)
+        text: containsNativeAssessmentVisualBlock(multilineText)
           ? multilineText
           : autoConvertMixedLatex(multilineText)
       };
@@ -10601,7 +10953,7 @@ function escapeHtml(str){
 
           questions.push({
             type: "note",
-            text: `[[NOTE_ROLE:${noteRole}]]\n${autoConvertMixedLatex(noteText || "")}`.trim(),
+            text: `[[NOTE_ROLE:${noteRole}]]\n${containsNativeAssessmentVisualBlock(noteText) ? noteText : autoConvertMixedLatex(noteText || "")}`.trim(),
             imageUrl: imageUrl || ""
           });
           continue;
