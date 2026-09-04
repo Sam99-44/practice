@@ -2,7 +2,7 @@
      ✅ MathJax enabled (SVG).
      ✅ Instructions box
      ✅ Note/Heading blocks (type:"note")
-     ✅ Native note tables and line/bar/scatter/histogram graphs (no image upload required)
+     ✅ Native note tables and line/bar/scatter/histogram/pie charts (no image upload required)
      ✅ Marks per question (points)
      ✅ Solution/Workings per question (solution)
      ✅ MCQ options: ADD/REMOVE choices (min 2)
@@ -2844,6 +2844,10 @@ body > .card:last-of-type{
   min-height:260px;
   background:#fff;
 }
+.generatedNotePie{
+  min-height:0;
+  shape-rendering:geometricPrecision;
+}
 .generatedNoteDiagram{
   display:block;
   width:100%;
@@ -3470,6 +3474,235 @@ html body .previewBox.prevNote.paperBox > .noteSection{
     padding:16px 12px !important;
   }
 }
+
+/* =====================================================================
+   REVIEW-FIRST ADMIN WORKFLOW
+   Upload -> learner preview -> click-to-edit -> publish after final item.
+   Existing editor and assessment behaviour remain unchanged.
+   ===================================================================== */
+.adminUploadWorkflow,
+.learnerReviewCard{
+  margin:0 0 14px 0 !important;
+}
+
+.adminUploadWorkflow{
+  padding:20px !important;
+}
+
+.workflowSectionHead,
+.learnerReviewHead,
+.previewPublishArea{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.workflowSectionHead h3,
+.learnerReviewHead h3{
+  margin:2px 0 4px 0;
+  color:#111827;
+}
+
+.workflowStepLabel{
+  color:var(--admin-blue, #0b69b7);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.08em;
+}
+
+.workflowUploadGrid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:14px;
+  margin-top:16px;
+}
+
+.workflowUploadOption{
+  min-width:0;
+  padding:14px;
+  border-radius:8px;
+  background:#f8fafc;
+}
+
+.workflowUploadPrimary{
+  background:#f5f8fc;
+}
+
+.workflowUploadLabel{
+  margin-bottom:10px;
+  color:#111827;
+  font-size:13px;
+  font-weight:700;
+}
+
+.workflowUploadControls{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+
+.workflowUploadControls .filePickerShell{
+  flex:1 1 280px;
+}
+
+.workflowUploadControls input[type="file"]{
+  width:100% !important;
+  max-width:none !important;
+}
+
+.learnerReviewCard{
+  padding:20px !important;
+}
+
+.learnerReviewHead{
+  margin-bottom:14px;
+}
+
+.learnerPreviewModes{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.learnerReviewCard #fullLearnerPreview{
+  margin:0 !important;
+}
+
+.previewPublishArea{
+  margin-top:18px;
+  padding:4px 2px 0;
+}
+
+.previewPublishTitle{
+  margin:2px 0 3px;
+  color:#111827;
+  font-size:14px;
+  font-weight:700;
+}
+
+.previewPublishArea #publishBtn{
+  flex:0 0 auto;
+  min-width:144px;
+}
+
+.previewPublishActions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.previewPublishActions #saveBtn,
+.previewPublishActions #publishBtn{
+  min-width:132px;
+}
+
+/* Keep draft recovery useful without stretching it across the whole screen. */
+body > .draftManager{
+  box-sizing:border-box;
+  width:calc(100% - 40px);
+  max-width:1500px;
+  margin:0 auto 18px;
+}
+
+.draftManagerControls{
+  grid-template-columns:minmax(260px, 500px) repeat(3, max-content);
+  justify-content:start;
+}
+
+.returnToLearnerHint{
+  margin-left:8px;
+  color:#64748b;
+  font-size:11px;
+  font-weight:400;
+}
+
+.noteEditorReturnRow [data-return-to-learner-preview]{
+  cursor:pointer;
+  transition:box-shadow .14s ease, border-color .14s ease, background-color .14s ease;
+}
+
+.noteEditorReturnRow [data-return-to-learner-preview]:hover{
+  border-color:#0e7490 !important;
+  box-shadow:0 0 0 2px rgba(14,116,144,.12) !important;
+}
+
+.noteEditorReturnRow [data-return-to-learner-preview]:focus-visible{
+  outline:2px solid #0e7490;
+  outline-offset:3px;
+}
+
+.previewEditorJump.previewReturnTarget{
+  background:rgba(14,116,144,.045);
+  box-shadow:0 0 0 3px rgba(14,116,144,.18);
+}
+
+.fieldOrderBar{
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.backToLearnerPreviewBtn{
+  border-color:#cbd5e1 !important;
+  background:#ffffff !important;
+  color:#0f172a !important;
+}
+
+.backToLearnerPreviewBtn:hover{
+  border-color:#0e7490 !important;
+  background:#f8fafc !important;
+}
+
+@media(max-width:820px){
+  .workflowUploadGrid{
+    grid-template-columns:1fr;
+  }
+
+  .workflowUploadControls,
+  .learnerReviewHead,
+  .previewPublishArea{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .workflowUploadControls .filePickerShell{
+    flex:0 1 auto;
+    width:100% !important;
+  }
+
+  .workflowUploadControls .uploadActionBtn,
+  .previewPublishArea #publishBtn,
+  .previewPublishArea #saveBtn{
+    width:auto !important;
+  }
+
+  body > .draftManager{
+    width:calc(100% - 24px);
+  }
+
+  .draftManagerControls{
+    grid-template-columns:1fr;
+  }
+
+  .previewPublishActions{
+    justify-content:flex-start;
+  }
+}
+
+@media(max-width:560px){
+  body > .draftManager{
+    width:calc(100% - 20px);
+  }
+
+  .returnToLearnerHint{
+    display:block;
+    margin:3px 0 0;
+  }
+}
 </style>
 </head>
 
@@ -3493,6 +3726,76 @@ html body .previewBox.prevNote.paperBox > .noteSection{
       <a class="btn2" href="learner-quizzes.html">Learner View</a>
       <button class="btn" id="logoutBtn" type="button">Logout</button>
     </div>
+  </div>
+
+  <div class="card adminUploadWorkflow" id="uploadWorkflowSection">
+    <div class="workflowSectionHead">
+      <div>
+        <div class="workflowStepLabel">STEP 1</div>
+        <h3>Upload Assessment</h3>
+        <div class="muted tiny">Load a .txt assessment, then review exactly what the learner will see.</div>
+      </div>
+    </div>
+
+    <div class="workflowUploadGrid">
+      <div class="workflowUploadOption workflowUploadPrimary">
+        <div class="workflowUploadLabel">Single assessment</div>
+        <div class="workflowUploadControls">
+          <div class="filePickerShell">
+            <img class="filePickerIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939097/upload_c8eg6o.svg" alt="" aria-hidden="true" />
+            <input id="uploadFile" type="file" accept=".txt" />
+          </div>
+          <button class="smallbtn uploadActionBtn" id="uploadBtn" type="button">
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939345/open-open-a-file_yhdyq4.svg" alt="" aria-hidden="true" />
+            <span>Upload &amp; Auto Fill</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="workflowUploadOption">
+        <div class="workflowUploadLabel">Multiple assessments</div>
+        <div class="workflowUploadControls">
+          <div class="filePickerShell">
+            <img class="filePickerIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939097/upload_c8eg6o.svg" alt="" aria-hidden="true" />
+            <input id="batchFiles" type="file" accept=".txt" multiple />
+          </div>
+          <button class="smallbtn uploadActionBtn" id="batchUploadBtn" type="button">
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939345/open-open-a-file_yhdyq4.svg" alt="" aria-hidden="true" />
+            <span>Batch Upload</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <p class="msg muted" id="msg"></p>
+    <div id="parseErrorsBox" class="hide" style="margin-top:10px; border:1px solid #fecaca; background:#fff1f2; color:#7f1d1d; border-radius:12px; padding:12px;"></div>
+  </div>
+
+  <div class="card learnerReviewCard" id="learnerReviewSection">
+    <div class="learnerReviewHead">
+      <div>
+        <div class="workflowStepLabel">STEP 2</div>
+        <h3>Full Learner Preview</h3>
+        <div class="muted tiny previewNavigationHint">Review every note, diagram, question and choice. Click any item to edit it.</div>
+      </div>
+      <div class="learnerPreviewModes">
+        <button class="smallbtn" id="previewAttemptModeBtn" type="button">Attempt Preview</button>
+        <button class="smallbtn" id="previewReviewModeBtn" type="button">Review Preview</button>
+      </div>
+    </div>
+    <div id="fullLearnerPreview" class="attemptPaperPreview"></div>
+    <div class="previewPublishArea">
+      <div>
+        <div class="workflowStepLabel">FINAL STEP</div>
+        <div class="previewPublishTitle">Finished reviewing the assessment?</div>
+        <div class="muted tiny">Publish only after checking the final question.</div>
+      </div>
+      <div class="previewPublishActions">
+        <button class="btn" id="saveBtn" disabled type="button">Save Content</button>
+        <button class="btn btn2" id="publishBtn" disabled type="button">Publish Content</button>
+      </div>
+    </div>
+    <div class="msg muted previewPublishFeedback" id="previewPublishFeedback" aria-live="polite"></div>
   </div>
 
   <div class="draftManager">
@@ -3692,56 +3995,14 @@ html body .previewBox.prevNote.paperBox > .noteSection{
       <button class="smallbtn" id="addSectionBtn" type="button">+ Add Section / Stem</button>
     </div>
 
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; align-items:center;">
-      <div class="filePickerShell">
-        <img class="filePickerIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939097/upload_c8eg6o.svg" alt="" aria-hidden="true" />
-        <input id="uploadFile" type="file" accept=".txt" style="max-width:260px;" />
-      </div>
-      <button class="smallbtn uploadActionBtn" id="uploadBtn" type="button">
-        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939345/open-open-a-file_yhdyq4.svg" alt="" aria-hidden="true" />
-        <span>Upload & Auto Fill</span>
-      </button>
-    </div>
-
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center;">
-      <div class="filePickerShell">
-        <img class="filePickerIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939097/upload_c8eg6o.svg" alt="" aria-hidden="true" />
-        <input id="batchFiles" type="file" accept=".txt" multiple style="max-width:260px;" />
-      </div>
-      <button class="smallbtn uploadActionBtn" id="batchUploadBtn" type="button">
-        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939345/open-open-a-file_yhdyq4.svg" alt="" aria-hidden="true" />
-        <span>Batch Upload .txt Files</span>
-      </button>
-    </div>
-
-    <div class="muted tiny" style="margin-top:6px;">Upload a <b>.txt</b> assessment file.</div>
-
     <hr>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <button class="btn" id="saveBtn" disabled type="button">Save Content</button>
-      <button class="btn btn2" id="publishBtn" disabled type="button">Publish Content</button>
       <button class="btn btn2" id="previewPaperBtn" type="button">Preview Exam Paper</button>
       <button class="btn btn2" id="saveDefaultsBtn" type="button">Save Metadata Defaults</button>
       <button class="btn btn2" id="applyDefaultsBtn" type="button">Apply Defaults</button>
       <button class="btn btn2" id="cloneQuizBtn" type="button">Clone as New Draft</button>
     </div>
-    <p class="msg muted" id="msg"></p>
-    <div id="parseErrorsBox" class="hide" style="margin-top:10px; border:1px solid #fecaca; background:#fff1f2; color:#7f1d1d; border-radius:12px; padding:12px;"></div>
-  </div>
-
-  <div class="card" style="margin-top:14px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
-      <div>
-        <h3 style="margin:0;">Full Learner Preview</h3>
-        <div class="muted tiny previewNavigationHint">Click any question or diagram to edit it.</div>
-      </div>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="smallbtn" id="previewAttemptModeBtn" type="button">Attempt Preview</button>
-        <button class="smallbtn" id="previewReviewModeBtn" type="button">Review Preview</button>
-      </div>
-    </div>
-    <div id="fullLearnerPreview" class="attemptPaperPreview"></div>
   </div>
 
 
@@ -3781,6 +4042,8 @@ html body .previewBox.prevNote.paperBox > .noteSection{
     const paperPreviewModal = document.getElementById("paperPreviewModal");
     const paperPreviewContent = document.getElementById("paperPreviewContent");
     const fullLearnerPreview = document.getElementById("fullLearnerPreview");
+    const learnerReviewSection = document.getElementById("learnerReviewSection");
+    const previewPublishFeedback = document.getElementById("previewPublishFeedback");
     const previewAttemptModeBtn = document.getElementById("previewAttemptModeBtn");
     const previewReviewModeBtn = document.getElementById("previewReviewModeBtn");
     const closePreviewBtn = document.getElementById("closePreviewBtn");
@@ -3844,9 +4107,22 @@ html body .previewBox.prevNote.paperBox > .noteSection{
     let serverDraftCache = [];
 
     function setMsg(text, type="muted"){
-      if (!msg) return;
-      msg.className = "msg " + type;
-      msg.textContent = String(text || "");
+      const value = String(text || "");
+      if (msg) {
+        msg.className = "msg " + type;
+        msg.textContent = value;
+      }
+      if (previewPublishFeedback) {
+        previewPublishFeedback.className = "msg previewPublishFeedback " + type;
+        previewPublishFeedback.textContent = value;
+      }
+    }
+
+    function openLearnerReviewAfterLoad(){
+      window.setTimeout(() => {
+        refreshFullLearnerPreview(fullLearnerPreview, "attempt");
+        learnerReviewSection?.scrollIntoView({ behavior:"smooth", block:"start" });
+      }, 80);
     }
     function getApiErrorMessage(data, fallback="Request failed"){
       if (!data) return fallback;
@@ -5307,6 +5583,249 @@ function escapeHtml(str){
       );
     }
 
+    function renderPieChartBlock(rawAttributes, bodyText){
+      const attributes = readNoteVisualAttributes(rawAttributes);
+      const minimalTheme = useMinimalAssessmentVisualTheme(attributes);
+      const sourceLines = getNoteVisualLines(bodyText);
+      const segments = [];
+      const invalidRows = [];
+
+      sourceLines.forEach((line, index) => {
+        const parts = line.split("|").map(part => String(part || "").trim());
+        const label = parts[0] || "Category " + (index + 1);
+        const value = parts.length >= 2 ? parseNoteGraphNumber(parts[1]) : null;
+
+        if (parts.length < 2 || value === null || value < 0) {
+          invalidRows.push(index + 1);
+          return;
+        }
+
+        segments.push({ label, value });
+      });
+
+      if (!sourceLines.length) {
+        return noteVisualError(
+          "This pie chart has no data. Add each section as: Category | value."
+        );
+      }
+
+      if (invalidRows.length) {
+        return noteVisualError(
+          "Pie-chart row" + (invalidRows.length === 1 ? " " : "s ") +
+          invalidRows.join(", ") +
+          " must use a label and a non-negative number: Category | value."
+        );
+      }
+
+      if (segments.length > 12) {
+        return noteVisualError(
+          "Use no more than 12 sections so that the pie chart and legend remain readable."
+        );
+      }
+
+      const total = segments.reduce((sum, segment) => sum + segment.value, 0);
+      const positiveSegments = segments.filter(segment => segment.value > 0);
+
+      if (!(total > 0) || positiveSegments.length < 2) {
+        return noteVisualError(
+          "A pie chart needs at least two sections with values greater than zero."
+        );
+      }
+
+      const requestedTitle = String(attributes.title || "Pie chart").trim();
+      const showTitle = !/^(?:0|false|no|off|hide|none)$/i.test(
+        String(attributes.show_title ?? attributes.showtitle ?? "true").trim()
+      );
+      const title = showTitle ? requestedTitle : "";
+      const labelsModeRaw = String(
+        attributes.labels || attributes.label || attributes.data_labels || "percent"
+      ).trim().toLowerCase();
+      const labelsMode = ["percent", "value", "both", "category", "none"].includes(labelsModeRaw)
+        ? labelsModeRaw
+        : "percent";
+      const showLegend = !/^(?:0|false|no|off|hide|none)$/i.test(
+        String(attributes.show_legend ?? attributes.legend ?? "true").trim()
+      );
+      const requestedPrecision = parseNoteGraphNumber(attributes.precision);
+      const precision = requestedPrecision === null
+        ? 0
+        : Math.max(0, Math.min(2, Math.round(requestedPrecision)));
+      const decimalSeparator = /^(?:comma|,|south-african|sa)$/i.test(
+        String(attributes.decimal_separator || attributes.decimal || "").trim()
+      ) ? "," : ".";
+
+      const formatPieValue = value => {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return "";
+        const formatted = String(Number(number.toFixed(3)));
+        return decimalSeparator === "," ? formatted.replace(".", ",") : formatted;
+      };
+
+      const formatPiePercent = value => {
+        const formatted = Number(value).toFixed(precision);
+        return decimalSeparator === "," ? formatted.replace(".", ",") : formatted;
+      };
+
+      const colourPalette = minimalTheme
+        ? [
+            "#ffffff", "#e5e7eb", "#cbd5e1", "#9ca3af",
+            "#6b7280", "#f3f4f6", "#d1d5db", "#94a3b8",
+            "#f9fafb", "#b8c0cc", "#7d8796", "#eef0f3"
+          ]
+        : [
+            "#60a5fa", "#f59e0b", "#34d399", "#a78bfa",
+            "#f87171", "#22d3ee", "#fbbf24", "#94a3b8",
+            "#818cf8", "#2dd4bf", "#fb7185", "#a3e635"
+          ];
+
+      const width = 760;
+      const legendColumns = showLegend && segments.length > 8 ? 2 : 1;
+      const legendRows = showLegend ? Math.ceil(segments.length / legendColumns) : 0;
+      const height = showLegend ? Math.max(370, 78 + legendRows * 52) : 370;
+      const centreX = showLegend ? (legendColumns === 2 ? 178 : 216) : width / 2;
+      const centreY = height / 2;
+      const radius = Math.min(132, Math.max(104, height / 2 - 42));
+      const legendStartX = legendColumns === 2 ? 336 : 414;
+      const legendColumnWidth = legendColumns === 2 ? 202 : 310;
+      const legendLabelLimit = legendColumns === 2 ? 20 : 32;
+      const svg = [];
+
+      const wrapLegendLabel = label => {
+        const text = String(label || "").trim();
+        if (text.length <= legendLabelLimit) return [text];
+
+        const words = text.split(/\s+/).filter(Boolean);
+        const lines = [""];
+        words.forEach(word => {
+          const current = lines[lines.length - 1];
+          if (!current || (current + " " + word).trim().length <= legendLabelLimit) {
+            lines[lines.length - 1] = (current + " " + word).trim();
+          } else if (lines.length < 2) {
+            lines.push(word);
+          } else {
+            lines[1] = (lines[1] + " " + word).trim();
+          }
+        });
+
+        if (lines[1] && lines[1].length > legendLabelLimit + 4) {
+          lines[1] = lines[1].slice(0, legendLabelLimit + 1).trimEnd() + "…";
+        }
+        return lines.slice(0, 2);
+      };
+
+      let startAngle = -Math.PI / 2;
+
+      segments.forEach((segment, index) => {
+        const fraction = segment.value / total;
+        const endAngle = startAngle + fraction * Math.PI * 2;
+        const fill = colourPalette[index % colourPalette.length];
+        const percent = fraction * 100;
+        const ariaText = segment.label + ": " + formatPieValue(segment.value) +
+          " (" + formatPiePercent(percent) + "%)";
+
+        if (fraction > 0) {
+          if (fraction >= 0.999999) {
+            svg.push(
+              '<circle cx="' + centreX + '" cy="' + centreY + '" r="' + radius +
+              '" fill="' + fill + '" stroke="#000000" stroke-width="1.25" vector-effect="non-scaling-stroke"><title>' +
+              escapeHtml(ariaText) + '</title></circle>'
+            );
+          } else {
+            const startX = centreX + radius * Math.cos(startAngle);
+            const startY = centreY + radius * Math.sin(startAngle);
+            const endX = centreX + radius * Math.cos(endAngle);
+            const endY = centreY + radius * Math.sin(endAngle);
+            const largeArc = fraction > 0.5 ? 1 : 0;
+            const path = [
+              "M", centreX.toFixed(2), centreY.toFixed(2),
+              "L", startX.toFixed(2), startY.toFixed(2),
+              "A", radius, radius, 0, largeArc, 1, endX.toFixed(2), endY.toFixed(2),
+              "Z"
+            ].join(" ");
+
+            svg.push(
+              '<path d="' + path + '" fill="' + fill +
+              '" stroke="#000000" stroke-width="1.25" vector-effect="non-scaling-stroke"><title>' +
+              escapeHtml(ariaText) + '</title></path>'
+            );
+          }
+
+          if (labelsMode !== "none" && fraction >= 0.055) {
+            let dataLabel = formatPiePercent(percent) + "%";
+            if (labelsMode === "value") dataLabel = formatPieValue(segment.value);
+            if (labelsMode === "both") {
+              dataLabel = formatPieValue(segment.value) + " · " + formatPiePercent(percent) + "%";
+            }
+            if (labelsMode === "category") dataLabel = segment.label;
+
+            const middleAngle = startAngle + (endAngle - startAngle) / 2;
+            const labelRadius = radius * 0.63;
+            const labelX = centreX + labelRadius * Math.cos(middleAngle);
+            const labelY = centreY + labelRadius * Math.sin(middleAngle) + 4;
+            svg.push(
+              '<text x="' + labelX.toFixed(2) + '" y="' + labelY.toFixed(2) +
+              '" text-anchor="middle" font-size="12" font-weight="400" fill="#000000">' +
+              escapeHtml(dataLabel) + '</text>'
+            );
+          }
+        }
+
+        startAngle = endAngle;
+      });
+
+      svg.push(
+        '<circle cx="' + centreX + '" cy="' + centreY + '" r="' + radius +
+        '" fill="none" stroke="#000000" stroke-width="1.25" vector-effect="non-scaling-stroke" />'
+      );
+
+      if (showLegend) {
+        segments.forEach((segment, index) => {
+          const column = Math.floor(index / legendRows);
+          const row = index % legendRows;
+          const itemX = legendStartX + column * legendColumnWidth;
+          const itemY = 30 + row * 52;
+          const fill = colourPalette[index % colourPalette.length];
+          const percent = (segment.value / total) * 100;
+          const labelLines = wrapLegendLabel(segment.label);
+          const detail = formatPieValue(segment.value) + " (" + formatPiePercent(percent) + "%)";
+
+          svg.push(
+            '<rect x="' + itemX + '" y="' + itemY +
+            '" width="13" height="13" fill="' + fill +
+            '" stroke="#000000" stroke-width="1" vector-effect="non-scaling-stroke" />'
+          );
+
+          labelLines.forEach((line, lineIndex) => {
+            svg.push(
+              '<text x="' + (itemX + 21) + '" y="' + (itemY + 10 + lineIndex * 12) +
+              '" font-size="11.5" font-weight="400" fill="#111827">' +
+              escapeHtml(line) + '</text>'
+            );
+          });
+
+          svg.push(
+            '<text x="' + (itemX + 21) + '" y="' + (itemY + 42) +
+            '" font-size="10.5" font-weight="400" fill="#475569">' +
+            escapeHtml(detail) + '</text>'
+          );
+        });
+      }
+
+      const accessibleTitle = requestedTitle || "Pie chart";
+
+      return (
+        '<div class="noteVisualBlock notePieBlock' + (minimalTheme ? ' minimalDiagramTheme' : '') + '">' +
+          (title ? '<div class="noteVisualTitle">' + renderNoteVisualTitle(title) + '</div>' : '') +
+          '<div class="generatedNoteGraphWrap">' +
+            '<svg class="generatedNoteGraph generatedNotePie" viewBox="0 0 ' + width + ' ' + height +
+            '" role="img" aria-label="' + escapeHtml(accessibleTitle + ". Total " + formatPieValue(total)) + '">' +
+              svg.join("") +
+            '</svg>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
     function renderHistogramBlock(rawAttributes, bodyText){
       return renderNoteGraphBlock(
         'type="histogram" ' + String(rawAttributes || ""),
@@ -6404,7 +6923,7 @@ function escapeHtml(str){
       if (!raw) return "";
 
       const blockPattern =
-        /\[\[(FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)([^\]]*)\]\]([\s\S]*?)\[\[\/\1\]\]/gi;
+        /\[\[(FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)([^\]]*)\]\]([\s\S]*?)\[\[\/\1\]\]/gi;
 
       const html = [];
       let cursor = 0;
@@ -6419,6 +6938,8 @@ function escapeHtml(str){
           BOX_WHISKER: "Use the box-and-whisker plots below to answer the next question.",
           GRAPH: "Use the graph below to answer the next question.",
           HISTOGRAM: "Use the histogram below to answer the next question.",
+          PIE_CHART: "Use the pie chart below to answer the next question.",
+          PIE: "Use the pie chart below to answer the next question.",
           FUNCTION_GRAPH: "Use the graph below to answer the next question.",
           TRIG_GRAPH: "Use the trigonometric graph below to answer the next question.",
           VENN: "Use the Venn diagram below to answer the next question.",
@@ -6443,6 +6964,8 @@ function escapeHtml(str){
           BOX_WHISKER: renderBoxPlotBlock,
           GRAPH: renderNoteGraphBlock,
           HISTOGRAM: renderHistogramBlock,
+          PIE_CHART: renderPieChartBlock,
+          PIE: renderPieChartBlock,
           FUNCTION_GRAPH: renderFunctionGraphBlock,
           TRIG_GRAPH: renderTrigGraphBlock,
           VENN: renderVennBlock,
@@ -6574,7 +7097,7 @@ function escapeHtml(str){
       }
 
       if (parsed.kind === "section") {
-        const sectionBodyHtml = /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(parsed.body)
+        const sectionBodyHtml = /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(parsed.body)
           ? renderAdminNotePreview(parsed.body)
           : renderMixedMathPreview(parsed.body);
         return `
@@ -6751,7 +7274,7 @@ function escapeHtml(str){
           } else {
             previewSubParent = null;
             previewChild = 0;
-            const hasSharedDiagram = !!img || /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(txt);
+            const hasSharedDiagram = !!img || /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(txt);
             const sharedReference = renderSharedPreviewReference(previewMain, hasSharedDiagram);
             parts.push(renderPreviewEditorJump(cardIndex, `<div class="q previewNoteRow">${sharedReference}<div class="noteBox">${renderAdminNotePreview(txt)}</div>${imageHtml}</div>`, hasSharedDiagram ? "shared diagram" : "shared information", `QUESTION ${previewMain}`));
           }
@@ -7034,6 +7557,7 @@ function escapeHtml(str){
             <button type="button" class="noteVisualInsertBtn insertNoteAdvancedBtn" data-visual-type="boxplot">+ Box &amp; Whisker</button>
             <button type="button" class="noteVisualInsertBtn insertNoteGraphBtn" data-graph-type="line">+ Line Graph</button>
             <button type="button" class="noteVisualInsertBtn insertNoteGraphBtn" data-graph-type="bar">+ Bar Graph</button>
+            <button type="button" class="noteVisualInsertBtn insertNoteAdvancedBtn" data-visual-type="pie">+ Pie Chart</button>
             <button type="button" class="noteVisualInsertBtn insertNoteGraphBtn" data-graph-type="scatter">+ Scatter Graph</button>
             <button type="button" class="noteVisualInsertBtn insertNoteAdvancedBtn" data-visual-type="function">+ Function Graph</button>
             <button type="button" class="noteVisualInsertBtn insertNoteAdvancedBtn" data-visual-type="combined">+ Combined Graph</button>
@@ -7055,10 +7579,10 @@ function escapeHtml(str){
             <input class="qImage noteImageUrl" type="url" placeholder="https://..." />
           </div>
 
-          <div class="previewRow">
-            <div class="prevTitle">Live Preview</div>
-            <div class="previewBox prevNote paperBox"></div>
-            <div class="noteImagePreviewWrap hide">
+          <div class="previewRow noteEditorReturnRow">
+            <div class="prevTitle">Live Preview <span class="returnToLearnerHint">Click the note to return to the learner preview</span></div>
+            <div class="previewBox prevNote paperBox" data-return-to-learner-preview role="button" tabindex="0" aria-label="Return to this note in the full learner preview"></div>
+            <div class="noteImagePreviewWrap hide" data-return-to-learner-preview role="button" tabindex="0" aria-label="Return to this diagram in the full learner preview">
               <img class="noteImagePreview" alt="Note diagram preview">
               <div class="noteImagePreviewError hide">The diagram could not be loaded from this URL.</div>
             </div>
@@ -7097,6 +7621,17 @@ function escapeHtml(str){
           "Graph A | 10 | 18 | 30 | 35 | 41",
           "Graph B | 10 | 14 | 18 | 35 | 41",
           "[[/BOX_PLOT]]"
+        ].join("\n");
+      }
+
+      if (normalisedType === "pie") {
+        return [
+          '[[PIE_CHART title="Learner transport methods" show_title="true" labels="percent" precision="0"]]',
+          "Walking | 12",
+          "Taxi | 18",
+          "Bus | 10",
+          "Car | 5",
+          "[[/PIE_CHART]]"
         ].join("\n");
       }
 
@@ -7347,6 +7882,7 @@ function escapeHtml(str){
           </div>
 
           <div class="fieldOrderBar">
+            <button type="button" class="smallbtn backToLearnerPreviewBtn">← Back to Learner Preview</button>
             <button type="button" class="smallbtn swapFieldsBtn">Swap Image / Question</button>
           </div>
 
@@ -7470,6 +8006,7 @@ function escapeHtml(str){
           </div>
 
           <div class="fieldOrderBar">
+            <button type="button" class="smallbtn backToLearnerPreviewBtn">← Back to Learner Preview</button>
             <button type="button" class="smallbtn swapFieldsBtn">Swap Image / Question</button>
           </div>
 
@@ -7994,6 +8531,7 @@ function escapeHtml(str){
       card.querySelector(".moveUpBtn")?.addEventListener("click", ()=>moveCard(card, -1));
       card.querySelector(".moveDownBtn")?.addEventListener("click", ()=>moveCard(card, 1));
       card.querySelector(".swapFieldsBtn")?.addEventListener("click", ()=>swapPrimaryFields(card));
+      card.querySelector(".backToLearnerPreviewBtn")?.addEventListener("click", ()=>jumpToLearnerPreviewFromEditorCard(card));
 
       ensureQuickInsertControls(card);
       card.querySelectorAll(".quickInsertBtn").forEach(btn => {
@@ -8272,7 +8810,8 @@ function escapeHtml(str){
         fillAssessmentForm(parsed);
         if (assessmentCodeEl) assessmentCodeEl.value = "Assigned automatically when saved";
 
-        setMsg("Assessment loaded successfully. Save or publish it to receive its unique code.", "ok");
+        setMsg("Assessment loaded successfully. Review every item below, click anything that needs editing, then publish after the final question.", "ok");
+        openLearnerReviewAfterLoad();
       } catch (err) {
         if (Array.isArray(err.parseErrors) && err.parseErrors.length) {
           showParseErrors(err.parseErrors, "Please fix these .txt file issues");
@@ -8580,7 +9119,7 @@ function escapeHtml(str){
           : autoConvertMixedLatex(noteSource);
         const preview = card.querySelector(".prevNote");
         if (preview) {
-          const hasNativeVisual = /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(t);
+          const hasNativeVisual = /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(t);
           const hasDiagram = hasNativeVisual || !!readCardImage(card);
           const mainNumber = Math.max(1, Number(card.dataset.mainNumber) || 1);
           const fullNumber = cleanSpaces(card.dataset.fullNumber || "");
@@ -10385,6 +10924,7 @@ function escapeHtml(str){
     }
 
     let previewJumpHighlightTimer = null;
+    let previewReturnHighlightTimer = null;
 
     function jumpToPreviewEditor(previewItem){
       const cardIndex = Number(previewItem?.dataset?.editorCardIndex);
@@ -10428,10 +10968,62 @@ function escapeHtml(str){
       jumpToPreviewEditor(previewItem);
     }
 
+    function jumpToLearnerPreviewFromEditorCard(card){
+      if (!card) return;
+
+      const cards = [...questionsWrap.querySelectorAll(".qcard")];
+      const cardIndex = cards.indexOf(card);
+      if (cardIndex < 0) return;
+
+      refreshFullLearnerPreview(fullLearnerPreview, currentFullPreviewMode);
+
+      requestAnimationFrame(() => {
+        const previewItem = fullLearnerPreview?.querySelector(
+          `.previewEditorJump[data-editor-card-index="${cardIndex}"]`
+        );
+
+        if (!previewItem) {
+          learnerReviewSection?.scrollIntoView({ behavior:"smooth", block:"start" });
+          return;
+        }
+
+        clearTimeout(previewReturnHighlightTimer);
+        fullLearnerPreview.querySelectorAll(".previewEditorJump.previewReturnTarget").forEach(item => {
+          item.classList.remove("previewReturnTarget");
+        });
+
+        previewItem.classList.add("previewReturnTarget");
+        previewItem.scrollIntoView({ behavior:"smooth", block:"center" });
+        try { previewItem.focus({ preventScroll:true }); }
+        catch { previewItem.focus(); }
+
+        previewReturnHighlightTimer = setTimeout(() => {
+          previewItem.classList.remove("previewReturnTarget");
+        }, 2200);
+      });
+    }
+
+    function handleNoteReturnNavigation(event){
+      const returnControl = event.target.closest?.("[data-return-to-learner-preview]");
+      if (!returnControl || !questionsWrap.contains(returnControl)) return;
+
+      if (event.type === "keydown" && !["Enter", " "].includes(event.key)) return;
+      if (event.type === "keydown") event.preventDefault();
+
+      const noteCard = returnControl.closest('.qcard[data-type="note"]');
+      if (!noteCard) return;
+
+      event.stopPropagation();
+      jumpToLearnerPreviewFromEditorCard(noteCard);
+    }
+
     [fullLearnerPreview, paperPreviewContent].forEach(preview => {
       preview?.addEventListener("click", handlePreviewNavigation);
       preview?.addEventListener("keydown", handlePreviewNavigation);
     });
+
+    questionsWrap?.addEventListener("click", handleNoteReturnNavigation);
+    questionsWrap?.addEventListener("keydown", handleNoteReturnNavigation);
 
     previewPaperBtn.addEventListener("click", buildPaperPreview);
     previewAttemptModeBtn?.addEventListener("click", ()=>refreshFullLearnerPreview(fullLearnerPreview, "attempt"));
@@ -10600,7 +11192,7 @@ function escapeHtml(str){
       const selected=draftAssessmentSelect?.value;
       if(!selected) return setMsg("Please select a draft assessment.","error");
       if(selected==="local"){
-        try{const snap=JSON.parse(localStorage.getItem(LOCAL_AUTOSAVE_KEY)||"null");if(!restoreEditorSnapshot(snap))throw new Error();setMsg("Automatic draft restored. You can continue editing, publish now, or schedule it.","ok");}
+        try{const snap=JSON.parse(localStorage.getItem(LOCAL_AUTOSAVE_KEY)||"null");if(!restoreEditorSnapshot(snap))throw new Error();setMsg("Automatic draft restored. Review it below, edit any item that needs attention, then publish after the final question.","ok");openLearnerReviewAfterLoad();}
         catch{setMsg("The automatic draft could not be restored.","error");}
         return;
       }
@@ -10617,7 +11209,8 @@ function escapeHtml(str){
         if(assessmentCodeEl) assessmentCodeEl.value=currentEditingAssessmentCode || "Assigned automatically when saved";
         publishModeEl.value=quiz?.publishAt ? "schedule" : "draft";updatePublishUI();
         saveLocalAutosave();
-        setMsg(`Draft ${currentEditingAssessmentCode || "assessment"} loaded. Edit it, then save, publish now, or schedule publishing.`,"ok");
+        setMsg(`Draft ${currentEditingAssessmentCode || "assessment"} loaded. Review it below, click any item that needs editing, then publish after the final question.`,"ok");
+        openLearnerReviewAfterLoad();
       }catch(err){setMsg(err.message || "Could not load the draft assessment.","error");}
     }
 
