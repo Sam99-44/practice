@@ -2353,25 +2353,105 @@ body.submitted-state .solutionHolder .solutionBox{
 
 
 
-/* ===== SAFE INLINE QUIZ LOADING MESSAGE ONLY ===== */
+/* ===== CENTRED CIRCULAR ASSESSMENT LOADER =====
+   Keep the loading state visible, centred and large enough to read on phones. */
 .quizLoaderOverlay{display:none !important;}
 
-/* ===== INLINE BUBBLE LOADER - DOES NOT BLOCK PAGE ===== */
-.inlineLoaderDots span{
-  width:12px;
-  height:12px;
-  border-radius:50%;
-  background:#1b1648;
-  display:inline-block;
-  animation:inlineBubbleBounce 1s infinite ease-in-out;
+.paperShell.loading{
+  visibility:visible !important;
 }
 
-.inlineLoaderDots span:nth-child(2){animation-delay:.15s;}
-.inlineLoaderDots span:nth-child(3){animation-delay:.3s;}
+.paperShell.loading #questions{
+  min-height:clamp(320px, 52vh, 520px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
 
-@keyframes inlineBubbleBounce{
-  0%,80%,100%{transform:scale(.55);opacity:.35;}
-  40%{transform:scale(1);opacity:1;}
+.inlineQuizLoading{
+  width:100%;
+  min-height:clamp(320px, 52vh, 520px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:28px 18px;
+}
+
+.inlineQuizLoadingContent{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+
+.inlineLoaderDots{
+  --loader-dot-size:clamp(10px, 1.3vw, 14px);
+  --loader-radius:clamp(52px, 7.4vw, 68px);
+  position:relative;
+  width:clamp(128px, 18vw, 164px);
+  height:clamp(128px, 18vw, 164px);
+  flex:0 0 auto;
+  margin:0 auto 22px;
+}
+
+.inlineLoaderDots span{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:var(--loader-dot-size);
+  height:var(--loader-dot-size);
+  margin-left:calc(var(--loader-dot-size) * -0.5);
+  margin-top:calc(var(--loader-dot-size) * -0.5);
+  border-radius:50%;
+  background:#dfe5ec;
+  opacity:.72;
+  transform:rotate(calc(var(--loader-index) * 15deg)) translateY(calc(var(--loader-radius) * -1));
+  transform-origin:center;
+  animation:inlineCircularPulse 1.45s linear infinite;
+  animation-delay:calc(var(--loader-index) * -0.06s);
+}
+
+@keyframes inlineCircularPulse{
+  0%,100%{background:#dfe5ec;opacity:.72;}
+  12%{background:#2563eb;opacity:1;}
+  24%{background:#1b1648;opacity:1;}
+  42%,80%{background:#cbd5e1;opacity:.65;}
+}
+
+.inlineQuizLoadingText{
+  color:#1b1648;
+  font-family:Arial, Helvetica, sans-serif;
+  font-size:16px;
+  font-weight:700;
+  letter-spacing:.01em;
+  line-height:1.4;
+}
+
+@media(max-width:640px){
+  .inlineQuizLoading{
+    min-height:clamp(320px, 50vh, 440px);
+    padding:24px 12px;
+  }
+
+  .inlineLoaderDots{
+    --loader-dot-size:11px;
+    --loader-radius:52px;
+    width:128px;
+    height:128px;
+    margin-bottom:20px;
+  }
+
+  .inlineQuizLoadingText{
+    font-size:15px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .inlineLoaderDots span{
+    animation-duration:2.4s;
+  }
 }
 
 
@@ -8763,9 +8843,141 @@ math-field.mathAnswerField::part(container){
 }
 </style>
 
+
+<style>
+/* =========================================================
+   FINAL LOADING STATE
+   - Slightly smaller circular loader.
+   - Previous / Next quiz controls hidden until loading finishes.
+   ========================================================= */
+
+body.assessment-loading #topQuizControls{
+  display:none !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+
+/* Slightly smaller loader on laptop/desktop */
+.inlineLoaderDots{
+  --loader-dot-size:clamp(8px, 1vw, 11px) !important;
+  --loader-radius:clamp(42px, 5.6vw, 54px) !important;
+  width:clamp(104px, 14vw, 132px) !important;
+  height:clamp(104px, 14vw, 132px) !important;
+  margin-bottom:16px !important;
+}
+
+.inlineQuizLoadingText{
+  font-size:15px !important;
+}
+
+/* Phone: compact but still clearly visible */
+@media(max-width:640px){
+  .inlineLoaderDots{
+    --loader-dot-size:9px !important;
+    --loader-radius:42px !important;
+    width:104px !important;
+    height:104px !important;
+    margin-bottom:15px !important;
+  }
+
+  .inlineQuizLoadingText{
+    font-size:14px !important;
+  }
+}
+</style>
+
+
+<style>
+/* =========================================================
+   CLEAN MINIMAL ASSESSMENT LOADER
+   - No square/background box
+   - Smaller circular loader
+   - No loading text
+   - Previous/Next remain hidden until loading completes
+   ========================================================= */
+
+/* Remove the large assessment paper/card appearance while loading */
+body.assessment-loading #questionsWrap{
+  min-height:260px !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+body.assessment-loading #questions{
+  min-height:260px !important;
+  max-width:none !important;
+  width:100% !important;
+  padding:0 !important;
+  margin:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+
+/* Clean centered loader only */
+body.assessment-loading .inlineQuizLoading{
+  min-height:260px !important;
+  width:100% !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+body.assessment-loading .inlineQuizLoadingContent{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  flex-direction:column !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+/* Smaller circular loader */
+body.assessment-loading .inlineLoaderDots{
+  --loader-dot-size:7px !important;
+  --loader-radius:31px !important;
+  width:78px !important;
+  height:78px !important;
+  margin:0 !important;
+}
+
+/* Remove loading wording completely */
+body.assessment-loading .inlineQuizLoadingText{
+  display:none !important;
+}
+
+/* Keep adjacent quiz controls hidden during loading */
+body.assessment-loading #topQuizControls{
+  display:none !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+
+@media(max-width:640px){
+  body.assessment-loading #questionsWrap,
+  body.assessment-loading #questions,
+  body.assessment-loading .inlineQuizLoading{
+    min-height:210px !important;
+  }
+
+  body.assessment-loading .inlineLoaderDots{
+    --loader-dot-size:6px !important;
+    --loader-radius:27px !important;
+    width:68px !important;
+    height:68px !important;
+  }
+}
+</style>
+
 </head>
 
-<body>
+<body class="assessment-loading">
 </div>
 
 <header class="topbar">
@@ -9227,19 +9439,21 @@ const postSubmitOverlay = document.getElementById("postSubmitOverlay");
 
 
 function inlineQuizLoadingHtml(){
+  const dots = Array.from({length:24}, (_, index) =>
+    `<span style="--loader-index:${index}"></span>`
+  ).join("");
   return `
-    <div style="min-height:260px;display:flex;align-items:center;justify-content:center;text-align:center;">
-      <div>
-        <div class="inlineLoaderDots" style="display:flex;justify-content:center;gap:8px;margin-bottom:12px;">
-          <span></span><span></span><span></span>
-        </div>
-        <div style="font-weight:700;font-family:'Times New Roman',Times,serif;">Loading Assessment...</div>
+    <div class="inlineQuizLoading" role="status" aria-live="polite" aria-label="Loading assessment">
+      <div class="inlineQuizLoadingContent">
+        <div class="inlineLoaderDots" aria-hidden="true">${dots}</div>
+        <div class="inlineQuizLoadingText">Loading assessment…</div>
       </div>
     </div>
   `;
 }
 
   function showQuestionsShell(){
+    document.body.classList.add("assessment-loading");
     if (questionsWrap) questionsWrap.classList.add("loading");
     questionsDiv.innerHTML = inlineQuizLoadingHtml();
   }
@@ -9269,6 +9483,7 @@ function inlineQuizLoadingHtml(){
   function showQuestionsContent(){
     if (questionsWrap) questionsWrap.classList.remove("loading");
     hideQuizLoader();
+    document.body.classList.remove("assessment-loading");
   }
 
   function getRowQuestionLabel(row, fallback = ""){
