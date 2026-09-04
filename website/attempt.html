@@ -15,6 +15,8 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/mathlive@0.110.0/+esm" crossorigin>
+
 
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
@@ -8975,6 +8977,230 @@ body.assessment-loading #topQuizControls{
 }
 </style>
 
+
+<style>
+/* =========================================================
+   FINAL ATTEMPT LOADER POSITION
+   Same true-centre positioning used in the learner portal.
+   Loader styling/colours remain unchanged.
+   ========================================================= */
+
+body.assessment-loading .inlineQuizLoading{
+  position:fixed !important;
+  left:0 !important;
+  right:0 !important;
+  top:78px !important;
+  bottom:0 !important;
+  width:auto !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  pointer-events:none !important;
+  z-index:20 !important;
+}
+
+body.assessment-loading .inlineQuizLoadingContent{
+  margin:0 !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+/* Keep the approved loader ring exactly as it is */
+body.assessment-loading .inlineLoaderDots{
+  margin:0 !important;
+}
+
+/* Phone: centre below the compact top bar */
+@media(max-width:640px){
+  body.assessment-loading .inlineQuizLoading{
+    top:70px !important;
+  }
+}
+</style>
+
+
+<style>
+/* =========================================================
+   PHONE-ONLY LOADING NAVIGATION CLEANUP
+   Hide Back / Next while the assessment is loading.
+   ========================================================= */
+@media(max-width:640px){
+  body.assessment-loading #quizNavigation,
+  body.assessment-loading #prevQuestionBtn,
+  body.assessment-loading #nextQuestionBtn{
+    display:none !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+  }
+}
+</style>
+
+
+<style>
+/* Back button colour only — match the grey "Return to attempt" style */
+#prevQuestionBtn{
+  background:#64748b !important;
+  border-color:#64748b !important;
+  color:#ffffff !important;
+}
+
+#prevQuestionBtn:hover:not(:disabled){
+  background:#566579 !important;
+  border-color:#566579 !important;
+  color:#ffffff !important;
+}
+
+#prevQuestionBtn img{
+  filter:brightness(0) invert(1) !important;
+}
+</style>
+
+
+<style>
+/* =========================================================
+   FINAL PHONE MATHLIVE KEYBOARD
+   Laptop / desktop is intentionally untouched.
+   ========================================================= */
+@media(max-width:640px){
+
+  html,
+  body{
+    overflow-x:hidden !important;
+    max-width:100% !important;
+  }
+
+  body.math-keyboard-open{
+    padding-bottom:
+      calc(var(--mobile-math-keyboard-height) + 14px) !important;
+  }
+
+  math-field.mathAnswerField{
+    touch-action:manipulation !important;
+    scroll-margin-top:90px !important;
+    scroll-margin-bottom:
+      calc(var(--mobile-math-keyboard-height) + 28px) !important;
+  }
+
+  /*
+   * Constrain only the virtual keyboard shell.
+   * MathLive is allowed to calculate its own internal layout.
+   */
+  math-virtual-keyboard,
+  .ML__virtual-keyboard{
+    position:fixed !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+
+    width:100dvw !important;
+    max-width:100dvw !important;
+    min-width:0 !important;
+
+    margin:0 !important;
+    padding:0 !important;
+
+    box-sizing:border-box !important;
+    overflow-x:hidden !important;
+
+    transform:none !important;
+    z-index:5000 !important;
+
+    font-size:12px !important;
+
+    --keycap-font-size:12px;
+    --keycap-small-font-size:9px;
+    --keycap-height:34px;
+    --keycap-gap:1px;
+  }
+
+  /*
+   * Remove old width-forcing rules that caused keyboard rows to crop.
+   */
+  .ML__keyboard,
+  .ML__keyboard-layer,
+  .ML__keyboard-layout,
+  .ML__keyboard-row{
+    width:auto !important;
+    max-width:none !important;
+    min-width:0 !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+  }
+
+  .ML__keyboard{
+    overflow-x:hidden !important;
+  }
+
+  .ML__keyboard-row{
+    justify-content:center !important;
+    gap:1px !important;
+    padding-left:1px !important;
+    padding-right:1px !important;
+  }
+
+  .ML__keyboard-row > *{
+    min-width:0 !important;
+    flex-shrink:1 !important;
+  }
+}
+
+@supports not (width:100dvw){
+  @media(max-width:640px){
+    math-virtual-keyboard,
+    .ML__virtual-keyboard{
+      width:100vw !important;
+      max-width:100vw !important;
+    }
+  }
+}
+
+@media(max-width:390px){
+  math-virtual-keyboard,
+  .ML__virtual-keyboard{
+    font-size:11px !important;
+    --keycap-font-size:11px;
+    --keycap-small-font-size:8px;
+    --keycap-height:32px;
+    --keycap-gap:1px;
+  }
+}
+</style>
+
+
+<style>
+/* =========================================================
+   PHONE MATH INPUT PERFORMANCE
+   Reduce first-input work; desktop/laptop unchanged.
+   ========================================================= */
+@media(max-width:640px){
+  math-field.mathAnswerField{
+    transition:none !important;
+    contain:layout style !important;
+  }
+
+  body.math-keyboard-open{
+    scroll-behavior:auto !important;
+  }
+
+  /* Keep the keyboard shell fixed, but do not force its internal rows. */
+  math-virtual-keyboard,
+  .ML__virtual-keyboard{
+    contain:layout style !important;
+  }
+}
+</style>
+
 </head>
 
 <body class="assessment-loading">
@@ -9601,6 +9827,14 @@ function inlineQuizLoadingHtml(){
 
   function focusActiveMathAnswerField(){
     if (!quizStarted || submitted || blocked) return;
+
+    /*
+     * Desktop/laptop keeps the convenient automatic cursor.
+     * On phones, wait for the learner's real tap. Auto-focusing a MathLive
+     * field during question rendering competes with the virtual keyboard
+     * startup and can make the first input feel delayed.
+     */
+    if (window.matchMedia("(max-width: 640px)").matches) return;
 
     const activeGroup = questionPageGroups[currentQuestionPage] || [];
     const activeQuestion = activeGroup.find(row => row?.dataset?.scorable === "1");
@@ -18782,31 +19016,40 @@ window.addEventListener("DOMContentLoaded", () => {
 
 
 <script>
-/* ===== FAST MATHLIVE KEYBOARD FOR PHONE USERS ===== */
+/* ===== FAST FIRST-INPUT MATHLIVE KEYBOARD FOR PHONE USERS ===== */
 (() => {
-  const isPhone = () => window.matchMedia("(max-width: 640px)").matches;
-  let activeMathField = null;
-  let keyboardObserver = null;
-  let keyboardElement = null;
+  const isPhone = () => window.matchMedia("(max-width:640px)").matches;
+  let activeField = null;
+  let lastKeyboardHeight = 0;
+  let settleTimer = null;
 
-  function getKeyboardElement(){
+  function keyboardElement(){
     return document.querySelector(
-      'math-virtual-keyboard, .ML__virtual-keyboard'
+      "math-virtual-keyboard, .ML__virtual-keyboard"
     );
   }
 
-  function keyboardIsVisible(keyboard){
+  function keyboardIsVisible(){
+    const keyboard = keyboardElement();
     if (!keyboard) return false;
-    const style = window.getComputedStyle(keyboard);
+
     const rect = keyboard.getBoundingClientRect();
-    return style.display !== "none" &&
+    const style = getComputedStyle(keyboard);
+
+    return (
+      style.display !== "none" &&
       style.visibility !== "hidden" &&
-      rect.height > 20 &&
-      rect.bottom > 0;
+      rect.height > 24 &&
+      rect.bottom > 0
+    );
   }
 
-  function updateMobileKeyboardSpace(){
-    if (!isPhone()) {
+  function measureKeyboardOnce(){
+    if (!isPhone()) return;
+
+    const keyboard = keyboardElement();
+    if (!keyboardIsVisible()){
+      lastKeyboardHeight = 0;
       document.body.classList.remove("math-keyboard-open");
       document.documentElement.style.setProperty(
         "--mobile-math-keyboard-height",
@@ -18815,138 +19058,182 @@ window.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const keyboard = keyboardElement || getKeyboardElement();
-    if (keyboard && keyboard !== keyboardElement) {
-      bindKeyboardObserver(keyboard);
+    const height = Math.ceil(
+      keyboard.getBoundingClientRect().height
+    );
+
+    if (height !== lastKeyboardHeight){
+      lastKeyboardHeight = height;
+      document.documentElement.style.setProperty(
+        "--mobile-math-keyboard-height",
+        `${height}px`
+      );
     }
 
-    const visible = keyboardIsVisible(keyboard);
-    const height = visible
-      ? Math.ceil(keyboard.getBoundingClientRect().height)
-      : 0;
-
-    document.documentElement.style.setProperty(
-      "--mobile-math-keyboard-height",
-      `${height}px`
-    );
-    document.body.classList.toggle("math-keyboard-open", visible);
+    document.body.classList.add("math-keyboard-open");
   }
 
-  function bindKeyboardObserver(keyboard){
-    if (!keyboard || keyboard === keyboardElement) return;
+  function keepFieldVisibleOnce(){
+    if (!isPhone() || !activeField) return;
 
-    keyboardObserver?.disconnect();
-    keyboardElement = keyboard;
+    const keyboard = keyboardElement();
+    if (!keyboard || !keyboardIsVisible()) return;
 
-    keyboardObserver = new MutationObserver(() => {
-      requestAnimationFrame(updateMobileKeyboardSpace);
-    });
+    const fieldRect = activeField.getBoundingClientRect();
+    const keyboardTop = keyboard.getBoundingClientRect().top;
+    const safeBottom = keyboardTop - 16;
 
-    keyboardObserver.observe(keyboard, {
-      attributes:true,
-      childList:true,
-      subtree:true,
-      attributeFilter:["class", "style", "hidden"]
-    });
+    if (fieldRect.bottom > safeBottom){
+      const target =
+        (window.scrollY || 0) +
+        fieldRect.bottom -
+        safeBottom +
+        16;
 
-    requestAnimationFrame(updateMobileKeyboardSpace);
+      window.scrollTo({
+        top: Math.max(0, target),
+        left: 0,
+        behavior: "auto"
+      });
+    }
+  }
+
+  function settleKeyboard(){
+    clearTimeout(settleTimer);
+
+    /*
+     * Let MathLive create the keyboard first, then do one measurement and
+     * one vertical positioning pass. No permanent keyboard DOM observer.
+     */
+    settleTimer = setTimeout(() => {
+      measureKeyboardOnce();
+      keepFieldVisibleOnce();
+    }, 70);
+  }
+
+  function prepareField(field){
+    if (!field || !isPhone()) return;
+
+    field.setAttribute(
+      "virtual-keyboard-mode",
+      "onfocus"
+    );
+
+    field.setAttribute(
+      "enterkeyhint",
+      "done"
+    );
+  }
+
+  function prepareAllFields(root = document){
+    if (!isPhone()) return;
+
+    root.querySelectorAll?.(
+      "math-field.mathAnswerField"
+    ).forEach(prepareField);
   }
 
   /*
-   * Lightweight discovery only watches for the keyboard being inserted.
-   * It does NOT watch every class/style change on the entire page.
+   * A real touch is the only trigger on phone.
+   * We do not call focus() or keyboard.show() repeatedly.
    */
-  const insertionObserver = new MutationObserver(() => {
-    const keyboard = getKeyboardElement();
-    if (!keyboard) return;
-    bindKeyboardObserver(keyboard);
-  });
+  document.addEventListener(
+    "pointerdown",
+    (event) => {
+      const field = event.target?.closest?.(
+        "math-field.mathAnswerField"
+      );
 
-  function prepareMathFields(root = document){
-    if (!isPhone()) return;
-    root.querySelectorAll?.("math-field.mathAnswerField").forEach((field) => {
-      field.setAttribute("virtual-keyboard-mode", "onfocus");
-    });
-  }
+      if (!field || !isPhone()) return;
 
-  function startFastKeyboardSupport(){
-    prepareMathFields();
-
-    insertionObserver.observe(document.body, {
-      childList:true,
-      subtree:true
-    });
-
-    const existingKeyboard = getKeyboardElement();
-    if (existingKeyboard) bindKeyboardObserver(existingKeyboard);
-  }
+      activeField = field;
+      prepareField(field);
+    },
+    { passive:true }
+  );
 
   document.addEventListener("focusin", (event) => {
-    const field = event.target?.closest?.("math-field.mathAnswerField");
+    const field = event.target?.closest?.(
+      "math-field.mathAnswerField"
+    );
+
     if (!field || !isPhone()) return;
 
-    activeMathField = field;
-    field.setAttribute("virtual-keyboard-mode", "onfocus");
+    activeField = field;
+    prepareField(field);
 
     /*
-     * No long timeout: update immediately and once again after MathLive
-     * has had a frame to create/show its keyboard.
+     * MathLive's onfocus keyboard handles the opening.
+     * Only one lightweight settle pass runs after focus.
      */
-    requestAnimationFrame(() => {
-      updateMobileKeyboardSpace();
-      requestAnimationFrame(updateMobileKeyboardSpace);
-    });
+    settleKeyboard();
   });
 
   document.addEventListener("focusout", (event) => {
-    if (!event.target?.matches?.("math-field.mathAnswerField")) return;
+    if (
+      !event.target?.matches?.(
+        "math-field.mathAnswerField"
+      )
+    ) return;
 
     setTimeout(() => {
       const focused = document.activeElement;
-      if (!focused?.matches?.("math-field.mathAnswerField")) {
-        activeMathField = null;
-        updateMobileKeyboardSpace();
+
+      if (
+        !focused?.matches?.(
+          "math-field.mathAnswerField"
+        )
+      ){
+        activeField = null;
+        measureKeyboardOnce();
       }
     }, 120);
   });
 
   /*
-   * Whenever questions are rendered later, make their MathLive fields
-   * keyboard-ready immediately.
+   * Prepare newly rendered questions only.
+   * This observer does not watch keyboard internals.
    */
-  const questionObserver = new MutationObserver(() => {
-    prepareMathFields(document);
-  });
-
   function begin(){
-    startFastKeyboardSupport();
+    prepareAllFields();
 
     const questionsRoot =
       document.getElementById("questions") ||
       document.getElementById("questionsDiv");
 
-    if (questionsRoot) {
-      questionObserver.observe(questionsRoot, {
+    if (questionsRoot){
+      new MutationObserver(() => {
+        prepareAllFields(questionsRoot);
+      }).observe(questionsRoot, {
         childList:true,
         subtree:true
       });
     }
   }
 
+  /*
+   * Visual viewport changes only update the saved keyboard height.
+   * They do not scroll or inspect keyboard rows on every event.
+   */
   window.visualViewport?.addEventListener(
     "resize",
-    updateMobileKeyboardSpace,
-    { passive:true }
-  );
-  window.addEventListener(
-    "resize",
-    updateMobileKeyboardSpace,
+    () => requestAnimationFrame(measureKeyboardOnce),
     { passive:true }
   );
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", begin, { once:true });
-  } else {
+  window.addEventListener(
+    "orientationchange",
+    () => setTimeout(measureKeyboardOnce, 180),
+    { passive:true }
+  );
+
+  if (document.readyState === "loading"){
+    document.addEventListener(
+      "DOMContentLoaded",
+      begin,
+      { once:true }
+    );
+  }else{
     begin();
   }
 })();
