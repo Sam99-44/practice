@@ -15,6 +15,10 @@
 <!doctype html>
 <html lang="en">
 <head>
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Attempt Assessment | Practice Online</title>
@@ -57,9 +61,9 @@ window.addEventListener("load", () => {
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
   <script type="module">
-    import { MathfieldElement } from "https://esm.run/mathlive@0.110.0";
+    import { MathfieldElement } from "https://cdn.jsdelivr.net/npm/mathlive@0.110.0/+esm";
     MathfieldElement.fontsDirectory =
-      "https://unpkg.com/mathlive@0.110.0/fonts";
+      "https://cdn.jsdelivr.net/npm/mathlive@0.110.0/fonts";
   </script>
 
   <style>
@@ -17997,11 +18001,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
 
 <script>
-/* ===== FLEXIBLE MATHLIVE KEYBOARD FOR PHONE USERS ===== */
+/* ===== FAST MATHLIVE KEYBOARD FOR PHONE USERS ===== */
 (() => {
   const isPhone = () => window.matchMedia("(max-width: 640px)").matches;
   let activeMathField = null;
   let keyboardObserver = null;
+  let keyboardElement = null;
 
   function getKeyboardElement(){
     return document.querySelector(
@@ -18015,56 +18020,84 @@ window.addEventListener("DOMContentLoaded", () => {
     const rect = keyboard.getBoundingClientRect();
     return style.display !== "none" &&
       style.visibility !== "hidden" &&
-      rect.height > 20 && rect.bottom > 0;
+      rect.height > 20 &&
+      rect.bottom > 0;
   }
 
   function updateMobileKeyboardSpace(){
     if (!isPhone()) {
       document.body.classList.remove("math-keyboard-open");
-      document.documentElement.style.setProperty("--mobile-math-keyboard-height", "0px");
+      document.documentElement.style.setProperty(
+        "--mobile-math-keyboard-height",
+        "0px"
+      );
       return;
     }
 
-    const keyboard = getKeyboardElement();
+    const keyboard = keyboardElement || getKeyboardElement();
+    if (keyboard && keyboard !== keyboardElement) {
+      bindKeyboardObserver(keyboard);
+    }
+
     const visible = keyboardIsVisible(keyboard);
-    const height = visible ? Math.ceil(keyboard.getBoundingClientRect().height) : 0;
+    const height = visible
+      ? Math.ceil(keyboard.getBoundingClientRect().height)
+      : 0;
 
     document.documentElement.style.setProperty(
       "--mobile-math-keyboard-height",
       `${height}px`
     );
     document.body.classList.toggle("math-keyboard-open", visible);
-
-    if (visible && activeMathField) {
-      requestAnimationFrame(() => {
-        const viewportHeight = window.visualViewport?.height || window.innerHeight;
-        const rect = activeMathField.getBoundingClientRect();
-        const safeBottom = Math.max(16, viewportHeight - height - 20);
-
-        if (rect.bottom > safeBottom || rect.top < 12) {
-          activeMathField.scrollIntoView({
-            behavior:"smooth",
-            block:"center",
-            inline:"nearest"
-          });
-        }
-      });
-    }
   }
 
-  function watchKeyboard(){
-    if (keyboardObserver) return;
+  function bindKeyboardObserver(keyboard){
+    if (!keyboard || keyboard === keyboardElement) return;
+
+    keyboardObserver?.disconnect();
+    keyboardElement = keyboard;
 
     keyboardObserver = new MutationObserver(() => {
       requestAnimationFrame(updateMobileKeyboardSpace);
     });
 
-    keyboardObserver.observe(document.body, {
+    keyboardObserver.observe(keyboard, {
+      attributes:true,
       childList:true,
       subtree:true,
-      attributes:true,
       attributeFilter:["class", "style", "hidden"]
     });
+
+    requestAnimationFrame(updateMobileKeyboardSpace);
+  }
+
+  /*
+   * Lightweight discovery only watches for the keyboard being inserted.
+   * It does NOT watch every class/style change on the entire page.
+   */
+  const insertionObserver = new MutationObserver(() => {
+    const keyboard = getKeyboardElement();
+    if (!keyboard) return;
+    bindKeyboardObserver(keyboard);
+  });
+
+  function prepareMathFields(root = document){
+    if (!isPhone()) return;
+    root.querySelectorAll?.("math-field.mathAnswerField").forEach((field) => {
+      field.setAttribute("virtual-keyboard-mode", "onfocus");
+    });
+  }
+
+  function startFastKeyboardSupport(){
+    prepareMathFields();
+
+    insertionObserver.observe(document.body, {
+      childList:true,
+      subtree:true
+    });
+
+    const existingKeyboard = getKeyboardElement();
+    if (existingKeyboard) bindKeyboardObserver(existingKeyboard);
   }
 
   document.addEventListener("focusin", (event) => {
@@ -18074,14 +18107,14 @@ window.addEventListener("DOMContentLoaded", () => {
     activeMathField = field;
     field.setAttribute("virtual-keyboard-mode", "onfocus");
 
-    setTimeout(() => {
+    /*
+     * No long timeout: update immediately and once again after MathLive
+     * has had a frame to create/show its keyboard.
+     */
+    requestAnimationFrame(() => {
       updateMobileKeyboardSpace();
-      field.scrollIntoView({
-        behavior:"smooth",
-        block:"center",
-        inline:"nearest"
-      });
-    }, 180);
+      requestAnimationFrame(updateMobileKeyboardSpace);
+    });
   });
 
   document.addEventListener("focusout", (event) => {
@@ -18093,20 +18126,47 @@ window.addEventListener("DOMContentLoaded", () => {
         activeMathField = null;
         updateMobileKeyboardSpace();
       }
-    }, 220);
+    }, 120);
   });
 
-  window.visualViewport?.addEventListener("resize", updateMobileKeyboardSpace);
-  window.visualViewport?.addEventListener("scroll", updateMobileKeyboardSpace);
-  window.addEventListener("resize", updateMobileKeyboardSpace);
-  window.addEventListener("orientationchange", () => {
-    setTimeout(updateMobileKeyboardSpace, 250);
+  /*
+   * Whenever questions are rendered later, make their MathLive fields
+   * keyboard-ready immediately.
+   */
+  const questionObserver = new MutationObserver(() => {
+    prepareMathFields(document);
   });
+
+  function begin(){
+    startFastKeyboardSupport();
+
+    const questionsRoot =
+      document.getElementById("questions") ||
+      document.getElementById("questionsDiv");
+
+    if (questionsRoot) {
+      questionObserver.observe(questionsRoot, {
+        childList:true,
+        subtree:true
+      });
+    }
+  }
+
+  window.visualViewport?.addEventListener(
+    "resize",
+    updateMobileKeyboardSpace,
+    { passive:true }
+  );
+  window.addEventListener(
+    "resize",
+    updateMobileKeyboardSpace,
+    { passive:true }
+  );
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", watchKeyboard, { once:true });
+    document.addEventListener("DOMContentLoaded", begin, { once:true });
   } else {
-    watchKeyboard();
+    begin();
   }
 })();
 </script>
