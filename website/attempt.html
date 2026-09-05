@@ -9229,6 +9229,32 @@ const postSubmitOverlay = document.getElementById("postSubmitOverlay");
   const END_KEY = `quiz_end_${quizId}_${localStorage.getItem("username") || "user"}`;
   const ANSWERS_KEY = `quiz_answers_${quizId}_${localStorage.getItem("username") || "user"}`;
   const OPTION_ORDER_KEY = `quiz_option_order_${quizId}_${localStorage.getItem("username") || "user"}`;
+  const ACTIVE_QUIZ_KEY = `po_active_quiz_${localStorage.getItem("username") || "user"}`;
+
+  function readActiveQuizLock(){
+    try{
+      const lock = JSON.parse(localStorage.getItem(ACTIVE_QUIZ_KEY) || "null");
+      return lock && lock.quizId ? lock : null;
+    }catch(_){
+      return null;
+    }
+  }
+
+  function releaseCurrentQuizLock(reason="completed"){
+    try{
+      const lock = readActiveQuizLock();
+      if (!lock || String(lock.quizId || "") !== String(quizId || "")) return false;
+      localStorage.removeItem(ACTIVE_QUIZ_KEY);
+      localStorage.setItem("po_active_quiz_released", JSON.stringify({
+        quizId:String(quizId || ""),
+        reason:String(reason || "completed"),
+        releasedAt:Date.now()
+      }));
+      return true;
+    }catch(_){
+      return false;
+    }
+  }
 
   function typesetMath(root=document){
     if (window.MathJax?.typesetClear) {
@@ -13984,6 +14010,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       disableAllInputs();
       /* Keep workings visible after bottom submit */
       clearSavedAnswers();
+      releaseCurrentQuizLock("practice-completed");
       return true;
     }
 
@@ -14003,6 +14030,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       };
       blocked = true;
       disableAllInputs();
+      releaseCurrentQuizLock("already-submitted");
       return;
     }
 
@@ -14049,6 +14077,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       viewResultsBtn.disabled = false;
       viewResultsBtn.onclick = () => window.location.href = "results.html";
       showBottomResultsButton();
+      releaseCurrentQuizLock("already-submitted");
       return false;
     }
 
@@ -14077,6 +14106,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       : "First attempt submitted and saved. You can now retry (Practice Mode).";
 
     clearSavedAnswers();
+    releaseCurrentQuizLock("submitted");
 
     const savedData = await res.json().catch(() => ({}));
     if (options.samePageFinal && !isMarksReleasePending()) {
@@ -14360,6 +14390,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
         })
       ]);
       alreadyAttempted = attempted;
+      if (alreadyAttempted) releaseCurrentQuizLock("already-submitted");
       res = quizRes;
     }catch{
       if (quizTitle) quizTitle.textContent = "Network error";
@@ -14405,6 +14436,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       setStatusMessage("Assessment not found.", "errorState");
       hideQuizLoader();
       submitBtn.disabled = true;
+      releaseCurrentQuizLock("assessment-unavailable");
       return;
     }
 
@@ -14415,6 +14447,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       setStatusMessage("Could not load assessment.", "errorState");
       hideQuizLoader();
       submitBtn.disabled = true;
+      releaseCurrentQuizLock("assessment-invalid");
       return;
     }
 
@@ -14804,6 +14837,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       viewResultsBtn.disabled = true;
       disableAllInputs();
       hideQuestionNavigation();
+      releaseCurrentQuizLock("assessment-unavailable");
       return;
     }
 
@@ -17393,6 +17427,100 @@ function hasInlineLatexMathOnly(text){
         return noteVisualError("Add geometry points as: POINT A | x | y | label | label dx | label dy, or COORD_POINT A | x | y.");
       }
 
+      /* Keep constructed intersection points on the lines they describe.
+       * Authors may supply an approximate POINT for an angle vertex such as U.
+       * When the angle's two rays correspond to two drawn straight primitives,
+       * use their exact crossing for the vertex, its arcs and its label. */
+      const straightCommandNames = new Set([
+        "SEGMENT", "CHORD", "DIAMETER", "RADIUS", "DASHED", "ARROW", "RAY", "LINE", "TANGENT"
+      ]);
+      const straightPrimitives = commands
+        .filter(item => straightCommandNames.has(item.command))
+        .map(item => {
+          const firstName = noteSvgLabel(item.subject || "");
+          const secondName = noteSvgLabel(item.parts[0] || "");
+          const first = points[firstName];
+          const second = points[secondName];
+          if (!first || !second || (first.x === second.x && first.y === second.y)) return null;
+          return {
+            command:item.command,
+            firstName,
+            secondName,
+            first:{ x:first.x, y:first.y },
+            second:{ x:second.x, y:second.y }
+          };
+        })
+        .filter(Boolean);
+      const lineTolerance = Math.max(worldWidth, worldHeight) * .008;
+      const maximumIntersectionSnap = Math.max(worldWidth, worldHeight) * .22;
+      const primitiveContainsPoint = (primitive, pointName) => {
+        if (primitive.firstName === pointName || primitive.secondName === pointName) return true;
+        const point = points[pointName];
+        if (!point) return false;
+        const dx = primitive.second.x - primitive.first.x;
+        const dy = primitive.second.y - primitive.first.y;
+        const lengthSquared = dx * dx + dy * dy || 1;
+        const ratio = ((point.x - primitive.first.x) * dx + (point.y - primitive.first.y) * dy) / lengthSquared;
+        const projected = { x:primitive.first.x + ratio * dx, y:primitive.first.y + ratio * dy };
+        const distance = Math.hypot(point.x - projected.x, point.y - projected.y);
+        if (distance > lineTolerance) return false;
+        if (["LINE", "TANGENT"].includes(primitive.command)) return true;
+        if (primitive.command === "RAY") return ratio >= -.02;
+        return ratio >= -.02 && ratio <= 1.02;
+      };
+      const primitiveAllowsRatio = (primitive, ratio) => {
+        if (["LINE", "TANGENT"].includes(primitive.command)) return true;
+        if (primitive.command === "RAY") return ratio >= -.02;
+        return ratio >= -.02 && ratio <= 1.02;
+      };
+      const primitiveIntersection = (firstPrimitive, secondPrimitive) => {
+        const p = firstPrimitive.first;
+        const q = secondPrimitive.first;
+        const r = {
+          x:firstPrimitive.second.x - firstPrimitive.first.x,
+          y:firstPrimitive.second.y - firstPrimitive.first.y
+        };
+        const s = {
+          x:secondPrimitive.second.x - secondPrimitive.first.x,
+          y:secondPrimitive.second.y - secondPrimitive.first.y
+        };
+        const denominator = r.x * s.y - r.y * s.x;
+        if (Math.abs(denominator) < 1e-9) return null;
+        const qMinusP = { x:q.x - p.x, y:q.y - p.y };
+        const firstRatio = (qMinusP.x * s.y - qMinusP.y * s.x) / denominator;
+        const secondRatio = (qMinusP.x * r.y - qMinusP.y * r.x) / denominator;
+        if (!primitiveAllowsRatio(firstPrimitive, firstRatio) || !primitiveAllowsRatio(secondPrimitive, secondRatio)) return null;
+        return { x:p.x + firstRatio * r.x, y:p.y + firstRatio * r.y };
+      };
+
+      commands
+        .filter(item => ["ANGLE", "ARC", "ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command))
+        .forEach(item => {
+          const firstName = noteSvgLabel(item.subject || "");
+          const vertexName = noteSvgLabel(item.parts[0] || "");
+          const secondName = noteSvgLabel(item.parts[1] || "");
+          const vertex = points[vertexName];
+          if (!vertex || !firstName || !secondName) return;
+          const firstPrimitives = straightPrimitives.filter(primitive => primitiveContainsPoint(primitive, firstName));
+          const secondPrimitives = straightPrimitives.filter(primitive => primitiveContainsPoint(primitive, secondName));
+          let best = null;
+          firstPrimitives.forEach(firstPrimitive => {
+            secondPrimitives.forEach(secondPrimitive => {
+              if (firstPrimitive === secondPrimitive) return;
+              const intersection = primitiveIntersection(firstPrimitive, secondPrimitive);
+              if (!intersection) return;
+              const distance = Math.hypot(intersection.x - vertex.x, intersection.y - vertex.y);
+              if (distance <= maximumIntersectionSnap && (!best || distance < best.distance)) {
+                best = { ...intersection, distance };
+              }
+            });
+          });
+          if (best && best.distance > lineTolerance) {
+            vertex.x = best.x;
+            vertex.y = best.y;
+          }
+        });
+
       const svg = [];
       const axisMarkerId = "geometryAxisArrow" + (++noteVisualSvgSequence);
       const lineMarkerId = "geometryLineArrow" + (++noteVisualSvgSequence);
@@ -17544,6 +17672,18 @@ function hasInlineLatexMathOnly(text){
         }
       });
 
+      const labelBoxFor = (x, y, width, anchor) => ({
+        left: anchor === "end" ? x - width : anchor === "middle" ? x - width / 2 : x,
+        right: anchor === "end" ? x : anchor === "middle" ? x + width / 2 : x + width,
+        top: y - 13,
+        bottom: y + 4
+      });
+      const boxesOverlap = (first, second) => !(
+        first.right + 3 < second.left || first.left - 3 > second.right ||
+        first.bottom + 2 < second.top || first.top - 2 > second.bottom
+      );
+      const annotationLabelBoxes = [];
+
       const drawAngle = (first, vertex, second, label, radius, labelDx, labelDy, options) => {
         const a = canvasPoint(first);
         const b = canvasPoint(vertex);
@@ -17570,13 +17710,37 @@ function hasInlineLatexMathOnly(text){
         );
         const middle = startAngle + delta / 2;
         if (label) {
-          addText(
-            b.x + (arcRadius + 13) * Math.cos(middle) + (labelDx || 0),
-            b.y + (arcRadius + 13) * Math.sin(middle) + (labelDy || 0) + 4,
-            label,
-            "middle",
-            13
-          );
+          const radial = { x: Math.cos(middle), y: Math.sin(middle) };
+          const tangent = { x: -radial.y, y: radial.x };
+          const textWidth = Math.max(18, Array.from(String(label)).length * 6.4);
+          const explicitOffset = !!labelDx || !!labelDy;
+          const candidateOffsets = explicitOffset
+            ? [{ distance:arcRadius + 13, tangent:0 }]
+            : [
+                { distance:arcRadius + 13, tangent:0 },
+                { distance:arcRadius + 23, tangent:0 },
+                { distance:arcRadius + 33, tangent:0 },
+                { distance:arcRadius + 18, tangent:14 },
+                { distance:arcRadius + 18, tangent:-14 }
+              ];
+          let labelX = b.x + (arcRadius + 13) * radial.x + (labelDx || 0);
+          let labelY = b.y + (arcRadius + 13) * radial.y + (labelDy || 0) + 4;
+
+          for (const candidate of candidateOffsets) {
+            const candidateX = b.x + candidate.distance * radial.x + candidate.tangent * tangent.x + (labelDx || 0);
+            const candidateY = b.y + candidate.distance * radial.y + candidate.tangent * tangent.y + (labelDy || 0) + 4;
+            const candidateBox = labelBoxFor(candidateX, candidateY, textWidth, "middle");
+            const inside = candidateBox.left >= 4 && candidateBox.right <= width - 4 &&
+              candidateBox.top >= 4 && candidateBox.bottom <= height - 4;
+            if (inside && !annotationLabelBoxes.some(box => boxesOverlap(candidateBox, box))) {
+              labelX = candidateX;
+              labelY = candidateY;
+              break;
+            }
+          }
+
+          addText(labelX, labelY, label, "middle", 13);
+          annotationLabelBoxes.push(labelBoxFor(labelX, labelY, textWidth, "middle"));
         }
       };
 
@@ -17670,18 +17834,8 @@ function hasInlineLatexMathOnly(text){
         }
       });
 
-      const placedLabelBoxes = [];
+      const placedLabelBoxes = annotationLabelBoxes.slice();
       const diagramCentre = { x: offsetX + usedWidth / 2, y: offsetY + usedHeight / 2 };
-      const labelBoxFor = (x, y, width, anchor) => ({
-        left: anchor === "end" ? x - width : anchor === "middle" ? x - width / 2 : x,
-        right: anchor === "end" ? x : anchor === "middle" ? x + width / 2 : x + width,
-        top: y - 13,
-        bottom: y + 4
-      });
-      const boxesOverlap = (first, second) => !(
-        first.right + 3 < second.left || first.left - 3 > second.right ||
-        first.bottom + 2 < second.top || first.top - 2 > second.bottom
-      );
       Object.values(points).forEach(point => {
         if (!point.label) return;
         const canvas = canvasPoint(point);
@@ -17690,7 +17844,10 @@ function hasInlineLatexMathOnly(text){
         let anchor = dx < 0 ? "end" : "start";
         const textWidth = Math.max(8, Array.from(point.label).length * 6.4);
 
-        if (point.autoLabel) {
+        const preferredBox = labelBoxFor(canvas.x + dx, canvas.y + dy, textWidth, anchor);
+        const preferredConflicts = placedLabelBoxes.some(box => boxesOverlap(preferredBox, box));
+
+        if (point.autoLabel || preferredConflicts) {
           const vx = canvas.x - diagramCentre.x;
           const vy = canvas.y - diagramCentre.y;
           const length = Math.hypot(vx, vy);
@@ -17698,10 +17855,12 @@ function hasInlineLatexMathOnly(text){
             ? { x: vx / length * 12, y: vy / length * 12 + 4 }
             : { x: 10, y: -9 };
           const candidates = [
+            ...(point.autoLabel ? [] : [{ x:dx, y:dy }]),
             outward,
             { x: 10, y: -9 }, { x: -10, y: -9 },
             { x: 10, y: 17 }, { x: -10, y: 17 },
-            { x: 0, y: -11 }, { x: 0, y: 18 }
+            { x: 16, y: 4 }, { x: -16, y: 4 },
+            { x: 0, y: -15 }, { x: 0, y: 21 }
           ];
           for (const candidate of candidates) {
             const candidateAnchor = Math.abs(candidate.x) < 4 ? "middle" : candidate.x < 0 ? "end" : "start";
