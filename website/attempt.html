@@ -17514,13 +17514,38 @@ function hasInlineLatexMathOnly(text){
         return noteVisualError("Add geometry points as: POINT A | x | y | label | label dx | label dy, or COORD_POINT A | x | y.");
       }
 
+      /* A right-angle square is the complete marker for its 90-degree wedge.
+       * If an uploaded diagram also includes a normal angle command for the
+       * same named rays, suppress that duplicate arc and label. */
+      const geometryAngleCommandKey = item => {
+        const vertexName = noteSvgLabel(item.parts[0] || "");
+        const rayNames = [
+          noteSvgLabel(item.subject || ""),
+          noteSvgLabel(item.parts[1] || "")
+        ].sort();
+        return vertexName && rayNames[0] && rayNames[1]
+          ? vertexName + "|" + rayNames.join("|")
+          : "";
+      };
+      const rightAngleCommandKeys = new Set(
+        commands
+          .filter(item => item.command === "RIGHT_ANGLE")
+          .map(geometryAngleCommandKey)
+          .filter(Boolean)
+      );
+      const isDuplicateRightAngleCommand = item =>
+        item.command !== "REFLEX_ANGLE" && rightAngleCommandKeys.has(geometryAngleCommandKey(item));
+
       /* A true central intersection needs angle annotations on four distinct
          rays. Two adjacent angles at an ordinary polygon corner must not turn
          that corner into a centre point. */
       const angleVertexUseCounts = new Map();
       const angleVertexRayNames = new Map();
       commands
-        .filter(item => ["ANGLE", "ARC", "ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command))
+        .filter(item =>
+          ["ANGLE", "ARC", "ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command) &&
+          !isDuplicateRightAngleCommand(item)
+        )
         .forEach(item => {
           const vertexName = noteSvgLabel(item.parts[0] || "");
           if (!vertexName) return;
@@ -17605,7 +17630,10 @@ function hasInlineLatexMathOnly(text){
       };
 
       commands
-        .filter(item => ["ANGLE", "ARC", "ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command))
+        .filter(item =>
+          ["ANGLE", "ARC", "ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command) &&
+          !isDuplicateRightAngleCommand(item)
+        )
         .forEach(item => {
           const firstName = noteSvgLabel(item.subject || "");
           const vertexName = noteSvgLabel(item.parts[0] || "");
@@ -17653,7 +17681,10 @@ function hasInlineLatexMathOnly(text){
       }, 0);
       const centralAngleMaximumTextWidth = new Map();
       commands
-        .filter(item => ["ANGLE", "ARC", "ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command))
+        .filter(item =>
+          ["ANGLE", "ARC", "ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command) &&
+          !isDuplicateRightAngleCommand(item)
+        )
         .forEach(item => {
           const vertexName = noteSvgLabel(item.parts[0] || "");
           if (!centralAngleVertexNames.has(vertexName)) return;
@@ -17969,10 +18000,11 @@ function hasInlineLatexMathOnly(text){
           };
           const squareSecond = { x:b.x + secondUnit.x * squareSize, y:b.y + secondUnit.y * squareSize };
           svg.push(
-            '<path class="geometryRightAngle" d="M ' + squareFirst.x.toFixed(2) + ' ' + squareFirst.y.toFixed(2) +
+            '<path class="geometryRightAngle" d="M ' + b.x.toFixed(2) + ' ' + b.y.toFixed(2) +
+            ' L ' + squareFirst.x.toFixed(2) + ' ' + squareFirst.y.toFixed(2) +
             ' L ' + squareCorner.x.toFixed(2) + ' ' + squareCorner.y.toFixed(2) +
             ' L ' + squareSecond.x.toFixed(2) + ' ' + squareSecond.y.toFixed(2) +
-            '" fill="none" stroke="' + stroke + '" stroke-width="1.05" vector-effect="non-scaling-stroke" />'
+            ' Z" fill="none" stroke="' + stroke + '" stroke-width="1.05" vector-effect="non-scaling-stroke" />'
           );
           rememberGeometryObstacle(squareFirst, squareCorner);
           rememberGeometryObstacle(squareCorner, squareSecond);
@@ -17981,23 +18013,25 @@ function hasInlineLatexMathOnly(text){
 
         const startPoint = { x: b.x + arcRadius * Math.cos(startAngle), y: b.y + arcRadius * Math.sin(startAngle) };
         const endPoint = { x: b.x + arcRadius * Math.cos(startAngle + delta), y: b.y + arcRadius * Math.sin(startAngle + delta) };
-        svg.push(
-          '<path d="M ' + startPoint.x.toFixed(2) + ' ' + startPoint.y.toFixed(2) +
-          ' A ' + arcRadius + ' ' + arcRadius + ' 0 ' + (Math.abs(delta) > Math.PI ? 1 : 0) + ' ' + (delta >= 0 ? 1 : 0) + ' ' +
-          endPoint.x.toFixed(2) + ' ' + endPoint.y.toFixed(2) +
-          '" fill="none" stroke="' + stroke + '" stroke-width="1.05" vector-effect="non-scaling-stroke"' +
-          (settings.arrow ? ' marker-end="url(#' + lineMarkerId + ')"' : '') + ' />'
-        );
-        const arcSteps = Math.max(6, Math.ceil(Math.abs(delta) / (Math.PI / 18)));
-        let previousArcPoint = startPoint;
-        for (let index = 1; index <= arcSteps; index += 1) {
-          const theta = startAngle + delta * index / arcSteps;
-          const nextArcPoint = {
-            x:b.x + arcRadius * Math.cos(theta),
-            y:b.y + arcRadius * Math.sin(theta)
-          };
-          rememberGeometryObstacle(previousArcPoint, nextArcPoint);
-          previousArcPoint = nextArcPoint;
+        if (!settings.suppressArc) {
+          svg.push(
+            '<path d="M ' + startPoint.x.toFixed(2) + ' ' + startPoint.y.toFixed(2) +
+            ' A ' + arcRadius + ' ' + arcRadius + ' 0 ' + (Math.abs(delta) > Math.PI ? 1 : 0) + ' ' + (delta >= 0 ? 1 : 0) + ' ' +
+            endPoint.x.toFixed(2) + ' ' + endPoint.y.toFixed(2) +
+            '" fill="none" stroke="' + stroke + '" stroke-width="1.05" vector-effect="non-scaling-stroke"' +
+            (settings.arrow ? ' marker-end="url(#' + lineMarkerId + ')"' : '') + ' />'
+          );
+          const arcSteps = Math.max(6, Math.ceil(Math.abs(delta) / (Math.PI / 18)));
+          let previousArcPoint = startPoint;
+          for (let index = 1; index <= arcSteps; index += 1) {
+            const theta = startAngle + delta * index / arcSteps;
+            const nextArcPoint = {
+              x:b.x + arcRadius * Math.cos(theta),
+              y:b.y + arcRadius * Math.sin(theta)
+            };
+            rememberGeometryObstacle(previousArcPoint, nextArcPoint);
+            previousArcPoint = nextArcPoint;
+          }
         }
         const middle = startAngle + delta / 2;
         if (label) {
@@ -18051,10 +18085,82 @@ function hasInlineLatexMathOnly(text){
         }
       };
 
+      const rightAngleDefinitions = commands
+        .filter(item => item.command === "RIGHT_ANGLE")
+        .map(item => ({
+          first:pointFor(item.subject),
+          vertex:pointFor(item.parts[0]),
+          second:pointFor(item.parts[1])
+        }))
+        .filter(item => item.first && item.vertex && item.second);
+      const pointsCoincide = (first, second) =>
+        Math.hypot(first.x - second.x, first.y - second.y) < 1e-7;
+      const raysCoincide = (first, vertex, otherFirst, otherVertex) => {
+        const firstDx = first.x - vertex.x;
+        const firstDy = first.y - vertex.y;
+        const otherDx = otherFirst.x - otherVertex.x;
+        const otherDy = otherFirst.y - otherVertex.y;
+        const firstLength = Math.hypot(firstDx, firstDy);
+        const otherLength = Math.hypot(otherDx, otherDy);
+        if (!firstLength || !otherLength) return false;
+        return (firstDx * otherDx + firstDy * otherDy) / (firstLength * otherLength) > .9995;
+      };
+      const angleHasRightAngleSquare = (first, vertex, second) => rightAngleDefinitions.some(rightAngle => {
+        if (!pointsCoincide(vertex, rightAngle.vertex)) return false;
+        return (
+          raysCoincide(first, vertex, rightAngle.first, rightAngle.vertex) &&
+          raysCoincide(second, vertex, rightAngle.second, rightAngle.vertex)
+        ) || (
+          raysCoincide(first, vertex, rightAngle.second, rightAngle.vertex) &&
+          raysCoincide(second, vertex, rightAngle.first, rightAngle.vertex)
+        );
+      });
+      const normaliseAngleValue = value => String(value || "")
+        .replace(/\s+/g, "")
+        .replace(/[{}$()]/g, "")
+        .replace(/\^?\\circ/gi, "°")
+        .replace(/\\degree/gi, "°");
+      const numericRightAngleDefinitions = commands
+        .filter(item =>
+          ["ANGLE", "ARC", "ANGLE_ARROW"].includes(item.command) &&
+          /^90(?:[.,]0+)?°?$/.test(normaliseAngleValue(noteSvgLabel(item.parts[2] || "")))
+        )
+        .map(item => ({
+          first:pointFor(item.subject),
+          vertex:pointFor(item.parts[0]),
+          second:pointFor(item.parts[1])
+        }))
+        .filter(item => item.first && item.vertex && item.second);
+      const everyRightAngleDefinition = rightAngleDefinitions.concat(numericRightAngleDefinitions);
+      const raySeparation = (first, vertex, second, otherVertex) => {
+        const firstDx = first.x - vertex.x;
+        const firstDy = first.y - vertex.y;
+        const secondDx = second.x - otherVertex.x;
+        const secondDy = second.y - otherVertex.y;
+        const denominator = Math.hypot(firstDx, firstDy) * Math.hypot(secondDx, secondDy);
+        if (!denominator) return Math.PI;
+        const cosine = Math.max(-1, Math.min(1, (firstDx * secondDx + firstDy * secondDy) / denominator));
+        return Math.acos(cosine);
+      };
+      const rayFallsInsideRightAngle = (rayPoint, vertex, rightAngle) => {
+        const sector = raySeparation(rightAngle.first, rightAngle.vertex, rightAngle.second, rightAngle.vertex);
+        if (sector < Math.PI * .35 || sector > Math.PI * .65) return false;
+        const firstPart = raySeparation(rightAngle.first, rightAngle.vertex, rayPoint, vertex);
+        const secondPart = raySeparation(rayPoint, vertex, rightAngle.second, rightAngle.vertex);
+        return firstPart + secondPart <= sector + .015;
+      };
+      const angleFallsInsideRightAngle = (first, vertex, second) => everyRightAngleDefinition.some(rightAngle =>
+        pointsCoincide(vertex, rightAngle.vertex) &&
+        rayFallsInsideRightAngle(first, vertex, rightAngle) &&
+        rayFallsInsideRightAngle(second, vertex, rightAngle)
+      );
+
       commands.filter(item => ["ANGLE", "ARC", "ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command)).forEach(item => {
         const first = pointFor(item.subject);
         const vertex = pointFor(item.parts[0]);
         const second = pointFor(item.parts[1]);
+        if (!first || !vertex || !second) return;
+        if (item.command !== "REFLEX_ANGLE" && angleHasRightAngleSquare(first, vertex, second)) return;
         const label = noteSvgLabel(item.parts[2] || "");
         const radius = parseNoteGraphNumber(item.parts[3]) ?? 24;
         const labelDx = parseNoteGraphNumber(item.parts[4]) ?? 0;
@@ -18063,7 +18169,8 @@ function hasInlineLatexMathOnly(text){
           reflex: item.command === "REFLEX_ANGLE",
           arrow: ["ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command),
           central: centralAngleVertexNames.has(noteSvgLabel(item.parts[0] || "")),
-          centralTextWidth: centralAngleMaximumTextWidth.get(noteSvgLabel(item.parts[0] || "")) || 0
+          centralTextWidth: centralAngleMaximumTextWidth.get(noteSvgLabel(item.parts[0] || "")) || 0,
+          suppressArc: item.command !== "REFLEX_ANGLE" && angleFallsInsideRightAngle(first, vertex, second)
         });
       });
 
@@ -18081,10 +18188,11 @@ function hasInlineLatexMathOnly(text){
         const p2 = { x: p1.x + v.x * size, y: p1.y + v.y * size };
         const p3 = { x: vertex.x + v.x * size, y: vertex.y + v.y * size };
         svg.push(
-          '<path d="M ' + p1.x.toFixed(2) + ' ' + p1.y.toFixed(2) +
+          '<path class="geometryRightAngle" d="M ' + vertex.x.toFixed(2) + ' ' + vertex.y.toFixed(2) +
+          ' L ' + p1.x.toFixed(2) + ' ' + p1.y.toFixed(2) +
           ' L ' + p2.x.toFixed(2) + ' ' + p2.y.toFixed(2) +
           ' L ' + p3.x.toFixed(2) + ' ' + p3.y.toFixed(2) +
-          '" fill="none" stroke="' + stroke + '" stroke-width="1.05" vector-effect="non-scaling-stroke" />'
+          ' Z" fill="none" stroke="' + stroke + '" stroke-width="1.05" vector-effect="non-scaling-stroke" />'
         );
       });
 
@@ -18241,7 +18349,7 @@ function hasInlineLatexMathOnly(text){
       const activeViewBox = useMobileGeometryView ? mobileViewBox : desktopViewBox;
       return '<div class="noteVisualBlock' + (minimalTheme ? ' minimalDiagramTheme' : '') + '">' +
         (title ? '<div class="noteVisualTitle">' + renderNoteVisualTitle(title) + '</div>' : '') +
-        '<div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram generatedNoteGeometry" viewBox="' + activeViewBox + '" data-desktop-view-box="' + desktopViewBox + '" data-mobile-view-box="' + mobileViewBox + '" data-geometry-renderer="compact-angle-labels-v13" style="--geometry-text-size:' + responsiveGeometryTextSize.toFixed(2) + 'px" role="img" aria-label="' + escapeHtml(accessibleTitle) + '">' + svg.join("") + '</svg></div></div>';
+        '<div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram generatedNoteGeometry" viewBox="' + activeViewBox + '" data-desktop-view-box="' + desktopViewBox + '" data-mobile-view-box="' + mobileViewBox + '" data-geometry-renderer="right-angle-continuous-lines-v17" style="--geometry-text-size:' + responsiveGeometryTextSize.toFixed(2) + 'px" role="img" aria-label="' + escapeHtml(accessibleTitle) + '">' + svg.join("") + '</svg></div></div>';
     }
 
     function renderStructuredVisualNote(rawText){
