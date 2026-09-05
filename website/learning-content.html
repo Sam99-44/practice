@@ -7103,11 +7103,12 @@ if(portalResultsListEl){
     if(confirmExit){
       confirmExit.onclick = () => {
         confirmExit.disabled = true;
-        confirmExit.textContent = "Starting…";
         clearUnfinishedQuizState(lock?.quizId);
         try{ localStorage.removeItem(KEY); }catch(_){}
         const nextLock = saveLock(requestedId);
-        location.href = nextLock?.href || `attempt.html?quizId=${encodeURIComponent(requestedId)}`;
+        const nextHref = nextLock?.href || `attempt.html?quizId=${encodeURIComponent(requestedId)}`;
+        closePopup(el);
+        location.replace(nextHref);
       };
       confirmExit.disabled = false;
       confirmExit.textContent = "Exit & Start";
