@@ -4948,35 +4948,68 @@ textarea{
   position:fixed; inset:0; z-index:5000; display:none;
   align-items:center; justify-content:center; padding:18px;
   background:rgba(15,23,42,.38);
-  font-family:Arial,Helvetica,sans-serif;
+  font-family:inherit;
 }
 .activeQuizGuardOverlay.show{display:flex;}
 .activeQuizGuardCard{
-  width:min(100%,420px); background:#fff; border:1px solid #d9dee7;
+  width:min(100%,460px); max-height:calc(100dvh - 28px); overflow:auto;
+  background:#fff; border:1px solid #d9dee7;
   border-radius:14px; box-shadow:0 18px 45px rgba(15,23,42,.18);
   padding:22px; color:#111827;
 }
+.activeQuizGuardCard [hidden]{display:none!important;}
 .activeQuizGuardCard h3{margin:0 0 8px;font-size:18px;line-height:1.35;font-weight:700;}
 .activeQuizGuardNote{margin:0 0 16px;font-size:13px;line-height:1.55;color:#475569;}
 .activeQuizGuardCodeRow{
-  display:flex; align-items:center; justify-content:space-between; gap:16px;
-  padding:12px 0; border-top:1px solid #e5e7eb; border-bottom:1px solid #e5e7eb;
+  display:flex;flex-wrap:wrap;align-items:baseline;justify-content:flex-start;gap:8px;
+  padding:4px 0;border:0;
   font-size:13px;
 }
 .activeQuizGuardCodeRow span{color:#475569;}
-.activeQuizGuardCodeRow strong{color:#1b1648;font-size:14px;white-space:nowrap;}
-.activeQuizGuardActions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px;flex-wrap:wrap;}
-.activeQuizGuardReturn,.activeQuizGuardStay{
-  height:38px;min-width:122px;padding:0 15px;border-radius:5px;
-  font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,Helvetica,sans-serif;
+.activeQuizGuardCodeRow strong{
+  display:inline-flex;align-items:center;justify-content:center;justify-self:end;
+  width:auto;max-width:100%;min-width:0;min-height:26px;padding:3px 8px;
+  border:1px solid #d9dee7;border-radius:4px;background:#f8fafc;
+  color:#1b1648;font-size:12px;line-height:1.35;text-align:left;
+  white-space:normal;overflow-wrap:anywhere;word-break:break-word;
 }
-.activeQuizGuardReturn{background:#64748b;border:1px solid #64748b;color:#fff;}
+#activeQuizGuardCode,#activeQuizExitCode,#activeQuizStartCode{
+  min-height:0;padding:0;border:0;border-radius:0;background:transparent;
+}
+#activeQuizGuardCode,#activeQuizExitCode{
+  color:#15803d;
+}
+#activeQuizStartCode{color:#1b1648;}
+.activeQuizGuardActions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px;}
+#activeQuizGuardMain .activeQuizGuardActions{grid-template-columns:repeat(3,minmax(0,1fr));}
+.activeQuizGuardReturn,.activeQuizGuardStay,.activeQuizGuardExit,.activeQuizGuardConfirmExit,.activeQuizGuardCancelExit{
+  min-height:40px;min-width:0;padding:9px 13px;border-radius:5px;
+  font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;
+  white-space:normal;line-height:1.35;
+}
+.activeQuizGuardReturn{background:#1b1648;border:1px solid #1b1648;color:#fff;}
 .activeQuizGuardStay{background:#fff;border:1px solid #cbd5e1;color:#334155;}
+.activeQuizGuardExit{grid-column:1/-1;background:#fff;border:1px solid #b42318;color:#b42318;}
+#activeQuizGuardMain .activeQuizGuardExit{grid-column:auto;}
+.activeQuizGuardConfirmExit{background:#b42318;border:1px solid #b42318;color:#fff;}
+.activeQuizGuardCancelExit{background:#fff;border:1px solid #cbd5e1;color:#334155;}
+.activeQuizGuardConfirmRows{border:0;}
+.activeQuizGuardConfirmRows .activeQuizGuardCodeRow{border-top:0;}
+#activeQuizExitConfirmation .activeQuizGuardActions{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px;
+}
+#activeQuizExitConfirmation .activeQuizGuardCancelExit,
+#activeQuizExitConfirmation .activeQuizGuardConfirmExit{
+  width:auto;min-width:90px;min-height:36px;padding:7px 14px;
+}
 @media(max-width:640px){
-  .activeQuizGuardOverlay{padding:14px;}
-  .activeQuizGuardCard{padding:18px;}
+  .activeQuizGuardOverlay{padding:12px;align-items:center;}
+  .activeQuizGuardCard{width:100%;padding:18px 16px;border-radius:12px;}
+  .activeQuizGuardCodeRow{gap:6px;align-items:baseline;}
+  .activeQuizGuardCodeRow strong{width:auto;max-width:100%;justify-self:start;font-size:12px;line-height:1.35;}
   .activeQuizGuardActions{display:grid;grid-template-columns:1fr;}
-  .activeQuizGuardReturn,.activeQuizGuardStay{width:100%;}
+  .activeQuizGuardExit{grid-column:auto;}
+  .activeQuizGuardReturn,.activeQuizGuardStay,.activeQuizGuardExit,.activeQuizGuardConfirmExit,.activeQuizGuardCancelExit{width:100%;min-height:44px;}
 }
 </style>
 
@@ -6870,7 +6903,8 @@ if(portalResultsListEl){
 <script>
 (() => {
   const MAX_AGE = 12 * 60 * 60 * 1000;
-  const KEY = `po_active_quiz_${localStorage.getItem("username") || "user"}`;
+  const ACTIVE_USER = localStorage.getItem("username") || "user";
+  const KEY = `po_active_quiz_${ACTIVE_USER}`;
 
   function readLock(){
     try{
@@ -6938,6 +6972,28 @@ if(portalResultsListEl){
     return lock;
   }
 
+  function clearUnfinishedQuizState(quizId){
+    const id = String(quizId || "").trim();
+    if(!id) return;
+    [
+      `quiz_end_${id}_${ACTIVE_USER}`,
+      `quiz_answers_${id}_${ACTIVE_USER}`,
+      `quiz_option_order_${id}_${ACTIVE_USER}`
+    ].forEach(storageKey => {
+      try{ localStorage.removeItem(storageKey); }catch(_){}
+    });
+  }
+
+  function closePopup(el){
+    if(!el) return;
+    el.classList.remove("show");
+    el.setAttribute("aria-hidden","true");
+    const main = el.querySelector("#activeQuizGuardMain");
+    const confirmation = el.querySelector("#activeQuizExitConfirmation");
+    if(main) main.hidden = false;
+    if(confirmation) confirmation.hidden = true;
+  }
+
   function ensurePopup(){
     let el = document.getElementById("activeQuizGuardOverlay");
     if(el) return el;
@@ -6948,19 +7004,41 @@ if(portalResultsListEl){
     el.setAttribute("aria-hidden","true");
 
     el.innerHTML = `
-      <div class="activeQuizGuardCard" role="dialog" aria-modal="true">
-        <h3>Quiz already in progress</h3>
-        <p class="activeQuizGuardNote">
-          You already have an active quiz. Only one quiz can be open at a time.
-          Return to the active quiz before starting or retaking another one.
-        </p>
-        <div class="activeQuizGuardCodeRow">
-          <span>Active assessment code</span>
-          <strong id="activeQuizGuardCode">—</strong>
+      <div class="activeQuizGuardCard" role="dialog" aria-modal="true" aria-labelledby="activeQuizGuardTitle">
+        <div id="activeQuizGuardMain">
+          <h3 id="activeQuizGuardTitle">Quiz already in progress</h3>
+          <p class="activeQuizGuardNote">
+            You already have an unfinished quiz.
+          </p>
+          <div class="activeQuizGuardCodeRow">
+            <span>Active assessment code</span>
+            <strong id="activeQuizGuardCode">—</strong>
+          </div>
+          <div class="activeQuizGuardActions">
+            <button class="activeQuizGuardReturn" id="activeQuizGuardReturn" type="button" aria-label="Return to current quiz" title="Return to current quiz">Active Quiz</button>
+            <button class="activeQuizGuardStay" id="activeQuizGuardStay" type="button" aria-label="Stay on this page" title="Stay on this page">Stay</button>
+            <button class="activeQuizGuardExit" id="activeQuizGuardExit" type="button" aria-label="Exit current quiz and start selected quiz" title="Exit current quiz and start selected quiz">New Quiz</button>
+          </div>
         </div>
-        <div class="activeQuizGuardActions">
-          <button class="activeQuizGuardReturn" id="activeQuizGuardReturn" type="button">Return to quiz</button>
-          <button class="activeQuizGuardStay" id="activeQuizGuardStay" type="button">Stay here</button>
+        <div id="activeQuizExitConfirmation" hidden>
+          <h3>Exit the current quiz?</h3>
+          <p class="activeQuizGuardNote">
+            Unsaved answers and progress in the current unfinished quiz will be removed. Completed results will not be affected.
+          </p>
+          <div class="activeQuizGuardConfirmRows">
+            <div class="activeQuizGuardCodeRow">
+              <span>Current quiz</span>
+              <strong id="activeQuizExitCode">—</strong>
+            </div>
+            <div class="activeQuizGuardCodeRow">
+              <span>New quiz</span>
+              <strong id="activeQuizStartCode">—</strong>
+            </div>
+          </div>
+          <div class="activeQuizGuardActions">
+            <button class="activeQuizGuardCancelExit" id="activeQuizGuardCancelExit" type="button">Cancel</button>
+            <button class="activeQuizGuardConfirmExit" id="activeQuizGuardConfirmExit" type="button" aria-label="Exit current quiz and start new quiz" title="Exit current quiz and start new quiz">Exit &amp; Start</button>
+          </div>
         </div>
       </div>
     `;
@@ -6968,24 +7046,71 @@ if(portalResultsListEl){
     document.body.appendChild(el);
 
     el.querySelector("#activeQuizGuardStay")?.addEventListener("click", () => {
-      el.classList.remove("show");
-      el.setAttribute("aria-hidden","true");
+      closePopup(el);
+    });
+
+    el.addEventListener("click", event => {
+      if(event.target === el) closePopup(el);
+    });
+
+    el.querySelector("#activeQuizGuardCancelExit")?.addEventListener("click", () => {
+      const main = el.querySelector("#activeQuizGuardMain");
+      const confirmation = el.querySelector("#activeQuizExitConfirmation");
+      if(main) main.hidden = false;
+      if(confirmation) confirmation.hidden = true;
+      el.querySelector("#activeQuizGuardExit")?.focus();
+    });
+
+    document.addEventListener("keydown", event => {
+      if(event.key === "Escape" && el.classList.contains("show")) closePopup(el);
     });
 
     return el;
   }
 
-  function showPopup(lock){
+  function showPopup(lock, requestedQuizId){
     const el = ensurePopup();
     const code = el.querySelector("#activeQuizGuardCode");
     const ret = el.querySelector("#activeQuizGuardReturn");
+    const exit = el.querySelector("#activeQuizGuardExit");
+    const confirmExit = el.querySelector("#activeQuizGuardConfirmExit");
+    const main = el.querySelector("#activeQuizGuardMain");
+    const confirmation = el.querySelector("#activeQuizExitConfirmation");
+    const requestedId = String(requestedQuizId || "").trim();
+    const currentCode = lock?.code || "Active quiz";
+    const requestedCode = getCode(requestedId) || "Selected quiz";
 
-    if(code) code.textContent = lock?.code || "Active quiz";
+    if(main) main.hidden = false;
+    if(confirmation) confirmation.hidden = true;
+    if(code) code.textContent = currentCode;
     if(ret){
       ret.onclick = () => {
         location.href = lock?.href ||
           `attempt.html?quizId=${encodeURIComponent(lock?.quizId || "")}`;
       };
+    }
+    if(exit){
+      exit.onclick = () => {
+        if(main) main.hidden = true;
+        if(confirmation) confirmation.hidden = false;
+        const exitCode = el.querySelector("#activeQuizExitCode");
+        const startCode = el.querySelector("#activeQuizStartCode");
+        if(exitCode) exitCode.textContent = currentCode;
+        if(startCode) startCode.textContent = requestedCode;
+        requestAnimationFrame(() => confirmExit?.focus());
+      };
+    }
+    if(confirmExit){
+      confirmExit.onclick = () => {
+        confirmExit.disabled = true;
+        confirmExit.textContent = "Starting…";
+        clearUnfinishedQuizState(lock?.quizId);
+        try{ localStorage.removeItem(KEY); }catch(_){}
+        const nextLock = saveLock(requestedId);
+        location.href = nextLock?.href || `attempt.html?quizId=${encodeURIComponent(requestedId)}`;
+      };
+      confirmExit.disabled = false;
+      confirmExit.textContent = "Exit & Start";
     }
 
     el.classList.add("show");
@@ -7000,7 +7125,7 @@ if(portalResultsListEl){
     const active = readLock();
 
     if(active && active.quizId !== id){
-      showPopup(active);
+      showPopup(active, id);
       return false;
     }
 
