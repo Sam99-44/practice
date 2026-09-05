@@ -8845,6 +8845,52 @@ body{
 }
 </style>
 
+<style>
+/* One-active-quiz guard: shared by first attempts and retakes. */
+.activeQuizConflictOverlay{
+  position:fixed;inset:0;z-index:100000;display:none;
+  align-items:center;justify-content:center;padding:16px;
+  background:rgba(15,23,42,.42);font-family:inherit;
+}
+.activeQuizConflictOverlay.show{display:flex;}
+.activeQuizConflictCard{
+  width:min(100%,430px);max-height:calc(100dvh - 28px);overflow:auto;
+  padding:22px;background:#fff;border:1px solid #d9dee7;border-radius:12px;
+  box-shadow:0 18px 44px rgba(15,23,42,.2);color:#111827;
+}
+.activeQuizConflictCard h3{margin:0 0 8px;font-size:18px;line-height:1.35;font-weight:700;}
+.activeQuizConflictCard p{margin:0 0 15px;color:#475569;font-size:13px;line-height:1.55;}
+.activeQuizConflictCode{
+  display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  padding:4px 0;font-size:13px;
+}
+.activeQuizConflictCode span{color:#475569;}
+.activeQuizConflictCode strong{
+  min-width:0;color:#15803d;font-size:13px;line-height:1.35;
+  text-align:right;white-space:normal;overflow-wrap:anywhere;word-break:break-word;
+}
+.activeQuizConflictActions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
+.activeQuizConflictActions button{
+  min-width:94px;min-height:36px;padding:7px 13px;border-radius:5px;
+  font:700 12px/1.35 inherit;cursor:pointer;
+}
+#activeQuizConflictReturn{background:#1b1648;border:1px solid #1b1648;color:#fff;}
+#activeQuizConflictHub{background:#fff;border:1px solid #cbd5e1;color:#334155;}
+
+/* The legacy full-screen completion summary and rating flow are retired. */
+#postSubmitOverlay{
+  display:none !important;
+}
+@media(max-width:640px){
+  .activeQuizConflictOverlay{padding:12px;}
+  .activeQuizConflictCard{padding:18px 16px;border-radius:10px;}
+  .activeQuizConflictCode{align-items:flex-start;}
+  .activeQuizConflictCode strong{max-width:56%;}
+  .activeQuizConflictActions{display:grid;grid-template-columns:1fr 1fr;}
+  .activeQuizConflictActions button{width:100%;min-width:0;min-height:40px;}
+}
+</style>
+
 </head>
 
 <body class="assessment-loading">
@@ -9222,14 +9268,94 @@ const postSubmitOverlay = document.getElementById("postSubmitOverlay");
   const ANSWERS_KEY = `quiz_answers_${quizId}_${localStorage.getItem("username") || "user"}`;
   const OPTION_ORDER_KEY = `quiz_option_order_${quizId}_${localStorage.getItem("username") || "user"}`;
   const ACTIVE_QUIZ_KEY = `po_active_quiz_${localStorage.getItem("username") || "user"}`;
+  const ACTIVE_QUIZ_MAX_AGE_MS = 12 * 60 * 60 * 1000;
 
   function readActiveQuizLock(){
     try{
-      const lock = JSON.parse(localStorage.getItem(ACTIVE_QUIZ_KEY) || "null");
-      return lock && lock.quizId ? lock : null;
-    }catch(_){
-      return null;
+      const raw = JSON.parse(localStorage.getItem(ACTIVE_QUIZ_KEY) || "null");
+      if(!raw || !raw.quizId) return null;
+      const updatedAt = Number(raw.updatedAt || raw.startedAt || 0);
+      if(updatedAt && Date.now() - updatedAt > ACTIVE_QUIZ_MAX_AGE_MS){
+        localStorage.removeItem(ACTIVE_QUIZ_KEY);
+        return null;
+      }
+      return {
+        quizId:String(raw.quizId),
+        code:String(raw.code || "Active quiz").toUpperCase(),
+        href:String(raw.href || `attempt.html?quizId=${encodeURIComponent(raw.quizId)}`),
+        startedAt:Number(raw.startedAt || Date.now()),
+        updatedAt:updatedAt || Date.now()
+      };
+    }catch(_){ return null; }
+  }
+
+  function assessmentCodeForActiveLock(quiz){
+    return cleanSpaces(
+      quiz?.assessmentCode || quiz?.quizCode || quiz?.examCode || quiz?.code || ""
+    ).toUpperCase() || "ACTIVE QUIZ";
+  }
+
+  function conflictingActiveQuiz(){
+    const active = readActiveQuizLock();
+    return active && active.quizId !== String(quizId || "") ? active : null;
+  }
+
+  function writeCurrentQuizLock(quiz){
+    const conflict = conflictingActiveQuiz();
+    if(conflict) return conflict;
+    const existing = readActiveQuizLock();
+    const now = Date.now();
+    const lock = {
+      quizId:String(quizId || ""),
+      code:assessmentCodeForActiveLock(quiz),
+      href:`attempt.html?quizId=${encodeURIComponent(quizId || "")}`,
+      startedAt:existing?.startedAt || now,
+      updatedAt:now
+    };
+    try{ localStorage.setItem(ACTIVE_QUIZ_KEY, JSON.stringify(lock)); }catch(_){}
+    return lock;
+  }
+
+  function touchCurrentQuizLock(){
+    const active = readActiveQuizLock();
+    if(!active || active.quizId !== String(quizId || "")) return;
+    active.updatedAt = Date.now();
+    try{ localStorage.setItem(ACTIVE_QUIZ_KEY, JSON.stringify(active)); }catch(_){}
+  }
+
+  function showActiveQuizConflict(lock){
+    let overlay = document.getElementById("activeQuizConflictOverlay");
+    if(!overlay){
+      overlay = document.createElement("div");
+      overlay.id = "activeQuizConflictOverlay";
+      overlay.className = "activeQuizConflictOverlay";
+      overlay.setAttribute("aria-hidden", "true");
+      overlay.innerHTML = `
+        <div class="activeQuizConflictCard" role="dialog" aria-modal="true" aria-labelledby="activeQuizConflictTitle">
+          <h3 id="activeQuizConflictTitle">Quiz already in progress</h3>
+          <p>Only one quiz can be active at a time.</p>
+          <div class="activeQuizConflictCode">
+            <span>Active assessment code</span>
+            <strong id="activeQuizConflictCodeValue">—</strong>
+          </div>
+          <div class="activeQuizConflictActions">
+            <button id="activeQuizConflictReturn" type="button">Active Quiz</button>
+            <button id="activeQuizConflictHub" type="button">Learning Hub</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
     }
+    overlay.querySelector("#activeQuizConflictCodeValue").textContent = lock?.code || "Active quiz";
+    overlay.querySelector("#activeQuizConflictReturn").onclick = () => {
+      location.replace(lock?.href || `attempt.html?quizId=${encodeURIComponent(lock?.quizId || "")}`);
+    };
+    overlay.querySelector("#activeQuizConflictHub").onclick = () => {
+      location.replace("learning-content.html#quizzes");
+    };
+    overlay.classList.add("show");
+    overlay.setAttribute("aria-hidden", "false");
+    hideQuizLoader();
+    document.body.classList.remove("assessment-loading");
   }
 
   function releaseCurrentQuizLock(reason="completed"){
@@ -9247,6 +9373,8 @@ const postSubmitOverlay = document.getElementById("postSubmitOverlay");
       return false;
     }
   }
+
+  setInterval(touchCurrentQuizLock, 60 * 1000);
 
   function typesetMath(root=document){
     if (window.MathJax?.typesetClear) {
@@ -11230,54 +11358,9 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   }
 
   function showResultsFollowupPopup(){
-    const overlay = ensureResultsFollowupPopup();
-
-    const retry = overlay.querySelector('[data-result-action="retry"]');
-    const next = overlay.querySelector('[data-result-action="next"]');
-    const workings = overlay.querySelector('[data-result-action="workings"]');
-    const rate = overlay.querySelector('[data-result-action="rate"]');
-
-    /* This stage is rating-only. No Continue learning choices are shown here. */
-    if (retry) retry.style.display = "none";
-    if (next) next.style.display = "none";
-    if (workings) workings.style.display = "none";
-    if (rate) rate.style.display = "none";
-
-    const heading = overlay.querySelector("h3");
-    const intro = overlay.querySelector("p");
-    if (heading) heading.textContent = "Rate this quiz";
-    if (intro) intro.textContent = "Tell us how you found this assessment.";
-
-    const ratingPanel = overlay.querySelector("[data-result-rating-panel]");
-    if (ratingPanel) {
-      ratingPanel.style.display = "block";
-
-      const status = ratingPanel.querySelector("[data-result-rating-status]");
-      if (status) status.textContent = "";
-
-      const saveRating = ratingPanel.querySelector("[data-result-rating-save]");
-      if (saveRating) {
-        saveRating.textContent = "Send rating";
-        saveRating.disabled = true;
-        saveRating.style.opacity = ".55";
-      }
-
-      ratingPanel.querySelectorAll("[data-result-star]").forEach(btn => {
-        btn.disabled = false;
-        btn.setAttribute("aria-pressed", "false");
-      });
-      ratingPanel.querySelectorAll("[data-result-star] img").forEach(img => {
-        img.style.opacity = ".32";
-        img.style.transform = "scale(1)";
-        img.style.filter = "grayscale(1) brightness(.9)";
-      });
-
-      const label = ratingPanel.querySelector("[data-result-rating-label]");
-      if (label) label.textContent = "Choose a rating";
-    }
-
-    overlay.style.display = "flex";
-    overlay.setAttribute("aria-hidden", "false");
+    /* Retired: remain on the submitted assessment instead of opening
+       another completion/rating dialog. */
+    hideResultsFollowupPopup();
   }
 
   function hideResultsFollowupPopup(){
@@ -11380,21 +11463,9 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   }
 
   function showCompletedAssessmentState(){
-    setCompletedFollowupView(true);
-
-    const panel = ensureCompletedAssessmentState();
-    const summary = computeLocalSubmissionSummary();
-    const scoreEl = panel.querySelector("#completedAssessmentScore");
-
-    if (scoreEl) {
-      scoreEl.innerHTML = `
-        <span><strong>Total score:</strong> ${formatBreakdownMark(summary.score)} / ${formatBreakdownMark(summary.total)}</span>
-        <span><strong>Percentage:</strong> ${Math.round(Number(summary.percent || 0))}%</span>
-      `;
-    }
-
-    panel.style.display = "block";
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    /* Retired with the legacy completion overlay. */
+    hideCompletedAssessmentState();
+    setCompletedFollowupView(false);
   }
 
   function hideCompletedAssessmentState(){
@@ -11419,13 +11490,16 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     const closeX = submitConfirmModal?.querySelector?.(".resultsCloseX");
     if (closeX) closeX.style.display = "none";
 
-    /*
-      Final flow:
-      Results -> Assessment completed state -> rating-only popup.
-      Never fall back to the last question and never show Continue learning here.
-    */
-    showCompletedAssessmentState();
-    window.setTimeout(showResultsFollowupPopup, 90);
+    hideResultsFollowupPopup();
+    hideCompletedAssessmentState();
+    setCompletedFollowupView(false);
+    document.body.classList.add("submitted-state");
+    placeReviewNavigationBelowQuestion();
+    showQuestionPage(currentQuestionPage, false);
+    showAllWorkingsButtons();
+    showAllWorkingsAfterFinish();
+    showBottomResultsButton();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   postSubmitOverlay.addEventListener("click", function(e){
@@ -12919,10 +12993,8 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   }
 
   function showPostSubmitPanel(){
-    if (!postSubmitPanel || !postSubmitOverlay) return;
-    postSubmitOverlay.classList.remove("hidden");
-    postSubmitOverlay.classList.add("show");
-    postSubmitOverlay.setAttribute("aria-hidden", "false");
+    /* Retired: results remain in the clean submitted-assessment view. */
+    hidePostSubmitPanel();
   }
 
   function updateInlineStars(){
@@ -13144,6 +13216,14 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
   function startPracticeMode(){
     if (!quizData) return;
+
+    const activeConflict = conflictingActiveQuiz();
+    if(activeConflict){
+      blocked = true;
+      showActiveQuizConflict(activeConflict);
+      return;
+    }
+    writeCurrentQuizLock(quizData);
 
     hideCompletedAssessmentState();
     samePageResultsDismissed = false;
@@ -14357,6 +14437,13 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   });
 
   async function loadQuiz(options = {}) {
+    const activeConflict = conflictingActiveQuiz();
+    if(activeConflict){
+      blocked = true;
+      showActiveQuizConflict(activeConflict);
+      return;
+    }
+
     msgEl.className = "muted";
     msgEl.textContent = "";
     blocked = false;
@@ -14442,6 +14529,14 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       releaseCurrentQuizLock("assessment-invalid");
       return;
     }
+
+    const lateActiveConflict = conflictingActiveQuiz();
+    if(lateActiveConflict){
+      blocked = true;
+      showActiveQuizConflict(lateActiveConflict);
+      return;
+    }
+    if(!alreadyAttempted) writeCurrentQuizLock(quizData);
 
     resetQuestionRandomization();
 
@@ -17419,17 +17514,27 @@ function hasInlineLatexMathOnly(text){
         return noteVisualError("Add geometry points as: POINT A | x | y | label | label dx | label dy, or COORD_POINT A | x | y.");
       }
 
-      /* Mark the exact centre of multi-angle intersections. */
+      /* A true central intersection needs angle annotations on four distinct
+         rays. Two adjacent angles at an ordinary polygon corner must not turn
+         that corner into a centre point. */
       const angleVertexUseCounts = new Map();
+      const angleVertexRayNames = new Map();
       commands
         .filter(item => ["ANGLE", "ARC", "ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command))
         .forEach(item => {
           const vertexName = noteSvgLabel(item.parts[0] || "");
-          if (vertexName) angleVertexUseCounts.set(vertexName, (angleVertexUseCounts.get(vertexName) || 0) + 1);
+          if (!vertexName) return;
+          angleVertexUseCounts.set(vertexName, (angleVertexUseCounts.get(vertexName) || 0) + 1);
+          if (!angleVertexRayNames.has(vertexName)) angleVertexRayNames.set(vertexName, new Set());
+          const rays = angleVertexRayNames.get(vertexName);
+          const firstRay = noteSvgLabel(item.subject || "");
+          const secondRay = noteSvgLabel(item.parts[1] || "");
+          if (firstRay) rays.add(firstRay);
+          if (secondRay) rays.add(secondRay);
         });
       const centralAngleVertexNames = new Set(
         [...angleVertexUseCounts.entries()]
-          .filter(([, count]) => count >= 2)
+          .filter(([name, count]) => count >= 2 && (angleVertexRayNames.get(name)?.size || 0) >= 4)
           .map(([name]) => name)
       );
 
@@ -17538,6 +17643,14 @@ function hasInlineLatexMathOnly(text){
         ? Math.max(16, Math.min(32, estimatedMobileWidth * 14 / 300))
         : 13;
       const estimatedGeometryCharacterWidth = responsiveGeometryTextSize * .58;
+      const estimateGeometryTextWidth = value => Array.from(String(value || "")).reduce((total, character) => {
+        if (/\s/.test(character)) return total + responsiveGeometryTextSize * .28;
+        if (/[1ilI|]/.test(character)) return total + responsiveGeometryTextSize * .34;
+        if (/[mwMW]/.test(character)) return total + responsiveGeometryTextSize * .82;
+        if (/[°′″]/.test(character)) return total + responsiveGeometryTextSize * .38;
+        if (/[+−=<>-]/.test(character)) return total + responsiveGeometryTextSize * .56;
+        return total + responsiveGeometryTextSize * .52;
+      }, 0);
       const centralAngleMaximumTextWidth = new Map();
       commands
         .filter(item => ["ANGLE", "ARC", "ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command))
@@ -17547,7 +17660,7 @@ function hasInlineLatexMathOnly(text){
           const angleLabel = noteSvgLabel(item.parts[2] || "");
           const angleTextWidth = Math.max(
             20,
-            Array.from(String(angleLabel)).length * estimatedGeometryCharacterWidth
+            estimateGeometryTextWidth(angleLabel)
           );
           centralAngleMaximumTextWidth.set(
             vertexName,
@@ -17817,7 +17930,7 @@ function hasInlineLatexMathOnly(text){
           clip(-dy, y0 - top) && clip(dy, bottom - y0) && minimum <= maximum;
       };
       const geometryCollisionCount = box => geometryLineObstacles.reduce(
-        (total, segment) => total + (segmentTouchesLabelBox(segment, box, 4) ? 1 : 0),
+        (total, segment) => total + (segmentTouchesLabelBox(segment, box, 0) ? 1 : 0),
         0
       );
 
@@ -17890,7 +18003,7 @@ function hasInlineLatexMathOnly(text){
         if (label) {
           const radial = { x: Math.cos(middle), y: Math.sin(middle) };
           const tangent = { x: -radial.y, y: radial.x };
-          const textWidth = Math.max(20, Array.from(String(label)).length * estimatedGeometryCharacterWidth);
+          const textWidth = Math.max(20, estimateGeometryTextWidth(label));
           /* Find the nearest clear position without covering a diagram line. */
           const centralTextWidth = Math.max(textWidth, Number(settings.centralTextWidth) || 0);
           const centralSpacing = settings.central
@@ -18031,6 +18144,9 @@ function hasInlineLatexMathOnly(text){
       });
 
       const placedLabelBoxes = annotationLabelBoxes.slice();
+      const pointLabelTouchesGeometry = box => geometryLineObstacles.some(
+        segment => segmentTouchesLabelBox(segment, box, 0)
+      );
       const diagramCentre = { x: offsetX + usedWidth / 2, y: offsetY + usedHeight / 2 };
       Object.values(points).forEach(point => {
         if (!point.label) return;
@@ -18044,10 +18160,12 @@ function hasInlineLatexMathOnly(text){
           dy = 5;
           anchor = "start";
         }
-        const textWidth = Math.max(8, Array.from(point.label).length * estimatedGeometryCharacterWidth);
+        const textWidth = Math.max(8, estimateGeometryTextWidth(point.label));
 
         const preferredBox = labelBoxFor(canvas.x + dx, canvas.y + dy, textWidth, anchor);
-        const preferredConflicts = placedLabelBoxes.some(box => boxesOverlap(preferredBox, box));
+        const preferredConflicts =
+          placedLabelBoxes.some(box => boxesOverlap(preferredBox, box)) ||
+          pointLabelTouchesGeometry(preferredBox);
 
         if (!isCentralAngleVertex && (point.autoLabel || preferredConflicts)) {
           const vx = canvas.x - diagramCentre.x;
@@ -18056,6 +18174,8 @@ function hasInlineLatexMathOnly(text){
           const outward = length > 10
             ? { x: vx / length * 12, y: vy / length * 12 + 4 }
             : { x: 10, y: -9 };
+          if (vy > 10) outward.y = Math.max(14, outward.y);
+          if (vy < -10) outward.y = Math.min(-10, outward.y);
           const candidates = [
             ...(point.autoLabel ? [] : [{ x:dx, y:dy }]),
             outward,
@@ -18069,7 +18189,11 @@ function hasInlineLatexMathOnly(text){
             const candidateBox = labelBoxFor(canvas.x + candidate.x, canvas.y + candidate.y, textWidth, candidateAnchor);
             const inside = candidateBox.left >= offsetX - 6 && candidateBox.right <= offsetX + usedWidth + 6 &&
               candidateBox.top >= offsetY - 8 && candidateBox.bottom <= offsetY + usedHeight + 8;
-            if (inside && !placedLabelBoxes.some(box => boxesOverlap(candidateBox, box))) {
+            if (
+              inside &&
+              !placedLabelBoxes.some(box => boxesOverlap(candidateBox, box)) &&
+              !pointLabelTouchesGeometry(candidateBox)
+            ) {
               dx = candidate.x;
               dy = candidate.y;
               anchor = candidateAnchor;
@@ -18117,7 +18241,7 @@ function hasInlineLatexMathOnly(text){
       const activeViewBox = useMobileGeometryView ? mobileViewBox : desktopViewBox;
       return '<div class="noteVisualBlock' + (minimalTheme ? ' minimalDiagramTheme' : '') + '">' +
         (title ? '<div class="noteVisualTitle">' + renderNoteVisualTitle(title) + '</div>' : '') +
-        '<div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram generatedNoteGeometry" viewBox="' + activeViewBox + '" data-desktop-view-box="' + desktopViewBox + '" data-mobile-view-box="' + mobileViewBox + '" data-geometry-renderer="adaptive-central-label-ring-v9" style="--geometry-text-size:' + responsiveGeometryTextSize.toFixed(2) + 'px" role="img" aria-label="' + escapeHtml(accessibleTitle) + '">' + svg.join("") + '</svg></div></div>';
+        '<div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram generatedNoteGeometry" viewBox="' + activeViewBox + '" data-desktop-view-box="' + desktopViewBox + '" data-mobile-view-box="' + mobileViewBox + '" data-geometry-renderer="compact-angle-labels-v13" style="--geometry-text-size:' + responsiveGeometryTextSize.toFixed(2) + 'px" role="img" aria-label="' + escapeHtml(accessibleTitle) + '">' + svg.join("") + '</svg></div></div>';
     }
 
     function renderStructuredVisualNote(rawText){
