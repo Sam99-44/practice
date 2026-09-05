@@ -1,17 +1,3 @@
-<!--
-  FINAL UPDATE
-  - Dropdown question layout and behaviour are unchanged.
-  - MathLive keyboard remains enabled for mathematical typed-answer questions.
-  - Keyboard opens when the learner focuses the math answer field.
-  - Existing MCQ, fill-in, marking, navigation and review behaviour is preserved.
-  - New note structure supports:
-      [[NOTE_ROLE:main]]         -> QUESTION 1, QUESTION 2, ...
-      [[NOTE_ROLE:instruction]]  -> blue instruction/objective note
-      [[NOTE_ROLE:information]]  -> blue shared question-information note
-      [[NOTE_ROLE:subquestion]]  -> parent such as 5.3, followed by 5.3.1, 5.3.2
-  - Shared notes and diagrams remain visible while moving between their questions.
-  - Old quizzes without NOTE_ROLE markers keep their original numbering and rendering.
--->
 <!doctype html>
 <html lang="en">
 <head>
@@ -6931,6 +6917,12 @@ mjx-container[jax="SVG"] svg{
   .generatedNoteDiagram text,
   .generatedNoteGraph text{
     font-size:20px !important;
+  }
+  .generatedNoteGeometry{
+    min-height:0 !important;
+  }
+  .generatedNoteGeometry text{
+    font-size:var(--geometry-text-size, 16px) !important;
   }
   .generatedNoteTable{
     width:100% !important;
@@ -17427,6 +17419,20 @@ function hasInlineLatexMathOnly(text){
         return noteVisualError("Add geometry points as: POINT A | x | y | label | label dx | label dy, or COORD_POINT A | x | y.");
       }
 
+      /* Mark the exact centre of multi-angle intersections. */
+      const angleVertexUseCounts = new Map();
+      commands
+        .filter(item => ["ANGLE", "ARC", "ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command))
+        .forEach(item => {
+          const vertexName = noteSvgLabel(item.parts[0] || "");
+          if (vertexName) angleVertexUseCounts.set(vertexName, (angleVertexUseCounts.get(vertexName) || 0) + 1);
+        });
+      const centralAngleVertexNames = new Set(
+        [...angleVertexUseCounts.entries()]
+          .filter(([, count]) => count >= 2)
+          .map(([name]) => name)
+      );
+
       /* Keep constructed intersection points on the lines they describe.
        * Authors may supply an approximate POINT for an angle vertex such as U.
        * When the angle's two rays correspond to two drawn straight primitives,
@@ -17521,6 +17527,34 @@ function hasInlineLatexMathOnly(text){
           }
         });
 
+      const useMobileGeometryView = typeof window !== "undefined" &&
+        typeof window.matchMedia === "function" && window.matchMedia("(max-width:700px)").matches;
+      const pointCanvasValues = Object.values(points).map(point => ({ x:toX(point.x), y:toY(point.y) }));
+      const pointContentWidth = pointCanvasValues.length
+        ? Math.max(...pointCanvasValues.map(point => point.x)) - Math.min(...pointCanvasValues.map(point => point.x))
+        : usedWidth;
+      const estimatedMobileWidth = Math.min(width, Math.max(340, pointContentWidth + 68));
+      const responsiveGeometryTextSize = useMobileGeometryView
+        ? Math.max(16, Math.min(32, estimatedMobileWidth * 14 / 300))
+        : 13;
+      const estimatedGeometryCharacterWidth = responsiveGeometryTextSize * .58;
+      const centralAngleMaximumTextWidth = new Map();
+      commands
+        .filter(item => ["ANGLE", "ARC", "ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command))
+        .forEach(item => {
+          const vertexName = noteSvgLabel(item.parts[0] || "");
+          if (!centralAngleVertexNames.has(vertexName)) return;
+          const angleLabel = noteSvgLabel(item.parts[2] || "");
+          const angleTextWidth = Math.max(
+            20,
+            Array.from(String(angleLabel)).length * estimatedGeometryCharacterWidth
+          );
+          centralAngleMaximumTextWidth.set(
+            vertexName,
+            Math.max(centralAngleMaximumTextWidth.get(vertexName) || 0, angleTextWidth)
+          );
+        });
+
       const svg = [];
       const axisMarkerId = "geometryAxisArrow" + (++noteVisualSvgSequence);
       const lineMarkerId = "geometryLineArrow" + (++noteVisualSvgSequence);
@@ -17540,9 +17574,13 @@ function hasInlineLatexMathOnly(text){
         if (!value) return;
         const safeAnchor = ["start", "middle", "end"].includes(anchor) ? anchor : "middle";
         const settings = options || {};
+        const requestedSize = Number(size || 13);
+        const effectiveSize = useMobileGeometryView
+          ? Math.max(requestedSize, responsiveGeometryTextSize)
+          : requestedSize;
         svg.push(
           '<text x="' + Number(x).toFixed(2) + '" y="' + Number(y).toFixed(2) +
-          '" text-anchor="' + safeAnchor + '" font-size="' + Number(size || 13) +
+          '" text-anchor="' + safeAnchor + '" font-size="' + effectiveSize.toFixed(2) +
           '" font-weight="400" font-style="' + (settings.italic ? "italic" : "normal") + '" fill="#111827" style="paint-order:stroke;stroke:#fff;stroke-width:2.2px;stroke-linejoin:round">' +
           escapeHtml(value) + '</text>'
         );
@@ -17675,14 +17713,113 @@ function hasInlineLatexMathOnly(text){
       const labelBoxFor = (x, y, width, anchor) => ({
         left: anchor === "end" ? x - width : anchor === "middle" ? x - width / 2 : x,
         right: anchor === "end" ? x : anchor === "middle" ? x + width / 2 : x + width,
-        top: y - 13,
-        bottom: y + 4
+        top: y - responsiveGeometryTextSize,
+        bottom: y + Math.max(4, responsiveGeometryTextSize * .3)
       });
       const boxesOverlap = (first, second) => !(
         first.right + 3 < second.left || first.left - 3 > second.right ||
         first.bottom + 2 < second.top || first.top - 2 > second.bottom
       );
       const annotationLabelBoxes = [];
+
+      /* Geometry annotations must never be crossed by a side, diagonal or
+       * construction line. Keep a canvas-space list of every drawn edge so
+       * angle labels can choose the nearest genuinely clear position. */
+      const geometryLineObstacles = [];
+      const rememberGeometryObstacle = (first, second) => {
+        if (!first || !second) return;
+        geometryLineObstacles.push({
+          first:{ x:Number(first.x), y:Number(first.y) },
+          second:{ x:Number(second.x), y:Number(second.y) }
+        });
+      };
+
+      commands
+        .filter(item => ["SEGMENT", "CHORD", "DIAMETER", "RADIUS", "DASHED", "ARROW", "RAY", "LINE", "TANGENT"].includes(item.command))
+        .forEach(item => {
+          const first = pointFor(item.subject);
+          const second = pointFor(item.parts[0]);
+          if (!first || !second) return;
+          let worldFirst = first;
+          let worldSecond = second;
+          if (["LINE", "TANGENT"].includes(item.command)) {
+            const startExtension = Math.max(0, parseNoteGraphNumber(item.parts[1]) ?? 0);
+            const endExtension = Math.max(0, parseNoteGraphNumber(item.parts[2]) ?? 0);
+            [worldFirst, worldSecond] = extendedWorldLine(first, second, startExtension, endExtension);
+          }
+          rememberGeometryObstacle(canvasPoint(worldFirst), canvasPoint(worldSecond));
+        });
+
+      commands
+        .filter(item => ["POLYGON", "SHADE_POLYGON", "FILLED_POLYGON"].includes(item.command))
+        .forEach(item => {
+          const polygonPoints = [item.subject, ...item.parts]
+            .map(pointFor)
+            .filter(Boolean)
+            .map(canvasPoint);
+          if (polygonPoints.length < 3) return;
+          polygonPoints.forEach((point, index) => {
+            rememberGeometryObstacle(point, polygonPoints[(index + 1) % polygonPoints.length]);
+          });
+        });
+
+      commands.filter(item => item.command === "CIRCLE").forEach(item => {
+        const centre = canvasPoint(pointFor(item.subject));
+        const worldRadius = parseNoteGraphNumber(item.parts[0]);
+        if (!centre || worldRadius === null || worldRadius <= 0) return;
+        const circleRadius = worldRadius * scale;
+        let previous = { x:centre.x + circleRadius, y:centre.y };
+        for (let index = 1; index <= 32; index += 1) {
+          const theta = index / 32 * Math.PI * 2;
+          const next = {
+            x:centre.x + circleRadius * Math.cos(theta),
+            y:centre.y + circleRadius * Math.sin(theta)
+          };
+          rememberGeometryObstacle(previous, next);
+          previous = next;
+        }
+      });
+
+      if (showAxes) {
+        if (yMin <= 0 && yMax >= 0) {
+          rememberGeometryObstacle({ x:toX(xMin), y:toY(0) }, { x:toX(xMax), y:toY(0) });
+        }
+        if (xMin <= 0 && xMax >= 0) {
+          rememberGeometryObstacle({ x:toX(0), y:toY(yMin) }, { x:toX(0), y:toY(yMax) });
+        }
+      }
+
+      const segmentTouchesLabelBox = (segment, box, padding) => {
+        const inset = Number(padding || 0);
+        const left = box.left - inset;
+        const right = box.right + inset;
+        const top = box.top - inset;
+        const bottom = box.bottom + inset;
+        const x0 = segment.first.x;
+        const y0 = segment.first.y;
+        const dx = segment.second.x - x0;
+        const dy = segment.second.y - y0;
+        let minimum = 0;
+        let maximum = 1;
+        const clip = (p, q) => {
+          if (Math.abs(p) < 1e-9) return q >= 0;
+          const ratio = q / p;
+          if (p < 0) {
+            if (ratio > maximum) return false;
+            if (ratio > minimum) minimum = ratio;
+          } else {
+            if (ratio < minimum) return false;
+            if (ratio < maximum) maximum = ratio;
+          }
+          return true;
+        };
+        return clip(-dx, x0 - left) && clip(dx, right - x0) &&
+          clip(-dy, y0 - top) && clip(dy, bottom - y0) && minimum <= maximum;
+      };
+      const geometryCollisionCount = box => geometryLineObstacles.reduce(
+        (total, segment) => total + (segmentTouchesLabelBox(segment, box, 4) ? 1 : 0),
+        0
+      );
 
       const drawAngle = (first, vertex, second, label, radius, labelDx, labelDy, options) => {
         const a = canvasPoint(first);
@@ -17699,6 +17836,36 @@ function hasInlineLatexMathOnly(text){
           delta = delta >= 0 ? delta - 2 * Math.PI : delta + 2 * Math.PI;
         }
         const arcRadius = Math.max(10, Math.min(55, radius || 24));
+        const normalisedAngleLabel = String(label || "")
+          .replace(/\s+/g, "")
+          .replace(/[{}$()]/g, "")
+          .replace(/\^?\\circ/gi, "°")
+          .replace(/\\degree/gi, "°");
+        const isExactRightAngle = !settings.reflex && /^90(?:[.,]0+)?°?$/.test(normalisedAngleLabel);
+
+        if (isExactRightAngle) {
+          const firstLength = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+          const secondLength = Math.hypot(c.x - b.x, c.y - b.y) || 1;
+          const firstUnit = { x:(a.x - b.x) / firstLength, y:(a.y - b.y) / firstLength };
+          const secondUnit = { x:(c.x - b.x) / secondLength, y:(c.y - b.y) / secondLength };
+          const squareSize = Math.max(9, Math.min(18, arcRadius * .82));
+          const squareFirst = { x:b.x + firstUnit.x * squareSize, y:b.y + firstUnit.y * squareSize };
+          const squareCorner = {
+            x:squareFirst.x + secondUnit.x * squareSize,
+            y:squareFirst.y + secondUnit.y * squareSize
+          };
+          const squareSecond = { x:b.x + secondUnit.x * squareSize, y:b.y + secondUnit.y * squareSize };
+          svg.push(
+            '<path class="geometryRightAngle" d="M ' + squareFirst.x.toFixed(2) + ' ' + squareFirst.y.toFixed(2) +
+            ' L ' + squareCorner.x.toFixed(2) + ' ' + squareCorner.y.toFixed(2) +
+            ' L ' + squareSecond.x.toFixed(2) + ' ' + squareSecond.y.toFixed(2) +
+            '" fill="none" stroke="' + stroke + '" stroke-width="1.05" vector-effect="non-scaling-stroke" />'
+          );
+          rememberGeometryObstacle(squareFirst, squareCorner);
+          rememberGeometryObstacle(squareCorner, squareSecond);
+          return;
+        }
+
         const startPoint = { x: b.x + arcRadius * Math.cos(startAngle), y: b.y + arcRadius * Math.sin(startAngle) };
         const endPoint = { x: b.x + arcRadius * Math.cos(startAngle + delta), y: b.y + arcRadius * Math.sin(startAngle + delta) };
         svg.push(
@@ -17708,35 +17875,62 @@ function hasInlineLatexMathOnly(text){
           '" fill="none" stroke="' + stroke + '" stroke-width="1.05" vector-effect="non-scaling-stroke"' +
           (settings.arrow ? ' marker-end="url(#' + lineMarkerId + ')"' : '') + ' />'
         );
+        const arcSteps = Math.max(6, Math.ceil(Math.abs(delta) / (Math.PI / 18)));
+        let previousArcPoint = startPoint;
+        for (let index = 1; index <= arcSteps; index += 1) {
+          const theta = startAngle + delta * index / arcSteps;
+          const nextArcPoint = {
+            x:b.x + arcRadius * Math.cos(theta),
+            y:b.y + arcRadius * Math.sin(theta)
+          };
+          rememberGeometryObstacle(previousArcPoint, nextArcPoint);
+          previousArcPoint = nextArcPoint;
+        }
         const middle = startAngle + delta / 2;
         if (label) {
           const radial = { x: Math.cos(middle), y: Math.sin(middle) };
           const tangent = { x: -radial.y, y: radial.x };
-          const textWidth = Math.max(18, Array.from(String(label)).length * 6.4);
-          const explicitOffset = !!labelDx || !!labelDy;
-          const candidateOffsets = explicitOffset
-            ? [{ distance:arcRadius + 13, tangent:0 }]
-            : [
-                { distance:arcRadius + 13, tangent:0 },
-                { distance:arcRadius + 23, tangent:0 },
-                { distance:arcRadius + 33, tangent:0 },
-                { distance:arcRadius + 18, tangent:14 },
-                { distance:arcRadius + 18, tangent:-14 }
-              ];
-          let labelX = b.x + (arcRadius + 13) * radial.x + (labelDx || 0);
-          let labelY = b.y + (arcRadius + 13) * radial.y + (labelDy || 0) + 4;
+          const textWidth = Math.max(20, Array.from(String(label)).length * estimatedGeometryCharacterWidth);
+          /* Find the nearest clear position without covering a diagram line. */
+          const centralTextWidth = Math.max(textWidth, Number(settings.centralTextWidth) || 0);
+          const centralSpacing = settings.central
+            ? Math.max(28, responsiveGeometryTextSize * 1.25, centralTextWidth * .5 + 20)
+            : 0;
+          const localDistance = arcRadius + Math.max(7, responsiveGeometryTextSize * .42) + centralSpacing;
+          /* Give narrow apex angles enough room for long expressions. */
+          const maximumDistance = arcRadius + Math.min(110, Math.max(50, textWidth * 1.65));
+          const lateralNudge = Math.min(18, Math.max(6, textWidth * .16));
+          const candidateOffsets = [];
+          for (let distance = localDistance; distance <= maximumDistance; distance += 3) {
+            candidateOffsets.push({ distance, tangent:0 });
+            candidateOffsets.push({ distance, tangent:lateralNudge });
+            candidateOffsets.push({ distance, tangent:-lateralNudge });
+          }
+          let labelX = b.x + localDistance * radial.x + (labelDx || 0);
+          let labelY = b.y + localDistance * radial.y + (labelDy || 0) + 4;
+          let bestCandidate = null;
 
-          for (const candidate of candidateOffsets) {
-            const candidateX = b.x + candidate.distance * radial.x + candidate.tangent * tangent.x + (labelDx || 0);
-            const candidateY = b.y + candidate.distance * radial.y + candidate.tangent * tangent.y + (labelDy || 0) + 4;
+          for (const [candidateIndex, candidate] of candidateOffsets.entries()) {
+            const appliedDx = labelDx || 0;
+            const appliedDy = labelDy || 0;
+            const candidateX = b.x + candidate.distance * radial.x + candidate.tangent * tangent.x + appliedDx;
+            const candidateY = b.y + candidate.distance * radial.y + candidate.tangent * tangent.y + appliedDy + 4;
             const candidateBox = labelBoxFor(candidateX, candidateY, textWidth, "middle");
             const inside = candidateBox.left >= 4 && candidateBox.right <= width - 4 &&
               candidateBox.top >= 4 && candidateBox.bottom <= height - 4;
-            if (inside && !annotationLabelBoxes.some(box => boxesOverlap(candidateBox, box))) {
-              labelX = candidateX;
-              labelY = candidateY;
-              break;
+            if (!inside) continue;
+            const labelConflicts = annotationLabelBoxes.filter(box => boxesOverlap(candidateBox, box)).length;
+            const lineConflicts = geometryCollisionCount(candidateBox);
+            const score = lineConflicts * 100000 + labelConflicts * 10000 + candidateIndex;
+            if (!bestCandidate || score < bestCandidate.score) {
+              bestCandidate = { x:candidateX, y:candidateY, box:candidateBox, lineConflicts, score };
             }
+            if (labelConflicts === 0 && lineConflicts === 0) break;
+          }
+
+          if (bestCandidate) {
+            labelX = bestCandidate.x;
+            labelY = bestCandidate.y;
           }
 
           addText(labelX, labelY, label, "middle", 13);
@@ -17754,7 +17948,9 @@ function hasInlineLatexMathOnly(text){
         const labelDy = parseNoteGraphNumber(item.parts[5]) ?? 0;
         drawAngle(first, vertex, second, label, radius, labelDx, labelDy, {
           reflex: item.command === "REFLEX_ANGLE",
-          arrow: ["ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command)
+          arrow: ["ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command),
+          central: centralAngleVertexNames.has(noteSvgLabel(item.parts[0] || "")),
+          centralTextWidth: centralAngleMaximumTextWidth.get(noteSvgLabel(item.parts[0] || "")) || 0
         });
       });
 
@@ -17829,7 +18025,7 @@ function hasInlineLatexMathOnly(text){
 
       Object.values(points).forEach(point => {
         const canvas = canvasPoint(point);
-        if (point.showDot) {
+        if (point.showDot || centralAngleVertexNames.has(point.name)) {
           svg.push('<circle cx="' + canvas.x.toFixed(2) + '" cy="' + canvas.y.toFixed(2) + '" r="2.1" fill="#111827" />');
         }
       });
@@ -17842,12 +18038,18 @@ function hasInlineLatexMathOnly(text){
         let dx = point.dx;
         let dy = point.dy;
         let anchor = dx < 0 ? "end" : "start";
-        const textWidth = Math.max(8, Array.from(point.label).length * 6.4);
+        const isCentralAngleVertex = centralAngleVertexNames.has(point.name);
+        if (isCentralAngleVertex) {
+          dx = Math.max(18, responsiveGeometryTextSize * 1.15);
+          dy = 5;
+          anchor = "start";
+        }
+        const textWidth = Math.max(8, Array.from(point.label).length * estimatedGeometryCharacterWidth);
 
         const preferredBox = labelBoxFor(canvas.x + dx, canvas.y + dy, textWidth, anchor);
         const preferredConflicts = placedLabelBoxes.some(box => boxesOverlap(preferredBox, box));
 
-        if (point.autoLabel || preferredConflicts) {
+        if (!isCentralAngleVertex && (point.autoLabel || preferredConflicts)) {
           const vx = canvas.x - diagramCentre.x;
           const vy = canvas.y - diagramCentre.y;
           const length = Math.hypot(vx, vy);
@@ -17883,9 +18085,39 @@ function hasInlineLatexMathOnly(text){
       });
 
       svg.push('</g>');
+      const mobileBounds = [];
+      geometryLineObstacles.forEach(segment => {
+        mobileBounds.push({ left:segment.first.x, right:segment.first.x, top:segment.first.y, bottom:segment.first.y });
+        mobileBounds.push({ left:segment.second.x, right:segment.second.x, top:segment.second.y, bottom:segment.second.y });
+      });
+      placedLabelBoxes.forEach(box => mobileBounds.push(box));
+      Object.values(points).forEach(point => {
+        const canvas = canvasPoint(point);
+        mobileBounds.push({ left:canvas.x, right:canvas.x, top:canvas.y, bottom:canvas.y });
+      });
+      const contentLeft = Math.min(...mobileBounds.map(box => box.left));
+      const contentRight = Math.max(...mobileBounds.map(box => box.right));
+      const contentTop = Math.min(...mobileBounds.map(box => box.top));
+      const contentBottom = Math.max(...mobileBounds.map(box => box.bottom));
+      const mobileWindow = (minimum, maximum, limit, minimumSize, padding) => {
+        const centre = (minimum + maximum) / 2;
+        const size = Math.min(limit, Math.max(minimumSize, maximum - minimum + padding * 2));
+        const start = Math.max(0, Math.min(limit - size, centre - size / 2));
+        return { start, size };
+      };
+      const mobileHorizontal = mobileWindow(contentLeft, contentRight, width, 300, 18);
+      const mobileVertical = mobileWindow(contentTop, contentBottom, height, 240, 22);
+      const desktopViewBox = '0 0 ' + width + ' ' + height;
+      const mobileViewBox = [
+        mobileHorizontal.start.toFixed(2),
+        mobileVertical.start.toFixed(2),
+        mobileHorizontal.size.toFixed(2),
+        mobileVertical.size.toFixed(2)
+      ].join(' ');
+      const activeViewBox = useMobileGeometryView ? mobileViewBox : desktopViewBox;
       return '<div class="noteVisualBlock' + (minimalTheme ? ' minimalDiagramTheme' : '') + '">' +
         (title ? '<div class="noteVisualTitle">' + renderNoteVisualTitle(title) + '</div>' : '') +
-        '<div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="' + escapeHtml(accessibleTitle) + '">' + svg.join("") + '</svg></div></div>';
+        '<div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram generatedNoteGeometry" viewBox="' + activeViewBox + '" data-desktop-view-box="' + desktopViewBox + '" data-mobile-view-box="' + mobileViewBox + '" data-geometry-renderer="adaptive-central-label-ring-v9" style="--geometry-text-size:' + responsiveGeometryTextSize.toFixed(2) + 'px" role="img" aria-label="' + escapeHtml(accessibleTitle) + '">' + svg.join("") + '</svg></div></div>';
     }
 
     function renderStructuredVisualNote(rawText){
@@ -19067,6 +19299,28 @@ window.addEventListener("DOMContentLoaded", () => {
   }else{
     customElements.whenDefined("math-field").then(start);
   }
+})();
+</script>
+
+<script>
+/* ===== RESPONSIVE GEOMETRY VIEW BOX ===== */
+(() => {
+  const phoneQuery = window.matchMedia("(max-width:700px)");
+  let pendingFrame = 0;
+  const syncGeometryViewBoxes = () => {
+    pendingFrame = 0;
+    document.querySelectorAll("svg.generatedNoteGeometry[data-desktop-view-box][data-mobile-view-box]").forEach(svg => {
+      const nextViewBox = svg.getAttribute(phoneQuery.matches ? "data-mobile-view-box" : "data-desktop-view-box");
+      if (nextViewBox && svg.getAttribute("viewBox") !== nextViewBox) svg.setAttribute("viewBox", nextViewBox);
+    });
+  };
+  const scheduleSync = () => {
+    if (pendingFrame) cancelAnimationFrame(pendingFrame);
+    pendingFrame = requestAnimationFrame(syncGeometryViewBoxes);
+  };
+  phoneQuery.addEventListener?.("change", scheduleSync);
+  window.addEventListener("orientationchange", scheduleSync, { passive:true });
+  window.addEventListener("resize", scheduleSync, { passive:true });
 })();
 </script>
 
