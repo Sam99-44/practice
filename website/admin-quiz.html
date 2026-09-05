@@ -3747,7 +3747,7 @@ body > .draftManager{
       <div>
         <div class="workflowStepLabel">STEP 1</div>
         <h3>Upload Assessment</h3>
-        <div class="muted tiny"></div>
+        <div class="muted tiny">Load a .txt assessment, then review exactly what the learner will see.</div>
       </div>
     </div>
 
@@ -3790,7 +3790,7 @@ body > .draftManager{
       <div>
         <div class="workflowStepLabel">STEP 2</div>
         <h3>Full Learner Preview</h3>
-        <div class="muted tiny previewNavigationHint"></div>
+        <div class="muted tiny previewNavigationHint">Review every note, diagram, question and choice. Click any item to edit it.</div>
       </div>
       <div class="learnerPreviewModes">
         <button class="smallbtn" id="previewAttemptModeBtn" type="button">Attempt Preview</button>
@@ -3802,7 +3802,7 @@ body > .draftManager{
       <div>
         <div class="workflowStepLabel">FINAL STEP</div>
         <div class="previewPublishTitle">Finished reviewing the assessment?</div>
-        <div class="muted tiny"></div>
+        <div class="muted tiny">Publish only after checking the final question.</div>
       </div>
       <div class="previewPublishActions">
         <button class="btn" id="saveBtn" disabled type="button">Save Content</button>
@@ -3816,7 +3816,7 @@ body > .draftManager{
     <div class="draftManagerHead">
       <div>
         <h3 class="draftManagerTitle">Draft Assessments</h3>
-        <div class="draftManagerStatus"></div>
+        <div class="draftManagerStatus">Select an unfinished assessment to load it into this editor, exactly like a file upload.</div>
       </div>
       <div class="autosaveBadge" id="autosaveBadge"><span class="autosaveDot"></span><span id="autosaveText">Automatic saving ready</span></div>
     </div>
@@ -3992,7 +3992,7 @@ body > .draftManager{
       <div>
         <h3 style="margin:0;">Blocks</h3>
         <div class="muted tiny" style="margin-top:6px;">
-          
+          Drag cards to reorder.
         </div>
       </div>
     </div>
@@ -6896,6 +6896,100 @@ function escapeHtml(str){
         return noteVisualError("Add geometry points as: POINT A | x | y | label | label dx | label dy, or COORD_POINT A | x | y.");
       }
 
+      /* Keep constructed intersection points on the lines they describe.
+       * Authors may supply an approximate POINT for an angle vertex such as U.
+       * When the angle's two rays correspond to two drawn straight primitives,
+       * use their exact crossing for the vertex, its arcs and its label. */
+      const straightCommandNames = new Set([
+        "SEGMENT", "CHORD", "DIAMETER", "RADIUS", "DASHED", "ARROW", "RAY", "LINE", "TANGENT"
+      ]);
+      const straightPrimitives = commands
+        .filter(item => straightCommandNames.has(item.command))
+        .map(item => {
+          const firstName = noteSvgLabel(item.subject || "");
+          const secondName = noteSvgLabel(item.parts[0] || "");
+          const first = points[firstName];
+          const second = points[secondName];
+          if (!first || !second || (first.x === second.x && first.y === second.y)) return null;
+          return {
+            command:item.command,
+            firstName,
+            secondName,
+            first:{ x:first.x, y:first.y },
+            second:{ x:second.x, y:second.y }
+          };
+        })
+        .filter(Boolean);
+      const lineTolerance = Math.max(worldWidth, worldHeight) * .008;
+      const maximumIntersectionSnap = Math.max(worldWidth, worldHeight) * .22;
+      const primitiveContainsPoint = (primitive, pointName) => {
+        if (primitive.firstName === pointName || primitive.secondName === pointName) return true;
+        const point = points[pointName];
+        if (!point) return false;
+        const dx = primitive.second.x - primitive.first.x;
+        const dy = primitive.second.y - primitive.first.y;
+        const lengthSquared = dx * dx + dy * dy || 1;
+        const ratio = ((point.x - primitive.first.x) * dx + (point.y - primitive.first.y) * dy) / lengthSquared;
+        const projected = { x:primitive.first.x + ratio * dx, y:primitive.first.y + ratio * dy };
+        const distance = Math.hypot(point.x - projected.x, point.y - projected.y);
+        if (distance > lineTolerance) return false;
+        if (["LINE", "TANGENT"].includes(primitive.command)) return true;
+        if (primitive.command === "RAY") return ratio >= -.02;
+        return ratio >= -.02 && ratio <= 1.02;
+      };
+      const primitiveAllowsRatio = (primitive, ratio) => {
+        if (["LINE", "TANGENT"].includes(primitive.command)) return true;
+        if (primitive.command === "RAY") return ratio >= -.02;
+        return ratio >= -.02 && ratio <= 1.02;
+      };
+      const primitiveIntersection = (firstPrimitive, secondPrimitive) => {
+        const p = firstPrimitive.first;
+        const q = secondPrimitive.first;
+        const r = {
+          x:firstPrimitive.second.x - firstPrimitive.first.x,
+          y:firstPrimitive.second.y - firstPrimitive.first.y
+        };
+        const s = {
+          x:secondPrimitive.second.x - secondPrimitive.first.x,
+          y:secondPrimitive.second.y - secondPrimitive.first.y
+        };
+        const denominator = r.x * s.y - r.y * s.x;
+        if (Math.abs(denominator) < 1e-9) return null;
+        const qMinusP = { x:q.x - p.x, y:q.y - p.y };
+        const firstRatio = (qMinusP.x * s.y - qMinusP.y * s.x) / denominator;
+        const secondRatio = (qMinusP.x * r.y - qMinusP.y * r.x) / denominator;
+        if (!primitiveAllowsRatio(firstPrimitive, firstRatio) || !primitiveAllowsRatio(secondPrimitive, secondRatio)) return null;
+        return { x:p.x + firstRatio * r.x, y:p.y + firstRatio * r.y };
+      };
+
+      commands
+        .filter(item => ["ANGLE", "ARC", "ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command))
+        .forEach(item => {
+          const firstName = noteSvgLabel(item.subject || "");
+          const vertexName = noteSvgLabel(item.parts[0] || "");
+          const secondName = noteSvgLabel(item.parts[1] || "");
+          const vertex = points[vertexName];
+          if (!vertex || !firstName || !secondName) return;
+          const firstPrimitives = straightPrimitives.filter(primitive => primitiveContainsPoint(primitive, firstName));
+          const secondPrimitives = straightPrimitives.filter(primitive => primitiveContainsPoint(primitive, secondName));
+          let best = null;
+          firstPrimitives.forEach(firstPrimitive => {
+            secondPrimitives.forEach(secondPrimitive => {
+              if (firstPrimitive === secondPrimitive) return;
+              const intersection = primitiveIntersection(firstPrimitive, secondPrimitive);
+              if (!intersection) return;
+              const distance = Math.hypot(intersection.x - vertex.x, intersection.y - vertex.y);
+              if (distance <= maximumIntersectionSnap && (!best || distance < best.distance)) {
+                best = { ...intersection, distance };
+              }
+            });
+          });
+          if (best && best.distance > lineTolerance) {
+            vertex.x = best.x;
+            vertex.y = best.y;
+          }
+        });
+
       const svg = [];
       const axisMarkerId = "geometryAxisArrow" + (++noteVisualSvgSequence);
       const lineMarkerId = "geometryLineArrow" + (++noteVisualSvgSequence);
@@ -7047,6 +7141,18 @@ function escapeHtml(str){
         }
       });
 
+      const labelBoxFor = (x, y, width, anchor) => ({
+        left: anchor === "end" ? x - width : anchor === "middle" ? x - width / 2 : x,
+        right: anchor === "end" ? x : anchor === "middle" ? x + width / 2 : x + width,
+        top: y - 13,
+        bottom: y + 4
+      });
+      const boxesOverlap = (first, second) => !(
+        first.right + 3 < second.left || first.left - 3 > second.right ||
+        first.bottom + 2 < second.top || first.top - 2 > second.bottom
+      );
+      const annotationLabelBoxes = [];
+
       const drawAngle = (first, vertex, second, label, radius, labelDx, labelDy, options) => {
         const a = canvasPoint(first);
         const b = canvasPoint(vertex);
@@ -7073,13 +7179,37 @@ function escapeHtml(str){
         );
         const middle = startAngle + delta / 2;
         if (label) {
-          addText(
-            b.x + (arcRadius + 13) * Math.cos(middle) + (labelDx || 0),
-            b.y + (arcRadius + 13) * Math.sin(middle) + (labelDy || 0) + 4,
-            label,
-            "middle",
-            13
-          );
+          const radial = { x: Math.cos(middle), y: Math.sin(middle) };
+          const tangent = { x: -radial.y, y: radial.x };
+          const textWidth = Math.max(18, Array.from(String(label)).length * 6.4);
+          const explicitOffset = !!labelDx || !!labelDy;
+          const candidateOffsets = explicitOffset
+            ? [{ distance:arcRadius + 13, tangent:0 }]
+            : [
+                { distance:arcRadius + 13, tangent:0 },
+                { distance:arcRadius + 23, tangent:0 },
+                { distance:arcRadius + 33, tangent:0 },
+                { distance:arcRadius + 18, tangent:14 },
+                { distance:arcRadius + 18, tangent:-14 }
+              ];
+          let labelX = b.x + (arcRadius + 13) * radial.x + (labelDx || 0);
+          let labelY = b.y + (arcRadius + 13) * radial.y + (labelDy || 0) + 4;
+
+          for (const candidate of candidateOffsets) {
+            const candidateX = b.x + candidate.distance * radial.x + candidate.tangent * tangent.x + (labelDx || 0);
+            const candidateY = b.y + candidate.distance * radial.y + candidate.tangent * tangent.y + (labelDy || 0) + 4;
+            const candidateBox = labelBoxFor(candidateX, candidateY, textWidth, "middle");
+            const inside = candidateBox.left >= 4 && candidateBox.right <= width - 4 &&
+              candidateBox.top >= 4 && candidateBox.bottom <= height - 4;
+            if (inside && !annotationLabelBoxes.some(box => boxesOverlap(candidateBox, box))) {
+              labelX = candidateX;
+              labelY = candidateY;
+              break;
+            }
+          }
+
+          addText(labelX, labelY, label, "middle", 13);
+          annotationLabelBoxes.push(labelBoxFor(labelX, labelY, textWidth, "middle"));
         }
       };
 
@@ -7173,18 +7303,8 @@ function escapeHtml(str){
         }
       });
 
-      const placedLabelBoxes = [];
+      const placedLabelBoxes = annotationLabelBoxes.slice();
       const diagramCentre = { x: offsetX + usedWidth / 2, y: offsetY + usedHeight / 2 };
-      const labelBoxFor = (x, y, width, anchor) => ({
-        left: anchor === "end" ? x - width : anchor === "middle" ? x - width / 2 : x,
-        right: anchor === "end" ? x : anchor === "middle" ? x + width / 2 : x + width,
-        top: y - 13,
-        bottom: y + 4
-      });
-      const boxesOverlap = (first, second) => !(
-        first.right + 3 < second.left || first.left - 3 > second.right ||
-        first.bottom + 2 < second.top || first.top - 2 > second.bottom
-      );
       Object.values(points).forEach(point => {
         if (!point.label) return;
         const canvas = canvasPoint(point);
@@ -7193,7 +7313,10 @@ function escapeHtml(str){
         let anchor = dx < 0 ? "end" : "start";
         const textWidth = Math.max(8, Array.from(point.label).length * 6.4);
 
-        if (point.autoLabel) {
+        const preferredBox = labelBoxFor(canvas.x + dx, canvas.y + dy, textWidth, anchor);
+        const preferredConflicts = placedLabelBoxes.some(box => boxesOverlap(preferredBox, box));
+
+        if (point.autoLabel || preferredConflicts) {
           const vx = canvas.x - diagramCentre.x;
           const vy = canvas.y - diagramCentre.y;
           const length = Math.hypot(vx, vy);
@@ -7201,10 +7324,12 @@ function escapeHtml(str){
             ? { x: vx / length * 12, y: vy / length * 12 + 4 }
             : { x: 10, y: -9 };
           const candidates = [
+            ...(point.autoLabel ? [] : [{ x:dx, y:dy }]),
             outward,
             { x: 10, y: -9 }, { x: -10, y: -9 },
             { x: 10, y: 17 }, { x: -10, y: 17 },
-            { x: 0, y: -11 }, { x: 0, y: 18 }
+            { x: 16, y: 4 }, { x: -16, y: 4 },
+            { x: 0, y: -15 }, { x: 0, y: 21 }
           ];
           for (const candidate of candidates) {
             const candidateAnchor = Math.abs(candidate.x) < 4 ? "middle" : candidate.x < 0 ? "end" : "start";
@@ -9243,12 +9368,6 @@ function escapeHtml(str){
         card.remove();
         renumberCards();
         refreshFullLearnerPreview();
-
-        /*
-         * The removed block is now immediately part of the current editor
-         * state. This prevents an older autosave from restoring the note.
-         */
-        scheduleAutosave();
       }
     });
 
@@ -11618,30 +11737,9 @@ function escapeHtml(str){
 
     async function saveOrUpdateQuiz(payload,token){
       if(!currentEditingQuizId) return createQuizWithUniqueServerCode(payload,token);
-
-      /*
-       * Use a clean payload copy for PUT. `questions` is intentionally a
-       * complete replacement array, including the possibility that note
-       * blocks have been removed.
-       */
-      const updatePayload = {
-        ...payload,
-        questions: Array.isArray(payload?.questions)
-          ? payload.questions.map(question => ({ ...question }))
-          : []
-      };
-
       const res=await fetch(`${API}/api/quizzes/${encodeURIComponent(currentEditingQuizId)}?_=${Date.now()}`,{
-        method:"PUT",
-        cache:"no-store",
-        headers:{
-          "Content-Type":"application/json",
-          Authorization:`Bearer ${token}`,
-          "Cache-Control":"no-cache"
-        },
-        body:JSON.stringify(updatePayload)
+        method:"PUT",cache:"no-store",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify(payload)
       });
-
       const data=await res.json().catch(()=>({}));
       return {res,data};
     }
@@ -11779,12 +11877,6 @@ function escapeHtml(str){
       try{
         const payload = await buildPayload("draft");
 
-        /*
-         * Questions in the current editor are authoritative.
-         * Any note/card removed from the admin page must be absent here.
-         */
-        payload.questions = collectQuestions();
-
         saveBtn.disabled = true;
         publishBtn.disabled = true;
         setMsg("Saving assessment as draft...", "muted");
@@ -11828,13 +11920,6 @@ function escapeHtml(str){
         const mode = publishModeEl.value === "draft" ? "now" : publishModeEl.value;
         const payload = await buildPayload(mode);
 
-        /*
-         * Publish exactly what remains in the admin editor.
-         * Removed notes/questions must not survive from the previously
-         * loaded assessment.
-         */
-        payload.questions = collectQuestions();
-
         saveBtn.disabled = true;
         publishBtn.disabled = true;
 
@@ -11844,13 +11929,7 @@ function escapeHtml(str){
           setMsg("Saving scheduled assessment...", "muted");
         }
 
-        const wasUpdatingExistingAssessment = !!currentEditingQuizId;
-
-        /*
-         * Loaded assessment => PUT the same assessment.
-         * New assessment    => create it normally.
-         */
-        const { res, data } = await saveOrUpdateQuiz(payload, token);
+        const { res, data } = await createQuizWithUniqueServerCode(payload, token);
 
         if (res?.ok) {
           const assignedCode = await resolveSavedAssessmentCode(data, token);
@@ -11877,34 +11956,12 @@ function escapeHtml(str){
             );
           }
 
-          localStorage.setItem("practiceOnlineQuizChangedAt", String(Date.now()));
-
-          if (wasUpdatingExistingAssessment) {
-            /*
-             * Keep the same assessment open after updating it.
-             * Save the exact post-removal state so a stale local draft cannot
-             * bring deleted notes back.
-             */
-            currentEditingAssessmentCode = assignedCode;
-            if (assessmentCodeEl) assessmentCodeEl.value = assignedCode;
-            saveLocalAutosave();
-            await refreshDraftAssessmentList(false);
-            refreshFullLearnerPreview();
-
-            setMsg(
-              mode === "now"
-                ? `Assessment ${assignedCode} updated and published. Removed notes are no longer part of the learner assessment.`
-                : `Assessment ${assignedCode} updated and scheduled. Removed notes are no longer part of the learner assessment.`,
-              "ok"
-            );
-          } else {
-            localStorage.removeItem(LOCAL_AUTOSAVE_KEY);
-            currentEditingQuizId = "";
-            currentEditingAssessmentCode = "";
-            await refreshDraftAssessmentList(false);
-            resetFormAfterSave();
-            if (assessmentCodeEl) assessmentCodeEl.value = assignedCode;
-          }
+          localStorage.removeItem(LOCAL_AUTOSAVE_KEY);
+          currentEditingQuizId = "";
+          currentEditingAssessmentCode = "";
+          await refreshDraftAssessmentList(false);
+          resetFormAfterSave();
+          if (assessmentCodeEl) assessmentCodeEl.value = assignedCode;
         } else {
           setMsg("Error: " + (data?.message || "Could not publish assessment"), "error");
         }
