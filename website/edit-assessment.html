@@ -1575,6 +1575,222 @@ input:focus,textarea:focus,select:focus{
   white-space:nowrap !important;
   pointer-events:none !important;
 }
+
+/* ===== EDIT / OVERRIDE WORKFLOW ===== */
+.workflowChoiceCard{
+  margin-bottom:14px;
+  padding:18px;
+}
+.workflowChoiceHeader h3{margin:0;color:var(--edit-navy);font-size:18px}
+.workflowChoiceHeader p{margin:6px 0 0;color:var(--edit-muted);font-size:13px;line-height:1.5}
+.workflowChoiceGrid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  margin-top:15px;
+}
+.workflowChoiceBtn{
+  min-height:76px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  gap:5px;
+  padding:14px 16px;
+  border:1px solid #cfd7e3;
+  border-radius:8px;
+  background:#fff;
+  color:var(--edit-navy);
+  text-align:left;
+  box-shadow:none;
+}
+.workflowChoiceBtn strong{font-size:15px}
+.workflowChoiceBtn span{font-size:12px;font-weight:500;color:var(--edit-muted);line-height:1.45}
+.workflowChoiceBtn:hover{border-color:#075fca;background:#f7faff}
+.workflowChoiceBtn.active{
+  border-color:#075fca;
+  background:#eef6ff;
+  box-shadow:inset 4px 0 0 #075fca;
+}
+body:not([data-assessment-workflow="edit"]) #assessmentFinderCard,
+body:not([data-assessment-workflow="edit"]) #learnerPreviewCard,
+body:not([data-assessment-workflow="edit"]) #assessmentEditorCard{
+  display:none !important;
+}
+body[data-assessment-workflow="edit"]:not(.workflowAssessmentLoaded) #learnerPreviewCard,
+body[data-assessment-workflow="edit"]:not(.workflowAssessmentLoaded) #assessmentEditorCard{
+  display:none !important;
+}
+body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
+  display:none !important;
+}
+.workflowStep{
+  border:1px solid var(--edit-border);
+  border-radius:8px;
+  background:#fff;
+  padding:16px;
+}
+.workflowStep + .workflowStep{margin-top:14px}
+.workflowStepHeader{
+  display:flex;
+  align-items:flex-start;
+  gap:11px;
+  margin-bottom:12px;
+}
+.workflowStepNumber{
+  width:28px;
+  height:28px;
+  flex:0 0 28px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#1b1648;
+  color:#fff;
+  font-size:13px;
+  font-weight:800;
+}
+.workflowStepHeader h3,.workflowStepHeader h4{margin:0;color:var(--edit-navy)}
+.workflowStepHeader p{margin:4px 0 0;color:var(--edit-muted);font-size:12px;line-height:1.45}
+.overrideLookupRow,
+.overrideFileActionRow{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:10px;
+  align-items:end;
+}
+.overrideLookupRow input,.overrideFileActionRow input{margin-bottom:0}
+.overridePreviewGrid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  margin-top:14px;
+}
+.overridePreviewPane{
+  min-width:0;
+  border:1px solid #cfd7e3;
+  border-radius:8px;
+  background:#f8fafc;
+  overflow:hidden;
+}
+.overridePreviewPaneHeader{
+  padding:12px 14px;
+  border-bottom:1px solid #cfd7e3;
+  background:#fff;
+}
+.overridePreviewPaneHeader h4{margin:0;color:var(--edit-navy);font-size:14px}
+.overridePreviewPaneHeader p{margin:4px 0 0;color:var(--edit-muted);font-size:11px;line-height:1.4}
+.overridePreviewCanvas{
+  max-height:68vh;
+  overflow:auto;
+  padding:12px;
+  background:#fff;
+}
+.overridePreviewCanvas .examPaper{min-width:0}
+.overrideEmptyPreview{
+  min-height:260px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  color:var(--edit-muted);
+  font-size:13px;
+  text-align:center;
+}
+.overrideCommitBar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid var(--edit-border);
+}
+.overrideCommitActions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.overrideCommitSummary{font-size:12px;line-height:1.5;color:var(--edit-muted)}
+#overrideTxtBtn{background:#075fca;color:#fff}
+#overrideTxtBtn:disabled{opacity:.5;cursor:not-allowed}
+.overrideStatus{margin:12px 0 0;font-size:13px;line-height:1.45}
+.backToLearnerPreviewBtn{
+  border:1px solid #1b1648 !important;
+  background:#fff !important;
+  color:#1b1648 !important;
+}
+.fieldOrderBar{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+#learnerPreviewCard{margin-top:0 !important;margin-bottom:14px}
+#assessmentEditorCard{margin-top:0}
+.legacyImportTools{display:none !important}
+.workflowLoadingOverlay{
+  position:fixed;
+  inset:0;
+  z-index:5000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:rgba(255,255,255,.88);
+  backdrop-filter:blur(2px);
+}
+.workflowLoadingOverlay[hidden]{display:none !important}
+.workflowLoadingCard{
+  min-width:250px;
+  padding:24px 28px 22px;
+  border:1px solid #d7deea;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 16px 42px rgba(15,23,42,.16);
+  text-align:center;
+}
+.brandDotLoader{
+  position:relative;
+  width:126px;
+  height:126px;
+  margin:0 auto 15px;
+}
+.brandDotLoader i{
+  --dot-angle:calc(var(--dot-index) * 22.5deg);
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:15px;
+  height:15px;
+  margin:-7.5px;
+  border-radius:50%;
+  background:#1b1648;
+  transform:rotate(var(--dot-angle)) translateY(-51px);
+  animation:workflowDotPulse 1.15s linear infinite;
+  animation-delay:calc(var(--dot-index) * -0.071875s);
+}
+.brandDotLoader i:nth-child(n+6):nth-child(-n+11){background:#075fca}
+.brandDotLoader i:nth-child(n+12){background:#00a651}
+.workflowLoadingText{color:#1b1648;font-size:14px;font-weight:750;line-height:1.4}
+@keyframes workflowDotPulse{0%,100%{opacity:.18;transform:rotate(var(--dot-angle)) translateY(-51px) scale(.72)}35%{opacity:1;transform:rotate(var(--dot-angle)) translateY(-51px) scale(1.08)}}
+
+@media(max-width:760px){
+  .workflowChoiceGrid,
+  .overridePreviewGrid,
+  .overrideLookupRow,
+  .overrideFileActionRow{
+    grid-template-columns:1fr;
+  }
+  .workflowChoiceBtn{min-height:70px}
+  .overrideLookupRow button,
+  .overrideFileActionRow button,
+  .overrideCommitBar button{width:100%}
+  .overrideCommitActions{display:grid;grid-template-columns:1fr;width:100%}
+  .overridePreviewCanvas{max-height:none;padding:8px}
+  .overrideCommitBar{align-items:stretch}
+  .workflowLoadingCard{width:min(88vw,320px);min-width:0;padding:22px 18px 20px}
+  .brandDotLoader{width:116px;height:116px}
+  .brandDotLoader i{width:14px;height:14px;margin:-7px;transform:rotate(var(--dot-angle)) translateY(-46px)}
+  @keyframes workflowDotPulse{0%,100%{opacity:.18;transform:rotate(var(--dot-angle)) translateY(-46px) scale(.72)}35%{opacity:1;transform:rotate(var(--dot-angle)) translateY(-46px) scale(1.08)}}
+}
 </style>
 </head>
 
@@ -1596,9 +1812,105 @@ input:focus,textarea:focus,select:focus{
     </div>
   </div>
 
+  <div class="workflowLoadingOverlay" id="workflowLoadingOverlay" hidden role="status" aria-live="polite" aria-busy="true">
+    <div class="workflowLoadingCard">
+      <div class="brandDotLoader" aria-hidden="true">
+        <i style="--dot-index:0"></i><i style="--dot-index:1"></i><i style="--dot-index:2"></i><i style="--dot-index:3"></i>
+        <i style="--dot-index:4"></i><i style="--dot-index:5"></i><i style="--dot-index:6"></i><i style="--dot-index:7"></i>
+        <i style="--dot-index:8"></i><i style="--dot-index:9"></i><i style="--dot-index:10"></i><i style="--dot-index:11"></i>
+        <i style="--dot-index:12"></i><i style="--dot-index:13"></i><i style="--dot-index:14"></i><i style="--dot-index:15"></i>
+      </div>
+      <div class="workflowLoadingText" id="workflowLoadingText">Loading assessment…</div>
+    </div>
+  </div>
 
+  <div class="card workflowChoiceCard" id="workflowChooserCard">
+    <div class="workflowChoiceHeader">
+      <h3>Select one below</h3>
+      
+    </div>
+    <div class="workflowChoiceGrid">
+      <button class="workflowChoiceBtn" id="chooseEditWorkflowBtn" type="button" aria-pressed="false">
+        <strong>Edit an assessment</strong>
+      </button>
+      <button class="workflowChoiceBtn" id="chooseOverrideWorkflowBtn" type="button" aria-pressed="false">
+        <strong>Override an assessment</strong>
+      </button>
+    </div>
+  </div>
 
-  <div class="card" style="margin-bottom:14px;">
+  <div class="card" id="overrideWorkflowPanel" style="margin-bottom:14px;">
+    <div class="workflowStep">
+      <div class="workflowStepHeader">
+        <div class="workflowStepNumber">1</div>
+        <div>
+          <h3>Choose the assessment to override</h3>
+        </div>
+      </div>
+      <div class="overrideLookupRow">
+        <div>
+          <label for="overrideAssessmentCode">Assessment code</label>
+          <input id="overrideAssessmentCode" autocomplete="off" placeholder="Enter assessment code" />
+        </div>
+        <button class="smallbtn" id="loadOverrideTargetBtn" type="button">Load Quiz Preview</button>
+      </div>
+    </div>
+
+    <div class="workflowStep hide" id="overrideReviewStep">
+      <div class="workflowStepHeader">
+        <div class="workflowStepNumber">2</div>
+        <div>
+          <h3>Review both quizzes</h3>
+        </div>
+      </div>
+
+      <div class="overridePreviewGrid">
+        <section class="overridePreviewPane" aria-labelledby="currentOverridePreviewTitle">
+          <div class="overridePreviewPaneHeader">
+            <h4 id="currentOverridePreviewTitle">Current quiz</h4>
+            <p id="currentOverridePreviewMeta">The assessment currently saved under this code.</p>
+          </div>
+          <div class="overridePreviewCanvas attemptPaperPreview" id="overrideExistingPreview"></div>
+        </section>
+
+        <section class="overridePreviewPane" aria-labelledby="newOverridePreviewTitle">
+          <div class="overridePreviewPaneHeader">
+            <h4 id="newOverridePreviewTitle">New file</h4>
+            <p id="newOverridePreviewMeta">Choose a TXT file, then load it to see the replacement preview.</p>
+          </div>
+          <div style="padding:12px;border-bottom:1px solid #cfd7e3;background:#fff;">
+            <div class="overrideFileActionRow">
+              <div class="filePickerShell" style="margin:0;">
+                <img class="filePickerIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939097/upload_c8eg6o.svg" alt="" aria-hidden="true" />
+                <input id="overrideFile" type="file" accept=".txt,text/plain" />
+              </div>
+            </div>
+          </div>
+          <div class="overridePreviewCanvas attemptPaperPreview" id="overrideNewPreview">
+            <div class="overrideEmptyPreview">The new file preview will appear here after you select and load it.</div>
+          </div>
+        </section>
+      </div>
+
+      <div class="overrideCommitBar">
+        <div class="overrideCommitSummary" id="overrideCommitSummary"></div>
+        <div class="overrideCommitActions">
+          <button class="smallbtn iconButton" id="loadOverrideFileBtn" type="button">
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939345/open-open-a-file_yhdyq4.svg" alt="" aria-hidden="true" />
+            <span>Load Override Preview</span>
+          </button>
+          <button class="smallbtn iconButton" id="overrideTxtBtn" type="button" disabled>
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939345/open-open-a-file_yhdyq4.svg" alt="" aria-hidden="true" />
+            <span>Override Assessment</span>
+          </button>
+        </div>
+      </div>
+      <p class="overrideStatus muted" id="overrideStatus" aria-live="polite"></p>
+      <div id="overrideParseErrors" class="hide" style="margin-top:10px;border:1px solid #fecaca;background:#fff1f2;color:#7f1d1d;border-radius:8px;padding:12px;"></div>
+    </div>
+  </div>
+
+  <div class="card" id="assessmentFinderCard" style="margin-bottom:14px;">
     <div class="qhead">
       <div>
         <h3 style="margin:0;">Find an assessment to edit</h3>
@@ -1706,7 +2018,7 @@ input:focus,textarea:focus,select:focus{
   
   </div>
 
-  <div class="card">
+  <div class="card" id="assessmentEditorCard">
     <div class="row">
       <div>
         <label>Grade</label>
@@ -1844,8 +2156,6 @@ input:focus,textarea:focus,select:focus{
     <div class="qhead">
       <div>
         <h3 style="margin:0;">Blocks</h3>
-        
-        </div>
       </div>
     </div>
 
@@ -1859,7 +2169,7 @@ input:focus,textarea:focus,select:focus{
       <button class="smallbtn" id="addSectionBtn" type="button">+ Add Section / Stem</button>
     </div>
 
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; align-items:center;">
+    <div class="legacyImportTools" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; align-items:center;">
       <div class="filePickerShell">
         <img class="filePickerIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939097/upload_c8eg6o.svg" alt="" aria-hidden="true" />
         <input id="uploadFile" type="file" accept=".txt" style="max-width:260px;" />
@@ -1870,7 +2180,7 @@ input:focus,textarea:focus,select:focus{
       </button>
     </div>
 
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center;">
+    <div class="legacyImportTools" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center;">
       <div class="filePickerShell">
         <img class="filePickerIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939097/upload_c8eg6o.svg" alt="" aria-hidden="true" />
         <input id="batchFiles" type="file" accept=".txt" multiple style="max-width:260px;" />
@@ -1886,21 +2196,6 @@ input:focus,textarea:focus,select:focus{
         <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784940092/file-download_h2gyqh.svg" alt="" aria-hidden="true" />
         <span>Download TXT</span>
       </button>
-      <div class="filePickerShell">
-        <img class="filePickerIcon" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939097/upload_c8eg6o.svg" alt="" aria-hidden="true" />
-        <input id="overrideFile" type="file" accept=".txt" style="max-width:260px;" />
-      </div>
-      <button class="smallbtn iconButton" id="overrideTxtBtn" type="button">
-        <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1784939345/open-open-a-file_yhdyq4.svg" alt="" aria-hidden="true" />
-        <span>Override From TXT</span>
-      </button>
-    </div>
-    
-    </div>
-
-    
-      <br />
-      
     </div>
 
     <hr>
@@ -1909,7 +2204,7 @@ input:focus,textarea:focus,select:focus{
       <div class="reviewPanelHeader">
         <div>
           <h3 class="reviewPanelTitle">Assessment Check & Changes Made</h3>
-          <div class="muted tiny" style="margin-top:4px;">Warnings do not stop a commit. Only errors must be corrected.</div>
+          <div class="muted tiny" style="margin-top:4px;"></div>
         </div>
         <div class="reviewStatus" id="reviewStatus">Select an assessment to begin.</div>
       </div>
@@ -1936,11 +2231,11 @@ input:focus,textarea:focus,select:focus{
     <div id="parseErrorsBox" class="hide" style="margin-top:10px; border:1px solid #fecaca; background:#fff1f2; color:#7f1d1d; border-radius:12px; padding:12px;"></div>
   </div>
 
-  <div class="card" style="margin-top:14px;">
+  <div class="card" id="learnerPreviewCard" style="margin-top:14px;">
     <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
       <div>
         <h3 style="margin:0;">Full Learner Preview</h3>
-        <div class="muted tiny previewNavigationHint">Click any question or diagram to edit it.</div>
+        <div class="muted tiny previewNavigationHint"></div>
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="smallbtn" id="previewAttemptModeBtn" type="button">Attempt Preview</button>
@@ -2039,6 +2334,24 @@ input:focus,textarea:focus,select:focus{
     const downloadTxtBtn = document.getElementById("downloadTxtBtn");
     const overrideFileEl = document.getElementById("overrideFile");
     const overrideTxtBtn = document.getElementById("overrideTxtBtn");
+    const loadOverrideFileBtn = document.getElementById("loadOverrideFileBtn");
+    const overrideAssessmentCodeEl = document.getElementById("overrideAssessmentCode");
+    const loadOverrideTargetBtn = document.getElementById("loadOverrideTargetBtn");
+    const overrideReviewStep = document.getElementById("overrideReviewStep");
+    const overrideExistingPreview = document.getElementById("overrideExistingPreview");
+    const overrideNewPreview = document.getElementById("overrideNewPreview");
+    const currentOverridePreviewMeta = document.getElementById("currentOverridePreviewMeta");
+    const newOverridePreviewMeta = document.getElementById("newOverridePreviewMeta");
+    const overrideCommitSummary = document.getElementById("overrideCommitSummary");
+    const overrideStatus = document.getElementById("overrideStatus");
+    const overrideParseErrors = document.getElementById("overrideParseErrors");
+    const chooseEditWorkflowBtn = document.getElementById("chooseEditWorkflowBtn");
+    const chooseOverrideWorkflowBtn = document.getElementById("chooseOverrideWorkflowBtn");
+    const assessmentFinderCard = document.getElementById("assessmentFinderCard");
+    const assessmentEditorCard = document.getElementById("assessmentEditorCard");
+    const learnerPreviewCard = document.getElementById("learnerPreviewCard");
+    const workflowLoadingOverlay = document.getElementById("workflowLoadingOverlay");
+    const workflowLoadingText = document.getElementById("workflowLoadingText");
     const questionsWrap = document.getElementById("questionsWrap");
     const gradeFilterEl = document.getElementById("gradeFilter");
     const searchBoxEl = document.getElementById("searchBox");
@@ -2063,6 +2376,77 @@ input:focus,textarea:focus,select:focus{
     let pendingCommitMode = "draft";
     let allQuizzes = [];
     let currentContentType = "quiz";
+    let overrideTargetQuiz = null;
+    let stagedOverrideParsed = null;
+    let stagedOverridePayload = null;
+
+    if (assessmentEditorCard && learnerPreviewCard) {
+      assessmentEditorCard.before(learnerPreviewCard);
+    }
+
+    function showWorkflowLoading(message="Loading assessment…"){
+      if (workflowLoadingText) workflowLoadingText.textContent = message;
+      if (workflowLoadingOverlay) workflowLoadingOverlay.hidden = false;
+      document.body.setAttribute("aria-busy", "true");
+    }
+
+    function hideWorkflowLoading(){
+      if (workflowLoadingOverlay) workflowLoadingOverlay.hidden = true;
+      document.body.removeAttribute("aria-busy");
+    }
+
+    function setOverrideMsg(text, type="muted"){
+      if (!overrideStatus) return;
+      overrideStatus.className = `overrideStatus ${type}`;
+      overrideStatus.textContent = text || "";
+    }
+
+    function clearOverrideErrors(){
+      if (!overrideParseErrors) return;
+      overrideParseErrors.classList.add("hide");
+      overrideParseErrors.innerHTML = "";
+    }
+
+    function showOverrideErrors(errors, heading="Please correct the new TXT file"){
+      if (!overrideParseErrors || !Array.isArray(errors) || !errors.length) return;
+      overrideParseErrors.classList.remove("hide");
+      overrideParseErrors.innerHTML =
+        `<b>${escapeHtml(heading)}</b><ul style="margin:8px 0 0 18px;padding:0;">` +
+        errors.map(error => `<li><b>${escapeHtml(error.where || "File")}</b>: ${escapeHtml(error.message || "Invalid content")}</li>`).join("") +
+        `</ul>`;
+    }
+
+    function resetStagedOverride(){
+      stagedOverrideParsed = null;
+      stagedOverridePayload = null;
+      if (overrideTxtBtn) overrideTxtBtn.disabled = true;
+      if (overrideCommitSummary) overrideCommitSummary.textContent = "";
+      if (newOverridePreviewMeta) newOverridePreviewMeta.textContent = "";
+      if (overrideNewPreview) overrideNewPreview.innerHTML = '<div class="overrideEmptyPreview">The new file preview will appear here after you select and load it.</div>';
+      clearOverrideErrors();
+    }
+
+    function setAssessmentWorkflow(mode){
+      const selected = mode === "edit" || mode === "override" ? mode : "choice";
+      document.body.dataset.assessmentWorkflow = selected;
+      chooseEditWorkflowBtn?.classList.toggle("active", selected === "edit");
+      chooseOverrideWorkflowBtn?.classList.toggle("active", selected === "override");
+      chooseEditWorkflowBtn?.setAttribute("aria-pressed", selected === "edit" ? "true" : "false");
+      chooseOverrideWorkflowBtn?.setAttribute("aria-pressed", selected === "override" ? "true" : "false");
+      document.body.classList.toggle("workflowAssessmentLoaded", selected === "edit" && !!currentQuiz?._id);
+
+      if (selected === "edit") {
+        setMsg(currentQuiz?._id ? "Assessment loaded. Review the learner preview, then click an item to edit it." : "Choose an assessment to edit.", "ok");
+        assessmentFinderCard?.scrollIntoView({behavior:"smooth", block:"start"});
+      } else if (selected === "override") {
+        setOverrideMsg(overrideTargetQuiz?._id ? "Existing quiz loaded. Choose and load the replacement TXT file." : "Enter the assessment code to begin.", "muted");
+        document.getElementById("overrideWorkflowPanel")?.scrollIntoView({behavior:"smooth", block:"start"});
+      }
+    }
+
+    chooseEditWorkflowBtn?.addEventListener("click", () => setAssessmentWorkflow("edit"));
+    chooseOverrideWorkflowBtn?.addEventListener("click", () => setAssessmentWorkflow("override"));
+    setAssessmentWorkflow("choice");
 
     const assessmentSyncChannel = (() => {
       try {
@@ -2799,6 +3183,21 @@ input:focus,textarea:focus,select:focus{
       const p = String(v || "").toLowerCase().trim();
       if (p === "paper1" || p === "paper2") return p;
       return "paper1";
+    }
+
+    function normalizeAssessmentSubject(value){
+      const subject = cleanSpaces(value || "");
+      if (/^(?:mathematics|maths?|math)$/i.test(subject)) return "Mathematics";
+      if (/^(?:physics|physical\s+sciences?)$/i.test(subject)) return "Physics";
+      return subject;
+    }
+
+    function resolveAssessmentSubject(value, context=""){
+      const normalized = normalizeAssessmentSubject(value);
+      if (["Mathematics", "Physics"].includes(normalized)) return normalized;
+      const combined = cleanSpaces(`${value || ""} ${context || ""}`);
+      if (/\b(?:physics|physical science|mechanics|electricity|magnetism|electrostatics|momentum|newton|optics|wave|doppler|circuit)\b/i.test(combined)) return "Physics";
+      return "Mathematics";
     }
 
     function normalizeQuizAccessLevel(value){
@@ -4522,7 +4921,7 @@ function escapeHtml(str){
         if (value === undefined || value === "") return;
         svg.push('<text x="' + x + '" y="' + y + '" text-anchor="middle" font-size="' + (size || 15) + '" font-weight="400" fill="#111827" style="paint-order:stroke;stroke:#fff;stroke-width:4px">' + escapeHtml(value) + '</text>');
       };
-      svg.push('<rect x="42" y="35" width="676" height="350" rx="8" fill="' + (minimalTheme ? "#fff" : "#f8fbff") + '" stroke="' + (minimalTheme ? "#374151" : "#64748b") + '" stroke-width="2" />');
+      svg.push('<rect x="42" y="35" width="676" height="350" rx="0" ry="0" style="rx:0;ry:0" fill="' + (minimalTheme ? "#fff" : "#f8fbff") + '" stroke="' + (minimalTheme ? "#374151" : "#64748b") + '" stroke-width="2" stroke-linejoin="miter" />');
       svg.push('<text x="58" y="60" font-size="15" font-weight="400" fill="#334155">U</text>');
       if (sets === 2) {
         svg.push('<circle cx="310" cy="210" r="125" fill="' + (minimalTheme ? "none" : "#60a5fa") + '" fill-opacity=".2" stroke="' + (minimalTheme ? "#111827" : "#2563eb") + '" stroke-width="' + (minimalTheme ? 2.2 : 3) + '" />');
@@ -4534,18 +4933,18 @@ function escapeHtml(str){
         addText(500, 216, values.B_ONLY, 18);
         addText(655, 345, values.OUTSIDE, 18);
       } else {
-        svg.push('<circle cx="315" cy="175" r="112" fill="' + (minimalTheme ? "none" : "#60a5fa") + '" fill-opacity=".18" stroke="' + (minimalTheme ? "#111827" : "#2563eb") + '" stroke-width="' + (minimalTheme ? 2.2 : 3) + '" />');
-        svg.push('<circle cx="445" cy="175" r="112" fill="' + (minimalTheme ? "none" : "#f59e0b") + '" fill-opacity=".18" stroke="' + (minimalTheme ? "#374151" : "#d97706") + '" stroke-width="' + (minimalTheme ? 2.2 : 3) + '" />');
-        svg.push('<circle cx="380" cy="275" r="112" fill="' + (minimalTheme ? "none" : "#34d399") + '" fill-opacity=".18" stroke="' + (minimalTheme ? "#6b7280" : "#059669") + '" stroke-width="' + (minimalTheme ? 2.2 : 3) + '" />');
+        svg.push('<circle cx="318" cy="150" r="102" fill="' + (minimalTheme ? "none" : "#60a5fa") + '" fill-opacity=".18" stroke="' + (minimalTheme ? "#111827" : "#2563eb") + '" stroke-width="' + (minimalTheme ? 2.2 : 3) + '" />');
+        svg.push('<circle cx="442" cy="150" r="102" fill="' + (minimalTheme ? "none" : "#f59e0b") + '" fill-opacity=".18" stroke="' + (minimalTheme ? "#374151" : "#d97706") + '" stroke-width="' + (minimalTheme ? 2.2 : 3) + '" />');
+        svg.push('<circle cx="380" cy="258" r="102" fill="' + (minimalTheme ? "none" : "#34d399") + '" fill-opacity=".18" stroke="' + (minimalTheme ? "#6b7280" : "#059669") + '" stroke-width="' + (minimalTheme ? 2.2 : 3) + '" />');
         addText(255, 62, values.A_LABEL || "A", 15);
         addText(505, 62, values.B_LABEL || "B", 15);
-        addText(380, 360, values.C_LABEL || "C", 15);
+        addText(380, 332, values.C_LABEL || "C", 15);
         addText(278, 160, values.A_ONLY, 17);
         addText(482, 160, values.B_ONLY, 17);
-        addText(380, 319, values.C_ONLY, 17);
+        addText(380, 288, values.C_ONLY, 17);
         addText(380, 142, values.AB_ONLY, 17);
-        addText(320, 245, values.AC_ONLY, 17);
-        addText(440, 245, values.BC_ONLY, 17);
+        addText(320, 235, values.AC_ONLY, 17);
+        addText(440, 235, values.BC_ONLY, 17);
         addText(380, 215, values.ABC, 17);
         addText(655, 345, values.OUTSIDE, 17);
       }
@@ -5110,12 +5509,175 @@ function escapeHtml(str){
         '<div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="' + escapeHtml(accessibleTitle) + '">' + svg.join("") + '</svg></div></div>';
     }
 
+    function renderPieChartBlock(rawAttributes, bodyText){
+      const attributes = readNoteVisualAttributes(rawAttributes);
+      const minimalTheme = useMinimalAssessmentVisualTheme(attributes);
+      const segments = [];
+      const invalidRows = [];
+      getNoteVisualLines(bodyText).forEach((line, index) => {
+        const parts = line.split("|").map(part => String(part || "").trim());
+        const value = parts.length >= 2 ? parseNoteGraphNumber(parts[1]) : null;
+        if (parts.length < 2 || !parts[0] || value === null || value < 0) invalidRows.push(index + 1);
+        else segments.push({ label:parts[0], value });
+      });
+      if (!segments.length) return noteVisualError("Add pie-chart rows as: Category | value.");
+      if (invalidRows.length) return noteVisualError(`Pie-chart row${invalidRows.length === 1 ? " " : "s "}${invalidRows.join(", ")} must contain a category and a non-negative value.`);
+      const total = segments.reduce((sum, segment) => sum + segment.value, 0);
+      if (!(total > 0)) return noteVisualError("The pie-chart values must have a total greater than zero.");
+
+      const requestedTitle = String(attributes.title || "Pie chart").trim();
+      const showTitle = !/^(?:0|false|no|off|hide|none)$/i.test(String(attributes.show_title ?? attributes.showtitle ?? "true"));
+      const title = showTitle ? requestedTitle : "";
+      const width = 760;
+      const rowHeight = 30;
+      const height = Math.max(350, segments.length * rowHeight + 90);
+      const cx = 220;
+      const cy = height / 2;
+      const radius = Math.min(128, height / 2 - 34);
+      const legendX = 430;
+      const legendHeight = segments.length * rowHeight;
+      const legendTop = (height - legendHeight) / 2;
+      const colours = minimalTheme
+        ? ["#111827", "#4b5563", "#6b7280", "#9ca3af", "#d1d5db", "#e5e7eb", "#f3f4f6"]
+        : ["#1b1648", "#075fca", "#00a651", "#f59e0b", "#8b5cf6", "#ec4899", "#64748b"];
+      const svg = [];
+      let angle = -Math.PI / 2;
+      const formatValue = value => Number.isInteger(value) ? String(value) : String(Number(value.toFixed(2)));
+
+      segments.forEach((segment, index) => {
+        const sweep = segment.value / total * Math.PI * 2;
+        const end = angle + sweep;
+        const x1 = cx + radius * Math.cos(angle);
+        const y1 = cy + radius * Math.sin(angle);
+        const x2 = cx + radius * Math.cos(end);
+        const y2 = cy + radius * Math.sin(end);
+        const largeArc = sweep > Math.PI ? 1 : 0;
+        const path = segments.length === 1
+          ? `<circle cx="${cx}" cy="${cy}" r="${radius}" />`
+          : `<path d="M ${cx} ${cy} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${radius} ${radius} 0 ${largeArc} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z" />`;
+        svg.push(path.replace(" />", ` fill="${colours[index % colours.length]}" stroke="#000" stroke-width="1.5" vector-effect="non-scaling-stroke" />`));
+
+        const middle = angle + sweep / 2;
+        const labelRadius = sweep < 0.16 ? radius * 0.78 : radius * 0.62;
+        const labelX = cx + labelRadius * Math.cos(middle);
+        const labelY = cy + labelRadius * Math.sin(middle) + 5;
+        svg.push(`<text x="${labelX.toFixed(2)}" y="${labelY.toFixed(2)}" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#000">${escapeHtml(formatValue(segment.value))}</text>`);
+
+        const legendY = legendTop + index * rowHeight + 15;
+        svg.push(`<rect x="${legendX}" y="${(legendY - 11).toFixed(2)}" width="16" height="16" fill="${colours[index % colours.length]}" stroke="#000" stroke-width="1" />`);
+        svg.push(`<text x="${legendX + 25}" y="${(legendY + 2).toFixed(2)}" font-family="Arial, sans-serif" font-size="14" fill="#111827">${escapeHtml(segment.label)} ${escapeHtml(formatValue(segment.value))}</text>`);
+        angle = end;
+      });
+
+      return `<div class="noteVisualBlock${minimalTheme ? " minimalDiagramTheme" : ""}">${title ? `<div class="noteVisualTitle">${renderNoteVisualTitle(title)}</div>` : ""}<div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(requestedTitle)}">${svg.join("")}</svg></div></div>`;
+    }
+
+    function renderPatternBlock(rawAttributes, bodyText){
+      const attributes = readNoteVisualAttributes(rawAttributes);
+      const minimalTheme = useMinimalAssessmentVisualTheme(attributes);
+      const stages = [];
+      const invalidRows = [];
+      getNoteVisualLines(bodyText).forEach((line, index) => {
+        const parts = line.split("|").map(part => String(part || "").trim());
+        const rawCount = parts.length > 1 ? parts[1] : parts[0];
+        const parsed = parseNoteGraphNumber(rawCount);
+        const count = parsed === null ? null : Math.round(parsed);
+        if (count === null || count < 1 || count > 12 || Math.abs(parsed - count) > 0.000001) invalidRows.push(index + 1);
+        else stages.push({ caption:parts.length > 1 ? (parts[0] || `Figure ${index + 1}`) : `Figure ${index + 1}`, count });
+      });
+      if (!stages.length) return noteVisualError("Add pattern stages as: Figure 1 | 1.");
+      if (invalidRows.length) return noteVisualError(`Pattern row${invalidRows.length === 1 ? " " : "s "}${invalidRows.join(", ")} must use a whole-number count from 1 to 12.`);
+      if (stages.length > 6) return noteVisualError("Use no more than 6 pattern stages.");
+
+      const requestedTitle = String(attributes.title || "Growing matchstick pattern").trim();
+      const showTitle = !/^(?:0|false|no|off|hide|none)$/i.test(String(attributes.show_title ?? attributes.showtitle ?? "true"));
+      const side = 58, arrow = 46, cellPadding = 34, gap = 28;
+      const stageWidths = stages.map(stage => side * stage.count + arrow + cellPadding);
+      const contentWidth = stageWidths.reduce((sum, value) => sum + value, 0) + gap * Math.max(0, stages.length - 1);
+      const width = Math.max(760, contentWidth + 48);
+      const height = 140;
+      const top = 25, bottom = top + side, captionY = bottom + 31;
+      const stroke = minimalTheme ? "#111827" : "#1b1648";
+      const svg = [];
+      let cursor = (width - contentWidth) / 2;
+
+      stages.forEach((stage, stageIndex) => {
+        const cellWidth = stageWidths[stageIndex];
+        const diagramWidth = side * stage.count + arrow;
+        const startX = cursor + (cellWidth - diagramWidth) / 2;
+        const edges = new Map();
+        const joints = new Map();
+        const pointKey = point => `${point.x.toFixed(2)},${point.y.toFixed(2)}`;
+        const addEdge = (first, second) => {
+          const key = [pointKey(first), pointKey(second)].sort().join("|");
+          if (!edges.has(key)) edges.set(key, [first, second]);
+          joints.set(pointKey(first), first); joints.set(pointKey(second), second);
+        };
+        for (let index = 0; index < stage.count; index += 1) {
+          const left = startX + index * side, right = left + side;
+          addEdge({x:left,y:top},{x:right,y:top});
+          addEdge({x:right,y:top},{x:right,y:bottom});
+          addEdge({x:right,y:bottom},{x:left,y:bottom});
+          addEdge({x:left,y:bottom},{x:left,y:top});
+        }
+        const base = startX + stage.count * side;
+        const tip = {x:base + arrow,y:top + side / 2};
+        addEdge({x:base,y:top},tip); addEdge(tip,{x:base,y:bottom});
+        edges.forEach(([first, second]) => svg.push(`<line x1="${first.x}" y1="${first.y}" x2="${second.x}" y2="${second.y}" stroke="${stroke}" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke" />`));
+        joints.forEach(point => svg.push(`<circle cx="${point.x}" cy="${point.y}" r="3" fill="#d1d5db" stroke="#000" stroke-width=".7" />`));
+        svg.push(`<text x="${cursor + cellWidth / 2}" y="${captionY}" text-anchor="middle" font-family="Times New Roman, serif" font-size="15" fill="#111827">${escapeHtml(stage.caption)}</text>`);
+        cursor += cellWidth + gap;
+      });
+
+      return `<div class="noteVisualBlock${minimalTheme ? " minimalDiagramTheme" : ""}">${showTitle ? `<div class="noteVisualTitle">${renderNoteVisualTitle(requestedTitle)}</div>` : ""}<div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(requestedTitle)}">${svg.join("")}</svg></div></div>`;
+    }
+
+    function renderRuleDiagramBlock(rawAttributes, bodyText){
+      const attributes = readNoteVisualAttributes(rawAttributes);
+      const minimalTheme = useMinimalAssessmentVisualTheme(attributes);
+      const rows = [];
+      const invalidRows = [];
+      getNoteVisualLines(bodyText).forEach((line, index) => {
+        const parts = line.split("|").map(part => String(part || "").trim());
+        if (parts.length < 2 || !parts[0] || !parts[1]) invalidRows.push(index + 1);
+        else rows.push({ input:noteSvgLabel(parts[0]), output:noteSvgLabel(parts[1]) });
+      });
+      if (!rows.length) return noteVisualError("Add rule mappings as: input | output.");
+      if (invalidRows.length) return noteVisualError(`Rule row${invalidRows.length === 1 ? " " : "s "}${invalidRows.join(", ")} must contain both input and output.`);
+
+      const requestedTitle = String(attributes.title || "Input-output rule").trim();
+      const showTitle = !/^(?:0|false|no|off|hide|none)$/i.test(String(attributes.show_title ?? attributes.showtitle ?? "true"));
+      const inputLabel = noteSvgLabel(attributes.input_label || attributes.input || "x");
+      const outputLabel = noteSvgLabel(attributes.output_label || attributes.output || "y");
+      const ruleLabel = noteSvgLabel(attributes.rule || attributes.formula || "3x + 1").replace(/^\$|\$$/g, "");
+      const width = 760, rowHeight = 54, top = 63, height = top + rows.length * rowHeight + 30;
+      const leftX = 150, ruleX = 380, rightX = 610;
+      const stroke = "#111827";
+      const accent = minimalTheme ? "#f3f4f6" : "#eef6ff";
+      const markerId = `ruleArrow${++noteVisualSvgSequence}`;
+      const svg = [`<defs><marker id="${markerId}" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 1 1 L 9 5 L 1 9 z" fill="${stroke}" /></marker></defs>`];
+      svg.push(`<text x="${leftX}" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="${stroke}">${escapeHtml(inputLabel)}</text>`);
+      svg.push(`<rect x="${ruleX - 74}" y="7" width="148" height="32" rx="6" fill="${accent}" stroke="${stroke}" stroke-width="1.2" /><text x="${ruleX}" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="${stroke}">${escapeHtml(ruleLabel)}</text>`);
+      svg.push(`<text x="${rightX}" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="${stroke}">${escapeHtml(outputLabel)}</text>`);
+      rows.forEach((row, index) => {
+        const y = top + index * rowHeight;
+        svg.push(`<circle cx="${leftX}" cy="${y}" r="20" fill="#fff" stroke="${stroke}" stroke-width="1.3" /><text x="${leftX}" y="${y + 5}" text-anchor="middle" font-size="15" fill="${stroke}">${escapeHtml(row.input)}</text>`);
+        svg.push(`<line x1="${leftX + 25}" y1="${y}" x2="${rightX - 27}" y2="${y}" stroke="${stroke}" stroke-width="1.3" marker-end="url(#${markerId})" />`);
+        svg.push(`<rect x="${ruleX - 57}" y="${y - 17}" width="114" height="34" rx="6" fill="${accent}" stroke="${stroke}" stroke-width="1.1" /><text x="${ruleX}" y="${y + 5}" text-anchor="middle" font-size="14" fill="${stroke}">${escapeHtml(ruleLabel)}</text>`);
+        svg.push(`<circle cx="${rightX}" cy="${y}" r="20" fill="#fff" stroke="${stroke}" stroke-width="1.3" /><text x="${rightX}" y="${y + 5}" text-anchor="middle" font-size="15" fill="${stroke}">${escapeHtml(row.output)}</text>`);
+      });
+      return `<div class="noteVisualBlock${minimalTheme ? " minimalDiagramTheme" : ""}">${showTitle ? `<div class="noteVisualTitle">${renderNoteVisualTitle(requestedTitle)}</div>` : ""}<div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(requestedTitle)}">${svg.join("")}</svg></div></div>`;
+    }
+
     function renderStructuredNotePreview(rawText){
-      const raw = String(rawText || "").replace(/\r/g, "").trim();
+      const raw = String(rawText || "")
+        .replace(/\r/g, "")
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        .trim();
       if (!raw) return "";
 
       const blockPattern =
-        /\[\[(FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)([^\]]*)\]\]([\s\S]*?)\[\[\/\1\]\]/gi;
+        /\[\[\s*(FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|RULE_DIAGRAM|RULE|PATTERN|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b([^\]]*)\]\]([\s\S]*?)\[\[\s*\/\s*\1\s*\]\]/gi;
 
       const html = [];
       let cursor = 0;
@@ -5130,6 +5692,11 @@ function escapeHtml(str){
           BOX_WHISKER: "Use the box-and-whisker plots below to answer the next question.",
           GRAPH: "Use the graph below to answer the next question.",
           HISTOGRAM: "Use the histogram below to answer the next question.",
+          PIE_CHART: "Use the pie chart below to answer the next question.",
+          PIE: "Use the pie chart below to answer the next question.",
+          RULE_DIAGRAM: "Use the rule diagram below to answer the next question.",
+          RULE: "Use the rule diagram below to answer the next question.",
+          PATTERN: "Use the pattern below to answer the next question.",
           FUNCTION_GRAPH: "Use the graph below to answer the next question.",
           TRIG_GRAPH: "Use the trigonometric graph below to answer the next question.",
           VENN: "Use the Venn diagram below to answer the next question.",
@@ -5154,6 +5721,11 @@ function escapeHtml(str){
           BOX_WHISKER: renderBoxPlotBlock,
           GRAPH: renderNoteGraphBlock,
           HISTOGRAM: renderHistogramBlock,
+          PIE_CHART: renderPieChartBlock,
+          PIE: renderPieChartBlock,
+          RULE_DIAGRAM: renderRuleDiagramBlock,
+          RULE: renderRuleDiagramBlock,
+          PATTERN: renderPatternBlock,
           FUNCTION_GRAPH: renderFunctionGraphBlock,
           TRIG_GRAPH: renderTrigGraphBlock,
           VENN: renderVennBlock,
@@ -5200,6 +5772,12 @@ function escapeHtml(str){
      */
     function containsNativeGeometryBlock(rawText){
       return /\[\[\s*GEOMETRY\b[\s\S]*?\]\][\s\S]*?\[\[\s*\/\s*GEOMETRY\s*\]\]/i.test(
+        String(rawText || "").replace(/[\u200B-\u200D\uFEFF]/g, "")
+      );
+    }
+
+    function containsNativeVisualBlock(rawText){
+      return /\[\[\s*(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|RULE_DIAGRAM|RULE|PATTERN|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b[\s\S]*?\]\][\s\S]*?\[\[\s*\/\s*(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|RULE_DIAGRAM|RULE|PATTERN|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\s*\]\]/i.test(
         String(rawText || "").replace(/[\u200B-\u200D\uFEFF]/g, "")
       );
     }
@@ -5261,7 +5839,7 @@ function escapeHtml(str){
       } catch (error) {
         console.error("Visual preview could not be drawn:", error);
         const directiveStart = source.search(
-          /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i
+          /\[\[\s*(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|RULE_DIAGRAM|RULE|PATTERN|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i
         );
         const introduction = (directiveStart >= 0 ? source.slice(0, directiveStart) : source).trim();
         return (introduction ? renderStructuredNoteTextPreview(introduction) : "") +
@@ -5276,8 +5854,8 @@ function escapeHtml(str){
       root.querySelectorAll(".noteBox").forEach(noteBox => {
         if (noteBox.querySelector("svg.generatedNoteDiagram")) return;
         const source = String(noteBox.innerText || noteBox.textContent || "").trim();
-        if (!containsNativeGeometryBlock(source)) return;
-        noteBox.innerHTML = renderNativeGeometryNotePreview(source);
+        if (!containsNativeVisualBlock(source)) return;
+        noteBox.innerHTML = renderAdminNotePreview(source);
       });
     }
 
@@ -5312,6 +5890,7 @@ function escapeHtml(str){
     function navigateToEditorBlock(key){
       const card = questionsWrap.querySelector(`.qcard[data-preview-key="${CSS.escape(key)}"]`);
       if (!card) return;
+      setAssessmentWorkflow("edit");
       if (paperPreviewModal?.style.display === "flex") closePreview();
       clearPreviewNavigationHighlight();
       card.classList.add("previewNavActive");
@@ -5322,7 +5901,11 @@ function escapeHtml(str){
 
     function navigateToPreviewBlock(key){
       const item = fullLearnerPreview?.querySelector(`[data-preview-key="${CSS.escape(key)}"]`);
-      if (!item) return;
+      setAssessmentWorkflow("edit");
+      if (!item) {
+        learnerPreviewCard?.scrollIntoView({behavior:"smooth", block:"start"});
+        return;
+      }
       clearPreviewNavigationHighlight();
       item.classList.add("previewNavActive");
       item.scrollIntoView({behavior:"smooth", block:"center"});
@@ -5462,7 +6045,7 @@ function escapeHtml(str){
             topNo+=1;subParent=topNo;childNo=0;
             parts.push(`<div class="q previewSectionRow previewLinkedItem" ${previewNavigationAttributes(previewKey, `${mainNo}.${subParent}`)}><div class="qSectionStem"><div class="qSectionLeft"><div class="qSectionNo">${mainNo}.${subParent}</div><div class="qSectionText">${renderAdminNotePreview(txt)}</div></div></div>${imageHtml}</div>`);
           }else{
-            const hasSharedDiagram = !!img || /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(txt);
+            const hasSharedDiagram = !!img || /\[\[\s*(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|RULE_DIAGRAM|RULE|PATTERN|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(txt);
             const sharedReference = renderSharedPreviewReference(mainNo, hasSharedDiagram);
             parts.push(`<div class="q previewNoteRow previewLinkedItem" ${previewNavigationAttributes(previewKey, `QUESTION ${mainNo}`)}>${sharedReference}<div class="noteBox">${renderAdminNotePreview(txt)}</div>${imageHtml}</div>`);
           }
@@ -5505,6 +6088,140 @@ function escapeHtml(str){
       }
       parts.push(`</div>`);
       target.innerHTML=parts.join("");
+      hydrateNativeGeometryPreview(target);
+      typesetMath(target);
+    }
+
+    function staticPreviewImageHtml(url, alt="Diagram"){
+      const clean = cleanSpaces(url || "");
+      if (!clean) return "";
+      return `<div class="qImageWrap"><img class="qimg" src="${escapeAttr(clean)}" alt="${escapeAttr(alt)}" loading="eager" decoding="async" onerror="this.closest('.qImageWrap').innerHTML='<div class=&quot;previewImageError&quot;>The diagram could not be loaded. Check its image URL.</div>'"></div>`;
+    }
+
+    function parsedItemNoteRole(item){
+      if (item?.type === "group") return "main";
+      if (item?.type === "section") return "subquestion";
+      if (item?.type !== "note") return "";
+      return item.noteRole || noteRoleFromText(item.text || "") || "information";
+    }
+
+    function summarizeParsedAssessment(parsed){
+      const items = Array.isArray(parsed?.items) ? parsed.items : [];
+      let questions = 0;
+      let notes = 0;
+      let diagrams = 0;
+      for (const item of items) {
+        if (["mcq", "text"].includes(item?.type)) questions += 1;
+        if (["group", "section", "note"].includes(item?.type)) notes += 1;
+        const noteText = String(item?.text || item?.question || "");
+        if (cleanSpaces(item?.imageUrl || "") || /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE|PIE_CHART|PIE|PATTERN|RULE_DIAGRAM)\b/i.test(noteText)) diagrams += 1;
+      }
+      return { questions, notes, diagrams, blocks: items.length };
+    }
+
+    function parsedPreviewSummary(parsed){
+      const summary = summarizeParsedAssessment(parsed);
+      return `${summary.questions} question${summary.questions === 1 ? "" : "s"} • ${summary.notes} note${summary.notes === 1 ? "" : "s"} • ${summary.diagrams} diagram${summary.diagrams === 1 ? "" : "s"}`;
+    }
+
+    function renderParsedAssessmentPreview(parsed, target, mode="attempt"){
+      if (!target) return;
+      const meta = parsed?.meta || {};
+      const items = Array.isArray(parsed?.items) ? parsed.items : [];
+      const title = cleanSpaces(meta.title || "Assessment Title");
+      const topic = cleanSpaces(meta.topic || "");
+      const grade = cleanSpaces(meta.grade || "");
+      const gradeLabel = grade ? (/^grade\s/i.test(grade) ? grade : `Grade ${grade}`) : "";
+      const time = cleanSpaces(meta.timeLimitMinutes || "10");
+      const instructions = cleanMultilinePreview(meta.instructions || "");
+      const parts = [`<div class="examPaper"><div class="paperMeta"><div style="font-size:14px;font-weight:400;margin:0 0 2px;line-height:1.5;">${escapeHtml(title)}</div><div class="paperMetaRow"><div>${escapeHtml([gradeLabel, topic].filter(Boolean).join(" • "))}</div><div class="paperMetaRight">Time limit: ${escapeHtml(time)} minutes</div></div></div>`];
+
+      if (instructions) parts.push(`<div class="q previewNoteRow"><div class="noteBox">${renderAdminNotePreview(`Assessment Instructions\n${instructions}`)}</div></div>`);
+
+      let mainNo = 0, topNo = 0, subParent = null, childNo = 0;
+      const ensureMain = () => {
+        if (mainNo === 0) {
+          mainNo = 1; topNo = 0; subParent = null; childNo = 0;
+          parts.push('<div class="q previewHeadingRow"><div class="qMainHeading">QUESTION 1</div></div>');
+        }
+      };
+
+      for (const item of items) {
+        const type = String(item?.type || "").toLowerCase();
+        if (!type) continue;
+
+        if (type === "group") {
+          mainNo += 1; topNo = 0; subParent = null; childNo = 0;
+          parts.push(`<div class="q previewHeadingRow"><div class="qMainHeading">QUESTION ${mainNo}</div></div>`);
+          continue;
+        }
+
+        if (type === "section") {
+          ensureMain(); topNo += 1; subParent = topNo; childNo = 0;
+          const txt = cleanMultilinePreview(item.text || "");
+          parts.push(`<div class="q previewSectionRow"><div class="qSectionStem"><div class="qSectionLeft"><div class="qSectionNo">${mainNo}.${subParent}</div><div class="qSectionText">${renderAdminNotePreview(txt)}</div></div></div></div>`);
+          continue;
+        }
+
+        if (type === "note") {
+          const raw = cleanMultilinePreview(item.text || "");
+          const role = parsedItemNoteRole(item);
+          const txt = stripNoteRoleMarker(raw);
+          const imageHtml = role === "information" ? staticPreviewImageHtml(item.imageUrl || "", "Diagram") : "";
+
+          if (role === "instruction") {
+            if (txt) parts.push(`<div class="q previewNoteRow"><div class="noteBox">${renderAdminNotePreview(txt)}</div></div>`);
+            continue;
+          }
+          if (role === "main") {
+            mainNo += 1; topNo = 0; subParent = null; childNo = 0;
+            const body = txt.replace(/^QUESTION\s+\d+\s*[:.-]?\s*/i, "").trim();
+            parts.push(`<div class="q previewHeadingRow"><div class="qMainHeading">QUESTION ${mainNo}</div>${body ? `<div class="noteBox">${renderAdminNotePreview(body)}</div>` : ""}</div>`);
+            continue;
+          }
+
+          ensureMain();
+          if (role === "subquestion") {
+            topNo += 1; subParent = topNo; childNo = 0;
+            parts.push(`<div class="q previewSectionRow"><div class="qSectionStem"><div class="qSectionLeft"><div class="qSectionNo">${mainNo}.${subParent}</div><div class="qSectionText">${renderAdminNotePreview(txt)}</div></div></div>${imageHtml}</div>`);
+          } else {
+            const hasSharedDiagram = !!cleanSpaces(item.imageUrl || "") || /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE|PIE_CHART|PIE|PATTERN|RULE_DIAGRAM)\b/i.test(txt);
+            parts.push(`<div class="q previewNoteRow">${renderSharedPreviewReference(mainNo, hasSharedDiagram)}<div class="noteBox">${renderAdminNotePreview(txt)}</div>${imageHtml}</div>`);
+          }
+          continue;
+        }
+
+        if (!["mcq", "text"].includes(type)) continue;
+        ensureMain();
+        let label;
+        if (subParent !== null) { childNo += 1; label = `${mainNo}.${subParent}.${childNo}`; }
+        else { topNo += 1; label = `${mainNo}.${topNo}`; }
+
+        const qText = stripLeadingQuestionNumberMultiline(item.question || item.text || "");
+        const points = cleanSpaces(item.points || "1");
+        const hint = cleanSpaces(item.hint || "");
+        const solution = String(item.solution || "").trim();
+        const imageHtml = staticPreviewImageHtml(item.imageUrl || "", "Question image");
+        const imageFirst = item.imageFirst === true || String(item.contentOrder || "").toLowerCase() === "image-question";
+        const headHtml = renderPreviewQuestionHead(label, qText, points);
+        const questionAndImageHtml = imageFirst ? `${imageHtml}${headHtml}` : `${headHtml}${imageHtml}`;
+
+        if (type === "text") {
+          const fields = normaliseAnswerFields(item);
+          const answers = fields.length ? fields.map((field, index) => {
+            const prefix = learnerVisibleAnswerLabel(field, index);
+            const suffix = cleanSpaces(field?.suffix || "");
+            return `<div class="answerPreviewRow" style="margin-left:68px;display:flex;align-items:center;gap:8px;margin-top:8px;">${prefix ? `<span>${renderMixedMathPreview(prefix)}</span>` : ""}<input class="textAnswerPaper" style="margin:0;width:150px;" disabled>${suffix ? `<span>${renderMixedMathPreview(suffix)}</span>` : ""}</div>`;
+          }).join("") : '<input class="textAnswerPaper" disabled>';
+          parts.push(`<div class="q">${questionAndImageHtml}${answers}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${mode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`);
+        } else {
+          const options = Array.isArray(item.options) ? item.options.map(option => typeof option === "string" ? option : (option?.text || option?.value || option?.label || "")).filter(Boolean) : [];
+          parts.push(`<div class="q">${questionAndImageHtml}${options.map(option => `<div class="optPaper"><span class="optBullet">○</span><span class="optTextPaper">${renderMixedMathPreview(option)}</span></div>`).join("")}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${mode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`);
+        }
+      }
+
+      parts.push("</div>");
+      target.innerHTML = parts.join("");
       hydrateNativeGeometryPreview(target);
       typesetMath(target);
     }
@@ -5643,6 +6360,7 @@ function escapeHtml(str){
       if (!id) {
         currentQuiz = null;
         originalEditorSnapshot = null;
+        document.body.classList.remove("workflowAssessmentLoaded");
         updateAvailabilityUi();
         updateChangeReview();
         return;
@@ -5790,7 +6508,7 @@ function escapeHtml(str){
       setMsg("Loading assessments...", "muted");
       await loadAssessmentList();
       updateAvailabilityUi();
-      setMsg("Select an assessment to edit.", "ok");
+      setMsg("Choose Edit or Override above.", "ok");
     })();
 
     let qCount = 0;
@@ -5803,7 +6521,10 @@ function escapeHtml(str){
               <span class="moveBtns"><button type="button" class="smallbtn moveUpBtn">↑</button><button type="button" class="smallbtn moveDownBtn">↓</button></span>
               <div><b class="cardLabel">Block ${id}</b> <span class="pill">NOTE / HEADING</span></div>
             </div>
-            <button type="button" class="smallbtn removeBtn">Remove</button>
+            <div class="toolRow">
+              <button type="button" class="smallbtn backToLearnerPreviewBtn">Back to Learner Preview</button>
+              <button type="button" class="smallbtn removeBtn">Remove</button>
+            </div>
           </div>
           <div class="noteRoleFields">
             <div><label>Note Type</label><select class="noteRole">
@@ -5842,6 +6563,7 @@ function escapeHtml(str){
 
           <div class="fieldOrderBar">
             <button type="button" class="smallbtn swapFieldsBtn">Swap Image / Question</button>
+            <button type="button" class="smallbtn backToLearnerPreviewBtn">Back to Learner Preview</button>
           </div>
 
           <div class="primaryFields">
@@ -5904,7 +6626,10 @@ function escapeHtml(str){
                
               </div>
             </div>
-            <button type="button" class="smallbtn removeBtn">Remove</button>
+            <div class="toolRow">
+              <button type="button" class="smallbtn backToLearnerPreviewBtn">Back to Learner Preview</button>
+              <button type="button" class="smallbtn removeBtn">Remove</button>
+            </div>
           </div>
 
           <div class="previewRow">
@@ -5926,7 +6651,10 @@ function escapeHtml(str){
                
               </div>
             </div>
-            <button type="button" class="smallbtn removeBtn">Remove</button>
+            <div class="toolRow">
+              <button type="button" class="smallbtn backToLearnerPreviewBtn">Back to Learner Preview</button>
+              <button type="button" class="smallbtn removeBtn">Remove</button>
+            </div>
           </div>
 
           <label>Section / Stem Text (supports math)</label>
@@ -5961,6 +6689,7 @@ function escapeHtml(str){
 
           <div class="fieldOrderBar">
             <button type="button" class="smallbtn swapFieldsBtn">Swap Image / Question</button>
+            <button type="button" class="smallbtn backToLearnerPreviewBtn">Back to Learner Preview</button>
           </div>
 
           <div class="primaryFields">
@@ -5998,7 +6727,7 @@ function escapeHtml(str){
                 <option value="unordered">Unordered values</option>
                 <option value="expression">Mathematical expression</option>
               </select>
-              <div class="muted tiny">Use “Number (tolerance)” for calculations.</div>
+              <div class="muted tiny"></div>
             </div>
           </div>
 
@@ -6006,7 +6735,7 @@ function escapeHtml(str){
             <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
               <div>
                 <b>Separate answer boxes</b>
-                <div class="muted tiny">Restore or add two, three, four, or more learner answer boxes.</div>
+                <div class="muted tiny"></div>
               </div>
               <button type="button" class="smallbtn addAnswerFieldBtn">+ Add Answer Box</button>
             </div>
@@ -6017,12 +6746,12 @@ function escapeHtml(str){
             <div>
               <label>Tolerance (only for Number mode)</label>
               <input class="tolerance" type="number" step="0.0001" />
-              <div class="muted tiny">Example: correct = 3.14, tolerance 0.01 accepts 3.13 to 3.15</div>
+              <div class="muted tiny"></div>
             </div>
           </div>
 
           <div class="muted tiny" style="margin-top:6px;">
-            Learners will type the answer in a text box.
+         
           </div>
 
           <div class="previewRow">
@@ -6423,6 +7152,10 @@ function escapeHtml(str){
       card.querySelector(".moveUpBtn")?.addEventListener("click", ()=>moveCard(card, -1));
       card.querySelector(".moveDownBtn")?.addEventListener("click", ()=>moveCard(card, 1));
       card.querySelector(".swapFieldsBtn")?.addEventListener("click", ()=>swapPrimaryFields(card));
+      card.querySelector(".backToLearnerPreviewBtn")?.addEventListener("click", () => {
+        if (!card.dataset.previewKey) updateGeneratedQuestionLinks();
+        navigateToPreviewBlock(card.dataset.previewKey || "");
+      });
 
       const convertBtn = card.querySelector(".convertBtn");
       if (convertBtn) {
@@ -6967,12 +7700,12 @@ function escapeHtml(str){
 
       if (type === "note") {
         const raw = cleanMultilinePreview(card.querySelector(".noteText")?.value || "");
-        const t = containsNativeGeometryBlock(raw) ? raw : autoConvertMixedLatex(raw);
+        const t = containsNativeVisualBlock(raw) ? raw : autoConvertMixedLatex(raw);
         const role = card.querySelector(".noteRole")?.value || "information";
         const preview = card.querySelector(".prevNote");
         const mainNumber = Math.max(1, Number(card.dataset.mainNumber) || 1);
         const fullNumber = cleanSpaces(card.dataset.fullNumber || "");
-        const hasNativeVisual = /\[\[(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(t);
+        const hasNativeVisual = /\[\[\s*(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|RULE_DIAGRAM|RULE|PATTERN|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(t);
         const hasDiagram = hasNativeVisual || !!cleanSpaces(card.querySelector(".noteImage")?.value || "");
         let reference = "";
 
@@ -7366,7 +8099,7 @@ function escapeHtml(str){
 
         switch (key) {
           case "GRADE": meta.grade = value.trim(); break;
-          case "SUBJECT": meta.subject = value.trim(); break;
+          case "SUBJECT": meta.subject = normalizeAssessmentSubject(value); break;
           case "CONTENT_TYPE": meta.contentType = normalizeAssessmentContentType(value); break;
           case "TOPIC": meta.topic = value.trim(); break;
           case "TITLE": meta.title = value.trim(); break;
@@ -7572,13 +8305,14 @@ function escapeHtml(str){
     function classifySpecialNote(text){
       const multilineText = cleanMultilineQuestion(text || "");
       const t = cleanSpaces(multilineText);
+      const preserveNativeVisual = containsNativeVisualBlock(multilineText);
       if (!t) return { type: "note", text: "" };
 
       const mainMatch = t.match(/^QUESTION\s+(\d+)\s*[:.-]?\s*(.*)$/i);
       if (mainMatch) {
         return {
           type: "group",
-          text: autoConvertMixedLatex(cleanSpaces(mainMatch[2] || "")),
+          text: preserveNativeVisual ? cleanSpaces(mainMatch[2] || "") : autoConvertMixedLatex(cleanSpaces(mainMatch[2] || "")),
           mainNumber: Number(mainMatch[1])
         };
       }
@@ -7588,11 +8322,11 @@ function escapeHtml(str){
         return {
           type: "section",
           number: sectionMatch[1],
-          text: autoConvertMixedLatex(cleanSpaces(sectionMatch[2] || ""))
+          text: preserveNativeVisual ? cleanSpaces(sectionMatch[2] || "") : autoConvertMixedLatex(cleanSpaces(sectionMatch[2] || ""))
         };
       }
 
-      return { type: "note", text: autoConvertMixedLatex(multilineText) };
+      return { type: "note", text: preserveNativeVisual ? multilineText : autoConvertMixedLatex(multilineText) };
     }
 
     function parseNoteBlock(block){
@@ -7611,6 +8345,11 @@ function escapeHtml(str){
       if (!raw) throw new Error("The selected file is empty.");
 
       const meta = parseAssessmentMetadata(raw, fallbackName);
+      const suppliedSubject = cleanSpaces(meta.subject || "");
+      if (!["Mathematics", "Physics"].includes(normalizeAssessmentSubject(suppliedSubject))) {
+        if (!cleanSpaces(meta.topic || "") && suppliedSubject) meta.topic = suppliedSubject;
+        meta.subject = resolveAssessmentSubject(suppliedSubject, `${meta.topic || ""} ${meta.title || ""}`);
+      }
       const blocks = splitQuestionBlocks(raw);
 
       if (!blocks.length) {
@@ -7644,16 +8383,21 @@ function escapeHtml(str){
       return {
         meta: {
           grade: String(meta.grade || "").trim(),
+          subject: resolveAssessmentSubject(meta.subject, `${meta.topic || ""} ${meta.title || ""}`),
+          contentType: normalizeAssessmentContentType(meta.contentType || "quiz"),
           topic: String(meta.topic || "").trim(),
           title: String(meta.title || "").trim(),
           timeLimitMinutes: Number(meta.timeLimitMinutes || 10),
           difficulty: normalizeDifficulty(meta.difficulty),
           paper: normalizePaper(meta.paper),
+          accessLevel: normalizeQuizAccessLevel(meta.accessLevel),
+          accessFee: Math.max(0, Number(meta.accessFee) || 0),
           instructions: String(meta.instructions || "").trim(),
           publishMode: normalizePublishMode(meta.publishMode),
           publishAt: String(meta.publishAt || "").trim(),
           availableFrom: String(meta.availableFrom || "").trim(),
           availableUntil: String(meta.availableUntil || "").trim(),
+          marksReleaseAt: String(meta.marksReleaseAt || "").trim(),
           sendPublishEmail: !!meta.sendPublishEmail
         },
         items
@@ -7737,7 +8481,8 @@ function escapeHtml(str){
       const meta = parsed.meta || {};
       currentContentType = normalizeAssessmentContentType(meta.contentType || currentQuiz?.contentType || "quiz");
       if (meta.grade) gradeEl.value = String(meta.grade);
-      subjectEl.value = ["Mathematics", "Physics"].includes(String(meta.subject || "").trim()) ? String(meta.subject).trim() : "";
+      const normalizedSubject = normalizeAssessmentSubject(meta.subject);
+      subjectEl.value = ["Mathematics", "Physics"].includes(normalizedSubject) ? normalizedSubject : "";
       if (meta.topic) topicEl.value = meta.topic || "";
       if (meta.title) titleEl.value = meta.title || "";
       timeLimitEl.value = Number.isFinite(Number(meta.timeLimitMinutes)) ? String(meta.timeLimitMinutes) : "10";
@@ -7794,7 +8539,7 @@ function escapeHtml(str){
     function buildPayloadFromParsedAssessment(parsed){
       const meta = parsed.meta || {};
       const grade = Number(meta.grade);
-      const subject = String(meta.subject || "").trim();
+      const subject = resolveAssessmentSubject(meta.subject, `${meta.topic || ""} ${meta.title || ""}`);
       const contentType = normalizeAssessmentContentType(meta.contentType || "quiz");
       const topic = toTitleCase(meta.topic || "");
       const title = cleanSpaces(meta.title || "");
@@ -7833,7 +8578,12 @@ function escapeHtml(str){
           return { type: "note", text: `${num} ${cleanSpaces(item.text || "")}` };
         }
         if (item.type === "note") {
-          return { type: "note", text: cleanSpaces(item.text || "") };
+          return {
+            type: "note",
+            text: cleanSpaces(item.text || ""),
+            noteRole: item.noteRole || noteRoleFromText(item.text || "") || "information",
+            imageUrl: cleanSpaces(item.imageUrl || "")
+          };
         }
         if (item.type === "text") {
           return {
@@ -8025,29 +8775,131 @@ function escapeHtml(str){
       }
     });
 
-    overrideTxtBtn?.addEventListener("click", async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return setMsg("Please log in again before overriding from TXT.", "error");
-      if (!currentQuiz?._id) return setMsg("Please select an assessment first.", "error");
-      const file = overrideFileEl?.files?.[0];
-      if (!file) return setMsg("Please choose a TXT file first.", "error");
+    function exactAssessmentCodeMatch(quiz, code){
+      return cleanSpaces(quiz?.assessmentCode || "").toLowerCase() === cleanSpaces(code || "").toLowerCase();
+    }
 
+    async function fetchQuizDetail(id){
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Please log in again before loading an assessment.");
+      const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      }).catch(() => null);
+      if (!res) throw new Error("Network error while loading the assessment.");
+      if (res.status === 401) {
+        logout();
+        throw new Error("Your session has expired. Please log in again.");
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "Could not load the assessment.");
+      return data?.quiz || data?.assessment || data?.data || data;
+    }
+
+    loadOverrideTargetBtn?.addEventListener("click", async () => {
+      const code = cleanSpaces(overrideAssessmentCodeEl?.value || "");
+      if (!code) return setOverrideMsg("Enter the exact assessment code first.", "error");
+      if (!localStorage.getItem("token")) return setOverrideMsg("Please log in again before loading an assessment.", "error");
+
+      loadOverrideTargetBtn.disabled = true;
+      showWorkflowLoading("Loading existing quiz preview…");
+      setOverrideMsg("Loading the existing quiz preview...", "muted");
+      clearOverrideErrors();
       try {
-        clearParseErrors();
+        if (!Array.isArray(allQuizzes) || !allQuizzes.length) await loadAssessmentList();
+        let match = allQuizzes.find(quiz => exactAssessmentCodeMatch(quiz, code));
+        if (!match) {
+          await loadAssessmentList();
+          match = allQuizzes.find(quiz => exactAssessmentCodeMatch(quiz, code));
+        }
+        if (!match?._id) throw new Error(`No assessment was found with the exact code “${code}”.`);
+
+        const detail = await fetchQuizDetail(match._id);
+        if (!detail?._id) throw new Error("The assessment record could not be read.");
+        overrideTargetQuiz = detail;
+        resetStagedOverride();
+        if (overrideFileEl) overrideFileEl.value = "";
+
+        const parsed = quizToParsedAssessment(overrideTargetQuiz);
+        renderParsedAssessmentPreview(parsed, overrideExistingPreview, "attempt");
+        const codeLabel = cleanSpaces(overrideTargetQuiz.assessmentCode || code);
+        currentOverridePreviewMeta.textContent = `${codeLabel} • ${cleanSpaces(overrideTargetQuiz.title || "Assessment")} • ${parsedPreviewSummary(parsed)}`;
+        overrideReviewStep?.classList.remove("hide");
+        setOverrideMsg("Existing quiz loaded. Review it, then choose and load the replacement TXT file.", "ok");
+        setTimeout(() => overrideReviewStep?.scrollIntoView({behavior:"smooth", block:"start"}), 80);
+      } catch (error) {
+        overrideTargetQuiz = null;
+        overrideReviewStep?.classList.add("hide");
+        resetStagedOverride();
+        setOverrideMsg(error.message || "Could not load the quiz preview.", "error");
+      } finally {
+        loadOverrideTargetBtn.disabled = false;
+        hideWorkflowLoading();
+      }
+    });
+
+    overrideAssessmentCodeEl?.addEventListener("input", () => {
+      if (!overrideTargetQuiz) return;
+      if (exactAssessmentCodeMatch(overrideTargetQuiz, overrideAssessmentCodeEl.value)) return;
+      overrideTargetQuiz = null;
+      overrideReviewStep?.classList.add("hide");
+      resetStagedOverride();
+      setOverrideMsg("Assessment code changed. Load the existing quiz preview again.", "muted");
+    });
+
+    loadOverrideFileBtn?.addEventListener("click", async () => {
+      if (!overrideTargetQuiz?._id) return setOverrideMsg("Load the existing quiz by assessment code first.", "error");
+      const file = overrideFileEl?.files?.[0];
+      if (!file) return setOverrideMsg("Choose the new TXT file first.", "error");
+      if (!/\.txt$/i.test(file.name || "") && String(file.type || "").toLowerCase() !== "text/plain") {
+        return setOverrideMsg("Choose a .txt assessment file.", "error");
+      }
+
+      loadOverrideFileBtn.disabled = true;
+      showWorkflowLoading("Unpacking new assessment file…");
+      resetStagedOverride();
+      setOverrideMsg("Unpacking and validating the new file...", "muted");
+      try {
         const raw = await readUploadedTextFile(file);
         const parsed = parseAssessmentFile(raw, file.name);
-        const contentPayload = buildPayloadFromParsedAssessment(parsed);
-        const payload = buildOverridePayloadPreservingIdentity(currentQuiz, contentPayload);
+        const payload = buildPayloadFromParsedAssessment(parsed);
+        stagedOverrideParsed = parsed;
+        stagedOverridePayload = payload;
+        renderParsedAssessmentPreview(parsed, overrideNewPreview, "attempt");
+        newOverridePreviewMeta.textContent = `${cleanSpaces(file.name || "New TXT file")} • ${cleanSpaces(parsed.meta?.title || "Assessment")} • ${parsedPreviewSummary(parsed)}`;
 
-        const ok = confirm("Override this assessment from TXT? This keeps the same assessment record, created date, and list order, but replaces the quiz content.");
-        if (!ok) return;
+        const oldSummary = parsedPreviewSummary(quizToParsedAssessment(overrideTargetQuiz));
+        const newSummary = parsedPreviewSummary(parsed);
+        overrideCommitSummary.innerHTML = `<b>${escapeHtml(cleanSpaces(overrideTargetQuiz.assessmentCode || "Selected assessment"))}</b><br>Current: ${escapeHtml(oldSummary)}<br>Replacement: ${escapeHtml(newSummary)}`;
+        overrideTxtBtn.disabled = false;
+        setOverrideMsg("Both previews are ready. Review them carefully, then use Override Assessment to commit the complete replacement.", "ok");
+      } catch (error) {
+        if (error?.parseErrors) showOverrideErrors(error.parseErrors);
+        setOverrideMsg(error.message || "Could not unpack the new TXT file.", "error");
+      } finally {
+        loadOverrideFileBtn.disabled = false;
+        hideWorkflowLoading();
+      }
+    });
 
-        saveBtn.disabled = true;
-        publishBtn.disabled = true;
-        overrideTxtBtn.disabled = true;
-        setMsg("Overriding assessment from TXT while keeping the same record...", "muted");
+    overrideTxtBtn?.addEventListener("click", async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return setOverrideMsg("Please log in again before overriding the assessment.", "error");
+      if (!overrideTargetQuiz?._id) return setOverrideMsg("Load the existing quiz preview first.", "error");
+      if (!stagedOverrideParsed || !stagedOverridePayload) return setOverrideMsg("Load and preview the new TXT file first.", "error");
 
-        const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(currentQuiz._id)}`, {
+      const code = cleanSpaces(overrideTargetQuiz.assessmentCode || "this assessment");
+      const ok = confirm(`Override ${code} with the complete new file? Notes, diagrams, wording, question types and question counts may all change. The assessment identity and history will be kept.`);
+      if (!ok) return;
+
+      overrideTxtBtn.disabled = true;
+      loadOverrideFileBtn.disabled = true;
+      loadOverrideTargetBtn.disabled = true;
+      showWorkflowLoading("Saving complete assessment replacement…");
+      setOverrideMsg("Overriding the assessment with the complete new file...", "muted");
+      clearOverrideErrors();
+      try {
+        const payload = buildOverridePayloadPreservingIdentity(overrideTargetQuiz, stagedOverridePayload);
+        const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(overrideTargetQuiz._id)}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -8055,26 +8907,29 @@ function escapeHtml(str){
           },
           body: JSON.stringify(payload)
         });
+        const responseData = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(responseData.message || "Could not override the assessment.");
 
-        const data = await res.json().catch(()=>({}));
-        if (!res.ok) {
-          throw new Error(data.message || "Could not override the assessment from TXT.");
-        }
-
-        currentQuiz = data;
-        fillAssessmentForm(quizToParsedAssessment(currentQuiz));
-        updateAvailabilityUi();
-        await loadAssessmentList();
-        assessmentSelectEl.value = currentQuiz._id;
+        const savedRaw = responseData?.quiz || responseData?.assessment || responseData?.data || responseData;
+        const saved = { ...overrideTargetQuiz, ...payload, ...(savedRaw || {}) };
+        overrideTargetQuiz = saved;
+        updateQuizInMemory(saved);
+        broadcastAssessmentUpdate("overridden", saved, { completeReplacement: true });
+        renderParsedAssessmentPreview(quizToParsedAssessment(saved), overrideExistingPreview, "attempt");
+        currentOverridePreviewMeta.textContent = `${cleanSpaces(saved.assessmentCode || code)} • ${cleanSpaces(saved.title || "Assessment")} • ${parsedPreviewSummary(quizToParsedAssessment(saved))}`;
+        overrideCommitSummary.innerHTML = `<b>Override complete.</b><br>${escapeHtml(parsedPreviewSummary(stagedOverrideParsed))} saved under assessment code ${escapeHtml(cleanSpaces(saved.assessmentCode || code))}.`;
         if (overrideFileEl) overrideFileEl.value = "";
-        setMsg("Assessment overridden from TXT. The same record was kept.", "ok");
-      } catch (err) {
-        if (err?.parseErrors) showParseErrors(err.parseErrors, "Please fix these TXT issues before override");
-        setMsg(err.message || "Could not override from TXT.", "error");
-      } finally {
-        saveBtn.disabled = false;
-        publishBtn.disabled = !canPublish;
+        stagedOverridePayload = null;
+        stagedOverrideParsed = null;
+        await loadAssessmentList();
+        setOverrideMsg("Assessment overridden successfully. The left preview now shows the saved replacement.", "ok");
+      } catch (error) {
         overrideTxtBtn.disabled = false;
+        setOverrideMsg(error.message || "Could not override the assessment.", "error");
+      } finally {
+        loadOverrideFileBtn.disabled = false;
+        loadOverrideTargetBtn.disabled = false;
+        hideWorkflowLoading();
       }
     });
 
@@ -8273,7 +9128,7 @@ function escapeHtml(str){
 
     async function buildPayload(modeOverride = null){
       const grade = Number(gradeEl.value);
-      const subject = String(subjectEl.value || "").trim();
+      const subject = normalizeAssessmentSubject(subjectEl.value);
       const contentType = normalizeAssessmentContentType(currentQuiz?.contentType || currentContentType || "quiz");
       const topic = toTitleCase(topicEl.value);
       const title = cleanSpaces(titleEl.value);
@@ -8686,7 +9541,7 @@ function escapeHtml(str){
       return {
         meta: {
           grade: String(quiz?.grade || ""),
-          subject: quiz?.subject || "",
+          subject: normalizeAssessmentSubject(quiz?.subject || ""),
           contentType: normalizeAssessmentContentType(quiz?.contentType || "quiz"),
           topic: quiz?.topic || "",
           title: quiz?.title || "",
@@ -8941,15 +9796,16 @@ function escapeHtml(str){
 
     async function loadAssessmentIntoEditor(id){
       if (!id) return;
+      showWorkflowLoading("Loading learner preview and editor…");
       setMsg("Loading assessment...", "muted");
       const res = await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       }).catch(() => null);
-      if (!res) return setMsg("Network error while loading assessment.", "error");
-      if (res.status === 401) return logout();
-      if (!res.ok) return setMsg("Could not load assessment.", "error");
+      if (!res) { hideWorkflowLoading(); return setMsg("Network error while loading assessment.", "error"); }
+      if (res.status === 401) { hideWorkflowLoading(); return logout(); }
+      if (!res.ok) { hideWorkflowLoading(); return setMsg("Could not load assessment.", "error"); }
       currentQuiz = await res.json().catch(() => null);
-      if (!currentQuiz) return setMsg("Could not read assessment data.", "error");
+      if (!currentQuiz) { hideWorkflowLoading(); return setMsg("Could not read assessment data.", "error"); }
       try {
         fillAssessmentForm(quizToParsedAssessment(currentQuiz));
         updateAvailabilityUi();
@@ -8958,6 +9814,7 @@ function escapeHtml(str){
         console.error("Assessment editor could not finish rendering:", error);
         updateAvailabilityUi();
         setMsg("The assessment data loaded, but the editor could not draw one preview block. Open the browser console for the exact block error.", "error");
+        hideWorkflowLoading();
         return;
       }
 
@@ -8968,7 +9825,11 @@ function escapeHtml(str){
         );
       } catch {}
 
-      setMsg("Assessment loaded. You can now edit it with the full editor.", "ok");
+      document.body.classList.add("workflowAssessmentLoaded");
+      setAssessmentWorkflow("edit");
+      setMsg("Assessment loaded. Review the learner preview first, then click the exact item you want to edit.", "ok");
+      hideWorkflowLoading();
+      setTimeout(() => learnerPreviewCard?.scrollIntoView({behavior:"smooth", block:"start"}), 80);
     }
 
     commitChangesBtn.addEventListener("click", ()=>openCommitConfirmation("draft"));
