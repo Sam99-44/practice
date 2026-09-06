@@ -8891,6 +8891,62 @@ body{
 }
 </style>
 
+<style>
+/* =========================================================
+   UNIFIED QUESTION-ROW ALIGNMENT
+   Keeps the number, wording/formula and marks on one visual
+   centre line. Answer controls retain the prompt-column inset.
+   ========================================================= */
+.examPaper .q[data-scorable="1"] .qHead{
+  align-items:center !important;
+}
+
+.examPaper .q[data-scorable="1"] .qNo,
+.examPaper .q[data-scorable="1"] .qText,
+.examPaper .q[data-scorable="1"] .marksMeta{
+  align-self:center !important;
+}
+
+.examPaper .q[data-scorable="1"] .marksMeta{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+}
+
+/* Tall inline fractions and brackets align by their visual centre. */
+.examPaper .q[data-scorable="1"] .qText mjx-container[jax="SVG"]:not([display="true"]){
+  position:relative !important;
+  top:0 !important;
+  vertical-align:middle !important;
+}
+
+.examPaper .q[data-scorable="1"] .qText mjx-container[jax="SVG"]:not([display="true"]) svg{
+  vertical-align:middle !important;
+}
+
+/* Keep stacked fractions at the same character scale as compact expressions
+   such as cos(2y). MathJax still supplies only the necessary stacked height. */
+.examPaper .q[data-scorable="1"] .qText mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+.examPaper .q[data-scorable="1"] .qText mjx-container[jax="SVG"]:has(mjx-mfrac),
+.examPaper .q[data-scorable="1"] .questionContinuation mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+.examPaper .q[data-scorable="1"] .questionContinuation mjx-container[jax="SVG"]:has(mjx-mfrac),
+.examPaper .q[data-scorable="1"] .optText mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+.examPaper .q[data-scorable="1"] .optText mjx-container[jax="SVG"]:has(mjx-mfrac),
+.examPaper .qSectionText mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+.examPaper .qSectionText mjx-container[jax="SVG"]:has(mjx-mfrac){
+  font-size:1em !important;
+  margin-inline:.03em !important;
+}
+
+/* A written continuation belongs below the first prompt line. Keep the
+   number and marks anchored to that first line instead of centring them
+   across the complete multi-line block. */
+.examPaper .q[data-scorable="1"] .qHead:has(.questionContinuation) .qNo,
+.examPaper .q[data-scorable="1"] .qHead:has(.questionContinuation) .marksMeta{
+  align-self:start !important;
+}
+</style>
+
 </head>
 
 <body class="assessment-loading">
@@ -15127,9 +15183,9 @@ function hasInlineLatexMathOnly(text){
     if (/^\$.*\$$/s.test(s)) s = s.slice(1, -1).trim();
     if (/^\\\((.*)\\\)$/s.test(s)) s = s.replace(/^\\\(|\\\)$/g, "").trim();
 
-    // trig: sin 50° -> \sin 50^{\circ}
-    s = s.replace(/\b(sin|cos|tan)\s*\(([^()]+)\)/gi, "\\$1($2)");
-    s = s.replace(/\b(sin|cos|tan)\s*([0-9]+)\s*°/gi, "\\$1 $2^{\\circ}");
+    // trig: cos(2y) -> \cos(2y), sin 50° -> \sin 50^{\circ}
+    s = s.replace(/\b(sin|cos|tan|cot|sec|csc|log|ln)\s*\(([^()]+)\)/gi, "\\$1($2)");
+    s = s.replace(/\b(sin|cos|tan|cot|sec|csc)\s*([0-9]+)\s*°/gi, "\\$1 $2^{\\circ}");
     s = s.replace(/([0-9]+)\s*°/g, "$1^{\\circ}");
 
     // powers before sqrt recovery
@@ -15166,12 +15222,12 @@ function hasInlineLatexMathOnly(text){
     if (!s) return false;
     if (sharedHasLatexSyntax(s)) return true;
 
-    const mathSignal = /sqrt\s*\(?|\^|\/|=|<=|>=|≤|≥|≈|∈|\b(sin|cos|tan)\b|°|\d/.test(s);
+    const mathSignal = /sqrt\s*\(?|\^|\/|=|<=|>=|≤|≥|≈|∈|\bP\s*\(|\b(sin|cos|tan|cot|sec|csc|log|ln)\b|°|\d/.test(s);
     if (!mathSignal) return false;
 
-    const cleanWords = s.replace(/\b(sin|cos|tan|sqrt|pi|or|and|x|k)\b/gi, " ");
+    const cleanWords = s.replace(/\b(sin|cos|tan|cot|sec|csc|log|ln|sqrt|pi|or|and|x|k)\b/gi, " ");
     const words = cleanWords.match(/[A-Za-z]{3,}/g) || [];
-    const sentenceWords = /\b(express|calculate|determine|describe|write|show|predict|simplify|which|what|how|therefore|hence|final|answer|step|given|terms|data|value|values|units|days|price|valid|real|interval)\b/i.test(s);
+    const sentenceWords = /\b(express|calculate|determine|describe|write|show|predict|simplify|expand|evaluate|solve|state|give|find|prove|verify|choose|select|identify|classify|use|complete|compare|which|what|how|therefore|hence|final|answer|step|given|terms|data|value|values|units|days|price|valid|real|interval)\b/i.test(s);
 
     return words.length <= 1 && !sentenceWords;
   }
@@ -15319,7 +15375,7 @@ function hasInlineLatexMathOnly(text){
 
     // Protect other compact mathematical fragments without swallowing prose.
     temp = temp.replace(
-      /(sqrt\s*\([^()]+\)|sqrt\s*\{[^{}]+\}|sqrt[A-Za-z0-9]+|\b(?:sin|cos|tan)\s*\d+\s*°|\d+\s*°|[A-Za-z]\s*∈\s*\[[^\]]+\]|\b\d+\s*\/\s*\d+\b|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+))/g,
+      /(sqrt\s*\([^()]+\)|sqrt\s*\{[^{}]+\}|sqrt[A-Za-z0-9]+|\bP\s*\([^()\n]+\)|\b(?:sin|cos|tan|cot|sec|csc|log|ln)\s*\([^()\n]+\)|\b(?:sin|cos|tan|cot|sec|csc)\s*\d+\s*°|\d+\s*°|[A-Za-z]\s*∈\s*\[[^\]]+\]|\b\d+\s*\/\s*\d+\b|\b(?:\d+(?:\.\d+)?[A-Za-z]?|[A-Za-z])(?:\s*\^\s*(?:\([^()]+\)|[+-]?\d+))?°?(?:\s*[+\-−×÷*\/]\s*(?:\d+(?:\.\d+)?[A-Za-z]?|[A-Za-z])(?:\s*\^\s*(?:\([^()]+\)|[+-]?\d+))?°?)+\b|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+))/g,
       protect
     );
 
@@ -15492,7 +15548,7 @@ function hasInlineLatexMathOnly(text){
   function renderAnswerChoice(text){
     const choice = cleanSpaces(text);
     const containsMathMarkup = sharedHasLatexSyntax(choice) ||
-      /(?:\$|\\\(|\\\[|\\frac|\\sqrt|\\times|\\div|[=<>≤≥±×÷√^])/i.test(choice);
+      /(?:\$|\\\(|\\\[|\\frac|\\sqrt|\\times|\\div|[=<>≤≥±×÷√^]|\b(?:sin|cos|tan|cot|sec|csc|log|ln)\s*\(|\b(?:\d+(?:\.\d+)?[A-Za-z]?|[A-Za-z])\s*[+\-−*\/]\s*(?:\d+(?:\.\d+)?[A-Za-z]?|[A-Za-z]))/i.test(choice);
     return containsMathMarkup ? renderQuestionMixedMath(choice) : escapeHtml(choice);
   }
 
@@ -18090,7 +18146,9 @@ function hasInlineLatexMathOnly(text){
         .map(item => ({
           first:pointFor(item.subject),
           vertex:pointFor(item.parts[0]),
-          second:pointFor(item.parts[1])
+          second:pointFor(item.parts[1]),
+          vertexName:noteSvgLabel(item.parts[0] || ""),
+          markerSize:Math.max(7, Math.min(22, parseNoteGraphNumber(item.parts[2]) ?? 11))
         }))
         .filter(item => item.first && item.vertex && item.second);
       const pointsCoincide = (first, second) =>
@@ -18128,7 +18186,12 @@ function hasInlineLatexMathOnly(text){
         .map(item => ({
           first:pointFor(item.subject),
           vertex:pointFor(item.parts[0]),
-          second:pointFor(item.parts[1])
+          second:pointFor(item.parts[1]),
+          vertexName:noteSvgLabel(item.parts[0] || ""),
+          markerSize:Math.max(
+            9,
+            Math.min(18, Math.max(10, Math.min(55, parseNoteGraphNumber(item.parts[3]) ?? 24)) * .82)
+          )
         }))
         .filter(item => item.first && item.vertex && item.second);
       const everyRightAngleDefinition = rightAngleDefinitions.concat(numericRightAngleDefinitions);
@@ -18154,6 +18217,34 @@ function hasInlineLatexMathOnly(text){
         rayFallsInsideRightAngle(first, vertex, rightAngle) &&
         rayFallsInsideRightAngle(second, vertex, rightAngle)
       );
+      const labelledAngleDefinitions = commands
+        .filter(item =>
+          ["ANGLE", "ARC", "ANGLE_ARROW"].includes(item.command) &&
+          noteSvgLabel(item.parts[2] || "") &&
+          !isDuplicateRightAngleCommand(item)
+        )
+        .map(item => ({
+          item,
+          first:pointFor(item.subject),
+          vertex:pointFor(item.parts[0]),
+          second:pointFor(item.parts[1]),
+          vertexName:noteSvgLabel(item.parts[0] || "")
+        }))
+        .filter(item => item.first && item.vertex && item.second);
+      const angleSharesOneBoundary = (item, first, vertex, second) => {
+        const vertexName = noteSvgLabel(item.parts[0] || "");
+        if (centralAngleVertexNames.has(vertexName)) return false;
+        return labelledAngleDefinitions.some(other => {
+          if (other.item === item || !pointsCoincide(vertex, other.vertex)) return false;
+          const sharedDirections = [
+            raysCoincide(first, vertex, other.first, other.vertex) ||
+              raysCoincide(first, vertex, other.second, other.vertex),
+            raysCoincide(second, vertex, other.first, other.vertex) ||
+              raysCoincide(second, vertex, other.second, other.vertex)
+          ].filter(Boolean).length;
+          return sharedDirections === 1;
+        });
+      };
 
       commands.filter(item => ["ANGLE", "ARC", "ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command)).forEach(item => {
         const first = pointFor(item.subject);
@@ -18170,7 +18261,10 @@ function hasInlineLatexMathOnly(text){
           arrow: ["ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command),
           central: centralAngleVertexNames.has(noteSvgLabel(item.parts[0] || "")),
           centralTextWidth: centralAngleMaximumTextWidth.get(noteSvgLabel(item.parts[0] || "")) || 0,
-          suppressArc: item.command !== "REFLEX_ANGLE" && angleFallsInsideRightAngle(first, vertex, second)
+          suppressArc: item.command !== "REFLEX_ANGLE" && (
+            angleFallsInsideRightAngle(first, vertex, second) ||
+            angleSharesOneBoundary(item, first, vertex, second)
+          )
         });
       });
 
@@ -18194,6 +18288,74 @@ function hasInlineLatexMathOnly(text){
           ' L ' + p3.x.toFixed(2) + ' ' + p3.y.toFixed(2) +
           ' Z" fill="none" stroke="' + stroke + '" stroke-width="1.05" vector-effect="non-scaling-stroke" />'
         );
+      });
+
+      const uniqueRightAngleDefinitions = everyRightAngleDefinition.filter((definition, index, values) =>
+        values.findIndex(other => pointsCoincide(definition.vertex, other.vertex) && (
+          raysCoincide(definition.first, definition.vertex, other.first, other.vertex) &&
+          raysCoincide(definition.second, definition.vertex, other.second, other.vertex) ||
+          raysCoincide(definition.first, definition.vertex, other.second, other.vertex) &&
+          raysCoincide(definition.second, definition.vertex, other.first, other.vertex)
+        )) === index
+      );
+      const connectedRayPoints = rightAngle => {
+        const candidates = [];
+        straightPrimitives.forEach(primitive => {
+          if (primitive.firstName === rightAngle.vertexName) {
+            const point = pointFor(primitive.secondName);
+            if (point) candidates.push(point);
+          } else if (primitive.secondName === rightAngle.vertexName) {
+            const point = pointFor(primitive.firstName);
+            if (point) candidates.push(point);
+          } else if (primitiveContainsPoint(primitive, rightAngle.vertexName)) {
+            const first = pointFor(primitive.firstName);
+            const second = pointFor(primitive.secondName);
+            if (first) candidates.push(first);
+            if (second) candidates.push(second);
+          }
+        });
+        return candidates.filter((candidate, index, values) =>
+          !raysCoincide(candidate, rightAngle.vertex, rightAngle.first, rightAngle.vertex) &&
+          !raysCoincide(candidate, rightAngle.vertex, rightAngle.second, rightAngle.vertex) &&
+          rayFallsInsideRightAngle(candidate, rightAngle.vertex, rightAngle) &&
+          values.findIndex(other => raysCoincide(candidate, rightAngle.vertex, other, rightAngle.vertex)) === index
+        );
+      };
+      uniqueRightAngleDefinitions.forEach(rightAngle => {
+        const vertex = canvasPoint(rightAngle.vertex);
+        const first = canvasPoint(rightAngle.first);
+        const second = canvasPoint(rightAngle.second);
+        if (!vertex || !first || !second) return;
+        const firstLength = Math.hypot(first.x - vertex.x, first.y - vertex.y) || 1;
+        const secondLength = Math.hypot(second.x - vertex.x, second.y - vertex.y) || 1;
+        const firstUnit = { x:(first.x - vertex.x) / firstLength, y:(first.y - vertex.y) / firstLength };
+        const secondUnit = { x:(second.x - vertex.x) / secondLength, y:(second.y - vertex.y) / secondLength };
+        connectedRayPoints(rightAngle).forEach(rayPoint => {
+          const canvasRay = canvasPoint(rayPoint);
+          if (!canvasRay) return;
+          const rayLength = Math.hypot(canvasRay.x - vertex.x, canvasRay.y - vertex.y) || 1;
+          const rayUnit = { x:(canvasRay.x - vertex.x) / rayLength, y:(canvasRay.y - vertex.y) / rayLength };
+          const firstComponent = Math.max(.001, rayUnit.x * firstUnit.x + rayUnit.y * firstUnit.y);
+          const secondComponent = Math.max(.001, rayUnit.x * secondUnit.x + rayUnit.y * secondUnit.y);
+          const crossingDistance = Math.min(
+            rightAngle.markerSize / firstComponent,
+            rightAngle.markerSize / secondComponent
+          );
+          const fromDistance = Math.max(0, crossingDistance - 3.2);
+          const toDistance = Math.min(rayLength, crossingDistance + 3.2);
+          const from = { x:vertex.x + rayUnit.x * fromDistance, y:vertex.y + rayUnit.y * fromDistance };
+          const to = { x:vertex.x + rayUnit.x * toDistance, y:vertex.y + rayUnit.y * toDistance };
+          svg.push(
+            '<line class="geometryRightAngleRayGap" x1="' + from.x.toFixed(2) + '" y1="' + from.y.toFixed(2) +
+            '" x2="' + to.x.toFixed(2) + '" y2="' + to.y.toFixed(2) +
+            '" stroke="#fff" stroke-width="3.4" stroke-linecap="round" vector-effect="non-scaling-stroke" />'
+          );
+          svg.push(
+            '<line class="geometryRightAngleRay" x1="' + from.x.toFixed(2) + '" y1="' + from.y.toFixed(2) +
+            '" x2="' + to.x.toFixed(2) + '" y2="' + to.y.toFixed(2) +
+            '" stroke="' + stroke + '" stroke-width="1.05" stroke-linecap="round" vector-effect="non-scaling-stroke" />'
+          );
+        });
       });
 
       commands.filter(item => ["EQUAL", "PARALLEL"].includes(item.command)).forEach(item => {
@@ -18349,7 +18511,7 @@ function hasInlineLatexMathOnly(text){
       const activeViewBox = useMobileGeometryView ? mobileViewBox : desktopViewBox;
       return '<div class="noteVisualBlock' + (minimalTheme ? ' minimalDiagramTheme' : '') + '">' +
         (title ? '<div class="noteVisualTitle">' + renderNoteVisualTitle(title) + '</div>' : '') +
-        '<div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram generatedNoteGeometry" viewBox="' + activeViewBox + '" data-desktop-view-box="' + desktopViewBox + '" data-mobile-view-box="' + mobileViewBox + '" data-geometry-renderer="right-angle-continuous-lines-v17" style="--geometry-text-size:' + responsiveGeometryTextSize.toFixed(2) + 'px" role="img" aria-label="' + escapeHtml(accessibleTitle) + '">' + svg.join("") + '</svg></div></div>';
+        '<div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram generatedNoteGeometry" viewBox="' + activeViewBox + '" data-desktop-view-box="' + desktopViewBox + '" data-mobile-view-box="' + mobileViewBox + '" data-geometry-renderer="clean-shared-angle-vertices-v18" style="--geometry-text-size:' + responsiveGeometryTextSize.toFixed(2) + 'px" role="img" aria-label="' + escapeHtml(accessibleTitle) + '">' + svg.join("") + '</svg></div></div>';
     }
 
     function renderStructuredVisualNote(rawText){
