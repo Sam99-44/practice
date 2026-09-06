@@ -3674,6 +3674,141 @@ body > .draftManager{
   }
 }
 </style>
+
+<style>
+/* =========================================================
+   UNIFIED QUESTION-ROW ALIGNMENT — ADMIN PREVIEW
+   Mirrors the learner attempt: number, wording/formula and
+   marks share one visual centre line.
+   ========================================================= */
+.attemptPaperPreview .qHead,
+#paperPreviewContent .qHead{
+  align-items:center !important;
+}
+
+.attemptPaperPreview .qNo,
+.attemptPaperPreview .qTextPaper,
+.attemptPaperPreview .marksMetaPaper,
+#paperPreviewContent .qNo,
+#paperPreviewContent .qTextPaper,
+#paperPreviewContent .marksMetaPaper{
+  align-self:center !important;
+}
+
+.attemptPaperPreview .marksMetaPaper,
+#paperPreviewContent .marksMetaPaper{
+  align-items:center !important;
+}
+
+/* Tall inline fractions and brackets align by their visual centre. */
+.attemptPaperPreview .qTextPaper mjx-container[jax="SVG"]:not([display="true"]),
+#paperPreviewContent .qTextPaper mjx-container[jax="SVG"]:not([display="true"]){
+  position:relative !important;
+  top:0 !important;
+  vertical-align:middle !important;
+}
+
+.attemptPaperPreview .qTextPaper mjx-container[jax="SVG"]:not([display="true"]) svg,
+#paperPreviewContent .qTextPaper mjx-container[jax="SVG"]:not([display="true"]) svg{
+  vertical-align:middle !important;
+}
+
+/* Keep stacked fractions at the same character scale as compact expressions
+   such as cos(2y). MathJax still supplies only the necessary stacked height. */
+.attemptPaperPreview .qTextPaper mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+.attemptPaperPreview .qTextPaper mjx-container[jax="SVG"]:has(mjx-mfrac),
+#paperPreviewContent .qTextPaper mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+#paperPreviewContent .qTextPaper mjx-container[jax="SVG"]:has(mjx-mfrac),
+.attemptPaperPreview .questionContinuationPaper mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+.attemptPaperPreview .questionContinuationPaper mjx-container[jax="SVG"]:has(mjx-mfrac),
+#paperPreviewContent .questionContinuationPaper mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+#paperPreviewContent .questionContinuationPaper mjx-container[jax="SVG"]:has(mjx-mfrac),
+.attemptPaperPreview .optTextPaper mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+.attemptPaperPreview .optTextPaper mjx-container[jax="SVG"]:has(mjx-mfrac),
+#paperPreviewContent .optTextPaper mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+#paperPreviewContent .optTextPaper mjx-container[jax="SVG"]:has(mjx-mfrac),
+.attemptPaperPreview .qSectionText mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+.attemptPaperPreview .qSectionText mjx-container[jax="SVG"]:has(mjx-mfrac),
+#paperPreviewContent .qSectionText mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+#paperPreviewContent .qSectionText mjx-container[jax="SVG"]:has(mjx-mfrac){
+  font-size:1em !important;
+  margin-inline:.03em !important;
+}
+
+/* Compact question mathematics mirrors the learner's baseline-native renderer.
+   Only stacked notation remains with MathJax. */
+.attemptPaperPreview .noteMathInline,
+#paperPreviewContent .noteMathInline{
+  display:inline !important;
+  position:static !important;
+  top:auto !important;
+  transform:none !important;
+  vertical-align:baseline !important;
+  margin:0 .02em !important;
+  padding:0 !important;
+  font-family:"Times New Roman", Times, serif !important;
+  font-size:1em !important;
+  font-style:normal !important;
+  font-weight:400 !important;
+  line-height:inherit !important;
+  white-space:nowrap !important;
+}
+
+.attemptPaperPreview .noteMathInline .noteMathVariable,
+#paperPreviewContent .noteMathInline .noteMathVariable{
+  display:inline !important;
+  position:static !important;
+  vertical-align:baseline !important;
+  font-family:inherit !important;
+  font-size:inherit !important;
+  font-style:italic !important;
+  font-weight:400 !important;
+  line-height:inherit !important;
+}
+
+.attemptPaperPreview .noteMathInline .noteMathRoman,
+#paperPreviewContent .noteMathInline .noteMathRoman{
+  display:inline !important;
+  position:static !important;
+  vertical-align:baseline !important;
+  font-family:inherit !important;
+  font-size:inherit !important;
+  font-style:normal !important;
+  font-weight:400 !important;
+  line-height:inherit !important;
+}
+
+.attemptPaperPreview .noteMathAccentedVertex,
+#paperPreviewContent .noteMathAccentedVertex{
+  display:inline-block !important;
+  position:relative !important;
+  vertical-align:baseline !important;
+  line-height:inherit !important;
+}
+
+.attemptPaperPreview .noteMathAccentMark,
+#paperPreviewContent .noteMathAccentMark{
+  position:absolute !important;
+  left:50% !important;
+  top:-.48em !important;
+  transform:translateX(-50%) !important;
+  font-family:"Times New Roman", Times, serif !important;
+  font-size:.72em !important;
+  font-style:normal !important;
+  font-weight:400 !important;
+  line-height:1 !important;
+  pointer-events:none !important;
+}
+
+/* Continuation text starts beneath the first prompt line. The number and
+   marks therefore stay with that first line, matching the learner view. */
+.attemptPaperPreview .qHead:has(.questionContinuationPaper) .qNo,
+.attemptPaperPreview .qHead:has(.questionContinuationPaper) .marksMetaPaper,
+#paperPreviewContent .qHead:has(.questionContinuationPaper) .qNo,
+#paperPreviewContent .qHead:has(.questionContinuationPaper) .marksMetaPaper{
+  align-self:start !important;
+}
+</style>
 </head>
 
 <body>
@@ -4173,6 +4308,9 @@ body > .draftManager{
       s = s.replace(/sqrt\s*\(([^()]+)\)/gi, "\\sqrt{$1}");
       s = s.replace(/sqrt\s*\{([^{}]+)\}/gi, "\\sqrt{$1}");
       s = s.replace(/sqrt([A-Za-z0-9]+)/g, "\\sqrt{$1}");
+      s = s.replace(/\b(sin|cos|tan|cot|sec|csc|log|ln)\s*\(([^()]+)\)/gi, "\\$1($2)");
+      s = s.replace(/\b(sin|cos|tan|cot|sec|csc)\s*([0-9]+)\s*°/gi, "\\$1 $2^{\\circ}");
+      s = s.replace(/([0-9]+)\s*°/g, "$1^{\\circ}");
       s = s.replace(/([A-Za-z0-9)\]])\s*\^\s*\(([^()]+)\)/g, "$1^{$2}");
       s = s.replace(/([A-Za-z0-9)\]])\s*\^\s*([+-]?\d+)/g, "$1^{$2}");
       s = s.replace(/(\d+)\s*\/\s*(\d+)/g, "\\frac{$1}{$2}");
@@ -4210,7 +4348,7 @@ body > .draftManager{
         s = s.replace(equationPattern, protect);
 
         s = s.replace(
-          /(\\sum_[^\s]+|sqrt\s*\([^()]+\)|sqrt\s*\{[^{}]+\}|sqrt\s*[A-Za-z0-9]+|\d+\s*\/\s*\d+|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+)|T_\{?\d+\}?|S_\\infty|\\frac\{[^{}]+\}\{[^{}]+\})/g,
+          /(\\sum_[^\s]+|sqrt\s*\([^()]+\)|sqrt\s*\{[^{}]+\}|sqrt\s*[A-Za-z0-9]+|\b(?:sin|cos|tan|cot|sec|csc|log|ln)\s*\([^()\n]+\)|\b(?:sin|cos|tan|cot|sec|csc)\s*\d+\s*°|\d+\s*°|\d+\s*\/\s*\d+|\b(?:\d+(?:\.\d+)?[A-Za-z]?|[A-Za-z])(?:\s*\^\s*(?:\([^()]+\)|[+-]?\d+))?°?(?:\s*[+\-−×÷*\/]\s*(?:\d+(?:\.\d+)?[A-Za-z]?|[A-Za-z])(?:\s*\^\s*(?:\([^()]+\)|[+-]?\d+))?°?)+\b|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+)|T_\{?\d+\}?|S_\\infty|\\frac\{[^{}]+\}\{[^{}]+\})/g,
           protect
         );
 
@@ -4678,6 +4816,126 @@ function escapeHtml(str){
       );
       return changed ? value : raw;
     }
+    function previewNativeMathToken(body){
+      let value = String(body || "").trim();
+      if (!value) return "";
+
+      /* Stacked notation keeps MathJax; compact expressions use baseline-native
+         typography so they sit naturally beside ordinary question wording. */
+      if (/\\(?:d?frac|tfrac|sqrt|begin|end|matrix|sum|prod|int|lim|overline|vec|bar|cases)\b/i.test(value)) return "";
+      if (/\//.test(value)) return "";
+
+      const romanParts = [];
+      value = value.replace(/\\(?:text|mathrm|operatorname)\s*\{([^{}]*)\}/g, (_, word) => {
+        const index = romanParts.push(String(word || "")) - 1;
+        return `\uE000${index}\uE001`;
+      });
+      value = value.replace(/\\(sin|cos|tan|cot|sec|csc|log|ln)\b/g, (_, word) => {
+        const index = romanParts.push(String(word || "")) - 1;
+        return `\uE000${index}\uE001`;
+      });
+
+      const angleAccentParts = [];
+      value = value.replace(/\\(?:widehat|hat)\s*\{([A-Za-z]{3})\}/g, (_, name) => {
+        const index = angleAccentParts.push(String(name || "")) - 1;
+        return `\uE100${index}\uE101`;
+      });
+
+      value = value
+        .replace(/\\left|\\right/g, "")
+        .replace(/\^\{?\\circ\}?/g, "°")
+        .replace(/\^\{?2\}?/g, "²")
+        .replace(/\^\{?3\}?/g, "³")
+        .replace(/_\{?0\}?/g, "₀")
+        .replace(/_\{?1\}?/g, "₁")
+        .replace(/_\{?2\}?/g, "₂")
+        .replace(/_\{?3\}?/g, "₃")
+        .replace(/\\[,!;:]/g, " ");
+
+      const subscriptCharacters = {
+        0:"₀", 1:"₁", 2:"₂", 3:"₃", 4:"₄", 5:"₅", 6:"₆", 7:"₇", 8:"₈", 9:"₉",
+        a:"ₐ", e:"ₑ", h:"ₕ", i:"ᵢ", j:"ⱼ", k:"ₖ", l:"ₗ", m:"ₘ", n:"ₙ", o:"ₒ",
+        p:"ₚ", r:"ᵣ", s:"ₛ", t:"ₜ", u:"ᵤ", v:"ᵥ", x:"ₓ",
+        '+':"₊", '-':"₋", '=':"₌", '(':"₍", ')':"₎"
+      };
+      value = value.replace(/_\{([A-Za-z0-9+\-=()]{1,8})\}|_([A-Za-z0-9])/g, (whole, braced, single) => {
+        const converted = [...String(braced || single || "").toLowerCase()]
+          .map(character => subscriptCharacters[character]);
+        return converted.every(Boolean) ? converted.join("") : whole;
+      });
+
+      const commands = {
+        alpha:"α", beta:"β", gamma:"γ", delta:"δ", epsilon:"ε", theta:"θ", lambda:"λ",
+        mu:"μ", pi:"π", rho:"ρ", sigma:"σ", phi:"φ", omega:"ω", Alpha:"Α", Beta:"Β",
+        Gamma:"Γ", Delta:"Δ", Theta:"Θ", Lambda:"Λ", Pi:"Π", Sigma:"Σ", Phi:"Φ", Omega:"Ω",
+        parallel:"∥", perp:"⊥", angle:"∠", neq:"≠", ne:"≠", le:"≤", leq:"≤", ge:"≥",
+        geq:"≥", approx:"≈", pm:"±", times:"×", div:"÷", cdot:"·", in:"∈", cap:"∩",
+        cup:"∪", prime:"′", triangle:"△", infty:"∞", therefore:"∴", ldots:"…", cdots:"⋯"
+      };
+      value = value.replace(/\\([A-Za-z]+)\b/g, (whole, name) => {
+        return Object.prototype.hasOwnProperty.call(commands, name) ? commands[name] : whole;
+      });
+
+      value = value
+        .replace(/'/g, "′")
+        .replace(/-/g, "−")
+        .replace(/\s*([=+×÷·±≠≤≥≈∥⊥∈∩∪])\s*/g, " $1 ")
+        .replace(/\(\s+/g, "(")
+        .replace(/\s+\)/g, ")")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      if (/\\[A-Za-z]+|[{}_^]/.test(value)) return "";
+
+      const renderVariablePart = part => {
+        const source = String(part || "");
+        const variablePattern = /[A-Za-z\u0370-\u03FF][A-Za-z\u0370-\u03FF\u0300-\u036F]*/g;
+        let html = "";
+        let lastIndex = 0;
+        let match;
+        const renderRoman = text => text ? `<span class="noteMathRoman">${escapeHtml(text)}</span>` : "";
+        while ((match = variablePattern.exec(source))) {
+          html += renderRoman(source.slice(lastIndex, match.index));
+          html += `<span class="noteMathVariable">${escapeHtml(match[0])}</span>`;
+          lastIndex = match.index + match[0].length;
+        }
+        html += renderRoman(source.slice(lastIndex));
+        return html;
+      };
+
+      const html = value
+        .split(/(\uE000\d+\uE001|\uE100\d+\uE101)/g)
+        .map(part => {
+          const roman = part.match(/^\uE000(\d+)\uE001$/);
+          if (roman) return `<span class="noteMathRoman">${escapeHtml(romanParts[Number(roman[1])] || "")}</span>`;
+          const accented = part.match(/^\uE100(\d+)\uE101$/);
+          if (accented) {
+            const name = angleAccentParts[Number(accented[1])] || "";
+            return `<span class="noteMathVariable noteMathAngleName">${escapeHtml(name[0] || "")}<span class="noteMathAccentedVertex">${escapeHtml(name[1] || "")}<span class="noteMathAccentMark" aria-hidden="true">ˆ</span></span>${escapeHtml(name[2] || "")}</span>`;
+          }
+          return renderVariablePart(part);
+        })
+        .join("");
+
+      return `<span class="noteMathInline" data-native-note-math="1">${html}</span>`;
+    }
+
+    function finalizePreviewMixedMath(rendered){
+      let value = String(rendered || "");
+      value = value.replace(
+        /<span class="inlineVariable" data-native-variable="1">([A-Za-z\u0370-\u03FF][A-Za-z\u0370-\u03FF\u0300-\u036F]*)<\/span>/g,
+        (whole, variable) => previewNativeMathToken(variable) || whole
+      );
+      value = value.replace(/(^|[^$])\$([^$\n]+)\$(?!\$)/g, (whole, prefix, body) => {
+        const token = previewNativeMathToken(body);
+        return token ? prefix + token : whole;
+      });
+      value = value.replace(/\\\(([^\n]+?)\\\)/g, (whole, body) => {
+        return previewNativeMathToken(body) || whole;
+      });
+      return value;
+    }
+
     function renderMixedMathPreview(text){
       const raw = String(text || "").trim();
       if (!raw) return "";
@@ -4686,12 +4944,12 @@ function escapeHtml(str){
       if (countPhrase) return escapeHtml(`${countPhrase[1]} ${countPhrase[2]}`);
 
       const variableReady = renderVariablesBeforeMathJaxPreview(raw);
-      if (variableReady !== raw) return variableReady;
+      if (variableReady !== raw) return finalizePreviewMixedMath(variableReady);
 
       const probabilityReady = renderProbabilityBeforeMathJaxPreview(raw);
       if (probabilityReady !== raw) return probabilityReady;
 
-      if (hasLatexSyntax(raw)) return raw;
+      if (hasLatexSyntax(raw)) return finalizePreviewMixedMath(raw);
 
       const parts = [];
       const protect = (m) => `@@M${parts.push(m)-1}@@`;
@@ -4699,13 +4957,13 @@ function escapeHtml(str){
 
       let temp = raw.replace(equationPattern, protect);
       temp = temp.replace(
-        /(sqrt\s*\([^()]+\)|sqrt\s*\{[^{}]+\}|sqrt[A-Za-z0-9]+|\d+\s*\/\s*\d+|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+))/g,
+        /(sqrt\s*\([^()]+\)|sqrt\s*\{[^{}]+\}|sqrt[A-Za-z0-9]+|\bP\s*\([^()\n]+\)|\b(?:sin|cos|tan|cot|sec|csc|log|ln)\s*\([^()\n]+\)|\b(?:sin|cos|tan|cot|sec|csc)\s*\d+\s*°|\d+\s*°|\d+\s*\/\s*\d+|\b(?:\d+(?:\.\d+)?[A-Za-z]?|[A-Za-z])(?:\s*\^\s*(?:\([^()]+\)|[+-]?\d+))?°?(?:\s*[+\-−×÷*\/]\s*(?:\d+(?:\.\d+)?[A-Za-z]?|[A-Za-z])(?:\s*\^\s*(?:\([^()]+\)|[+-]?\d+))?°?)+\b|[A-Za-z0-9)\]]\s*\^\s*(?:\([^()]+\)|[+-]?\d+))/g,
         protect
       );
 
       temp = escapeHtml(temp);
       temp = temp.replace(/@@M(\d+)@@/g, (_, i) => `$${latexifyMath(parts[Number(i)])}$`);
-      return temp;
+      return finalizePreviewMixedMath(temp);
     }
     function renderNoteMixedMathPreview(text){
       let rendered = renderMixedMathPreview(text);
@@ -7436,7 +7694,9 @@ function escapeHtml(str){
         .map(item => ({
           first:pointFor(item.subject),
           vertex:pointFor(item.parts[0]),
-          second:pointFor(item.parts[1])
+          second:pointFor(item.parts[1]),
+          vertexName:noteSvgLabel(item.parts[0] || ""),
+          markerSize:Math.max(7, Math.min(22, parseNoteGraphNumber(item.parts[2]) ?? 11))
         }))
         .filter(item => item.first && item.vertex && item.second);
       const pointsCoincide = (first, second) =>
@@ -7474,7 +7734,12 @@ function escapeHtml(str){
         .map(item => ({
           first:pointFor(item.subject),
           vertex:pointFor(item.parts[0]),
-          second:pointFor(item.parts[1])
+          second:pointFor(item.parts[1]),
+          vertexName:noteSvgLabel(item.parts[0] || ""),
+          markerSize:Math.max(
+            9,
+            Math.min(18, Math.max(10, Math.min(55, parseNoteGraphNumber(item.parts[3]) ?? 24)) * .82)
+          )
         }))
         .filter(item => item.first && item.vertex && item.second);
       const everyRightAngleDefinition = rightAngleDefinitions.concat(numericRightAngleDefinitions);
@@ -7500,6 +7765,34 @@ function escapeHtml(str){
         rayFallsInsideRightAngle(first, vertex, rightAngle) &&
         rayFallsInsideRightAngle(second, vertex, rightAngle)
       );
+      const labelledAngleDefinitions = commands
+        .filter(item =>
+          ["ANGLE", "ARC", "ANGLE_ARROW"].includes(item.command) &&
+          noteSvgLabel(item.parts[2] || "") &&
+          !isDuplicateRightAngleCommand(item)
+        )
+        .map(item => ({
+          item,
+          first:pointFor(item.subject),
+          vertex:pointFor(item.parts[0]),
+          second:pointFor(item.parts[1]),
+          vertexName:noteSvgLabel(item.parts[0] || "")
+        }))
+        .filter(item => item.first && item.vertex && item.second);
+      const angleSharesOneBoundary = (item, first, vertex, second) => {
+        const vertexName = noteSvgLabel(item.parts[0] || "");
+        if (centralAngleVertexNames.has(vertexName)) return false;
+        return labelledAngleDefinitions.some(other => {
+          if (other.item === item || !pointsCoincide(vertex, other.vertex)) return false;
+          const sharedDirections = [
+            raysCoincide(first, vertex, other.first, other.vertex) ||
+              raysCoincide(first, vertex, other.second, other.vertex),
+            raysCoincide(second, vertex, other.first, other.vertex) ||
+              raysCoincide(second, vertex, other.second, other.vertex)
+          ].filter(Boolean).length;
+          return sharedDirections === 1;
+        });
+      };
 
       commands.filter(item => ["ANGLE", "ARC", "ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command)).forEach(item => {
         const first = pointFor(item.subject);
@@ -7516,7 +7809,10 @@ function escapeHtml(str){
           arrow: ["ANGLE_ARROW", "REFLEX_ANGLE"].includes(item.command),
           central: centralAngleVertexNames.has(noteSvgLabel(item.parts[0] || "")),
           centralTextWidth: centralAngleMaximumTextWidth.get(noteSvgLabel(item.parts[0] || "")) || 0,
-          suppressArc: item.command !== "REFLEX_ANGLE" && angleFallsInsideRightAngle(first, vertex, second)
+          suppressArc: item.command !== "REFLEX_ANGLE" && (
+            angleFallsInsideRightAngle(first, vertex, second) ||
+            angleSharesOneBoundary(item, first, vertex, second)
+          )
         });
       });
 
@@ -7540,6 +7836,74 @@ function escapeHtml(str){
           ' L ' + p3.x.toFixed(2) + ' ' + p3.y.toFixed(2) +
           ' Z" fill="none" stroke="' + stroke + '" stroke-width="1.05" vector-effect="non-scaling-stroke" />'
         );
+      });
+
+      const uniqueRightAngleDefinitions = everyRightAngleDefinition.filter((definition, index, values) =>
+        values.findIndex(other => pointsCoincide(definition.vertex, other.vertex) && (
+          raysCoincide(definition.first, definition.vertex, other.first, other.vertex) &&
+          raysCoincide(definition.second, definition.vertex, other.second, other.vertex) ||
+          raysCoincide(definition.first, definition.vertex, other.second, other.vertex) &&
+          raysCoincide(definition.second, definition.vertex, other.first, other.vertex)
+        )) === index
+      );
+      const connectedRayPoints = rightAngle => {
+        const candidates = [];
+        straightPrimitives.forEach(primitive => {
+          if (primitive.firstName === rightAngle.vertexName) {
+            const point = pointFor(primitive.secondName);
+            if (point) candidates.push(point);
+          } else if (primitive.secondName === rightAngle.vertexName) {
+            const point = pointFor(primitive.firstName);
+            if (point) candidates.push(point);
+          } else if (primitiveContainsPoint(primitive, rightAngle.vertexName)) {
+            const first = pointFor(primitive.firstName);
+            const second = pointFor(primitive.secondName);
+            if (first) candidates.push(first);
+            if (second) candidates.push(second);
+          }
+        });
+        return candidates.filter((candidate, index, values) =>
+          !raysCoincide(candidate, rightAngle.vertex, rightAngle.first, rightAngle.vertex) &&
+          !raysCoincide(candidate, rightAngle.vertex, rightAngle.second, rightAngle.vertex) &&
+          rayFallsInsideRightAngle(candidate, rightAngle.vertex, rightAngle) &&
+          values.findIndex(other => raysCoincide(candidate, rightAngle.vertex, other, rightAngle.vertex)) === index
+        );
+      };
+      uniqueRightAngleDefinitions.forEach(rightAngle => {
+        const vertex = canvasPoint(rightAngle.vertex);
+        const first = canvasPoint(rightAngle.first);
+        const second = canvasPoint(rightAngle.second);
+        if (!vertex || !first || !second) return;
+        const firstLength = Math.hypot(first.x - vertex.x, first.y - vertex.y) || 1;
+        const secondLength = Math.hypot(second.x - vertex.x, second.y - vertex.y) || 1;
+        const firstUnit = { x:(first.x - vertex.x) / firstLength, y:(first.y - vertex.y) / firstLength };
+        const secondUnit = { x:(second.x - vertex.x) / secondLength, y:(second.y - vertex.y) / secondLength };
+        connectedRayPoints(rightAngle).forEach(rayPoint => {
+          const canvasRay = canvasPoint(rayPoint);
+          if (!canvasRay) return;
+          const rayLength = Math.hypot(canvasRay.x - vertex.x, canvasRay.y - vertex.y) || 1;
+          const rayUnit = { x:(canvasRay.x - vertex.x) / rayLength, y:(canvasRay.y - vertex.y) / rayLength };
+          const firstComponent = Math.max(.001, rayUnit.x * firstUnit.x + rayUnit.y * firstUnit.y);
+          const secondComponent = Math.max(.001, rayUnit.x * secondUnit.x + rayUnit.y * secondUnit.y);
+          const crossingDistance = Math.min(
+            rightAngle.markerSize / firstComponent,
+            rightAngle.markerSize / secondComponent
+          );
+          const fromDistance = Math.max(0, crossingDistance - 3.2);
+          const toDistance = Math.min(rayLength, crossingDistance + 3.2);
+          const from = { x:vertex.x + rayUnit.x * fromDistance, y:vertex.y + rayUnit.y * fromDistance };
+          const to = { x:vertex.x + rayUnit.x * toDistance, y:vertex.y + rayUnit.y * toDistance };
+          svg.push(
+            '<line class="geometryRightAngleRayGap" x1="' + from.x.toFixed(2) + '" y1="' + from.y.toFixed(2) +
+            '" x2="' + to.x.toFixed(2) + '" y2="' + to.y.toFixed(2) +
+            '" stroke="#fff" stroke-width="3.4" stroke-linecap="round" vector-effect="non-scaling-stroke" />'
+          );
+          svg.push(
+            '<line class="geometryRightAngleRay" x1="' + from.x.toFixed(2) + '" y1="' + from.y.toFixed(2) +
+            '" x2="' + to.x.toFixed(2) + '" y2="' + to.y.toFixed(2) +
+            '" stroke="' + stroke + '" stroke-width="1.05" stroke-linecap="round" vector-effect="non-scaling-stroke" />'
+          );
+        });
       });
 
       commands.filter(item => ["EQUAL", "PARALLEL"].includes(item.command)).forEach(item => {
@@ -7695,7 +8059,7 @@ function escapeHtml(str){
       const activeViewBox = useMobileGeometryView ? mobileViewBox : desktopViewBox;
       return '<div class="noteVisualBlock' + (minimalTheme ? ' minimalDiagramTheme' : '') + '">' +
         (title ? '<div class="noteVisualTitle">' + renderNoteVisualTitle(title) + '</div>' : '') +
-        '<div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram generatedNoteGeometry" viewBox="' + activeViewBox + '" data-desktop-view-box="' + desktopViewBox + '" data-mobile-view-box="' + mobileViewBox + '" data-geometry-renderer="right-angle-continuous-lines-v17" style="--geometry-text-size:' + responsiveGeometryTextSize.toFixed(2) + 'px" role="img" aria-label="' + escapeHtml(accessibleTitle) + '">' + svg.join("") + '</svg></div></div>';
+        '<div class="generatedNoteGraphWrap"><svg class="generatedNoteDiagram generatedNoteGeometry" viewBox="' + activeViewBox + '" data-desktop-view-box="' + desktopViewBox + '" data-mobile-view-box="' + mobileViewBox + '" data-geometry-renderer="clean-shared-angle-vertices-v18" style="--geometry-text-size:' + responsiveGeometryTextSize.toFixed(2) + 'px" role="img" aria-label="' + escapeHtml(accessibleTitle) + '">' + svg.join("") + '</svg></div></div>';
     }
 
     function renderStructuredNotePreview(rawText){
