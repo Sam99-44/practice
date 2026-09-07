@@ -5602,6 +5602,24 @@ function escapeHtml(str){
         margin.top +
         ((yMax - Number(value)) / (yMax - yMin)) * plotHeight;
 
+      const horizontalAxisY = Math.max(
+        margin.top,
+        Math.min(margin.top + plotHeight, toY(0))
+      );
+
+      const verticalAxisX = ["bar", "histogram"].includes(graphType)
+        ? margin.left
+        : Math.max(
+            margin.left,
+            Math.min(margin.left + plotWidth, toX(0))
+          );
+
+      const isAngularLineGraph = graphType === "line" &&
+        /(?:\\?(?:sin|cos|tan)\b|trigonom|degrees?)/i.test([title, xLabel, yLabel].join(" "));
+      const angularTickLabelY = horizontalAxisY + 18 <= margin.top + plotHeight - 2
+        ? horizontalAxisY + 18
+        : horizontalAxisY - 8;
+
       const svgParts = [];
       const axisMarkerId = "noteAxisArrow" + (++noteVisualSvgSequence);
       svgParts.push('<defs><marker id="' + axisMarkerId + '" viewBox="0 0 10 10" refX="8.2" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse"><path d="M 1 1 L 9 5 L 1 9 z" fill="#111827" /></marker></defs>');
@@ -5693,9 +5711,10 @@ function escapeHtml(str){
 
           svgParts.push(
             '<text x="' + x.toFixed(2) +
-            '" y="' + (margin.top + plotHeight + 22) +
-            '" text-anchor="middle" font-size="11" fill="#475569">' +
-            escapeHtml(formatGraphDisplayNumber(value)) +
+            '" y="' + (isAngularLineGraph ? angularTickLabelY.toFixed(2) : (margin.top + plotHeight + 22)) +
+            '" text-anchor="middle" font-size="11" fill="#475569"' +
+            (isAngularLineGraph ? ' style="paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round"' : '') + '>' +
+            escapeHtml(formatGraphDisplayNumber(value) + (isAngularLineGraph ? "°" : "")) +
             "</text>"
           );
         });
@@ -5730,43 +5749,72 @@ function escapeHtml(str){
           const orderedPoints = graphType === "line"
             ? [...points].sort((left, right) => left.x - right.x)
             : points;
+          let hideLinePoints = false;
 
           if (graphType === "line") {
-            const polylinePoints = orderedPoints
-              .map(point =>
-                toX(point.x).toFixed(2) + "," + toY(point.y).toFixed(2)
-              )
-              .join(" ");
+            const smoothPreference = String(attributes.smooth || attributes.curve || "").trim();
+            const smoothDisabled = /^(?:0|false|no|off|straight)$/i.test(smoothPreference);
+            const smoothRequested = /^(?:1|true|yes|on|smooth|curve)$/i.test(smoothPreference);
+            const trigGraphContext = [title, xLabel, yLabel].join(" ");
+            const isTrigonometricLine = /(?:\\?(?:sin|cos|tan)\b|trigonom|degrees?)/i.test(trigGraphContext);
+            const useSmoothCurve = orderedPoints.length > 2 && !smoothDisabled && (smoothRequested || isTrigonometricLine);
+            hideLinePoints = useSmoothCurve;
+            const plottedPoints = orderedPoints.map(point => ({
+              x: toX(point.x),
+              y: toY(point.y)
+            }));
 
-            svgParts.push(
-              '<polyline points="' + polylinePoints +
-              '" fill="none" stroke="' + primaryColour + '" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />'
-            );
+            if (useSmoothCurve) {
+              /* Catmull-Rom converted to cubic Bezier: the curve passes through
+                 every supplied point and has a continuous tangent at each one. */
+              let curvePath = "M " + plottedPoints[0].x.toFixed(2) + " " + plottedPoints[0].y.toFixed(2);
+              for (let index = 0; index < plottedPoints.length - 1; index += 1) {
+                const previous = plottedPoints[Math.max(0, index - 1)];
+                const start = plottedPoints[index];
+                const end = plottedPoints[index + 1];
+                const next = plottedPoints[Math.min(plottedPoints.length - 1, index + 2)];
+                const firstControl = {
+                  x: start.x + (end.x - previous.x) / 6,
+                  y: start.y + (end.y - previous.y) / 6
+                };
+                const secondControl = {
+                  x: end.x - (next.x - start.x) / 6,
+                  y: end.y - (next.y - start.y) / 6
+                };
+                curvePath += " C " + firstControl.x.toFixed(2) + " " + firstControl.y.toFixed(2) +
+                  " " + secondControl.x.toFixed(2) + " " + secondControl.y.toFixed(2) +
+                  " " + end.x.toFixed(2) + " " + end.y.toFixed(2);
+              }
+              const smoothStrokeColour = minimalTheme ? "#475569" : primaryColour;
+              const smoothStrokeWidth = minimalTheme ? 2.1 : 2.4;
+              svgParts.push(
+                '<path d="' + curvePath +
+                '" fill="none" stroke="' + smoothStrokeColour + '" stroke-width="' + smoothStrokeWidth + '" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round" shape-rendering="geometricPrecision" />'
+              );
+            } else {
+              const polylinePoints = plottedPoints
+                .map(point => point.x.toFixed(2) + "," + point.y.toFixed(2))
+                .join(" ");
+              svgParts.push(
+                '<polyline points="' + polylinePoints +
+                '" fill="none" stroke="' + primaryColour + '" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round" />'
+              );
+            }
           }
 
-          orderedPoints.forEach(point => {
-            svgParts.push(
-              '<circle cx="' + toX(point.x).toFixed(2) +
-              '" cy="' + toY(point.y).toFixed(2) +
-              '" r="' + (graphType === "scatter" ? 5 : 4) +
-              '" fill="' + (graphType === "scatter" ? accentColour : primaryColour) +
-              '" stroke="#fff" stroke-width="1.5" />'
-            );
-          });
+          if (!hideLinePoints) {
+            orderedPoints.forEach(point => {
+              svgParts.push(
+                '<circle cx="' + toX(point.x).toFixed(2) +
+                '" cy="' + toY(point.y).toFixed(2) +
+                '" r="' + (graphType === "scatter" ? 5 : 4) +
+                '" fill="' + (graphType === "scatter" ? accentColour : primaryColour) +
+                '" stroke="#fff" stroke-width="1.5" />'
+              );
+            });
+          }
         }
       }
-
-      const horizontalAxisY = Math.max(
-        margin.top,
-        Math.min(margin.top + plotHeight, toY(0))
-      );
-
-      const verticalAxisX = ["bar", "histogram"].includes(graphType)
-        ? margin.left
-        : Math.max(
-            margin.left,
-            Math.min(margin.left + plotWidth, toX(0))
-          );
 
       svgParts.push(
         '<line x1="' + margin.left + '" y1="' + horizontalAxisY.toFixed(2) +
@@ -5777,24 +5825,33 @@ function escapeHtml(str){
       svgParts.push(
         '<line x1="' + verticalAxisX.toFixed(2) + '" y1="' + margin.top +
         '" x2="' + verticalAxisX.toFixed(2) + '" y2="' + (margin.top + plotHeight) +
-        '" stroke="#111827" stroke-width="1.1" vector-effect="non-scaling-stroke" marker-end="url(#' + axisMarkerId + ')" />'
+        '" stroke="#111827" stroke-width="1.1" vector-effect="non-scaling-stroke"' +
+        (isAngularLineGraph ? ' marker-start="url(#' : ' marker-end="url(#') + axisMarkerId + ')" />'
       );
 
       svgParts.push(
-        '<text x="' + (margin.left + plotWidth / 2).toFixed(2) +
-        '" y="' + (height - 14) +
-        '" text-anchor="middle" font-size="12" font-weight="400" fill="#111827">' +
-        escapeHtml(xLabel) +
+        '<text x="' + (isAngularLineGraph ? (margin.left + plotWidth + 12) : (margin.left + plotWidth / 2)).toFixed(2) +
+        '" y="' + (isAngularLineGraph ? (horizontalAxisY - 7).toFixed(2) : (height - 14)) +
+        '" text-anchor="middle" font-size="' + (isAngularLineGraph ? 13 : 12) + '" font-weight="400" fill="#111827"' +
+        (isAngularLineGraph ? ' font-family="Times New Roman, Times, serif" font-style="italic" style="paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round"' : '') + '>' +
+        escapeHtml(isAngularLineGraph ? "x" : xLabel) +
         "</text>"
       );
 
-      svgParts.push(
-        '<text x="18" y="' + (margin.top + plotHeight / 2).toFixed(2) +
-        '" text-anchor="middle" font-size="12" font-weight="400" fill="#111827"' +
-        ' transform="rotate(-90 18 ' + (margin.top + plotHeight / 2).toFixed(2) + ')">' +
-        escapeHtml(yLabel) +
-        "</text>"
-      );
+      if (isAngularLineGraph) {
+        svgParts.push(
+          '<text x="' + (verticalAxisX + 10).toFixed(2) + '" y="' + (margin.top - 7) +
+          '" text-anchor="middle" font-size="13" font-weight="400" fill="#111827" font-family="Times New Roman, Times, serif" font-style="italic" style="paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round">y</text>'
+        );
+      } else {
+        svgParts.push(
+          '<text x="18" y="' + (margin.top + plotHeight / 2).toFixed(2) +
+          '" text-anchor="middle" font-size="12" font-weight="400" fill="#111827"' +
+          ' transform="rotate(-90 18 ' + (margin.top + plotHeight / 2).toFixed(2) + ')">' +
+          escapeHtml(yLabel) +
+          "</text>"
+        );
+      }
 
       return (
         '<div class="noteVisualBlock noteGraphBlock' + (minimalTheme ? ' minimalDiagramTheme' : '') + '">' +
@@ -6535,6 +6592,14 @@ function escapeHtml(str){
       const minimalTheme = Boolean(options.minimalTheme);
       const showGrid = options.showGrid !== false;
       const showTicks = options.showTicks !== false;
+      const isAngularGraph = /(?:\\?(?:sin|cos|tan)\b|trigonom|degrees?)/i.test(
+        [options.title, options.xLabel, options.yLabel].join(" ")
+      );
+      const axisY = Math.max(margin.top, Math.min(margin.top + plotHeight, toY(0)));
+      const axisX = Math.max(margin.left, Math.min(margin.left + plotWidth, toX(0)));
+      const angularTickLabelY = axisY + 17 <= margin.top + plotHeight - 2
+        ? axisY + 17
+        : axisY - 8;
       const axisMarkerId = "advancedAxisArrow" + (++noteVisualSvgSequence);
       svg.push('<defs><marker id="' + axisMarkerId + '" viewBox="0 0 10 10" refX="8.2" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse"><path d="M 1 1 L 9 5 L 1 9 z" fill="#111827" /></marker></defs>');
       const buildAxisTicks = (min, max, axisName) => {
@@ -6575,7 +6640,7 @@ function escapeHtml(str){
           svg.push('<line x1="' + x.toFixed(2) + '" y1="' + margin.top + '" x2="' + x.toFixed(2) + '" y2="' + (margin.top + plotHeight) + '" stroke="' + (minimalTheme ? "#d1d5db" : "#e2e8f0") + '" stroke-width=".75" vector-effect="non-scaling-stroke" />');
         }
         if (showTicks) {
-          svg.push('<text x="' + x.toFixed(2) + '" y="' + (margin.top + plotHeight + 19) + '" text-anchor="middle" font-size="9.2" fill="#475569">' + escapeHtml(formatNoteGraphNumber(xValue)) + '</text>');
+          svg.push('<text x="' + x.toFixed(2) + '" y="' + (isAngularGraph ? angularTickLabelY.toFixed(2) : (margin.top + plotHeight + 19)) + '" text-anchor="middle" font-size="9.2" fill="#475569"' + (isAngularGraph ? ' style="paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round"' : '') + '>' + escapeHtml(formatNoteGraphNumber(xValue) + (isAngularGraph ? "°" : "")) + '</text>');
         }
       });
 
@@ -6589,10 +6654,8 @@ function escapeHtml(str){
         }
       });
 
-      const axisY = Math.max(margin.top, Math.min(margin.top + plotHeight, toY(0)));
-      const axisX = Math.max(margin.left, Math.min(margin.left + plotWidth, toX(0)));
-      svg.push('<line x1="' + margin.left + '" y1="' + axisY.toFixed(2) + '" x2="' + (margin.left + plotWidth) + '" y2="' + axisY.toFixed(2) + '" stroke="#111827" stroke-width="1.1" vector-effect="non-scaling-stroke" marker-start="url(#' + axisMarkerId + ')" marker-end="url(#' + axisMarkerId + ')" />');
-      svg.push('<line x1="' + axisX.toFixed(2) + '" y1="' + margin.top + '" x2="' + axisX.toFixed(2) + '" y2="' + (margin.top + plotHeight) + '" stroke="#111827" stroke-width="1.1" vector-effect="non-scaling-stroke" marker-start="url(#' + axisMarkerId + ')" marker-end="url(#' + axisMarkerId + ')" />');
+      svg.push('<line x1="' + margin.left + '" y1="' + axisY.toFixed(2) + '" x2="' + (margin.left + plotWidth) + '" y2="' + axisY.toFixed(2) + '" stroke="#111827" stroke-width="1.1" vector-effect="non-scaling-stroke"' + (isAngularGraph ? ' marker-end="url(#' + axisMarkerId + ')"' : ' marker-start="url(#' + axisMarkerId + ')" marker-end="url(#' + axisMarkerId + ')"') + ' />');
+      svg.push('<line x1="' + axisX.toFixed(2) + '" y1="' + margin.top + '" x2="' + axisX.toFixed(2) + '" y2="' + (margin.top + plotHeight) + '" stroke="#111827" stroke-width="1.1" vector-effect="non-scaling-stroke"' + (isAngularGraph ? ' marker-start="url(#' + axisMarkerId + ')"' : ' marker-start="url(#' + axisMarkerId + ')" marker-end="url(#' + axisMarkerId + ')"') + ' />');
 
       (options.guides || []).forEach(guide => {
         if (![guide.x1, guide.y1, guide.x2, guide.y2].every(Number.isFinite)) return;
@@ -6624,7 +6687,7 @@ function escapeHtml(str){
           const path = segment.map((point, index) =>
             (index ? "L" : "M") + toX(point.x).toFixed(2) + " " + toY(point.y).toFixed(2)
           ).join(" ");
-          svg.push('<path d="' + path + '" fill="none" stroke="' + escapeHtml(seriesColour) + '" stroke-width="' + Number(series.width || (minimalTheme ? 1.6 : 2.1)) + '" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round" marker-start="url(#' + seriesMarkerId + ')" marker-end="url(#' + seriesMarkerId + ')" />');
+          svg.push('<path d="' + path + '" fill="none" stroke="' + escapeHtml(seriesColour) + '" stroke-width="' + Number(series.width || (minimalTheme ? 1.6 : 2.1)) + '" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"' + (isAngularGraph ? '' : ' marker-start="url(#' + seriesMarkerId + ')" marker-end="url(#' + seriesMarkerId + ')"') + ' />');
         });
       });
 
@@ -6640,7 +6703,7 @@ function escapeHtml(str){
         if (point.x < xMin || point.x > xMax || point.y < yMin || point.y > yMax) return;
         const x = toX(point.x);
         const y = toY(point.y);
-        svg.push('<circle cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) + '" r="3.6" fill="' + (minimalTheme ? "#111827" : "#c2410c") + '" stroke="#fff" stroke-width="1" />');
+        if (!isAngularGraph) svg.push('<circle cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) + '" r="3.6" fill="' + (minimalTheme ? "#111827" : "#c2410c") + '" stroke="#fff" stroke-width="1" />');
         if (point.label) {
           const labelWidth = Math.max(16, Math.min(160, noteSvgLabel(point.label).length * 6.2));
           const candidates = [
@@ -6667,8 +6730,13 @@ function escapeHtml(str){
       if (options.showAxisLabels !== false) {
         const xAxisLabel = noteSvgLabel(options.xLabel || "");
         const yAxisLabel = noteSvgLabel(options.yLabel || "");
-        if (xAxisLabel) svg.push('<text x="' + (margin.left + plotWidth / 2).toFixed(2) + '" y="' + (height - 14) + '" text-anchor="middle" font-size="10" font-weight="400">' + escapeHtml(xAxisLabel) + '</text>');
-        if (yAxisLabel) svg.push('<text x="18" y="' + (margin.top + plotHeight / 2).toFixed(2) + '" text-anchor="middle" font-size="10" font-weight="400" transform="rotate(-90 18 ' + (margin.top + plotHeight / 2).toFixed(2) + ')">' + escapeHtml(yAxisLabel) + '</text>');
+        if (isAngularGraph) {
+          svg.push('<text x="' + (margin.left + plotWidth + 12).toFixed(2) + '" y="' + (axisY - 7).toFixed(2) + '" text-anchor="middle" font-size="13" font-weight="400" font-family="Times New Roman, Times, serif" font-style="italic" style="paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round">x</text>');
+          svg.push('<text x="' + (axisX + 10).toFixed(2) + '" y="' + (margin.top - 7) + '" text-anchor="middle" font-size="13" font-weight="400" font-family="Times New Roman, Times, serif" font-style="italic" style="paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round">y</text>');
+        } else {
+          if (xAxisLabel) svg.push('<text x="' + (margin.left + plotWidth / 2).toFixed(2) + '" y="' + (height - 14) + '" text-anchor="middle" font-size="10" font-weight="400">' + escapeHtml(xAxisLabel) + '</text>');
+          if (yAxisLabel) svg.push('<text x="18" y="' + (margin.top + plotHeight / 2).toFixed(2) + '" text-anchor="middle" font-size="10" font-weight="400" transform="rotate(-90 18 ' + (margin.top + plotHeight / 2).toFixed(2) + ')">' + escapeHtml(yAxisLabel) + '</text>');
+        }
       }
 
       const title = String(options.title || "Graph").trim();
