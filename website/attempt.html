@@ -12288,6 +12288,46 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     );
   }
 
+  function numericCandidatesFromStoredAnswer(value){
+    const raw = String(value ?? "").trim();
+    if (!raw) return [];
+
+    const candidates = [];
+    const push = item => {
+      const text = String(item ?? "").trim();
+      if (!text) return;
+      const numeric = evaluateNumericMathAnswer(text);
+      if (numeric === null) return;
+      if (!candidates.some(entry => Math.abs(entry.numeric - numeric) <= 1e-12 * Math.max(1, Math.abs(entry.numeric), Math.abs(numeric)))) {
+        candidates.push({ text, numeric });
+      }
+    };
+
+    // Standard OR-separated storage.
+    raw.split("|").forEach(part => {
+      const piece = String(part || "").trim();
+      if (!piece) return;
+
+      // answer_1=1/2, answer=0.5, P(L)=1/2, etc.
+      const equalsParts = piece.split("=").map(x => x.trim()).filter(Boolean);
+      if (equalsParts.length > 1) {
+        equalsParts.slice(1).forEach(push);
+      } else {
+        push(piece);
+      }
+    });
+
+    // Chained equality without pipes, e.g. P(L)=75/150=1/2=0.5
+    if (!raw.includes("|") && raw.includes("=")) {
+      raw.split("=").slice(1).forEach(push);
+    }
+
+    // If the complete raw value itself is numeric, include it too.
+    push(raw);
+
+    return candidates;
+  }
+
   function compareTextAnswer(
     userAns,
     correctAns,
@@ -12301,6 +12341,22 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
      *
      * Any one mathematically equivalent form must be accepted.
      */
+    /*
+     * First try every safe numeric value present in the stored answer.
+     * This covers fractions/decimals regardless of how the admin/parser
+     * stored them: answer_1=..., P(L)=..., chained equality, or OR lists.
+     */
+    const learnerNumericCandidate = evaluateNumericMathAnswer(userAns);
+    if (learnerNumericCandidate !== null) {
+      const correctNumericCandidates = numericCandidatesFromStoredAnswer(correctAns);
+      if (correctNumericCandidates.some(candidate => {
+        const scale = Math.max(1, Math.abs(learnerNumericCandidate), Math.abs(candidate.numeric));
+        return Math.abs(learnerNumericCandidate - candidate.numeric) <= 1e-12 * scale;
+      })) {
+        return true;
+      }
+    }
+
     const storedAlternatives =
       extractStoredTypedAnswerAlternatives(correctAns);
 
