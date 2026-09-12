@@ -5362,7 +5362,51 @@ textarea{
 </section>
 </main>
 <script>
-const API=window.API||"https://api.practiceonline.co.za";const token=localStorage.getItem("token");const menuToggleBtn=document.getElementById("menuToggleBtn"),menuDropdown=document.getElementById("menuDropdown"),logoutBtn=document.getElementById("logoutBtn");function text(id,value){const el=document.getElementById(id);if(el)el.textContent=value||"-"}function escapeHtml(value){return String(value||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}function makeInitials(name){return String(name||"Learner").trim().split(/\s+/).map(p=>p[0]).join("").substring(0,2).toUpperCase()||"L"}logoutBtn.onclick=()=>{localStorage.removeItem("token");localStorage.removeItem("username");localStorage.removeItem("me_cache");localStorage.removeItem("user");localStorage.removeItem("role");location.href="login.html"};menuToggleBtn.addEventListener("click",e=>{e.stopPropagation();menuDropdown.classList.toggle("open")});document.addEventListener("click",e=>{if(!menuDropdown.contains(e.target)&&!menuToggleBtn.contains(e.target))menuDropdown.classList.remove("open")});function saveAndRenderUser(user){if(!user||typeof user!=="object")return;localStorage.setItem("user",JSON.stringify(user));localStorage.setItem("username",user.username||"");localStorage.setItem("role",user.role||"");const displayName=user.fullName||user.username||"Learner",accountType=user.accountType||"student",role=user.role||"learner",learnerNumber=user.learnerNumber||user.studentNumber||"-",joinedYear=user.createdAt?new Date(user.createdAt).getFullYear():new Date().getFullYear();text("accountName",displayName);text("accountType",accountType);text("profileInitials",makeInitials(displayName));text("heroName",displayName);text("heroRole",role);text("fullNameValue",user.fullName||displayName);text("usernameValue",user.username||"-");text("emailValue",user.email||"-");text("gradeValue",user.grade?"Grade "+user.grade:"-");text("accountTypeValue",accountType);text("joinedYearValue",joinedYear);text("roleValue",role);text("learnerNumberValue",learnerNumber)}async function loadProfile(){if(!token){location.href="login.html";return}const cachedUser=JSON.parse(localStorage.getItem("user")||"{}");if(cachedUser&&(cachedUser.username||cachedUser.email||cachedUser.fullName))saveAndRenderUser(cachedUser);try{let res=await fetch(`${API}/api/profile/me`,{headers:{Authorization:`Bearer ${token}`}});if(!res.ok)res=await fetch(`${API}/api/auth/me`,{headers:{Authorization:`Bearer ${token}`}});if(!res.ok){localStorage.removeItem("token");localStorage.removeItem("user");location.href="login.html";return}const user=await res.json();saveAndRenderUser(user)}catch(err){if(!cachedUser||(!cachedUser.username&&!cachedUser.email&&!cachedUser.fullName)){text("accountName","Could not load profile");text("heroName","Could not load profile")}}}loadProfile();
+const API=window.API||"https://api.practiceonline.co.za";const token=localStorage.getItem("token");
+
+function learnerProfileNeedsSetup(user = {}){
+  const role = String(user?.role || "").trim().toLowerCase();
+  const accountType = String(user?.accountType || "").trim().toLowerCase();
+
+  if(["admin","editor","tester"].includes(role)) return false;
+
+  const learnerLike =
+    role === "learner" ||
+    accountType === "learner" ||
+    accountType === "practice";
+
+  if(!learnerLike) return false;
+
+  /*
+   * Authoritative onboarding rule:
+   * incomplete Google learners cannot enter the learner hub.
+   */
+  return user?.onboardingCompleted !== true;
+}
+
+function redirectIncompleteLearnerToSetup(user = {}){
+  if(!learnerProfileNeedsSetup(user)) return false;
+
+  // Keep the current destination so onboarding returns to Quizzes.
+  const setupUrl = new URL("register.html", window.location.href);
+  setupUrl.searchParams.set("googleSetup", "1");
+  setupUrl.searchParams.set(
+    "next",
+    "learning-content.html#quizzes"
+  );
+
+  document.documentElement.dataset.profileSetupRedirect = "1";
+
+  window.location.replace(
+    setupUrl.pathname + setupUrl.search
+  );
+
+  return true;
+}
+
+const menuToggleBtn=document.getElementById("menuToggleBtn"),menuDropdown=document.getElementById("menuDropdown"),logoutBtn=document.getElementById("logoutBtn");function text(id,value){const el=document.getElementById(id);if(el)el.textContent=value||"-"}function escapeHtml(value){return String(value||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}function makeInitials(name){return String(name||"Learner").trim().split(/\s+/).map(p=>p[0]).join("").substring(0,2).toUpperCase()||"L"}logoutBtn.onclick=()=>{localStorage.removeItem("token");localStorage.removeItem("username");localStorage.removeItem("me_cache");localStorage.removeItem("user");localStorage.removeItem("role");location.href="login.html"};menuToggleBtn.addEventListener("click",e=>{e.stopPropagation();menuDropdown.classList.toggle("open")});document.addEventListener("click",e=>{if(!menuDropdown.contains(e.target)&&!menuToggleBtn.contains(e.target))menuDropdown.classList.remove("open")});function saveAndRenderUser(user){if(!user||typeof user!=="object")return;localStorage.setItem("user",JSON.stringify(user));localStorage.setItem("username",user.username||"");localStorage.setItem("role",user.role||"");const displayName=user.fullName||user.username||"Learner",accountType=user.accountType||"student",role=user.role||"learner",learnerNumber=user.learnerNumber||user.studentNumber||"-",joinedYear=user.createdAt?new Date(user.createdAt).getFullYear():new Date().getFullYear();text("accountName",displayName);text("accountType",accountType);text("profileInitials",makeInitials(displayName));text("heroName",displayName);text("heroRole",role);text("fullNameValue",user.fullName||displayName);text("usernameValue",user.username||"-");text("emailValue",user.email||"-");text("gradeValue",user.grade?"Grade "+user.grade:"-");text("accountTypeValue",accountType);text("joinedYearValue",joinedYear);text("roleValue",role);text("learnerNumberValue",learnerNumber)}async function loadProfile(){if(!token){location.href="login.html";return}const cachedUser=JSON.parse(localStorage.getItem("user")||"{}");if(cachedUser&&(cachedUser.username||cachedUser.email||cachedUser.fullName))saveAndRenderUser(cachedUser);try{let res=await fetch(`${API}/api/profile/me`,{headers:{Authorization:`Bearer ${token}`}});if(!res.ok)res=await fetch(`${API}/api/auth/me`,{headers:{Authorization:`Bearer ${token}`}});if(!res.ok){localStorage.removeItem("token");localStorage.removeItem("user");location.href="login.html";return}const user=await res.json();
+if(redirectIncompleteLearnerToSetup(user)) return;
+saveAndRenderUser(user)}catch(err){if(!cachedUser||(!cachedUser.username&&!cachedUser.email&&!cachedUser.fullName)){text("accountName","Could not load profile");text("heroName","Could not load profile")}}}loadProfile();
 </script>
 
 <script>
@@ -6108,6 +6152,16 @@ async function loadPage(){
     }
 
     const me = await meRes.json().catch(() => ({}));
+
+    /*
+     * Do not show an empty quiz page to a learner whose Google profile
+     * has not been completed yet. Grade and Curriculum are required by
+     * the quiz API to return the learner's assessments.
+     */
+    if(redirectIncompleteLearnerToSetup(me)){
+      return;
+    }
+
     const rawQuizzes = await quizzesRes.json().catch(() => []);
     const results = await resultsRes.json().catch(() => []);
 
@@ -6142,7 +6196,12 @@ async function loadPage(){
       quizListEl.innerHTML = `<div class="empty">Could not load quizzes.</div>`;
     }
   }finally{
-    showPortalQuizzesContent();
+    /*
+     * If onboarding redirect has started, keep the quiz content hidden.
+     */
+    if(!document.documentElement.dataset.profileSetupRedirect){
+      showPortalQuizzesContent();
+    }
   }
 }
 
