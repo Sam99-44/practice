@@ -10257,7 +10257,40 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   function getTypedInputValue(input){
     if (!input) return "";
 
+    /*
+     * MathLive's visible fraction can be represented differently depending
+     * on browser/version. Prefer LaTeX, but fall back to the normal value.
+     */
+    if (input.matches?.("math-field") && typeof input.getValue === "function") {
+      try {
+        const latex = String(input.getValue("latex") || "").trim();
+        if (latex) return latex;
+      } catch {}
+    }
+
     return String(input.value || "").trim();
+  }
+
+  function getTypedInputNumericRepresentations(input){
+    const values = [];
+
+    const add = value => {
+      const text = String(value ?? "").trim();
+      if (!text || values.includes(text)) return;
+      values.push(text);
+    };
+
+    if (!input) return values;
+
+    add(input.value);
+
+    if (input.matches?.("math-field") && typeof input.getValue === "function") {
+      try { add(input.getValue("latex")); } catch {}
+      try { add(input.getValue("ascii-math")); } catch {}
+      try { add(input.getValue("math-json")); } catch {}
+    }
+
+    return values;
   }
 
   function setTypedInputValue(input, value){
@@ -12328,6 +12361,108 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     return candidates;
   }
 
+  function collectQuestionCorrectAnswerCandidates(q, field = null){
+    const candidates = [];
+
+    const add = value => {
+      const raw = String(value ?? "").trim();
+      if (!raw || candidates.includes(raw)) return;
+      candidates.push(raw);
+    };
+
+    /*
+     * Current field first.
+     */
+    add(field?.correctAnswer);
+    add(field?.answer);
+    add(field?.value);
+
+    /*
+     * Whole-question storage forms. Different historical quiz versions used
+     * different property names, so the local marker accepts all of them.
+     */
+    add(q?.correctText);
+    add(q?.correctAnswer);
+    add(q?.answer);
+
+    if (Array.isArray(q?.answers)) {
+      q.answers.forEach(add);
+    }
+
+    if (Array.isArray(q?.answerFields)) {
+      q.answerFields.forEach(answerField => {
+        add(answerField?.correctAnswer);
+        add(answerField?.answer);
+        add(answerField?.correctText);
+        add(answerField?.value);
+      });
+    }
+
+    /*
+     * Expand pipe-separated accepted forms into individual candidates too.
+     */
+    [...candidates].forEach(raw => {
+      String(raw)
+        .split("|")
+        .map(part => part.trim())
+        .filter(Boolean)
+        .forEach(part => {
+          add(part);
+
+          const equalsAt = part.indexOf("=");
+          if (equalsAt > 0) {
+            add(part.slice(equalsAt + 1).trim());
+          }
+        });
+    });
+
+    return candidates;
+  }
+
+  function learnerTypedValueMatchesQuestion(
+    q,
+    input,
+    field,
+    mode,
+    tolerance,
+    unitCandidates = []
+  ){
+    const learnerRepresentations =
+      getTypedInputNumericRepresentations(input);
+
+    /*
+     * Always include the normal getter as a final fallback.
+     */
+    const ordinaryValue = getTypedInputValue(input);
+    if (
+      ordinaryValue &&
+      !learnerRepresentations.includes(ordinaryValue)
+    ) {
+      learnerRepresentations.push(ordinaryValue);
+    }
+
+    const correctCandidates =
+      collectQuestionCorrectAnswerCandidates(q, field);
+
+    for (const learnerValue of learnerRepresentations) {
+      for (const correctValue of correctCandidates) {
+        if (
+          compareTextAnswer(
+            learnerValue,
+            correctValue,
+            mode,
+            tolerance,
+            unitCandidates
+          )
+        ) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   function compareTextAnswer(
     userAns,
     correctAns,
@@ -12335,6 +12470,33 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     tolerance,
     unitCandidates = []
   ) {
+    /*
+     * Absolute first rule:
+     * If both sides are valid numeric mathematics and evaluate to the same
+     * value, the answer is correct. Formatting cannot override mathematics.
+     */
+    const directLearnerNumeric = evaluateNumericMathAnswer(userAns);
+    const directCorrectNumeric = evaluateNumericMathAnswer(correctAns);
+
+    if (
+      directLearnerNumeric !== null &&
+      directCorrectNumeric !== null
+    ) {
+      const directScale = Math.max(
+        1,
+        Math.abs(directLearnerNumeric),
+        Math.abs(directCorrectNumeric)
+      );
+
+      if (
+        Math.abs(
+          directLearnerNumeric - directCorrectNumeric
+        ) <= 1e-12 * directScale
+      ) {
+        return true;
+      }
+    }
+
     /*
      * A question can store several accepted forms of ONE answer:
      * answer_1=1/2|answer_2=0.5|answer_3=0,5
@@ -13688,24 +13850,38 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     }
 
     if (type === "text") {
-      const values = getTypedValuesForQuestion(q, i);
+      const fields = getQuestionAnswerFields(q);
       const mode = q.textAnswerMode || "exact";
       const tol = q.numberTolerance ?? 0;
       const answered = typedQuestionIsAnswered(q, i);
+      const multiple = questionUsesSeveralTypedFields(q);
 
-      const correct = answered && values.every(item =>
-        compareTextAnswer(
-          item.value,
-          item.correctAnswer,
-          mode,
-          tol,
-          [
-            q?.unit,
-            q?.answerSuffix,
-            getQuestionAnswerFields(q).find(field => field.key === item.key)?.suffix
-          ]
-        )
-      );
+      const correct =
+        answered &&
+        fields.length > 0 &&
+        fields.every((field, fieldIndex) => {
+          const inputId = getTypedInputId(
+            i,
+            field.key,
+            fieldIndex,
+            multiple
+          );
+
+          const input = document.getElementById(inputId);
+
+          return learnerTypedValueMatchesQuestion(
+            q,
+            input,
+            field,
+            mode,
+            tol,
+            [
+              q?.unit,
+              q?.answerSuffix,
+              field?.suffix
+            ]
+          );
+        });
 
       return { answered, correct, points: pts };
     }
