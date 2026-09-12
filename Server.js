@@ -4232,6 +4232,42 @@ function splitPossibleAnswers(value) {
     .filter(Boolean);
 }
 
+/*
+ * Accepted-alternative storage
+ * ----------------------------
+ * Some TXT assessments store several correct forms for ONE typed field as:
+ *
+ *   answer_1=1/2|answer_2=0.5|answer_3=0,5
+ *
+ * These are alternatives (OR), not three answers that the learner must
+ * provide simultaneously.
+ */
+function extractKeyedAcceptedAlternatives(value) {
+  const parts = String(value || "")
+    .split("|")
+    .map(part => String(part || "").trim())
+    .filter(Boolean);
+
+  if (parts.length < 2) return [];
+
+  const alternatives = [];
+
+  for (const part of parts) {
+    const match = part.match(
+      /^answer_\d+\s*=\s*(.+)$/i
+    );
+
+    if (!match) return [];
+
+    const answerValue = String(match[1] || "").trim();
+    if (!answerValue) return [];
+
+    alternatives.push(answerValue);
+  }
+
+  return alternatives;
+}
+
 function splitLearnerAnswers(value) {
   return String(value || "")
     .trim()
@@ -4244,6 +4280,20 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
   const uaRaw = String(userAns || "").trim();
   const caRaw = String(correctAns || "").trim();
   if (!caRaw) return false;
+
+  const keyedAlternatives =
+    extractKeyedAcceptedAlternatives(caRaw);
+
+  if (keyedAlternatives.length > 0) {
+    return keyedAlternatives.some(alternative =>
+      compareTextAnswer(
+        uaRaw,
+        alternative,
+        mode,
+        tolerance
+      )
+    );
+  }
 
   const allowedAnswers = splitPossibleAnswers(caRaw);
   const learnerAnswers = splitLearnerAnswers(uaRaw);
@@ -5242,6 +5292,26 @@ function compareTypedAnswerValue(
   tolerance,
   unitCandidates = []
 ) {
+  /*
+   * If one stored correct answer contains keyed alternatives such as
+   * answer_1=1/2|answer_2=0.5|answer_3=0,5, accept the learner when ANY
+   * alternative is mathematically equivalent.
+   */
+  const keyedAlternatives =
+    extractKeyedAcceptedAlternatives(correctAnswer);
+
+  if (keyedAlternatives.length > 0) {
+    return keyedAlternatives.some(alternative =>
+      compareTypedAnswerValue(
+        userAnswer,
+        alternative,
+        mode,
+        tolerance,
+        unitCandidates
+      )
+    );
+  }
+
   const learnerValue = prepareTypedAnswerForComparison(
     userAnswer,
     unitCandidates
@@ -5255,6 +5325,24 @@ function compareTypedAnswerValue(
   const normalizedMode = String(mode || "exact")
     .toLowerCase()
     .trim();
+
+  /*
+   * First compare pure numerical values mathematically.
+   *
+   * Examples that MUST be identical:
+   *   75/150 = 1/2 = 0.5 = 0,5
+   *   \\frac{75}{150} = \\frac{1}{2}
+   */
+  const learnerNumeric = decimalFromAnswer(learnerValue);
+  const correctNumeric = decimalFromAnswer(correctValue);
+
+  if (learnerNumeric && correctNumeric) {
+    try {
+      if (learnerNumeric.equals(correctNumeric)) {
+        return true;
+      }
+    } catch {}
+  }
 
   /* Coordinate notation is presentation-flexible but value-strict. */
   if (coordinateAnswersEquivalent(learnerValue, correctValue)) {
@@ -5333,6 +5421,17 @@ function compareTypedAnswerValue(
     ? areExpressionsEquivalent(learnerValue, correctValue)
     : false;
 }
+
+
+/*
+ * Development sanity checks for typed-answer equivalence.
+ * These do not run automatically in production; they document the expected
+ * authoritative server-marking behaviour.
+ *
+ * compareTypedAnswerValue("75/150", "answer_1=1/2|answer_2=0.5|answer_3=0,5", "exact", 0) === true
+ * compareTypedAnswerValue("\\frac{75}{150}", "1/2", "exact", 0) === true
+ * compareTypedAnswerValue("-2", "m=-2", "exact", 0) === true
+ */
 
 app.post("/api/results", authRequired, async (req, res) => {
   try {
