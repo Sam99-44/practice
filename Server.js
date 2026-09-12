@@ -5300,6 +5300,39 @@ function compareDecimalWithTolerance(
   }
 }
 
+function numericCandidatesFromStoredAnswer(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return [];
+
+  const candidates = [];
+  const push = item => {
+    const text = String(item ?? "").trim();
+    if (!text) return;
+    const numeric = decimalFromAnswer(text);
+    if (!numeric) return;
+    if (!candidates.some(existing => {
+      try { return existing.equals(numeric); } catch { return false; }
+    })) {
+      candidates.push(numeric);
+    }
+  };
+
+  raw.split("|").forEach(part => {
+    const piece = String(part || "").trim();
+    if (!piece) return;
+    const equalsParts = piece.split("=").map(x => x.trim()).filter(Boolean);
+    if (equalsParts.length > 1) equalsParts.slice(1).forEach(push);
+    else push(piece);
+  });
+
+  if (!raw.includes("|") && raw.includes("=")) {
+    raw.split("=").slice(1).forEach(push);
+  }
+
+  push(raw);
+  return candidates;
+}
+
 function compareTypedAnswerValue(
   userAnswer,
   correctAnswer,
@@ -5307,6 +5340,21 @@ function compareTypedAnswerValue(
   tolerance,
   unitCandidates = []
 ) {
+  /*
+   * Universal numeric equivalence across all supported storage shapes.
+   * A learner fraction/decimal is compared against every safe numeric value
+   * present in the stored answer before text/expression handling begins.
+   */
+  const learnerNumericCandidate = decimalFromAnswer(userAnswer);
+  if (learnerNumericCandidate) {
+    const correctNumericCandidates = numericCandidatesFromStoredAnswer(correctAnswer);
+    if (correctNumericCandidates.some(candidate => {
+      try { return learnerNumericCandidate.equals(candidate); } catch { return false; }
+    })) {
+      return true;
+    }
+  }
+
   /*
    * If one stored correct answer contains keyed alternatives such as
    * answer_1=1/2|answer_2=0.5|answer_3=0,5, accept the learner when ANY
