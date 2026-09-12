@@ -32,7 +32,17 @@ const UserSchema = new mongoose.Schema(
 
     passwordHash: {
       type: String,
-      required: true,
+      /*
+       * Normal email/password accounts still require a password.
+       * A verified OAuth account (Google) is allowed to exist without one.
+       */
+      required: function () {
+        return !(
+          this.emailVerified === true &&
+          !String(this.passwordHash || "").trim()
+        );
+      },
+      default: "",
     },
 
     role: {
@@ -177,7 +187,13 @@ const UserSchema = new mongoose.Schema(
 
     cellphone: {
       type: String,
-      required: true,
+      /*
+       * Google learners are created before the onboarding questions run,
+       * so cellphone can initially be empty. Normal registration is still
+       * enforced by the pre-validation rules below.
+       */
+      required: false,
+      default: "",
       trim: true,
     },
 
@@ -335,6 +351,15 @@ UserSchema.virtual("trialDaysLeft").get(function () {
 
 UserSchema.pre("validate", function (next) {
   try {
+    /*
+     * Google OAuth creates an email-verified user before the learner has
+     * answered the onboarding questions. Such an account has no password.
+     * Allow that temporary incomplete state so the profile wizard can run.
+     */
+    const isPasswordlessVerifiedAccount =
+      this.emailVerified === true &&
+      !String(this.passwordHash || "").trim();
+
     if (this.email) {
       this.email = String(this.email)
         .trim()
@@ -422,12 +447,12 @@ UserSchema.pre("validate", function (next) {
     }
 
     if (!this.cellphone) {
-      return next(
-        new Error("Cellphone number is required.")
-      );
-    }
-
-    if (!saPhoneRegex.test(this.cellphone)) {
+      if (!isPasswordlessVerifiedAccount) {
+        return next(
+          new Error("Cellphone number is required.")
+        );
+      }
+    } else if (!saPhoneRegex.test(this.cellphone)) {
       return next(
         new Error(
           "Please enter a valid South African cellphone number. Example: +27821234567"
@@ -454,24 +479,32 @@ UserSchema.pre("validate", function (next) {
       this.accountType === "guest";
 
     if (isLearner || isPractice) {
-      if (
-        this.grade === null ||
-        this.grade === undefined ||
-        this.grade === ""
-      ) {
-        return next(
-          new Error(
-            "Grade is required for learner and practice accounts."
-          )
-        );
-      }
+      if (!isPasswordlessVerifiedAccount) {
+        if (
+          this.grade === null ||
+          this.grade === undefined ||
+          this.grade === ""
+        ) {
+          return next(
+            new Error(
+              "Grade is required for learner and practice accounts."
+            )
+          );
+        }
 
-      if (!this.curriculum) {
-        return next(
-          new Error(
-            "Curriculum is required for learner and practice accounts."
-          )
-        );
+        if (!this.curriculum) {
+          return next(
+            new Error(
+              "Curriculum is required for learner and practice accounts."
+            )
+          );
+        }
+      } else {
+        /*
+         * A Google learner may be incomplete only while onboarding.
+         * If values are already supplied, normal schema min/max/enum rules
+         * still validate them automatically.
+         */
       }
     }
 
