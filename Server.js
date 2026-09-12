@@ -132,6 +132,43 @@ passport.use(
 
         let user = await User.findOne({ email });
 
+        /*
+         * Existing Google learners created before onboardingCompleted was
+         * introduced must still be sent through setup if their learner
+         * profile is incomplete.
+         */
+        if (user) {
+          const role = String(user.role || "").toLowerCase();
+          const accountType = String(user.accountType || "").toLowerCase();
+          const learnerLike =
+            role === "learner" ||
+            accountType === "learner" ||
+            accountType === "practice";
+
+          const validGrade =
+            Number.isInteger(Number(user.grade)) &&
+            Number(user.grade) >= 8 &&
+            Number(user.grade) <= 12;
+
+          const validCurriculum =
+            ["CAPS", "IEB"].includes(
+              String(user.curriculum || "").trim().toUpperCase()
+            );
+
+          const validCellphone =
+            /^\+27[6-8][0-9]{8}$/.test(
+              String(user.cellphone || "").replace(/\s+/g, "")
+            );
+
+          if (
+            learnerLike &&
+            (!validGrade || !validCurriculum || !validCellphone)
+          ) {
+            user.onboardingCompleted = false;
+            await user.save();
+          }
+        }
+
         if (!user) {
           const learnerNumber = await generateUniqueLearnerNumber("learner");
           const googleUsername = await generateUniqueGoogleUsername(
@@ -1010,7 +1047,24 @@ function toPublicProfile(user) {
     curriculum: user.curriculum || "",
     accountType: user.accountType || "",
     role: user.role || "",
-    onboardingCompleted: user.onboardingCompleted === true,
+    onboardingCompleted:
+      user.onboardingCompleted === true &&
+      (
+        !["learner", "practice"].includes(
+          String(user.accountType || "").toLowerCase()
+        ) ||
+        (
+          Number.isInteger(Number(user.grade)) &&
+          Number(user.grade) >= 8 &&
+          Number(user.grade) <= 12 &&
+          ["CAPS", "IEB"].includes(
+            String(user.curriculum || "").trim().toUpperCase()
+          ) &&
+          /^\+27[6-8][0-9]{8}$/.test(
+            String(user.cellphone || "").replace(/\s+/g, "")
+          )
+        )
+      ),
     learnerNumber: user.learnerNumber || user.studentNumber || "",
     studentNumber: user.studentNumber || "",
     profileHeadline: user.profileHeadline || "",
@@ -2284,7 +2338,24 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
       grade: user.grade,
       curriculum: user.curriculum || "",
       accountType: user.accountType,
-      onboardingCompleted: user.onboardingCompleted === true,
+      onboardingCompleted:
+        user.onboardingCompleted === true &&
+        (
+          !["learner", "practice"].includes(
+            String(user.accountType || "").toLowerCase()
+          ) ||
+          (
+            Number.isInteger(Number(user.grade)) &&
+            Number(user.grade) >= 8 &&
+            Number(user.grade) <= 12 &&
+            ["CAPS", "IEB"].includes(
+              String(user.curriculum || "").trim().toUpperCase()
+            ) &&
+            /^\+27[6-8][0-9]{8}$/.test(
+              String(user.cellphone || "").replace(/\s+/g, "")
+            )
+          )
+        ),
       learnerNumber: user.learnerNumber || user.studentNumber || "",
       studentNumber: user.studentNumber,
       profileHeadline: user.profileHeadline || "",
