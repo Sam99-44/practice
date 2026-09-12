@@ -166,6 +166,7 @@ passport.use(
             emailVerified: true,
             role: "learner",
             accountType: "learner",
+            onboardingCompleted: false,
             learnerNumber,
             studentNumber: null,
             profilePhoto: profile.photos?.[0]?.value || "",
@@ -1009,6 +1010,7 @@ function toPublicProfile(user) {
     curriculum: user.curriculum || "",
     accountType: user.accountType || "",
     role: user.role || "",
+    onboardingCompleted: user.onboardingCompleted === true,
     learnerNumber: user.learnerNumber || user.studentNumber || "",
     studentNumber: user.studentNumber || "",
     profileHeadline: user.profileHeadline || "",
@@ -2253,7 +2255,7 @@ app.get(
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select(
-      "firstName surname fullName username email role grade curriculum accountType studentNumber learnerNumber profileHeadline profilePhoto province district gender cellphone guardianCellphone schoolName currentMarkRange guestReasons otherReason guestMessage emailVerified phoneVerified subscriptionStatus paidUntil lastPaymentId premium premiumExpiresAt trialActive trialStartDate trialEndDate trialExpiredAt accessStatus trialDaysLeft"
+      "firstName surname fullName username email role grade curriculum accountType onboardingCompleted studentNumber learnerNumber profileHeadline profilePhoto province district gender cellphone guardianCellphone schoolName currentMarkRange guestReasons otherReason guestMessage emailVerified phoneVerified subscriptionStatus paidUntil lastPaymentId premium premiumExpiresAt trialActive trialStartDate trialEndDate trialExpiredAt accessStatus trialDaysLeft"
     );
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -2282,6 +2284,7 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
       grade: user.grade,
       curriculum: user.curriculum || "",
       accountType: user.accountType,
+      onboardingCompleted: user.onboardingCompleted === true,
       learnerNumber: user.learnerNumber || user.studentNumber || "",
       studentNumber: user.studentNumber,
       profileHeadline: user.profileHeadline || "",
@@ -2533,6 +2536,7 @@ app.post("/api/register", registerLimiter, async (req, res) => {
 
       // Save exactly the account type selected on register.html.
       accountType: cleanAccountType,
+      onboardingCompleted: true,
 
       learnerNumber,
       studentNumber: null,
@@ -3263,6 +3267,12 @@ app.patch("/api/profile/me", authRequired, async (req, res) => {
         });
       }
     }
+
+    /*
+     * Reaching this point means all account-type-specific onboarding
+     * validation has passed. Mark the guided setup as completed only now.
+     */
+    user.onboardingCompleted = true;
 
     await user.save();
 
