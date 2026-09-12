@@ -12170,6 +12170,97 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       .replace(/−/g, "-");
   }
 
+  /*
+   * Flexible coordinate marking
+   * ---------------------------
+   * These all represent the same point:
+   *   T(2; -2)
+   *   (2; -2)
+   *   2; -2
+   *   T(2, -2)
+   *   (2, -2)
+   *   2 : -2
+   *
+   * The point label and outer brackets are presentation only.
+   */
+  function parseFlexibleCoordinateAnswer(value) {
+    let raw = String(value ?? "").trim();
+    if (!raw) return null;
+
+    raw = raw
+      .replace(/\u2212/g, "-")
+      .replace(/[–—]/g, "-")
+      .replace(/\\left|\\right/g, "")
+      .replace(/\\,/g, "")
+      .trim();
+
+    /*
+     * Remove an optional point name before the coordinate pair:
+     * T(...), P(...), A(...), R(...), etc.
+     */
+    raw = raw.replace(
+      /^\s*[A-Za-z][A-Za-z0-9_]*\s*(?=[(\[\{]|[-+0-9.])/,
+      ""
+    ).trim();
+
+    raw = raw
+      .replace(/^[\s(\[\{]+/, "")
+      .replace(/[\s)\]\}]+$/, "")
+      .trim();
+
+    let separator = null;
+
+    if (raw.includes(";")) {
+      separator = ";";
+    } else if (raw.includes(":")) {
+      separator = ":";
+    } else {
+      /*
+       * Use a comma as coordinate separator only when there is exactly
+       * one comma in the whole pair. Decimal-comma values continue to
+       * be handled by the normal numeric marker.
+       */
+      const commaCount = (raw.match(/,/g) || []).length;
+      if (commaCount === 1) separator = ",";
+    }
+
+    if (!separator) return null;
+
+    const parts = raw
+      .split(separator)
+      .map(part => part.trim())
+      .filter(Boolean);
+
+    if (parts.length !== 2) return null;
+
+    const x = evaluateNumericMathAnswer(parts[0]);
+    const y = evaluateNumericMathAnswer(parts[1]);
+
+    if (x === null || y === null) return null;
+
+    return { x, y };
+  }
+
+  function flexibleCoordinateAnswersEquivalent(left, right) {
+    const learner = parseFlexibleCoordinateAnswer(left);
+    const correct = parseFlexibleCoordinateAnswer(right);
+
+    if (!learner || !correct) return false;
+
+    return (
+      numericValuesAreInAcceptableRange(
+        learner.x,
+        correct.x,
+        String(correct.x)
+      ) &&
+      numericValuesAreInAcceptableRange(
+        learner.y,
+        correct.y,
+        String(correct.y)
+      )
+    );
+  }
+
   function compareTextAnswer(
     userAns,
     correctAns,
@@ -12239,6 +12330,14 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     const normalizedMode = String(mode || "exact")
       .toLowerCase()
       .trim();
+
+    /*
+     * Coordinate answers are value-based, not format-based.
+     * Accept optional point labels and normal coordinate separators.
+     */
+    if (flexibleCoordinateAnswersEquivalent(uaRaw, caRaw)) {
+      return true;
+    }
 
     const uNum = evaluateNumericMathAnswer(uaRaw);
     const cNum = evaluateNumericMathAnswer(caRaw);
