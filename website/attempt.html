@@ -10011,11 +10011,12 @@ function inlineQuizLoadingHtml(){
 
     if (parts.length < 2) return [];
 
-    const values = [];
+    const keyedValues = [];
     let allKeyedAnswers = true;
 
     for (const part of parts){
       const equalsAt = part.indexOf("=");
+
       if (equalsAt <= 0){
         allKeyedAnswers = false;
         break;
@@ -10029,10 +10030,22 @@ function inlineQuizLoadingHtml(){
         break;
       }
 
-      values.push(right);
+      keyedValues.push(right);
     }
 
-    return allKeyedAnswers ? values : [];
+    if (allKeyedAnswers && keyedValues.length > 1) {
+      return keyedValues;
+    }
+
+    /*
+     * Also support plain OR alternatives for a single typed answer:
+     *   3/4 | 0.75 | 0,75
+     */
+    if (parts.every(part => !part.includes("="))) {
+      return parts;
+    }
+
+    return [];
   }
 
   function extractStoredTypedAnswerValue(value, expectedKey = ""){
@@ -10113,6 +10126,9 @@ function inlineQuizLoadingHtml(){
       });
 
     if (configured.length){
+      const combinedAlternatives =
+        extractStoredTypedAnswerAlternatives(combinedCorrectText);
+
       return configured
         .map((field, index) => {
           const key = normalizeTypedFieldKey(
@@ -10127,6 +10143,16 @@ function inlineQuizLoadingHtml(){
             key
           );
 
+          /*
+           * One visible answer box + several stored answer_n values means
+           * several accepted representations of ONE mathematical answer.
+           */
+          const singleFieldAlternativeAnswer =
+            configured.length === 1 &&
+            combinedAlternatives.length > 1
+              ? combinedCorrectText
+              : "";
+
           return {
             key,
             prefix: String(
@@ -10140,6 +10166,7 @@ function inlineQuizLoadingHtml(){
               ""
             ).trim(),
             correctAnswer:
+              singleFieldAlternativeAnswer ||
               directCorrectAnswer ||
               correctValueMap.get(key) ||
               ""
@@ -12364,10 +12391,18 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
     if (uNum !== null && cNum !== null) {
       /*
-       * Exact mathematical equality first:
-       * 75/150 = 1/2 = 0.5 = 0,5
+       * Universal fraction/decimal equivalence.
+       *
+       * Examples:
+       *   75/150 = 1/2 = 0.5 = 0,5
+       *   6/8 = 3/4 = 0.75 = 0,75
+       *   2/4 = 1/2 = 0.5
+       *
+       * The learner never has to use the same numerator/denominator as
+       * the stored answer. Only the mathematical value matters.
        */
-      if (Math.abs(uNum - cNum) <= 1e-12) {
+      const scale = Math.max(1, Math.abs(uNum), Math.abs(cNum));
+      if (Math.abs(uNum - cNum) <= (1e-12 * scale)) {
         return true;
       }
 
