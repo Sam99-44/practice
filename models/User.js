@@ -65,6 +65,16 @@ const UserSchema = new mongoose.Schema(
       default: "not_required",
     },
 
+    /*
+     * Normal registration is considered complete immediately.
+     * New Google/OAuth users are explicitly created with this set to false
+     * and must finish the guided profile questions before entering the hub.
+     */
+    onboardingCompleted: {
+      type: Boolean,
+      default: true,
+    },
+
     firstName: {
       type: String,
       default: "",
