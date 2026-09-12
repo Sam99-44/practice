@@ -4447,6 +4447,9 @@ function normalizeCorrectTypedFields(question) {
       }
     });
 
+  const keyedAlternatives =
+    extractKeyedAcceptedAlternatives(combinedCorrectText);
+
   return configuredFields
     .map((field, index) => {
       const key = normalizeTypedFieldKey(
@@ -4467,6 +4470,17 @@ function normalizeCorrectTypedFields(question) {
         directCorrectAnswer = "";
       }
 
+      /*
+       * If the learner sees one answer box and the stored answer contains
+       * answer_1=...|answer_2=...|answer_3=..., those are OR alternatives
+       * for one mathematical value, not three required fields.
+       */
+      const singleFieldAlternatives =
+        configuredFields.length === 1 &&
+        keyedAlternatives.length > 1
+          ? combinedCorrectText
+          : "";
+
       return {
         key,
         prefix: String(
@@ -4480,6 +4494,7 @@ function normalizeCorrectTypedFields(question) {
           ""
         ).trim(),
         correctAnswer:
+          singleFieldAlternatives ||
           directCorrectAnswer ||
           keyedCorrectValues.get(key) ||
           positionalCorrectValues[index] ||
@@ -5338,6 +5353,11 @@ function compareTypedAnswerValue(
 
   if (learnerNumeric && correctNumeric) {
     try {
+      /*
+       * Universal mathematical equivalence for fractions/decimals.
+       * Decimal.js compares the evaluated values, so simplification is
+       * irrelevant: 75/150, 1/2, 0.5 and 0,5 are the same answer.
+       */
       if (learnerNumeric.equals(correctNumeric)) {
         return true;
       }
