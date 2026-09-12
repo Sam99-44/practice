@@ -90,6 +90,31 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const app = express();
 app.use(passport.initialize());
 
+async function generateUniqueGoogleUsername(email, displayName = "") {
+  const emailBase = String(email || "")
+    .split("@")[0]
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, ".")
+    .replace(/^\.+|\.+$/g, "");
+
+  const nameBase = String(displayName || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ".")
+    .replace(/^\.+|\.+$/g, "");
+
+  const base = (emailBase || nameBase || "learner").slice(0, 60);
+
+  let candidate = base;
+  let counter = 1;
+
+  while (await User.exists({ username: candidate })) {
+    counter += 1;
+    candidate = `${base}.${counter}`;
+  }
+
+  return candidate;
+}
+
 passport.use(
   new GoogleStrategy(
     {
@@ -109,10 +134,34 @@ passport.use(
 
         if (!user) {
           const learnerNumber = await generateUniqueLearnerNumber("learner");
+          const googleUsername = await generateUniqueGoogleUsername(
+            email,
+            profile.displayName || ""
+          );
 
+          const givenName =
+            profile.name?.givenName ||
+            String(profile.displayName || "").trim().split(/\s+/)[0] ||
+            "";
+
+          const familyName =
+            profile.name?.familyName ||
+            String(profile.displayName || "")
+              .trim()
+              .split(/\s+/)
+              .slice(1)
+              .join(" ");
+
+          /*
+           * Google creates a temporary, verified learner account first.
+           * Grade, curriculum and cellphone are collected immediately after
+           * sign-in by register.html?googleSetup=1.
+           */
           user = await User.create({
+            firstName: givenName,
+            surname: familyName,
             fullName: profile.displayName || email.split("@")[0],
-            username: email.split("@")[0],
+            username: googleUsername,
             email,
             emailVerified: true,
             role: "learner",
@@ -120,6 +169,9 @@ passport.use(
             learnerNumber,
             studentNumber: null,
             profilePhoto: profile.photos?.[0]?.value || "",
+            cellphone: "",
+            grade: null,
+            curriculum: "",
             trialActive: true,
             trialStartDate: new Date(),
             trialEndDate: addDays(new Date(), 7),
@@ -139,6 +191,7 @@ passport.use(
 
         return done(null, user);
       } catch (err) {
+        console.error("Google OAuth user creation error:", err);
         return done(err, null);
       }
     }
@@ -947,15 +1000,31 @@ function normalizeQuestionForSave(q) {
 function toPublicProfile(user) {
   return {
     _id: user._id,
+    firstName: user.firstName || "",
+    surname: user.surname || "",
     fullName: user.fullName || "",
     username: user.username || "",
     email: user.email || "",
     grade: user.grade ?? "",
+    curriculum: user.curriculum || "",
     accountType: user.accountType || "",
     role: user.role || "",
     learnerNumber: user.learnerNumber || user.studentNumber || "",
+    studentNumber: user.studentNumber || "",
     profileHeadline: user.profileHeadline || "",
     profilePhoto: user.profilePhoto || "",
+    province: user.province || "",
+    district: user.district || "",
+    gender: user.gender || "",
+    cellphone: user.cellphone || "",
+    guardianCellphone: user.guardianCellphone || "",
+    schoolName: user.schoolName || "",
+    currentMarkRange: user.currentMarkRange || "",
+    guestReasons: Array.isArray(user.guestReasons) ? user.guestReasons : [],
+    otherReason: user.otherReason || "",
+    guestMessage: user.guestMessage || "",
+    emailVerified: !!user.emailVerified,
+    phoneVerified: !!user.phoneVerified,
     joinedYear: user.createdAt ? new Date(user.createdAt).getFullYear() : "",
   };
 }
@@ -2166,7 +2235,7 @@ app.get(
   "/api/auth/google/callback",
   passport.authenticate("google", {
     session: false,
-    failureRedirect: "https://practiceonline.co.za/login.html",
+    failureRedirect: "https://practiceonline.co.za/login.html?googleError=1",
   }),
   async (req, res) => {
     const token = jwt.sign(
@@ -2184,7 +2253,7 @@ app.get(
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select(
-      "fullName username email role grade accountType studentNumber province district gender cellphone guardianCellphone emailVerified subscriptionStatus paidUntil lastPaymentId premium premiumExpiresAt trialActive trialStartDate trialEndDate trialExpiredAt accessStatus trialDaysLeft"
+      "firstName surname fullName username email role grade curriculum accountType studentNumber learnerNumber profileHeadline profilePhoto province district gender cellphone guardianCellphone schoolName currentMarkRange guestReasons otherReason guestMessage emailVerified phoneVerified subscriptionStatus paidUntil lastPaymentId premium premiumExpiresAt trialActive trialStartDate trialEndDate trialExpiredAt accessStatus trialDaysLeft"
     );
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -2204,19 +2273,31 @@ app.get("/api/auth/me", authRequired, async (req, res) => {
 
     return res.json({
       _id: user._id,
+      firstName: user.firstName || "",
+      surname: user.surname || "",
       fullName: user.fullName || "",
       username: user.username,
       email: user.email,
       role: user.role,
       grade: user.grade,
+      curriculum: user.curriculum || "",
       accountType: user.accountType,
+      learnerNumber: user.learnerNumber || user.studentNumber || "",
       studentNumber: user.studentNumber,
+      profileHeadline: user.profileHeadline || "",
+      profilePhoto: user.profilePhoto || "",
       province: user.province || "",
       district: user.district || "",
       gender: user.gender || "",
       cellphone: user.cellphone || "",
       guardianCellphone: user.guardianCellphone || "",
+      schoolName: user.schoolName || "",
+      currentMarkRange: user.currentMarkRange || "",
+      guestReasons: Array.isArray(user.guestReasons) ? user.guestReasons : [],
+      otherReason: user.otherReason || "",
+      guestMessage: user.guestMessage || "",
       emailVerified: !!user.emailVerified,
+      phoneVerified: !!user.phoneVerified,
       subscriptionStatus: effectiveStatus,
       paidUntil: effectivePaidUntil,
       lastPaymentId: user.lastPaymentId || "",
@@ -2880,19 +2961,69 @@ app.get("/api/profile/me", authRequired, async (req, res) => {
 
 app.patch("/api/profile/me", authRequired, async (req, res) => {
   try {
-    const { fullName, username, email, grade, profileHeadline } = req.body;
+    const {
+      firstName,
+      surname,
+      fullName,
+      username,
+      email,
+      grade,
+      curriculum,
+      accountType,
+      profileHeadline,
+      province,
+      district,
+      gender,
+      cellphone,
+      guardianCellphone,
+      schoolName,
+      currentMarkRange,
+      guestReasons,
+      otherReason,
+      guestMessage,
+    } = req.body;
 
     const user = await User.findById(req.user.userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    /*
+     * Role is never changed by learner onboarding.
+     * Only supported account types may be selected.
+     */
+    if (accountType !== undefined) {
+      const normalizedType = String(accountType || "").trim().toLowerCase();
+
+      if (!["learner", "practice", "guest"].includes(normalizedType)) {
+        return res.status(400).json({ message: "Invalid account type." });
+      }
+
+      user.accountType = normalizedType;
+    }
+
+    if (typeof firstName === "string") {
+      user.firstName = cleanSpaces(firstName);
+    }
+
+    if (typeof surname === "string") {
+      user.surname = cleanSpaces(surname);
+    }
+
     if (typeof fullName === "string") {
       user.fullName = cleanSpaces(fullName);
+    } else if (
+      typeof firstName === "string" ||
+      typeof surname === "string"
+    ) {
+      user.fullName = cleanSpaces(
+        `${user.firstName || ""} ${user.surname || ""}`
+      );
     }
 
     if (typeof username === "string") {
       const newUsername = cleanSpaces(username);
+
       if (!newUsername) {
         return res.status(400).json({ message: "Username is required." });
       }
@@ -2903,7 +3034,7 @@ app.patch("/api/profile/me", authRequired, async (req, res) => {
       }).select("_id");
 
       if (existingUsername) {
-        return res.status(400).json({ message: "Username already in use." });
+        return res.status(400).json({ message: "Username is already in use." });
       }
 
       user.username = newUsername;
@@ -2913,7 +3044,9 @@ app.patch("/api/profile/me", authRequired, async (req, res) => {
       const newEmail = String(email).trim().toLowerCase();
 
       if (!isValidEmail(newEmail)) {
-        return res.status(400).json({ message: "Please enter a valid email address." });
+        return res.status(400).json({
+          message: "Please enter a valid email address.",
+        });
       }
 
       const existingEmail = await User.findOne({
@@ -2922,7 +3055,7 @@ app.patch("/api/profile/me", authRequired, async (req, res) => {
       }).select("_id");
 
       if (existingEmail) {
-        return res.status(400).json({ message: "Email already in use." });
+        return res.status(400).json({ message: "Email is already in use." });
       }
 
       user.email = newEmail;
@@ -2932,12 +3065,203 @@ app.patch("/api/profile/me", authRequired, async (req, res) => {
       user.profileHeadline = cleanSpaces(profileHeadline);
     }
 
-    if (grade !== undefined && (user.accountType === "learner" ||user.accountType === "practice")){
-      const parsedGrade = Number(grade);
-      if (!Number.isInteger(parsedGrade) || parsedGrade < 8 || parsedGrade > 12) {
-        return res.status(400).json({ message: "Grade must be between 8 and 12." });
+    if (typeof province === "string") {
+      user.province = cleanSpaces(province);
+    }
+
+    if (typeof district === "string") {
+      user.district = cleanSpaces(district);
+    }
+
+    if (typeof gender === "string") {
+      const normalizedGender = String(gender || "").trim().toLowerCase();
+      const validGenders = [
+        "",
+        "female",
+        "male",
+        "prefer_not_to_say",
+        "other",
+      ];
+
+      if (!validGenders.includes(normalizedGender)) {
+        return res.status(400).json({ message: "Invalid gender selection." });
       }
+
+      user.gender = normalizedGender;
+    }
+
+    if (typeof cellphone === "string") {
+      const cleanCellphone = String(cellphone || "")
+        .replace(/\s+/g, "")
+        .trim();
+
+      if (
+        cleanCellphone &&
+        !/^\+27[6-8][0-9]{8}$/.test(cleanCellphone)
+      ) {
+        return res.status(400).json({
+          message:
+            "Please enter a valid South African cellphone number, e.g. +27821234567.",
+        });
+      }
+
+      user.cellphone = cleanCellphone;
+    }
+
+    if (typeof guardianCellphone === "string") {
+      const cleanGuardian = String(guardianCellphone || "")
+        .replace(/\s+/g, "")
+        .trim();
+
+      if (
+        cleanGuardian &&
+        !/^\+27[6-8][0-9]{8}$/.test(cleanGuardian)
+      ) {
+        return res.status(400).json({
+          message:
+            "Please enter a valid guardian cellphone number, e.g. +27821234567.",
+        });
+      }
+
+      user.guardianCellphone = cleanGuardian;
+    }
+
+    if (typeof schoolName === "string") {
+      user.schoolName = cleanSpaces(schoolName);
+    }
+
+    if (typeof currentMarkRange === "string") {
+      const markRange = String(currentMarkRange || "").trim();
+      const validMarkRanges = [
+        "",
+        "0-29",
+        "30-39",
+        "40-49",
+        "50-59",
+        "60-69",
+        "70-79",
+        "80-100",
+      ];
+
+      if (!validMarkRanges.includes(markRange)) {
+        return res.status(400).json({ message: "Invalid current mark range." });
+      }
+
+      user.currentMarkRange = markRange;
+    }
+
+    if (Array.isArray(guestReasons)) {
+      user.guestReasons = guestReasons
+        .map((item) => String(item || "").trim())
+        .filter(Boolean);
+    }
+
+    if (typeof otherReason === "string") {
+      user.otherReason = cleanSpaces(otherReason);
+    }
+
+    if (typeof guestMessage === "string") {
+      user.guestMessage = cleanSpaces(guestMessage);
+    }
+
+    const learnerLike =
+      user.accountType === "learner" ||
+      user.accountType === "practice";
+
+    if (learnerLike) {
+      if (grade === undefined || grade === null || grade === "") {
+        return res.status(400).json({
+          message: "Please select your grade.",
+        });
+      }
+
+      const parsedGrade = Number(grade);
+
+      if (
+        !Number.isInteger(parsedGrade) ||
+        parsedGrade < 8 ||
+        parsedGrade > 12
+      ) {
+        return res.status(400).json({
+          message: "Grade must be between 8 and 12.",
+        });
+      }
+
       user.grade = parsedGrade;
+
+      const normalizedCurriculum = String(curriculum || "")
+        .trim()
+        .toUpperCase();
+
+      if (!["CAPS", "IEB"].includes(normalizedCurriculum)) {
+        return res.status(400).json({
+          message: "Please select your curriculum: CAPS or IEB.",
+        });
+      }
+
+      user.curriculum = normalizedCurriculum;
+
+      if (!String(user.cellphone || "").trim()) {
+        return res.status(400).json({
+          message: "Please enter your cellphone number.",
+        });
+      }
+
+      user.guestReasons = [];
+      user.otherReason = "";
+      user.guestMessage = "";
+
+      if (user.accountType === "practice") {
+        user.guardianCellphone = "";
+        user.schoolName = "";
+        user.currentMarkRange = "";
+        user.enrollmentStatus = "not_required";
+      } else if (
+        !user.enrollmentStatus ||
+        user.enrollmentStatus === "not_required"
+      ) {
+        user.enrollmentStatus = "pending";
+      }
+    }
+
+    if (user.accountType === "guest") {
+      user.grade = null;
+      user.curriculum = "";
+      user.gender = "";
+      user.guardianCellphone = "";
+      user.schoolName = "";
+      user.currentMarkRange = "";
+      user.enrollmentStatus = "not_required";
+
+      if (!String(user.province || "").trim()) {
+        return res.status(400).json({
+          message: "Province is required for guest accounts.",
+        });
+      }
+
+      if (!String(user.district || "").trim()) {
+        return res.status(400).json({
+          message: "District is required for guest accounts.",
+        });
+      }
+
+      if (
+        !Array.isArray(user.guestReasons) ||
+        user.guestReasons.length === 0
+      ) {
+        return res.status(400).json({
+          message: "Please select at least one reason for visiting.",
+        });
+      }
+
+      if (
+        user.guestReasons.includes("other") &&
+        !String(user.otherReason || "").trim()
+      ) {
+        return res.status(400).json({
+          message: "Please specify your reason for visiting.",
+        });
+      }
     }
 
     await user.save();
@@ -2947,8 +3271,18 @@ app.patch("/api/profile/me", authRequired, async (req, res) => {
       user: toPublicProfile(user),
     });
   } catch (error) {
-    console.error("PATCH /api/profile/me error:", error.message);
-    return res.status(500).json({ message: "Failed to update profile" });
+    console.error("PATCH /api/profile/me error:", error);
+
+    if (error?.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0] || "value";
+      return res.status(400).json({
+        message: `${field} is already in use.`,
+      });
+    }
+
+    return res.status(500).json({
+      message: error?.message || "Failed to update profile",
+    });
   }
 });
 
