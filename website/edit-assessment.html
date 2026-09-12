@@ -2675,21 +2675,51 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
     function synchroniseSavedAssessment(
       action,
       savedQuiz,
-      extra = {}
+      extra = {},
+      submittedPayload = null
     ){
-      savedQuiz = savedQuiz?.quiz || savedQuiz?.assessment || savedQuiz?.data || savedQuiz;
-      if (!savedQuiz) return;
+      const serverQuiz =
+        savedQuiz?.quiz ||
+        savedQuiz?.assessment ||
+        savedQuiz?.data ||
+        savedQuiz ||
+        {};
 
-      updateQuizInMemory(savedQuiz);
+      /*
+       * The exact editor payload is authoritative for assessment content.
+       * A PUT response may be partial, so never let an old questions array
+       * restore a previous diagram/image after it has been changed.
+       */
+      const authoritativeQuiz = {
+        ...(currentQuiz || {}),
+        ...(submittedPayload || {}),
+        ...(serverQuiz || {})
+      };
 
-      const id = safeQuizId(savedQuiz);
+      if (Array.isArray(submittedPayload?.questions)) {
+        authoritativeQuiz.questions =
+          submittedPayload.questions.map(question => ({ ...question }));
+      }
+
+      if (!safeQuizId(authoritativeQuiz) && safeQuizId(currentQuiz)) {
+        authoritativeQuiz._id = safeQuizId(currentQuiz);
+      }
+
+      if (!authoritativeQuiz.assessmentCode && currentQuiz?.assessmentCode) {
+        authoritativeQuiz.assessmentCode = currentQuiz.assessmentCode;
+      }
+
+      authoritativeQuiz.updatedAt =
+        serverQuiz?.updatedAt ||
+        submittedPayload?.updatedAt ||
+        new Date().toISOString();
+
+      updateQuizInMemory(authoritativeQuiz);
+
+      const id = safeQuizId(authoritativeQuiz);
 
       if (id) {
-        currentQuiz = {
-          ...(currentQuiz || {}),
-          ...savedQuiz
-        };
-
+        currentQuiz = authoritativeQuiz;
         assessmentSelectEl.value = id;
       }
 
@@ -2700,11 +2730,22 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
         assessmentSelectEl.value = id;
       }
 
+      /*
+       * Broadcast the complete new assessment immediately so learner pages
+       * and other tabs receive the new diagram without waiting for cache expiry.
+       */
       broadcastAssessmentUpdate(
         action,
-        currentQuiz,
-        extra
+        authoritativeQuiz,
+        {
+          ...extra,
+          completeReplacement: true,
+          questionsAuthoritative: true,
+          diagramChangesIncluded: true
+        }
       );
+
+      return authoritativeQuiz;
     }
 
     /*
@@ -2808,7 +2849,25 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
       const base = { type };
       if (type === "group") return { ...base, number:simpleValue(card.dataset.manualNumber || card.querySelector(".cardLabel")?.textContent) };
       if (type === "section") return { ...base, number:simpleValue(card.querySelector(".cardLabel")?.textContent), text:simpleValue(card.querySelector(".sectionText")?.value) };
-      if (type === "note") return { ...base, text:simpleValue(card.querySelector(".noteText")?.value) };
+      if (type === "note") {
+        const noteRole = simpleValue(
+          card.querySelector(".noteRole")?.value || "information"
+        );
+
+        return {
+          ...base,
+          text: simpleValue(card.querySelector(".noteText")?.value),
+          noteRole,
+          imageUrl:
+            noteRole === "information"
+              ? simpleValue(
+                  card.querySelector(".noteImage")?.value ||
+                  card.dataset.imageUrl ||
+                  ""
+                )
+              : ""
+        };
+      }
       const common = {
         ...base,
         number:simpleValue(card.querySelector(".cardLabel")?.textContent),
@@ -2884,7 +2943,18 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
       let scorable=0;
       cards.forEach((card,index)=>{
         const state=captureCardState(card); const label=cardLabelFor(state,index);
-        if (state.type === "note" && !state.text) warnings.push(`${label} is empty. Commit is still allowed.`);
+        if (state.type === "note" && !state.text) {
+          warnings.push(`${label} is empty. Commit is still allowed.`);
+        }
+
+        if (
+          state.type === "note" &&
+          state.imageUrl &&
+          !/^https?:\/\//i.test(state.imageUrl)
+        ) {
+          warnings.push(`${label} has a diagram/image URL that may be invalid.`);
+        }
+
         if (state.type === "section" && !state.text) warnings.push(`${label} has an empty stem. Commit is still allowed.`);
         if (["mcq","text"].includes(state.type)) {
           scorable += 1;
@@ -6533,7 +6603,13 @@ function escapeHtml(str){
               <option value="information" selected>Question Information</option>
               <option value="subquestion">Subquestion Heading</option>
             </select></div>
-            <div class="noteImageWrap"><label>Diagram / Image URL</label><input class="noteImage" placeholder="https://..." /></div>
+            <div class="noteImageWrap">
+              <label>Diagram / Image URL</label>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;">
+                <input class="noteImage" placeholder="https://..." />
+                <button type="button" class="smallbtn clearDiagramBtn">Remove Diagram</button>
+              </div>
+            </div>
           </div>
           <label>Text (supports math)</label>
           <textarea class="noteText" rows="3"></textarea>
@@ -6568,8 +6644,11 @@ function escapeHtml(str){
 
           <div class="primaryFields">
             <div class="fieldImage">
-              <label>Image URL (optional)</label>
-              <input class="qImage" />
+              <label>Diagram / Image URL (optional)</label>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;">
+                <input class="qImage" />
+                <button type="button" class="smallbtn clearDiagramBtn">Remove Diagram</button>
+              </div>
             </div>
 
             <div class="fieldQuestion">
@@ -6699,8 +6778,11 @@ function escapeHtml(str){
             </div>
 
             <div class="fieldImage">
-              <label>Image URL (optional)</label>
-              <input class="qImage2" />
+              <label>Diagram / Image URL (optional)</label>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;">
+                <input class="qImage2" />
+                <button type="button" class="smallbtn clearDiagramBtn">Remove Diagram</button>
+              </div>
             </div>
           </div>
 
@@ -7488,10 +7570,37 @@ function escapeHtml(str){
         return;
       }
 
+      if (e.target.closest(".clearDiagramBtn")) {
+        const imageInput =
+          card.querySelector(".noteImage") ||
+          card.querySelector(".qImage") ||
+          card.querySelector(".qImage2");
+
+        if (imageInput) {
+          imageInput.value = "";
+          card.dataset.imageUrl = "";
+          imageInput.dispatchEvent(
+            new Event("input", { bubbles: true })
+          );
+          imageInput.dispatchEvent(
+            new Event("change", { bubbles: true })
+          );
+        }
+
+        scheduleLiveLearnerPreview({
+          renderCard: card,
+          delay: 0
+        });
+        setTimeout(updateChangeReview, 0);
+        setMsg("Diagram removed in the editor. Commit Changes to synchronize it with learners.", "ok");
+        return;
+      }
+
       if (e.target.classList.contains("removeBtn")) {
         card.remove();
         renumberCards();
         refreshFullLearnerPreview();
+        setTimeout(updateChangeReview, 0);
       }
     });
 
@@ -7550,6 +7659,25 @@ function escapeHtml(str){
         delay: 20
       });
       setTimeout(updateChangeReview, 0);
+
+      /*
+       * Diagram/image edits must never keep a stale loaded snapshot around.
+       * The actual learner broadcast still happens after Commit/Publish.
+       */
+      if (
+        event.target?.matches?.(".noteImage, .qImage, .qImage2") &&
+        currentQuiz?._id
+      ) {
+        try {
+          localStorage.removeItem(
+            `practiceonline:quizSnapshot:${currentQuiz._id}`
+          );
+          sessionStorage.setItem(
+            `practiceonline:pendingDiagramChange:${currentQuiz._id}`,
+            String(Date.now())
+          );
+        } catch {}
+      }
     });
 
     /*
@@ -9861,6 +9989,15 @@ function escapeHtml(str){
 
       try{
         const payload = await buildPayload("draft");
+
+        /*
+         * Send a complete replacement questions array. This includes current
+         * diagram/image URLs and removed/replaced diagrams.
+         */
+        payload.questions = Array.isArray(payload.questions)
+          ? payload.questions.map(question => ({ ...question }))
+          : [];
+
         payload.publishNow = false;
         payload.publishAt = null;
         payload.isFrozen = currentQuiz.isFrozen;
@@ -9886,7 +10023,8 @@ function escapeHtml(str){
             {
               publishMode: "draft",
               isPublished: Boolean(data?.isPublished)
-            }
+            },
+            payload
           );
 
           /*
@@ -9999,6 +10137,15 @@ function escapeHtml(str){
       try{
         const mode = publishModeEl.value === "draft" ? "now" : publishModeEl.value;
         const payload = await buildPayload(mode);
+
+        /*
+         * Publish exactly the diagram/image state currently visible in the
+         * editor rather than relying on a previous server snapshot.
+         */
+        payload.questions = Array.isArray(payload.questions)
+          ? payload.questions.map(question => ({ ...question }))
+          : [];
+
         payload.isFrozen = currentQuiz.isFrozen;
 
         saveBtn.disabled = true;
@@ -10029,7 +10176,8 @@ function escapeHtml(str){
               publishMode: mode,
               isPublished: Boolean(data?.isPublished),
               publishAt: data?.publishAt || payload.publishAt || null
-            }
+            },
+            payload
           );
 
           await loadAssessmentList();
