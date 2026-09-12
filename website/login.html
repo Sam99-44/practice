@@ -238,7 +238,50 @@
       border:1px solid var(--gold);
     }
 
-    #googleLoginBtn{display:none!important}
+    .loginDivider{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin:16px 0;
+      color:#64748b;
+      font-size:12px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+    }
+
+    .loginDivider::before,
+    .loginDivider::after{
+      content:"";
+      flex:1;
+      height:1px;
+      background:#e5e7eb;
+    }
+
+    #googleLoginBtn{
+      display:flex !important;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      margin-top:0;
+      background:#fff;
+      color:#111827;
+      border:1px solid #cfd6df;
+      font-weight:700;
+      box-shadow:none;
+    }
+
+    #googleLoginBtn:hover:not(:disabled){
+      background:#f8fafc;
+      border-color:#b8c2cf;
+    }
+
+    #googleLoginBtn img{
+      width:20px;
+      height:20px;
+      display:block;
+      flex:0 0 20px;
+    }
 
     .msg{
       min-height:18px;
@@ -330,18 +373,21 @@
 
 <button id="loginBtn" type="button">Login</button>
 
+<div class="loginDivider" aria-hidden="true">or</div>
+
 <button
   id="googleLoginBtn"
   type="button"
-  style="display:none;"
+  aria-label="Continue with Google"
 >
   <img
     src="https://www.svgrepo.com/show/475656/google-color.svg"
     width="20"
     height="20"
-    alt="Google"
+    alt=""
+    aria-hidden="true"
   >
-  Continue with Google
+  <span>Continue with Google</span>
 </button>
 
 <button id="resendBtn" class="ghostBtn" type="button">Resend Verification Email</button>
@@ -359,36 +405,139 @@
   const API = "https://api.practiceonline.co.za";
 
   const loginBtn = document.getElementById("loginBtn");
+  const googleLoginBtn = document.getElementById("googleLoginBtn");
   const resendBtn = document.getElementById("resendBtn");
   const msg = document.getElementById("msg");
   const emailEl = document.getElementById("email");
   const passwordEl = document.getElementById("password");
   const params = new URLSearchParams(window.location.search);
   const googleToken = params.get("googleToken");
+  const nextFromUrl = params.get("next");
 
-if (googleToken) {
-  localStorage.setItem("token", googleToken);
+  function googleLearnerNeedsProfileSetup(user = {}) {
+    const role = String(user.role || "").trim().toLowerCase();
+    const accountType = String(user.accountType || "").trim().toLowerCase();
 
-  fetch(`${API}/api/auth/me`, {
-    headers: {
-      Authorization: `Bearer ${googleToken}`
+    if (role === "admin" || role === "editor" || role === "tester") {
+      return false;
     }
-  })
-  .then(r => r.json())
-  .then(user => {
-    localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("role", user.role || "");
-    window.location.href = getDefaultRedirect(user);
-  })
-  .catch(() => {
-    localStorage.removeItem("token");
-  });
-}
-document
-  .getElementById("googleLoginBtn")
-  .addEventListener("click", () => {
-    window.location.href =
-      "https://api.practiceonline.co.za/api/auth/google";
+
+    const learnerLike =
+      role === "learner" ||
+      accountType === "learner" ||
+      accountType === "practice" ||
+      !accountType;
+
+    if (!learnerLike) return false;
+
+    /*
+     * This is now the authoritative first-login rule.
+     * A new/incomplete Google learner MUST finish the guided setup.
+     */
+    return user.onboardingCompleted !== true;
+  }
+
+  function getGooglePostLoginDestination(user = {}) {
+    if (googleLearnerNeedsProfileSetup(user)) {
+      const setupUrl = new URL("register.html", window.location.href);
+      setupUrl.searchParams.set("googleSetup", "1");
+
+      if (nextFromUrl) {
+        setupUrl.searchParams.set("next", nextFromUrl);
+      }
+
+      return setupUrl.pathname + setupUrl.search;
+    }
+
+    return nextFromUrl
+      ? decodeURIComponent(nextFromUrl)
+      : getDefaultRedirect(user);
+  }
+
+  async function completeGoogleLogin(token) {
+    if (!token) return;
+
+    loginBtn.disabled = true;
+    googleLoginBtn.disabled = true;
+    resendBtn.disabled = true;
+    setMsg("Signing in with Google...");
+
+    try {
+      localStorage.setItem("token", token);
+
+      const res = await fetch(`${API}/api/auth/me`, {
+        method: "GET",
+        cache: "no-store",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const user = await safeJson(res);
+
+      if (!res.ok || !user || typeof user !== "object") {
+        throw new Error(user?.message || "Could not complete Google sign in.");
+      }
+
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("username", user.username || user.email || "");
+      localStorage.setItem("role", user.role || "");
+
+      /*
+       * Remove the OAuth token from the visible browser URL before
+       * navigating away so it is not left in browser history.
+       */
+      try {
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete("googleToken");
+        window.history.replaceState(
+          {},
+          document.title,
+          cleanUrl.pathname + cleanUrl.search + cleanUrl.hash
+        );
+      } catch {}
+
+      const destination = getGooglePostLoginDestination(user);
+
+      window.location.replace(destination);
+
+    } catch (error) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("username");
+      localStorage.removeItem("role");
+
+      loginBtn.disabled = false;
+      googleLoginBtn.disabled = false;
+      resendBtn.disabled = false;
+
+      setMsg(
+        error?.message || "Google sign in could not be completed. Please try again.",
+        "error"
+      );
+    }
+  }
+
+  if (googleToken) {
+    completeGoogleLogin(googleToken);
+  }
+
+  googleLoginBtn.addEventListener("click", () => {
+    googleLoginBtn.disabled = true;
+    loginBtn.disabled = true;
+    setMsg("Opening Google sign in...");
+
+    /*
+     * Preserve the requested destination if login.html was opened with
+     * ?next=..., while remaining compatible with the existing backend route.
+     */
+    const googleAuthUrl = new URL(`${API}/api/auth/google`);
+
+    if (nextFromUrl) {
+      googleAuthUrl.searchParams.set("next", nextFromUrl);
+    }
+
+    window.location.assign(googleAuthUrl.toString());
   });
   function setMsg(text, type = "") {
     msg.className = "msg " + type;
@@ -441,6 +590,7 @@ document
     }
 
     loginBtn.disabled = true;
+    googleLoginBtn.disabled = true;
     resendBtn.disabled = true;
     setMsg("Signing in...");
 
@@ -455,6 +605,7 @@ document
 
       if (!res.ok) {
         loginBtn.disabled = false;
+        googleLoginBtn.disabled = false;
         resendBtn.disabled = false;
 
         const errorMessage = data.message || "Invalid email or password.";
@@ -498,6 +649,7 @@ document
 
     resendBtn.disabled = true;
     loginBtn.disabled = true;
+    googleLoginBtn.disabled = true;
     setMsg("Sending verification email...");
 
     try {
@@ -511,6 +663,7 @@ document
 
       resendBtn.disabled = false;
       loginBtn.disabled = false;
+      googleLoginBtn.disabled = false;
 
       if (!res.ok) {
         return setMsg(data.message || "Could not resend verification email.", "error");
@@ -523,6 +676,7 @@ document
     } catch {
       resendBtn.disabled = false;
       loginBtn.disabled = false;
+      googleLoginBtn.disabled = false;
       setMsg("Network error. Please try again.", "error");
     }
   };
