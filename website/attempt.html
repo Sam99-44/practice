@@ -10000,9 +10000,58 @@ function inlineQuizLoadingHtml(){
    * This prevents the local Check Answer button from comparing the
    * learner's expression against the complete storage string.
    */
+  function extractStoredTypedAnswerAlternatives(value, expectedKey = ""){
+    const raw = String(value ?? "").trim();
+    if (!raw) return [];
+
+    const parts = raw
+      .split("|")
+      .map(part => String(part || "").trim())
+      .filter(Boolean);
+
+    if (parts.length < 2) return [];
+
+    const values = [];
+    let allKeyedAnswers = true;
+
+    for (const part of parts){
+      const equalsAt = part.indexOf("=");
+      if (equalsAt <= 0){
+        allKeyedAnswers = false;
+        break;
+      }
+
+      const left = normalizeTypedFieldKey(part.slice(0, equalsAt));
+      const right = part.slice(equalsAt + 1).trim();
+
+      if (!/^answer(?:_\d+)?$/.test(left) || !right){
+        allKeyedAnswers = false;
+        break;
+      }
+
+      values.push(right);
+    }
+
+    return allKeyedAnswers ? values : [];
+  }
+
   function extractStoredTypedAnswerValue(value, expectedKey = ""){
     const raw = String(value ?? "").trim();
     if (!raw) return "";
+
+    /*
+     * Do not collapse a list of accepted alternatives into one invalid
+     * string. Example:
+     * answer_1=1/2|answer_2=0.5|answer_3=0,5
+     *
+     * compareTextAnswer() handles these as OR alternatives.
+     */
+    const alternatives = extractStoredTypedAnswerAlternatives(
+      raw,
+      expectedKey
+    );
+
+    if (alternatives.length > 1) return raw;
 
     const equalsAt = raw.indexOf("=");
     if (equalsAt <= 0) return raw;
@@ -10107,10 +10156,20 @@ function inlineQuizLoadingHtml(){
         q?.unit ||
         ""
       ).trim(),
-      correctAnswer: extractStoredTypedAnswerValue(
-        combinedCorrectText,
-        "answer"
-      )
+      /*
+       * Keep keyed OR alternatives intact so the local marker can test
+       * each one independently.
+       */
+      correctAnswer:
+        extractStoredTypedAnswerAlternatives(
+          combinedCorrectText,
+          "answer"
+        ).length > 1
+          ? combinedCorrectText
+          : extractStoredTypedAnswerValue(
+              combinedCorrectText,
+              "answer"
+            )
     }];
   }
 
@@ -12118,6 +12177,27 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     tolerance,
     unitCandidates = []
   ) {
+    /*
+     * A question can store several accepted forms of ONE answer:
+     * answer_1=1/2|answer_2=0.5|answer_3=0,5
+     *
+     * Any one mathematically equivalent form must be accepted.
+     */
+    const storedAlternatives =
+      extractStoredTypedAnswerAlternatives(correctAns);
+
+    if (storedAlternatives.length > 1){
+      return storedAlternatives.some(alternative =>
+        compareTextAnswer(
+          userAns,
+          alternative,
+          mode,
+          tolerance,
+          unitCandidates
+        )
+      );
+    }
+
     const stripConfiguredUnitLocally = (value, candidates = []) => {
       let result = String(value ?? "").trim();
       const units = (Array.isArray(candidates) ? candidates : [candidates])
@@ -12137,10 +12217,21 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       return result.trim();
     };
 
-    const uaRaw = stripConfiguredUnitLocally(userAns, unitCandidates);
-    const caRaw = stripConfiguredUnitLocally(
-      extractStoredTypedAnswerValue(correctAns),
-      unitCandidates
+    const stripSimpleAnswerLabel = (value) =>
+      String(value ?? "")
+        .trim()
+        .replace(/^\s*[A-Za-z]\s*=\s*/, "")
+        .trim();
+
+    const uaRaw = stripSimpleAnswerLabel(
+      stripConfiguredUnitLocally(userAns, unitCandidates)
+    );
+
+    const caRaw = stripSimpleAnswerLabel(
+      stripConfiguredUnitLocally(
+        extractStoredTypedAnswerValue(correctAns),
+        unitCandidates
+      )
     );
 
     if (!caRaw.trim()) return false;
@@ -12173,6 +12264,14 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     }
 
     if (uNum !== null && cNum !== null) {
+      /*
+       * Exact mathematical equality first:
+       * 75/150 = 1/2 = 0.5 = 0,5
+       */
+      if (Math.abs(uNum - cNum) <= 1e-12) {
+        return true;
+      }
+
       return numericValuesAreInAcceptableRange(
         uNum,
         cNum,
