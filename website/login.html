@@ -258,7 +258,8 @@
       background:#e5e7eb;
     }
 
-    #googleLoginBtn{
+    #googleLoginBtn,
+    #microsoftLoginBtn{
       display:flex !important;
       align-items:center;
       justify-content:center;
@@ -271,16 +272,64 @@
       box-shadow:none;
     }
 
-    #googleLoginBtn:hover:not(:disabled){
+    #microsoftLoginBtn{
+      margin-top:10px;
+    }
+
+    #googleLoginBtn:hover:not(:disabled),
+    #microsoftLoginBtn:hover:not(:disabled){
       background:#f8fafc;
       border-color:#b8c2cf;
     }
 
-    #googleLoginBtn img{
+    #googleLoginBtn img,
+    #microsoftLoginBtn img{
       width:20px;
       height:20px;
       display:block;
       flex:0 0 20px;
+    }
+
+    #googleLoginBtn.googleLoading img,
+    #microsoftLoginBtn.microsoftLoading img{
+      display:none;
+    }
+
+    #googleLoginBtn.googleLoading::before,
+    #microsoftLoginBtn.microsoftLoading::before{
+      content:"";
+      width:17px;
+      height:17px;
+      flex:0 0 17px;
+      border:2px solid #d7dce3;
+      border-top-color:#6b7280;
+      border-radius:50%;
+      animation:oauthLoginSpin .7s linear infinite;
+    }
+
+    @keyframes oauthLoginSpin{
+      to{transform:rotate(360deg)}
+    }
+
+    .legalFooter{
+      margin-top:18px;
+      padding-top:14px;
+      border-top:1px solid #eef2f7;
+      text-align:center;
+      font-size:12px;
+      line-height:1.55;
+      color:#94a3b8;
+    }
+
+    .legalFooter a{
+      color:#64748b;
+      font-weight:600;
+      text-decoration:underline;
+      text-underline-offset:2px;
+    }
+
+    .legalFooter a:hover{
+      color:var(--gold-dark);
     }
 
     .msg{
@@ -390,6 +439,21 @@
   <span>Continue with Google</span>
 </button>
 
+<button
+  id="microsoftLoginBtn"
+  type="button"
+  aria-label="Continue with Microsoft"
+>
+  <img
+    src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg"
+    width="20"
+    height="20"
+    alt=""
+    aria-hidden="true"
+  >
+  <span>Continue with Microsoft</span>
+</button>
+
 <button id="resendBtn" class="ghostBtn" type="button">Resend Verification Email</button>
 
       <p id="msg" class="msg"></p>
@@ -397,6 +461,13 @@
       <div class="links">
         <span>Don't have an account?</span>
         <a href="register.html">Sign Up</a>
+      </div>
+
+      <div class="legalFooter">
+        By logging in, you agree to our
+        <a href="terms.html">Terms of Service</a>
+        and
+        <a href="privacy.html">Privacy Policy</a>.
       </div>
     </div>
   </main>
@@ -406,13 +477,31 @@
 
   const loginBtn = document.getElementById("loginBtn");
   const googleLoginBtn = document.getElementById("googleLoginBtn");
+  const microsoftLoginBtn = document.getElementById("microsoftLoginBtn");
   const resendBtn = document.getElementById("resendBtn");
   const msg = document.getElementById("msg");
   const emailEl = document.getElementById("email");
   const passwordEl = document.getElementById("password");
   const params = new URLSearchParams(window.location.search);
   const googleToken = params.get("googleToken");
+  const microsoftToken = params.get("microsoftToken");
   const nextFromUrl = params.get("next");
+
+  function setGoogleLoading(isLoading) {
+    googleLoginBtn.classList.toggle("googleLoading", Boolean(isLoading));
+    const label = googleLoginBtn.querySelector("span");
+    if (label) {
+      label.textContent = isLoading ? "Continue with Google" : "Continue with Google";
+    }
+  }
+
+  function setMicrosoftLoading(isLoading) {
+    microsoftLoginBtn.classList.toggle("microsoftLoading", Boolean(isLoading));
+    const label = microsoftLoginBtn.querySelector("span");
+    if (label) {
+      label.textContent = "Continue with Microsoft";
+    }
+  }
 
   function googleLearnerNeedsProfileSetup(user = {}) {
     const role = String(user.role || "").trim().toLowerCase();
@@ -437,10 +526,14 @@
     return user.onboardingCompleted !== true;
   }
 
-  function getGooglePostLoginDestination(user = {}) {
+  function getOAuthPostLoginDestination(user = {}, provider = "google") {
     if (googleLearnerNeedsProfileSetup(user)) {
       const setupUrl = new URL("register.html", window.location.href);
-      setupUrl.searchParams.set("googleSetup", "1");
+      setupUrl.searchParams.set("oauthSetup", "1");
+      setupUrl.searchParams.set(
+        "provider",
+        String(provider || "google").toLowerCase()
+      );
 
       if (nextFromUrl) {
         setupUrl.searchParams.set("next", nextFromUrl);
@@ -454,13 +547,23 @@
       : getDefaultRedirect(user);
   }
 
-  async function completeGoogleLogin(token) {
+  async function completeOAuthLogin(token, provider = "Google") {
     if (!token) return;
+
+    const isMicrosoft = provider === "Microsoft";
 
     loginBtn.disabled = true;
     googleLoginBtn.disabled = true;
+    microsoftLoginBtn.disabled = true;
     resendBtn.disabled = true;
-    setMsg("Signing in with Google...");
+
+    if (isMicrosoft) {
+      setMicrosoftLoading(true);
+    } else {
+      setGoogleLoading(true);
+    }
+
+    setMsg("");
 
     try {
       localStorage.setItem("token", token);
@@ -476,7 +579,9 @@
       const user = await safeJson(res);
 
       if (!res.ok || !user || typeof user !== "object") {
-        throw new Error(user?.message || "Could not complete Google sign in.");
+        throw new Error(
+          user?.message || `Could not complete ${provider} sign in.`
+        );
       }
 
       localStorage.setItem("user", JSON.stringify(user));
@@ -484,12 +589,14 @@
       localStorage.setItem("role", user.role || "");
 
       /*
-       * Remove the OAuth token from the visible browser URL before
-       * navigating away so it is not left in browser history.
+       * Remove OAuth tokens from the visible URL before navigation so
+       * they are not left in browser history.
        */
       try {
         const cleanUrl = new URL(window.location.href);
         cleanUrl.searchParams.delete("googleToken");
+        cleanUrl.searchParams.delete("microsoftToken");
+
         window.history.replaceState(
           {},
           document.title,
@@ -497,8 +604,7 @@
         );
       } catch {}
 
-      const destination = getGooglePostLoginDestination(user);
-
+      const destination = getOAuthPostLoginDestination(user, provider);
       window.location.replace(destination);
 
     } catch (error) {
@@ -509,28 +615,32 @@
 
       loginBtn.disabled = false;
       googleLoginBtn.disabled = false;
+      microsoftLoginBtn.disabled = false;
       resendBtn.disabled = false;
+      setGoogleLoading(false);
+      setMicrosoftLoading(false);
 
       setMsg(
-        error?.message || "Google sign in could not be completed. Please try again.",
+        error?.message ||
+          `${provider} sign in could not be completed. Please try again.`,
         "error"
       );
     }
   }
 
   if (googleToken) {
-    completeGoogleLogin(googleToken);
+    completeOAuthLogin(googleToken, "Google");
+  } else if (microsoftToken) {
+    completeOAuthLogin(microsoftToken, "Microsoft");
   }
 
   googleLoginBtn.addEventListener("click", () => {
     googleLoginBtn.disabled = true;
+    microsoftLoginBtn.disabled = true;
     loginBtn.disabled = true;
-    setMsg("Opening Google sign in...");
+    setGoogleLoading(true);
+    setMsg("");
 
-    /*
-     * Preserve the requested destination if login.html was opened with
-     * ?next=..., while remaining compatible with the existing backend route.
-     */
     const googleAuthUrl = new URL(`${API}/api/auth/google`);
 
     if (nextFromUrl) {
@@ -539,6 +649,23 @@
 
     window.location.assign(googleAuthUrl.toString());
   });
+
+  microsoftLoginBtn.addEventListener("click", () => {
+    microsoftLoginBtn.disabled = true;
+    googleLoginBtn.disabled = true;
+    loginBtn.disabled = true;
+    setMicrosoftLoading(true);
+    setMsg("");
+
+    const microsoftAuthUrl = new URL(`${API}/api/auth/microsoft`);
+
+    if (nextFromUrl) {
+      microsoftAuthUrl.searchParams.set("next", nextFromUrl);
+    }
+
+    window.location.assign(microsoftAuthUrl.toString());
+  });
+
   function setMsg(text, type = "") {
     msg.className = "msg " + type;
     msg.textContent = text;
