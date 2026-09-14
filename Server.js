@@ -87,6 +87,14 @@ dotenv.config();
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 
+const MICROSOFT_CLIENT_ID = String(process.env.MICROSOFT_CLIENT_ID || "").trim();
+const MICROSOFT_CLIENT_SECRET = String(process.env.MICROSOFT_CLIENT_SECRET || "").trim();
+const MICROSOFT_CALLBACK_URL = String(
+  process.env.MICROSOFT_CALLBACK_URL ||
+  "https://api.practiceonline.co.za/api/auth/microsoft/callback"
+).trim();
+const MICROSOFT_AUTHORITY = "https://login.microsoftonline.com/common";
+
 const app = express();
 app.use(passport.initialize());
 
@@ -2278,6 +2286,201 @@ app.get("/api/quizzes/ratings/summary", authRequired, async (req, res) => {
     });
   }
 });
+
+/* ------------------ MICROSOFT OAUTH HELPERS ------------------ */
+function makeMicrosoftOAuthState(nextPath = "") {
+  return jwt.sign(
+    {
+      purpose: "microsoft_oauth",
+      next: String(nextPath || "").slice(0, 1200),
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "10m" }
+  );
+}
+
+function readMicrosoftOAuthState(rawState) {
+  try {
+    const decoded = jwt.verify(String(rawState || ""), process.env.JWT_SECRET);
+    if (decoded?.purpose !== "microsoft_oauth") return null;
+    return decoded;
+  } catch {
+    return null;
+  }
+}
+
+function microsoftLoginErrorRedirect(reason = "oauth_failed") {
+  return (
+    "https://practiceonline.co.za/login.html?microsoftError=" +
+    encodeURIComponent(String(reason || "oauth_failed"))
+  );
+}
+
+async function exchangeMicrosoftAuthorizationCode(code) {
+  const body = new URLSearchParams({
+    client_id: MICROSOFT_CLIENT_ID,
+    client_secret: MICROSOFT_CLIENT_SECRET,
+    code: String(code || ""),
+    redirect_uri: MICROSOFT_CALLBACK_URL,
+    grant_type: "authorization_code",
+    scope: "openid profile email User.Read",
+  });
+
+  const response = await fetch(
+    `${MICROSOFT_AUTHORITY}/oauth2/v2.0/token`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body,
+    }
+  );
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || !data.access_token) {
+    console.error("Microsoft token exchange failed:", data);
+    throw new Error(
+      data?.error_description ||
+      data?.error ||
+      "Microsoft token exchange failed."
+    );
+  }
+
+  return data;
+}
+
+async function fetchMicrosoftProfile(accessToken) {
+  const response = await fetch(
+    "https://graph.microsoft.com/v1.0/me?$select=id,displayName,givenName,surname,mail,userPrincipalName",
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
+      },
+    }
+  );
+
+  const profile = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    console.error("Microsoft profile request failed:", profile);
+    throw new Error(
+      profile?.error?.message ||
+      "Could not load Microsoft profile."
+    );
+  }
+
+  return profile;
+}
+
+async function findOrCreateMicrosoftUser(profile) {
+  const email = String(
+    profile?.mail ||
+    profile?.userPrincipalName ||
+    ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (!email || !isValidEmail(email)) {
+    throw new Error(
+      "Microsoft account did not provide a usable email address."
+    );
+  }
+
+  let user = await User.findOne({ email });
+
+  if (user) {
+    const role = String(user.role || "").toLowerCase();
+    const accountType = String(user.accountType || "").toLowerCase();
+    const learnerLike =
+      role === "learner" ||
+      accountType === "learner" ||
+      accountType === "practice";
+
+    const validGrade =
+      Number.isInteger(Number(user.grade)) &&
+      Number(user.grade) >= 8 &&
+      Number(user.grade) <= 12;
+
+    const validCurriculum = ["CAPS", "IEB"].includes(
+      String(user.curriculum || "").trim().toUpperCase()
+    );
+
+    const validCellphone = /^\\+27[6-8][0-9]{8}$/.test(
+      String(user.cellphone || "").replace(/\\s+/g, "")
+    );
+
+    if (
+      learnerLike &&
+      (!validGrade || !validCurriculum || !validCellphone)
+    ) {
+      user.onboardingCompleted = false;
+      await user.save();
+    }
+
+    return user;
+  }
+
+  const learnerNumber = await generateUniqueLearnerNumber("learner");
+  const displayName =
+    cleanSpaces(profile?.displayName || "") ||
+    email.split("@")[0];
+
+  const microsoftUsername = await generateUniqueGoogleUsername(
+    email,
+    displayName
+  );
+
+  const firstName =
+    cleanSpaces(profile?.givenName || "") ||
+    displayName.split(/\\s+/)[0] ||
+    "";
+
+  const surname =
+    cleanSpaces(profile?.surname || "") ||
+    displayName.split(/\\s+/).slice(1).join(" ");
+
+  user = await User.create({
+    firstName,
+    surname,
+    fullName: displayName,
+    username: microsoftUsername,
+    email,
+    emailVerified: true,
+    role: "learner",
+    accountType: "learner",
+    onboardingCompleted: false,
+    learnerNumber,
+    studentNumber: null,
+    profilePhoto: "",
+    cellphone: "",
+    grade: null,
+    curriculum: "",
+    trialActive: true,
+    trialStartDate: new Date(),
+    trialEndDate: addDays(new Date(), 7),
+  });
+
+  setImmediate(async () => {
+    try {
+      await sendNewRegistrationNotification(
+        user,
+        "Microsoft registration"
+      );
+    } catch (notificationError) {
+      console.error(
+        "Microsoft registration support notification failed:",
+        notificationError.message
+      );
+    }
+  });
+
+  return user;
+}
+
 /* ------------------ AUTH ROUTES ------------------ */
 app.get(
   "/api/auth/google",
@@ -2305,6 +2508,98 @@ app.get(
 );
   }
 );
+
+
+app.get("/api/auth/microsoft", (req, res) => {
+  if (!MICROSOFT_CLIENT_ID || !MICROSOFT_CLIENT_SECRET) {
+    return res.redirect(
+      microsoftLoginErrorRedirect("not_configured")
+    );
+  }
+
+  const state = makeMicrosoftOAuthState(req.query.next || "");
+
+  const params = new URLSearchParams({
+    client_id: MICROSOFT_CLIENT_ID,
+    response_type: "code",
+    redirect_uri: MICROSOFT_CALLBACK_URL,
+    response_mode: "query",
+    scope: "openid profile email User.Read",
+    state,
+    prompt: "select_account",
+  });
+
+  return res.redirect(
+    `${MICROSOFT_AUTHORITY}/oauth2/v2.0/authorize?${params.toString()}`
+  );
+});
+
+app.get("/api/auth/microsoft/callback", async (req, res) => {
+  try {
+    if (req.query.error) {
+      console.error(
+        "Microsoft OAuth authorization error:",
+        req.query.error,
+        req.query.error_description || ""
+      );
+
+      return res.redirect(
+        microsoftLoginErrorRedirect(
+          req.query.error || "authorization_failed"
+        )
+      );
+    }
+
+    const state = readMicrosoftOAuthState(req.query.state);
+
+    if (!state) {
+      return res.redirect(
+        microsoftLoginErrorRedirect("invalid_state")
+      );
+    }
+
+    const code = String(req.query.code || "").trim();
+
+    if (!code) {
+      return res.redirect(
+        microsoftLoginErrorRedirect("missing_code")
+      );
+    }
+
+    const tokenData =
+      await exchangeMicrosoftAuthorizationCode(code);
+
+    const microsoftProfile =
+      await fetchMicrosoftProfile(tokenData.access_token);
+
+    const user =
+      await findOrCreateMicrosoftUser(microsoftProfile);
+
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    const redirect = new URL(
+      "https://practiceonline.co.za/login.html"
+    );
+
+    redirect.searchParams.set("microsoftToken", token);
+
+    if (state.next) {
+      redirect.searchParams.set("next", state.next);
+    }
+
+    return res.redirect(redirect.toString());
+  } catch (error) {
+    console.error("Microsoft OAuth callback error:", error);
+
+    return res.redirect(
+      microsoftLoginErrorRedirect("server_error")
+    );
+  }
+});
 
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
