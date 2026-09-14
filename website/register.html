@@ -523,6 +523,177 @@
     }
   </style>
 
+
+<style>
+body.googleSetupMode{background:#fff}
+body.googleSetupMode .topbar,
+body.googleSetupMode .tabs,
+body.googleSetupMode .links,
+body.googleSetupMode .registrationProgress,
+body.googleSetupMode .registrationStep,
+body.googleSetupMode .card>h2,
+body.googleSetupMode .card>p,
+body.googleSetupMode .card>.noteBox,
+body.googleSetupMode .card>label,
+body.googleSetupMode .card>.radioRow{display:none!important}
+body.googleSetupMode .wrap{
+  min-height:100vh;
+  max-width:none;
+  padding:44px 24px;
+  align-items:flex-start;
+  justify-content:center
+}
+body.googleSetupMode .card{
+  width:min(100%,760px);
+  max-width:760px;
+  margin:0 auto;
+  padding:0;
+  border:none;
+  border-radius:0;
+  box-shadow:none;
+  background:#fff
+}
+.googleOnboarding{display:none}
+body.googleSetupMode .googleOnboarding{display:block}
+.googleSetupBrand{
+  margin-bottom:34px;
+  color:#1f2937;
+  font-size:18px;
+  font-weight:800
+}
+.googleSetupProgressText{
+  margin-bottom:13px;
+  color:#111827;
+  font-size:14px;
+  font-weight:700
+}
+.googleSetupProgressTrack{
+  width:100%;
+  height:3px;
+  margin-bottom:27px;
+  background:#e5e7eb;
+  overflow:hidden
+}
+.googleSetupProgressBar{
+  height:100%;
+  width:33.333%;
+  background:#0878d1;
+  transition:width .2s ease
+}
+.googleQuestion{margin-bottom:24px}
+.googleQuestionEyebrow{display:none}
+.googleQuestionTitle{
+  margin:0 0 7px;
+  color:#111827;
+  font-size:20px;
+  line-height:1.35;
+  font-weight:700
+}
+.googleQuestionHelp{
+  margin:0;
+  color:#5f6368;
+  font-size:14px;
+  line-height:1.5
+}
+.googleAnswerArea{
+  display:grid;
+  gap:18px;
+  margin-top:26px
+}
+.oauthField{display:block}
+.oauthField.hidden{display:none}
+.oauthLabel{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin:0 0 7px;
+  color:#1f2937;
+  font-size:14px;
+  font-weight:500
+}
+.oauthOptional{color:#6b7280;font-size:12px;font-weight:400}
+.oauthField input,
+.oauthField select,
+.oauthField textarea{
+  width:100%;
+  min-height:46px;
+  margin:0;
+  padding:10px 12px;
+  border:1px solid #b8bec7;
+  border-radius:3px;
+  background:#fff;
+  color:#111827;
+  box-shadow:none;
+  font-size:15px
+}
+.oauthField input:focus,
+.oauthField select:focus,
+.oauthField textarea:focus{
+  outline:none;
+  border-color:#0878d1;
+  box-shadow:0 0 0 1px #0878d1
+}
+.oauthField textarea{min-height:94px;resize:vertical}
+.googleReadOnly{background:#f4f6f8!important;color:#5f6368!important}
+.oauthCheckList{
+  display:grid;
+  gap:11px;
+  margin-top:2px
+}
+.oauthCheck{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  color:#1f2937;
+  font-size:14px;
+  line-height:1.4
+}
+.oauthCheck input{
+  width:17px!important;
+  min-height:17px!important;
+  height:17px;
+  margin:2px 0 0!important;
+  flex:0 0 17px
+}
+.googleSetupActions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:30px;
+  padding-top:4px
+}
+.googleSetupLeftActions,.googleSetupRightActions{display:flex;align-items:center;gap:10px}
+.googleSetupBtn{
+  min-width:108px;
+  height:42px;
+  padding:0 18px;
+  border-radius:3px;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer
+}
+.googleSetupBack{border:1px solid #aab1ba;background:#fff;color:#111827}
+.googleSetupSkip{display:none!important}
+.googleSetupContinue{border:1px solid #0878d1;background:#0878d1;color:#fff}
+.googleSetupContinue:hover{background:#0568b7}
+.googleSetupStatus{
+  min-height:20px;
+  margin-top:14px;
+  color:var(--error);
+  font-size:13px
+}
+.googleSetupStatus.ok{color:var(--ok)}
+@media(max-width:640px){
+  body.googleSetupMode .wrap{padding:28px 18px}
+  .googleSetupBrand{margin-bottom:26px}
+  .googleQuestionTitle{font-size:19px}
+  .googleAnswerArea{gap:16px}
+  .googleSetupActions{align-items:center}
+  .googleSetupBtn{min-width:96px}
+}
+</style>
+
 </head>
 
 <body>
@@ -539,6 +710,36 @@
 
 <main class="wrap">
   <div class="card">
+    <div class="googleOnboarding" id="googleOnboarding" aria-live="polite">
+      <div class="googleSetupBrand">Practice Online</div>
+
+      <div class="googleSetupProgressText" id="googleSetupProgressText">Step 1 of 3</div>
+      <div class="googleSetupProgressTrack" aria-hidden="true">
+        <div class="googleSetupProgressBar" id="googleSetupProgressBar"></div>
+      </div>
+
+      <div class="googleQuestion">
+        <div class="googleQuestionEyebrow" id="googleQuestionEyebrow">Set up your account</div>
+        <h2 class="googleQuestionTitle" id="googleQuestionTitle">Account information</h2>
+        <p class="googleQuestionHelp" id="googleQuestionHelp">
+          Complete the details below to finish setting up your Practice Online account.
+        </p>
+      </div>
+
+      <div class="googleAnswerArea" id="googleAnswerArea"></div>
+      <div class="googleSetupStatus" id="googleSetupStatus"></div>
+
+      <div class="googleSetupActions">
+        <div class="googleSetupLeftActions">
+          <button class="googleSetupBtn googleSetupBack" id="googleSetupBack" type="button">Back</button>
+        </div>
+        <div class="googleSetupRightActions">
+          <button class="googleSetupBtn googleSetupSkip" id="googleSetupSkip" type="button">Skip</button>
+          <button class="googleSetupBtn googleSetupContinue" id="googleSetupContinue" type="button">Continue</button>
+        </div>
+      </div>
+    </div>
+
     <h2>Register Account</h2>
     <p>Create your Practice Online account</p>
 
@@ -1499,6 +1700,397 @@
   },true);
 
   refreshAccount();show(1);
+})();
+</script>
+
+
+<script>
+(function(){
+  const params=new URLSearchParams(location.search);
+  const oauthMode=params.get("oauthSetup")==="1" || params.get("googleSetup")==="1";
+  if(!oauthMode) return;
+
+  document.body.classList.add("googleSetupMode");
+
+  const API="https://api.practiceonline.co.za";
+  const token=localStorage.getItem("token");
+  const provider=String(params.get("provider") || (params.get("googleSetup")==="1"?"google":"oauth")).toLowerCase();
+  const providerName=provider==="microsoft"?"Microsoft":provider==="google"?"Google":"your sign-in provider";
+  const nextUrl=params.get("next")||"learning-content.html#quizzes";
+  if(!token){location.replace("login.html");return;}
+
+  const progressText=document.getElementById("googleSetupProgressText");
+  const progressBar=document.getElementById("googleSetupProgressBar");
+  const titleEl=document.getElementById("googleQuestionTitle");
+  const helpEl=document.getElementById("googleQuestionHelp");
+  const answerArea=document.getElementById("googleAnswerArea");
+  const statusEl=document.getElementById("googleSetupStatus");
+  const backBtn=document.getElementById("googleSetupBack");
+  const skipBtn=document.getElementById("googleSetupSkip");
+  const continueBtn=document.getElementById("googleSetupContinue");
+
+  let me={},answers={},step=0;
+
+  const DISTRICTS={
+    "Eastern Cape":["Buffalo City (Metro)","Nelson Mandela Bay (Metro)","Amathole","Chris Hani","Joe Gqabi","OR Tambo","Sarah Baartman"],
+    "Free State":["Mangaung (Metro)","Fezile Dabi","Lejweleputswa","Thabo Mofutsanyana","Xhariep"],
+    "Gauteng":["City of Johannesburg (Metro)","City of Tshwane (Metro)","Ekurhuleni (Metro)","Sedibeng","West Rand"],
+    "KwaZulu-Natal":["eThekwini (Metro)","Amajuba","Harry Gwala","iLembe","King Cetshwayo","Ugu","uMgungundlovu","uMkhanyakude","uMzinyathi","uThukela","Zululand"],
+    "Limpopo":["Capricorn","Mopani","Sekhukhune","Vhembe","Waterberg"],
+    "Mpumalanga":["Ehlanzeni","Gert Sibande","Nkangala"],
+    "Northern Cape":["Frances Baard","John Taolo Gaetsewe","Namakwa","Pixley ka Seme","ZF Mgcawu"],
+    "North West":["Bojanala Platinum","Dr Kenneth Kaunda","Dr Ruth Segomotsi Mompati","Ngaka Modiri Molema"],
+    "Western Cape":["City of Cape Town (Metro)","Cape Winelands","Central Karoo","Garden Route","Overberg","West Coast"]
+  };
+
+  const clean=v=>String(v??"").trim();
+  const normalizePhone=v=>String(v||"").replace(/\s+/g,"");
+  const validPhone=v=>/^\+27[6-8][0-9]{8}$/.test(normalizePhone(v));
+  const setStatus=(m="",ok=false)=>{statusEl.textContent=m;statusEl.className="googleSetupStatus"+(ok?" ok":"");};
+  const accountType=()=>String(answers.accountType||me.accountType||"learner").toLowerCase();
+
+  function field(label,key,type="text",opts={}){
+    const wrap=document.createElement("div");
+    wrap.className="oauthField"+(opts.hidden?" hidden":"");
+    const l=document.createElement("label");
+    l.className="oauthLabel";
+    l.htmlFor="oauth_"+key;
+    l.textContent=label;
+    if(opts.optional){
+      const small=document.createElement("span");
+      small.className="oauthOptional";
+      small.textContent="(Optional)";
+      l.appendChild(small);
+    }
+    wrap.appendChild(l);
+
+    let el;
+    if(type==="select"){
+      el=document.createElement("select");
+      const first=document.createElement("option");
+      first.value="";
+      first.textContent=opts.placeholder||"Select an option";
+      el.appendChild(first);
+      (opts.options||[]).forEach(([value,text])=>{
+        const o=document.createElement("option");
+        o.value=value;o.textContent=text;el.appendChild(o);
+      });
+      el.value=answers[key]??"";
+      el.addEventListener("change",()=>{
+        answers[key]=el.value;
+        if(key==="accountType"||key==="isSA"||key==="province") render();
+      });
+    }else if(type==="textarea"){
+      el=document.createElement("textarea");
+      el.placeholder=opts.placeholder||"";
+      el.value=answers[key]??"";
+      el.maxLength=255;
+      el.addEventListener("input",()=>answers[key]=el.value);
+    }else{
+      el=document.createElement("input");
+      el.type=type;
+      el.placeholder=opts.placeholder||"";
+      el.value=answers[key]??"";
+      if(opts.readonly){el.readOnly=true;el.className="googleReadOnly";}
+      el.addEventListener("input",()=>answers[key]=el.value);
+    }
+    el.id="oauth_"+key;
+    wrap.appendChild(el);
+    answerArea.appendChild(wrap);
+    return el;
+  }
+
+  function checkboxList(label,key,options){
+    const wrap=document.createElement("div");
+    wrap.className="oauthField";
+    const l=document.createElement("div");
+    l.className="oauthLabel";
+    l.textContent=label;
+    wrap.appendChild(l);
+
+    const list=document.createElement("div");
+    list.className="oauthCheckList";
+    const selected=new Set(Array.isArray(answers[key])?answers[key]:[]);
+    options.forEach(([value,text])=>{
+      const row=document.createElement("label");
+      row.className="oauthCheck";
+      const cb=document.createElement("input");
+      cb.type="checkbox";
+      cb.checked=selected.has(value);
+      const span=document.createElement("span");
+      span.textContent=text;
+      cb.addEventListener("change",()=>{
+        const values=new Set(Array.isArray(answers[key])?answers[key]:[]);
+        cb.checked?values.add(value):values.delete(value);
+        answers[key]=[...values];
+        render();
+      });
+      row.append(cb,span);
+      list.appendChild(row);
+    });
+    wrap.appendChild(list);
+    answerArea.appendChild(wrap);
+  }
+
+  function updateProgress(){
+    progressText.textContent=`Step ${step+1} of 3`;
+    progressBar.style.width=`${((step+1)/3)*100}%`;
+  }
+
+  function renderStep1(){
+    titleEl.textContent="Account information";
+    helpEl.textContent=`Your email is linked to the ${providerName} account you used to sign in.`;
+    field("Account type","accountType","select",{
+      options:[["learner","Learner Account"],["practice","Practice Account"],["guest","Guest Account"]],
+      placeholder:"Select account type"
+    });
+    field("First name","firstName","text",{placeholder:"First name"});
+    field("Surname","surname","text",{placeholder:"Surname"});
+    if(accountType()!=="guest"){
+      field("Username","username","text",{placeholder:"Username"});
+    }
+    field(`${providerName} email`,"email","email",{readonly:true});
+    if(accountType()!=="guest"){
+      field("Gender","gender","select",{
+        options:[["female","Female"],["male","Male"],["prefer_not_to_say","Prefer not to say"],["other","Other"]],
+        placeholder:"Select gender"
+      });
+    }
+  }
+
+  function renderStep2(){
+    titleEl.textContent="Contact & location information";
+    helpEl.textContent="Add the contact and location details for your Practice Online profile.";
+    field("Are you in South Africa?","isSA","select",{
+      options:[["yes","Yes"],["no","No"]],
+      placeholder:"Select an option"
+    });
+    if(answers.isSA!=="no"){
+      field("Province","province","select",{
+        options:Object.keys(DISTRICTS).map(x=>[x,x]),
+        placeholder:"Select province"
+      });
+      field("District","district","select",{
+        options:(DISTRICTS[answers.province]||[]).map(x=>[x,x]),
+        placeholder:"Select district"
+      });
+    }
+    field("Cellphone number","cellphone","tel",{placeholder:"+27821234567"});
+    if(accountType()==="learner"){
+      field("Guardian cellphone number","guardianCellphone","tel",{placeholder:"+27821234567",optional:true});
+    }
+  }
+
+  function renderStep3(){
+    const t=accountType();
+    if(t==="guest"){
+      titleEl.textContent="Visit information";
+      helpEl.textContent="Tell us briefly why you are visiting Practice Online.";
+      checkboxList("Reason for visiting","guestReasons",[
+        ["parent_guardian","Parent / Guardian"],
+        ["tutoring_service","Another Tutoring Service"],
+        ["school_institution","School / Institution"],
+        ["request_information","Request Information"],
+        ["request_quote","Request a Quote"],
+        ["partnership","Partnership Opportunity"],
+        ["research","Research Purposes"],
+        ["exploring","Exploring the Platform"],
+        ["other","Other"]
+      ]);
+      if(Array.isArray(answers.guestReasons)&&answers.guestReasons.includes("other")){
+        field("Other reason","otherReason","text",{placeholder:"Reason for visiting"});
+      }
+      field("Message","guestMessage","textarea",{placeholder:"Anything else you would like to tell us",optional:true});
+      return;
+    }
+
+    titleEl.textContent="Learning information";
+    helpEl.textContent="These details help us show the correct assessments and learning content.";
+    field("Grade","grade","select",{
+      options:[8,9,10,11,12].map(x=>[String(x),`Grade ${x}`]),
+      placeholder:"Select grade"
+    });
+    field("Curriculum","curriculum","select",{
+      options:[["CAPS","CAPS"],["IEB","IEB"]],
+      placeholder:"Select curriculum"
+    });
+    if(t==="learner"){
+      field("School name","schoolName","text",{placeholder:"School name",optional:true});
+      field("Current Mathematics mark","currentMarkRange","select",{
+        options:["0-29","30-39","40-49","50-59","60-69","70-79","80-100"].map(x=>[x,`${x}%`]),
+        placeholder:"Select mark range",
+        optional:true
+      });
+    }
+  }
+
+  function render(){
+    updateProgress();
+    setStatus("");
+    answerArea.innerHTML="";
+    backBtn.style.visibility=step===0?"hidden":"visible";
+    continueBtn.textContent=step===2?"Finish Setup":"Continue";
+    if(step===0) renderStep1();
+    else if(step===1) renderStep2();
+    else renderStep3();
+  }
+
+  function validateStep(){
+    const t=accountType();
+
+    if(step===0){
+      if(!["learner","practice","guest"].includes(t)){setStatus("Please select an account type.");return false;}
+      if(!clean(answers.firstName)){setStatus("Please enter your first name.");return false;}
+      if(!clean(answers.surname)){setStatus("Please enter your surname.");return false;}
+      if(t!=="guest"&&!clean(answers.username)){setStatus("Please enter a username.");return false;}
+      if(t!=="guest"&&!clean(answers.gender)){setStatus("Please select your gender.");return false;}
+    }
+
+    if(step===1){
+      if(!["yes","no"].includes(String(answers.isSA||""))){setStatus("Please confirm whether you are in South Africa.");return false;}
+      if(answers.isSA!=="no"&&!clean(answers.province)){setStatus("Please select your province.");return false;}
+      if(answers.isSA!=="no"&&!clean(answers.district)){setStatus("Please select your district.");return false;}
+      if(!validPhone(answers.cellphone)){setStatus("Please enter a valid South African cellphone number, for example +27821234567.");return false;}
+      if(t==="learner"&&clean(answers.guardianCellphone)&&!validPhone(answers.guardianCellphone)){
+        setStatus("Please enter a valid guardian cellphone number, for example +27821234567.");return false;
+      }
+    }
+
+    if(step===2){
+      if(t==="learner"||t==="practice"){
+        const g=Number(answers.grade);
+        if(!Number.isInteger(g)||g<8||g>12){setStatus("Please select your grade.");return false;}
+        if(!["CAPS","IEB"].includes(clean(answers.curriculum).toUpperCase())){setStatus("Please select CAPS or IEB.");return false;}
+      }
+      if(t==="guest"){
+        if(!Array.isArray(answers.guestReasons)||answers.guestReasons.length===0){
+          setStatus("Please choose at least one reason for visiting.");return false;
+        }
+        if(answers.guestReasons.includes("other")&&!clean(answers.otherReason)){
+          setStatus("Please enter your other reason.");return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  function buildPayload(){
+    const t=accountType(),firstName=clean(answers.firstName||me.firstName),surname=clean(answers.surname||me.surname);
+    return {
+      accountType:t,
+      firstName,
+      surname,
+      fullName:clean(`${firstName} ${surname}`),
+      username:t==="guest"?(me.username||""):clean(answers.username||me.username),
+      email:clean(me.email||answers.email),
+      province:answers.isSA==="no"?"":clean(answers.province),
+      district:answers.isSA==="no"?"":clean(answers.district),
+      gender:t==="guest"?"":clean(answers.gender),
+      cellphone:normalizePhone(answers.cellphone),
+      guardianCellphone:t==="learner"?normalizePhone(answers.guardianCellphone||""):"",
+      grade:(t==="learner"||t==="practice")?Number(answers.grade):null,
+      curriculum:(t==="learner"||t==="practice")?clean(answers.curriculum):"",
+      schoolName:t==="learner"?clean(answers.schoolName):"",
+      currentMarkRange:t==="learner"?clean(answers.currentMarkRange):"",
+      guestReasons:t==="guest"?(Array.isArray(answers.guestReasons)?answers.guestReasons:[]):[],
+      otherReason:t==="guest"?clean(answers.otherReason):"",
+      guestMessage:t==="guest"?clean(answers.guestMessage):""
+    };
+  }
+
+  async function finish(){
+    continueBtn.disabled=backBtn.disabled=true;
+    setStatus("Saving your account...",true);
+    try{
+      const res=await fetch(`${API}/api/profile/me`,{
+        method:"PATCH",
+        headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},
+        body:JSON.stringify(buildPayload())
+      });
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok){
+        continueBtn.disabled=backBtn.disabled=false;
+        setStatus(data.message||"We could not save your account. Please try again.");
+        return;
+      }
+      const user=data.user||{};
+      localStorage.setItem("user",JSON.stringify(user));
+      localStorage.setItem("username",user.username||"");
+      localStorage.setItem("role",user.role||"");
+      setStatus("Setup complete.",true);
+      setTimeout(()=>location.replace(nextUrl),350);
+    }catch{
+      continueBtn.disabled=backBtn.disabled=false;
+      setStatus("Network error. Please try again.");
+    }
+  }
+
+  continueBtn.addEventListener("click",()=>{
+    if(!validateStep()) return;
+    if(step===2){finish();return;}
+    step++;
+    render();
+    window.scrollTo({top:0,behavior:"smooth"});
+  });
+
+  backBtn.addEventListener("click",()=>{
+    if(step>0){
+      step--;
+      render();
+      window.scrollTo({top:0,behavior:"smooth"});
+    }
+  });
+
+  document.addEventListener("keydown",e=>{
+    if(!document.body.classList.contains("googleSetupMode")) return;
+    if(e.key==="Enter"&&e.target?.tagName!=="TEXTAREA"){
+      e.preventDefault();
+      continueBtn.click();
+    }
+  },true);
+
+  async function load(){
+    setStatus("Loading your account...",true);
+    try{
+      const res=await fetch(`${API}/api/auth/me`,{headers:{Authorization:`Bearer ${token}`}});
+      if(res.status===401){
+        localStorage.removeItem("token");
+        location.replace("login.html");
+        return;
+      }
+      me=await res.json().catch(()=>({});
+      if(me.onboardingCompleted===true){
+        location.replace(nextUrl);
+        return;
+      }
+      answers={
+        accountType:me.accountType||"learner",
+        firstName:me.firstName||"",
+        surname:me.surname||"",
+        username:me.username||"",
+        email:me.email||"",
+        isSA:"yes",
+        province:me.province||"",
+        district:me.district||"",
+        gender:me.gender||"",
+        cellphone:me.cellphone||"",
+        guardianCellphone:me.guardianCellphone||"",
+        grade:me.grade?String(me.grade):"",
+        curriculum:me.curriculum||"",
+        schoolName:me.schoolName||"",
+        currentMarkRange:me.currentMarkRange||"",
+        guestReasons:Array.isArray(me.guestReasons)?me.guestReasons:[],
+        otherReason:me.otherReason||"",
+        guestMessage:me.guestMessage||""
+      };
+      setStatus("");
+      render();
+    }catch{
+      setStatus("Could not load your account. Please refresh and try again.");
+    }
+  }
+
+  load();
 })();
 </script>
 
