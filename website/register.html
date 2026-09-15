@@ -1259,9 +1259,175 @@ body.googleSetupMode #googleSetupContinue{
 }
 </style>
 
+
+<style>
+/* ===== OAuth Step 2 confirmation + professional loading state ===== */
+body.googleSetupMode .googleSetupProgressText,
+body.googleSetupMode .googleSetupProgressTrack{
+  display:block!important;
+}
+
+body.googleSetupMode .googleSetupProgressText{
+  margin:0 0 8px;
+  font-size:13px;
+  color:#111827;
+}
+
+body.googleSetupMode .googleSetupProgressTrack{
+  width:100%;
+  height:2px;
+  margin-bottom:22px;
+  background:#dedede;
+  overflow:hidden;
+}
+
+body.googleSetupMode .googleSetupProgressBar{
+  height:100%;
+  background:#0078d4;
+  transition:width .2s ease;
+}
+
+.oauthConfirmCard{
+  border:1px solid #d6dbe3;
+  border-radius:4px;
+  background:#fff;
+  overflow:hidden;
+}
+
+.oauthConfirmSection{
+  padding:14px 16px;
+}
+
+.oauthConfirmSection + .oauthConfirmSection{
+  border-top:1px solid #e5e7eb;
+}
+
+.oauthConfirmTitle{
+  margin:0 0 10px;
+  color:#111827;
+  font-size:14px;
+  font-weight:700;
+}
+
+.oauthConfirmGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px 18px;
+}
+
+.oauthConfirmItem{
+  min-width:0;
+}
+
+.oauthConfirmLabel{
+  margin:0 0 2px;
+  color:#6b7280;
+  font-size:11.5px;
+}
+
+.oauthConfirmValue{
+  margin:0;
+  color:#111827;
+  font-size:13px;
+  line-height:1.35;
+  word-break:break-word;
+}
+
+.oauthConfirmNote{
+  margin:14px 0 0;
+  color:#4b5563;
+  font-size:12px;
+  line-height:1.45;
+}
+
+body.googleSetupMode .googleSetupActions{
+  justify-content:space-between;
+  margin-top:20px;
+}
+
+body.googleSetupMode #googleSetupBack{
+  display:inline-flex!important;
+}
+
+body.googleSetupMode #googleSetupSkip{
+  display:none!important;
+}
+
+/* Full-page handoff loader shown after confirmation */
+.oauthFinishLoader{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:#fff;
+}
+
+.oauthFinishLoader.show{
+  display:flex;
+}
+
+.oauthFinishLoaderInner{
+  width:min(92vw,340px);
+  text-align:center;
+}
+
+.oauthFinishLoaderTitle{
+  margin:0 0 8px;
+  color:#111827;
+  font-size:16px;
+  font-weight:700;
+}
+
+.oauthFinishLoaderText{
+  margin:0 0 18px;
+  color:#6b7280;
+  font-size:12px;
+}
+
+.oauthDots{
+  display:flex;
+  justify-content:center;
+  gap:7px;
+}
+
+.oauthDots span{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#1b1648;
+  animation:oauthDotPulse 1.1s infinite ease-in-out;
+}
+
+.oauthDots span:nth-child(2){animation-delay:.16s}
+.oauthDots span:nth-child(3){animation-delay:.32s}
+
+@keyframes oauthDotPulse{
+  0%,80%,100%{transform:scale(.7);opacity:.35}
+  40%{transform:scale(1);opacity:1}
+}
+
+@media(max-width:640px){
+  .oauthConfirmGrid{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+
 </head>
 
 <body>
+<div class="oauthFinishLoader" id="oauthFinishLoader" aria-live="polite" aria-busy="true">
+  <div class="oauthFinishLoaderInner">
+    <h2 class="oauthFinishLoaderTitle">Preparing your learner account</h2>
+    <p class="oauthFinishLoaderText">Please wait while we load your learning content.</p>
+    <div class="oauthDots" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</div>
+
 
 <script>
 (function(){
@@ -2566,9 +2732,12 @@ body.googleSetupMode #googleSetupContinue{
   const continueBtn=document.getElementById("googleSetupContinue");
   const progressText=document.getElementById("googleSetupProgressText");
   const progressBar=document.getElementById("googleSetupProgressBar");
+  const finishLoader=document.getElementById("oauthFinishLoader");
 
   let me={};
   let answers={};
+  let step=1;
+  let finishing=false;
 
   const DISTRICTS={
     "Eastern Cape":["Buffalo City (Metro)","Nelson Mandela Bay (Metro)","Amathole","Chris Hani","Joe Gqabi","OR Tambo","Sarah Baartman"],
@@ -2586,10 +2755,26 @@ body.googleSetupMode #googleSetupContinue{
   const normalizePhone=v=>String(v||"").replace(/\s+/g,"");
   const validPhone=v=>/^\+27[6-8][0-9]{8}$/.test(normalizePhone(v));
 
+  const howHeardLabels={
+    tiktok:"TikTok",
+    facebook:"Facebook",
+    referral:"Referral",
+    family_friends:"Family/Friends",
+    google_search:"Google Search",
+    whatsapp:"WhatsApp",
+    school_teacher:"School or Teacher",
+    other:"Other"
+  };
+
   function setStatus(message="",ok=false){
     if(!statusEl) return;
     statusEl.textContent=message;
     statusEl.className="googleSetupStatus"+(ok?" ok":"");
+  }
+
+  function updateProgress(){
+    if(progressText) progressText.textContent=`Step ${step} of 2`;
+    if(progressBar) progressBar.style.width=step===1?"50%":"100%";
   }
 
   function createSection(title){
@@ -2663,7 +2848,7 @@ body.googleSetupMode #googleSetupContinue{
           key==="province" ||
           key==="howDidYouHearAboutUs"
         ){
-          render();
+          renderStep1();
         }
       });
 
@@ -2685,10 +2870,9 @@ body.googleSetupMode #googleSetupContinue{
     return el;
   }
 
-  function render(){
-    if(progressText) progressText.textContent="";
-    if(progressBar) progressBar.style.width="100%";
-
+  function renderStep1(){
+    step=1;
+    updateProgress();
     setStatus("");
     answerArea.innerHTML="";
 
@@ -2696,7 +2880,8 @@ body.googleSetupMode #googleSetupContinue{
     helpEl.textContent="";
     backBtn.style.display="none";
     skipBtn.style.display="none";
-    continueBtn.textContent="Register";
+    continueBtn.textContent="Continue";
+    continueBtn.disabled=false;
 
     const personal=createSection("Personal details");
 
@@ -2822,6 +3007,111 @@ body.googleSetupMode #googleSetupContinue{
     }
   }
 
+  function addConfirmItem(grid,label,value){
+    const item=document.createElement("div");
+    item.className="oauthConfirmItem";
+
+    const labelEl=document.createElement("p");
+    labelEl.className="oauthConfirmLabel";
+    labelEl.textContent=label;
+
+    const valueEl=document.createElement("p");
+    valueEl.className="oauthConfirmValue";
+    valueEl.textContent=value || "Not provided";
+
+    item.appendChild(labelEl);
+    item.appendChild(valueEl);
+    grid.appendChild(item);
+  }
+
+  function renderConfirmation(){
+    step=2;
+    updateProgress();
+    setStatus("");
+    answerArea.innerHTML="";
+
+    titleEl.textContent="Confirm your details";
+    helpEl.textContent="";
+    backBtn.style.display="inline-flex";
+    skipBtn.style.display="none";
+    continueBtn.textContent="Confirm & Register";
+    continueBtn.disabled=false;
+
+    const card=document.createElement("div");
+    card.className="oauthConfirmCard";
+
+    const personal=document.createElement("section");
+    personal.className="oauthConfirmSection";
+    personal.innerHTML='<h3 class="oauthConfirmTitle">Personal details</h3>';
+    const personalGrid=document.createElement("div");
+    personalGrid.className="oauthConfirmGrid";
+
+    addConfirmItem(personalGrid,"First name",clean(answers.firstName));
+    addConfirmItem(personalGrid,"Surname",clean(answers.surname));
+    addConfirmItem(personalGrid,"Username",clean(answers.username));
+    addConfirmItem(personalGrid,"Gender",clean(answers.gender).replaceAll("_"," "));
+    addConfirmItem(
+      personalGrid,
+      "South Africa",
+      answers.isSA==="yes" ? "Yes" : "No"
+    );
+
+    if(answers.isSA!=="no"){
+      addConfirmItem(personalGrid,"Province",clean(answers.province));
+      addConfirmItem(personalGrid,"District",clean(answers.district));
+    }
+
+    addConfirmItem(personalGrid,"Cellphone",normalizePhone(answers.cellphone));
+    addConfirmItem(
+      personalGrid,
+      "Guardian cellphone",
+      normalizePhone(answers.guardianCellphone||"")
+    );
+
+    personal.appendChild(personalGrid);
+
+    const school=document.createElement("section");
+    school.className="oauthConfirmSection";
+    school.innerHTML='<h3 class="oauthConfirmTitle">School information</h3>';
+    const schoolGrid=document.createElement("div");
+    schoolGrid.className="oauthConfirmGrid";
+
+    addConfirmItem(schoolGrid,"Grade",`Grade ${clean(answers.grade)}`);
+    addConfirmItem(schoolGrid,"Curriculum",clean(answers.curriculum));
+    addConfirmItem(schoolGrid,"School name",clean(answers.schoolName));
+    addConfirmItem(
+      schoolGrid,
+      "Current Mathematics mark",
+      clean(answers.currentMarkRange)
+        ? `${clean(answers.currentMarkRange)}%`
+        : ""
+    );
+
+    const heard=clean(answers.howDidYouHearAboutUs);
+    const heardLabel=
+      heard==="other"
+        ? `Other — ${clean(answers.howDidYouHearAboutUsOther)}`
+        : (howHeardLabels[heard]||heard);
+
+    addConfirmItem(
+      schoolGrid,
+      "How did you hear about us?",
+      heardLabel
+    );
+
+    school.appendChild(schoolGrid);
+
+    card.appendChild(personal);
+    card.appendChild(school);
+    answerArea.appendChild(card);
+
+    const note=document.createElement("p");
+    note.className="oauthConfirmNote";
+    note.textContent=
+      "Please check your details. Once you confirm, your learner account will be registered and your learning content will load.";
+    answerArea.appendChild(note);
+  }
+
   function validate(){
     if(!clean(answers.firstName)){
       setStatus("Please enter your first name.");
@@ -2924,12 +3214,18 @@ body.googleSetupMode #googleSetupContinue{
   }
 
   async function finish(){
+    if(finishing) return;
+    finishing=true;
     continueBtn.disabled=true;
+    backBtn.disabled=true;
     setStatus("");
 
+    finishLoader?.classList.add("show");
+
     try{
-      const res=await fetch(`${API}/api/profile/me`,{
+      const saveRes=await fetch(`${API}/api/profile/me`,{
         method:"PATCH",
+        cache:"no-store",
         headers:{
           "Content-Type":"application/json",
           Authorization:`Bearer ${token}`
@@ -2937,31 +3233,91 @@ body.googleSetupMode #googleSetupContinue{
         body:JSON.stringify(buildPayload())
       });
 
-      const data=await res.json().catch(()=>({}));
+      const saveData=await saveRes.json().catch(()=>({}));
 
-      if(!res.ok){
+      if(!saveRes.ok){
+        finishLoader?.classList.remove("show");
+        finishing=false;
         continueBtn.disabled=false;
-        setStatus(data.message || "We could not save your account. Please try again.");
+        backBtn.disabled=false;
+        setStatus(
+          saveData.message ||
+          "We could not register your account. Please try again."
+        );
         return;
       }
 
-      const user=data.user || {};
+      /*
+       * Confirm the server now considers onboarding complete before leaving
+       * register.html. This prevents a redirect back to setup.
+       */
+      const authRes=await fetch(`${API}/api/auth/me`,{
+        method:"GET",
+        cache:"no-store",
+        headers:{Authorization:`Bearer ${token}`}
+      });
 
-      localStorage.setItem("user",JSON.stringify(user));
-      localStorage.setItem("username",user.username||"");
-      localStorage.setItem("role",user.role||"");
+      const authUser=await authRes.json().catch(()=>({}));
+
+      if(!authRes.ok){
+        throw new Error(
+          authUser.message ||
+          "Could not confirm your learner account."
+        );
+      }
+
+      if(authUser.onboardingCompleted!==true){
+        throw new Error(
+          "Your learner account was saved, but setup is not yet marked complete. Please try again."
+        );
+      }
+
+      localStorage.setItem("user",JSON.stringify(authUser));
+      localStorage.setItem("username",authUser.username||"");
+      localStorage.setItem("role",authUser.role||"");
+
+      /*
+       * Warm the learner page while the dots remain visible.
+       * Navigation happens only after the HTML request completes, so the user
+       * never sees the login page or an empty registration page in between.
+       */
+      try{
+        await fetch("learning-content.html",{
+          method:"GET",
+          cache:"reload",
+          credentials:"same-origin"
+        });
+      }catch{}
 
       location.replace(nextUrl);
 
     }catch(error){
+      finishLoader?.classList.remove("show");
+      finishing=false;
       continueBtn.disabled=false;
-      setStatus("Network error. Please try again.");
+      backBtn.disabled=false;
+      setStatus(
+        error?.message ||
+        "We could not finish registration. Please try again."
+      );
     }
   }
 
   continueBtn.addEventListener("click",()=>{
-    if(!validate()) return;
+    if(step===1){
+      if(!validate()) return;
+      renderConfirmation();
+      window.scrollTo({top:0,behavior:"smooth"});
+      return;
+    }
+
     finish();
+  });
+
+  backBtn.addEventListener("click",()=>{
+    if(finishing) return;
+    renderStep1();
+    window.scrollTo({top:0,behavior:"smooth"});
   });
 
   document.addEventListener("keydown",event=>{
@@ -2977,11 +3333,13 @@ body.googleSetupMode #googleSetupContinue{
 
     try{
       const res=await fetch(`${API}/api/auth/me`,{
+        cache:"no-store",
         headers:{Authorization:`Bearer ${token}`}
       });
 
       if(res.status===401){
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
         location.replace("login.html");
         return;
       }
@@ -2989,6 +3347,20 @@ body.googleSetupMode #googleSetupContinue{
       me=await res.json().catch(()=>({}));
 
       if(me.onboardingCompleted===true){
+        /*
+         * The OAuth account is already complete. Do not send the learner
+         * through setup again; keep the same professional loading handoff.
+         */
+        finishLoader?.classList.add("show");
+
+        try{
+          await fetch("learning-content.html",{
+            method:"GET",
+            cache:"reload",
+            credentials:"same-origin"
+          });
+        }catch{}
+
         location.replace(nextUrl);
         return;
       }
@@ -3011,7 +3383,7 @@ body.googleSetupMode #googleSetupContinue{
         howDidYouHearAboutUsOther:me.howDidYouHearAboutUsOther||""
       };
 
-      render();
+      renderStep1();
 
     }catch(error){
       setStatus("Could not load your account. Please refresh and try again.");
