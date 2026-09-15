@@ -525,7 +525,10 @@
 
 
 <style>
-body.googleSetupMode{background:#fff}
+body.googleSetupMode{
+  background:#fff;
+  color:#111827;
+}
 body.googleSetupMode .topbar,
 body.googleSetupMode .tabs,
 body.googleSetupMode .links,
@@ -535,14 +538,18 @@ body.googleSetupMode .card>h2,
 body.googleSetupMode .card>p,
 body.googleSetupMode .card>.noteBox,
 body.googleSetupMode .card>label,
-body.googleSetupMode .card>.radioRow{display:none!important}
+body.googleSetupMode .card>.radioRow{
+  display:none!important;
+}
+
 body.googleSetupMode .wrap{
   min-height:100vh;
   max-width:none;
-  padding:44px 24px;
+  padding:28px 24px 44px;
   align-items:flex-start;
-  justify-content:center
+  justify-content:center;
 }
+
 body.googleSetupMode .card{
   width:min(100%,760px);
   max-width:760px;
@@ -551,146 +558,592 @@ body.googleSetupMode .card{
   border:none;
   border-radius:0;
   box-shadow:none;
-  background:#fff
+  background:#fff;
 }
+
 .googleOnboarding{display:none}
 body.googleSetupMode .googleOnboarding{display:block}
+
 .googleSetupBrand{
-  margin-bottom:34px;
-  color:#1f2937;
-  font-size:18px;
-  font-weight:800
+  display:none;
 }
+
 .googleSetupProgressText{
-  margin-bottom:13px;
+  margin:0 0 10px;
   color:#111827;
-  font-size:14px;
-  font-weight:700
+  font-size:13px;
+  font-weight:500;
 }
+
 .googleSetupProgressTrack{
   width:100%;
-  height:3px;
-  margin-bottom:27px;
-  background:#e5e7eb;
-  overflow:hidden
+  height:2px;
+  margin-bottom:22px;
+  background:#dedede;
+  overflow:hidden;
 }
+
 .googleSetupProgressBar{
   height:100%;
   width:33.333%;
-  background:#0878d1;
-  transition:width .2s ease
+  background:#0078d4;
+  transition:width .2s ease;
 }
-.googleQuestion{margin-bottom:24px}
-.googleQuestionEyebrow{display:none}
+
+.googleQuestion{
+  margin-bottom:22px;
+}
+
+.googleQuestionEyebrow{
+  display:none;
+}
+
 .googleQuestionTitle{
-  margin:0 0 7px;
+  margin:0 0 6px;
   color:#111827;
-  font-size:20px;
+  font-size:16px;
   line-height:1.35;
-  font-weight:700
+  font-weight:700;
 }
+
 .googleQuestionHelp{
   margin:0;
   color:#5f6368;
-  font-size:14px;
-  line-height:1.5
+  font-size:13px;
+  line-height:1.5;
 }
+
 .googleAnswerArea{
   display:grid;
-  gap:18px;
-  margin-top:26px
+  gap:14px;
+  margin-top:20px;
 }
-.oauthField{display:block}
-.oauthField.hidden{display:none}
+
+.oauthField{
+  display:block;
+}
+
+.oauthField.hidden{
+  display:none;
+}
+
 .oauthLabel{
   display:flex;
   align-items:center;
-  gap:6px;
-  margin:0 0 7px;
+  gap:4px;
+  margin:0 0 6px;
   color:#1f2937;
-  font-size:14px;
-  font-weight:500
+  font-size:13px;
+  line-height:1.3;
+  font-weight:500;
 }
-.oauthOptional{color:#6b7280;font-size:12px;font-weight:400}
+
+.oauthRequired{
+  color:#d93025;
+  font-weight:700;
+}
+
+.oauthOptional{
+  color:#6b7280;
+  font-size:12px;
+  font-weight:400;
+}
+
 .oauthField input,
 .oauthField select,
 .oauthField textarea{
   width:100%;
-  min-height:46px;
+  min-height:38px;
   margin:0;
-  padding:10px 12px;
+  padding:8px 11px;
   border:1px solid #b8bec7;
   border-radius:3px;
   background:#fff;
   color:#111827;
   box-shadow:none;
-  font-size:15px
+  font-size:14px;
+  line-height:1.35;
 }
+
 .oauthField input:focus,
 .oauthField select:focus,
 .oauthField textarea:focus{
   outline:none;
-  border-color:#0878d1;
-  box-shadow:0 0 0 1px #0878d1
+  border-color:#0078d4;
+  box-shadow:0 0 0 1px #0078d4;
 }
-.oauthField textarea{min-height:94px;resize:vertical}
-.googleReadOnly{background:#f4f6f8!important;color:#5f6368!important}
+
+.oauthField textarea{
+  min-height:82px;
+  resize:vertical;
+}
+
+.googleReadOnly{
+  background:#eef4fb!important;
+  color:#334155!important;
+}
+
 .oauthCheckList{
   display:grid;
-  gap:11px;
-  margin-top:2px
+  gap:9px;
+  margin-top:2px;
 }
+
 .oauthCheck{
   display:flex;
   align-items:flex-start;
-  gap:10px;
+  gap:9px;
   color:#1f2937;
-  font-size:14px;
-  line-height:1.4
+  font-size:13px;
+  line-height:1.4;
 }
+
 .oauthCheck input{
-  width:17px!important;
-  min-height:17px!important;
-  height:17px;
+  width:16px!important;
+  min-height:16px!important;
+  height:16px;
   margin:2px 0 0!important;
-  flex:0 0 17px
+  flex:0 0 16px;
 }
+
 .googleSetupActions{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:12px;
-  margin-top:30px;
-  padding-top:4px
+  margin-top:24px;
+  padding-top:2px;
 }
-.googleSetupLeftActions,.googleSetupRightActions{display:flex;align-items:center;gap:10px}
+
+.googleSetupLeftActions,
+.googleSetupRightActions{
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+
 .googleSetupBtn{
-  min-width:108px;
-  height:42px;
-  padding:0 18px;
+  min-width:92px;
+  height:36px;
+  padding:0 14px;
   border-radius:3px;
-  font-size:14px;
-  font-weight:700;
-  cursor:pointer
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
 }
-.googleSetupBack{border:1px solid #aab1ba;background:#fff;color:#111827}
-.googleSetupSkip{display:none!important}
-.googleSetupContinue{border:1px solid #0878d1;background:#0878d1;color:#fff}
-.googleSetupContinue:hover{background:#0568b7}
+
+.googleSetupBack{
+  border:1px solid #9fa6b0;
+  background:#fff;
+  color:#111827;
+}
+
+.googleSetupSkip{
+  display:none!important;
+}
+
+.googleSetupContinue{
+  border:1px solid #0078d4;
+  background:#0078d4;
+  color:#fff;
+}
+
+.googleSetupContinue:hover{
+  background:#006cbd;
+}
+
 .googleSetupStatus{
-  min-height:20px;
-  margin-top:14px;
+  min-height:18px;
+  margin-top:12px;
   color:var(--error);
-  font-size:13px
+  font-size:12px;
 }
-.googleSetupStatus.ok{color:var(--ok)}
+
+.googleSetupStatus.ok{
+  color:var(--ok);
+}
+
 @media(max-width:640px){
-  body.googleSetupMode .wrap{padding:28px 18px}
-  .googleSetupBrand{margin-bottom:26px}
-  .googleQuestionTitle{font-size:19px}
-  .googleAnswerArea{gap:16px}
-  .googleSetupActions{align-items:center}
-  .googleSetupBtn{min-width:96px}
+  body.googleSetupMode .wrap{
+    padding:22px 16px 34px;
+  }
+
+  .googleQuestionTitle{
+    font-size:15px;
+  }
+
+  .googleAnswerArea{
+    gap:13px;
+  }
+
+  .googleSetupBtn{
+    min-width:86px;
+    height:35px;
+    font-size:12.5px;
+  }
+}
+</style>
+
+
+<style>
+/* Required / optional labels for the normal registration flow */
+.requiredStar{
+  color:#d93025;
+  font-weight:700;
+  margin-left:3px;
+}
+.optionalText{
+  color:#6b7280;
+  font-size:12px;
+  font-weight:400;
+  margin-left:4px;
+}
+</style>
+
+
+<style>
+/* ===== Clean 3-step normal registration wizard ===== */
+body:not(.googleSetupMode){
+  background:#fff;
+}
+
+body:not(.googleSetupMode) .wrap{
+  max-width:none;
+  min-height:calc(100vh - 70px);
+  padding:30px 20px 50px;
+  align-items:flex-start;
+  justify-content:center;
+}
+
+body:not(.googleSetupMode) .card{
+  width:min(100%,700px);
+  max-width:700px;
+  margin:0 auto;
+  padding:0;
+  border:0;
+  box-shadow:none;
+  border-radius:0;
+  background:#fff;
+}
+
+body:not(.googleSetupMode) .card > h2,
+body:not(.googleSetupMode) .card > h2 + p,
+body:not(.googleSetupMode) .registrationProgress{
+  display:none!important;
+}
+
+.wizardTop{
+  margin:0 0 24px;
+}
+
+.wizardStepText{
+  margin:0 0 9px;
+  color:#111827;
+  font-size:13px;
+  font-weight:500;
+}
+
+.wizardTrack{
+  width:100%;
+  height:2px;
+  background:#dedede;
+  overflow:hidden;
+}
+
+.wizardFill{
+  width:33.333%;
+  height:100%;
+  background:#0878d1;
+  transition:width .2s ease;
+}
+
+body:not(.googleSetupMode) .registrationStep{
+  display:none;
+}
+
+body:not(.googleSetupMode) .registrationStep.active{
+  display:block;
+}
+
+body:not(.googleSetupMode) .stepHeading{
+  margin:0 0 5px;
+  color:#111827;
+  font-size:17px;
+  line-height:1.35;
+  font-weight:700;
+}
+
+body:not(.googleSetupMode) .stepSubheading{
+  display:none;
+}
+
+body:not(.googleSetupMode) .stepContent{
+  margin-top:20px;
+}
+
+body:not(.googleSetupMode) label{
+  font-size:13px;
+  font-weight:500;
+  color:#1f2937;
+}
+
+body:not(.googleSetupMode) input,
+body:not(.googleSetupMode) select,
+body:not(.googleSetupMode) textarea{
+  min-height:40px;
+  font-size:14px;
+  border-radius:3px;
+  box-shadow:none;
+}
+
+body:not(.googleSetupMode) .row{
+  gap:12px;
+}
+
+body:not(.googleSetupMode) .stepMessage{
+  min-height:18px;
+  margin:10px 0 0;
+  color:#d93025;
+  font-size:12px;
+}
+
+body:not(.googleSetupMode) .wizardNavigation{
+  margin-top:24px;
+  padding-top:0;
+  border-top:0;
+}
+
+body:not(.googleSetupMode) .wizardBackBtn,
+body:not(.googleSetupMode) .wizardNextBtn{
+  min-width:88px;
+  height:36px;
+  padding:0 14px;
+  border-radius:3px;
+  font-size:13px;
+  font-weight:600;
+}
+
+body:not(.googleSetupMode) #acctNote{
+  display:none!important;
+}
+
+body:not(.googleSetupMode) .accountTypeStep .stepContent{
+  margin-top:18px;
+}
+
+body:not(.googleSetupMode) .accountTypeStep .stepContent > label:first-child{
+  display:none;
+}
+
+body:not(.googleSetupMode) .accountTypeStep .radioRow{
+  margin-top:0;
+}
+
+body:not(.googleSetupMode) .links{
+  margin-top:18px;
+  font-size:12px;
+}
+
+body:not(.googleSetupMode) #registerBtn{
+  min-height:36px;
+  font-size:13px;
+}
+
+@media(max-width:640px){
+  body:not(.googleSetupMode) .wrap{
+    padding:24px 16px 40px;
+  }
+  body:not(.googleSetupMode) .stepHeading{
+    font-size:16px;
+  }
+}
+</style>
+
+
+<style>
+/* ===== Learner-only registration refinement ===== */
+body:not(.googleSetupMode) .accountTypeStep{
+  display:none!important;
+}
+
+body:not(.googleSetupMode) .wizardStepText{
+  font-size:13px;
+  font-weight:500;
+}
+
+.passwordFieldWrap{
+  position:relative;
+}
+
+.passwordFieldWrap input{
+  padding-right:42px!important;
+}
+
+.passwordEyeBtn{
+  position:absolute;
+  right:10px;
+  top:50%;
+  transform:translateY(-50%);
+  width:28px;
+  height:28px;
+  border:0;
+  background:transparent;
+  padding:0;
+  margin:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  color:#475569;
+}
+
+.passwordEyeBtn:hover{
+  color:#111827;
+}
+
+.passwordEyeBtn svg{
+  width:18px;
+  height:18px;
+  pointer-events:none;
+}
+
+body:not(.googleSetupMode) #registerBtn{
+  width:auto;
+  min-width:120px;
+  height:38px;
+  padding:0 18px;
+  margin:0;
+}
+
+body:not(.googleSetupMode) .wizardNavigation{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:24px;
+}
+
+body:not(.googleSetupMode) .finalActions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:22px;
+}
+
+body:not(.googleSetupMode) .finalActions .leftSide,
+body:not(.googleSetupMode) .finalActions .rightSide{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+body:not(.googleSetupMode) .finalLinks{
+  margin-top:18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  font-size:12px;
+}
+
+body:not(.googleSetupMode) .finalLinks a{
+  color:#9a6b00;
+  font-weight:500;
+}
+
+body:not(.googleSetupMode) .finalLinks a:hover{
+  text-decoration:underline;
+}
+
+body:not(.googleSetupMode) .passwordActionsLegacy{
+  display:none!important;
+}
+
+body:not(.googleSetupMode) .passwordRequirements{
+  margin-top:10px;
+}
+
+body:not(.googleSetupMode) .passwordRequirements li{
+  font-size:12px;
+  margin:4px 0;
+}
+
+@media(max-width:640px){
+  body:not(.googleSetupMode) .finalActions,
+  body:not(.googleSetupMode) .finalLinks{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  body:not(.googleSetupMode) .finalActions .leftSide,
+  body:not(.googleSetupMode) .finalActions .rightSide{
+    width:100%;
+  }
+
+  body:not(.googleSetupMode) #registerBtn,
+  body:not(.googleSetupMode) .wizardBackBtn{
+    width:100%;
+  }
+}
+</style>
+
+
+<style>
+/* ===== Visible learner-only account type ===== */
+.learnerOnlyCard{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 20px;
+  padding:12px 14px;
+  border:1px solid #d6dbe3;
+  border-radius:4px;
+  background:#fff;
+}
+
+.learnerOnlyCard .learnerOnlyText{
+  min-width:0;
+}
+
+.learnerOnlyCard .learnerOnlyTitle{
+  margin:0;
+  color:#111827;
+  font-size:13.5px;
+  line-height:1.3;
+  font-weight:700;
+}
+
+.learnerOnlyCard .learnerOnlySub{
+  margin:2px 0 0;
+  color:#6b7280;
+  font-size:11.5px;
+  line-height:1.35;
+}
+
+.learnerOnlyCard .learnerOnlyCheck{
+  width:18px;
+  height:18px;
+  flex:0 0 18px;
+  border-radius:50%;
+  background:#0878d1;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  font-weight:700;
+}
+</style>
+
+
+<style>
+/* Hide the original account type label/radio row.
+   Learner Account remains selected internally and shown only in the clean learner card. */
+body:not(.googleSetupMode) .accountTypeStep,
+body:not(.googleSetupMode) .accountTypeStep + *{
+  display:none!important;
 }
 </style>
 
@@ -748,7 +1201,7 @@ body.googleSetupMode .googleOnboarding{display:block}
       <span id="acctNoteText">Please choose Learner, Practice or Guest Account to continue.</span>
     </div>
 
-    <label>Account Type</label>
+    <label>Account Type<span class="requiredStar">*</span></label>
     <div class="radioRow">
       <label><input type="radio" name="accountType" value="learner"> Learner Account</label>
       <label><input type="radio" name="accountType" value="practice"> Practice Account</label>
@@ -757,31 +1210,31 @@ body.googleSetupMode .googleOnboarding{display:block}
 
     <div class="row">
       <div>
-        <label for="firstName">First Name</label>
-        <input id="firstName" />
+        <label for="firstName">First Name<span class="requiredStar">*</span></label>
+        <input id="firstName" required />
       </div>
       <div>
-        <label for="surname">Surname</label>
-        <input id="surname" />
+        <label for="surname">Surname<span class="requiredStar">*</span></label>
+        <input id="surname" required />
       </div>
     </div>
 
     <div id="usernameWrap">
-      <label for="username">Username</label>
-      <input id="username" autocomplete="username" />
+      <label for="username">Username<span class="requiredStar">*</span></label>
+      <input id="username" autocomplete="username" required />
     </div>
 
-    <label for="email">Email</label>
-    <input id="email" type="email" autocomplete="email" />
+    <label for="email">Email<span class="requiredStar">*</span></label>
+    <input id="email" type="email" autocomplete="email" required />
 
-    <label>Are you in South Africa?</label>
+    <label>Are you in South Africa?<span class="requiredStar">*</span></label>
     <div class="radioRow">
       <label><input type="radio" name="isSA" value="yes" checked> Yes</label>
       <label><input type="radio" name="isSA" value="no"> No</label>
     </div>
 
     <div id="saWrap">
-      <label for="province">Province</label>
+      <label for="province">Province<span class="requiredStar">*</span></label>
       <select id="province">
         <option value="" selected>Select Province</option>
         <option value="Eastern Cape">Eastern Cape</option>
@@ -795,38 +1248,38 @@ body.googleSetupMode .googleOnboarding{display:block}
         <option value="Western Cape">Western Cape</option>
       </select>
 
-      <label for="district">District</label>
+      <label for="district">District<span class="requiredStar">*</span></label>
       <select id="district" disabled>
         <option value="" selected>Select District</option>
       </select>
     </div>
 
     <div id="genderWrap">
-      <label for="gender">Gender</label>
-      <select id="gender">
+      <label for="gender">Gender<span class="requiredStar">*</span></label>
+      <select id="gender" required>
         <option value="" selected>Select Gender</option>
         <option value="female">Female</option>
         <option value="male">Male</option>
         <option value="prefer_not_to_say">Prefer not to say</option>
-        <option value="other">Other</option>
+        <option value="other">Other (please specify)</option>
       </select>
     </div>
 
     <div class="row" id="phoneRow">
       <div>
-        <label for="cellphone">Your Cellphone</label>
-        <input id="cellphone" inputmode="tel" placeholder="+27" />
+        <label for="cellphone">Your Cellphone<span class="requiredStar">*</span></label>
+        <input id="cellphone" inputmode="tel" placeholder="+27" required />
    
       </div>
       <div id="guardianCellphoneWrap">
-        <label for="guardianCellphone">Guardian Cellphone</label>
+        <label for="guardianCellphone">Guardian Cellphone<span class="optionalText">(Optional)</span></label>
         <input id="guardianCellphone" inputmode="tel" placeholder="+27" />
       </div>
     </div>
 
     <div id="gradeWrap">
-      <label for="grade">Grade</label>
-      <select id="grade">
+      <label for="grade">Grade<span class="requiredStar">*</span></label>
+      <select id="grade" required>
         <option value="" selected>Select Grade</option>
         <option value="8">Grade 8</option>
         <option value="9">Grade 9</option>
@@ -837,8 +1290,8 @@ body.googleSetupMode .googleOnboarding{display:block}
     </div>
 
     <div id="curriculumWrap">
-      <label for="curriculum">Curriculum</label>
-      <select id="curriculum">
+      <label for="curriculum">Curriculum<span class="requiredStar">*</span></label>
+      <select id="curriculum" required>
         <option value="" selected>Select Curriculum</option>
         <option value="CAPS">CAPS</option>
         <option value="IEB">IEB</option>
@@ -846,7 +1299,7 @@ body.googleSetupMode .googleOnboarding{display:block}
     </div>
 
     <div id="guestWrap" class="hide">
-      <label>Reason for Visiting</label>
+      <label>Reason for Visiting<span class="requiredStar">*</span></label>
       <div class="checkGroup">
         <label><input type="checkbox" name="guestReasons" value="parent_guardian"> Parent / Guardian</label>
         <label><input type="checkbox" name="guestReasons" value="tutoring_service"> Another Tutoring Service</label>
@@ -860,22 +1313,22 @@ body.googleSetupMode .googleOnboarding{display:block}
       </div>
 
       <div id="otherReasonWrap" class="hide">
-        <label for="otherReason">Please Specify</label>
+        <label for="otherReason">Please Specify<span class="requiredStar">*</span></label>
         <input id="otherReason" placeholder="Please tell us your reason for visiting" />
       </div>
 
-      <label for="guestMessage">Message</label>
+      <label for="guestMessage">Message<span class="optionalText">(Optional)</span></label>
       <textarea id="guestMessage" maxlength="255" rows="4" placeholder="Tell us more about your visit..."></textarea>
       <div class="charCount" id="guestMessageCount">255 characters remaining</div>
     </div>
 
     <div id="schoolNameWrap">
-      <label for="schoolName">School Name</label>
+      <label for="schoolName">School Name<span class="optionalText">(Optional)</span></label>
       <input id="schoolName" />
     </div>
 
     <div id="currentWrap">
-      <label for="currentMarkRange">Current Mark</label>
+      <label for="currentMarkRange">Current Mark<span class="optionalText">(Optional)</span></label>
       <select id="currentMarkRange">
         <option value="" selected>Select Current Mark</option>
         <option value="0-29">0-29</option>
@@ -888,12 +1341,32 @@ body.googleSetupMode .googleOnboarding{display:block}
       </select>
     </div>
 
+    <div id="howHeardWrap">
+      <label for="howDidYouHearAboutUs">How did you hear about us?<span class="requiredStar">*</span></label>
+      <select id="howDidYouHearAboutUs" required>
+        <option value="" selected>Select an option</option>
+        <option value="tiktok">TikTok</option>
+        <option value="facebook">Facebook</option>
+        <option value="family_friends">Family/Friends</option>
+        <option value="google_search">Google Search</option>
+        <option value="whatsapp">WhatsApp</option>
+        <option value="school_teacher">School or Teacher</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+
+    <div id="howHeardOtherWrap" style="display:none;">
+      <label for="howDidYouHearAboutUsOther">Please tell us how you heard about us<span class="requiredStar">*</span></label>
+      <input id="howDidYouHearAboutUsOther" type="text" maxlength="120" placeholder="Please specify">
+    </div>
+
     <div class="row">
       <div>
-        <label for="password">Password</label>
+        <label for="password">Password<span class="requiredStar">*</span></label>
         <input
           id="password"
           type="password"
+          required
           autocomplete="new-password"
           aria-describedby="passwordStrengthLabel passwordStrengthHint"
         />
@@ -930,8 +1403,8 @@ body.googleSetupMode .googleOnboarding{display:block}
         </div>
       </div>
       <div>
-        <label for="confirmPassword">Confirm Password</label>
-        <input id="confirmPassword" type="password" autocomplete="new-password" />
+        <label for="confirmPassword">Confirm Password<span class="requiredStar">*</span></label>
+        <input id="confirmPassword" type="password" autocomplete="new-password" required />
       </div>
     </div>
 
@@ -980,6 +1453,21 @@ body.googleSetupMode .googleOnboarding{display:block}
   const schoolNameEl = document.getElementById("schoolName");
   const currentWrap = document.getElementById("currentWrap");
   const currentMarkRangeEl = document.getElementById("currentMarkRange");
+  const howDidYouHearAboutUsEl = document.getElementById("howDidYouHearAboutUs");
+  const howDidYouHearAboutUsOtherEl = document.getElementById("howDidYouHearAboutUsOther");
+  const howHeardOtherWrap = document.getElementById("howHeardOtherWrap");
+
+  function refreshHowHeardOther(){
+    const show = howDidYouHearAboutUsEl?.value === "other";
+    if(howHeardOtherWrap) howHeardOtherWrap.style.display = show ? "block" : "none";
+    if(howDidYouHearAboutUsOtherEl){
+      howDidYouHearAboutUsOtherEl.required = show;
+      if(!show) howDidYouHearAboutUsOtherEl.value = "";
+    }
+  }
+
+  howDidYouHearAboutUsEl?.addEventListener("change", refreshHowHeardOther);
+  refreshHowHeardOther();
 
   const passwordEl = document.getElementById("password");
   const confirmEl = document.getElementById("confirmPassword");
@@ -1409,6 +1897,9 @@ body.googleSetupMode .googleOnboarding{display:block}
 
     const schoolName = cleanSpaces(schoolNameEl.value);
     const currentMarkRange = currentMarkRangeEl.value;
+    const howDidYouHearAboutUs = howDidYouHearAboutUsEl.value;
+    const howDidYouHearAboutUsOther =
+      howDidYouHearAboutUsOtherEl?.value.trim() || "";
     const curriculum = curriculumEl.value.trim();
     const guestReasons = selectedGuestReasons();
     const otherReason = cleanSpaces(otherReasonEl.value);
@@ -1467,6 +1958,16 @@ body.googleSetupMode .googleOnboarding{display:block}
       currentMarkRange:
         type === "learner"
           ? currentMarkRange
+          : "",
+
+      howDidYouHearAboutUs:
+        type === "learner"
+          ? howDidYouHearAboutUs
+          : "",
+
+      howDidYouHearAboutUsOther:
+        type === "learner" && howDidYouHearAboutUs === "other"
+          ? howDidYouHearAboutUsOther
           : "",
 
       gender:
@@ -1604,11 +2105,33 @@ body.googleSetupMode .googleOnboarding{display:block}
 
 <script>
 (function(){
-  const card=document.querySelector(".card"); if(!card) return;
+  const card=document.querySelector(".card");
+  if(!card) return;
+
+  /* Force Learner account for now. */
+  const learnerRadio=document.querySelector('input[name="accountType"][value="learner"]');
+  if(learnerRadio){
+    learnerRadio.checked=true;
+    learnerRadio.dispatchEvent(new Event("change",{bubbles:true}));
+  }
+
+  document.querySelectorAll('input[name="accountType"]').forEach(radio=>{
+    if(radio.value!=="learner"){
+      radio.checked=false;
+    }
+    const holder=radio.closest("label");
+    if(holder) holder.style.display="none";
+  });
+
+  const originalAccountLabel=[...document.querySelectorAll("label")]
+    .find(label=>label.textContent.replace("*","").trim()==="Account Type");
+  if(originalAccountLabel){
+    originalAccountLabel.style.display="none";
+    const originalAccountRow=originalAccountLabel.nextElementSibling;
+    if(originalAccountRow) originalAccountRow.style.display="none";
+  }
+
   const intro=card.querySelector("h2")?.nextElementSibling;
-  const accountLabel=[...card.querySelectorAll("label")].find(x=>x.textContent.trim()==="Account Type");
-  const accountRow=accountLabel?.nextElementSibling;
-  const accountNote=document.getElementById("acctNote");
   const firstNameRow=document.getElementById("firstName")?.closest(".row");
   const usernameWrap=document.getElementById("usernameWrap");
   const email=document.getElementById("email");
@@ -1616,90 +2139,278 @@ body.googleSetupMode .googleOnboarding{display:block}
   const saRow=document.querySelector('input[name="isSA"]')?.closest(".radioRow");
   const saLabel=saRow?.previousElementSibling;
   const passwordRow=document.getElementById("password")?.closest(".row");
-  const registerRow=document.getElementById("registerBtn")?.closest(".row");
+  const registerBtn=document.getElementById("registerBtn");
+  const registerRow=registerBtn?.closest(".row");
   const msg=document.getElementById("msg");
-  const links=card.querySelector(".links");
+  const oldLinks=card.querySelector(".links");
 
-  const progress=document.createElement("div");
-  progress.className="registrationProgress";
-  progress.innerHTML=[1,2,3,4].map(n=>`<span class="registrationProgressDot" data-progress="${n}"></span>`).join("");
-  intro?.insertAdjacentElement("afterend",progress);
+  const oldProgress=card.querySelector(".registrationProgress");
+  if(oldProgress) oldProgress.remove();
 
-  function makeStep(n,title,sub,cls=""){
+  /* Remove any prior generated registrationStep sections from the normal flow. */
+  card.querySelectorAll(".registrationStep").forEach(el=>el.remove());
+
+  const wizardTop=document.createElement("div");
+  wizardTop.className="wizardTop";
+  wizardTop.innerHTML=`
+    <div class="wizardStepText" id="wizardStepText">Step 1 of 2</div>
+    <div class="wizardTrack" aria-hidden="true">
+      <div class="wizardFill" id="wizardFill" style="width:50%"></div>
+    </div>
+  `;
+  intro?.insertAdjacentElement("afterend",wizardTop);
+
+  function makeStep(n,title){
     const el=document.createElement("section");
-    el.className=`registrationStep ${cls}`.trim();
+    el.className="registrationStep";
     el.dataset.step=n;
-    el.innerHTML=`<h3 class="stepHeading">${title}</h3><p class="stepSubheading">${sub}</p><div class="stepContent"></div><p class="stepMessage"></p><div class="wizardNavigation">${n>1?'<button class="wizardBackBtn" type="button"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">Back</button>':""}${n<4?'<button class="wizardNextBtn" type="button">Next<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt=""></button>':""}</div>`;
-    card.appendChild(el); return el;
+    el.innerHTML=`
+      <h3 class="stepHeading">${title}</h3>
+      <div class="stepContent"></div>
+      <p class="stepMessage"></p>
+    `;
+    card.appendChild(el);
+    return el;
   }
 
   const steps=[
-    makeStep(1,"Choose Account Type","Select the account that best matches how you will use Practice Online.","accountTypeStep"),
-    makeStep(2,"Personal Details","Enter your personal and contact information."),
-    makeStep(3,"Account Details","Complete the details required for your selected account."),
-    makeStep(4,"Secure Your Account","Create a strong password, confirm it, and submit your registration.")
+    makeStep(1,"Personal details"),
+    makeStep(2,"Secure your account")
   ];
 
-  function move(step,nodes){const c=step.querySelector(".stepContent");nodes.filter(Boolean).forEach(x=>c.appendChild(x));}
-  move(steps[0],[accountLabel,accountRow,accountNote]);
-  move(steps[1],[firstNameRow,usernameWrap,emailLabel,email,saLabel,saRow,document.getElementById("saWrap"),document.getElementById("genderWrap"),document.getElementById("phoneRow")]);
-  move(steps[2],[document.getElementById("gradeWrap"),document.getElementById("curriculumWrap"),document.getElementById("guestWrap"),document.getElementById("schoolNameWrap"),document.getElementById("currentWrap")]);
-  move(steps[3],[passwordRow,registerRow,msg,links]);
+  const learnerOnlyCard=document.createElement("div");
+  learnerOnlyCard.className="learnerOnlyCard";
+  learnerOnlyCard.innerHTML=`
+    <div class="learnerOnlyText">
+      <p class="learnerOnlyTitle">Learner Account</p>
+      <p class="learnerOnlySub">Account type</p>
+    </div>
+    <div class="learnerOnlyCheck" aria-hidden="true">✓</div>
+  `;
+  steps[0].querySelector(".stepContent").appendChild(learnerOnlyCard);
 
-  accountNote?.classList.add("hideAccountDescription");
+  function move(step,nodes){
+    const content=step.querySelector(".stepContent");
+    nodes.filter(Boolean).forEach(node=>content.appendChild(node));
+  }
+
+  move(steps[0],[
+    firstNameRow,
+    usernameWrap,
+    emailLabel,
+    email,
+    saLabel,
+    saRow,
+    document.getElementById("saWrap"),
+    document.getElementById("genderWrap"),
+    document.getElementById("phoneRow"),
+    document.getElementById("gradeWrap"),
+    document.getElementById("curriculumWrap"),
+    document.getElementById("schoolNameWrap"),
+    document.getElementById("currentWrap"),
+    document.getElementById("howHeardWrap"),
+    document.getElementById("howHeardOtherWrap")
+  ]);
+
+  move(steps[1],[passwordRow]);
+
+  /* Add inline eye buttons to password and confirm password. */
+  function addEye(inputId){
+    const input=document.getElementById(inputId);
+    if(!input) return;
+
+    const parent=input.parentElement;
+    if(!parent) return;
+
+    const wrap=document.createElement("div");
+    wrap.className="passwordFieldWrap";
+
+    parent.insertBefore(wrap,input);
+    wrap.appendChild(input);
+
+    const btn=document.createElement("button");
+    btn.type="button";
+    btn.className="passwordEyeBtn";
+    btn.setAttribute("aria-label",`Show ${inputId==="password"?"password":"confirm password"}`);
+    btn.setAttribute("aria-pressed","false");
+    btn.innerHTML=`
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
+        <circle cx="12" cy="12" r="2.6"></circle>
+      </svg>
+    `;
+
+    btn.addEventListener("click",()=>{
+      const showing=input.type==="text";
+      input.type=showing?"password":"text";
+      btn.setAttribute("aria-pressed",String(!showing));
+      btn.setAttribute("aria-label",`${showing?"Show":"Hide"} ${inputId==="password"?"password":"confirm password"}`);
+    });
+
+    wrap.appendChild(btn);
+  }
+
+  addEye("password");
+  addEye("confirmPassword");
+
+  /* Hide legacy show-password button if present. */
+  [...card.querySelectorAll("button")].forEach(btn=>{
+    if(/show password/i.test(btn.textContent||"")){
+      btn.classList.add("passwordActionsLegacy");
+    }
+  });
+
+  /* Build clean final action area. */
+  const finalContent=steps[1].querySelector(".stepContent");
+
+  const finalActions=document.createElement("div");
+  finalActions.className="finalActions";
+  finalActions.innerHTML=`
+    <div class="leftSide">
+      <button class="wizardBackBtn" type="button">Back</button>
+    </div>
+    <div class="rightSide"></div>
+  `;
+
+  if(registerBtn){
+    finalActions.querySelector(".rightSide").appendChild(registerBtn);
+  }
+  finalContent.appendChild(finalActions);
+
+  if(msg){
+    finalContent.appendChild(msg);
+  }
+
+  const finalLinks=document.createElement("div");
+  finalLinks.className="finalLinks";
+  finalLinks.innerHTML=`
+    <a href="login.html">Already have an account? Login</a>
+    <a href="forgot-password.html">Forgot password?</a>
+  `;
+  finalContent.appendChild(finalLinks);
+
+  if(registerRow && registerRow.children.length===0){
+    registerRow.remove();
+  }
+  if(oldLinks){
+    oldLinks.style.display="none";
+  }
+
+  /* Next button for Step 1. */
+  const nav=document.createElement("div");
+  nav.className="wizardNavigation";
+  nav.innerHTML=`
+    <span></span>
+    <button class="wizardNextBtn" type="button">Next</button>
+  `;
+  steps[0].appendChild(nav);
+
   let current=1;
-  const radios=[...document.querySelectorAll('input[name="accountType"]')];
-  const val=id=>String(document.getElementById(id)?.value||"").trim();
-  const type=()=>String(document.querySelector('input[name="accountType"]:checked')?.value||"").trim().toLowerCase();
-  const setErr=(n,t)=>{const e=card.querySelector(`.registrationStep[data-step="${n}"] .stepMessage`);if(e)e.textContent=t||""};
 
-  function refreshAccount(){
-    const t=type();
-    radios.forEach(r=>r.closest("label")?.classList.toggle("selectedAccount",r.checked));
-    accountNote?.classList.toggle("hideAccountDescription",!t);
-    const b=steps[0].querySelector(".wizardNextBtn"); if(b)b.disabled=!t;
-  }
+  const value=id=>String(document.getElementById(id)?.value||"").trim();
 
-  function validate(n){
-    const t=type();
-    if(n===1){if(!t){setErr(1,"Please choose an account type before continuing.");return false}}
-    if(n===2){
-      if(!val("firstName")||!val("surname")){setErr(2,"Please enter your first name and surname.");return false}
-      if(t!=="guest"&&!val("username")){setErr(2,"Please enter a username.");return false}
-      if(!val("email")){setErr(2,"Please enter your email address.");return false}
-      if(!val("cellphone")||val("cellphone")==="+27"){setErr(2,"Please enter your cellphone number.");return false}
-      if(t!=="guest"&&!val("gender")){setErr(2,"Please select your gender.");return false}
+  const setError=(n,text)=>{
+    const el=card.querySelector(`.registrationStep[data-step="${n}"] .stepMessage`);
+    if(el) el.textContent=text||"";
+  };
+
+  function validate(step){
+    if(step===1){
+      if(!value("firstName") || !value("surname")){
+        setError(1,"Please enter your first name and surname.");
+        return false;
+      }
+      if(!value("username")){
+        setError(1,"Please enter a username.");
+        return false;
+      }
+      if(!value("email")){
+        setError(1,"Please enter your email address.");
+        return false;
+      }
+      if(!value("cellphone") || value("cellphone")==="+27"){
+        setError(1,"Please enter your cellphone number.");
+        return false;
+      }
+      if(!value("gender")){
+        setError(1,"Please select your gender.");
+        return false;
+      }
+
       const inSA=document.querySelector('input[name="isSA"]:checked')?.value==="yes";
-      if(inSA&&(!val("province")||!val("district"))){setErr(2,"Please select your province and district.");return false}
+      if(inSA && (!value("province") || !value("district"))){
+        setError(1,"Please select your province and district.");
+        return false;
+      }
+
+      if(!value("grade") || !value("curriculum")){
+        setError(1,"Please select your grade and curriculum.");
+        return false;
+      }
+
+      if(!value("howDidYouHearAboutUs")){
+        setError(1,"Please tell us how you heard about Practice Online.");
+        return false;
+      }
+
+      if(
+        value("howDidYouHearAboutUs")==="other" &&
+        !value("howDidYouHearAboutUsOther")
+      ){
+        setError(1,"Please specify how you heard about Practice Online.");
+        return false;
+      }
     }
-    if(n===3){
-      if((t==="learner"||t==="practice")&&(!val("grade")||!val("curriculum"))){setErr(3,"Please select your grade and curriculum.");return false}
-      if(t==="learner"&&(!val("schoolName")||!val("currentMarkRange")||!val("guardianCellphone")||val("guardianCellphone")==="+27")){setErr(3,"Please complete the learner account details.");return false}
-      if(t==="guest"&&!document.querySelectorAll('input[name="guestReasons"]:checked').length){setErr(3,"Please select at least one reason for visiting.");return false}
-      if(t==="guest"&&document.getElementById("guestReasonOther")?.checked&&!val("otherReason")){setErr(3,"Please specify the other reason for visiting.");return false}
-    }
-    setErr(n,""); return true;
+
+    setError(step,"");
+    return true;
   }
 
-  function show(n){
-    current=Math.max(1,Math.min(4,n));
-    steps.forEach(s=>s.classList.toggle("active",Number(s.dataset.step)===current));
-    card.querySelectorAll(".registrationProgressDot").forEach(d=>{const x=Number(d.dataset.progress);d.classList.toggle("active",x===current);d.classList.toggle("done",x<current)});
+  function show(step){
+    current=Math.max(1,Math.min(2,step));
+
+    steps.forEach(section=>{
+      section.classList.toggle(
+        "active",
+        Number(section.dataset.step)===current
+      );
+    });
+
+    const stepText=document.getElementById("wizardStepText");
+    const fill=document.getElementById("wizardFill");
+
+    if(stepText) stepText.textContent=`Step ${current} of 2`;
+    if(fill) fill.style.width=`${current===1?50:100}%`;
+
     window.scrollTo({top:0,behavior:"smooth"});
   }
 
-  card.querySelectorAll(".wizardNextBtn").forEach(b=>b.addEventListener("click",()=>{if(validate(current))show(current+1)}));
-  card.querySelectorAll(".wizardBackBtn").forEach(b=>b.addEventListener("click",()=>show(current-1)));
-  radios.forEach(r=>r.addEventListener("change",refreshAccount));
+  steps[0].querySelector(".wizardNextBtn")?.addEventListener("click",()=>{
+    if(validate(1)) show(2);
+  });
 
-  document.addEventListener("keydown",e=>{
-    if(e.key!=="Enter"||String(e.target?.tagName||"").toLowerCase()==="textarea")return;
-    e.preventDefault();e.stopImmediatePropagation();
-    if(current<4)card.querySelector(`.registrationStep[data-step="${current}"] .wizardNextBtn`)?.click();
-    else document.getElementById("registerBtn")?.click();
+  steps[1].querySelector(".wizardBackBtn")?.addEventListener("click",()=>{
+    show(1);
+  });
+
+  document.addEventListener("keydown",event=>{
+    if(
+      event.key!=="Enter" ||
+      String(event.target?.tagName||"").toLowerCase()==="textarea" ||
+      document.body.classList.contains("googleSetupMode")
+    ) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    if(current===1){
+      steps[0].querySelector(".wizardNextBtn")?.click();
+    }else{
+      registerBtn?.click();
+    }
   },true);
 
-  refreshAccount();show(1);
+  show(1);
 })();
 </script>
 
@@ -1752,16 +2463,28 @@ body.googleSetupMode .googleOnboarding{display:block}
   function field(label,key,type="text",opts={}){
     const wrap=document.createElement("div");
     wrap.className="oauthField"+(opts.hidden?" hidden":"");
+
     const l=document.createElement("label");
     l.className="oauthLabel";
     l.htmlFor="oauth_"+key;
-    l.textContent=label;
-    if(opts.optional){
+
+    const labelText=document.createElement("span");
+    labelText.textContent=label;
+    l.appendChild(labelText);
+
+    if(opts.required){
+      const required=document.createElement("span");
+      required.className="oauthRequired";
+      required.textContent="*";
+      required.setAttribute("aria-hidden","true");
+      l.appendChild(required);
+    }else if(opts.optional){
       const small=document.createElement("span");
       small.className="oauthOptional";
       small.textContent="(Optional)";
       l.appendChild(small);
     }
+
     wrap.appendChild(l);
 
     let el;
@@ -1771,14 +2494,18 @@ body.googleSetupMode .googleOnboarding{display:block}
       first.value="";
       first.textContent=opts.placeholder||"Select an option";
       el.appendChild(first);
+
       (opts.options||[]).forEach(([value,text])=>{
         const o=document.createElement("option");
-        o.value=value;o.textContent=text;el.appendChild(o);
+        o.value=value;
+        o.textContent=text;
+        el.appendChild(o);
       });
+
       el.value=answers[key]??"";
       el.addEventListener("change",()=>{
         answers[key]=el.value;
-        if(key==="accountType"||key==="isSA"||key==="province") render();
+        if(key==="accountType"||key==="isSA"||key==="province"||key==="howDidYouHearAboutUs") render();
       });
     }else if(type==="textarea"){
       el=document.createElement("textarea");
@@ -1791,10 +2518,16 @@ body.googleSetupMode .googleOnboarding{display:block}
       el.type=type;
       el.placeholder=opts.placeholder||"";
       el.value=answers[key]??"";
-      if(opts.readonly){el.readOnly=true;el.className="googleReadOnly";}
+      if(opts.readonly){
+        el.readOnly=true;
+        el.className="googleReadOnly";
+      }
       el.addEventListener("input",()=>answers[key]=el.value);
     }
+
     el.id="oauth_"+key;
+    if(opts.required) el.required=true;
+
     wrap.appendChild(el);
     answerArea.appendChild(wrap);
     return el;
@@ -1840,42 +2573,42 @@ body.googleSetupMode .googleOnboarding{display:block}
   function renderStep1(){
     titleEl.textContent="Account information";
     helpEl.textContent=`Your email is linked to the ${providerName} account you used to sign in.`;
-    field("Account type","accountType","select",{
+    field("Account type","accountType","select",{required:true,
       options:[["learner","Learner Account"],["practice","Practice Account"],["guest","Guest Account"]],
       placeholder:"Select account type"
     });
-    field("First name","firstName","text",{placeholder:"First name"});
-    field("Surname","surname","text",{placeholder:"Surname"});
+    field("First name","firstName","text",{placeholder:"First name",required:true});
+    field("Surname","surname","text",{placeholder:"Surname",required:true});
     if(accountType()!=="guest"){
-      field("Username","username","text",{placeholder:"Username"});
+      field("Username","username","text",{placeholder:"Username",required:true});
     }
-    field(`${providerName} email`,"email","email",{readonly:true});
+    field(`${providerName} email`,"email","email",{readonly:true,required:true});
     if(accountType()!=="guest"){
-      field("Gender","gender","select",{
-        options:[["female","Female"],["male","Male"],["prefer_not_to_say","Prefer not to say"],["other","Other"]],
+      field("Gender","gender","select",{required:true,
+        options:[["female","Female"],["male","Male"],["prefer_not_to_say","Prefer not to say"],["other","Other (please specify)"]],
         placeholder:"Select gender"
       });
     }
   }
 
   function renderStep2(){
-    titleEl.textContent="Contact & location information";
-    helpEl.textContent="Add the contact and location details for your Practice Online profile.";
-    field("Are you in South Africa?","isSA","select",{
+    titleEl.textContent="Address information";
+    helpEl.textContent="";
+    field("Are you in South Africa?","isSA","select",{required:true,
       options:[["yes","Yes"],["no","No"]],
       placeholder:"Select an option"
     });
     if(answers.isSA!=="no"){
-      field("Province","province","select",{
+      field("Province","province","select",{required:true,
         options:Object.keys(DISTRICTS).map(x=>[x,x]),
         placeholder:"Select province"
       });
-      field("District","district","select",{
+      field("District","district","select",{required:true,
         options:(DISTRICTS[answers.province]||[]).map(x=>[x,x]),
         placeholder:"Select district"
       });
     }
-    field("Cellphone number","cellphone","tel",{placeholder:"+27821234567"});
+    field("Cellphone number","cellphone","tel",{placeholder:"+27821234567",required:true});
     if(accountType()==="learner"){
       field("Guardian cellphone number","guardianCellphone","tel",{placeholder:"+27821234567",optional:true});
     }
@@ -1886,7 +2619,7 @@ body.googleSetupMode .googleOnboarding{display:block}
     if(t==="guest"){
       titleEl.textContent="Visit information";
       helpEl.textContent="Tell us briefly why you are visiting Practice Online.";
-      checkboxList("Reason for visiting","guestReasons",[
+      checkboxList("Reason for visiting *","guestReasons",[
         ["parent_guardian","Parent / Guardian"],
         ["tutoring_service","Another Tutoring Service"],
         ["school_institution","School / Institution"],
@@ -1906,11 +2639,11 @@ body.googleSetupMode .googleOnboarding{display:block}
 
     titleEl.textContent="Learning information";
     helpEl.textContent="These details help us show the correct assessments and learning content.";
-    field("Grade","grade","select",{
+    field("Grade","grade","select",{required:true,
       options:[8,9,10,11,12].map(x=>[String(x),`Grade ${x}`]),
       placeholder:"Select grade"
     });
-    field("Curriculum","curriculum","select",{
+    field("Curriculum","curriculum","select",{required:true,
       options:[["CAPS","CAPS"],["IEB","IEB"]],
       placeholder:"Select curriculum"
     });
@@ -1920,6 +2653,20 @@ body.googleSetupMode .googleOnboarding{display:block}
         options:["0-29","30-39","40-49","50-59","60-69","70-79","80-100"].map(x=>[x,`${x}%`]),
         placeholder:"Select mark range",
         optional:true
+      });
+      field("How did you hear about us?","howDidYouHearAboutUs","select",{
+        options:[
+          ["tiktok","TikTok"],
+          ["facebook","Facebook"],
+          ["referral","Referral"],
+          ["family_friends","Family or Friends"],
+          ["google_search","Google Search"],
+          ["whatsapp","WhatsApp"],
+          ["school_teacher","School or Teacher"],
+          ["other","Other"]
+        ],
+        placeholder:"Select an option",
+        required:true
       });
     }
   }
@@ -1961,6 +2708,8 @@ body.googleSetupMode .googleOnboarding{display:block}
         const g=Number(answers.grade);
         if(!Number.isInteger(g)||g<8||g>12){setStatus("Please select your grade.");return false;}
         if(!["CAPS","IEB"].includes(clean(answers.curriculum).toUpperCase())){setStatus("Please select CAPS or IEB.");return false;}
+        if(!clean(answers.howDidYouHearAboutUs)){setStatus("Please tell us how you heard about Practice Online.");return false;}
+        if(clean(answers.howDidYouHearAboutUs)==="other"&&!clean(answers.howDidYouHearAboutUsOther)){setStatus("Please specify how you heard about Practice Online.");return false;}
       }
       if(t==="guest"){
         if(!Array.isArray(answers.guestReasons)||answers.guestReasons.length===0){
@@ -1992,6 +2741,11 @@ body.googleSetupMode .googleOnboarding{display:block}
       curriculum:(t==="learner"||t==="practice")?clean(answers.curriculum):"",
       schoolName:t==="learner"?clean(answers.schoolName):"",
       currentMarkRange:t==="learner"?clean(answers.currentMarkRange):"",
+      howDidYouHearAboutUs:t==="learner"?clean(answers.howDidYouHearAboutUs):"",
+      howDidYouHearAboutUsOther:
+        t==="learner" && clean(answers.howDidYouHearAboutUs)==="other"
+          ? clean(answers.howDidYouHearAboutUsOther)
+          : "",
       guestReasons:t==="guest"?(Array.isArray(answers.guestReasons)?answers.guestReasons:[]):[],
       otherReason:t==="guest"?clean(answers.otherReason):"",
       guestMessage:t==="guest"?clean(answers.guestMessage):""
@@ -2079,6 +2833,8 @@ body.googleSetupMode .googleOnboarding{display:block}
         curriculum:me.curriculum||"",
         schoolName:me.schoolName||"",
         currentMarkRange:me.currentMarkRange||"",
+        howDidYouHearAboutUs:me.howDidYouHearAboutUs||"",
+        howDidYouHearAboutUsOther:me.howDidYouHearAboutUsOther||"",
         guestReasons:Array.isArray(me.guestReasons)?me.guestReasons:[],
         otherReason:me.otherReason||"",
         guestMessage:me.guestMessage||""
