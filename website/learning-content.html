@@ -5388,8 +5388,9 @@ function redirectIncompleteLearnerToSetup(user = {}){
   if(!learnerProfileNeedsSetup(user)) return false;
 
   // Keep the current destination so onboarding returns to Quizzes.
+  // oauthSetup is shared by both Google and Microsoft sign-in.
   const setupUrl = new URL("register.html", window.location.href);
-  setupUrl.searchParams.set("googleSetup", "1");
+  setupUrl.searchParams.set("oauthSetup", "1");
   setupUrl.searchParams.set(
     "next",
     "learning-content.html#quizzes"
@@ -5404,9 +5405,79 @@ function redirectIncompleteLearnerToSetup(user = {}){
   return true;
 }
 
-const menuToggleBtn=document.getElementById("menuToggleBtn"),menuDropdown=document.getElementById("menuDropdown"),logoutBtn=document.getElementById("logoutBtn");function text(id,value){const el=document.getElementById(id);if(el)el.textContent=value||"-"}function escapeHtml(value){return String(value||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}function makeInitials(name){return String(name||"Learner").trim().split(/\s+/).map(p=>p[0]).join("").substring(0,2).toUpperCase()||"L"}logoutBtn.onclick=()=>{localStorage.removeItem("token");localStorage.removeItem("username");localStorage.removeItem("me_cache");localStorage.removeItem("user");localStorage.removeItem("role");location.href="login.html"};menuToggleBtn.addEventListener("click",e=>{e.stopPropagation();menuDropdown.classList.toggle("open")});document.addEventListener("click",e=>{if(!menuDropdown.contains(e.target)&&!menuToggleBtn.contains(e.target))menuDropdown.classList.remove("open")});function saveAndRenderUser(user){if(!user||typeof user!=="object")return;localStorage.setItem("user",JSON.stringify(user));localStorage.setItem("username",user.username||"");localStorage.setItem("role",user.role||"");const displayName=user.fullName||user.username||"Learner",accountType=user.accountType||"student",role=user.role||"learner",learnerNumber=user.learnerNumber||user.studentNumber||"-",joinedYear=user.createdAt?new Date(user.createdAt).getFullYear():new Date().getFullYear();text("accountName",displayName);text("accountType",accountType);text("profileInitials",makeInitials(displayName));text("heroName",displayName);text("heroRole",role);text("fullNameValue",user.fullName||displayName);text("usernameValue",user.username||"-");text("emailValue",user.email||"-");text("gradeValue",user.grade?"Grade "+user.grade:"-");text("accountTypeValue",accountType);text("joinedYearValue",joinedYear);text("roleValue",role);text("learnerNumberValue",learnerNumber)}async function loadProfile(){if(!token){location.href="login.html";return}const cachedUser=JSON.parse(localStorage.getItem("user")||"{}");if(cachedUser&&(cachedUser.username||cachedUser.email||cachedUser.fullName))saveAndRenderUser(cachedUser);try{let res=await fetch(`${API}/api/profile/me`,{headers:{Authorization:`Bearer ${token}`}});if(!res.ok)res=await fetch(`${API}/api/auth/me`,{headers:{Authorization:`Bearer ${token}`}});if(!res.ok){localStorage.removeItem("token");localStorage.removeItem("user");location.href="login.html";return}const user=await res.json();
-if(redirectIncompleteLearnerToSetup(user)) return;
-saveAndRenderUser(user)}catch(err){if(!cachedUser||(!cachedUser.username&&!cachedUser.email&&!cachedUser.fullName)){text("accountName","Could not load profile");text("heroName","Could not load profile")}}}loadProfile();
+const menuToggleBtn=document.getElementById("menuToggleBtn"),menuDropdown=document.getElementById("menuDropdown"),logoutBtn=document.getElementById("logoutBtn");function text(id,value){const el=document.getElementById(id);if(el)el.textContent=value||"-"}function escapeHtml(value){return String(value||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}function makeInitials(name){return String(name||"Learner").trim().split(/\s+/).map(p=>p[0]).join("").substring(0,2).toUpperCase()||"L"}logoutBtn.onclick=()=>{localStorage.removeItem("token");localStorage.removeItem("username");localStorage.removeItem("me_cache");localStorage.removeItem("user");localStorage.removeItem("role");location.href="login.html"};menuToggleBtn.addEventListener("click",e=>{e.stopPropagation();menuDropdown.classList.toggle("open")});document.addEventListener("click",e=>{if(!menuDropdown.contains(e.target)&&!menuToggleBtn.contains(e.target))menuDropdown.classList.remove("open")});function saveAndRenderUser(user){if(!user||typeof user!=="object")return;localStorage.setItem("user",JSON.stringify(user));localStorage.setItem("username",user.username||"");localStorage.setItem("role",user.role||"");const displayName=user.fullName||user.username||"Learner",accountType=user.accountType||"student",role=user.role||"learner",learnerNumber=user.learnerNumber||user.studentNumber||"-",joinedYear=user.createdAt?new Date(user.createdAt).getFullYear():new Date().getFullYear();text("accountName",displayName);text("accountType",accountType);text("profileInitials",makeInitials(displayName));text("heroName",displayName);text("heroRole",role);text("fullNameValue",user.fullName||displayName);text("usernameValue",user.username||"-");text("emailValue",user.email||"-");text("gradeValue",user.grade?"Grade "+user.grade:"-");text("accountTypeValue",accountType);text("joinedYearValue",joinedYear);text("roleValue",role);text("learnerNumberValue",learnerNumber)}async function loadProfile(){
+  if(!token){
+    location.href="login.html";
+    return;
+  }
+
+  const cachedUser=JSON.parse(localStorage.getItem("user")||"{}");
+
+  if(
+    cachedUser &&
+    (cachedUser.username||cachedUser.email||cachedUser.fullName)
+  ){
+    saveAndRenderUser(cachedUser);
+  }
+
+  try{
+    /*
+     * Use /api/auth/me for the onboarding decision.
+     * It is the authoritative authentication/profile response and avoids
+     * redirect loops if a display/profile endpoint ever omits a field.
+     */
+    const authRes=await fetch(`${API}/api/auth/me`,{
+      cache:"no-store",
+      headers:{Authorization:`Bearer ${token}`}
+    });
+
+    if(!authRes.ok){
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      location.href="login.html";
+      return;
+    }
+
+    const authUser=await authRes.json();
+
+    if(redirectIncompleteLearnerToSetup(authUser)) return;
+
+    saveAndRenderUser(authUser);
+
+    /*
+     * Load the profile endpoint afterward for any display-specific fields.
+     * A profile fetch failure must not send a completed learner back to setup.
+     */
+    try{
+      const profileRes=await fetch(`${API}/api/profile/me`,{
+        cache:"no-store",
+        headers:{Authorization:`Bearer ${token}`}
+      });
+
+      if(profileRes.ok){
+        const profileUser=await profileRes.json();
+
+        const mergedUser={
+          ...authUser,
+          ...profileUser,
+          onboardingCompleted:authUser.onboardingCompleted
+        };
+
+        saveAndRenderUser(mergedUser);
+      }
+    }catch{}
+
+  }catch(err){
+    if(
+      !cachedUser ||
+      (!cachedUser.username&&!cachedUser.email&&!cachedUser.fullName)
+    ){
+      text("accountName","Could not load profile");
+      text("heroName","Could not load profile");
+    }
+  }
+}
+loadProfile();
 </script>
 
 <script>
