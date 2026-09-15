@@ -533,6 +533,15 @@ button{
 }
 </style>
 
+
+<style>
+/* Keep login status area clean when there is no message */
+.msg:empty{
+  min-height:0;
+  margin-top:0;
+}
+</style>
+
 </head>
 
 <body>
@@ -879,7 +888,7 @@ button{
     loginBtn.disabled = true;
     googleLoginBtn.disabled = true;
     resendBtn.disabled = true;
-    setMsg("Signing in...");
+    setMsg("");
 
     try {
       const res = await fetch(`${API}/api/login`, {
