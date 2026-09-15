@@ -34,7 +34,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       /*
        * Normal email/password accounts still require a password.
-       * A verified OAuth account (Google) is allowed to exist without one.
+       * A verified OAuth account (Google or Microsoft) is allowed to exist without one.
        */
       required: function () {
         return !(
@@ -131,6 +131,30 @@ const UserSchema = new mongoose.Schema(
       ],
       default: "",
       trim: true,
+    },
+
+    howDidYouHearAboutUs: {
+      type: String,
+      enum: [
+        "",
+        "tiktok",
+        "facebook",
+        "referral",
+        "family_friends",
+        "google_search",
+        "whatsapp",
+        "school_teacher",
+        "other",
+      ],
+      default: "",
+      trim: true,
+    },
+
+    howDidYouHearAboutUsOther: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 120,
     },
 
     guestReasons: {
@@ -362,7 +386,7 @@ UserSchema.virtual("trialDaysLeft").get(function () {
 UserSchema.pre("validate", function (next) {
   try {
     /*
-     * Google OAuth creates an email-verified user before the learner has
+     * OAuth creates an email-verified user before the learner has
      * answered the onboarding questions. Such an account has no password.
      * Allow that temporary incomplete state so the profile wizard can run.
      */
@@ -411,6 +435,20 @@ UserSchema.pre("validate", function (next) {
     if (this.currentMarkRange) {
       this.currentMarkRange = String(
         this.currentMarkRange
+      ).trim();
+    }
+
+    if (this.howDidYouHearAboutUs) {
+      this.howDidYouHearAboutUs = String(
+        this.howDidYouHearAboutUs
+      )
+        .trim()
+        .toLowerCase();
+    }
+
+    if (this.howDidYouHearAboutUsOther) {
+      this.howDidYouHearAboutUsOther = String(
+        this.howDidYouHearAboutUsOther
       ).trim();
     }
 
@@ -511,7 +549,7 @@ UserSchema.pre("validate", function (next) {
         }
       } else {
         /*
-         * A Google learner may be incomplete only while onboarding.
+         * An OAuth learner may be incomplete only while onboarding.
          * If values are already supplied, normal schema min/max/enum rules
          * still validate them automatically.
          */
@@ -519,6 +557,27 @@ UserSchema.pre("validate", function (next) {
     }
 
     if (isLearner) {
+      if (!isPasswordlessVerifiedAccount || this.onboardingCompleted === true) {
+        if (!String(this.howDidYouHearAboutUs || "").trim()) {
+          return next(
+            new Error(
+              "Please tell us how you heard about Practice Online."
+            )
+          );
+        }
+
+        if (
+          this.howDidYouHearAboutUs === "other" &&
+          !String(this.howDidYouHearAboutUsOther || "").trim()
+        ) {
+          return next(
+            new Error(
+              "Please specify how you heard about Practice Online."
+            )
+          );
+        }
+      }
+
       if (
         this.isNew &&
         (!this.enrollmentStatus ||
@@ -533,6 +592,8 @@ UserSchema.pre("validate", function (next) {
       this.guardianCellphone = "";
       this.schoolName = "";
       this.currentMarkRange = "";
+      this.howDidYouHearAboutUs = "";
+      this.howDidYouHearAboutUsOther = "";
       this.guestReasons = [];
       this.otherReason = "";
       this.guestMessage = "";
@@ -547,6 +608,8 @@ UserSchema.pre("validate", function (next) {
       this.guardianCellphone = "";
       this.schoolName = "";
       this.currentMarkRange = "";
+      this.howDidYouHearAboutUs = "";
+      this.howDidYouHearAboutUsOther = "";
       this.enrollmentStatus = "not_required";
 
       if (!this.province) {
