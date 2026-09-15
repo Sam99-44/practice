@@ -1178,6 +1178,87 @@ body.googleSetupMode #googleSetupContinue{
 }
 </style>
 
+
+<style>
+/* ===== OAuth clean isolation + two-section onboarding ===== */
+body.googleSetupMode .card > :not(.googleOnboarding){
+  display:none !important;
+}
+
+body.googleSetupMode .googleOnboarding{
+  display:block !important;
+}
+
+body.googleSetupMode .googleSetupProgressText,
+body.googleSetupMode .googleSetupProgressTrack,
+body.googleSetupMode #googleSetupBack,
+body.googleSetupMode #googleSetupSkip,
+body.googleSetupMode #googleQuestionHelp{
+  display:none !important;
+}
+
+body.googleSetupMode .googleQuestion{
+  margin:0 0 16px;
+}
+
+body.googleSetupMode #googleQuestionTitle{
+  margin:0;
+  font-size:17px;
+  line-height:1.35;
+  text-align:left;
+}
+
+.oauthSection{
+  margin:0 0 24px;
+}
+
+.oauthSection + .oauthSection{
+  padding-top:2px;
+}
+
+.oauthSectionTitle{
+  margin:0 0 12px;
+  color:#111827;
+  font-size:15px;
+  line-height:1.35;
+  font-weight:700;
+}
+
+.oauthSectionGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px 12px;
+}
+
+.oauthSectionGrid .oauthField.full{
+  grid-column:1 / -1;
+}
+
+body.googleSetupMode .googleSetupActions{
+  justify-content:flex-end;
+  margin-top:8px;
+}
+
+body.googleSetupMode #googleSetupContinue{
+  width:auto;
+  min-width:120px;
+}
+
+@media(max-width:640px){
+  .oauthSectionGrid{
+    grid-template-columns:1fr;
+  }
+
+  .oauthSectionGrid .oauthField.full{
+    grid-column:auto;
+  }
+
+  body.googleSetupMode #googleSetupContinue{
+    width:100%;
+  }
+}
+</style>
+
 </head>
 
 <body>
@@ -2511,9 +2592,27 @@ body.googleSetupMode #googleSetupContinue{
     statusEl.className="googleSetupStatus"+(ok?" ok":"");
   }
 
-  function field(label,key,type="text",opts={}){
+  function createSection(title){
+    const section=document.createElement("section");
+    section.className="oauthSection";
+
+    const heading=document.createElement("h3");
+    heading.className="oauthSectionTitle";
+    heading.textContent=title;
+
+    const grid=document.createElement("div");
+    grid.className="oauthSectionGrid";
+
+    section.appendChild(heading);
+    section.appendChild(grid);
+    answerArea.appendChild(section);
+
+    return grid;
+  }
+
+  function field(container,label,key,type="text",opts={}){
     const wrap=document.createElement("div");
-    wrap.className="oauthField";
+    wrap.className="oauthField"+(opts.full?" full":"");
 
     const labelEl=document.createElement("label");
     labelEl.className="oauthLabel";
@@ -2527,7 +2626,6 @@ body.googleSetupMode #googleSetupContinue{
       const star=document.createElement("span");
       star.className="oauthRequired";
       star.textContent="*";
-      star.setAttribute("aria-hidden","true");
       labelEl.appendChild(star);
     }else if(opts.optional){
       const optional=document.createElement("span");
@@ -2583,7 +2681,7 @@ body.googleSetupMode #googleSetupContinue{
     if(opts.required) el.required=true;
 
     wrap.appendChild(el);
-    answerArea.appendChild(wrap);
+    container.appendChild(wrap);
     return el;
   }
 
@@ -2594,28 +2692,31 @@ body.googleSetupMode #googleSetupContinue{
     setStatus("");
     answerArea.innerHTML="";
 
-    titleEl.textContent="Personal details";
+    titleEl.textContent="Complete your registration";
     helpEl.textContent="";
     backBtn.style.display="none";
     skipBtn.style.display="none";
     continueBtn.textContent="Register";
 
-    field("First name","firstName","text",{
+    const personal=createSection("Personal details");
+
+    field(personal,"First name","firstName","text",{
       placeholder:"First name",
       required:true
     });
 
-    field("Surname","surname","text",{
+    field(personal,"Surname","surname","text",{
       placeholder:"Surname",
       required:true
     });
 
-    field("Username","username","text",{
+    field(personal,"Username","username","text",{
       placeholder:"Username",
-      required:true
+      required:true,
+      full:true
     });
 
-    field("Gender","gender","select",{
+    field(personal,"Gender","gender","select",{
       required:true,
       options:[
         ["female","Female"],
@@ -2626,7 +2727,7 @@ body.googleSetupMode #googleSetupContinue{
       placeholder:"Select gender"
     });
 
-    field("Are you in South Africa?","isSA","select",{
+    field(personal,"Are you in South Africa?","isSA","select",{
       required:true,
       options:[
         ["yes","Yes"],
@@ -2636,36 +2737,38 @@ body.googleSetupMode #googleSetupContinue{
     });
 
     if(answers.isSA!=="no"){
-      field("Province","province","select",{
+      field(personal,"Province","province","select",{
         required:true,
         options:Object.keys(DISTRICTS).map(x=>[x,x]),
         placeholder:"Select province"
       });
 
-      field("District","district","select",{
+      field(personal,"District","district","select",{
         required:true,
         options:(DISTRICTS[answers.province]||[]).map(x=>[x,x]),
         placeholder:"Select district"
       });
     }
 
-    field("Cellphone number","cellphone","tel",{
+    field(personal,"Cellphone number","cellphone","tel",{
       placeholder:"+27821234567",
       required:true
     });
 
-    field("Guardian cellphone number","guardianCellphone","tel",{
+    field(personal,"Guardian cellphone number","guardianCellphone","tel",{
       placeholder:"+27821234567",
       optional:true
     });
 
-    field("Grade","grade","select",{
+    const school=createSection("School information");
+
+    field(school,"Grade","grade","select",{
       required:true,
       options:[8,9,10,11,12].map(x=>[String(x),`Grade ${x}`]),
       placeholder:"Select grade"
     });
 
-    field("Curriculum","curriculum","select",{
+    field(school,"Curriculum","curriculum","select",{
       required:true,
       options:[
         ["CAPS","CAPS"],
@@ -2674,26 +2777,22 @@ body.googleSetupMode #googleSetupContinue{
       placeholder:"Select curriculum"
     });
 
-    field("School name","schoolName","text",{
+    field(school,"School name","schoolName","text",{
       placeholder:"School name",
-      optional:true
+      optional:true,
+      full:true
     });
 
-    field("Current Mathematics mark","currentMarkRange","select",{
+    field(school,"Current Mathematics mark","currentMarkRange","select",{
       options:[
-        "0-29",
-        "30-39",
-        "40-49",
-        "50-59",
-        "60-69",
-        "70-79",
-        "80-100"
+        "0-29","30-39","40-49","50-59",
+        "60-69","70-79","80-100"
       ].map(x=>[x,`${x}%`]),
       placeholder:"Select mark range",
       optional:true
     });
 
-    field("How did you hear about us?","howDidYouHearAboutUs","select",{
+    field(school,"How did you hear about us?","howDidYouHearAboutUs","select",{
       required:true,
       options:[
         ["tiktok","TikTok"],
@@ -2710,12 +2809,14 @@ body.googleSetupMode #googleSetupContinue{
 
     if(clean(answers.howDidYouHearAboutUs)==="other"){
       field(
+        school,
         "Please tell us how you heard about us",
         "howDidYouHearAboutUsOther",
         "text",
         {
           placeholder:"Please specify",
-          required:true
+          required:true,
+          full:true
         }
       );
     }
@@ -2758,19 +2859,12 @@ body.googleSetupMode #googleSetupContinue{
     }
 
     if(!validPhone(answers.cellphone)){
-      setStatus(
-        "Please enter a valid South African cellphone number, for example +27821234567."
-      );
+      setStatus("Please enter a valid South African cellphone number, for example +27821234567.");
       return false;
     }
 
-    if(
-      clean(answers.guardianCellphone) &&
-      !validPhone(answers.guardianCellphone)
-    ){
-      setStatus(
-        "Please enter a valid guardian cellphone number, for example +27821234567."
-      );
+    if(clean(answers.guardianCellphone)&&!validPhone(answers.guardianCellphone)){
+      setStatus("Please enter a valid guardian cellphone number, for example +27821234567.");
       return false;
     }
 
@@ -2781,11 +2875,7 @@ body.googleSetupMode #googleSetupContinue{
       return false;
     }
 
-    if(
-      !["CAPS","IEB"].includes(
-        clean(answers.curriculum).toUpperCase()
-      )
-    ){
+    if(!["CAPS","IEB"].includes(clean(answers.curriculum).toUpperCase())){
       setStatus("Please select CAPS or IEB.");
       return false;
     }
@@ -2851,10 +2941,7 @@ body.googleSetupMode #googleSetupContinue{
 
       if(!res.ok){
         continueBtn.disabled=false;
-        setStatus(
-          data.message ||
-          "We could not save your account. Please try again."
-        );
+        setStatus(data.message || "We could not save your account. Please try again.");
         return;
       }
 
@@ -2890,9 +2977,7 @@ body.googleSetupMode #googleSetupContinue{
 
     try{
       const res=await fetch(`${API}/api/auth/me`,{
-        headers:{
-          Authorization:`Bearer ${token}`
-        }
+        headers:{Authorization:`Bearer ${token}`}
       });
 
       if(res.status===401){
@@ -2929,9 +3014,7 @@ body.googleSetupMode #googleSetupContinue{
       render();
 
     }catch(error){
-      setStatus(
-        "Could not load your account. Please refresh and try again."
-      );
+      setStatus("Could not load your account. Please refresh and try again.");
     }
   }
 
