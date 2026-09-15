@@ -1147,6 +1147,41 @@ body:not(.googleSetupMode) .accountTypeStep + *{
 }
 </style>
 
+
+<style>
+/* ===== LIVE OAuth registration: one clean Personal details page ===== */
+body.googleSetupMode #googleSetupProgressText,
+body.googleSetupMode .googleSetupProgressTrack,
+body.googleSetupMode #googleSetupBack,
+body.googleSetupMode #googleSetupSkip{
+  display:none!important;
+}
+
+body.googleSetupMode .googleSetupCard{
+  max-width:700px;
+}
+
+body.googleSetupMode #googleQuestionTitle{
+  text-align:left;
+  margin:0 0 6px;
+  font-size:17px;
+}
+
+body.googleSetupMode #googleQuestionHelp{
+  display:none!important;
+}
+
+body.googleSetupMode .googleSetupActions{
+  justify-content:flex-end;
+  margin-top:22px;
+}
+
+body.googleSetupMode #googleSetupContinue{
+  width:auto;
+  min-width:120px;
+}
+</style>
+
 </head>
 
 <body>
@@ -2458,7 +2493,7 @@ body:not(.googleSetupMode) .accountTypeStep + *{
   const normalizePhone=v=>String(v||"").replace(/\s+/g,"");
   const validPhone=v=>/^\+27[6-8][0-9]{8}$/.test(normalizePhone(v));
   const setStatus=(m="",ok=false)=>{statusEl.textContent=m;statusEl.className="googleSetupStatus"+(ok?" ok":"");};
-  const accountType=()=>String(answers.accountType||me.accountType||"learner").toLowerCase();
+  const accountType=()=> "learner";
 
   function field(label,key,type="text",opts={}){
     const wrap=document.createElement("div");
@@ -2566,8 +2601,8 @@ body:not(.googleSetupMode) .accountTypeStep + *{
   }
 
   function updateProgress(){
-    progressText.textContent=`Step ${step+1} of 3`;
-    progressBar.style.width=`${((step+1)/3)*100}%`;
+    if(progressText) progressText.textContent="";
+    if(progressBar) progressBar.style.width="100%";
   }
 
   function renderStep1(){
@@ -2582,8 +2617,7 @@ body:not(.googleSetupMode) .accountTypeStep + *{
     if(accountType()!=="guest"){
       field("Username","username","text",{placeholder:"Username",required:true});
     }
-    field(`${providerName} email`,"email","email",{readonly:true,required:true});
-    if(accountType()!=="guest"){
+if(accountType()!=="guest"){
       field("Gender","gender","select",{required:true,
         options:[["female","Female"],["male","Male"],["prefer_not_to_say","Prefer not to say"],["other","Other (please specify)"]],
         placeholder:"Select gender"
@@ -2675,58 +2709,183 @@ body:not(.googleSetupMode) .accountTypeStep + *{
     updateProgress();
     setStatus("");
     answerArea.innerHTML="";
-    backBtn.style.visibility=step===0?"hidden":"visible";
-    continueBtn.textContent=step===2?"Finish Setup":"Continue";
-    if(step===0) renderStep1();
-    else if(step===1) renderStep2();
-    else renderStep3();
+
+    titleEl.textContent="Personal details";
+    helpEl.textContent="";
+    backBtn.style.display="none";
+    skipBtn.style.display="none";
+    continueBtn.textContent="Register";
+
+    field("First name","firstName","text",{placeholder:"First name",required:true});
+    field("Surname","surname","text",{placeholder:"Surname",required:true});
+    field("Username","username","text",{placeholder:"Username",required:true});
+
+    field("Gender","gender","select",{
+      required:true,
+      options:[
+        ["female","Female"],
+        ["male","Male"],
+        ["prefer_not_to_say","Prefer not to say"],
+        ["other","Other"]
+      ],
+      placeholder:"Select gender"
+    });
+
+    field("Are you in South Africa?","isSA","select",{
+      required:true,
+      options:[["yes","Yes"],["no","No"]],
+      placeholder:"Select an option"
+    });
+
+    if(answers.isSA!=="no"){
+      field("Province","province","select",{
+        required:true,
+        options:Object.keys(DISTRICTS).map(x=>[x,x]),
+        placeholder:"Select province"
+      });
+
+      field("District","district","select",{
+        required:true,
+        options:(DISTRICTS[answers.province]||[]).map(x=>[x,x]),
+        placeholder:"Select district"
+      });
+    }
+
+    field("Cellphone number","cellphone","tel",{
+      placeholder:"+27821234567",
+      required:true
+    });
+
+    field("Guardian cellphone number","guardianCellphone","tel",{
+      placeholder:"+27821234567",
+      optional:true
+    });
+
+    field("Grade","grade","select",{
+      required:true,
+      options:[8,9,10,11,12].map(x=>[String(x),`Grade ${x}`]),
+      placeholder:"Select grade"
+    });
+
+    field("Curriculum","curriculum","select",{
+      required:true,
+      options:[["CAPS","CAPS"],["IEB","IEB"]],
+      placeholder:"Select curriculum"
+    });
+
+    field("School name","schoolName","text",{
+      placeholder:"School name",
+      optional:true
+    });
+
+    field("Current Mathematics mark","currentMarkRange","select",{
+      options:["0-29","30-39","40-49","50-59","60-69","70-79","80-100"]
+        .map(x=>[x,`${x}%`]),
+      placeholder:"Select mark range",
+      optional:true
+    });
+
+    field("How did you hear about us?","howDidYouHearAboutUs","select",{
+      required:true,
+      options:[
+        ["tiktok","TikTok"],
+        ["facebook","Facebook"],
+        ["referral","Referral"],
+        ["family_friends","Family/Friends"],
+        ["google_search","Google Search"],
+        ["whatsapp","WhatsApp"],
+        ["school_teacher","School or Teacher"],
+        ["other","Other"]
+      ],
+      placeholder:"Select an option"
+    });
+
+    if(clean(answers.howDidYouHearAboutUs)==="other"){
+      field("Please tell us how you heard about us","howDidYouHearAboutUsOther","text",{
+        placeholder:"Please specify",
+        required:true
+      });
+    }
   }
 
   function validateStep(){
-    const t=accountType();
-
-    if(step===0){
-      if(!["learner","practice","guest"].includes(t)){setStatus("Please select an account type.");return false;}
-      if(!clean(answers.firstName)){setStatus("Please enter your first name.");return false;}
-      if(!clean(answers.surname)){setStatus("Please enter your surname.");return false;}
-      if(t!=="guest"&&!clean(answers.username)){setStatus("Please enter a username.");return false;}
-      if(t!=="guest"&&!clean(answers.gender)){setStatus("Please select your gender.");return false;}
+    if(!clean(answers.firstName)){
+      setStatus("Please enter your first name.");
+      return false;
     }
 
-    if(step===1){
-      if(!["yes","no"].includes(String(answers.isSA||""))){setStatus("Please confirm whether you are in South Africa.");return false;}
-      if(answers.isSA!=="no"&&!clean(answers.province)){setStatus("Please select your province.");return false;}
-      if(answers.isSA!=="no"&&!clean(answers.district)){setStatus("Please select your district.");return false;}
-      if(!validPhone(answers.cellphone)){setStatus("Please enter a valid South African cellphone number, for example +27821234567.");return false;}
-      if(t==="learner"&&clean(answers.guardianCellphone)&&!validPhone(answers.guardianCellphone)){
-        setStatus("Please enter a valid guardian cellphone number, for example +27821234567.");return false;
-      }
+    if(!clean(answers.surname)){
+      setStatus("Please enter your surname.");
+      return false;
     }
 
-    if(step===2){
-      if(t==="learner"||t==="practice"){
-        const g=Number(answers.grade);
-        if(!Number.isInteger(g)||g<8||g>12){setStatus("Please select your grade.");return false;}
-        if(!["CAPS","IEB"].includes(clean(answers.curriculum).toUpperCase())){setStatus("Please select CAPS or IEB.");return false;}
-        if(!clean(answers.howDidYouHearAboutUs)){setStatus("Please tell us how you heard about Practice Online.");return false;}
-        if(clean(answers.howDidYouHearAboutUs)==="other"&&!clean(answers.howDidYouHearAboutUsOther)){setStatus("Please specify how you heard about Practice Online.");return false;}
-      }
-      if(t==="guest"){
-        if(!Array.isArray(answers.guestReasons)||answers.guestReasons.length===0){
-          setStatus("Please choose at least one reason for visiting.");return false;
-        }
-        if(answers.guestReasons.includes("other")&&!clean(answers.otherReason)){
-          setStatus("Please enter your other reason.");return false;
-        }
-      }
+    if(!clean(answers.username)){
+      setStatus("Please enter a username.");
+      return false;
     }
+
+    if(!clean(answers.gender)){
+      setStatus("Please select your gender.");
+      return false;
+    }
+
+    if(!["yes","no"].includes(String(answers.isSA||""))){
+      setStatus("Please confirm whether you are in South Africa.");
+      return false;
+    }
+
+    if(answers.isSA!=="no"&&!clean(answers.province)){
+      setStatus("Please select your province.");
+      return false;
+    }
+
+    if(answers.isSA!=="no"&&!clean(answers.district)){
+      setStatus("Please select your district.");
+      return false;
+    }
+
+    if(!validPhone(answers.cellphone)){
+      setStatus("Please enter a valid South African cellphone number, for example +27821234567.");
+      return false;
+    }
+
+    if(clean(answers.guardianCellphone)&&!validPhone(answers.guardianCellphone)){
+      setStatus("Please enter a valid guardian cellphone number, for example +27821234567.");
+      return false;
+    }
+
+    const g=Number(answers.grade);
+    if(!Number.isInteger(g)||g<8||g>12){
+      setStatus("Please select your grade.");
+      return false;
+    }
+
+    if(!["CAPS","IEB"].includes(clean(answers.curriculum).toUpperCase())){
+      setStatus("Please select CAPS or IEB.");
+      return false;
+    }
+
+    if(!clean(answers.howDidYouHearAboutUs)){
+      setStatus("Please tell us how you heard about Practice Online.");
+      return false;
+    }
+
+    if(
+      clean(answers.howDidYouHearAboutUs)==="other" &&
+      !clean(answers.howDidYouHearAboutUsOther)
+    ){
+      setStatus("Please specify how you heard about Practice Online.");
+      return false;
+    }
+
     return true;
   }
+
 
   function buildPayload(){
     const t=accountType(),firstName=clean(answers.firstName||me.firstName),surname=clean(answers.surname||me.surname);
     return {
-      accountType:t,
+      accountType:"learner",
       firstName,
       surname,
       fullName:clean(`${firstName} ${surname}`),
@@ -2781,10 +2940,7 @@ body:not(.googleSetupMode) .accountTypeStep + *{
 
   continueBtn.addEventListener("click",()=>{
     if(!validateStep()) return;
-    if(step===2){finish();return;}
-    step++;
-    render();
-    window.scrollTo({top:0,behavior:"smooth"});
+    finish();
   });
 
   backBtn.addEventListener("click",()=>{
@@ -2818,7 +2974,7 @@ body:not(.googleSetupMode) .accountTypeStep + *{
         return;
       }
       answers={
-        accountType:me.accountType||"learner",
+        accountType:"learner",
         firstName:me.firstName||"",
         surname:me.surname||"",
         username:me.username||"",
