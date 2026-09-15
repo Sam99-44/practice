@@ -1149,35 +1149,31 @@ body:not(.googleSetupMode) .accountTypeStep + *{
 
 
 <style>
-/* ===== LIVE OAuth registration: one clean Personal details page ===== */
+/* ===== OAuth learner setup: one page only ===== */
 body.googleSetupMode #googleSetupProgressText,
 body.googleSetupMode .googleSetupProgressTrack,
 body.googleSetupMode #googleSetupBack,
-body.googleSetupMode #googleSetupSkip{
-  display:none!important;
-}
-
-body.googleSetupMode .googleSetupCard{
-  max-width:700px;
-}
-
-body.googleSetupMode #googleQuestionTitle{
-  text-align:left;
-  margin:0 0 6px;
-  font-size:17px;
-}
-
+body.googleSetupMode #googleSetupSkip,
 body.googleSetupMode #googleQuestionHelp{
   display:none!important;
 }
 
+body.googleSetupMode .googleQuestion{
+  margin-bottom:10px;
+}
+
+body.googleSetupMode #googleQuestionTitle{
+  margin:0;
+  font-size:17px;
+  text-align:left;
+}
+
 body.googleSetupMode .googleSetupActions{
   justify-content:flex-end;
-  margin-top:22px;
+  margin-top:20px;
 }
 
 body.googleSetupMode #googleSetupContinue{
-  width:auto;
   min-width:120px;
 }
 </style>
@@ -2540,7 +2536,7 @@ body.googleSetupMode #googleSetupContinue{
       el.value=answers[key]??"";
       el.addEventListener("change",()=>{
         answers[key]=el.value;
-        if(key==="accountType"||key==="isSA"||key==="province"||key==="howDidYouHearAboutUs") render();
+        if(key==="isSA"||key==="province"||key==="howDidYouHearAboutUs") render();
       });
     }else if(type==="textarea"){
       el=document.createElement("textarea");
@@ -2605,106 +2601,6 @@ body.googleSetupMode #googleSetupContinue{
     if(progressBar) progressBar.style.width="100%";
   }
 
-  function renderStep1(){
-    titleEl.textContent="Account information";
-    helpEl.textContent=`Your email is linked to the ${providerName} account you used to sign in.`;
-    field("Account type","accountType","select",{required:true,
-      options:[["learner","Learner Account"],["practice","Practice Account"],["guest","Guest Account"]],
-      placeholder:"Select account type"
-    });
-    field("First name","firstName","text",{placeholder:"First name",required:true});
-    field("Surname","surname","text",{placeholder:"Surname",required:true});
-    if(accountType()!=="guest"){
-      field("Username","username","text",{placeholder:"Username",required:true});
-    }
-if(accountType()!=="guest"){
-      field("Gender","gender","select",{required:true,
-        options:[["female","Female"],["male","Male"],["prefer_not_to_say","Prefer not to say"],["other","Other (please specify)"]],
-        placeholder:"Select gender"
-      });
-    }
-  }
-
-  function renderStep2(){
-    titleEl.textContent="Address information";
-    helpEl.textContent="";
-    field("Are you in South Africa?","isSA","select",{required:true,
-      options:[["yes","Yes"],["no","No"]],
-      placeholder:"Select an option"
-    });
-    if(answers.isSA!=="no"){
-      field("Province","province","select",{required:true,
-        options:Object.keys(DISTRICTS).map(x=>[x,x]),
-        placeholder:"Select province"
-      });
-      field("District","district","select",{required:true,
-        options:(DISTRICTS[answers.province]||[]).map(x=>[x,x]),
-        placeholder:"Select district"
-      });
-    }
-    field("Cellphone number","cellphone","tel",{placeholder:"+27821234567",required:true});
-    if(accountType()==="learner"){
-      field("Guardian cellphone number","guardianCellphone","tel",{placeholder:"+27821234567",optional:true});
-    }
-  }
-
-  function renderStep3(){
-    const t=accountType();
-    if(t==="guest"){
-      titleEl.textContent="Visit information";
-      helpEl.textContent="Tell us briefly why you are visiting Practice Online.";
-      checkboxList("Reason for visiting *","guestReasons",[
-        ["parent_guardian","Parent / Guardian"],
-        ["tutoring_service","Another Tutoring Service"],
-        ["school_institution","School / Institution"],
-        ["request_information","Request Information"],
-        ["request_quote","Request a Quote"],
-        ["partnership","Partnership Opportunity"],
-        ["research","Research Purposes"],
-        ["exploring","Exploring the Platform"],
-        ["other","Other"]
-      ]);
-      if(Array.isArray(answers.guestReasons)&&answers.guestReasons.includes("other")){
-        field("Other reason","otherReason","text",{placeholder:"Reason for visiting"});
-      }
-      field("Message","guestMessage","textarea",{placeholder:"Anything else you would like to tell us",optional:true});
-      return;
-    }
-
-    titleEl.textContent="Learning information";
-    helpEl.textContent="These details help us show the correct assessments and learning content.";
-    field("Grade","grade","select",{required:true,
-      options:[8,9,10,11,12].map(x=>[String(x),`Grade ${x}`]),
-      placeholder:"Select grade"
-    });
-    field("Curriculum","curriculum","select",{required:true,
-      options:[["CAPS","CAPS"],["IEB","IEB"]],
-      placeholder:"Select curriculum"
-    });
-    if(t==="learner"){
-      field("School name","schoolName","text",{placeholder:"School name",optional:true});
-      field("Current Mathematics mark","currentMarkRange","select",{
-        options:["0-29","30-39","40-49","50-59","60-69","70-79","80-100"].map(x=>[x,`${x}%`]),
-        placeholder:"Select mark range",
-        optional:true
-      });
-      field("How did you hear about us?","howDidYouHearAboutUs","select",{
-        options:[
-          ["tiktok","TikTok"],
-          ["facebook","Facebook"],
-          ["referral","Referral"],
-          ["family_friends","Family or Friends"],
-          ["google_search","Google Search"],
-          ["whatsapp","WhatsApp"],
-          ["school_teacher","School or Teacher"],
-          ["other","Other"]
-        ],
-        placeholder:"Select an option",
-        required:true
-      });
-    }
-  }
-
   function render(){
     updateProgress();
     setStatus("");
@@ -2720,8 +2616,7 @@ if(accountType()!=="guest"){
     field("Surname","surname","text",{placeholder:"Surname",required:true});
     field("Username","username","text",{placeholder:"Username",required:true});
 
-    field("Gender","gender","select",{
-      required:true,
+    field("Gender","gender","select",{required:true,
       options:[
         ["female","Female"],
         ["male","Male"],
@@ -2731,21 +2626,18 @@ if(accountType()!=="guest"){
       placeholder:"Select gender"
     });
 
-    field("Are you in South Africa?","isSA","select",{
-      required:true,
+    field("Are you in South Africa?","isSA","select",{required:true,
       options:[["yes","Yes"],["no","No"]],
       placeholder:"Select an option"
     });
 
     if(answers.isSA!=="no"){
-      field("Province","province","select",{
-        required:true,
+      field("Province","province","select",{required:true,
         options:Object.keys(DISTRICTS).map(x=>[x,x]),
         placeholder:"Select province"
       });
 
-      field("District","district","select",{
-        required:true,
+      field("District","district","select",{required:true,
         options:(DISTRICTS[answers.province]||[]).map(x=>[x,x]),
         placeholder:"Select district"
       });
@@ -2761,14 +2653,12 @@ if(accountType()!=="guest"){
       optional:true
     });
 
-    field("Grade","grade","select",{
-      required:true,
+    field("Grade","grade","select",{required:true,
       options:[8,9,10,11,12].map(x=>[String(x),`Grade ${x}`]),
       placeholder:"Select grade"
     });
 
-    field("Curriculum","curriculum","select",{
-      required:true,
+    field("Curriculum","curriculum","select",{required:true,
       options:[["CAPS","CAPS"],["IEB","IEB"]],
       placeholder:"Select curriculum"
     });
@@ -2786,7 +2676,6 @@ if(accountType()!=="guest"){
     });
 
     field("How did you hear about us?","howDidYouHearAboutUs","select",{
-      required:true,
       options:[
         ["tiktok","TikTok"],
         ["facebook","Facebook"],
@@ -2797,7 +2686,8 @@ if(accountType()!=="guest"){
         ["school_teacher","School or Teacher"],
         ["other","Other"]
       ],
-      placeholder:"Select an option"
+      placeholder:"Select an option",
+      required:true
     });
 
     if(clean(answers.howDidYouHearAboutUs)==="other"){
@@ -2881,7 +2771,6 @@ if(accountType()!=="guest"){
     return true;
   }
 
-
   function buildPayload(){
     const t=accountType(),firstName=clean(answers.firstName||me.firstName),surname=clean(answers.surname||me.surname);
     return {
@@ -2889,18 +2778,18 @@ if(accountType()!=="guest"){
       firstName,
       surname,
       fullName:clean(`${firstName} ${surname}`),
-      username:t==="guest"?(me.username||""):clean(answers.username||me.username),
-      email:clean(me.email||answers.email),
+      username:clean(answers.username||me.username),
+      email:clean(me.email),
       province:answers.isSA==="no"?"":clean(answers.province),
       district:answers.isSA==="no"?"":clean(answers.district),
-      gender:t==="guest"?"":clean(answers.gender),
+      gender:clean(answers.gender),
       cellphone:normalizePhone(answers.cellphone),
-      guardianCellphone:t==="learner"?normalizePhone(answers.guardianCellphone||""):"",
-      grade:(t==="learner"||t==="practice")?Number(answers.grade):null,
-      curriculum:(t==="learner"||t==="practice")?clean(answers.curriculum):"",
-      schoolName:t==="learner"?clean(answers.schoolName):"",
-      currentMarkRange:t==="learner"?clean(answers.currentMarkRange):"",
-      howDidYouHearAboutUs:t==="learner"?clean(answers.howDidYouHearAboutUs):"",
+      guardianCellphone:normalizePhone(answers.guardianCellphone||""),
+      grade:Number(answers.grade),
+      curriculum:clean(answers.curriculum),
+      schoolName:clean(answers.schoolName),
+      currentMarkRange:clean(answers.currentMarkRange),
+      howDidYouHearAboutUs:clean(answers.howDidYouHearAboutUs),
       howDidYouHearAboutUsOther:
         t==="learner" && clean(answers.howDidYouHearAboutUs)==="other"
           ? clean(answers.howDidYouHearAboutUsOther)
@@ -2913,7 +2802,7 @@ if(accountType()!=="guest"){
 
   async function finish(){
     continueBtn.disabled=backBtn.disabled=true;
-    setStatus("Saving your account...",true);
+    setStatus("");
     try{
       const res=await fetch(`${API}/api/profile/me`,{
         method:"PATCH",
@@ -2930,8 +2819,7 @@ if(accountType()!=="guest"){
       localStorage.setItem("user",JSON.stringify(user));
       localStorage.setItem("username",user.username||"");
       localStorage.setItem("role",user.role||"");
-      setStatus("Setup complete.",true);
-      setTimeout(()=>location.replace(nextUrl),350);
+      location.replace(nextUrl);
     }catch{
       continueBtn.disabled=backBtn.disabled=false;
       setStatus("Network error. Please try again.");
@@ -2943,13 +2831,7 @@ if(accountType()!=="guest"){
     finish();
   });
 
-  backBtn.addEventListener("click",()=>{
-    if(step>0){
-      step--;
-      render();
-      window.scrollTo({top:0,behavior:"smooth"});
-    }
-  });
+  backBtn.addEventListener("click",()=>{});
 
   document.addEventListener("keydown",e=>{
     if(!document.body.classList.contains("googleSetupMode")) return;
@@ -2960,7 +2842,7 @@ if(accountType()!=="guest"){
   },true);
 
   async function load(){
-    setStatus("Loading your account...",true);
+    setStatus("");
     try{
       const res=await fetch(`${API}/api/auth/me`,{headers:{Authorization:`Bearer ${token}`}});
       if(res.status===401){
@@ -2978,7 +2860,6 @@ if(accountType()!=="guest"){
         firstName:me.firstName||"",
         surname:me.surname||"",
         username:me.username||"",
-        email:me.email||"",
         isSA:"yes",
         province:me.province||"",
         district:me.district||"",
