@@ -1149,7 +1149,7 @@ body:not(.googleSetupMode) .accountTypeStep + *{
 
 
 <style>
-/* ===== OAuth learner setup: one page only ===== */
+/* ===== OAuth one-page learner setup ===== */
 body.googleSetupMode #googleSetupProgressText,
 body.googleSetupMode .googleSetupProgressTrack,
 body.googleSetupMode #googleSetupBack,
@@ -1181,6 +1181,16 @@ body.googleSetupMode #googleSetupContinue{
 </head>
 
 <body>
+
+<script>
+(function(){
+  const p=new URLSearchParams(location.search);
+  if(p.get("oauthSetup")==="1" || p.get("googleSetup")==="1"){
+    document.body.classList.add("googleSetupMode");
+  }
+})();
+</script>
+
 
 <header class="topbar">
   <div class="navBar">
@@ -2449,20 +2459,23 @@ body.googleSetupMode #googleSetupContinue{
 <script>
 (function(){
   const params=new URLSearchParams(location.search);
-  const oauthMode=params.get("oauthSetup")==="1" || params.get("googleSetup")==="1";
+  const oauthMode=
+    params.get("oauthSetup")==="1" ||
+    params.get("googleSetup")==="1";
+
   if(!oauthMode) return;
 
   document.body.classList.add("googleSetupMode");
 
   const API="https://api.practiceonline.co.za";
   const token=localStorage.getItem("token");
-  const provider=String(params.get("provider") || (params.get("googleSetup")==="1"?"google":"oauth")).toLowerCase();
-  const providerName=provider==="microsoft"?"Microsoft":provider==="google"?"Google":"your sign-in provider";
-  const nextUrl=params.get("next")||"learning-content.html#quizzes";
-  if(!token){location.replace("login.html");return;}
+  const nextUrl=params.get("next") || "learning-content.html#quizzes";
 
-  const progressText=document.getElementById("googleSetupProgressText");
-  const progressBar=document.getElementById("googleSetupProgressBar");
+  if(!token){
+    location.replace("login.html");
+    return;
+  }
+
   const titleEl=document.getElementById("googleQuestionTitle");
   const helpEl=document.getElementById("googleQuestionHelp");
   const answerArea=document.getElementById("googleAnswerArea");
@@ -2470,8 +2483,11 @@ body.googleSetupMode #googleSetupContinue{
   const backBtn=document.getElementById("googleSetupBack");
   const skipBtn=document.getElementById("googleSetupSkip");
   const continueBtn=document.getElementById("googleSetupContinue");
+  const progressText=document.getElementById("googleSetupProgressText");
+  const progressBar=document.getElementById("googleSetupProgressBar");
 
-  let me={},answers={},step=0;
+  let me={};
+  let answers={};
 
   const DISTRICTS={
     "Eastern Cape":["Buffalo City (Metro)","Nelson Mandela Bay (Metro)","Amathole","Chris Hani","Joe Gqabi","OR Tambo","Sarah Baartman"],
@@ -2488,72 +2504,79 @@ body.googleSetupMode #googleSetupContinue{
   const clean=v=>String(v??"").trim();
   const normalizePhone=v=>String(v||"").replace(/\s+/g,"");
   const validPhone=v=>/^\+27[6-8][0-9]{8}$/.test(normalizePhone(v));
-  const setStatus=(m="",ok=false)=>{statusEl.textContent=m;statusEl.className="googleSetupStatus"+(ok?" ok":"");};
-  const accountType=()=> "learner";
+
+  function setStatus(message="",ok=false){
+    if(!statusEl) return;
+    statusEl.textContent=message;
+    statusEl.className="googleSetupStatus"+(ok?" ok":"");
+  }
 
   function field(label,key,type="text",opts={}){
     const wrap=document.createElement("div");
-    wrap.className="oauthField"+(opts.hidden?" hidden":"");
+    wrap.className="oauthField";
 
-    const l=document.createElement("label");
-    l.className="oauthLabel";
-    l.htmlFor="oauth_"+key;
+    const labelEl=document.createElement("label");
+    labelEl.className="oauthLabel";
+    labelEl.htmlFor="oauth_"+key;
 
     const labelText=document.createElement("span");
     labelText.textContent=label;
-    l.appendChild(labelText);
+    labelEl.appendChild(labelText);
 
     if(opts.required){
-      const required=document.createElement("span");
-      required.className="oauthRequired";
-      required.textContent="*";
-      required.setAttribute("aria-hidden","true");
-      l.appendChild(required);
+      const star=document.createElement("span");
+      star.className="oauthRequired";
+      star.textContent="*";
+      star.setAttribute("aria-hidden","true");
+      labelEl.appendChild(star);
     }else if(opts.optional){
-      const small=document.createElement("span");
-      small.className="oauthOptional";
-      small.textContent="(Optional)";
-      l.appendChild(small);
+      const optional=document.createElement("span");
+      optional.className="oauthOptional";
+      optional.textContent="(Optional)";
+      labelEl.appendChild(optional);
     }
 
-    wrap.appendChild(l);
+    wrap.appendChild(labelEl);
 
     let el;
+
     if(type==="select"){
       el=document.createElement("select");
+
       const first=document.createElement("option");
       first.value="";
-      first.textContent=opts.placeholder||"Select an option";
+      first.textContent=opts.placeholder || "Select an option";
       el.appendChild(first);
 
       (opts.options||[]).forEach(([value,text])=>{
-        const o=document.createElement("option");
-        o.value=value;
-        o.textContent=text;
-        el.appendChild(o);
+        const option=document.createElement("option");
+        option.value=value;
+        option.textContent=text;
+        el.appendChild(option);
       });
 
-      el.value=answers[key]??"";
+      el.value=answers[key] ?? "";
+
       el.addEventListener("change",()=>{
         answers[key]=el.value;
-        if(key==="isSA"||key==="province"||key==="howDidYouHearAboutUs") render();
+
+        if(
+          key==="isSA" ||
+          key==="province" ||
+          key==="howDidYouHearAboutUs"
+        ){
+          render();
+        }
       });
-    }else if(type==="textarea"){
-      el=document.createElement("textarea");
-      el.placeholder=opts.placeholder||"";
-      el.value=answers[key]??"";
-      el.maxLength=255;
-      el.addEventListener("input",()=>answers[key]=el.value);
+
     }else{
       el=document.createElement("input");
       el.type=type;
-      el.placeholder=opts.placeholder||"";
-      el.value=answers[key]??"";
-      if(opts.readonly){
-        el.readOnly=true;
-        el.className="googleReadOnly";
-      }
-      el.addEventListener("input",()=>answers[key]=el.value);
+      el.placeholder=opts.placeholder || "";
+      el.value=answers[key] ?? "";
+      el.addEventListener("input",()=>{
+        answers[key]=el.value;
+      });
     }
 
     el.id="oauth_"+key;
@@ -2564,45 +2587,10 @@ body.googleSetupMode #googleSetupContinue{
     return el;
   }
 
-  function checkboxList(label,key,options){
-    const wrap=document.createElement("div");
-    wrap.className="oauthField";
-    const l=document.createElement("div");
-    l.className="oauthLabel";
-    l.textContent=label;
-    wrap.appendChild(l);
-
-    const list=document.createElement("div");
-    list.className="oauthCheckList";
-    const selected=new Set(Array.isArray(answers[key])?answers[key]:[]);
-    options.forEach(([value,text])=>{
-      const row=document.createElement("label");
-      row.className="oauthCheck";
-      const cb=document.createElement("input");
-      cb.type="checkbox";
-      cb.checked=selected.has(value);
-      const span=document.createElement("span");
-      span.textContent=text;
-      cb.addEventListener("change",()=>{
-        const values=new Set(Array.isArray(answers[key])?answers[key]:[]);
-        cb.checked?values.add(value):values.delete(value);
-        answers[key]=[...values];
-        render();
-      });
-      row.append(cb,span);
-      list.appendChild(row);
-    });
-    wrap.appendChild(list);
-    answerArea.appendChild(wrap);
-  }
-
-  function updateProgress(){
+  function render(){
     if(progressText) progressText.textContent="";
     if(progressBar) progressBar.style.width="100%";
-  }
 
-  function render(){
-    updateProgress();
     setStatus("");
     answerArea.innerHTML="";
 
@@ -2612,11 +2600,23 @@ body.googleSetupMode #googleSetupContinue{
     skipBtn.style.display="none";
     continueBtn.textContent="Register";
 
-    field("First name","firstName","text",{placeholder:"First name",required:true});
-    field("Surname","surname","text",{placeholder:"Surname",required:true});
-    field("Username","username","text",{placeholder:"Username",required:true});
+    field("First name","firstName","text",{
+      placeholder:"First name",
+      required:true
+    });
 
-    field("Gender","gender","select",{required:true,
+    field("Surname","surname","text",{
+      placeholder:"Surname",
+      required:true
+    });
+
+    field("Username","username","text",{
+      placeholder:"Username",
+      required:true
+    });
+
+    field("Gender","gender","select",{
+      required:true,
       options:[
         ["female","Female"],
         ["male","Male"],
@@ -2626,18 +2626,24 @@ body.googleSetupMode #googleSetupContinue{
       placeholder:"Select gender"
     });
 
-    field("Are you in South Africa?","isSA","select",{required:true,
-      options:[["yes","Yes"],["no","No"]],
+    field("Are you in South Africa?","isSA","select",{
+      required:true,
+      options:[
+        ["yes","Yes"],
+        ["no","No"]
+      ],
       placeholder:"Select an option"
     });
 
     if(answers.isSA!=="no"){
-      field("Province","province","select",{required:true,
+      field("Province","province","select",{
+        required:true,
         options:Object.keys(DISTRICTS).map(x=>[x,x]),
         placeholder:"Select province"
       });
 
-      field("District","district","select",{required:true,
+      field("District","district","select",{
+        required:true,
         options:(DISTRICTS[answers.province]||[]).map(x=>[x,x]),
         placeholder:"Select district"
       });
@@ -2653,13 +2659,18 @@ body.googleSetupMode #googleSetupContinue{
       optional:true
     });
 
-    field("Grade","grade","select",{required:true,
+    field("Grade","grade","select",{
+      required:true,
       options:[8,9,10,11,12].map(x=>[String(x),`Grade ${x}`]),
       placeholder:"Select grade"
     });
 
-    field("Curriculum","curriculum","select",{required:true,
-      options:[["CAPS","CAPS"],["IEB","IEB"]],
+    field("Curriculum","curriculum","select",{
+      required:true,
+      options:[
+        ["CAPS","CAPS"],
+        ["IEB","IEB"]
+      ],
       placeholder:"Select curriculum"
     });
 
@@ -2669,13 +2680,21 @@ body.googleSetupMode #googleSetupContinue{
     });
 
     field("Current Mathematics mark","currentMarkRange","select",{
-      options:["0-29","30-39","40-49","50-59","60-69","70-79","80-100"]
-        .map(x=>[x,`${x}%`]),
+      options:[
+        "0-29",
+        "30-39",
+        "40-49",
+        "50-59",
+        "60-69",
+        "70-79",
+        "80-100"
+      ].map(x=>[x,`${x}%`]),
       placeholder:"Select mark range",
       optional:true
     });
 
     field("How did you hear about us?","howDidYouHearAboutUs","select",{
+      required:true,
       options:[
         ["tiktok","TikTok"],
         ["facebook","Facebook"],
@@ -2686,19 +2705,23 @@ body.googleSetupMode #googleSetupContinue{
         ["school_teacher","School or Teacher"],
         ["other","Other"]
       ],
-      placeholder:"Select an option",
-      required:true
+      placeholder:"Select an option"
     });
 
     if(clean(answers.howDidYouHearAboutUs)==="other"){
-      field("Please tell us how you heard about us","howDidYouHearAboutUsOther","text",{
-        placeholder:"Please specify",
-        required:true
-      });
+      field(
+        "Please tell us how you heard about us",
+        "howDidYouHearAboutUsOther",
+        "text",
+        {
+          placeholder:"Please specify",
+          required:true
+        }
+      );
     }
   }
 
-  function validateStep(){
+  function validate(){
     if(!clean(answers.firstName)){
       setStatus("Please enter your first name.");
       return false;
@@ -2735,22 +2758,34 @@ body.googleSetupMode #googleSetupContinue{
     }
 
     if(!validPhone(answers.cellphone)){
-      setStatus("Please enter a valid South African cellphone number, for example +27821234567.");
+      setStatus(
+        "Please enter a valid South African cellphone number, for example +27821234567."
+      );
       return false;
     }
 
-    if(clean(answers.guardianCellphone)&&!validPhone(answers.guardianCellphone)){
-      setStatus("Please enter a valid guardian cellphone number, for example +27821234567.");
+    if(
+      clean(answers.guardianCellphone) &&
+      !validPhone(answers.guardianCellphone)
+    ){
+      setStatus(
+        "Please enter a valid guardian cellphone number, for example +27821234567."
+      );
       return false;
     }
 
-    const g=Number(answers.grade);
-    if(!Number.isInteger(g)||g<8||g>12){
+    const grade=Number(answers.grade);
+
+    if(!Number.isInteger(grade)||grade<8||grade>12){
       setStatus("Please select your grade.");
       return false;
     }
 
-    if(!["CAPS","IEB"].includes(clean(answers.curriculum).toUpperCase())){
+    if(
+      !["CAPS","IEB"].includes(
+        clean(answers.curriculum).toUpperCase()
+      )
+    ){
       setStatus("Please select CAPS or IEB.");
       return false;
     }
@@ -2772,16 +2807,17 @@ body.googleSetupMode #googleSetupContinue{
   }
 
   function buildPayload(){
-    const t=accountType(),firstName=clean(answers.firstName||me.firstName),surname=clean(answers.surname||me.surname);
+    const firstName=clean(answers.firstName||me.firstName);
+    const surname=clean(answers.surname||me.surname);
+
     return {
       accountType:"learner",
       firstName,
       surname,
       fullName:clean(`${firstName} ${surname}`),
       username:clean(answers.username||me.username),
-      email:clean(me.email),
-      province:answers.isSA==="no"?"":clean(answers.province),
-      district:answers.isSA==="no"?"":clean(answers.district),
+      province:answers.isSA==="no" ? "" : clean(answers.province),
+      district:answers.isSA==="no" ? "" : clean(answers.district),
       gender:clean(answers.gender),
       cellphone:normalizePhone(answers.cellphone),
       guardianCellphone:normalizePhone(answers.guardianCellphone||""),
@@ -2791,72 +2827,88 @@ body.googleSetupMode #googleSetupContinue{
       currentMarkRange:clean(answers.currentMarkRange),
       howDidYouHearAboutUs:clean(answers.howDidYouHearAboutUs),
       howDidYouHearAboutUsOther:
-        t==="learner" && clean(answers.howDidYouHearAboutUs)==="other"
+        clean(answers.howDidYouHearAboutUs)==="other"
           ? clean(answers.howDidYouHearAboutUsOther)
-          : "",
-      guestReasons:t==="guest"?(Array.isArray(answers.guestReasons)?answers.guestReasons:[]):[],
-      otherReason:t==="guest"?clean(answers.otherReason):"",
-      guestMessage:t==="guest"?clean(answers.guestMessage):""
+          : ""
     };
   }
 
   async function finish(){
-    continueBtn.disabled=backBtn.disabled=true;
+    continueBtn.disabled=true;
     setStatus("");
+
     try{
       const res=await fetch(`${API}/api/profile/me`,{
         method:"PATCH",
-        headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},
+        headers:{
+          "Content-Type":"application/json",
+          Authorization:`Bearer ${token}`
+        },
         body:JSON.stringify(buildPayload())
       });
+
       const data=await res.json().catch(()=>({}));
+
       if(!res.ok){
-        continueBtn.disabled=backBtn.disabled=false;
-        setStatus(data.message||"We could not save your account. Please try again.");
+        continueBtn.disabled=false;
+        setStatus(
+          data.message ||
+          "We could not save your account. Please try again."
+        );
         return;
       }
-      const user=data.user||{};
+
+      const user=data.user || {};
+
       localStorage.setItem("user",JSON.stringify(user));
       localStorage.setItem("username",user.username||"");
       localStorage.setItem("role",user.role||"");
+
       location.replace(nextUrl);
-    }catch{
-      continueBtn.disabled=backBtn.disabled=false;
+
+    }catch(error){
+      continueBtn.disabled=false;
       setStatus("Network error. Please try again.");
     }
   }
 
   continueBtn.addEventListener("click",()=>{
-    if(!validateStep()) return;
+    if(!validate()) return;
     finish();
   });
 
-  backBtn.addEventListener("click",()=>{});
-
-  document.addEventListener("keydown",e=>{
+  document.addEventListener("keydown",event=>{
     if(!document.body.classList.contains("googleSetupMode")) return;
-    if(e.key==="Enter"&&e.target?.tagName!=="TEXTAREA"){
-      e.preventDefault();
+    if(event.key==="Enter" && event.target?.tagName!=="TEXTAREA"){
+      event.preventDefault();
       continueBtn.click();
     }
   },true);
 
   async function load(){
     setStatus("");
+
     try{
-      const res=await fetch(`${API}/api/auth/me`,{headers:{Authorization:`Bearer ${token}`}});
+      const res=await fetch(`${API}/api/auth/me`,{
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
+      });
+
       if(res.status===401){
         localStorage.removeItem("token");
         location.replace("login.html");
         return;
       }
-      me=await res.json().catch(()=>({});
+
+      me=await res.json().catch(()=>({}));
+
       if(me.onboardingCompleted===true){
         location.replace(nextUrl);
         return;
       }
+
       answers={
-        accountType:"learner",
         firstName:me.firstName||"",
         surname:me.surname||"",
         username:me.username||"",
@@ -2866,20 +2918,20 @@ body.googleSetupMode #googleSetupContinue{
         gender:me.gender||"",
         cellphone:me.cellphone||"",
         guardianCellphone:me.guardianCellphone||"",
-        grade:me.grade?String(me.grade):"",
+        grade:me.grade ? String(me.grade) : "",
         curriculum:me.curriculum||"",
         schoolName:me.schoolName||"",
         currentMarkRange:me.currentMarkRange||"",
         howDidYouHearAboutUs:me.howDidYouHearAboutUs||"",
-        howDidYouHearAboutUsOther:me.howDidYouHearAboutUsOther||"",
-        guestReasons:Array.isArray(me.guestReasons)?me.guestReasons:[],
-        otherReason:me.otherReason||"",
-        guestMessage:me.guestMessage||""
+        howDidYouHearAboutUsOther:me.howDidYouHearAboutUsOther||""
       };
-      setStatus("");
+
       render();
-    }catch{
-      setStatus("Could not load your account. Please refresh and try again.");
+
+    }catch(error){
+      setStatus(
+        "Could not load your account. Please refresh and try again."
+      );
     }
   }
 
