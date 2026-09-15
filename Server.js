@@ -329,6 +329,32 @@ function calculateAssessmentTotalMarks(quiz) {
   }, 0);
 }
 
+function howDidYouHearAboutUsLabel(user) {
+  const value = String(user?.howDidYouHearAboutUs || "").trim().toLowerCase();
+
+  const labels = {
+    tiktok: "TikTok",
+    facebook: "Facebook",
+    referral: "Referral",
+    family_friends: "Family or Friends",
+    google_search: "Google Search",
+    whatsapp: "WhatsApp",
+    school_teacher: "School or Teacher",
+    other: "Other",
+  };
+
+  if (!value) return "Not provided";
+
+  const baseLabel = labels[value] || value;
+
+  if (value === "other") {
+    const detail = String(user?.howDidYouHearAboutUsOther || "").trim();
+    return detail ? `Other — ${detail}` : "Other";
+  }
+
+  return baseLabel;
+}
+
 async function sendNewRegistrationNotification(user, source = "Registration form") {
   if (!user || !SUPPORT_NOTIFICATION_EMAIL) return;
 
@@ -336,6 +362,7 @@ async function sendNewRegistrationNotification(user, source = "Registration form
   const gradeText = user.grade ? `Grade ${user.grade}` : "Not applicable";
   const learnerNumber =
     user.learnerNumber || user.studentNumber || "Not assigned";
+  const heardAboutUs = howDidYouHearAboutUsLabel(user);
 
   await sendEmail({
     to: SUPPORT_NOTIFICATION_EMAIL,
@@ -350,6 +377,7 @@ async function sendNewRegistrationNotification(user, source = "Registration form
       `Curriculum: ${user.curriculum || "Not provided"}`,
       `Learner / Practice Number: ${learnerNumber}`,
       `Cellphone: ${user.cellphone || "Not provided"}`,
+      `How did you hear about us?: ${heardAboutUs}`,
       `Source: ${source}`,
       `Registered: ${registeredAt}`,
     ].join("\n"),
@@ -364,6 +392,7 @@ async function sendNewRegistrationNotification(user, source = "Registration form
         <p><strong>Curriculum:</strong> ${escapeEmailHtml(user.curriculum || "Not provided")}</p>
         <p><strong>Learner / Practice Number:</strong> ${escapeEmailHtml(learnerNumber)}</p>
         <p><strong>Cellphone:</strong> ${escapeEmailHtml(user.cellphone || "Not provided")}</p>
+        <p><strong>How did you hear about us?</strong> ${escapeEmailHtml(heardAboutUs)}</p>
         <p><strong>Source:</strong> ${escapeEmailHtml(source)}</p>
         <p><strong>Registered:</strong> ${escapeEmailHtml(registeredAt)}</p>
       </div>
@@ -1084,6 +1113,8 @@ function toPublicProfile(user) {
     guardianCellphone: user.guardianCellphone || "",
     schoolName: user.schoolName || "",
     currentMarkRange: user.currentMarkRange || "",
+    howDidYouHearAboutUs: user.howDidYouHearAboutUs || "",
+    howDidYouHearAboutUsOther: user.howDidYouHearAboutUsOther || "",
     guestReasons: Array.isArray(user.guestReasons) ? user.guestReasons : [],
     otherReason: user.otherReason || "",
     guestMessage: user.guestMessage || "",
@@ -2604,7 +2635,7 @@ app.get("/api/auth/microsoft/callback", async (req, res) => {
 app.get("/api/auth/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select(
-      "firstName surname fullName username email role grade curriculum accountType onboardingCompleted studentNumber learnerNumber profileHeadline profilePhoto province district gender cellphone guardianCellphone schoolName currentMarkRange guestReasons otherReason guestMessage emailVerified phoneVerified subscriptionStatus paidUntil lastPaymentId premium premiumExpiresAt trialActive trialStartDate trialEndDate trialExpiredAt accessStatus trialDaysLeft"
+      "firstName surname fullName username email role grade curriculum accountType onboardingCompleted studentNumber learnerNumber profileHeadline profilePhoto province district gender cellphone guardianCellphone schoolName currentMarkRange howDidYouHearAboutUs howDidYouHearAboutUsOther guestReasons otherReason guestMessage emailVerified phoneVerified subscriptionStatus paidUntil lastPaymentId premium premiumExpiresAt trialActive trialStartDate trialEndDate trialExpiredAt accessStatus trialDaysLeft"
     );
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -2703,6 +2734,8 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       guestMessage,
       schoolName,
       currentMarkRange,
+      howDidYouHearAboutUs,
+      howDidYouHearAboutUsOther,
       gender,
     } = req.body;
 
@@ -2728,6 +2761,14 @@ app.post("/api/register", registerLimiter, async (req, res) => {
     const cleanGuardianCellphone = String(guardianCellphone || "")
       .replace(/\s+/g, "")
       .trim();
+
+    const cleanHowDidYouHearAboutUs = String(howDidYouHearAboutUs || "")
+      .trim()
+      .toLowerCase();
+
+    const cleanHowDidYouHearAboutUsOther = String(
+      howDidYouHearAboutUsOther || ""
+    ).trim();
 
     if (!cleanUsername || !cleanEmail || !password || !cleanAccountType) {
       return res.status(400).json({
@@ -2810,6 +2851,40 @@ app.post("/api/register", registerLimiter, async (req, res) => {
         message:
           "Please enter a valid guardian cellphone number. Example: +27821234567",
       });
+    }
+
+    const allowedHowHeard = [
+      "tiktok",
+      "facebook",
+      "referral",
+      "family_friends",
+      "google_search",
+      "whatsapp",
+      "school_teacher",
+      "other",
+    ];
+
+    if (cleanAccountType === "learner") {
+      if (!cleanHowDidYouHearAboutUs) {
+        return res.status(400).json({
+          message: "Please tell us how you heard about Practice Online.",
+        });
+      }
+
+      if (!allowedHowHeard.includes(cleanHowDidYouHearAboutUs)) {
+        return res.status(400).json({
+          message: "Invalid referral source.",
+        });
+      }
+
+      if (
+        cleanHowDidYouHearAboutUs === "other" &&
+        !cleanHowDidYouHearAboutUsOther
+      ) {
+        return res.status(400).json({
+          message: "Please specify how you heard about Practice Online.",
+        });
+      }
     }
 
     const cleanGuestReasons = Array.isArray(guestReasons)
@@ -2936,6 +3011,15 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       currentMarkRange:
         cleanAccountType === "learner"
           ? String(currentMarkRange || "").trim()
+          : "",
+      howDidYouHearAboutUs:
+        cleanAccountType === "learner"
+          ? cleanHowDidYouHearAboutUs
+          : "",
+      howDidYouHearAboutUsOther:
+        cleanAccountType === "learner" &&
+        cleanHowDidYouHearAboutUs === "other"
+          ? cleanHowDidYouHearAboutUsOther
           : "",
 
       profileHeadline: "",
@@ -3348,6 +3432,8 @@ app.patch("/api/profile/me", authRequired, async (req, res) => {
       guardianCellphone,
       schoolName,
       currentMarkRange,
+      howDidYouHearAboutUs,
+      howDidYouHearAboutUsOther,
       guestReasons,
       otherReason,
       guestMessage,
@@ -3357,6 +3443,8 @@ app.patch("/api/profile/me", authRequired, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    const wasOnboardingCompleted = user.onboardingCompleted === true;
 
     /*
      * Role is never changed by learner onboarding.
@@ -3520,6 +3608,44 @@ app.patch("/api/profile/me", authRequired, async (req, res) => {
       user.currentMarkRange = markRange;
     }
 
+    if (typeof howDidYouHearAboutUs === "string") {
+      const heard = String(howDidYouHearAboutUs || "").trim().toLowerCase();
+      const validHowHeard = [
+        "",
+        "tiktok",
+        "facebook",
+        "referral",
+        "family_friends",
+        "google_search",
+        "whatsapp",
+        "school_teacher",
+        "other",
+      ];
+
+      if (!validHowHeard.includes(heard)) {
+        return res.status(400).json({ message: "Invalid referral source." });
+      }
+
+      user.howDidYouHearAboutUs = heard;
+    }
+
+    if (typeof howDidYouHearAboutUsOther === "string") {
+      user.howDidYouHearAboutUsOther =
+        String(howDidYouHearAboutUs || "").trim().toLowerCase() === "other"
+          ? String(howDidYouHearAboutUsOther || "").trim()
+          : "";
+    }
+
+    if (
+      String(user.accountType || "").toLowerCase() === "learner" &&
+      String(user.howDidYouHearAboutUs || "").toLowerCase() === "other" &&
+      !String(user.howDidYouHearAboutUsOther || "").trim()
+    ) {
+      return res.status(400).json({
+        message: "Please specify how you heard about Practice Online.",
+      });
+    }
+
     if (Array.isArray(guestReasons)) {
       user.guestReasons = guestReasons
         .map((item) => String(item || "").trim())
@@ -3641,6 +3767,31 @@ app.patch("/api/profile/me", authRequired, async (req, res) => {
     user.onboardingCompleted = true;
 
     await user.save();
+
+    /*
+     * Google/Microsoft OAuth accounts are created before onboarding is complete,
+     * so the first registration notification cannot yet include referral data.
+     * Send one completed-onboarding notification after those details are saved.
+     * This does not run again on later profile edits.
+     */
+    if (
+      !wasOnboardingCompleted &&
+      user.accountType === "learner"
+    ) {
+      setImmediate(async () => {
+        try {
+          await sendNewRegistrationNotification(
+            user,
+            "OAuth onboarding completed"
+          );
+        } catch (notificationError) {
+          console.error(
+            "OAuth onboarding support notification failed:",
+            notificationError.message
+          );
+        }
+      });
+    }
 
     return res.json({
       message: "Profile updated successfully.",
