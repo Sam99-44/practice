@@ -3398,8 +3398,48 @@ app.post("/api/login", loginLimiter, async (req, res) => {
 
 app.get("/api/profile/me", authRequired, async (req, res) => {
   try {
+    /*
+     * IMPORTANT:
+     * toPublicProfile() calculates the effective onboarding state from
+     * onboardingCompleted + grade + curriculum + cellphone.
+     *
+     * Do not project those fields away here. If they are missing,
+     * a fully registered Google/Microsoft learner is incorrectly returned
+     * as onboardingCompleted:false and the learner hub redirects them back
+     * to register.html in a loop.
+     */
     const user = await User.findById(req.user.userId).select(
-      "fullName username email grade accountType role learnerNumber studentNumber profileHeadline profilePhoto createdAt"
+      [
+        "firstName",
+        "surname",
+        "fullName",
+        "username",
+        "email",
+        "grade",
+        "curriculum",
+        "accountType",
+        "role",
+        "onboardingCompleted",
+        "learnerNumber",
+        "studentNumber",
+        "profileHeadline",
+        "profilePhoto",
+        "province",
+        "district",
+        "gender",
+        "cellphone",
+        "guardianCellphone",
+        "schoolName",
+        "currentMarkRange",
+        "howDidYouHearAboutUs",
+        "howDidYouHearAboutUsOther",
+        "guestReasons",
+        "otherReason",
+        "guestMessage",
+        "emailVerified",
+        "phoneVerified",
+        "createdAt",
+      ].join(" ")
     );
 
     if (!user) {
