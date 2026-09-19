@@ -5126,6 +5126,91 @@ function normalizeTextAnswer(s) {
   return normalizeAnswer(s);
 }
 
+/*
+ * Flexible wording marker for written reasons / geometry statements.
+ * Learners do not need to reproduce the memorandum sentence exactly.
+ */
+function normalizeConceptText(value) {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/\u2212/g, "-")
+    .replace(/[–—]/g, "-")
+    .replace(/\\perp|⊥/g, " perpendicular ")
+    .replace(/90\s*(?:°|degrees?|deg)\b/g, " perpendicular ")
+    .replace(/\bright\s*angles?\b/g, " perpendicular ")
+    .replace(/\bcentre\b/g, "center")
+    .replace(/\bmid[-\s]?point\b/g, "midpoint")
+    .replace(/\bbisected?\b|\bbisects?\b|\bbisecting\b/g, "midpoint")
+    .replace(/\bmiddle\b/g, "midpoint")
+    .replace(/\bparallel\s+to\b/g, "parallel")
+    .replace(/\bperpendicular\s+to\b/g, "perpendicular")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function conceptTokens(value) {
+  const stopWords = new Set([
+    "a","an","the","of","to","is","are","was","were","be","being",
+    "from","at","in","on","and","or","because","therefore","hence",
+    "it","this","that","which","why"
+  ]);
+
+  return normalizeConceptText(value)
+    .split(" ")
+    .map(token => token.trim())
+    .filter(token => token && !stopWords.has(token));
+}
+
+function flexibleConceptTextEquivalent(userAnswer, correctAnswer) {
+  const user = normalizeConceptText(userAnswer);
+  const correct = normalizeConceptText(correctAnswer);
+
+  if (!user || !correct) return false;
+  if (user === correct) return true;
+
+  const userTokens = [...new Set(conceptTokens(user))];
+  const correctTokens = [...new Set(conceptTokens(correct))];
+
+  if (!userTokens.length || !correctTokens.length) return false;
+
+  const userSet = new Set(userTokens);
+  const correctSet = new Set(correctTokens);
+
+  const relationshipTokens = [
+    "perpendicular",
+    "parallel",
+    "equal",
+    "midpoint",
+    "tangent",
+    "chord",
+    "diameter",
+    "radius",
+    "center"
+  ];
+
+  const requiredRelationships = relationshipTokens.filter(token =>
+    correctSet.has(token)
+  );
+
+  const relationshipSatisfied = requiredRelationships.every(token =>
+    userSet.has(token)
+  );
+
+  const matchedCount = correctTokens.filter(token =>
+    userSet.has(token)
+  ).length;
+
+  const coverage = matchedCount / correctTokens.length;
+
+  if (correctTokens.length <= 4) {
+    return relationshipSatisfied && coverage >= 0.75;
+  }
+
+  return relationshipSatisfied && coverage >= 0.60;
+}
+
+
 function splitPossibleAnswers(value) {
   return String(value || "")
     .split("|")
@@ -5177,10 +5262,145 @@ function splitLearnerAnswers(value) {
     .filter(Boolean);
 }
 
+
+function parseFlexibleCoordinateAnswer(value) {
+  let raw = String(value ?? "").trim();
+  if (!raw) return null;
+
+  raw = raw
+    .replace(/\u2212/g, "-")
+    .replace(/[–—]/g, "-")
+    .replace(/\\left|\\right/g, "")
+    .replace(/\\,/g, "")
+    .trim();
+
+  raw = raw.replace(
+    /^\s*[A-Za-z][A-Za-z0-9_]*\s*(?=[(\[\{]|[-+0-9.])/,
+    ""
+  ).trim();
+
+  raw = raw
+    .replace(/^[\s(\[\{]+/, "")
+    .replace(/[\s)\]\}]+$/, "")
+    .trim();
+
+  let separator = null;
+
+  if (raw.includes(";")) {
+    separator = ";";
+  } else if (raw.includes(":")) {
+    separator = ":";
+  } else {
+    const commaCount = (raw.match(/,/g) || []).length;
+    if (commaCount === 1) separator = ",";
+  }
+
+  if (!separator) return null;
+
+  const parts = raw
+    .split(separator)
+    .map(part => part.trim())
+    .filter(Boolean);
+
+  if (parts.length !== 2) return null;
+
+  const x = parseNumberOrFraction(parts[0]);
+  const y = parseNumberOrFraction(parts[1]);
+
+  if (x === null || y === null) return null;
+
+  return { x, y };
+}
+
+function parseFlexibleCoordinateCollection(value) {
+  let raw = String(value ?? "").trim();
+  if (!raw) return null;
+
+  raw = raw
+    .replace(/\u2212/g, "-")
+    .replace(/[–—]/g, "-")
+    .replace(/\\left|\\right/g, "")
+    .replace(/\\,/g, "")
+    .replace(/\\&/g, "&")
+    .trim();
+
+  const points = [];
+
+  const bracketPattern =
+    /(?:[A-Za-z][A-Za-z0-9_]*\s*)?[\(\[\{]\s*([^()\[\]{}]+?)\s*[\)\]\}]/g;
+
+  let match;
+
+  while ((match = bracketPattern.exec(raw)) !== null) {
+    const point = parseFlexibleCoordinateAnswer(match[1]);
+    if (point) points.push(point);
+  }
+
+  return points.length >= 2 ? points : null;
+}
+
+function flexibleCoordinateCollectionsEquivalent(left, right) {
+  const learnerPoints = parseFlexibleCoordinateCollection(left);
+  const correctPoints = parseFlexibleCoordinateCollection(right);
+
+  if (!learnerPoints || !correctPoints) return false;
+  if (learnerPoints.length !== correctPoints.length) return false;
+
+  const used = new Set();
+
+  for (const learnerPoint of learnerPoints) {
+    let matchedIndex = -1;
+
+    for (let index = 0; index < correctPoints.length; index += 1) {
+      if (used.has(index)) continue;
+
+      const correctPoint = correctPoints[index];
+
+      const xMatches = numericValuesAreInAcceptableRange(
+        learnerPoint.x,
+        correctPoint.x,
+        String(correctPoint.x)
+      );
+
+      const yMatches = numericValuesAreInAcceptableRange(
+        learnerPoint.y,
+        correctPoint.y,
+        String(correctPoint.y)
+      );
+
+      if (xMatches && yMatches) {
+        matchedIndex = index;
+        break;
+      }
+    }
+
+    if (matchedIndex < 0) return false;
+    used.add(matchedIndex);
+  }
+
+  return true;
+}
+
 function compareTextAnswer(userAns, correctAns, mode, tolerance) {
   const uaRaw = String(userAns || "").trim();
   const caRaw = String(correctAns || "").trim();
   if (!caRaw) return false;
+
+  /*
+   * Multi-point coordinate answers must be checked BEFORE generic learner
+   * answer splitting because semicolons are valid coordinate separators.
+   * Point order and A/B labels do not affect correctness.
+   */
+  if (flexibleCoordinateCollectionsEquivalent(uaRaw, caRaw)) {
+    return true;
+  }
+
+  if (
+    String(mode || "exact").toLowerCase() !== "number_tolerance" &&
+    flexibleConceptTextEquivalent(uaRaw, caRaw)
+  ) {
+    return true;
+  }
 
   const keyedAlternatives =
     extractKeyedAcceptedAlternatives(caRaw);
