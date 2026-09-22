@@ -3861,6 +3861,651 @@ body > .draftManager{
 }
 </style>
 
+
+<style>
+/* =========================================================
+   ADMIN PREVIEW MATHJAX — PRESERVE FRACTION BARS
+   MathJax uses SVG <rect> elements both for some enclosures
+   and for fraction division bars. Keep enclosures transparent
+   but restore the actual mfrac bar.
+   ========================================================= */
+
+/* Default SVG rectangles stay transparent to prevent black blocks. */
+.attemptPaperPreview mjx-container[jax="SVG"] svg rect,
+#paperPreviewContent mjx-container[jax="SVG"] svg rect{
+  fill:none !important;
+}
+
+/* Restore MathJax fraction division bars. */
+.attemptPaperPreview mjx-container[jax="SVG"] g[data-mml-node="mfrac"] > rect,
+#paperPreviewContent mjx-container[jax="SVG"] g[data-mml-node="mfrac"] > rect{
+  fill:#000 !important;
+  stroke:none !important;
+}
+
+/* Keep boxed/enclosed maths as an outline, not a solid rectangle. */
+.attemptPaperPreview mjx-container[jax="SVG"] g[data-mml-node="menclose"] rect,
+#paperPreviewContent mjx-container[jax="SVG"] g[data-mml-node="menclose"] rect{
+  fill:none !important;
+  stroke:#000 !important;
+}
+</style>
+
+
+<style>
+/* =========================================================
+   FINAL ADMIN PREVIEW SPACING + NOTE ALIGNMENT
+   Compact, consistent, and matched to the learner attempt.
+   ========================================================= */
+
+/* ---------- SOLUTION / WORKINGS ---------- */
+.attemptPaperPreview .solutionBox,
+#paperPreviewContent .solutionBox{
+  margin-top:10px !important;
+  padding:10px 12px !important;
+}
+
+.attemptPaperPreview .solutionTop,
+#paperPreviewContent .solutionTop{
+  margin:0 0 7px 0 !important;
+  line-height:1.35 !important;
+}
+
+.attemptPaperPreview .solutionBody,
+#paperPreviewContent .solutionBody{
+  padding:8px 10px !important;
+  line-height:1.55 !important;
+  white-space:pre-wrap !important;
+}
+
+/* Remove oversized MathJax display gaps inside solutions. */
+.attemptPaperPreview .solutionBody mjx-container[display="true"],
+#paperPreviewContent .solutionBody mjx-container[display="true"]{
+  margin:.22rem 0 !important;
+}
+
+/* Inline maths in solution sentences should sit naturally on the text line. */
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"]:not([display="true"]),
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"]:not([display="true"]){
+  margin:0 .05em !important;
+  vertical-align:middle !important;
+  position:relative !important;
+  top:0 !important;
+}
+
+/* ---------- INFORMATION NOTES ---------- */
+html body .attemptPaperPreview .noteBox:not(:has(.assessmentVisualFrame)),
+html body #paperPreviewContent .noteBox:not(:has(.assessmentVisualFrame)),
+html body .previewBox.prevNote.paperBox{
+  min-height:0 !important;
+  margin:10px 0 14px !important;
+  padding:14px 16px !important;
+}
+
+/* One stable grid for icon + note content. */
+html body .attemptPaperPreview .noteBox:not(:has(.assessmentVisualFrame)) > .noteSection,
+html body #paperPreviewContent .noteBox:not(:has(.assessmentVisualFrame)) > .noteSection,
+html body .previewBox.prevNote.paperBox > .noteSection{
+  grid-template-columns:24px minmax(0,1fr) !important;
+  column-gap:10px !important;
+  row-gap:0 !important;
+  min-height:0 !important;
+  align-items:start !important;
+}
+
+/* Keep the note icon aligned with the first text baseline. */
+.attemptPaperPreview .noteSectionIcon,
+#paperPreviewContent .noteSectionIcon,
+.previewBox.prevNote.paperBox .noteSectionIcon{
+  width:22px !important;
+  height:22px !important;
+  margin:0 !important;
+  position:relative !important;
+  top:1px !important;
+  align-self:start !important;
+}
+
+/* Remove nested spacing that causes notes to float or look uneven. */
+.attemptPaperPreview .noteSectionContent,
+#paperPreviewContent .noteSectionContent,
+.previewBox.prevNote.paperBox .noteSectionContent,
+.attemptPaperPreview .noteSection > div:last-child,
+#paperPreviewContent .noteSection > div:last-child{
+  margin:0 !important;
+  padding:0 !important;
+  line-height:1.55 !important;
+  align-self:start !important;
+}
+
+/* Consistent paragraph/list rhythm inside notes. */
+.attemptPaperPreview .noteBox p,
+#paperPreviewContent .noteBox p,
+.previewBox.prevNote.paperBox p{
+  margin:0 0 6px !important;
+}
+
+.attemptPaperPreview .noteBox p:last-child,
+#paperPreviewContent .noteBox p:last-child,
+.previewBox.prevNote.paperBox p:last-child{
+  margin-bottom:0 !important;
+}
+
+.attemptPaperPreview .noteBox ul,
+.attemptPaperPreview .noteBox ol,
+#paperPreviewContent .noteBox ul,
+#paperPreviewContent .noteBox ol{
+  margin:5px 0 5px 18px !important;
+  padding:0 !important;
+}
+
+.attemptPaperPreview .noteBox li,
+#paperPreviewContent .noteBox li{
+  margin:2px 0 !important;
+  line-height:1.5 !important;
+}
+
+/* Inline note maths: consistent baseline and tight spacing. */
+.attemptPaperPreview .noteBox mjx-container[jax="SVG"]:not([display="true"]),
+#paperPreviewContent .noteBox mjx-container[jax="SVG"]:not([display="true"]),
+.previewBox.prevNote.paperBox mjx-container[jax="SVG"]:not([display="true"]){
+  display:inline-block !important;
+  margin:0 .04em !important;
+  position:relative !important;
+  top:0 !important;
+  vertical-align:middle !important;
+  line-height:1 !important;
+}
+
+/* Stacked fractions stay compact and centred within prose. */
+.attemptPaperPreview .noteBox mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+#paperPreviewContent .noteBox mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+.previewBox.prevNote.paperBox mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]){
+  font-size:1em !important;
+  margin-inline:.05em !important;
+  vertical-align:middle !important;
+}
+
+/* Plain inline variables/values align with the surrounding sentence. */
+.attemptPaperPreview .noteBox .inlineVariable,
+.attemptPaperPreview .noteBox .noteValueInline,
+#paperPreviewContent .noteBox .inlineVariable,
+#paperPreviewContent .noteBox .noteValueInline{
+  display:inline !important;
+  position:static !important;
+  vertical-align:baseline !important;
+  line-height:inherit !important;
+}
+
+/* Mobile keeps the exact same rhythm, only with slightly tighter padding. */
+@media(max-width:640px){
+  html body .attemptPaperPreview .noteBox:not(:has(.assessmentVisualFrame)),
+  html body #paperPreviewContent .noteBox:not(:has(.assessmentVisualFrame)),
+  html body .previewBox.prevNote.paperBox{
+    margin:8px 0 12px !important;
+    padding:12px !important;
+  }
+
+  html body .attemptPaperPreview .noteBox:not(:has(.assessmentVisualFrame)) > .noteSection,
+  html body #paperPreviewContent .noteBox:not(:has(.assessmentVisualFrame)) > .noteSection,
+  html body .previewBox.prevNote.paperBox > .noteSection{
+    grid-template-columns:22px minmax(0,1fr) !important;
+    column-gap:9px !important;
+  }
+
+  .attemptPaperPreview .solutionBody,
+  #paperPreviewContent .solutionBody{
+    line-height:1.5 !important;
+  }
+}
+</style>
+
+
+<style>
+/* =========================================================
+   FINAL ADMIN SOLUTION BASELINE + SPACING OPTIMISATION
+   Goal:
+   - prose and inline maths share one baseline
+   - stacked fractions stay readable without floating
+   - standalone equations have consistent vertical rhythm
+   - no oversized gaps between short solution lines
+   ========================================================= */
+
+/* Compact solution container */
+.attemptPaperPreview .solutionBody,
+#paperPreviewContent .solutionBody{
+  font-size:14px !important;
+  line-height:1.45 !important;
+  padding:8px 10px !important;
+  white-space:pre-wrap !important;
+}
+
+/* Inline maths must sit on the text baseline, not in the vertical middle */
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"]:not([display="true"]),
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"]:not([display="true"]){
+  display:inline-block !important;
+  margin:0 .04em !important;
+  padding:0 !important;
+  position:relative !important;
+  top:.04em !important;
+  vertical-align:baseline !important;
+  line-height:1 !important;
+}
+
+/* Fractions in prose: slightly lift the whole expression so text and fraction
+   feel visually aligned without making the fraction smaller. */
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="mfrac"]),
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="mfrac"]){
+  top:.10em !important;
+  vertical-align:baseline !important;
+  margin-left:.06em !important;
+  margin-right:.06em !important;
+}
+
+/* Keep inline powers / subscripts compact and on the same reading line */
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="msup"]),
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="msub"]),
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="msup"]),
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="msub"]){
+  top:.02em !important;
+}
+
+/* Standalone/display equations: consistent rhythm, never huge MathJax margins */
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"][display="true"],
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"][display="true"]{
+  display:block !important;
+  margin:.24rem 0 .30rem !important;
+  padding:0 !important;
+  text-align:left !important;
+  line-height:1.15 !important;
+}
+
+/* Standalone equations should hug the left edge like the surrounding workings */
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"][display="true"] > svg,
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"][display="true"] > svg{
+  margin-left:0 !important;
+  margin-right:auto !important;
+}
+
+/* Prevent MathJax's own internal baseline tweaks from producing visible jumps */
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"] svg,
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"] svg{
+  vertical-align:baseline !important;
+  overflow:visible !important;
+}
+
+/* Compact ordinary text lines */
+.attemptPaperPreview .solutionBody p,
+#paperPreviewContent .solutionBody p{
+  margin:0 0 5px !important;
+  line-height:1.45 !important;
+}
+
+.attemptPaperPreview .solutionBody p:last-child,
+#paperPreviewContent .solutionBody p:last-child{
+  margin-bottom:0 !important;
+}
+
+/* If solution text contains BR-separated lines, keep a controlled rhythm */
+.attemptPaperPreview .solutionBody br,
+#paperPreviewContent .solutionBody br{
+  line-height:1.35 !important;
+}
+
+/* Keep common labels tight to the equation that follows */
+.attemptPaperPreview .solutionBody .solutionLabelOnly,
+#paperPreviewContent .solutionBody .solutionLabelOnly{
+  margin:4px 0 2px !important;
+}
+
+/* Reduce vertical gaps between generated solution rows if present */
+.attemptPaperPreview .solutionStep,
+#paperPreviewContent .solutionStep{
+  margin:6px 0 4px !important;
+  line-height:1.5 !important;
+}
+
+.attemptPaperPreview .solutionMathBlock,
+#paperPreviewContent .solutionMathBlock{
+  margin:4px 0 7px 0 !important;
+  max-width:100% !important;
+  text-align:left !important;
+  line-height:1.35 !important;
+}
+
+.attemptPaperPreview .solutionTextBlock,
+#paperPreviewContent .solutionTextBlock{
+  margin:2px 0 7px 0 !important;
+  line-height:1.45 !important;
+}
+
+/* Notes use the same baseline philosophy */
+.attemptPaperPreview .noteBox mjx-container[jax="SVG"]:not([display="true"]),
+#paperPreviewContent .noteBox mjx-container[jax="SVG"]:not([display="true"]),
+.previewBox.prevNote.paperBox mjx-container[jax="SVG"]:not([display="true"]){
+  display:inline-block !important;
+  position:relative !important;
+  top:.04em !important;
+  vertical-align:baseline !important;
+  margin:0 .04em !important;
+  line-height:1 !important;
+}
+
+.attemptPaperPreview .noteBox mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="mfrac"]),
+#paperPreviewContent .noteBox mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="mfrac"]),
+.previewBox.prevNote.paperBox mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="mfrac"]){
+  top:.10em !important;
+  vertical-align:baseline !important;
+}
+
+/* Mobile keeps same alignment with slightly tighter vertical rhythm */
+@media(max-width:640px){
+  .attemptPaperPreview .solutionBody,
+  #paperPreviewContent .solutionBody{
+    line-height:1.42 !important;
+  }
+
+  .attemptPaperPreview .solutionBody mjx-container[jax="SVG"][display="true"],
+  #paperPreviewContent .solutionBody mjx-container[jax="SVG"][display="true"]{
+    margin:.20rem 0 .26rem !important;
+  }
+}
+</style>
+
+
+<style>
+/* =========================================================
+   FINAL FRACTION-ONLY BASELINE TUNING
+   Keep all existing maths alignment unchanged.
+   Only inline fractions are moved slightly lower.
+   ========================================================= */
+
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="mfrac"]),
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="mfrac"]),
+.attemptPaperPreview .noteBox mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="mfrac"]),
+#paperPreviewContent .noteBox mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="mfrac"]),
+.previewBox.prevNote.paperBox mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="mfrac"]){
+  top:.18em !important;
+  vertical-align:baseline !important;
+  margin-left:.05em !important;
+  margin-right:.05em !important;
+}
+</style>
+
+
+<style>
+/* =========================================================
+   FRACTION FONT + BASELINE FINAL MATCH
+   Match the clean Times New Roman-style maths shown in the
+   worked-equation example, while lowering inline fractions
+   into the prose baseline more naturally.
+   ========================================================= */
+
+/* Use the same serif maths appearance consistently in solutions. */
+.attemptPaperPreview .solutionBody,
+#paperPreviewContent .solutionBody,
+.attemptPaperPreview .solutionBody mjx-container,
+#paperPreviewContent .solutionBody mjx-container,
+.attemptPaperPreview .solutionBody mjx-container *,
+#paperPreviewContent .solutionBody mjx-container *{
+  font-family:"Times New Roman", Times, serif !important;
+}
+
+/* Inline ordinary maths stays on the sentence baseline. */
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"]:not([display="true"]),
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"]:not([display="true"]){
+  vertical-align:baseline !important;
+  top:.02em !important;
+  line-height:1 !important;
+}
+
+/* Inline fractions need a slightly deeper optical baseline than symbols/text. */
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="mfrac"]),
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="mfrac"]){
+  top:.24em !important;
+  vertical-align:baseline !important;
+  margin-left:.04em !important;
+  margin-right:.04em !important;
+  font-size:1em !important;
+}
+
+/* Keep the fraction itself compact and visually like the worked example. */
+.attemptPaperPreview .solutionBody g[data-mml-node="mfrac"],
+#paperPreviewContent .solutionBody g[data-mml-node="mfrac"]{
+  font-family:"Times New Roman", Times, serif !important;
+}
+
+/* Same treatment inside admin notes. */
+.attemptPaperPreview .noteBox,
+#paperPreviewContent .noteBox,
+.previewBox.prevNote.paperBox,
+.attemptPaperPreview .noteBox mjx-container,
+#paperPreviewContent .noteBox mjx-container,
+.previewBox.prevNote.paperBox mjx-container,
+.attemptPaperPreview .noteBox mjx-container *,
+#paperPreviewContent .noteBox mjx-container *,
+.previewBox.prevNote.paperBox mjx-container *{
+  font-family:"Times New Roman", Times, serif !important;
+}
+
+.attemptPaperPreview .noteBox mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="mfrac"]),
+#paperPreviewContent .noteBox mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="mfrac"]),
+.previewBox.prevNote.paperBox mjx-container[jax="SVG"]:not([display="true"]):has([data-mml-node="mfrac"]){
+  top:.24em !important;
+  vertical-align:baseline !important;
+  font-size:1em !important;
+  margin-left:.04em !important;
+  margin-right:.04em !important;
+}
+</style>
+
+
+<style>
+/* =========================================================
+   FINAL SOLUTION MATH CONSISTENCY
+   Fractions were inheriting different MathJax sizing, which
+   made fraction equations look like a different font/style.
+   Keep one consistent MathJax size and weight everywhere.
+   ========================================================= */
+
+/* One consistent mathematical size in every solution line */
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"],
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"]{
+  font-size:1em !important;
+  font-weight:400 !important;
+  line-height:1 !important;
+  color:#000 !important;
+}
+
+/* Fractions must not enlarge the equation */
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"] [data-mml-node="mfrac"],
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"] [data-mml-node="mfrac"],
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"] [data-mml-node="mfrac"] *,
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"] [data-mml-node="mfrac"] *{
+  font-size:1em !important;
+  font-weight:400 !important;
+}
+
+/* Same size for subscripts, superscripts, roots, operators and numbers */
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"] [data-mml-node="msup"],
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"] [data-mml-node="msub"],
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"] [data-mml-node="msubsup"],
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"] [data-mml-node="msqrt"],
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"] [data-mml-node="mi"],
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"] [data-mml-node="mn"],
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"] [data-mml-node="mo"],
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"] [data-mml-node="msup"],
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"] [data-mml-node="msub"],
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"] [data-mml-node="msubsup"],
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"] [data-mml-node="msqrt"],
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"] [data-mml-node="mi"],
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"] [data-mml-node="mn"],
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"] [data-mml-node="mo"]{
+  font-size:1em !important;
+  font-weight:400 !important;
+}
+
+/* Display equations and fraction equations use the same overall scale */
+.attemptPaperPreview .solutionBody mjx-container[jax="SVG"][display="true"],
+#paperPreviewContent .solutionBody mjx-container[jax="SVG"][display="true"]{
+  font-size:1em !important;
+  line-height:1.15 !important;
+}
+
+/* Keep fraction bars crisp without changing the apparent font weight */
+.attemptPaperPreview .solutionBody g[data-mml-node="mfrac"] > rect,
+#paperPreviewContent .solutionBody g[data-mml-node="mfrac"] > rect{
+  fill:#000 !important;
+  stroke:none !important;
+}
+
+/* Do not let older global fraction rules enlarge solution fractions */
+.attemptPaperPreview .solutionBody mjx-mfrac,
+.attemptPaperPreview .solutionBody mjx-frac,
+#paperPreviewContent .solutionBody mjx-mfrac,
+#paperPreviewContent .solutionBody mjx-frac{
+  font-size:1em !important;
+}
+</style>
+
+
+<style>
+/* =========================================================
+   FINAL ADMIN NOTES — COMPACT / CLEAN / CONSISTENT
+   Reduce empty space without making notes cramped.
+   ========================================================= */
+
+/* Main note container */
+.attemptPaperPreview .noteBox,
+#paperPreviewContent .noteBox,
+.previewBox.prevNote.paperBox{
+  margin:6px 0 9px !important;
+  padding:8px 10px !important;
+  line-height:1.42 !important;
+  min-height:0 !important;
+}
+
+/* Remove unnecessary spacing around nested note sections */
+.attemptPaperPreview .noteSection,
+#paperPreviewContent .noteSection,
+.previewBox.prevNote.paperBox .noteSection{
+  margin:0 !important;
+  padding:0 !important;
+  row-gap:0 !important;
+  column-gap:8px !important;
+  align-items:start !important;
+}
+
+/* Keep icon aligned tightly with first text line */
+.attemptPaperPreview .noteSectionIcon,
+#paperPreviewContent .noteSectionIcon,
+.previewBox.prevNote.paperBox .noteSectionIcon{
+  width:20px !important;
+  height:20px !important;
+  margin:0 !important;
+  top:1px !important;
+}
+
+/* Note content itself */
+.attemptPaperPreview .noteSectionContent,
+#paperPreviewContent .noteSectionContent,
+.previewBox.prevNote.paperBox .noteSectionContent{
+  margin:0 !important;
+  padding:0 !important;
+  line-height:1.42 !important;
+}
+
+/* Paragraph spacing */
+.attemptPaperPreview .noteBox p,
+#paperPreviewContent .noteBox p,
+.previewBox.prevNote.paperBox p{
+  margin:0 0 4px !important;
+  line-height:1.42 !important;
+}
+
+.attemptPaperPreview .noteBox p:last-child,
+#paperPreviewContent .noteBox p:last-child,
+.previewBox.prevNote.paperBox p:last-child{
+  margin-bottom:0 !important;
+}
+
+/* Headings inside notes */
+.attemptPaperPreview .noteBox h1,
+.attemptPaperPreview .noteBox h2,
+.attemptPaperPreview .noteBox h3,
+.attemptPaperPreview .noteBox h4,
+#paperPreviewContent .noteBox h1,
+#paperPreviewContent .noteBox h2,
+#paperPreviewContent .noteBox h3,
+#paperPreviewContent .noteBox h4{
+  margin:3px 0 5px !important;
+  line-height:1.3 !important;
+}
+
+/* Lists */
+.attemptPaperPreview .noteBox ul,
+.attemptPaperPreview .noteBox ol,
+#paperPreviewContent .noteBox ul,
+#paperPreviewContent .noteBox ol,
+.previewBox.prevNote.paperBox ul,
+.previewBox.prevNote.paperBox ol{
+  margin:3px 0 4px 18px !important;
+  padding:0 !important;
+}
+
+.attemptPaperPreview .noteBox li,
+#paperPreviewContent .noteBox li,
+.previewBox.prevNote.paperBox li{
+  margin:1px 0 !important;
+  line-height:1.4 !important;
+}
+
+/* Inline maths stays close to surrounding wording */
+.attemptPaperPreview .noteBox mjx-container[jax="SVG"]:not([display="true"]),
+#paperPreviewContent .noteBox mjx-container[jax="SVG"]:not([display="true"]),
+.previewBox.prevNote.paperBox mjx-container[jax="SVG"]:not([display="true"]){
+  margin-left:.03em !important;
+  margin-right:.03em !important;
+}
+
+/* Display maths inside notes: compact vertical rhythm */
+.attemptPaperPreview .noteBox mjx-container[jax="SVG"][display="true"],
+#paperPreviewContent .noteBox mjx-container[jax="SVG"][display="true"],
+.previewBox.prevNote.paperBox mjx-container[jax="SVG"][display="true"]{
+  margin:.16rem 0 .20rem !important;
+  line-height:1.1 !important;
+}
+
+/* Visual / diagram notes should not inherit large text-note padding */
+.attemptPaperPreview .noteBox:has(.assessmentVisualFrame),
+#paperPreviewContent .noteBox:has(.assessmentVisualFrame){
+  padding:4px 0 6px !important;
+  margin:5px 0 8px !important;
+}
+
+/* Keep question-to-note spacing compact */
+.attemptPaperPreview .q .noteBox:first-child,
+#paperPreviewContent .q .noteBox:first-child{
+  margin-top:4px !important;
+}
+
+/* Mobile */
+@media(max-width:640px){
+  .attemptPaperPreview .noteBox,
+  #paperPreviewContent .noteBox,
+  .previewBox.prevNote.paperBox{
+    margin:5px 0 8px !important;
+    padding:7px 9px !important;
+    line-height:1.4 !important;
+  }
+
+  .attemptPaperPreview .noteSection,
+  #paperPreviewContent .noteSection,
+  .previewBox.prevNote.paperBox .noteSection{
+    column-gap:7px !important;
+  }
+}
+</style>
+
 </head>
 
 <body>
@@ -5018,7 +5663,13 @@ function escapeHtml(str){
       return finalizePreviewMixedMath(temp);
     }
     function renderNoteMixedMathPreview(text){
-      let rendered = renderMixedMathPreview(text);
+      const compactText = String(text || "")
+        .replace(/\r\n?/g, "\n")
+        .replace(/[ \t]+\n/g, "\n")
+        .replace(/\n[ \t]*\n+/g, "\n")
+        .trim();
+
+      let rendered = renderMixedMathPreview(compactText);
       const nativeDefinition = (whole, variable, description) => {
         let cleanDescription = String(description || "")
           .replace(/\\text\s*\{([^{}]*)\}/g, "$1")
@@ -5075,7 +5726,16 @@ function escapeHtml(str){
       return /(?:=|\\^|frac|sqrt|\d+\s*\/\s*\d+|[<>≤≥])/.test(t);
     }
     function formatSolutionHtmlPreview(solutionText){
-      const solRaw = String(solutionText || "").trim();
+      /*
+       * Admin-preview spacing cleanup only:
+       * keep the saved solution unchanged, but remove accidental repeated
+       * blank lines and trailing spaces before rendering.
+       */
+      const solRaw = String(solutionText || "")
+        .replace(/\r\n?/g, "\n")
+        .replace(/[ \t]+\n/g, "\n")
+        .replace(/\n[ \t]*\n+/g, "\n")
+        .trim();
 
       if (!solRaw) return "";
 
