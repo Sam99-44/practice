@@ -1,45 +1,4 @@
 // server.js (FULL UPDATED - COPY & PASTE)
-// ✅ Adds profile routes.
-// ✅ Adds profile photo upload/remove
-// ✅ Adds profile info update
-// ✅ Adds static /uploads serving
-// ✅ Keeps current studentNumber system
-// ✅ Adds MCQ MULTI-SELECT support (chosenIndexes + correctIndexes)
-// ✅ Auto-detects multi-select when correctIndexes has 2+ items OR isMultiSelect true
-// ✅ Saves multi-select properly into Result for review/results
-// ✅ Saves and marks single + multiple typed-answer fields
-// ✅ Supports instructions, labels, units, x/y/z values and review snapshots
-// ✅ Adds safe Math.js expression equivalence checking
-// ✅ Accepts equivalent MathLive/LaTeX forms and ignores configured units during marking
-// ✅ Uses Decimal.js for reliable number-tolerance comparisons
-// ✅ Backward compatible with old single-correct fields (chosenIndex/correctIndex)
-// ✅ Saves + returns quiz difficulty (easy/moderate/hard)
-// ✅ Saves + returns quiz paper (paper1/paper2)
-// ✅ PayFast monthly payments
-// ✅ Returns subscription info on /api/auth/me
-// ✅ Strong email validation.
-// ✅ Email verification routes
-// ✅ Login blocks unverified users
-// ✅ Register route protection with express-rate-limit
-// ✅ Free trial system 
-// ✅ Access-status routes
-// ✅ Manual payment routes
-// ✅ Admin leaderboard filters
-// ✅ Admin leaderboard statistics
-// ✅ Admin sees all pages
-// ✅ Tester sees all pages
-// ✅ Tester can test subscription/payments/features
-// ✅ Editor can add/edit quizzes
-// ✅ Learners can practice without subscription during development
-// ✅ Draft / publish / scheduled publish support
-// ✅ Available from / until support
-// ✅ Optional learner email on publish
-// ✅ Auto-publish scheduled quizzes
-// ✅ Final PUT route fixed so edit page updates MongoDB correctly
-// ✅  system added
-// ✅ Profile  summary added.
-// ✅ Class RSVP (accept/reject) added.
-
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -223,16 +182,13 @@ passport.use(
             trialEndDate: addDays(new Date(), 7),
           });
 
-          setImmediate(async () => {
-            try {
-              await sendNewRegistrationNotification(user, "Google registration");
-            } catch (notificationError) {
-              console.error(
-                "Google registration support notification failed:",
-                notificationError.message
-              );
-            }
-          });
+          /*
+           * Do NOT send the registration email yet.
+           * This is only the temporary Google OAuth account. Grade,
+           * curriculum, cellphone and referral information are collected
+           * during onboarding. The completed registration notification is
+           * sent after /api/profile/me successfully finishes onboarding.
+           */
         }
 
         return done(null, user);
@@ -2495,19 +2451,11 @@ async function findOrCreateMicrosoftUser(profile) {
     trialEndDate: addDays(new Date(), 7),
   });
 
-  setImmediate(async () => {
-    try {
-      await sendNewRegistrationNotification(
-        user,
-        "Microsoft registration"
-      );
-    } catch (notificationError) {
-      console.error(
-        "Microsoft registration support notification failed:",
-        notificationError.message
-      );
-    }
-  });
+  /*
+   * Do NOT send the registration email yet.
+   * This is only the temporary Microsoft OAuth account. The completed
+   * registration notification is sent after learner onboarding succeeds.
+   */
 
   return user;
 }
@@ -3809,10 +3757,16 @@ app.patch("/api/profile/me", authRequired, async (req, res) => {
     await user.save();
 
     /*
-     * Google/Microsoft OAuth accounts are created before onboarding is complete,
-     * so the first registration notification cannot yet include referral data.
-     * Send one completed-onboarding notification after those details are saved.
-     * This does not run again on later profile edits.
+     * Google/Microsoft OAuth accounts are created as temporary learner records
+     * before onboarding is complete. No registration email is sent at that
+     * temporary stage. Send ONE notification only after all required learner
+     * details have been saved successfully.
+     *
+     * This also prevents incomplete notifications showing:
+     *   Grade: Not applicable
+     *   Curriculum: Not provided
+     *   Cellphone: Not provided
+     *   How did you hear about us?: Not provided
      */
     if (
       !wasOnboardingCompleted &&
@@ -3822,11 +3776,11 @@ app.patch("/api/profile/me", authRequired, async (req, res) => {
         try {
           await sendNewRegistrationNotification(
             user,
-            "OAuth onboarding completed"
+            "OAuth registration completed"
           );
         } catch (notificationError) {
           console.error(
-            "OAuth onboarding support notification failed:",
+            "OAuth completed registration notification failed:",
             notificationError.message
           );
         }
@@ -5008,6 +4962,13 @@ function normalizeAnswer(ans) {
 }
 
 function parseNumberOrFraction(input) {
+  /*
+   * Decimal comma and decimal point are equivalent throughout marking.
+   * normalizeAnswer() converts decimal commas to decimal points, so:
+   *   0,34 === 0.34
+   *   11,66 === 11.66
+   *   0,475 === 0.475
+   */
   const s = normalizeAnswer(input);
   if (!s) return null;
 
@@ -5263,6 +5224,10 @@ function splitLearnerAnswers(value) {
 }
 
 
+/*
+ * Coordinate values may use either decimal comma or decimal point.
+ * Examples: (0,34;0) and (0.34;0) are mathematically identical.
+ */
 function parseFlexibleCoordinateAnswer(value) {
   let raw = String(value ?? "").trim();
   if (!raw) return null;
@@ -5406,6 +5371,21 @@ function compareTextAnswer(userAns, correctAns, mode, tolerance) {
     extractKeyedAcceptedAlternatives(caRaw);
 
   if (keyedAlternatives.length > 0) {
+    /*
+     * If the stored keyed values are coordinate points, they represent one
+     * complete answer. Compare them as an unordered point collection first.
+     */
+    const combinedCoordinateAnswer = keyedAlternatives.join(", ");
+
+    if (
+      flexibleCoordinateCollectionsEquivalent(
+        uaRaw,
+        combinedCoordinateAnswer
+      )
+    ) {
+      return true;
+    }
+
     return keyedAlternatives.some(alternative =>
       compareTextAnswer(
         uaRaw,
