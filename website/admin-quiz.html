@@ -3832,6 +3832,35 @@ body > .draftManager{
 }
 </style>
 
+
+<style>
+/* =========================================================
+   ADMIN PREVIEW MATHJAX — REMOVE BLACK RECTANGLE ARTIFACTS
+   Keep maths dark, but preserve unfilled SVG rectangles.
+   ========================================================= */
+
+/* Do not force structural MathJax rectangles to solid black. */
+.attemptPaperPreview mjx-container[jax="SVG"] svg rect,
+#paperPreviewContent mjx-container[jax="SVG"] svg rect{
+  fill:none !important;
+}
+
+/* Keep actual mathematical glyphs dark and readable. */
+.attemptPaperPreview mjx-container[jax="SVG"] svg path,
+.attemptPaperPreview mjx-container[jax="SVG"] svg use,
+#paperPreviewContent mjx-container[jax="SVG"] svg path,
+#paperPreviewContent mjx-container[jax="SVG"] svg use{
+  fill:#000 !important;
+}
+
+/* Fraction/radical/other strokes remain visible without filling boxes. */
+.attemptPaperPreview mjx-container[jax="SVG"] svg line,
+#paperPreviewContent mjx-container[jax="SVG"] svg line{
+  stroke:#000 !important;
+  fill:none !important;
+}
+</style>
+
 </head>
 
 <body>
