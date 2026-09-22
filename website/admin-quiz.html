@@ -3809,6 +3809,29 @@ body > .draftManager{
   align-self:start !important;
 }
 </style>
+
+<style>
+/* =========================================================
+   ADMIN PREVIEW — ALWAYS SHOW SAVED SOLUTION
+   Solutions are visible in the admin preview for moderation
+   before content is committed/published to the learner attempt.
+   ========================================================= */
+#paperPreviewContent .solutionBox,
+.attemptPaperPreview .solutionBox{
+  position:relative !important;
+}
+
+#paperPreviewContent .solutionTop::after,
+.attemptPaperPreview .solutionTop::after{
+  content:"  •  Admin preview";
+  color:#64748b;
+  font-family:Arial, Helvetica, sans-serif;
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:.01em;
+}
+</style>
+
 </head>
 
 <body>
@@ -8577,10 +8600,10 @@ function escapeHtml(str){
                 ${answerSuffix ? `<span>${renderMixedMathPreview(answerSuffix)}</span>` : ""}
               </div>`;
 
-          parts.push(renderPreviewEditorJump(cardIndex, `<div class="q">${questionAndImageHtml}${instructionHtml}${answerHtml}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${currentFullPreviewMode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`, "question", label));
+          parts.push(renderPreviewEditorJump(cardIndex, `<div class="q">${questionAndImageHtml}${instructionHtml}${answerHtml}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${solution ? formatSolutionHtmlPreview(solution) : ""}</div>`, "question", label));
         } else if (type === "mcq") {
           const opts = [...card.querySelectorAll(".optRow")].map((row, index) => ({ idx:index, txt:cleanSpaces(row.querySelector(".optInput")?.value || "") })).filter(o => o.txt);
-          parts.push(renderPreviewEditorJump(cardIndex, `<div class="q">${questionAndImageHtml}${opts.map((o, idx)=>`<div class="optPaper"><span class="optBullet">○</span><span class="optTextPaper">${renderMixedMathPreview(o.txt)}</span></div>`).join("")}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${currentFullPreviewMode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`, "question", label));
+          parts.push(renderPreviewEditorJump(cardIndex, `<div class="q">${questionAndImageHtml}${opts.map((o, idx)=>`<div class="optPaper"><span class="optBullet">○</span><span class="optTextPaper">${renderMixedMathPreview(o.txt)}</span></div>`).join("")}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${solution ? formatSolutionHtmlPreview(solution) : ""}</div>`, "question", label));
         } else if (type === "dropdown") {
           const options = String(card.querySelector(".dropdownOptions")?.value || "")
             .split(/\n|\|/)
@@ -8588,7 +8611,7 @@ function escapeHtml(str){
             .filter(Boolean);
           const placeholder = cleanSpaces(card.querySelector(".dropdownPlaceholder")?.value || "Select an answer");
           const selectHtml = `<div style="margin:10px 0 4px 68px;max-width:320px;"><select disabled style="width:100%;padding:9px 10px;border:1px solid #cbd5e1;background:#fff;font-family:'Times New Roman',Times,serif;font-size:14px;"><option value="">${escapeHtml(placeholder)}</option>${options.map(option => `<option>${escapeHtml(option)}</option>`).join("")}</select></div>`;
-          parts.push(renderPreviewEditorJump(cardIndex, `<div class="q">${questionAndImageHtml}${selectHtml}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${currentFullPreviewMode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`, "question", label));
+          parts.push(renderPreviewEditorJump(cardIndex, `<div class="q">${questionAndImageHtml}${selectHtml}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${solution ? formatSolutionHtmlPreview(solution) : ""}</div>`, "question", label));
         } else if (type === "fill") {
           const instruction = cleanSpaces(card.querySelector(".fillInstruction")?.value || "");
           const rawQuestion = stripLeadingQuestionNumberMultiline(card.querySelector(".qText")?.value || "")
@@ -8613,7 +8636,7 @@ function escapeHtml(str){
             ? `${imageHtml}${fillHeadHtml}`
             : `${fillHeadHtml}${imageHtml}`;
           const instructionHtml = instruction ? `<div class="answerPreviewInstruction" style="margin-left:68px;"><b>INSTRUCTION:</b> ${renderMixedMathPreview(instruction)}</div>` : "";
-          parts.push(renderPreviewEditorJump(cardIndex, `<div class="q">${fillQuestionAndImageHtml}${instructionHtml}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${currentFullPreviewMode === "review" && solution ? formatSolutionHtmlPreview(solution) : ""}</div>`, "question", label));
+          parts.push(renderPreviewEditorJump(cardIndex, `<div class="q">${fillQuestionAndImageHtml}${instructionHtml}${hint ? `<div class="hint">Hint: ${renderMixedMathPreview(hint)}</div>` : ""}${solution ? formatSolutionHtmlPreview(solution) : ""}</div>`, "question", label));
         }
       }
       parts.push(`</div>`);
