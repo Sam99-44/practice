@@ -1532,15 +1532,149 @@ body.googleSetupMode #googleSetupContinue{
 }
 </style>
 
+
+<style>
+/* =========================================================
+   REGISTER LOADER — SAME APPROVED STYLE AS ATTEMPT PAGE
+   24-dot circular loader, no loading wording.
+   ========================================================= */
+
+.oauthFinishLoader{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:99999 !important;
+  display:none;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  height:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  background:#ffffff !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+.oauthFinishLoader.show,
+body.googleSetupMode.oauthInitialLoading #oauthFinishLoader{
+  display:flex !important;
+}
+
+.oauthFinishLoaderInner{
+  width:auto !important;
+  margin:0 !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  text-align:center !important;
+}
+
+/* Same final size used on the attempt loading screen */
+.oauthAttemptLoaderDots{
+  --loader-dot-size:7px;
+  --loader-radius:31px;
+  position:relative;
+  width:78px;
+  height:78px;
+  flex:0 0 auto;
+  margin:0;
+}
+
+.oauthAttemptLoaderDots span{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:var(--loader-dot-size);
+  height:var(--loader-dot-size);
+  margin-left:calc(var(--loader-dot-size) * -0.5);
+  margin-top:calc(var(--loader-dot-size) * -0.5);
+  border-radius:50%;
+  background:#dfe5ec;
+  opacity:.72;
+  transform:
+    rotate(calc(var(--loader-index) * 15deg))
+    translateY(calc(var(--loader-radius) * -1));
+  transform-origin:center;
+  animation:registerCircularPulse 1.45s linear infinite;
+  animation-delay:calc(var(--loader-index) * -0.06s);
+}
+
+@keyframes registerCircularPulse{
+  0%,100%{
+    background:#dfe5ec;
+    opacity:.72;
+  }
+  12%{
+    background:#2563eb;
+    opacity:1;
+  }
+  24%{
+    background:#1b1648;
+    opacity:1;
+  }
+  42%,80%{
+    background:#cbd5e1;
+    opacity:.65;
+  }
+}
+
+/* No loading wording — same as the final attempt loader */
+.oauthFinishLoaderTitle,
+.oauthFinishLoaderText,
+.oauthDots{
+  display:none !important;
+}
+
+@media(max-width:640px){
+  .oauthAttemptLoaderDots{
+    --loader-dot-size:6px;
+    --loader-radius:27px;
+    width:68px;
+    height:68px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .oauthAttemptLoaderDots span{
+    animation-duration:2.4s;
+  }
+}
+</style>
+
 </head>
 
 <body>
-<div class="oauthFinishLoader" id="oauthFinishLoader" aria-live="polite" aria-busy="true">
+<div class="oauthFinishLoader" id="oauthFinishLoader" role="status" aria-live="polite" aria-label="Loading">
   <div class="oauthFinishLoaderInner">
-    <h2 class="oauthFinishLoaderTitle">Preparing your learner account</h2>
-    <p class="oauthFinishLoaderText">Please wait while we load your learning content.</p>
-    <div class="oauthDots" aria-hidden="true">
-      <span></span><span></span><span></span>
+    <div class="oauthAttemptLoaderDots" aria-hidden="true">
+      <span style="--loader-index:0"></span>
+      <span style="--loader-index:1"></span>
+      <span style="--loader-index:2"></span>
+      <span style="--loader-index:3"></span>
+      <span style="--loader-index:4"></span>
+      <span style="--loader-index:5"></span>
+      <span style="--loader-index:6"></span>
+      <span style="--loader-index:7"></span>
+      <span style="--loader-index:8"></span>
+      <span style="--loader-index:9"></span>
+      <span style="--loader-index:10"></span>
+      <span style="--loader-index:11"></span>
+      <span style="--loader-index:12"></span>
+      <span style="--loader-index:13"></span>
+      <span style="--loader-index:14"></span>
+      <span style="--loader-index:15"></span>
+      <span style="--loader-index:16"></span>
+      <span style="--loader-index:17"></span>
+      <span style="--loader-index:18"></span>
+      <span style="--loader-index:19"></span>
+      <span style="--loader-index:20"></span>
+      <span style="--loader-index:21"></span>
+      <span style="--loader-index:22"></span>
+      <span style="--loader-index:23"></span>
     </div>
   </div>
 </div>
@@ -1555,12 +1689,6 @@ body.googleSetupMode #googleSetupContinue{
     const loader=document.getElementById("oauthFinishLoader");
     if(loader){
       loader.classList.add("show");
-
-      const title=loader.querySelector(".oauthFinishLoaderTitle");
-      const copy=loader.querySelector(".oauthFinishLoaderText");
-
-      if(title) title.textContent="Loading your registration";
-      if(copy) copy.textContent="Please wait while we load your details.";
     }
   }
 })();
@@ -3353,10 +3481,6 @@ body.googleSetupMode #googleSetupContinue{
     setStatus("");
 
     if(finishLoader){
-      const loaderTitle=finishLoader.querySelector(".oauthFinishLoaderTitle");
-      const loaderText=finishLoader.querySelector(".oauthFinishLoaderText");
-      if(loaderTitle) loaderTitle.textContent="Preparing your learner account";
-      if(loaderText) loaderText.textContent="Please wait while we load your learning content.";
       finishLoader.classList.add("show");
     }
 
@@ -3490,10 +3614,6 @@ body.googleSetupMode #googleSetupContinue{
          * through setup again; keep the same professional loading handoff.
          */
         if(finishLoader){
-          const loaderTitle=finishLoader.querySelector(".oauthFinishLoaderTitle");
-          const loaderText=finishLoader.querySelector(".oauthFinishLoaderText");
-          if(loaderTitle) loaderTitle.textContent="Preparing your learner account";
-          if(loaderText) loaderText.textContent="Please wait while we load your learning content.";
           finishLoader.classList.add("show");
         }
 
