@@ -4340,7 +4340,13 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
       return res.json(quiz);
     }
 
-    if (Number(quiz.grade) !== Number(u.grade)) {
+    const normalizedContentType = normalizeAssessmentContentType(quiz.contentType);
+    const availableToAllLearners =
+      quiz.isForAllLearners === true ||
+      String(quiz.audience || "").toLowerCase() === "all" ||
+      normalizedContentType === "weeklyChallenge";
+
+    if (!availableToAllLearners && Number(quiz.grade) !== Number(u.grade)) {
       return res.status(403).json({ message: "Not allowed" });
     }
 
@@ -4868,7 +4874,7 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
   }
 });
 
-app.patch("/api/quizzes/:id/publish", authRequired, adminOnly, async (req, res) => {
+app.patch("/api/quizzes/:id/publish", authRequired, quizManagerOnly, async (req, res) => {
   try {
     const { publishNow, publishAt, sendPublishEmail } = req.body;
 
