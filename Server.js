@@ -435,6 +435,121 @@ async function sendBulkEmail({ recipients, subject, html, text }) {
   return data;
 }
 
+
+/* ------------------ UNATTEMPTED QUIZ REMINDER EMAILS ------------------ */
+function unattemptedQuizReminderLink(quizId) {
+  return "https://practiceonline.co.za/login.html?next=" + encodeURIComponent(`attempt.html?quizId=${String(quizId || "")}`);
+}
+
+function quizIsCurrentlyAvailableForReminder(quiz, now = new Date()) {
+  if (!quiz || quiz.isFrozen === true || quiz.isPublished !== true) return false;
+  if (normalizeAssessmentContentType(quiz.contentType) !== "quiz") return false;
+  if (quiz.publishAt && new Date(quiz.publishAt) > now) return false;
+  if (quiz.availableFrom && new Date(quiz.availableFrom) > now) return false;
+  if (quiz.availableUntil && new Date(quiz.availableUntil) < now) return false;
+  return true;
+}
+
+async function sendUnattemptedQuizReminderEmails() {
+  const now = new Date();
+  const learners = await User.find({
+    role: "learner",
+    accountType: { $in: ["learner", "practice"] },
+    emailVerified: true,
+    email: { $exists: true, $ne: "" },
+    grade: { $gte: 8, $lte: 12 },
+  }).select("_id email fullName username grade").lean();
+
+  let emailsSent = 0;
+  let learnersWithOutstandingQuizzes = 0;
+
+  for (const learner of learners) {
+    const learnerGrade = Number(learner.grade);
+    if (!Number.isInteger(learnerGrade)) continue;
+
+    const quizzes = await Quiz.find({
+      grade: learnerGrade,
+      isPublished: true,
+      isFrozen: { $ne: true },
+      contentType: { $in: ["quiz", "Quiz", "quizzes", "Quizzes"] },
+      $and: [
+        { $or: [{ publishAt: null }, { publishAt: { $exists: false } }, { publishAt: { $lte: now } }] },
+        { $or: [{ availableFrom: null }, { availableFrom: { $exists: false } }, { availableFrom: { $lte: now } }] },
+        { $or: [{ availableUntil: null }, { availableUntil: { $exists: false } }, { availableUntil: { $gte: now } }] },
+      ],
+    }).select("_id assessmentCode title topic subtopic contentType isPublished isFrozen publishAt availableFrom availableUntil").sort({ topic: 1, createdAt: 1 }).lean();
+
+    const available = quizzes.filter(q => quizIsCurrentlyAvailableForReminder(q, now));
+    if (!available.length) continue;
+
+    const attemptedIds = await Result.distinct("quizId", {
+      userId: learner._id,
+      quizId: { $in: available.map(q => q._id) },
+      isAdminAttempt: { $ne: true },
+    });
+    const attemptedSet = new Set(attemptedIds.map(String));
+    const outstanding = available.filter(q => !attemptedSet.has(String(q._id)));
+    if (!outstanding.length) continue;
+
+    learnersWithOutstandingQuizzes += 1;
+    const displayName = learner.fullName || learner.username || "Learner";
+    const rows = outstanding.map(q => {
+      const topic = String(q.topic || "General").trim();
+      const title = String(q.title || "Quiz").trim();
+      const subtopic = String(q.subtopic || "").trim();
+      const code = String(q.assessmentCode || "").trim();
+      const link = unattemptedQuizReminderLink(q._id);
+      return `<tr><td style="padding:10px;border-bottom:1px solid #e5e7eb;"><strong>${escapeEmailHtml(topic)}</strong>${subtopic ? `<div style="color:#64748b;font-size:12px;margin-top:2px;">${escapeEmailHtml(subtopic)}</div>` : ""}</td><td style="padding:10px;border-bottom:1px solid #e5e7eb;">${escapeEmailHtml(title)}</td><td style="padding:10px;border-bottom:1px solid #e5e7eb;white-space:nowrap;">${escapeEmailHtml(code)}</td><td style="padding:10px;border-bottom:1px solid #e5e7eb;white-space:nowrap;"><a href="${link}" target="_blank" style="color:#1b1648;font-weight:700;text-decoration:none;">Attempt Quiz</a></td></tr>`;
+    }).join("");
+
+    const html = `<div style="font-family:Inter,Arial,sans-serif;line-height:1.6;color:#111827;"><h2 style="margin:0 0 12px;color:#1b1648;">Quizzes waiting for you</h2><p>Hello ${escapeEmailHtml(displayName)},</p><p>You still have ${outstanding.length} ${outstanding.length === 1 ? "quiz" : "quizzes"} available on Practice Online that you have not attempted yet.</p><table style="border-collapse:collapse;width:100%;max-width:760px;margin:16px 0;"><thead><tr style="background:#f8fafc;text-align:left;"><th style="padding:10px;border-bottom:2px solid #c9a227;">Topic</th><th style="padding:10px;border-bottom:2px solid #c9a227;">Quiz</th><th style="padding:10px;border-bottom:2px solid #c9a227;">Code</th><th style="padding:10px;border-bottom:2px solid #c9a227;">Open</th></tr></thead><tbody>${rows}</tbody></table><p>Once you attempt a quiz, it will automatically be removed from your next reminder.</p><p style="margin-top:22px;">Kind Regards,<br><strong>Practice Online Team</strong></p></div>`;
+
+    const plainList = outstanding.map((q,i) => `${i+1}. ${q.topic || "General"} — ${q.title || "Quiz"}${q.assessmentCode ? ` (${q.assessmentCode})` : ""}\n${unattemptedQuizReminderLink(q._id)}`).join("\n\n");
+    const plainText = [`Hello ${displayName},`, "", `You still have ${outstanding.length} ${outstanding.length === 1 ? "quiz" : "quizzes"} available on Practice Online that you have not attempted yet.`, "", plainList, "", "Once you attempt a quiz, it will automatically be removed from your next reminder.", "", "Kind Regards,", "Practice Online Team"].join("\n");
+
+    try {
+      await sendEmail({
+        to: learner.email,
+        subject: outstanding.length === 1 ? "Reminder: 1 quiz still waiting for you" : `Reminder: ${outstanding.length} quizzes still waiting for you`,
+        html,
+        text: plainText,
+      });
+      emailsSent += 1;
+    } catch (error) {
+      console.error("Unattempted quiz reminder failed for learner:", String(learner._id), error.message);
+    }
+  }
+  return { learnerCount: learners.length, learnersWithOutstandingQuizzes, emailsSent };
+}
+
+async function initializeUnattemptedQuizReminderScheduler() {
+  const now = new Date();
+  await QuizReminderJobState.updateOne(
+    { _id: QUIZ_REMINDER_JOB_ID },
+    { $setOnInsert: { nextRunAt: new Date(now.getTime() + QUIZ_REMINDER_INTERVAL_MS), lastRunAt: null, lockedUntil: null, lastSentCount: 0, lastLearnerCount: 0, lastError: "" } },
+    { upsert: true }
+  );
+}
+
+async function runDueUnattemptedQuizReminderJob() {
+  const now = new Date();
+  const locked = await QuizReminderJobState.findOneAndUpdate(
+    { _id: QUIZ_REMINDER_JOB_ID, nextRunAt: { $lte: now }, $or: [{ lockedUntil: null }, { lockedUntil: { $exists: false } }, { lockedUntil: { $lte: now } }] },
+    { $set: { lockedUntil: new Date(now.getTime() + QUIZ_REMINDER_LOCK_MS), lastError: "" } },
+    { new: true }
+  );
+  if (!locked) return null;
+  try {
+    const summary = await sendUnattemptedQuizReminderEmails();
+    await QuizReminderJobState.updateOne({ _id: QUIZ_REMINDER_JOB_ID }, { $set: { lastRunAt: new Date(), nextRunAt: new Date(Date.now() + QUIZ_REMINDER_INTERVAL_MS), lockedUntil: null, lastSentCount: summary.emailsSent, lastLearnerCount: summary.learnersWithOutstandingQuizzes, lastError: "" } });
+    console.log("Unattempted quiz reminders sent", summary);
+    return summary;
+  } catch (error) {
+    await QuizReminderJobState.updateOne({ _id: QUIZ_REMINDER_JOB_ID }, { $set: { nextRunAt: new Date(Date.now() + 60 * 60 * 1000), lockedUntil: null, lastError: String(error.message || error) } });
+    throw error;
+  }
+}
+
 /* ------------------ HELPERS ------------------ */
 function hashToken(raw) {
   return crypto.createHash("sha256").update(String(raw)).digest("hex");
@@ -540,6 +655,24 @@ const AssessmentCodeCounterSchema = new mongoose.Schema(
 const AssessmentCodeCounter =
   mongoose.models.AssessmentCodeCounter ||
   mongoose.model("AssessmentCodeCounter", AssessmentCodeCounterSchema);
+
+/* ------------------ UNATTEMPTED QUIZ REMINDERS ------------------ */
+const QUIZ_REMINDER_INTERVAL_DAYS = Math.max(1, Number(process.env.QUIZ_REMINDER_INTERVAL_DAYS || 3));
+const QUIZ_REMINDER_INTERVAL_MS = QUIZ_REMINDER_INTERVAL_DAYS * 24 * 60 * 60 * 1000;
+const QUIZ_REMINDER_LOCK_MS = 60 * 60 * 1000;
+
+const QuizReminderJobStateSchema = new mongoose.Schema({
+  _id: { type: String, required: true },
+  nextRunAt: { type: Date, required: true },
+  lastRunAt: { type: Date, default: null },
+  lockedUntil: { type: Date, default: null },
+  lastSentCount: { type: Number, default: 0 },
+  lastLearnerCount: { type: Number, default: 0 },
+  lastError: { type: String, default: "" },
+}, { versionKey: false, timestamps: true });
+
+const QuizReminderJobState = mongoose.models.QuizReminderJobState || mongoose.model("QuizReminderJobState", QuizReminderJobStateSchema);
+const QUIZ_REMINDER_JOB_ID = "unattempted-quiz-reminder-v1";
 
 function normalizeAssessmentContentType(value) {
   const raw = String(value || "")
@@ -1472,6 +1605,28 @@ app.delete("/api/finance/potential-clients/:id", authRequired, employeeAdminOnly
     });
   }
 });
+
+/* ------------------ QUIZ REMINDER ADMIN CONTROLS ------------------ */
+app.post("/api/admin/jobs/unattempted-quiz-reminders/run", authRequired, adminOnly, async (req, res) => {
+  try {
+    const summary = await sendUnattemptedQuizReminderEmails();
+    await QuizReminderJobState.updateOne({ _id: QUIZ_REMINDER_JOB_ID }, { $set: { lastRunAt: new Date(), nextRunAt: new Date(Date.now() + QUIZ_REMINDER_INTERVAL_MS), lockedUntil: null, lastSentCount: summary.emailsSent, lastLearnerCount: summary.learnersWithOutstandingQuizzes, lastError: "" } }, { upsert: true });
+    return res.json({ message: "Unattempted quiz reminder batch completed.", intervalDays: QUIZ_REMINDER_INTERVAL_DAYS, ...summary });
+  } catch (error) {
+    console.error("Manual quiz reminder batch failed:", error.message);
+    return res.status(500).json({ message: "Could not send unattempted quiz reminders." });
+  }
+});
+
+app.get("/api/admin/jobs/unattempted-quiz-reminders/status", authRequired, adminOnly, async (req, res) => {
+  try {
+    const state = await QuizReminderJobState.findById(QUIZ_REMINDER_JOB_ID).lean();
+    return res.json({ intervalDays: QUIZ_REMINDER_INTERVAL_DAYS, state: state || null });
+  } catch {
+    return res.status(500).json({ message: "Could not load quiz reminder status." });
+  }
+});
+
 /* ------------------ LEARNER RESULTS ------------------ */
 
 app.get("/api/admin/learner-results", authRequired, async (req, res) => {
@@ -8151,9 +8306,22 @@ const PORT = process.env.PORT || 5000;
 
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => {
+  .then(async () => {
     console.log("MongoDB connected");
     setInterval(autoPublishScheduledQuizzes, 60 * 1000);
+
+    await initializeUnattemptedQuizReminderScheduler();
+
+    setInterval(() => {
+      runDueUnattemptedQuizReminderJob().catch((error) => {
+        console.error("Quiz reminder scheduler error:", error.message);
+      });
+    }, 30 * 60 * 1000);
+
+    runDueUnattemptedQuizReminderJob().catch((error) => {
+      console.error("Initial quiz reminder scheduler check failed:", error.message);
+    });
+
     app.listen(PORT, () => console.log(`Server running on ${PORT}`));
   })
   .catch((err) => console.error("Mongo error:", err.message));
