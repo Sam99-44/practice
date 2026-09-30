@@ -1792,6 +1792,36 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
   @keyframes workflowDotPulse{0%,100%{opacity:.18;transform:rotate(var(--dot-angle)) translateY(-46px) scale(.72)}35%{opacity:1;transform:rotate(var(--dot-angle)) translateY(-46px) scale(1.08)}}
 }
 </style>
+
+<style>
+.assessmentNativeSelect{display:none!important}
+.assessmentCheckboxDropdown{position:relative;width:100%;margin-top:6px}
+.assessmentDropdownButton{width:100%;min-height:42px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid #cfd7e3;border-radius:4px;background:#fff;color:#111827;font:inherit;font-size:14px;font-weight:400;text-align:left;cursor:pointer}
+.assessmentDropdownButton:hover,.assessmentDropdownButton:focus{border-color:var(--edit-navy,#1b1648);outline:none;box-shadow:0 0 0 3px rgba(27,22,72,.10)}
+.assessmentDropdownChevron{flex:0 0 auto;color:#64748b;font-size:12px;transition:transform .15s ease}
+.assessmentCheckboxDropdown.open .assessmentDropdownChevron{transform:rotate(180deg)}
+.assessmentDropdownPanel{position:absolute;left:0;right:0;top:calc(100% + 5px);z-index:1000;overflow:hidden;border:1px solid #cfd7e3;border-radius:6px;background:#fff;box-shadow:0 12px 30px rgba(15,23,42,.14)}
+.assessmentDropdownTools{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border-bottom:1px solid #e5e7eb;background:#f8fafc}
+.assessmentSelectAllLabel{display:inline-flex!important;align-items:center;gap:7px;margin:0!important;color:#334155!important;font-size:12px!important;font-weight:700!important;cursor:pointer}
+.assessmentSelectAllLabel input,.assessmentCheckboxRow input{width:16px!important;min-width:16px!important;height:16px!important;min-height:16px!important;margin:0!important;padding:0!important;accent-color:var(--edit-navy,#1b1648)}
+#deleteCheckedAssessmentsBtn{min-height:32px!important;padding:6px 10px!important;color:#b91c1c!important;border-color:#fecaca!important;background:#fff!important}
+#deleteCheckedAssessmentsBtn:not(:disabled):hover{background:#fff1f2!important;border-color:#fca5a5!important}
+.assessmentCheckboxList{max-height:330px;overflow:auto;padding:5px}
+.assessmentCheckboxRow{display:grid;grid-template-columns:18px minmax(0,1fr);gap:9px;align-items:start;width:100%;margin:0!important;padding:9px 10px;border:1px solid transparent;border-radius:4px;color:#111827!important;cursor:pointer}
+.assessmentCheckboxRow:hover{background:#f8fafc;border-color:#e2e8f0}
+.assessmentCheckboxRow.checked{background:#fffdf5;border-color:#d6bd55}
+.assessmentCheckboxRow.activeAssessment{box-shadow:inset 3px 0 0 var(--edit-navy,#1b1648)}
+.assessmentCheckboxRow input{margin-top:2px!important}
+.assessmentCheckboxContent{min-width:0}
+.assessmentCheckboxTitle{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;line-height:1.4}
+.assessmentCheckboxCode{color:var(--edit-navy,#1b1648);font-weight:800}
+.assessmentCheckboxName{font-weight:700}
+.assessmentCheckboxMeta{margin-top:2px;color:#64748b;font-size:11px;line-height:1.35}
+.assessmentCheckboxLoad{display:inline-block;margin-top:4px;color:#0b5d84;font-size:10px;font-weight:700;text-decoration:underline;text-underline-offset:2px}
+.assessmentCheckboxEmpty{padding:12px;color:#64748b;font-size:12px;text-align:center}
+@media(max-width:700px){.assessmentDropdownPanel{position:static;margin-top:5px;box-shadow:none}.assessmentDropdownTools{align-items:flex-start;flex-direction:column}#deleteCheckedAssessmentsBtn{width:100%}}
+</style>
+
 </head>
 
 <body>
@@ -1999,13 +2029,36 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
     <div class="assessmentSelectRow">
       <div>
         <label>Select assessment</label>
-        <select id="assessmentSelect">
+        <select id="assessmentSelect" class="assessmentNativeSelect" aria-hidden="true" tabindex="-1">
           <option value="">Loading...</option>
         </select>
+
+        <div class="assessmentCheckboxDropdown" id="assessmentCheckboxDropdown">
+          <button class="assessmentDropdownButton" id="assessmentDropdownButton" type="button"
+                  aria-expanded="false" aria-controls="assessmentDropdownPanel">
+            <span id="assessmentDropdownButtonText">Select assessment</span>
+            <span class="assessmentDropdownChevron" aria-hidden="true">▾</span>
+          </button>
+
+          <div class="assessmentDropdownPanel" id="assessmentDropdownPanel" hidden>
+            <div class="assessmentDropdownTools">
+              <label class="assessmentSelectAllLabel">
+                <input id="assessmentSelectAllCheckbox" type="checkbox" />
+                <span>Select all shown</span>
+              </label>
+              <button class="smallbtn dangerBtn" id="deleteCheckedAssessmentsBtn" type="button" disabled>
+                Remove checked
+              </button>
+            </div>
+            <div class="assessmentCheckboxList" id="assessmentCheckboxList">
+              <div class="assessmentCheckboxEmpty">Loading assessments…</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div>
-        <label>Manage</label>
+        <label>Manage selected assessment</label>
         <div class="manageAssessmentButtons">
           <button class="smallbtn" id="toggleFreezeBtn" type="button" disabled>Make Unavailable</button>
           <button class="smallbtn dangerBtn iconButton" id="deleteAssessmentBtn" type="button" disabled>
@@ -2364,6 +2417,13 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
     const clearAssessmentFiltersBtn = document.getElementById("clearAssessmentFiltersBtn");
     const assessmentFilterCount = document.getElementById("assessmentFilterCount");
     const assessmentSelectEl = document.getElementById("assessmentSelect");
+    const assessmentCheckboxDropdown = document.getElementById("assessmentCheckboxDropdown");
+    const assessmentDropdownButton = document.getElementById("assessmentDropdownButton");
+    const assessmentDropdownButtonText = document.getElementById("assessmentDropdownButtonText");
+    const assessmentDropdownPanel = document.getElementById("assessmentDropdownPanel");
+    const assessmentCheckboxList = document.getElementById("assessmentCheckboxList");
+    const assessmentSelectAllCheckbox = document.getElementById("assessmentSelectAllCheckbox");
+    const deleteCheckedAssessmentsBtn = document.getElementById("deleteCheckedAssessmentsBtn");
     const toggleFreezeBtn = document.getElementById("toggleFreezeBtn");
     const deleteAssessmentBtn = document.getElementById("deleteAssessmentBtn");
     const availabilityPill = document.getElementById("availabilityPill");
@@ -6425,6 +6485,54 @@ function escapeHtml(str){
       });
     } catch {}
 
+    assessmentDropdownButton?.addEventListener("click",()=>{
+      const open=assessmentDropdownPanel?.hasAttribute("hidden")===false;
+      if(open){
+        assessmentDropdownPanel.setAttribute("hidden","");
+        assessmentCheckboxDropdown?.classList.remove("open");
+        assessmentDropdownButton.setAttribute("aria-expanded","false");
+      }else{
+        assessmentDropdownPanel?.removeAttribute("hidden");
+        assessmentCheckboxDropdown?.classList.add("open");
+        assessmentDropdownButton.setAttribute("aria-expanded","true");
+      }
+    });
+
+    assessmentCheckboxList?.addEventListener("change",event=>{
+      if(event.target.matches('input[data-assessment-check-id]')) syncAssessmentCheckboxControls();
+    });
+
+    assessmentCheckboxList?.addEventListener("click",event=>{
+      const loadControl=event.target.closest("[data-load-assessment-id]");
+      if(!loadControl) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const id=String(loadControl.dataset.loadAssessmentId||"");
+      if(!id) return;
+      assessmentSelectEl.value=id;
+      assessmentSelectEl.dispatchEvent(new Event("change",{bubbles:true}));
+      assessmentDropdownPanel?.setAttribute("hidden","");
+      assessmentCheckboxDropdown?.classList.remove("open");
+      assessmentDropdownButton?.setAttribute("aria-expanded","false");
+      updateAssessmentDropdownButtonText();
+    });
+
+    assessmentSelectAllCheckbox?.addEventListener("change",()=>{
+      const checked=!!assessmentSelectAllCheckbox.checked;
+      assessmentCheckboxList?.querySelectorAll('input[data-assessment-check-id]').forEach(box=>{box.checked=checked;});
+      syncAssessmentCheckboxControls();
+    });
+
+    deleteCheckedAssessmentsBtn?.addEventListener("click",deleteCheckedAssessments);
+
+    document.addEventListener("click",event=>{
+      if(!assessmentCheckboxDropdown?.contains(event.target)){
+        assessmentDropdownPanel?.setAttribute("hidden","");
+        assessmentCheckboxDropdown?.classList.remove("open");
+        assessmentDropdownButton?.setAttribute("aria-expanded","false");
+      }
+    });
+
     assessmentSelectEl?.addEventListener("change", ()=>{
       const id = assessmentSelectEl.value;
       if (!id) {
@@ -6435,6 +6543,7 @@ function escapeHtml(str){
         updateChangeReview();
         return;
       }
+      updateAssessmentDropdownButtonText();
       loadAssessmentIntoEditor(id);
     });
     [
@@ -9812,6 +9921,155 @@ function escapeHtml(str){
       return labels[String(value || "").trim()] || "Quiz";
     }
 
+    function checkedAssessmentIds(){
+      if(!assessmentCheckboxList) return [];
+      return [...assessmentCheckboxList.querySelectorAll('input[data-assessment-check-id]:checked')]
+        .map(input=>String(input.dataset.assessmentCheckId||"").trim())
+        .filter(Boolean);
+    }
+
+    function syncAssessmentCheckboxControls(){
+      const boxes=assessmentCheckboxList?[...assessmentCheckboxList.querySelectorAll('input[data-assessment-check-id]')]:[];
+      const checked=boxes.filter(box=>box.checked);
+      boxes.forEach(box=>box.closest(".assessmentCheckboxRow")?.classList.toggle("checked",box.checked));
+      if(deleteCheckedAssessmentsBtn){
+        deleteCheckedAssessmentsBtn.disabled=checked.length===0;
+        deleteCheckedAssessmentsBtn.textContent=checked.length?`Remove checked (${checked.length})`:"Remove checked";
+      }
+      if(assessmentSelectAllCheckbox){
+        assessmentSelectAllCheckbox.disabled=boxes.length===0;
+        assessmentSelectAllCheckbox.checked=boxes.length>0&&checked.length===boxes.length;
+        assessmentSelectAllCheckbox.indeterminate=checked.length>0&&checked.length<boxes.length;
+      }
+    }
+
+    function updateAssessmentDropdownButtonText(){
+      if(!assessmentDropdownButtonText) return;
+      const currentId=String(assessmentSelectEl?.value||currentQuiz?._id||"");
+      const current=allQuizzes.find(q=>String(q?._id||"")===currentId);
+      if(!current){assessmentDropdownButtonText.textContent="Select assessment";return;}
+      const code=String(current.assessmentCode||"").trim();
+      const title=String(current.title||"Assessment").trim();
+      assessmentDropdownButtonText.textContent=code?`${code} • ${title}`:title;
+    }
+
+    function renderAssessmentCheckboxDropdown(filtered){
+      if(!assessmentCheckboxList) return;
+      const previouslyChecked=new Set(checkedAssessmentIds());
+      const currentId=String(assessmentSelectEl?.value||currentQuiz?._id||"");
+      assessmentCheckboxList.innerHTML="";
+      if(!filtered.length){
+        assessmentCheckboxList.innerHTML='<div class="assessmentCheckboxEmpty">No matching assessments</div>';
+        syncAssessmentCheckboxControls();
+        updateAssessmentDropdownButtonText();
+        return;
+      }
+
+      filtered.forEach(q=>{
+        const id=String(q?._id||"");
+        if(!id) return;
+        const row=document.createElement("label");
+        row.className="assessmentCheckboxRow"+(id===currentId?" activeAssessment":"");
+
+        const checkbox=document.createElement("input");
+        checkbox.type="checkbox";
+        checkbox.dataset.assessmentCheckId=id;
+        checkbox.checked=previouslyChecked.has(id);
+
+        const content=document.createElement("div");
+        content.className="assessmentCheckboxContent";
+
+        const title=document.createElement("div");
+        title.className="assessmentCheckboxTitle";
+
+        if(q.assessmentCode){
+          const code=document.createElement("span");
+          code.className="assessmentCheckboxCode";
+          code.textContent=q.assessmentCode;
+          title.appendChild(code);
+        }
+
+        const name=document.createElement("span");
+        name.className="assessmentCheckboxName";
+        name.textContent=q.title||"Untitled assessment";
+        title.appendChild(name);
+
+        const meta=document.createElement("div");
+        meta.className="assessmentCheckboxMeta";
+        meta.textContent=[
+          contentTypeLabel(q.contentType),
+          q.grade?`Grade ${q.grade}`:"",
+          q.topic||"",
+          q.difficulty||"",
+          q.isFrozen?"Unavailable":"Available"
+        ].filter(Boolean).join(" • ");
+
+        const load=document.createElement("span");
+        load.className="assessmentCheckboxLoad";
+        load.textContent=id===currentId?"Currently loaded":"Open to edit";
+        load.dataset.loadAssessmentId=id;
+
+        content.append(title,meta,load);
+        row.append(checkbox,content);
+        assessmentCheckboxList.appendChild(row);
+      });
+
+      syncAssessmentCheckboxControls();
+      updateAssessmentDropdownButtonText();
+    }
+
+    async function deleteCheckedAssessments(){
+      const ids=checkedAssessmentIds();
+      if(!ids.length) return setMsg("Tick at least one assessment to remove.","error");
+
+      const selected=ids.map(id=>allQuizzes.find(q=>String(q?._id||"")===id)).filter(Boolean);
+      const names=selected.map(q=>`${q.assessmentCode?`${q.assessmentCode} — `:""}${q.title||"Untitled assessment"}`);
+      const ok=confirm(`Remove ${ids.length} assessment${ids.length===1?"":"s"} permanently?\n\n${names.join("\n")}\n\nThis cannot be undone.`);
+      if(!ok) return;
+
+      const token=localStorage.getItem("token");
+      if(!token) return logout();
+
+      deleteCheckedAssessmentsBtn.disabled=true;
+      setMsg(`Removing ${ids.length} assessment${ids.length===1?"":"s"}...`,"muted");
+
+      let deleted=0;
+      const failed=[];
+      const currentId=String(currentQuiz?._id||"");
+
+      for(const id of ids){
+        const res=await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`,{
+          method:"DELETE",
+          headers:{Authorization:`Bearer ${token}`}
+        }).catch(()=>null);
+
+        if(!res){failed.push(id);continue;}
+        if(res.status===401) return logout();
+        if(!res.ok){failed.push(id);continue;}
+
+        deleted+=1;
+        purgeDeletedAssessmentFromCaches(id);
+        broadcastAssessmentDeleted(id);
+      }
+
+      if(currentId&&ids.includes(currentId)){
+        assessmentSelectEl.value="";
+        currentQuiz=null;
+        originalEditorSnapshot=null;
+        resetFormAfterSave();
+        document.body.classList.remove("workflowAssessmentLoaded");
+        updateAvailabilityUi();
+      }
+
+      await loadAssessmentList();
+
+      if(failed.length){
+        setMsg(`${deleted} assessment${deleted===1?"":"s"} removed. ${failed.length} could not be removed.`,"error");
+      }else{
+        setMsg(`${deleted} assessment${deleted===1?"":"s"} removed successfully.`,"ok");
+      }
+    }
+
     function renderAssessmentDropdown(){
       const selectedId = assessmentSelectEl.value || currentQuiz?._id || "";
       const grade = String(gradeFilterEl.value || "").trim();
@@ -9901,6 +10159,8 @@ function escapeHtml(str){
       ) {
         assessmentSelectEl.value = selectedId;
       }
+
+      renderAssessmentCheckboxDropdown(filtered);
     }
 
     [gradeEl,subjectEl,topicEl,timeLimitEl,titleEl,difficultyEl,paperEl,accessLevelEl,accessFeeEl,publishModeEl,publishAtEl,availableFromEl,availableUntilEl,marksReleaseAtEl,sendPublishEmailEl,instructionsEl].forEach(el=>{
