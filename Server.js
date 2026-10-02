@@ -1560,6 +1560,117 @@ const uploadProfilePhoto = multer({
   limits: { fileSize: 3 * 1024 * 1024 },
 });
 
+
+/* ------------------ SOUTH AFRICAN SCHOOL DIRECTORY ------------------ */
+/*
+ * Central school directory used by registration and OAuth onboarding.
+ * Existing learner school names are also searched, so the directory can
+ * progressively clean historical data without breaking old accounts.
+ */
+const SchoolDirectorySchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    normalizedName: { type: String, required: true, trim: true, index: true },
+
+    province: { type: String, default: "", trim: true, index: true },
+    district: { type: String, default: "", trim: true, index: true },
+
+    /* DBE identifiers / useful official metadata */
+    emisNumber: { type: String, default: "", trim: true, index: true },
+    status: { type: String, default: "", trim: true },
+    sector: { type: String, default: "", trim: true },
+    phase: { type: String, default: "", trim: true },
+    townCity: { type: String, default: "", trim: true },
+
+    normalizedKey: { type: String, required: true, unique: true, index: true },
+
+    source: {
+      type: String,
+      enum: ["registration", "oauth", "existing_user", "admin", "official_import"],
+      default: "registration",
+      index: true,
+    },
+
+    masterlistYear: { type: Number, default: null },
+    masterlistQuarter: { type: Number, default: null },
+    lastOfficialImportAt: { type: Date, default: null },
+
+    active: { type: Boolean, default: true, index: true },
+  },
+  { timestamps: true }
+);
+
+const SchoolDirectory =
+  mongoose.models.SchoolDirectory ||
+  mongoose.model("SchoolDirectory", SchoolDirectorySchema);
+
+
+
+function normalizeSchoolText(value) {
+  return cleanSpaces(value || "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeSchoolKeyPart(value) {
+  return normalizeSchoolText(value)
+    .toLowerCase()
+    .replace(/[’']/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildSchoolDirectoryKey(name, province = "", district = "") {
+  return [
+    normalizeSchoolKeyPart(name),
+    normalizeSchoolKeyPart(province),
+    normalizeSchoolKeyPart(district),
+  ].join("|");
+}
+
+async function ensureSchoolDirectoryEntry({
+  name,
+  province = "",
+  district = "",
+  source = "registration",
+} = {}) {
+  const cleanName = normalizeSchoolText(name);
+  if (!cleanName) return null;
+
+  const cleanProvince = normalizeSchoolText(province);
+  const cleanDistrict = normalizeSchoolText(district);
+  const normalizedName = normalizeSchoolKeyPart(cleanName);
+  const normalizedKey = buildSchoolDirectoryKey(
+    cleanName,
+    cleanProvince,
+    cleanDistrict
+  );
+
+  return SchoolDirectory.findOneAndUpdate(
+    { normalizedKey },
+    {
+      $setOnInsert: {
+        name: cleanName,
+        normalizedName,
+        province: cleanProvince,
+        district: cleanDistrict,
+        normalizedKey,
+        source,
+        active: true,
+      },
+    },
+    {
+      new: true,
+      upsert: true,
+      setDefaultsOnInsert: true,
+    }
+  );
+}
+
+
+
+
 /* ------------------ RATE LIMIT ------------------ */
 /* ------------------ RATE LIMIT ------------------ */
 const loginLimiter = rateLimit({
@@ -1679,6 +1790,153 @@ app.get("/", (req, res) => res.send("Practice Online API running"));
 app.get("/api/health", (req, res) =>
   res.json({ ok: true, time: new Date().toISOString() })
 );
+
+
+/* ------------------ SCHOOL DIRECTORY SEARCH ------------------ */
+app.get("/api/schools", async (req, res) => {
+  try {
+    const search = normalizeSchoolText(req.query.search || "");
+    const province = normalizeSchoolText(req.query.province || "");
+    const district = normalizeSchoolText(req.query.district || "");
+
+    /*
+     * For South African learners, province/district can be used to browse
+     * the dropdown even before the learner types a search term.
+     */
+    if (!search && !province && !district) {
+      return res.json([]);
+    }
+
+    const directoryQuery = {
+      active: { $ne: false },
+    };
+
+    if (search) {
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      directoryQuery.name = new RegExp(escapedSearch, "i");
+    }
+
+    if (province) {
+      directoryQuery.province = {
+        $regex: new RegExp(
+          `^${province.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+          "i"
+        ),
+      };
+    }
+
+    if (district) {
+      directoryQuery.district = {
+        $regex: new RegExp(
+          `^${district.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+          "i"
+        ),
+      };
+    }
+
+    const directorySchools = await SchoolDirectory.find(directoryQuery)
+      .select("name province district source emisNumber status sector phase townCity")
+      .sort({ name: 1 })
+      .limit(150)
+      .lean();
+
+    const historicNames = search
+      ? await User.distinct("schoolName", {
+          schoolName: new RegExp(
+            search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+            "i"
+          ),
+          role: "learner",
+        })
+      : [];
+
+    const seen = new Set();
+    const results = [];
+
+    function matchesFilters(item) {
+      const itemProvince = normalizeSchoolText(item?.province || "");
+      const itemDistrict = normalizeSchoolText(item?.district || "");
+      const itemName = normalizeSchoolText(item?.name || "");
+
+      if (
+        province &&
+        itemProvince &&
+        itemProvince.toLowerCase() !== province.toLowerCase()
+      ) {
+        return false;
+      }
+
+      if (
+        district &&
+        itemDistrict &&
+        itemDistrict.toLowerCase() !== district.toLowerCase()
+      ) {
+        return false;
+      }
+
+      if (
+        search &&
+        !itemName.toLowerCase().includes(search.toLowerCase())
+      ) {
+        return false;
+      }
+
+      return true;
+    }
+
+    function addResult(item) {
+      const name = normalizeSchoolText(item?.name || "");
+      if (!name || !matchesFilters(item)) return;
+
+      const p = normalizeSchoolText(item?.province || "");
+      const d = normalizeSchoolText(item?.district || "");
+      const key = buildSchoolDirectoryKey(name, p, d);
+
+      if (seen.has(key)) return;
+      seen.add(key);
+
+      results.push({
+        name,
+        province: p,
+        district: d,
+        source: item?.source || "existing_user",
+        emisNumber: String(item?.emisNumber || "").trim(),
+        status: String(item?.status || "").trim(),
+        sector: String(item?.sector || "").trim(),
+        phase: String(item?.phase || "").trim(),
+        townCity: String(item?.townCity || "").trim(),
+      });
+    }
+
+    directorySchools.forEach(addResult);
+
+    for (const schoolName of historicNames) {
+      addResult({
+        name: schoolName,
+        province: "",
+        district: "",
+        source: "existing_user",
+      });
+    }
+
+    results.sort((a, b) => {
+      const aExact =
+        search && a.name.toLowerCase() === search.toLowerCase() ? 0 : 1;
+      const bExact =
+        search && b.name.toLowerCase() === search.toLowerCase() ? 0 : 1;
+
+      return aExact - bExact || a.name.localeCompare(b.name);
+    });
+
+    return res.json(results.slice(0, 150));
+  } catch (error) {
+    console.error("GET /api/schools error:", error);
+    return res.status(500).json({
+      message: "Could not search schools.",
+    });
+  }
+});
+
 
 /* ------------------ TEST EMAIL ------------------ */
 app.get("/test-email", async (req, res) => {
@@ -3418,6 +3676,22 @@ app.post("/api/register", registerLimiter, async (req, res) => {
       trialEndDate: addDays(now, trialDays),
     });
 
+    if (user.accountType === "learner" && user.schoolName) {
+      try {
+        await ensureSchoolDirectoryEntry({
+          name: user.schoolName,
+          province: user.province,
+          district: user.district,
+          source: "registration",
+        });
+      } catch (schoolDirectoryError) {
+        console.error(
+          "School directory registration upsert failed:",
+          schoolDirectoryError.message
+        );
+      }
+    }
+
     const verifyUrl = `${APP_URL}/verify-email.html?token=${encodeURIComponent(
       rawVerifyToken
     )}&email=${encodeURIComponent(user.email)}`;
@@ -4180,6 +4454,22 @@ app.patch("/api/profile/me", authRequired, async (req, res) => {
     user.onboardingCompleted = true;
 
     await user.save();
+
+    if (user.accountType === "learner" && user.schoolName) {
+      try {
+        await ensureSchoolDirectoryEntry({
+          name: user.schoolName,
+          province: user.province,
+          district: user.district,
+          source: wasOnboardingCompleted ? "existing_user" : "oauth",
+        });
+      } catch (schoolDirectoryError) {
+        console.error(
+          "School directory profile upsert failed:",
+          schoolDirectoryError.message
+        );
+      }
+    }
 
     /*
      * Google/Microsoft OAuth accounts are created as temporary learner records
