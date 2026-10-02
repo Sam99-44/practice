@@ -82,6 +82,118 @@ async function generateUniqueGoogleUsername(email, displayName = "") {
   return candidate;
 }
 
+
+/* ------------------ OAUTH EXISTING ACCOUNT MATCHING ------------------ */
+/*
+ * Google and Microsoft must reuse an existing Practice Online account when
+ * the verified OAuth email matches the email already registered on the site.
+ *
+ * This prevents:
+ * - a second learner record
+ * - a second learner number
+ * - duplicate onboarding
+ * - asking for Grade/Curriculum/Cellphone again
+ * - a second "New Registration" notification for an existing complete account
+ */
+function normalizeOAuthEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function escapeRegexLiteral(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function isLearnerLikeAccount(user) {
+  const role = String(user?.role || "").trim().toLowerCase();
+  const accountType = String(user?.accountType || "").trim().toLowerCase();
+
+  return (
+    role === "learner" ||
+    accountType === "learner" ||
+    accountType === "practice"
+  );
+}
+
+function hasCompleteLearnerOnboardingProfile(user) {
+  if (!isLearnerLikeAccount(user)) return true;
+
+  const validGrade =
+    Number.isInteger(Number(user?.grade)) &&
+    Number(user?.grade) >= 8 &&
+    Number(user?.grade) <= 12;
+
+  const validCurriculum = ["CAPS", "IEB"].includes(
+    String(user?.curriculum || "").trim().toUpperCase()
+  );
+
+  const validCellphone = /^\+27[6-8][0-9]{8}$/.test(
+    String(user?.cellphone || "").replace(/\s+/g, "")
+  );
+
+  return validGrade && validCurriculum && validCellphone;
+}
+
+async function findExistingUserByOAuthEmail(rawEmail) {
+  const email = normalizeOAuthEmail(rawEmail);
+  if (!email || !isValidEmail(email)) return null;
+
+  // Normal/current records.
+  let user = await User.findOne({ email });
+  if (user) return user;
+
+  /*
+   * Fallback for older records that may have stored capital letters in the
+   * email address. This still matches the same address only.
+   */
+  const exactEmailPattern = new RegExp(
+    `^${escapeRegexLiteral(email)}$`,
+    "i"
+  );
+
+  return User.findOne({ email: exactEmailPattern });
+}
+
+async function prepareExistingOAuthUser(user) {
+  if (!user) return null;
+
+  let changed = false;
+
+  // Signing in with Google/Microsoft verifies control of this email address.
+  if (user.emailVerified !== true) {
+    user.emailVerified = true;
+    changed = true;
+  }
+
+  if (isLearnerLikeAccount(user)) {
+    const profileComplete = hasCompleteLearnerOnboardingProfile(user);
+
+    /*
+     * Existing complete learner:
+     * go straight through as a login, even if an older record was left with
+     * onboardingCompleted:false.
+     */
+    if (profileComplete && user.onboardingCompleted !== true) {
+      user.onboardingCompleted = true;
+      changed = true;
+    }
+
+    /*
+     * Existing genuinely incomplete learner:
+     * keep onboarding available so only the missing setup must be completed.
+     */
+    if (!profileComplete && user.onboardingCompleted !== false) {
+      user.onboardingCompleted = false;
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    await user.save();
+  }
+
+  return user;
+}
+
 passport.use(
   new GoogleStrategy(
     {
@@ -97,46 +209,18 @@ passport.use(
           return done(new Error("Google account has no email"), null);
         }
 
-        let user = await User.findOne({ email });
+        let user = await findExistingUserByOAuthEmail(email);
 
         /*
-         * Existing Google learners created before onboardingCompleted was
-         * introduced must still be sent through setup if their learner
-         * profile is incomplete.
+         * If this email is already registered on Practice Online, this is a
+         * LOGIN to the existing account — not a new registration.
          */
         if (user) {
-          const role = String(user.role || "").toLowerCase();
-          const accountType = String(user.accountType || "").toLowerCase();
-          const learnerLike =
-            role === "learner" ||
-            accountType === "learner" ||
-            accountType === "practice";
-
-          const validGrade =
-            Number.isInteger(Number(user.grade)) &&
-            Number(user.grade) >= 8 &&
-            Number(user.grade) <= 12;
-
-          const validCurriculum =
-            ["CAPS", "IEB"].includes(
-              String(user.curriculum || "").trim().toUpperCase()
-            );
-
-          const validCellphone =
-            /^\+27[6-8][0-9]{8}$/.test(
-              String(user.cellphone || "").replace(/\s+/g, "")
-            );
-
-          if (
-            learnerLike &&
-            (!validGrade || !validCurriculum || !validCellphone)
-          ) {
-            user.onboardingCompleted = false;
-            await user.save();
-          }
+          user = await prepareExistingOAuthUser(user);
         }
 
         if (!user) {
+          // Only a genuinely new email reaches this branch.
           const learnerNumber = await generateUniqueLearnerNumber("learner");
           const googleUsername = await generateUniqueGoogleUsername(
             email,
@@ -452,13 +536,16 @@ function quizIsCurrentlyAvailableForReminder(quiz, now = new Date()) {
 
 async function sendUnattemptedQuizReminderEmails() {
   const now = new Date();
+
   const learners = await User.find({
     role: "learner",
     accountType: { $in: ["learner", "practice"] },
     emailVerified: true,
     email: { $exists: true, $ne: "" },
     grade: { $gte: 8, $lte: 12 },
-  }).select("_id email fullName username grade").lean();
+  })
+    .select("_id email firstName fullName username grade")
+    .lean();
 
   let emailsSent = 0;
   let learnersWithOutstandingQuizzes = 0;
@@ -477,58 +564,221 @@ async function sendUnattemptedQuizReminderEmails() {
         { $or: [{ availableFrom: null }, { availableFrom: { $exists: false } }, { availableFrom: { $lte: now } }] },
         { $or: [{ availableUntil: null }, { availableUntil: { $exists: false } }, { availableUntil: { $gte: now } }] },
       ],
-    }).select("_id assessmentCode title topic subtopic contentType isPublished isFrozen publishAt availableFrom availableUntil").sort({ topic: 1, createdAt: 1 }).lean();
+    })
+      .select("_id topic contentType isPublished isFrozen publishAt availableFrom availableUntil")
+      .sort({ topic: 1, createdAt: 1 })
+      .lean();
 
-    const available = quizzes.filter(q => quizIsCurrentlyAvailableForReminder(q, now));
+    const available = quizzes.filter((quiz) =>
+      quizIsCurrentlyAvailableForReminder(quiz, now)
+    );
     if (!available.length) continue;
 
     const attemptedIds = await Result.distinct("quizId", {
       userId: learner._id,
-      quizId: { $in: available.map(q => q._id) },
+      quizId: { $in: available.map((quiz) => quiz._id) },
       isAdminAttempt: { $ne: true },
     });
+
     const attemptedSet = new Set(attemptedIds.map(String));
-    const outstanding = available.filter(q => !attemptedSet.has(String(q._id)));
-    if (!outstanding.length) continue;
+    const topicGroups = new Map();
+
+    for (const quiz of available) {
+      const topic = String(quiz.topic || "General").trim() || "General";
+      const key = topic.toLowerCase();
+
+      if (!topicGroups.has(key)) {
+        topicGroups.set(key, { topic, attempted: 0, unattempted: 0 });
+      }
+
+      const group = topicGroups.get(key);
+
+      if (attemptedSet.has(String(quiz._id))) {
+        group.attempted += 1;
+      } else {
+        group.unattempted += 1;
+      }
+    }
+
+    const topicSummary = [...topicGroups.values()]
+      .sort((a, b) => a.topic.localeCompare(b.topic));
+
+    const totalAttempted = topicSummary.reduce(
+      (sum, group) => sum + group.attempted,
+      0
+    );
+
+    const totalUnattempted = topicSummary.reduce(
+      (sum, group) => sum + group.unattempted,
+      0
+    );
+
+    // No reminder at all once every currently available quiz is attempted.
+    if (totalUnattempted === 0) continue;
 
     learnersWithOutstandingQuizzes += 1;
-    const displayName = learner.fullName || learner.username || "Learner";
-    const rows = outstanding.map(q => {
-      const topic = String(q.topic || "General").trim();
-      const title = String(q.title || "Quiz").trim();
-      const subtopic = String(q.subtopic || "").trim();
-      const code = String(q.assessmentCode || "").trim();
-      const link = unattemptedQuizReminderLink(q._id);
-      return `<tr><td style="padding:10px;border-bottom:1px solid #e5e7eb;"><strong>${escapeEmailHtml(topic)}</strong>${subtopic ? `<div style="color:#64748b;font-size:12px;margin-top:2px;">${escapeEmailHtml(subtopic)}</div>` : ""}</td><td style="padding:10px;border-bottom:1px solid #e5e7eb;">${escapeEmailHtml(title)}</td><td style="padding:10px;border-bottom:1px solid #e5e7eb;white-space:nowrap;">${escapeEmailHtml(code)}</td><td style="padding:10px;border-bottom:1px solid #e5e7eb;white-space:nowrap;"><a href="${link}" target="_blank" style="color:#1b1648;font-weight:700;text-decoration:none;">Attempt Quiz</a></td></tr>`;
-    }).join("");
 
-    const html = `<div style="font-family:Inter,Arial,sans-serif;line-height:1.6;color:#111827;"><h2 style="margin:0 0 12px;color:#1b1648;">Quizzes waiting for you</h2><p>Hello ${escapeEmailHtml(displayName)},</p><p>You still have ${outstanding.length} ${outstanding.length === 1 ? "quiz" : "quizzes"} available on Practice Online that you have not attempted yet.</p><table style="border-collapse:collapse;width:100%;max-width:760px;margin:16px 0;"><thead><tr style="background:#f8fafc;text-align:left;"><th style="padding:10px;border-bottom:2px solid #c9a227;">Topic</th><th style="padding:10px;border-bottom:2px solid #c9a227;">Quiz</th><th style="padding:10px;border-bottom:2px solid #c9a227;">Code</th><th style="padding:10px;border-bottom:2px solid #c9a227;">Open</th></tr></thead><tbody>${rows}</tbody></table><p>Once you attempt a quiz, it will automatically be removed from your next reminder.</p><p style="margin-top:22px;">Kind Regards,<br><strong>Practice Online Team</strong></p></div>`;
+    const displayName =
+      String(learner.firstName || "").trim() ||
+      String(learner.fullName || "").trim().split(/\s+/)[0] ||
+      String(learner.username || "").trim() ||
+      "Learner";
 
-    const plainList = outstanding.map((q,i) => `${i+1}. ${q.topic || "General"} — ${q.title || "Quiz"}${q.assessmentCode ? ` (${q.assessmentCode})` : ""}\n${unattemptedQuizReminderLink(q._id)}`).join("\n\n");
-    const plainText = [`Hello ${displayName},`, "", `You still have ${outstanding.length} ${outstanding.length === 1 ? "quiz" : "quizzes"} available on Practice Online that you have not attempted yet.`, "", plainList, "", "Once you attempt a quiz, it will automatically be removed from your next reminder.", "", "Kind Regards,", "Practice Online Team"].join("\n");
+    const rows = topicSummary
+      .map((group) => `
+        <tr>
+          <td style="padding:10px;border-bottom:1px solid #e5e7eb;">
+            <strong>${escapeEmailHtml(group.topic)}</strong>
+          </td>
+          <td style="padding:10px;border-bottom:1px solid #e5e7eb;text-align:center;">
+            ${group.attempted}
+          </td>
+          <td style="padding:10px;border-bottom:1px solid #e5e7eb;text-align:center;">
+            ${group.unattempted}
+          </td>
+        </tr>
+      `)
+      .join("");
+
+    const dashboardLink = "https://practiceonline.co.za/learning-content.html";
+
+    const html = `
+      <div style="font-family:Inter,Arial,sans-serif;line-height:1.6;color:#111827;">
+        <h2 style="margin:0 0 12px;color:#1b1648;">Quiz progress reminder</h2>
+        <p>Hi ${escapeEmailHtml(displayName)},</p>
+        <p>
+          Here is a quick summary of your available Practice Online quizzes.
+          You still have <strong>${totalUnattempted}</strong>
+          ${totalUnattempted === 1 ? "quiz" : "quizzes"} to attempt.
+        </p>
+
+        <p>
+          Keep practising whenever you can. Completing these quizzes can help you
+          strengthen the topics you are learning, spot areas that still need a
+          little more practice, and prepare with more confidence for your next
+          assessment. Every quiz you complete is another opportunity to improve.
+        </p>
+
+        <table style="border-collapse:collapse;width:100%;max-width:620px;margin:16px 0;">
+          <thead>
+            <tr style="background:#f8fafc;text-align:left;">
+              <th style="padding:10px;border-bottom:2px solid #c9a227;">Topic</th>
+              <th style="padding:10px;border-bottom:2px solid #c9a227;text-align:center;">Attempted</th>
+              <th style="padding:10px;border-bottom:2px solid #c9a227;text-align:center;">Not attempted</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+          <tfoot>
+            <tr>
+              <td style="padding:10px;font-weight:700;">Total</td>
+              <td style="padding:10px;text-align:center;font-weight:700;">${totalAttempted}</td>
+              <td style="padding:10px;text-align:center;font-weight:700;">${totalUnattempted}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <p style="margin:18px 0;">
+          <a href="${dashboardLink}"
+             style="display:inline-block;padding:10px 16px;background:#1b1648;color:#fff;text-decoration:none;border-radius:5px;font-weight:700;">
+            View my quizzes
+          </a>
+        </p>
+
+        <p>Once all your available quizzes have been attempted, you will stop receiving these reminder emails.</p>
+
+        <p style="margin-top:22px;">
+          Kind Regards,<br>
+          <strong>Practice Online Team</strong>
+        </p>
+      </div>
+    `;
+
+    const plainTopicSummary = topicSummary
+      .map((group) =>
+        `${group.topic}: ${group.attempted} attempted, ${group.unattempted} not attempted`
+      )
+      .join("\n");
+
+    const plainText = [
+      `Hi ${displayName},`,
+      "",
+      `You still have ${totalUnattempted} ${totalUnattempted === 1 ? "quiz" : "quizzes"} to attempt on Practice Online.`,
+      "",
+      "Keep practising whenever you can. Completing these quizzes can help you strengthen the topics you are learning, identify areas that need more practice, and prepare with more confidence for your next assessment. Every quiz you complete is another opportunity to improve.",
+      "",
+      plainTopicSummary,
+      "",
+      `Total attempted: ${totalAttempted}`,
+      `Total not attempted: ${totalUnattempted}`,
+      "",
+      "View your quizzes:",
+      dashboardLink,
+      "",
+      "Once all your available quizzes have been attempted, you will stop receiving these reminder emails.",
+      "",
+      "Kind Regards,",
+      "Practice Online Team",
+    ].join("\n");
 
     try {
       await sendEmail({
         to: learner.email,
-        subject: outstanding.length === 1 ? "Reminder: 1 quiz still waiting for you" : `Reminder: ${outstanding.length} quizzes still waiting for you`,
+        subject:
+          totalUnattempted === 1
+            ? "Reminder: 1 quiz still to attempt"
+            : `Reminder: ${totalUnattempted} quizzes still to attempt`,
         html,
         text: plainText,
       });
+
       emailsSent += 1;
     } catch (error) {
-      console.error("Unattempted quiz reminder failed for learner:", String(learner._id), error.message);
+      console.error(
+        "Unattempted quiz reminder failed for learner:",
+        String(learner._id),
+        error.message
+      );
     }
   }
-  return { learnerCount: learners.length, learnersWithOutstandingQuizzes, emailsSent };
+
+  return {
+    learnerCount: learners.length,
+    learnersWithOutstandingQuizzes,
+    emailsSent,
+  };
 }
 
 async function initializeUnattemptedQuizReminderScheduler() {
   const now = new Date();
-  await QuizReminderJobState.updateOne(
-    { _id: QUIZ_REMINDER_JOB_ID },
-    { $setOnInsert: { nextRunAt: new Date(now.getTime() + QUIZ_REMINDER_INTERVAL_MS), lastRunAt: null, lockedUntil: null, lastSentCount: 0, lastLearnerCount: 0, lastError: "" } },
-    { upsert: true }
-  );
+  const desiredNextRun = nextQuizReminderAt10Sast(now, true);
+
+  const existing = await QuizReminderJobState.findById(QUIZ_REMINDER_JOB_ID).lean();
+
+  if (!existing) {
+    await QuizReminderJobState.create({
+      _id: QUIZ_REMINDER_JOB_ID,
+      nextRunAt: desiredNextRun,
+      lastRunAt: null,
+      lockedUntil: null,
+      lastSentCount: 0,
+      lastLearnerCount: 0,
+      lastError: "",
+    });
+    return;
+  }
+
+  const existingNext = existing.nextRunAt ? new Date(existing.nextRunAt) : null;
+  const alreadyAt10Sast =
+    existingNext &&
+    existingNext.getUTCHours() === QUIZ_REMINDER_UTC_HOUR &&
+    existingNext.getUTCMinutes() === 0;
+
+  if (!alreadyAt10Sast) {
+    await QuizReminderJobState.updateOne(
+      { _id: QUIZ_REMINDER_JOB_ID },
+      { $set: { nextRunAt: desiredNextRun, lockedUntil: null } }
+    );
+  }
 }
 
 async function runDueUnattemptedQuizReminderJob() {
@@ -541,7 +791,18 @@ async function runDueUnattemptedQuizReminderJob() {
   if (!locked) return null;
   try {
     const summary = await sendUnattemptedQuizReminderEmails();
-    await QuizReminderJobState.updateOne({ _id: QUIZ_REMINDER_JOB_ID }, { $set: { lastRunAt: new Date(), nextRunAt: new Date(Date.now() + QUIZ_REMINDER_INTERVAL_MS), lockedUntil: null, lastSentCount: summary.emailsSent, lastLearnerCount: summary.learnersWithOutstandingQuizzes, lastError: "" } });
+    const completedAt = new Date();
+    await QuizReminderJobState.updateOne(
+      { _id: QUIZ_REMINDER_JOB_ID },
+      { $set: {
+          lastRunAt: completedAt,
+          nextRunAt: nextQuizReminderAt10Sast(completedAt, true),
+          lockedUntil: null,
+          lastSentCount: summary.emailsSent,
+          lastLearnerCount: summary.learnersWithOutstandingQuizzes,
+          lastError: ""
+      } }
+    );
     console.log("Unattempted quiz reminders sent", summary);
     return summary;
   } catch (error) {
@@ -660,6 +921,26 @@ const AssessmentCodeCounter =
 const QUIZ_REMINDER_INTERVAL_DAYS = Math.max(1, Number(process.env.QUIZ_REMINDER_INTERVAL_DAYS || 3));
 const QUIZ_REMINDER_INTERVAL_MS = QUIZ_REMINDER_INTERVAL_DAYS * 24 * 60 * 60 * 1000;
 const QUIZ_REMINDER_LOCK_MS = 60 * 60 * 1000;
+
+/* 10:00 South Africa time (SAST, UTC+2) = 08:00 UTC. */
+const QUIZ_REMINDER_UTC_HOUR = 8;
+
+function nextQuizReminderAt10Sast(fromDate = new Date(), addIntervalDays = true) {
+  const base = new Date(fromDate);
+  if (addIntervalDays) {
+    base.setUTCDate(base.getUTCDate() + QUIZ_REMINDER_INTERVAL_DAYS);
+  }
+
+  return new Date(Date.UTC(
+    base.getUTCFullYear(),
+    base.getUTCMonth(),
+    base.getUTCDate(),
+    QUIZ_REMINDER_UTC_HOUR,
+    0,
+    0,
+    0
+  ));
+}
 
 const QuizReminderJobStateSchema = new mongoose.Schema({
   _id: { type: String, required: true },
@@ -1610,7 +1891,19 @@ app.delete("/api/finance/potential-clients/:id", authRequired, employeeAdminOnly
 app.post("/api/admin/jobs/unattempted-quiz-reminders/run", authRequired, adminOnly, async (req, res) => {
   try {
     const summary = await sendUnattemptedQuizReminderEmails();
-    await QuizReminderJobState.updateOne({ _id: QUIZ_REMINDER_JOB_ID }, { $set: { lastRunAt: new Date(), nextRunAt: new Date(Date.now() + QUIZ_REMINDER_INTERVAL_MS), lockedUntil: null, lastSentCount: summary.emailsSent, lastLearnerCount: summary.learnersWithOutstandingQuizzes, lastError: "" } }, { upsert: true });
+    const completedAt = new Date();
+    await QuizReminderJobState.updateOne(
+      { _id: QUIZ_REMINDER_JOB_ID },
+      { $set: {
+          lastRunAt: completedAt,
+          nextRunAt: nextQuizReminderAt10Sast(completedAt, true),
+          lockedUntil: null,
+          lastSentCount: summary.emailsSent,
+          lastLearnerCount: summary.learnersWithOutstandingQuizzes,
+          lastError: ""
+      } },
+      { upsert: true }
+    );
     return res.json({ message: "Unattempted quiz reminder batch completed.", intervalDays: QUIZ_REMINDER_INTERVAL_DAYS, ...summary });
   } catch (error) {
     console.error("Manual quiz reminder batch failed:", error.message);
@@ -2532,40 +2825,17 @@ async function findOrCreateMicrosoftUser(profile) {
     );
   }
 
-  let user = await User.findOne({ email });
+  let user = await findExistingUserByOAuthEmail(email);
 
   if (user) {
-    const role = String(user.role || "").toLowerCase();
-    const accountType = String(user.accountType || "").toLowerCase();
-    const learnerLike =
-      role === "learner" ||
-      accountType === "learner" ||
-      accountType === "practice";
-
-    const validGrade =
-      Number.isInteger(Number(user.grade)) &&
-      Number(user.grade) >= 8 &&
-      Number(user.grade) <= 12;
-
-    const validCurriculum = ["CAPS", "IEB"].includes(
-      String(user.curriculum || "").trim().toUpperCase()
-    );
-
-    const validCellphone = /^\\+27[6-8][0-9]{8}$/.test(
-      String(user.cellphone || "").replace(/\\s+/g, "")
-    );
-
-    if (
-      learnerLike &&
-      (!validGrade || !validCurriculum || !validCellphone)
-    ) {
-      user.onboardingCompleted = false;
-      await user.save();
-    }
-
-    return user;
+    /*
+     * Same verified email = same Practice Online account.
+     * Do not create another learner or send the learner through registration.
+     */
+    return prepareExistingOAuthUser(user);
   }
 
+  // Only a genuinely new email reaches this branch.
   const learnerNumber = await generateUniqueLearnerNumber("learner");
   const displayName =
     cleanSpaces(profile?.displayName || "") ||
