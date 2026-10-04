@@ -9125,6 +9125,8 @@ body{
 }
 </style>
 
+
+
 </head>
 
 <body class="assessment-loading">
@@ -9256,7 +9258,7 @@ body{
 
 
       <div class="btnRow">
-        <button class="btn" id="submitBtn" type="button">Submit</button>
+        <button class="btn" id="submitBtn" type="button">Submit all questions</button>
         <button class="btn2" id="retryBtn" type="button" style="display:none;" disabled>Retry</button>
         <button class="btn2" id="viewResultsBtn" type="button" disabled>View Results</button>
       </div>
@@ -13355,7 +13357,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
     if (submitBtn) {
       submitBtn.disabled = false;
-      submitBtn.textContent = "Submit";
+      submitBtn.textContent = "Submit all questions";
     }
 
     startTimerWithQuiz(quizData);
@@ -14308,7 +14310,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
     submitBtn.disabled = false;
     submitBtn.style.display = "";
-    submitBtn.textContent = "Submit";
+    submitBtn.textContent = "Submit all questions";
     submitBtn.onclick = () => submitQuiz("manual");
 
     retryBtn.disabled = false;
@@ -20430,6 +20432,37 @@ function formatSolutionHtml(solutionText){
     `;
   }
 
+  function applyFirstNoteIconRule(){
+    const noteBoxes = [...document.querySelectorAll(".examPaper .noteBox")];
+
+    let firstInformationNoteFound = false;
+
+    noteBoxes.forEach(box => {
+      const icon = box.querySelector(".noteSectionIcon img");
+      const src = String(icon?.getAttribute("src") || "");
+
+      const isObjectiveIcon = /target-objective/i.test(src);
+      const isInformationIcon = icon && !isObjectiveIcon;
+
+      /*
+       * Learning objective icons keep their own icon.
+       * For ordinary information notes, only the first one displays the
+       * information icon; every following information note is text-only.
+       */
+      if (!isInformationIcon) {
+        box.classList.remove("hide-info-icon");
+        return;
+      }
+
+      if (!firstInformationNoteFound) {
+        firstInformationNoteFound = true;
+        box.classList.remove("hide-info-icon");
+      } else {
+        box.classList.add("hide-info-icon");
+      }
+    });
+  }
+
   function renderNoteLike(rawText, imageHtml, sectionTotal){
     const parsed = parseExamTextParts(rawText);
     const hasNativeVisual = /\[\[\s*(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|RULE_DIAGRAM|RULE|PATTERN|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(
@@ -20847,5 +20880,71 @@ window.addEventListener("DOMContentLoaded", () => {
 })();
 </script>
 
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const applyRule = () => {
+    if (typeof applyFirstNoteIconRule === "function") {
+      applyFirstNoteIconRule();
+    }
+  };
+
+  applyRule();
+
+  const examPaper = document.querySelector(".examPaper");
+  if (examPaper) {
+    const observer = new MutationObserver(() => {
+      requestAnimationFrame(applyRule);
+    });
+    observer.observe(examPaper, { childList:true, subtree:true });
+  }
+});
+</script>
+
 </body>
 </html>
+
+
+<style>
+/* ===== FINAL NOTE ICON RULE =====
+   Keep the note layout exactly the same.
+   Only hide the icon itself on the second and later information notes. */
+.examPaper .noteBox.hide-info-icon .noteSection{
+  grid-template-columns:28px minmax(0,1fr) !important;
+}
+
+.examPaper .noteBox.hide-info-icon .noteSectionIcon{
+  display:flex !important;
+  visibility:hidden !important;
+}
+
+.examPaper .noteBox.hide-info-icon .noteSection > div:last-child{
+  grid-column:2 !important;
+  min-width:0 !important;
+  width:auto !important;
+}
+</style>
+
+
+<style>
+/* ===== FINAL QUIZ ANSWER FLOW =====
+   Learners answer the full quiz first.
+   No per-question Check Answer / Retry grading is shown before submission. */
+
+body:not(.submitted-state) .qLocalActions{
+  display:none !important;
+}
+
+.qCheckBtn{
+  display:none !important;
+}
+
+body.submitted-state .qLocalActions{
+  display:flex !important;
+}
+
+body.submitted-state .qCheckBtn{
+  display:none !important;
+}
+</style>
+
