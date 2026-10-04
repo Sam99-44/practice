@@ -8947,6 +8947,17 @@ body{
 }
 </style>
 
+
+<style>
+  #completedAssessmentState{
+    width:min(100%,820px);
+    box-sizing:border-box;
+  }
+  #completedAssessmentState[hidden]{
+    display:none !important;
+  }
+</style>
+
 </head>
 
 <body class="assessment-loading">
@@ -11591,13 +11602,14 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     const retryBtn = panel.querySelector("#completedRetryBtn");
     retryBtn?.addEventListener("click", () => {
       hideResultsFollowupPopup();
-      panel.style.display = "none";
+      hideCompletedAssessmentState();
+      setCompletedFollowupView(false);
       startPracticeMode();
     });
 
     const seeSolutionBtn = panel.querySelector("#completedSeeSolutionBtn");
     seeSolutionBtn?.addEventListener("click", () => {
-      panel.style.display = "none";
+      hideCompletedAssessmentState();
       setCompletedFollowupView(false);
 
       /* Submitted review mode: jump to the first question and open its workings. */
@@ -11609,7 +11621,10 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
         Reinitialise the question navigation in submitted-review mode.
       */
       initQuestionNavigation(0);
+      placeReviewNavigationBelowQuestion();
       showQuestionPage(0, false);
+      showAllWorkingsButtons();
+      showBottomResultsButton();
 
       const firstGroup = questionPageGroups[0] || [];
       const firstScorable = firstGroup.find(row => row?.dataset?.scorable === "1");
@@ -11638,14 +11653,45 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   }
 
   function showCompletedAssessmentState(){
-    /* Retired with the legacy completion overlay. */
-    hideCompletedAssessmentState();
-    setCompletedFollowupView(false);
+    const panel = ensureCompletedAssessmentState();
+    if (!panel) return;
+
+    const summary = typeof computeLocalSubmissionSummary === "function"
+      ? computeLocalSubmissionSummary()
+      : { score: 0, total: 0, percent: 0 };
+
+    const score = Number(summary?.score ?? summary?.scorePoints ?? 0);
+    const total = Number(summary?.total ?? summary?.totalPoints ?? 0);
+    const percent = Number(summary?.percent ?? (total > 0 ? Math.round((score / total) * 100) : 0));
+
+    const scoreEl = panel.querySelector("#completedAssessmentScore");
+    if (scoreEl) {
+      scoreEl.innerHTML = `
+        <span><b>Score:</b> ${score} / ${total}</span>
+        <span><b>Percentage:</b> ${percent}%</span>
+      `;
+    }
+
+    /*
+      Closing Results must show ONLY this completed-state block.
+      Do not reveal the last question or any solutions until See solution is clicked.
+    */
+    setCompletedFollowupView(true);
+
+    panel.hidden = false;
+    panel.classList.remove("hidden");
+    panel.style.display = "block";
+    panel.style.visibility = "visible";
+    panel.style.opacity = "1";
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function hideCompletedAssessmentState(){
     const panel = document.getElementById("completedAssessmentState");
-    if (panel) panel.style.display = "none";
+    if (!panel) return;
+    panel.style.display = "none";
+    panel.hidden = true;
   }
 
   function setCompletedFollowupView(active){
@@ -11662,19 +11708,18 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     samePageResultsDismissed = true;
     hideSubmitConfirm();
     samePageResultsReady = false;
+
     const closeX = submitConfirmModal?.querySelector?.(".resultsCloseX");
     if (closeX) closeX.style.display = "none";
 
     hideResultsFollowupPopup();
-    hideCompletedAssessmentState();
-    setCompletedFollowupView(false);
-    document.body.classList.add("submitted-state");
-    placeReviewNavigationBelowQuestion();
-    showQuestionPage(currentQuestionPage, false);
-    showAllWorkingsButtons();
-    showAllWorkingsAfterFinish();
-    showBottomResultsButton();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    /*
+      Correct post-results flow:
+      Results -> Close results -> Assessment completed block.
+      The submitted paper stays hidden until Retry quiz or See solution is chosen.
+    */
+    showCompletedAssessmentState();
   }
 
   postSubmitOverlay.addEventListener("click", function(e){
