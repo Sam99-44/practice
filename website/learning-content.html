@@ -7064,6 +7064,53 @@ if(portalResultsListEl){
     }catch(_){ return null; }
   }
 
+
+  function refreshActiveQuizCard(){
+    const lock = readLock();
+    const activeId = String(lock?.quizId || "");
+
+    document.querySelectorAll('#quizzesPanel .assessment-card').forEach(card => {
+      card.classList.remove("active-quiz-card");
+      card.querySelector(".active-quiz-indicator")?.remove();
+    });
+
+    if(!activeId) return;
+
+    const buttons = [
+      ...document.querySelectorAll('#quizzesPanel [data-action="open"][data-quiz-id]')
+    ];
+
+    const activeButton = buttons.find(btn => {
+      try{
+        return decodeURIComponent(String(btn.dataset.quizId || "")) === activeId;
+      }catch(_){
+        return String(btn.dataset.quizId || "") === activeId;
+      }
+    });
+
+    const card = activeButton?.closest?.(".assessment-card");
+    if(!card) return;
+
+    card.classList.add("active-quiz-card");
+
+    const top = card.querySelector(".assessment-top");
+    if(top && !top.querySelector(".active-quiz-indicator")){
+      const indicator = document.createElement("span");
+      indicator.className = "active-quiz-indicator";
+      indicator.textContent = "Active Quiz";
+      top.appendChild(indicator);
+    }
+
+    if(activeButton){
+      activeButton.textContent = "Active Quiz";
+      activeButton.title = "Return to active quiz";
+    }
+  }
+
+  function scheduleActiveQuizRefresh(){
+    requestAnimationFrame(() => refreshActiveQuizCard());
+  }
+
   function getCode(quizId){
     const id = String(quizId || "");
     try{
@@ -7106,7 +7153,55 @@ if(portalResultsListEl){
     };
 
     try{ localStorage.setItem(KEY, JSON.stringify(lock)); }catch(_){}
+    scheduleActiveQuizRefresh();
     return lock;
+  }
+
+  function activeQuizHasAttemptedAnswer(quizId){
+    const id = String(quizId || "").trim();
+    if(!id) return false;
+
+    try{
+      const raw = JSON.parse(
+        localStorage.getItem(`quiz_answers_${id}_${ACTIVE_USER}`) || "null"
+      );
+
+      if(!raw) return false;
+
+      if(Array.isArray(raw.checkedQuestions) && raw.checkedQuestions.length > 0){
+        return true;
+      }
+
+      const attemptStates = raw.questionAttemptStates || {};
+      if(Object.values(attemptStates).some(state => Number(state?.used || 0) > 0)){
+        return true;
+      }
+
+      const hasMeaningfulValue = value => {
+        if(Array.isArray(value)) return value.some(hasMeaningfulValue);
+        if(value && typeof value === "object"){
+          return Object.entries(value).some(([key, inner]) => {
+            if(key === "questionIndex") return false;
+            return hasMeaningfulValue(inner);
+          });
+        }
+        if(typeof value === "boolean") return value;
+        if(typeof value === "number") return Number.isFinite(value) && value !== 0;
+        return String(value ?? "").trim().length > 0;
+      };
+
+      if(Array.isArray(raw.answers)){
+        return raw.answers.some(answer => {
+          if(!answer || typeof answer !== "object") return false;
+          return Object.entries(answer).some(([key, value]) => {
+            if(key === "questionIndex") return false;
+            return hasMeaningfulValue(value);
+          });
+        });
+      }
+    }catch(_){}
+
+    return false;
   }
 
   function clearUnfinishedQuizState(quizId){
@@ -7127,8 +7222,10 @@ if(portalResultsListEl){
     el.setAttribute("aria-hidden","true");
     const main = el.querySelector("#activeQuizGuardMain");
     const confirmation = el.querySelector("#activeQuizExitConfirmation");
+    const attemptedWarning = el.querySelector("#activeQuizAttemptedWarning");
     if(main) main.hidden = false;
     if(confirmation) confirmation.hidden = true;
+    if(attemptedWarning) attemptedWarning.hidden = true;
   }
 
   function ensurePopup(){
@@ -7177,6 +7274,21 @@ if(portalResultsListEl){
             <button class="activeQuizGuardConfirmExit" id="activeQuizGuardConfirmExit" type="button" aria-label="Exit current quiz and start new quiz" title="Exit current quiz and start new quiz">Exit &amp; Start</button>
           </div>
         </div>
+        <div id="activeQuizAttemptedWarning" hidden>
+          <h3>Submit the current quiz first</h3>
+          <p class="activeQuizGuardNote">
+            You have already answered one or more questions in this quiz.
+            Submit the full quiz first. You will review answered and unanswered questions, submit for grading, and then continue to the quiz you selected.
+          </p>
+          <div class="activeQuizGuardCodeRow">
+            <span>Active assessment code</span>
+            <strong id="activeQuizAttemptedCode">—</strong>
+          </div>
+          <div class="activeQuizGuardActions">
+            <button class="activeQuizGuardStay" id="activeQuizAttemptedStay" type="button">Stay</button>
+            <button class="activeQuizGuardReturn" id="activeQuizAttemptedReturn" type="button">Submit all questions</button>
+          </div>
+        </div>
       </div>
     `;
 
@@ -7193,8 +7305,10 @@ if(portalResultsListEl){
     el.querySelector("#activeQuizGuardCancelExit")?.addEventListener("click", () => {
       const main = el.querySelector("#activeQuizGuardMain");
       const confirmation = el.querySelector("#activeQuizExitConfirmation");
+      const attemptedWarning = el.querySelector("#activeQuizAttemptedWarning");
       if(main) main.hidden = false;
       if(confirmation) confirmation.hidden = true;
+      if(attemptedWarning) attemptedWarning.hidden = true;
       el.querySelector("#activeQuizGuardExit")?.focus();
     });
 
@@ -7213,13 +7327,19 @@ if(portalResultsListEl){
     const confirmExit = el.querySelector("#activeQuizGuardConfirmExit");
     const main = el.querySelector("#activeQuizGuardMain");
     const confirmation = el.querySelector("#activeQuizExitConfirmation");
+    const attemptedWarning = el.querySelector("#activeQuizAttemptedWarning");
+    const attemptedCode = el.querySelector("#activeQuizAttemptedCode");
+    const attemptedStay = el.querySelector("#activeQuizAttemptedStay");
+    const attemptedReturn = el.querySelector("#activeQuizAttemptedReturn");
     const requestedId = String(requestedQuizId || "").trim();
     const currentCode = lock?.code || "Active quiz";
     const requestedCode = getCode(requestedId) || "Selected quiz";
 
     if(main) main.hidden = false;
     if(confirmation) confirmation.hidden = true;
+    if(attemptedWarning) attemptedWarning.hidden = true;
     if(code) code.textContent = currentCode;
+    if(attemptedCode) attemptedCode.textContent = currentCode;
     if(ret){
       ret.onclick = () => {
         location.href = lock?.href ||
@@ -7228,13 +7348,41 @@ if(portalResultsListEl){
     }
     if(exit){
       exit.onclick = () => {
+        if(activeQuizHasAttemptedAnswer(lock?.quizId)){
+          if(main) main.hidden = true;
+          if(confirmation) confirmation.hidden = true;
+          if(attemptedWarning) attemptedWarning.hidden = false;
+          if(attemptedCode) attemptedCode.textContent = currentCode;
+          requestAnimationFrame(() => attemptedReturn?.focus());
+          return;
+        }
+
         if(main) main.hidden = true;
         if(confirmation) confirmation.hidden = false;
+        if(attemptedWarning) attemptedWarning.hidden = true;
         const exitCode = el.querySelector("#activeQuizExitCode");
         const startCode = el.querySelector("#activeQuizStartCode");
         if(exitCode) exitCode.textContent = currentCode;
         if(startCode) startCode.textContent = requestedCode;
         requestAnimationFrame(() => confirmExit?.focus());
+      };
+    }
+
+    if(attemptedStay){
+      attemptedStay.onclick = () => closePopup(el);
+    }
+
+    if(attemptedReturn){
+      attemptedReturn.onclick = () => {
+        const activeHref = lock?.href ||
+          `attempt.html?quizId=${encodeURIComponent(lock?.quizId || "")}`;
+
+        const separator = activeHref.includes("?") ? "&" : "?";
+        const submitHref =
+          `${activeHref}${separator}submitBeforeSwitch=1&switchToQuizId=${encodeURIComponent(requestedId)}`;
+
+        closePopup(el);
+        location.href = submitHref;
       };
     }
     if(confirmExit){
@@ -7278,8 +7426,77 @@ if(portalResultsListEl){
   };
 
   window.getLearnerActiveQuiz = readLock;
+
+  /* Keep the visual state synced even when quiz cards render asynchronously. */
+  scheduleActiveQuizRefresh();
+
+  const quizPanel = document.getElementById("quizzesPanel");
+  if(quizPanel){
+    const activeQuizObserver = new MutationObserver(() => {
+      scheduleActiveQuizRefresh();
+    });
+    activeQuizObserver.observe(quizPanel, { childList:true, subtree:true });
+  }
+
+  window.addEventListener("storage", event => {
+    if(event.key === KEY) scheduleActiveQuizRefresh();
+  });
+
+  window.addEventListener("hashchange", scheduleActiveQuizRefresh);
 })();
 </script>
+
+
+<style>
+/* ===== ACTIVE QUIZ HIGHLIGHT =====
+   Only the quiz stored in po_active_quiz_<user> is highlighted. */
+#quizzesPanel .assessment-card.active-quiz-card{
+  border:1.5px solid #2563eb !important;
+  background:#eff6ff !important;
+  box-shadow:0 0 0 2px rgba(37,99,235,.08) !important;
+}
+
+#quizzesPanel .assessment-card.active-quiz-card:hover{
+  border-color:#1d4ed8 !important;
+  background:#eff6ff !important;
+}
+
+#quizzesPanel .assessment-card.active-quiz-card .assessment-code{
+  background:#2563eb !important;
+  color:#fff !important;
+}
+
+#quizzesPanel .assessment-card.active-quiz-card .assessment-title{
+  color:#1d4ed8 !important;
+}
+
+#quizzesPanel .active-quiz-indicator{
+  display:inline-flex;
+  align-items:center;
+  min-height:22px;
+  padding:3px 7px;
+  border-radius:3px;
+  background:#dbeafe;
+  border:1px solid #93c5fd;
+  color:#1d4ed8;
+  font-size:9px;
+  font-weight:700;
+  white-space:nowrap;
+}
+
+#quizzesPanel .assessment-card.active-quiz-card .assessment-btn.start,
+#quizzesPanel .assessment-card.active-quiz-card .assessment-btn.retake{
+  background:#2563eb !important;
+  border-color:#2563eb !important;
+  color:#fff !important;
+}
+
+@media(max-width:640px){
+  #quizzesPanel .assessment-card.active-quiz-card{
+    border-width:1.5px !important;
+  }
+}
+</style>
 
 </body>
 </html>
@@ -7310,3 +7527,46 @@ if(portalResultsListEl){
   }
 }
 </style>
+
+
+<style>
+/* ===== FINAL ACTIVE QUIZ VISUAL OVERRIDE =====
+   Must stay last so it also covers active Retake cards. */
+#quizzesPanel .assessment-card.active-quiz-card,
+#quizzesPanel .assessment-card.active-quiz-card.locked,
+#quizzesPanel .assessment-card.active-quiz-card:hover{
+  background:#eff6ff !important;
+  border:2px solid #2563eb !important;
+  box-shadow:0 0 0 1px rgba(37,99,235,.10) !important;
+}
+
+#quizzesPanel .assessment-card.active-quiz-card .assessment-code{
+  background:#2563eb !important;
+  color:#fff !important;
+}
+
+#quizzesPanel .assessment-card.active-quiz-card .assessment-title{
+  color:#1d4ed8 !important;
+}
+
+#quizzesPanel .assessment-card.active-quiz-card .result-summary,
+#quizzesPanel .assessment-card.active-quiz-card .not-attempted{
+  background:#f8fbff !important;
+  border-color:#bfdbfe !important;
+}
+
+#quizzesPanel .assessment-card.active-quiz-card .assessment-btn.start,
+#quizzesPanel .assessment-card.active-quiz-card .assessment-btn.retake,
+#quizzesPanel .assessment-card.active-quiz-card [data-action="open"]{
+  background:#2563eb !important;
+  border-color:#2563eb !important;
+  color:#fff !important;
+}
+
+#quizzesPanel .assessment-card.active-quiz-card .active-quiz-indicator{
+  background:#dbeafe !important;
+  border-color:#93c5fd !important;
+  color:#1d4ed8 !important;
+}
+</style>
+
