@@ -18090,12 +18090,24 @@ function hasInlineLatexMathOnly(text){
 
     function parseAdvancedGraphPoints(bodyText){
       return getNoteVisualLines(bodyText).map(line => {
-        const match = line.match(/^POINT\s+([^|]+)\|\s*([^|]+)(?:\|\s*(.*))?$/i);
-        if (!match) return null;
-        const x = parseNoteGraphNumber(match[1]);
-        const y = parseNoteGraphNumber(match[2]);
+        if (!/^POINT\s+/i.test(line)) return null;
+        const raw = line.replace(/^POINT\s+/i, "");
+        const parts = raw.split("|").map(part => part.trim());
+        const x = parseNoteGraphNumber(parts[0]);
+        const y = parseNoteGraphNumber(parts[1]);
         if (x === null || y === null) return null;
-        return { x, y, label: noteSvgLabel(match[3] || "") };
+        const label = noteSvgLabel(parts[2] || "");
+        const position = String(parts[3] || "").trim().toLowerCase();
+        const offsetX = parts[4] !== undefined ? Number(parts[4]) : null;
+        const offsetY = parts[5] !== undefined ? Number(parts[5]) : null;
+        return {
+          x,
+          y,
+          label,
+          position,
+          offsetX: Number.isFinite(offsetX) ? offsetX : null,
+          offsetY: Number.isFinite(offsetY) ? offsetY : null
+        };
       }).filter(Boolean);
     }
 
@@ -18226,28 +18238,76 @@ function hasInlineLatexMathOnly(text){
         if (point.x < xMin || point.x > xMax || point.y < yMin || point.y > yMax) return;
         const x = toX(point.x);
         const y = toY(point.y);
-        if (!isAngularGraph) svg.push('<circle cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) + '" r="3.6" fill="' + (minimalTheme ? "#111827" : "#c2410c") + '" stroke="#fff" stroke-width="1" />');
+        if (!isAngularGraph) svg.push('<circle cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) + '" r="3.6" fill="#111827" stroke="#fff" stroke-width="1" />');
         if (point.label) {
-          const labelWidth = Math.max(16, Math.min(160, noteSvgLabel(point.label).length * 6.2));
-          const candidates = [
-            { x: x + 10, y: y - 10, anchor: "start", box: { left: x + 8, right: x + 8 + labelWidth, top: y - 24, bottom: y - 5 } },
-            { x: x + 10, y: y + 18, anchor: "start", box: { left: x + 8, right: x + 8 + labelWidth, top: y + 3, bottom: y + 22 } },
-            { x: x - 10, y: y - 10, anchor: "end", box: { left: x - 8 - labelWidth, right: x - 8, top: y - 24, bottom: y - 5 } },
-            { x: x - 10, y: y + 18, anchor: "end", box: { left: x - 8 - labelWidth, right: x - 8, top: y + 3, bottom: y + 22 } }
-          ];
+          const labelText = noteSvgLabel(point.label);
+          const labelWidth = Math.max(18, Math.min(170, labelText.length * 7.1));
+          const labelHeight = 18;
+          const buildCandidate = (labelX, labelY, anchor) => {
+            const left = anchor === "end" ? labelX - labelWidth : (anchor === "middle" ? labelX - labelWidth / 2 : labelX);
+            const right = anchor === "end" ? labelX : (anchor === "middle" ? labelX + labelWidth / 2 : labelX + labelWidth);
+            return {
+              x: labelX,
+              y: labelY,
+              anchor,
+              box: { left, right, top: labelY - labelHeight + 2, bottom: labelY + 4 }
+            };
+          };
+          const placementAliases = {
+            right: "right", east: "right",
+            left: "left", west: "left",
+            top: "top", above: "top", up: "top",
+            bottom: "bottom", below: "bottom", down: "bottom",
+            "top-right": "top-right", tr: "top-right", ne: "top-right",
+            "top-left": "top-left", tl: "top-left", nw: "top-left",
+            "bottom-right": "bottom-right", br: "bottom-right", se: "bottom-right",
+            "bottom-left": "bottom-left", bl: "bottom-left", sw: "bottom-left"
+          };
+          const requestedPlacement = placementAliases[String(point.position || "").toLowerCase()] || "";
+          const candidateMap = {
+            "top-right": buildCandidate(x + 14, y - 12, "start"),
+            right: buildCandidate(x + 16, y + 4, "start"),
+            "bottom-right": buildCandidate(x + 14, y + 18, "start"),
+            top: buildCandidate(x, y - 12, "middle"),
+            bottom: buildCandidate(x, y + 18, "middle"),
+            "top-left": buildCandidate(x - 14, y - 12, "end"),
+            left: buildCandidate(x - 16, y + 4, "end"),
+            "bottom-left": buildCandidate(x - 14, y + 18, "end")
+          };
+          if (Number.isFinite(point.offsetX) || Number.isFinite(point.offsetY)) {
+            const manualAnchor = requestedPlacement === "left" || requestedPlacement === "top-left" || requestedPlacement === "bottom-left"
+              ? "end"
+              : (requestedPlacement === "top" || requestedPlacement === "bottom" ? "middle" : "start");
+            candidateMap.manual = buildCandidate(
+              x + (Number.isFinite(point.offsetX) ? point.offsetX : 12),
+              y + (Number.isFinite(point.offsetY) ? point.offsetY : -12),
+              manualAnchor
+            );
+          }
+          const candidateOrder = [];
+          if (candidateMap.manual) candidateOrder.push("manual");
+          if (requestedPlacement) candidateOrder.push(requestedPlacement);
+          ["top-right", "top-left", "bottom-right", "bottom-left", "right", "left", "top", "bottom"].forEach(key => {
+            if (!candidateOrder.includes(key)) candidateOrder.push(key);
+          });
+          const candidates = candidateOrder.map(key => candidateMap[key]).filter(Boolean);
           const insidePlot = candidate => candidate.box.left >= margin.left && candidate.box.right <= margin.left + plotWidth && candidate.box.top >= margin.top && candidate.box.bottom <= margin.top + plotHeight;
           const selected = candidates.find(candidate => insidePlot(candidate) && !occupiedPointLabels.some(box => boxesOverlap(candidate.box, box))) ||
             candidates.find(insidePlot) ||
             candidates[0];
           occupiedPointLabels.push(selected.box);
-          svg.push('<text x="' + selected.x.toFixed(2) + '" y="' + selected.y.toFixed(2) + '" text-anchor="' + selected.anchor + '" font-size="10" font-weight="400" fill="' + (minimalTheme ? "#111827" : "#7c2d12") + '" style="paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round">' + escapeHtml(point.label) + '</text>');
+          svg.push('<text x="' + selected.x.toFixed(2) + '" y="' + selected.y.toFixed(2) + '" text-anchor="' + selected.anchor + '" font-size="11.5" font-weight="400" font-family="Times New Roman, Times, serif" fill="#111827" style="paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round">' + escapeHtml(labelText) + '</text>');
         }
       });
 
       (options.labels || []).forEach(label => {
         if (!Number.isFinite(label.x) || !Number.isFinite(label.y)) return;
         if (label.x < xMin || label.x > xMax || label.y < yMin || label.y > yMax) return;
-        svg.push('<text x="' + toX(label.x).toFixed(2) + '" y="' + toY(label.y).toFixed(2) + '" text-anchor="' + escapeHtml(label.anchor || "middle") + '" font-size="10.5" font-weight="400" fill="' + escapeHtml(minimalTheme ? "#111827" : (label.colour || "#111827")) + '" style="paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round">' + escapeHtml(noteSvgLabel(label.text || "")) + '</text>');
+        const labelX = toX(label.x) + (Number.isFinite(label.dx) ? label.dx : 0);
+        const labelY = toY(label.y) + (Number.isFinite(label.dy) ? label.dy : 0);
+        const labelText = noteSvgLabel(label.text || "");
+        const labelFontStyle = /^[a-z]$/i.test(labelText) ? ' font-style="italic"' : '';
+        svg.push('<text x="' + labelX.toFixed(2) + '" y="' + labelY.toFixed(2) + '" text-anchor="' + escapeHtml(label.anchor || "middle") + '" font-size="11.5" font-weight="400" font-family="Times New Roman, Times, serif"' + labelFontStyle + ' fill="' + escapeHtml(minimalTheme ? "#111827" : (label.colour || "#111827")) + '" style="paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round">' + escapeHtml(labelText) + '</text>');
       });
 
       if (options.showAxisLabels !== false) {
@@ -18271,7 +18331,7 @@ function hasInlineLatexMathOnly(text){
     function renderFunctionGraphBlock(rawAttributes, bodyText){
       const attributes = readNoteVisualAttributes(rawAttributes);
       const minimalTheme = useMinimalAssessmentVisualTheme(attributes);
-      const supportedTypes = ["linear", "quadratic", "exponential", "hyperbola"];
+      const supportedTypes = ["linear", "quadratic", "cubic", "exponential", "hyperbola"];
       const defaultType = supportedTypes.includes(String(attributes.type || "quadratic").toLowerCase())
         ? String(attributes.type || "quadratic").toLowerCase()
         : "quadratic";
@@ -18291,11 +18351,14 @@ function hasInlineLatexMathOnly(text){
         const a = noteVisualNumber(seriesAttributes, "a", 1);
         const b = noteVisualNumber(seriesAttributes, "b", type === "exponential" ? 2 : 0);
         const c = noteVisualNumber(seriesAttributes, "c", 0);
+        const d = noteVisualNumber(seriesAttributes, "d", 0);
         const m = noteVisualNumber(seriesAttributes, "m", 1);
         const p = noteVisualNumber(seriesAttributes, "p", 0);
         const q = noteVisualNumber(seriesAttributes, "q", 0);
         const evaluate = x => {
           if (type === "linear") return m * x + c;
+          if (type === "quadratic") return a * x * x + b * x + c;
+          if (type === "cubic") return a * x * x * x + b * x * x + c * x + d;
           if (type === "exponential") return a * Math.pow(b, x) + q;
           if (type === "hyperbola") return a / (x - p) + q;
           return a * x * x + b * x + c;
@@ -18356,11 +18419,29 @@ function hasInlineLatexMathOnly(text){
           if (values.every(value => value !== null)) guides.push({ x1: values[0], y1: values[1], x2: values[2], y2: values[3], label: noteSvgLabel(match[5] || ""), dash: "5 4", colour: "#64748b" });
           return;
         }
-        match = line.match(/^LABEL\s+([^|]+)\|\s*([^|]+)\|\s*(.*)$/i);
-        if (match) {
-          const x = parseNoteGraphNumber(match[1]);
-          const y = parseNoteGraphNumber(match[2]);
-          if (x !== null && y !== null) labels.push({ x, y, text: noteSvgLabel(match[3]), colour: "#111827" });
+        if (/^LABEL\s+/i.test(line)) {
+          const raw = line.replace(/^LABEL\s+/i, "");
+          const parts = raw.split("|").map(part => part.trim());
+          const x = parseNoteGraphNumber(parts[0]);
+          const y = parseNoteGraphNumber(parts[1]);
+          if (x !== null && y !== null) {
+            const anchorValue = String(parts[3] || "").trim().toLowerCase();
+            const anchor = ["start", "middle", "end"].includes(anchorValue)
+              ? anchorValue
+              : (/^(left|west)$/i.test(anchorValue) ? "end" : (/^(right|east)$/i.test(anchorValue) ? "start" : "middle"));
+            const dx = parts[4] !== undefined ? Number(parts[4]) : 0;
+            const dy = parts[5] !== undefined ? Number(parts[5]) : 0;
+            labels.push({
+              x,
+              y,
+              text: noteSvgLabel(parts[2] || ""),
+              colour: "#111827",
+              anchor,
+              dx: Number.isFinite(dx) ? dx : 0,
+              dy: Number.isFinite(dy) ? dy : 0
+            });
+          }
+          return;
         }
       });
 
@@ -20947,4 +21028,3 @@ body.submitted-state .qCheckBtn{
   display:none !important;
 }
 </style>
-
