@@ -1,6 +1,12 @@
 // models/Quiz.js
 
 import mongoose from "mongoose";
+import { randomBytes } from "node:crypto";
+
+// A public link token, never derived from MongoDB _id or assessmentCode.
+function createPublicAssessmentId() {
+  return randomBytes(12).toString("base64url");
+}
 
 const QuestionSchema = new mongoose.Schema( { type: { type: String,
 enum: ["mcq", "text", "dropdown", "fill", "note"], default: "mcq",
@@ -282,6 +288,17 @@ required: true, },
 
 const QuizSchema = new mongoose.Schema( { assessmentCode: { type:
 String, default: undefined, trim: true, uppercase: true, index: true, },
+
+    // Public-facing opaque identifier used in clean learner URLs.
+    // Historical quizzes are backfilled separately without changing their _id.
+    publicId: {
+      type: String,
+      default: createPublicAssessmentId,
+      immutable: true,
+      trim: true,
+      select: false,
+      match: /^[A-Za-z0-9_-]{16}$/,
+    },
 
     grade: {
       type: Number,
@@ -702,6 +719,12 @@ next(); });
 QuizSchema.index( { assessmentCode: 1 }, { unique: true,
 partialFilterExpression: { assessmentCode: { $exists: true, $type:
 "string", $ne: "", }, }, } );
+
+// Partial unique index: existing documents without publicId stay valid.
+QuizSchema.index(
+  { publicId: 1 },
+  { unique: true, partialFilterExpression: { publicId: { $type: "string" } } }
+);
 
 QuizSchema.index({ contentType: 1, grade: 1, isPublished: 1,
 accessLevel: 1, createdAt: -1, });
