@@ -1,3 +1,6 @@
+
+
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -1889,11 +1892,10 @@ mjx-container[jax="SVG"]{
   font-weight:900 !important;
 }
 
-/* DARK SVG */
-mjx-container[jax="SVG"] svg,
-mjx-container[jax="SVG"] svg *{
-  fill:#000 !important;
-  stroke:#000 !important;
+/* MathJax SVG colours: respect each SVG element's own fill/stroke.
+   Forcing every element black fills the hollow frame of \boxed{...}. */
+mjx-container[jax="SVG"] svg{
+  color:#000;
 }
 
 /* FRACTION BARS */
@@ -5728,13 +5730,9 @@ mjx-container[jax="SVG"] svg{
   stroke:none !important;
 }
 
-/* Fraction bars and rule elements */
-.examPaper mjx-container[jax="SVG"] svg rect{
-  fill:#000000 !important;
-  stroke:#000000 !important;
-  stroke-width:0 !important;
-  opacity:1 !important;
-}
+/* Preserve MathJax's SVG rectangle attributes.
+   Some rectangles are fraction bars; others are empty answer frames.
+   Giving all rectangles a black fill hides boxed final answers. */
 
 .examPaper mjx-container[jax="SVG"] svg line,
 .examPaper mjx-container[jax="SVG"] mjx-line{
@@ -8226,6 +8224,85 @@ html body .examPaper .q:not([data-scorable="1"]) > .noteBox:not(.nativeVisualNot
     margin-bottom:8px;
   }
 }
+/* Show the existing Back / Next controls during desktop solution review.
+   Scoped to the review-only class, keeping mobile and question styling intact. */
+@media (min-width: 641px) {
+  .quizNavigation.show.solutionReviewNavigation {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  .q[data-scorable="1"] > #quizNavigation.desktopSolutionNavigation.show {
+    display: flex !important;
+    width: 100% !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: static !important;
+    margin-top: 18px !important;
+  }
+}
+
+/* SHARED WORKED-SOLUTION NAVIGATION — desktop and phone */
+.examPaper .desktopWorkingsPager {
+  display:flex !important;
+  justify-content:space-between;
+  align-items:center;
+  width:100%;
+  gap:12px;
+  margin:20px 0 4px;
+  padding:0;                 /* no separator line above buttons */
+  border:0 !important;
+  background:transparent;
+}
+.examPaper .desktopWorkingsPager button {
+  display:inline-flex !important;
+  visibility:visible !important;
+  align-items:center;
+  justify-content:center;
+  min-width:92px;
+  min-height:36px;
+  padding:8px 16px;
+  border:1px solid #102a56;
+  border-radius:5px;
+  background:#102a56;
+  color:#fff;
+  font:700 13px Arial, Helvetica, sans-serif;
+  cursor:pointer;
+}
+/* Back is always grey, matching the existing phone navigation. */
+.examPaper .desktopWorkingsPager .desktopWorkingsBack {
+  background:#64748b !important;
+  border-color:#64748b !important;
+  color:#fff !important;
+}
+.examPaper .desktopWorkingsPager .desktopWorkingsBack:hover:not(:disabled) {
+  background:#566579 !important;
+}
+.examPaper .desktopWorkingsPager button:disabled {
+  opacity:.6;
+  cursor:default;
+}
+/* When the solution-specific buttons are shown, hide the original
+   question pager to avoid two sets of navigation buttons. */
+.q.solution-pager-active > .quizNavigation,
+.q.solution-pager-active .quizNavigation.show {
+  display:none !important;
+}
+@media (max-width:640px) {
+  .examPaper .desktopWorkingsPager {
+    gap:8px;
+    margin-top:18px;
+  }
+  .examPaper .desktopWorkingsPager button {
+    min-width:82px;
+    min-height:34px;
+    font-size:12px;
+  }
+}
 </style>
 
 <style>
@@ -9903,6 +9980,51 @@ function inlineQuizLoadingHtml(){
     });
   }
 
+  // Shared solution pager: independent of the general attempt navigation bar.
+  // It is placed directly below the displayed worked solution.
+  function syncDesktopSolutionNavigation(){
+    if (!questionsDiv) return;
+    const active = getActiveScorableQuestion();
+    const holder = active?.querySelector(".solutionHolder");
+    const visible = !!(holder && !holder.classList.contains("hidden") && holder.innerHTML.trim());
+
+    // Remove obsolete pagers and clear old visibility state.
+    questionsDiv.querySelectorAll(".desktopWorkingsPager").forEach(el => {
+      if (!visible || !active.contains(el)) el.remove();
+    });
+    questionsDiv.querySelectorAll(".q.solution-pager-active").forEach(el => {
+      el.classList.remove("solution-pager-active");
+    });
+    if (!visible) return;
+    active.classList.add("solution-pager-active");
+
+    let pager = active.querySelector(".desktopWorkingsPager");
+    if (!pager) {
+      pager = document.createElement("div");
+      pager.className = "desktopWorkingsPager";
+      pager.setAttribute("aria-label", "Navigate assessment questions");
+      pager.innerHTML = `
+        <button type="button" class="desktopWorkingsBack">Back</button>
+        <button type="button" class="desktopWorkingsNext">Next</button>`;
+      holder.insertAdjacentElement("afterend", pager);
+      pager.querySelector(".desktopWorkingsBack").addEventListener("click", () => {
+        if (currentQuestionPage <= 0) return;
+        saveAnswersToStorage();
+        showQuestionPage(currentQuestionPage - 1);
+      });
+      pager.querySelector(".desktopWorkingsNext").addEventListener("click", () => {
+        if (currentQuestionPage >= questionPageGroups.length - 1) return;
+        saveAnswersToStorage();
+        showQuestionPage(currentQuestionPage + 1);
+      });
+    }
+    const back = pager.querySelector(".desktopWorkingsBack");
+    const next = pager.querySelector(".desktopWorkingsNext");
+    back.disabled = currentQuestionPage <= 0;
+    next.disabled = currentQuestionPage >= questionPageGroups.length - 1;
+    pager.hidden = false;
+  }
+
   function showQuestionPage(index, shouldScroll = true){
     buildQuestionPageGroups();
 
@@ -9984,6 +10106,8 @@ function inlineQuizLoadingHtml(){
       placeAttemptNavigationBelowCheckAnswer();
     }
 
+    syncDesktopSolutionNavigation();
+
     if (submitBtn && !submitted && !blocked) {
       /* The final navigation button is the single visible Submit action. */
       submitBtn.style.display = "none";
@@ -10007,6 +10131,7 @@ function inlineQuizLoadingHtml(){
 
   function placeAttemptNavigationBelowCheckAnswer(){
     if (!quizNavigation) return;
+    quizNavigation.classList.remove("solutionReviewNavigation");
     const activeQuestion = getActiveScorableQuestion();
     if (!activeQuestion) return;
 
@@ -10038,6 +10163,9 @@ function inlineQuizLoadingHtml(){
     quizNavigation.hidden = false;
     quizNavigation.removeAttribute("aria-hidden");
     quizNavigation.style.removeProperty("display");
+    // In submitted solution review, the desktop navigation must be visible too.
+    // The normal mobile grid remains controlled by its existing media query.
+    quizNavigation.classList.add("solutionReviewNavigation");
   }
 
   function placeQuestionProgressBelowTotalMarks(){
@@ -10703,12 +10831,6 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
             <span class="typedAnswerSuffix">${escapeHtml(suffix)}</span>
           </div>
 
-          ${useMathLive ? `
-            <div class="mathPreview empty" id="${escapeAttr(previewId)}">
-              <span class="mathPreviewLabel">Preview</span>
-              <span class="mathPreviewValue"></span>
-            </div>
-          ` : ""}
         </div>
       `;
     }).join("");
@@ -11939,6 +12061,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       showQuestionPage(0, false);
       showAllWorkingsButtons();
       showBottomResultsButton();
+      syncDesktopSolutionNavigation();
 
       const firstGroup = questionPageGroups[0] || [];
       const firstScorable = firstGroup.find(row => row?.dataset?.scorable === "1");
@@ -14823,6 +14946,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       btn.textContent = "Answer Shown";
       btn.disabled = true;
     }
+    syncDesktopSolutionNavigation();
   }
 
   function attachShowAnswerButtons(){
