@@ -1,3 +1,6 @@
+
+
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -6160,7 +6163,8 @@ quizListEl.addEventListener("click", function(e){
   const actionBtn = e.target.closest("[data-action][data-quiz-id]");
   if(!actionBtn) return;
 
-  const quizId = actionBtn.dataset.quizId;
+  let quizId = actionBtn.dataset.quizId;
+  try { quizId = decodeURIComponent(quizId); } catch (_) {}
   const action = actionBtn.dataset.action;
   if(!quizId) return;
 
@@ -7221,11 +7225,7 @@ if(portalResultsListEl){
     el.classList.remove("show");
     el.setAttribute("aria-hidden","true");
     const main = el.querySelector("#activeQuizGuardMain");
-    const confirmation = el.querySelector("#activeQuizExitConfirmation");
-    const attemptedWarning = el.querySelector("#activeQuizAttemptedWarning");
     if(main) main.hidden = false;
-    if(confirmation) confirmation.hidden = true;
-    if(attemptedWarning) attemptedWarning.hidden = true;
   }
 
   function ensurePopup(){
@@ -7254,41 +7254,6 @@ if(portalResultsListEl){
             <button class="activeQuizGuardExit" id="activeQuizGuardExit" type="button" aria-label="Exit current quiz and start selected quiz" title="Exit current quiz and start selected quiz">New Quiz</button>
           </div>
         </div>
-        <div id="activeQuizExitConfirmation" hidden>
-          <h3>Exit the current quiz?</h3>
-          <p class="activeQuizGuardNote">
-            Unsaved answers and progress in the current unfinished quiz will be removed. Completed results will not be affected.
-          </p>
-          <div class="activeQuizGuardConfirmRows">
-            <div class="activeQuizGuardCodeRow">
-              <span>Current quiz</span>
-              <strong id="activeQuizExitCode">—</strong>
-            </div>
-            <div class="activeQuizGuardCodeRow">
-              <span>New quiz</span>
-              <strong id="activeQuizStartCode">—</strong>
-            </div>
-          </div>
-          <div class="activeQuizGuardActions">
-            <button class="activeQuizGuardCancelExit" id="activeQuizGuardCancelExit" type="button">Cancel</button>
-            <button class="activeQuizGuardConfirmExit" id="activeQuizGuardConfirmExit" type="button" aria-label="Exit current quiz and start new quiz" title="Exit current quiz and start new quiz">Exit &amp; Start</button>
-          </div>
-        </div>
-        <div id="activeQuizAttemptedWarning" hidden>
-          <h3>Submit the current quiz first</h3>
-          <p class="activeQuizGuardNote">
-            You have already answered one or more questions in this quiz.
-            Submit the full quiz first. You will review answered and unanswered questions, submit for grading, and then continue to the quiz you selected.
-          </p>
-          <div class="activeQuizGuardCodeRow">
-            <span>Active assessment code</span>
-            <strong id="activeQuizAttemptedCode">—</strong>
-          </div>
-          <div class="activeQuizGuardActions">
-            <button class="activeQuizGuardStay" id="activeQuizAttemptedStay" type="button">Stay</button>
-            <button class="activeQuizGuardReturn" id="activeQuizAttemptedReturn" type="button">Submit all questions</button>
-          </div>
-        </div>
       </div>
     `;
 
@@ -7300,16 +7265,6 @@ if(portalResultsListEl){
 
     el.addEventListener("click", event => {
       if(event.target === el) closePopup(el);
-    });
-
-    el.querySelector("#activeQuizGuardCancelExit")?.addEventListener("click", () => {
-      const main = el.querySelector("#activeQuizGuardMain");
-      const confirmation = el.querySelector("#activeQuizExitConfirmation");
-      const attemptedWarning = el.querySelector("#activeQuizAttemptedWarning");
-      if(main) main.hidden = false;
-      if(confirmation) confirmation.hidden = true;
-      if(attemptedWarning) attemptedWarning.hidden = true;
-      el.querySelector("#activeQuizGuardExit")?.focus();
     });
 
     document.addEventListener("keydown", event => {
@@ -7324,22 +7279,12 @@ if(portalResultsListEl){
     const code = el.querySelector("#activeQuizGuardCode");
     const ret = el.querySelector("#activeQuizGuardReturn");
     const exit = el.querySelector("#activeQuizGuardExit");
-    const confirmExit = el.querySelector("#activeQuizGuardConfirmExit");
     const main = el.querySelector("#activeQuizGuardMain");
-    const confirmation = el.querySelector("#activeQuizExitConfirmation");
-    const attemptedWarning = el.querySelector("#activeQuizAttemptedWarning");
-    const attemptedCode = el.querySelector("#activeQuizAttemptedCode");
-    const attemptedStay = el.querySelector("#activeQuizAttemptedStay");
-    const attemptedReturn = el.querySelector("#activeQuizAttemptedReturn");
     const requestedId = String(requestedQuizId || "").trim();
     const currentCode = lock?.code || "Active quiz";
-    const requestedCode = getCode(requestedId) || "Selected quiz";
 
     if(main) main.hidden = false;
-    if(confirmation) confirmation.hidden = true;
-    if(attemptedWarning) attemptedWarning.hidden = true;
     if(code) code.textContent = currentCode;
-    if(attemptedCode) attemptedCode.textContent = currentCode;
     if(ret){
       ret.onclick = () => {
         location.href = lock?.href ||
@@ -7348,56 +7293,21 @@ if(portalResultsListEl){
     }
     if(exit){
       exit.onclick = () => {
-        if(activeQuizHasAttemptedAnswer(lock?.quizId)){
-          if(main) main.hidden = true;
-          if(confirmation) confirmation.hidden = true;
-          if(attemptedWarning) attemptedWarning.hidden = false;
-          if(attemptedCode) attemptedCode.textContent = currentCode;
-          requestAnimationFrame(() => attemptedReturn?.focus());
-          return;
-        }
-
-        if(main) main.hidden = true;
-        if(confirmation) confirmation.hidden = false;
-        if(attemptedWarning) attemptedWarning.hidden = true;
-        const exitCode = el.querySelector("#activeQuizExitCode");
-        const startCode = el.querySelector("#activeQuizStartCode");
-        if(exitCode) exitCode.textContent = currentCode;
-        if(startCode) startCode.textContent = requestedCode;
-        requestAnimationFrame(() => confirmExit?.focus());
-      };
-    }
-
-    if(attemptedStay){
-      attemptedStay.onclick = () => closePopup(el);
-    }
-
-    if(attemptedReturn){
-      attemptedReturn.onclick = () => {
-        const activeHref = lock?.href ||
-          `attempt.html?quizId=${encodeURIComponent(lock?.quizId || "")}`;
-
-        const separator = activeHref.includes("?") ? "&" : "?";
-        const submitHref =
-          `${activeHref}${separator}submitBeforeSwitch=1&switchToQuizId=${encodeURIComponent(requestedId)}`;
-
-        closePopup(el);
-        location.href = submitHref;
-      };
-    }
-    if(confirmExit){
-      confirmExit.onclick = () => {
-        confirmExit.disabled = true;
+        // Abandon the unfinished attempt; never submit or grade it.
+        exit.disabled = true;
         clearUnfinishedQuizState(lock?.quizId);
+        // Reopening a previously abandoned quiz must also begin empty.
+        clearUnfinishedQuizState(requestedId);
         try{ localStorage.removeItem(KEY); }catch(_){}
         const nextLock = saveLock(requestedId);
         const nextHref = nextLock?.href || `attempt.html?quizId=${encodeURIComponent(requestedId)}`;
         closePopup(el);
-        location.replace(nextHref);
+        // Explicitly start fresh. No submitBeforeSwitch parameter is ever passed.
+        location.replace(nextHref + (nextHref.includes("?") ? "&" : "?") + "newQuiz=1");
       };
-      confirmExit.disabled = false;
-      confirmExit.textContent = "Exit & Start";
+      exit.disabled = false;
     }
+
 
     el.classList.add("show");
     el.setAttribute("aria-hidden","false");
@@ -7420,8 +7330,10 @@ if(portalResultsListEl){
       return true;
     }
 
+    clearUnfinishedQuizState(id);
     const lock = saveLock(id);
-    location.href = lock?.href || `attempt.html?quizId=${encodeURIComponent(id)}`;
+    const href = lock?.href || `attempt.html?quizId=${encodeURIComponent(id)}`;
+    location.href = href + (href.includes("?") ? "&" : "?") + "newQuiz=1";
     return true;
   };
 
@@ -7569,4 +7481,3 @@ if(portalResultsListEl){
   color:#1d4ed8 !important;
 }
 </style>
-
