@@ -1,3 +1,9 @@
+
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -4506,6 +4512,46 @@ html body .previewBox.prevNote.paperBox > .noteSection{
 }
 </style>
 
+
+<!-- Shared notes: icon-free, full-width, no squeezed columns -->
+<style>
+/* Text-only shared information / objectives: remove the old icon grid completely. */
+html body .attemptPaperPreview .noteBox .noteSection:not(:has(.assessmentVisualFrame)),
+html body #paperPreviewContent .noteBox .noteSection:not(:has(.assessmentVisualFrame)),
+html body .previewBox.prevNote.paperBox .noteSection:not(:has(.assessmentVisualFrame)) {
+  display:block !important;
+  grid-template-columns:none !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  column-gap:0 !important;
+  box-sizing:border-box !important;
+  text-align:left !important;
+}
+/* Keep visual/diagram frames in their original layout, but without an icon column. */
+html body .attemptPaperPreview .assessmentVisualFrame > .noteSection,
+html body #paperPreviewContent .assessmentVisualFrame > .noteSection {
+  grid-template-columns:minmax(0,1fr) !important;
+  column-gap:0 !important;
+}
+html body .noteSectionIcon { display:none !important; }
+html body .attemptPaperPreview .noteSectionContent,
+html body #paperPreviewContent .noteSectionContent,
+html body .previewBox.prevNote.paperBox .noteSectionContent,
+html body .attemptPaperPreview .noteSectionBody,
+html body #paperPreviewContent .noteSectionBody,
+html body .previewBox.prevNote.paperBox .noteSectionBody {
+  display:block !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  margin-left:0 !important;
+  box-sizing:border-box !important;
+  text-align:left !important;
+  overflow-wrap:break-word !important;
+  word-break:normal !important;
+}
+</style>
 </head>
 
 <body>
@@ -5964,15 +6010,8 @@ function escapeHtml(str){
       return sections.map((section) => {
         const isObjective = /learning objective|objective/i.test(section.title);
         const title = escapeHtml(section.title);
-        const iconUrl = isObjective
-          ? "https://res.cloudinary.com/dopoxadlr/image/upload/v1784924492/target-objective_xacvpm.svg"
-          : "https://res.cloudinary.com/dopoxadlr/image/upload/v1784922880/info_vd9ndi.svg";
-
         return `
           <div class="noteSection ${isObjective ? "objectiveSection" : "instructionSection"}">
-            <div class="noteSectionIcon" aria-hidden="true">
-              <img src="${iconUrl}" alt="">
-            </div>
             <div class="noteSectionContent">
               ${title ? `<div class="noteSectionTitle">${title}</div>` : ""}
               <div class="noteSectionBody">${renderLines(section.lines)}</div>
