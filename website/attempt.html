@@ -21197,6 +21197,50 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+
+<style>
+/* FINAL PRODUCTION FIX: note content must never occupy an implicit grid column.
+   Override the original high-specificity 2-column shared-note rule. */
+html body .examPaper .q:not([data-scorable="1"]) > .noteBox:not(.nativeVisualNote) > .noteSection,
+html body .examPaper .noteBox > .noteSection,
+html body .examPaper .noteBox .assessmentVisualFrame > .noteSection,
+html body .examPaper .qSectionText .assessmentVisualFrame > .noteSection {
+  display:block !important;
+  grid-template-columns:none !important;
+  width:100% !important;
+  min-width:0 !important;
+  height:auto !important;
+  transform:none !important;
+  box-sizing:border-box !important;
+}
+html body .examPaper .noteBox .noteSection > .noteSectionContent,
+html body .examPaper .noteBox .noteSection > div:last-child,
+html body .examPaper .qSectionText .noteSection > div:last-child {
+  display:block !important;
+  grid-column:auto !important;
+  grid-row:auto !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  transform:none !important;
+  text-align:left !important;
+  box-sizing:border-box !important;
+}
+html body .examPaper .noteBox .noteSectionIcon,
+html body .examPaper .qSectionText .noteSectionIcon {display:none !important;}
+html body .examPaper .noteBox .noteSectionBody,
+html body .examPaper .qSectionText .noteSectionBody {
+  display:block !important;
+  width:100% !important;
+  min-width:0 !important;
+  font-size:14px !important;
+  line-height:1.55 !important;
+  text-align:left !important;
+  transform:none !important;
+}
+</style>
 </body>
 </html>
 
