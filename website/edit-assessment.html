@@ -1,3 +1,6 @@
+
+
+
 <!-- Edit Assessment.html (UPDATED - COPY & PASTE)
      ✅ MathJax enabled (SVG)
      ✅ Instructions box
@@ -1791,6 +1794,12 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
   .brandDotLoader i{width:14px;height:14px;margin:-7px;transform:rotate(var(--dot-angle)) translateY(-46px)}
   @keyframes workflowDotPulse{0%,100%{opacity:.18;transform:rotate(var(--dot-angle)) translateY(-46px) scale(.72)}35%{opacity:1;transform:rotate(var(--dot-angle)) translateY(-46px) scale(1.08)}}
 }
+.assessmentBulkPanel{grid-column:1/-1;padding:12px;border:1px solid #dfe5ec;border-radius:7px;background:#f8fafc;margin-top:4px}
+.assessmentBulkPanel>label{font-size:12px;font-weight:700}
+.assessmentBulkControls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:6px}
+.assessmentBulkControls select{width:auto;flex:1 1 180px;min-width:160px;margin:0}
+.assessmentBulkControls button{min-height:39px;background:#1b1648;color:#fff}
+#assessmentBulkStatus{margin-top:7px}
 </style>
 
 <style>
@@ -1820,6 +1829,14 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
 .assessmentCheckboxLoad{display:inline-block;margin-top:4px;color:#0b5d84;font-size:10px;font-weight:700;text-decoration:underline;text-underline-offset:2px}
 .assessmentCheckboxEmpty{padding:12px;color:#64748b;font-size:12px;text-align:center}
 @media(max-width:700px){.assessmentDropdownPanel{position:static;margin-top:5px;box-shadow:none}.assessmentDropdownTools{align-items:flex-start;flex-direction:column}#deleteCheckedAssessmentsBtn{width:100%}}
+
+/* Small save confirmation; selections refresh after dismissal. */
+#assessmentSavedOverlay{position:fixed;inset:0;z-index:11000;background:rgba(15,23,42,.35);display:none;align-items:center;justify-content:center;padding:18px}
+#assessmentSavedOverlay.open{display:flex}
+.assessmentSavedDialog{background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 14px 32px rgba(15,23,42,.15);padding:22px;max-width:350px;width:100%;text-align:center;font-family:Arial,Helvetica,sans-serif}
+.assessmentSavedDialog h3{font-size:16px;margin:0 0 8px;color:#166534}
+.assessmentSavedDialog p{font-size:12px;margin:0 0 17px;color:#475569;line-height:1.5}
+.assessmentSavedDialog button{min-width:100px;background:#1b1648;color:#fff}
 </style>
 
 </head>
@@ -2055,6 +2072,22 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
             </div>
           </div>
         </div>
+      </div>
+
+      <div class="assessmentBulkPanel" id="assessmentBulkPanel">
+        <label>Bulk change checked assessments</label>
+        <div class="assessmentBulkControls">
+          <select id="bulkAssessmentField" aria-label="Property to change">
+            <option value="">Choose a property</option>
+            <option value="difficulty">Difficulty</option>
+            <option value="term">Term</option>
+          </select>
+          <select id="bulkAssessmentValue" aria-label="New value" disabled>
+            <option value="">Choose a value</option>
+          </select>
+          <button class="smallbtn" id="applyAssessmentBulkBtn" type="button" disabled>Apply to checked (0)</button>
+        </div>
+        <div class="muted tiny" id="assessmentBulkStatus" role="status">Select assessments using the checkboxes above, then choose the shared value.</div>
       </div>
 
       <div>
@@ -2299,6 +2332,14 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
   </div>
 
 
+  <div id="assessmentSavedOverlay" role="dialog" aria-modal="true" aria-labelledby="assessmentSavedTitle">
+    <div class="assessmentSavedDialog">
+      <h3 id="assessmentSavedTitle">Updated successfully</h3>
+      <p id="assessmentSavedDetail">Your assessment changes have been saved.</p>
+      <button id="assessmentSavedCloseBtn" type="button">Close</button>
+    </div>
+  </div>
+
   <div id="commitConfirmModal" role="dialog" aria-modal="true" aria-labelledby="commitConfirmTitle">
     <div class="commitModalCard">
       <h3 id="commitConfirmTitle" style="margin:0;">Commit assessment changes?</h3>
@@ -2424,6 +2465,10 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
     const assessmentCheckboxList = document.getElementById("assessmentCheckboxList");
     const assessmentSelectAllCheckbox = document.getElementById("assessmentSelectAllCheckbox");
     const deleteCheckedAssessmentsBtn = document.getElementById("deleteCheckedAssessmentsBtn");
+    const bulkAssessmentField = document.getElementById("bulkAssessmentField");
+    const bulkAssessmentValue = document.getElementById("bulkAssessmentValue");
+    const applyAssessmentBulkBtn = document.getElementById("applyAssessmentBulkBtn");
+    const assessmentBulkStatus = document.getElementById("assessmentBulkStatus");
     const toggleFreezeBtn = document.getElementById("toggleFreezeBtn");
     const deleteAssessmentBtn = document.getElementById("deleteAssessmentBtn");
     const availabilityPill = document.getElementById("availabilityPill");
@@ -3099,7 +3144,18 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
       else assessmentChecksList.innerHTML=checkItems.map(x=>`<div class="reviewItem"><span class="${x.k==='error'?'errorIcon':'warningIcon'}" aria-hidden="true"></span><span>${escapeHtml(x.t)}</span></div>`).join("");
       const dirty=changes.length>0;
       reviewStatus.textContent=!currentQuiz?._id?'Select an assessment to begin.':`${changes.length} change${changes.length===1?'':'s'} • ${checks.warnings.length} warning${checks.warnings.length===1?'':'s'} • ${checks.errors.length} error${checks.errors.length===1?'':'s'}`;
-      commitChangesBtn.disabled=!currentQuiz?._id || checks.errors.length>0;
+      // A note-only edit is a valid assessment revision. Do not let legacy
+      // validation failures on unrelated, unchanged questions disable its commit.
+      const stateNow = captureEditorState();
+      const noteOnlyEdit = !!originalEditorSnapshot && changes.length > 0 &&
+        sameState(stateNow.meta, originalEditorSnapshot.meta) &&
+        stateNow.cards.length === originalEditorSnapshot.cards.length &&
+        stateNow.cards.every((card, index) =>
+          sameState(card, originalEditorSnapshot.cards[index]) ||
+          (card.type === "note" && originalEditorSnapshot.cards[index]?.type === "note")
+        );
+      commitChangesBtn.disabled = !currentQuiz?._id || (checks.errors.length > 0 && !noteOnlyEdit);
+      commitChangesBtn.dataset.noteOnlyEdit = noteOnlyEdit ? "true" : "false";
       discardChangesBtn.disabled=!currentQuiz?._id || !dirty;
       publishBtn.disabled=!currentQuiz?._id || !canPublish || checks.errors.length>0;
       updateCardChangeBadges();
@@ -3113,13 +3169,46 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
 
     function openCommitConfirmation(mode="draft"){
       const review=updateChangeReview();
-      if (review.checks.errors.length) { setMsg("Please fix the errors shown in Assessment Check before committing.","error"); return; }
+      if (!currentQuiz?._id) { setMsg("Select an assessment before committing.","error"); return; }
+      if (review.checks.errors.length && commitChangesBtn.dataset.noteOnlyEdit !== "true") {
+        setMsg("Please fix the errors shown in Assessment Check before committing.","error");
+        assessmentChecksList.scrollIntoView({behavior:"smooth",block:"center"});
+        return;
+      }
       pendingCommitMode=mode;
       const changeHtml=review.changes.length?review.changes.map(x=>`<div class="reviewItem"><span class="changeDot"></span><span>${escapeHtml(x)}</span></div>`).join(""):'<div class="noIssues">No visible content changes were detected. You may still commit.</div>';
       const warningHtml=review.checks.warnings.length?review.checks.warnings.map(x=>`<div class="reviewItem"><span class="warningIcon"></span><span>${escapeHtml(x)}</span></div>`).join(""):'<div class="noIssues">No warnings.</div>';
       commitConfirmSummary.innerHTML=`<b>Changes</b><div class="reviewList" style="margin-top:8px">${changeHtml}</div><hr><b>Warnings (commit allowed)</b><div class="reviewList" style="margin-top:8px">${warningHtml}</div>`;
       commitConfirmModal.style.display="flex";
     }
+
+    const assessmentSavedOverlay = document.getElementById("assessmentSavedOverlay");
+    const assessmentSavedDetail = document.getElementById("assessmentSavedDetail");
+    const assessmentSavedCloseBtn = document.getElementById("assessmentSavedCloseBtn");
+    let assessmentSavedRefreshing = false;
+    function showAssessmentSavedPopup(message){
+      assessmentSavedDetail.textContent = message || "Your changes have been saved.";
+      assessmentSavedOverlay.classList.add("open");
+      assessmentSavedCloseBtn.focus();
+    }
+    async function closeAssessmentSavedPopup(){
+      if(assessmentSavedRefreshing) return;
+      assessmentSavedRefreshing = true;
+      assessmentSavedOverlay.classList.remove("open");
+      try{
+        const selectedId = assessmentSelectEl?.value || currentQuiz?._id || "";
+        await loadAssessmentList();
+        if(selectedId && assessmentSelectEl?.querySelector(`option[value="${CSS.escape(String(selectedId))}"]`)){
+          assessmentSelectEl.value = String(selectedId);
+        }
+        renderAssessmentDropdown();
+        syncAssessmentCheckboxControls();
+        updateChangeReview();
+      }catch(error){ console.error("Could not refresh assessment selections",error); }
+      finally{ assessmentSavedRefreshing=false; }
+    }
+    assessmentSavedCloseBtn.addEventListener("click",closeAssessmentSavedPopup);
+    assessmentSavedOverlay.addEventListener("click",event=>{if(event.target===assessmentSavedOverlay)closeAssessmentSavedPopup();});
 
     function setMsg(text, type="muted"){
       msg.className = "msg " + type;
@@ -7752,6 +7841,9 @@ function escapeHtml(str){
      * Every editable control inside a widget/card updates both its local
      * mini-preview and the complete learner preview.
      */
+    questionsWrap.addEventListener("keyup", event => {
+      if(event.target?.closest?.('.qcard[data-type="note"]')) queueMicrotask(updateChangeReview);
+    });
     questionsWrap.addEventListener("input", event => {
       const card = event.target.closest(".qcard");
       scheduleLiveLearnerPreview({
@@ -9655,9 +9747,18 @@ function escapeHtml(str){
         ""
       );
 
-      if (!stored.length) return parsedCorrectText;
+      // A single typed answer is NOT a separate answer box. Older saves may
+      // contain a derived one-field array; never recreate it as another UI block.
+      if (!stored.length) return [];
+      const distinct = stored.filter((field, index, arr) =>
+        arr.findIndex(other => String(other.key).toLowerCase() === String(field.key).toLowerCase()) === index
+      );
+      if (distinct.length === 1 &&
+          /^answer(?:_?1)?$/i.test(distinct[0].key) &&
+          !distinct[0].prefix && !distinct[0].suffix &&
+          parsedCorrectText.length <= 1) return [];
 
-      return stored.map((field, index) => ({
+      return distinct.map((field, index) => ({
         ...field,
         correctAnswer:
           field.correctAnswer ||
@@ -9936,6 +10037,10 @@ function escapeHtml(str){
         deleteCheckedAssessmentsBtn.disabled=checked.length===0;
         deleteCheckedAssessmentsBtn.textContent=checked.length?`Remove checked (${checked.length})`:"Remove checked";
       }
+      if(applyAssessmentBulkBtn){
+        applyAssessmentBulkBtn.disabled = !checked.length || !bulkAssessmentField?.value || !bulkAssessmentValue?.value;
+        applyAssessmentBulkBtn.textContent = `Apply to checked (${checked.length})`;
+      }
       if(assessmentSelectAllCheckbox){
         assessmentSelectAllCheckbox.disabled=boxes.length===0;
         assessmentSelectAllCheckbox.checked=boxes.length>0&&checked.length===boxes.length;
@@ -10001,6 +10106,8 @@ function escapeHtml(str){
           q.grade?`Grade ${q.grade}`:"",
           q.topic||"",
           q.difficulty||"",
+          formatAssessmentCreatedDate(q) ? `Created ${formatAssessmentCreatedDate(q)}` : "",
+          q.term ? `Term ${String(q.term).replace(/^term\s*/i, "")}` : "",
           q.isFrozen?"Unavailable":"Available"
         ].filter(Boolean).join(" • ");
 
@@ -10017,6 +10124,72 @@ function escapeHtml(str){
       syncAssessmentCheckboxControls();
       updateAssessmentDropdownButtonText();
     }
+
+    // Bulk edits reuse each full assessment payload, preserving questions and metadata.
+    // The backend must accept `term` for term changes to persist.
+    bulkAssessmentField?.addEventListener("change",()=>{
+      const field=bulkAssessmentField.value;
+      const values=field==="difficulty"?[["easy","Easy"],["moderate","Moderate"],["hard","Hard"]]:
+        field==="term"?[["1","Term 1"],["2","Term 2"],["3","Term 3"],["4","Term 4"]]:[];
+      bulkAssessmentValue.innerHTML='<option value="">Choose a value</option>'+
+        values.map(([value,label])=>`<option value="${value}">${label}</option>`).join("");
+      bulkAssessmentValue.disabled=!values.length;
+      syncAssessmentCheckboxControls();
+    });
+    bulkAssessmentValue?.addEventListener("change",syncAssessmentCheckboxControls);
+    applyAssessmentBulkBtn?.addEventListener("click",async()=>{
+      const ids=checkedAssessmentIds();
+      const field=bulkAssessmentField.value;
+      const value=bulkAssessmentValue.value;
+      if(!ids.length || !["difficulty","term"].includes(field) || !value) return;
+      const label=field==="term"?`Term ${value}`:value;
+      if(!confirm(`Change ${field} to ${label} for ${ids.length} checked assessments?\n\nThis saves each assessment immediately.`))return;
+      const token=localStorage.getItem("token");
+      if(!token)return logout();
+      applyAssessmentBulkBtn.disabled=true;
+      let saved=0; const failures=[];
+      for(const id of ids){
+        try{
+          const get=await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`,{headers:{Authorization:`Bearer ${token}`}});
+          if(get.status===401)return logout();
+          if(!get.ok)throw new Error(`Read failed (${get.status})`);
+          const raw=await get.json();
+          const quiz=raw?.quiz||raw?.assessment||raw?.data||raw;
+          if(!quiz || !Array.isArray(quiz.questions))throw new Error("Missing assessment questions");
+          const payload={...quiz,[field]:value};
+          const put=await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`,{
+            method:"PUT",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},
+            body:JSON.stringify(payload)
+          });
+          if(put.status===401)return logout();
+          if(!put.ok){const err=await put.json().catch(()=>({}));throw new Error(err.message||`Save failed (${put.status})`);}
+          const response=await put.json().catch(()=>({}));
+          const savedQuiz=response?.quiz||response?.assessment||response?.data||response;
+          const verified=await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`,{
+            headers:{Authorization:`Bearer ${token}`}
+          });
+          if(!verified.ok)throw new Error("Could not verify saved change");
+          const verifiedRaw=await verified.json();
+          const verifiedQuiz=verifiedRaw?.quiz||verifiedRaw?.assessment||verifiedRaw?.data||verifiedRaw;
+          if(String(verifiedQuiz?.[field]??"").toLowerCase()!==String(value).toLowerCase())
+            throw new Error(`Server did not retain ${field}; backend schema may need this field`);
+          updateQuizInMemory({...quiz,...payload,...verifiedQuiz});
+          broadcastAssessmentUpdate("saved",{...quiz,...payload,...verifiedQuiz});
+          saved++;
+        }catch(error){failures.push(`${id}: ${error.message}`);}
+      }
+      await loadAssessmentList();
+      if(currentQuiz?._id && ids.includes(String(currentQuiz._id))){
+        const updated=allQuizzes.find(q=>String(q._id)===String(currentQuiz._id));
+        if(updated)currentQuiz={...currentQuiz,...updated};
+        if(field==="difficulty")difficultyEl.value=normalizeDifficulty(currentQuiz.difficulty);
+      }
+      assessmentBulkStatus.textContent=`Updated ${saved} of ${ids.length} assessments.`+(failures.length?` ${failures.length} failed. Check server support and console.`:"");
+      if(failures.length)console.error("Bulk assessment update errors",failures);
+      setMsg(assessmentBulkStatus.textContent,failures.length?"error":"ok");
+      if(saved === ids.length && !failures.length) showAssessmentSavedPopup(`${saved} assessment${saved===1?"":"s"} updated successfully.`);
+      syncAssessmentCheckboxControls();
+    });
 
     async function deleteCheckedAssessments(){
       const ids=checkedAssessmentIds();
@@ -10300,12 +10473,16 @@ function escapeHtml(str){
             "Changes saved, including the Image / Question order. Learner quiz and attempt pages were synchronized immediately.",
             "ok"
           );
+          showAssessmentSavedPopup("Assessment updated successfully.");
         } else {
-          setMsg("Error: " + (data.message || "Could not save assessment"), "error");
+          setMsg("Commit failed: " + (data.message || "Could not save assessment"), "error");
+          document.getElementById("msg")?.scrollIntoView({behavior:"smooth",block:"center"});
         }
       } catch (err){
-        setMsg(err.message || "Something went wrong.", "error");
+        setMsg("Commit failed: " + (err.message || "Something went wrong."), "error");
+        document.getElementById("msg")?.scrollIntoView({behavior:"smooth",block:"center"});
       } finally {
+        updateChangeReview();
         saveBtn.disabled = false;
         publishBtn.disabled = !canPublish;
       }
