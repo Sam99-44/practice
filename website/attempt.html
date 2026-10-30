@@ -1,6 +1,9 @@
 
 
 
+
+
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -9204,6 +9207,95 @@ body{
 
 
 
+
+<style>
+/* Only the completed assessment results: Close results below the entire table. */
+#submitConfirmModal.results-mode .confirmCard { position: static !important; }
+#submitConfirmModal.results-mode .confirmActions {
+  position: static !important;
+  display: flex !important;
+  justify-content: center !important;
+  margin-top: 24px !important;
+  padding-bottom: 18px !important;
+}
+#submitConfirmModal.results-mode #confirmCancelBtn {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  left: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  margin: 0 auto !important;
+  min-width: 150px !important;
+  width: auto !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  line-height: normal !important;
+  padding: 0 16px !important;
+}
+</style>
+
+<style>
+/* Shared information and notes: no decorative icons, full-width text. */
+.noteSectionIcon,
+.examPaper .noteBox .noteSectionIcon,
+.examPaper .qSectionText .noteSectionIcon,
+.attemptPaperPreview .noteSectionIcon,
+#paperPreviewContent .noteSectionIcon { display:none !important; }
+.noteSection,
+.examPaper .noteBox .noteSection,
+.examPaper .qSectionText .noteSection,
+.attemptPaperPreview .noteSection,
+#paperPreviewContent .noteSection,
+.attemptPaperPreview .assessmentVisualFrame > .noteSection,
+#paperPreviewContent .assessmentVisualFrame > .noteSection,
+.examPaper .noteBox .assessmentVisualFrame > .noteSection,
+.examPaper .qSectionText .assessmentVisualFrame > .noteSection { grid-template-columns:minmax(0,1fr) !important; }
+.noteSectionContent,
+.examPaper .noteBox .noteSectionContent,
+.examPaper .noteBox .noteSection > div:last-child,
+.examPaper .qSectionText .noteSection > div:last-child,
+.attemptPaperPreview .noteSectionContent,
+#paperPreviewContent .noteSectionContent { grid-column:1 !important; min-width:0 !important; }
+</style>
+<style>
+/* Production shared notes: remove both levels of the former icon columns. */
+html body .examPaper .q:not([data-scorable="1"]) > .noteBox:not(.nativeVisualNote),
+html body .examPaper .noteBox:not(:has(.assessmentVisualFrame)) {
+  display:block !important;
+  grid-template-columns:none !important;
+  column-gap:0 !important;
+}
+html body .examPaper .noteBox > .noteSection,
+html body .examPaper .noteBox .assessmentVisualFrame > .noteSection,
+html body .examPaper .qSectionText .assessmentVisualFrame > .noteSection {
+  display:block !important;
+  grid-template-columns:none !important;
+  column-gap:0 !important;
+  text-align:left !important;
+}
+html body .examPaper .noteBox > .noteSection,
+html body .examPaper .noteBox > .noteSectionContent,
+html body .examPaper .noteBox > .noteText,
+html body .examPaper .noteBox > .noteContent,
+html body .examPaper .noteBox .noteSection > .noteSectionContent,
+html body .examPaper .noteBox .noteSection > div:last-child,
+html body .examPaper .qSectionText .noteSection > div:last-child {
+  grid-column:auto !important;
+  grid-row:auto !important;
+  width:100% !important;
+  margin-left:0 !important;
+  padding-left:0 !important;
+  justify-self:stretch !important;
+  text-align:left !important;
+}
+html body .examPaper .noteBox .noteSectionBody,
+html body .examPaper .noteBox .noteParagraph,
+html body .examPaper .qSectionText .noteSectionBody {
+  grid-column:auto !important;
+  text-align:left !important;
+}
+</style>
 </head>
 
 <body class="assessment-loading">
@@ -11333,6 +11425,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   }
 
   function showSubmitConfirm(){
+    submitConfirmModal.classList.remove("results-mode");
     if (confirmTitleEl) confirmTitleEl.textContent = "Submission status";
     if (confirmTextEl) confirmTextEl.textContent = "Review the status of your answers before submitting the assessment.";
     if (submitReviewSummary) submitReviewSummary.hidden = true;
@@ -11471,6 +11564,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       the learner deliberately closes it.
     */
     samePageResultsReady = true;
+    submitConfirmModal.classList.add("results-mode");
 
     if (confirmCancelBtn) {
       confirmCancelBtn.style.display = "inline-flex";
@@ -13958,6 +14052,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
   function showSamePagePostSubmitActions(){
     samePageResultsReady = true;
+    submitConfirmModal.classList.add("results-mode");
 
     /* Close controls are immediately available and never wait on network work. */
     if (confirmCancelBtn) {
@@ -16907,9 +17002,7 @@ function hasInlineLatexMathOnly(text){
 
         return `
           <div class="noteSection ${isObjective ? "objectiveSection" : "instructionSection"}">
-            <div class="noteSectionIcon" aria-hidden="true">
-              <img src="${iconUrl}" alt="">
-            </div>
+
             <div class="noteSectionContent">
               ${title ? `<div class="noteSectionTitle">${title}</div>` : ""}
               <div class="noteSectionBody">${renderLines(section.lines)}</div>
@@ -20105,9 +20198,7 @@ function hasInlineLatexMathOnly(text){
       const title = escapeHtml(section.title);
       return `
         <div class="noteSection ${/learning objective|objective/i.test(section.title) ? "objectiveSection" : ""}">
-          <div class="noteSectionIcon" aria-hidden="true">
-            <img src="${/learning objective|objective/i.test(section.title) ? "https://res.cloudinary.com/dopoxadlr/image/upload/v1784924492/target-objective_xacvpm.svg" : "https://res.cloudinary.com/dopoxadlr/image/upload/v1784922880/info_vd9ndi.svg"}" alt="">
-          </div>
+
           <div>
             <div class="noteSectionTitle">${title}</div>
             <div class="noteSectionBody">${renderLines(section.lines)}</div>
@@ -21111,22 +21202,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 <style>
-/* ===== FINAL NOTE ICON RULE =====
-   Keep the note layout exactly the same.
-   Only hide the icon itself on the second and later information notes. */
-.examPaper .noteBox.hide-info-icon .noteSection{
-  grid-template-columns:28px minmax(0,1fr) !important;
+/* ===== SHARED NOTES: ICON-FREE, NO EMPTY LEFT COLUMN =====
+   Preserve the existing note borders, padding, maths and diagrams. */
+html body .examPaper .noteBox .noteSection,
+html body .examPaper .noteBox.hide-info-icon .noteSection,
+html body .examPaper .noteBox .assessmentVisualFrame > .noteSection,
+html body .examPaper .qSectionText .assessmentVisualFrame > .noteSection {
+  grid-template-columns:minmax(0,1fr) !important;
+  column-gap:0 !important;
 }
-
-.examPaper .noteBox.hide-info-icon .noteSectionIcon{
-  display:flex !important;
+html body .examPaper .noteBox .noteSectionIcon,
+html body .examPaper .noteBox.hide-info-icon .noteSectionIcon,
+html body .examPaper .qSectionText .noteSectionIcon {
+  display:none !important;
   visibility:hidden !important;
 }
-
-.examPaper .noteBox.hide-info-icon .noteSection > div:last-child{
-  grid-column:2 !important;
-  min-width:0 !important;
+html body .examPaper .noteBox .noteSectionContent,
+html body .examPaper .noteBox .noteSection > div:last-child,
+html body .examPaper .noteBox.hide-info-icon .noteSection > div:last-child,
+html body .examPaper .qSectionText .noteSectionContent,
+html body .examPaper .qSectionText .noteSection > div:last-child {
+  grid-column:1 !important;
   width:auto !important;
+  min-width:0 !important;
+  margin-left:0 !important;
+  padding-left:0 !important;
 }
 </style>
 
