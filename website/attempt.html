@@ -4,6 +4,18 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -9296,6 +9308,28 @@ html body .examPaper .qSectionText .noteSectionBody {
   text-align:left !important;
 }
 </style>
+
+<style>
+/* Place the active question's marks on the same row as Question X of Y. */
+html body #simpleQuestionProgress #questionCounter.simpleQuestionProgressText{
+  display:flex !important;
+  align-items:baseline !important;
+  justify-content:space-between !important;
+  gap:12px !important;
+  width:100% !important;
+}
+html body #simpleQuestionProgress .currentQuestionProgressMarks{
+  margin-left:auto !important;
+  flex:0 0 auto !important;
+  font:400 14px/1.4 "Times New Roman",Times,serif !important;
+  color:#111827 !important;
+  white-space:nowrap !important;
+}
+/* Avoid a second copy of the marks alongside the question stem. */
+html body .examPaper .q[data-scorable="1"] .qHead .marksMeta{
+  display:none !important;
+}
+</style>
 </head>
 
 <body class="assessment-loading">
@@ -9421,8 +9455,8 @@ html body .examPaper .qSectionText .noteSectionBody {
       </div>
 
       <div id="quizNavigation" class="quizNavigation" aria-label="Question navigation">
-        <button id="prevQuestionBtn" class="btn2 quizNavBtn prev" type="button"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">Back</button>
-        <button id="nextQuestionBtn" class="btn2 quizNavBtn next" type="button">Next<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt=""></button>
+        <button id="prevQuestionBtn" class="btn2 quizNavBtn prev" type="button"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1793801997/next_wiwir5.svg" alt="">Previous</button>
+        <button id="nextQuestionBtn" class="btn2 quizNavBtn next" type="button">Next<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1793801997/next_wiwir5.svg" alt=""></button>
       </div>
 
 
@@ -10134,6 +10168,19 @@ function inlineQuizLoadingHtml(){
 
     if (questionCounter) {
       questionCounter.textContent = `Question ${currentQuestionPage + 1} of ${questionPageGroups.length}`;
+      // Show the marks for the current displayed question beside its progress.
+      // A page can contain more than one scorable row, so add those points.
+      let pageMarks = 0;
+      questionPageGroups[currentQuestionPage].forEach(row => {
+        if (row?.dataset?.scorable !== "1") return;
+        const points = Number(String(row.querySelector(".marksBox")?.textContent || "").trim());
+        if (Number.isFinite(points)) pageMarks += points;
+      });
+      const marks = document.createElement("span");
+      marks.className = "currentQuestionProgressMarks";
+      marks.textContent = `(${pageMarks})`;
+      marks.setAttribute("aria-label", `${pageMarks} marks`);
+      questionCounter.appendChild(marks);
     }
 
     placeSimpleQuestionProgressBelowTotalMarks();
@@ -10180,12 +10227,12 @@ function inlineQuizLoadingHtml(){
       const isLast = currentQuestionPage === questionPageGroups.length - 1;
       nextQuestionBtn.classList.toggle("submit-final", !submitted && isLast);
       if (submitted) {
-        nextQuestionBtn.innerHTML = `Next<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">`;
+        nextQuestionBtn.innerHTML = `Next<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1793801997/next_wiwir5.svg" alt="">`;
         nextQuestionBtn.disabled = isLast;
       } else {
         nextQuestionBtn.innerHTML = isLast
           ? `Submit`
-          : `Next<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">`;
+          : `Next<img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1793801997/next_wiwir5.svg" alt="">`;
         nextQuestionBtn.disabled = !quizStarted;
       }
     }
@@ -11048,7 +11095,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     return `
       <div class="qHead dropdownQuestionHead">
         <div class="qTitle">
-          <span class="qNo">${escapeHtml(label)}</span>
+          <span class="qNo ${/^\d+(?:\.\d+)+\.?$/.test(String(label).trim()) ? "subQuestionNo" : "wholeQuestionNo"}">${escapeHtml(label)}</span>
           <span class="qText dropdownQuestionText">${bodyHtml}${continuationHtml ? `<span class="questionContinuation">${continuationHtml}</span>` : ""}</span>
         </div>
         <div class="marksMeta" title="Question marks">
@@ -11098,7 +11145,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     return `
       <div class="qHead">
         <div class="qTitle">
-          <span class="qNo">${escapeHtml(label)}</span>
+          <span class="qNo ${/^\d+(?:\.\d+)+\.?$/.test(String(label).trim()) ? "subQuestionNo" : "wholeQuestionNo"}">${escapeHtml(label)}</span>
           <span class="fillQuestionText">${bodyHtml}${continuationHtml ? `<span class="questionContinuation">${continuationHtml}</span>` : ""}</span>
         </div>
         <div class="marksMeta" title="Question marks"><div class="marksLbl">Marks</div><div class="marksBox">${String(points).trim()}</div></div>
@@ -20717,7 +20764,7 @@ function formatSolutionHtml(solutionText){
     return `
       <div class="qHead">
         <div class="qTitle">
-          <span class="qNo">${escapeHtml(label)}</span>
+          <span class="qNo ${/^\d+(?:\.\d+)+\.?$/.test(String(label).trim()) ? "subQuestionNo" : "wholeQuestionNo"}">${escapeHtml(label)}</span>
           <span class="qText">${renderQuestionLine(visibleBody)}${continuationHtml ? `<span class="questionContinuation">${continuationHtml}</span>` : ""}</span>
         </div>
         <div class="marksMeta" title="Question marks">
@@ -21241,6 +21288,182 @@ html body .examPaper .qSectionText .noteSectionBody {
   transform:none !important;
 }
 </style>
+
+<style>
+/* ===== PRACTICE ONLINE SOLUTION CARD — REFERENCE DESIGN =====
+   Visual styling only; keeps solution content, MathJax and reveal behaviour. */
+html body .examPaper .solutionBox,
+html body .examPaper .solutionHolder .solutionBox{
+  position:relative !important;
+  box-sizing:border-box !important;
+  width:auto !important;
+  min-height:190px !important;
+  padding:15px 20px 20px 27px !important;
+  border:0 !important;
+  border-radius:34px !important;
+  background:#d9f1d2 !important;
+  box-shadow:none !important;
+  color:#111111 !important;
+  overflow-wrap:break-word !important;
+}
+html body .examPaper .solutionBox .solutionTop,
+html body .examPaper .solutionBox .solutionTitle{
+  color:#111111 !important;
+  font-family:"Times New Roman",Times,serif !important;
+  font-size:17px !important;
+  font-style:italic !important;
+  text-decoration:underline !important;
+  text-underline-offset:2px !important;
+  font-weight:400 !important;
+  line-height:1.4 !important;
+  margin:0 0 12px !important;
+}
+html body .examPaper .solutionBox .solutionBody{
+  color:#111111 !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  padding:0 !important;
+}
+@media(max-width:640px){
+  html body .examPaper .solutionBox,
+  html body .examPaper .solutionHolder .solutionBox{
+    min-height:120px !important;
+    padding:14px 12px 16px 25px !important;
+    background:#d9f1d2 !important;
+    border-radius:30px !important;
+  }
+}
+</style>
+
+<style>
+/* ===== CONSISTENT MOBILE SOLUTION MATHS =====
+   Limit the global fraction enlargement inside solutions only.
+   Keep original desktop rendering and mathematical content. */
+@media (max-width:640px){
+  html body .examPaper .solutionHolder .solutionBox,
+  html body .examPaper .solutionBox{
+    max-width:calc(100% - 56px) !important;
+    width:calc(100% - 56px) !important;
+    margin-left:56px !important;
+    padding:14px 12px 16px 19px !important;
+    overflow-x:auto !important;
+  }
+  html body .examPaper .solutionBox .solutionBody,
+  html body .examPaper .solutionHolder .solutionBody{
+    min-width:0 !important;
+    max-width:100% !important;
+    font-family:"Times New Roman",Times,serif !important;
+    font-size:14px !important;
+    line-height:1.6 !important;
+    overflow-wrap:normal !important;
+    word-break:normal !important;
+  }
+  html body .examPaper .solutionBox .solutionBody mjx-container[jax="SVG"],
+  html body .examPaper .solutionBox .solutionMathBlock mjx-container[jax="SVG"],
+  html body .examPaper .solutionBox .solutionBody mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+  html body .examPaper .solutionBox .solutionBody mjx-container[jax="SVG"]:has(mjx-mfrac),
+  html body .examPaper .solutionBox .solutionBody mjx-container[jax="SVG"]:has([data-mml-node="msqrt"]){
+    font-size:1em !important;
+    line-height:1.15 !important;
+    max-width:100% !important;
+    margin-inline:0 !important;
+  }
+  html body .examPaper .solutionBox .solutionMathBlock,
+  html body .examPaper .solutionBox .solutionTextBlock{
+    margin-left:0 !important;
+    max-width:100% !important;
+    font-size:14px !important;
+    line-height:1.6 !important;
+  }
+  html body .examPaper .solutionBox .solutionStep{
+    grid-template-columns:minmax(50px,70px) minmax(0,1fr) !important;
+    column-gap:7px !important;
+    font-size:14px !important;
+    line-height:1.6 !important;
+  }
+  html body .examPaper .solutionBox .solutionStepNo{
+    min-width:0 !important;
+    width:auto !important;
+  }
+  html body .examPaper .solutionBox .solutionTitle,
+  html body .examPaper .solutionBox .solutionTop{
+    font-size:16px !important;
+  }
+}
+@media (max-width:380px){
+  html body .examPaper .solutionBox,
+  html body .examPaper .solutionHolder .solutionBox{
+    max-width:calc(100% - 46px) !important;
+    width:calc(100% - 46px) !important;
+    margin-left:46px !important;
+  }
+}
+</style>
+
+<style>
+/* ===== SOLUTION-ONLY FRACTION SCALE NORMALISATION =====
+   MathJax stacked fractions and roots are intrinsically taller than inline text.
+   The global .examPaper fraction rule enlarges them another 18%; override that
+   specifically inside solutions. Keep regular maths at its original size. */
+html body .examPaper .solutionHolder .solutionBody mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+html body .examPaper .solutionHolder .solutionBody mjx-container[jax="SVG"]:has(mjx-mfrac),
+html body .examPaper .solutionHolder .solutionMathBlock mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+html body .examPaper .solutionHolder .solutionMathBlock mjx-container[jax="SVG"]:has(mjx-mfrac),
+html body .examPaper .solutionBox .solutionBody mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+html body .examPaper .solutionBox .solutionBody mjx-container[jax="SVG"]:has(mjx-mfrac),
+html body .examPaper .solutionBox .solutionMathBlock mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+html body .examPaper .solutionBox .solutionMathBlock mjx-container[jax="SVG"]:has(mjx-mfrac),
+html body .examPaper .solutionBox .solutionBody mjx-container[jax="SVG"]:has([data-mml-node="msqrt"]),
+html body .examPaper .solutionBox .solutionBody mjx-container[jax="SVG"]:has([data-mml-node="mroot"]){
+  font-size:.88em !important;
+  line-height:1.15 !important;
+  margin-inline:0 !important;
+  max-width:100% !important;
+}
+/* Displayed formulae keep a readable fraction height without enlarging the
+   numerators compared with the surrounding 14px worked-solution text. */
+@media(max-width:640px){
+  html body .examPaper .solutionBox .solutionBody mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+  html body .examPaper .solutionBox .solutionBody mjx-container[jax="SVG"]:has(mjx-mfrac),
+  html body .examPaper .solutionBox .solutionMathBlock mjx-container[jax="SVG"]:has([data-mml-node="mfrac"]),
+  html body .examPaper .solutionBox .solutionMathBlock mjx-container[jax="SVG"]:has(mjx-mfrac){
+    font-size:.84em !important;
+  }
+}
+</style>
+
+
+<style>
+/* Keep the paper side borders continuous down to the fixed navigation.
+   No horizontal separator above Previous / Next. */
+html body #questions.examPaper{
+  min-height:max(420px, calc(100dvh - var(--po-paper-top, 85px))) !important;
+}
+html body .quizNavigation.show,
+html body .q[data-scorable="1"] > .quizNavigation.show,
+html body .quizNavigation.show.solutionReviewNavigation,
+html body .q[data-scorable="1"] > #quizNavigation.desktopSolutionNavigation.show,
+html body .examPaper .desktopWorkingsPager{
+  border-top:0 !important;
+  box-shadow:none !important;
+}
+</style>
+<script>
+/* Measure the actual top of the question paper, which differs on phone and desktop. */
+(function(){
+  function fitPaper(){
+    const paper=document.getElementById('questions');
+    if(!paper) return;
+    const top=paper.getBoundingClientRect().top;
+    if(top>=0) document.documentElement.style.setProperty('--po-paper-top', Math.round(top)+'px');
+  }
+  window.addEventListener('load', fitPaper);
+  window.addEventListener('resize', fitPaper, {passive:true});
+  document.addEventListener('DOMContentLoaded', fitPaper);
+})();
+</script>
 </body>
 </html>
 
@@ -21294,5 +21517,488 @@ body.submitted-state .qLocalActions{
 
 body.submitted-state .qCheckBtn{
   display:none !important;
+}
+</style>
+<style>
+/* Clean revealed solutions: hide the completed Workings Shown button
+   and status feedback, but retain answer-checking logic and other controls. */
+html body .examPaper .q:has(.solutionHolder:not(.hidden)) .qShowAnswerBtn,
+html body .examPaper .q:has(.solutionHolder:not(.hidden)) .qFeedback{
+  display:none !important;
+}
+html body .examPaper .q:has(.solutionHolder:not(.hidden)) .qLocalActions{
+  margin-bottom:0 !important;
+}
+html body .examPaper .q:has(.solutionHolder:not(.hidden)) .solutionHolder .solutionBox{
+  margin-top:8px !important;
+}
+</style>
+
+<style>
+/* NOV 2026 — consistent question text and anchored question navigation.
+   Leaves solved maths/solution styling untouched. */
+@media(max-width:640px){
+  html body .examPaper .q[data-scorable="1"] .qText,
+  html body .examPaper .q[data-scorable="1"] .qSectionText,
+  html body .examPaper .q[data-scorable="1"] .qTextPaper{
+    font-size:14px !important;
+    line-height:1.55 !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    overflow-wrap:break-word !important;
+    word-break:normal !important;
+    text-align:left !important;
+  }
+  html body .examPaper .q[data-scorable="1"] .qText mjx-container[jax="SVG"],
+  html body .examPaper .q[data-scorable="1"] .qSectionText mjx-container[jax="SVG"]{
+    font-size:1em !important;
+    line-height:1.2 !important;
+    max-width:100% !important;
+  }
+}
+/* Fixed at the bottom of the view, whether the question is short or long. */
+html body .quizNavigation.show,
+html body .q[data-scorable="1"] > .quizNavigation.show,
+html body .quizNavigation.show.solutionReviewNavigation,
+html body .q[data-scorable="1"] > #quizNavigation.desktopSolutionNavigation.show{
+  position:fixed !important;
+  bottom:0 !important;
+  left:50% !important;
+  right:auto !important;
+  transform:translateX(-50%) !important;
+  z-index:1100 !important;
+  width:min(100%, 880px) !important;
+  box-sizing:border-box !important;
+  min-height:54px !important;
+  padding:9px 16px max(9px, env(safe-area-inset-bottom)) !important;
+  margin:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:12px !important;
+  background:#fff !important;
+  border:0 !important;
+  border-top:1px solid #e8e8e8 !important;
+  border-radius:0 !important;
+  box-shadow:0 -2px 9px rgba(15,23,42,.04) !important;
+}
+/* The workings-review pager uses the same stable bottom position. */
+html body .examPaper .desktopWorkingsPager{
+  position:fixed !important;
+  bottom:0 !important;
+  left:50% !important;
+  transform:translateX(-50%) !important;
+  z-index:1102 !important;
+  width:min(100%, 880px) !important;
+  min-height:54px !important;
+  box-sizing:border-box !important;
+  padding:9px 16px max(9px, env(safe-area-inset-bottom)) !important;
+  margin:0 !important;
+  background:#fff !important;
+  border-top:1px solid #e8e8e8 !important;
+}
+html body #prevQuestionBtn,
+html body .examPaper .desktopWorkingsPager .desktopWorkingsBack{
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:5px !important;
+  justify-content:center !important;
+  min-width:78px !important;
+  width:auto !important;
+  height:30px !important;
+  min-height:30px !important;
+  padding:0 11px !important;
+  border:0 !important;
+  border-radius:4px !important;
+  background:#f3f3f3 !important;
+  color:#333 !important;
+  font:600 12px Arial,Helvetica,sans-serif !important;
+}
+html body #prevQuestionBtn img{width:12px !important;height:12px !important;filter:brightness(0) !important;}
+html body #nextQuestionBtn,
+html body .examPaper .desktopWorkingsPager .desktopWorkingsNext{
+  min-width:59px !important;
+  width:auto !important;
+  height:30px !important;
+  min-height:30px !important;
+  padding:0 11px !important;
+  border:0 !important;
+  border-radius:4px !important;
+  background:#ff742d !important;
+  color:#fff !important;
+  font:600 12px Arial,Helvetica,sans-serif !important;
+}
+html body #nextQuestionBtn img{width:12px !important;height:12px !important;filter:brightness(0) invert(1) !important;}
+html body #prevQuestionBtn:disabled,
+html body #nextQuestionBtn:disabled,
+html body .examPaper .desktopWorkingsPager button:disabled{opacity:.5 !important;cursor:not-allowed !important;}
+/* Clear the anchored controls while scrolling to the end of long questions. */
+html body .sectionBody{padding-bottom:90px !important;}
+html body .examPaper{padding-bottom:76px !important;}
+@media(max-width:640px){
+  html body .quizNavigation.show,
+  html body .q[data-scorable="1"] > .quizNavigation.show{
+    display:flex !important;
+    width:100% !important;
+    grid-template-columns:none !important;
+    padding-left:16px !important;
+    padding-right:16px !important;
+  }
+  html body .quizNavigation .questionCounter{display:none !important;}
+  html body .examPaper .desktopWorkingsPager{width:100% !important;}
+}
+/* Honour the app's existing loading state: never show nav prematurely. */
+html body.assessment-loading #quizNavigation,
+html body.mobile-assessment-loading #quizNavigation{display:none !important;}
+</style>
+
+
+<style>
+/* Continuous assessment frame, including fixed bottom navigation. */
+html body #questionsWrap.paperShell{
+  position:relative !important;
+  width:100% !important;
+  max-width:960px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  min-height:max(420px,calc(100dvh - var(--po-frame-top,85px))) !important;
+  border:1px solid #e2e6eb !important;
+  border-radius:0 !important;
+  background:#fff !important;
+  box-shadow:0 1px 3px rgba(15,23,42,.07) !important;
+  box-sizing:border-box !important;
+}
+html body #questionsWrap > #questions.examPaper{
+  width:100% !important;
+  min-height:0 !important;
+  padding-bottom:88px !important;
+  border:0 !important;
+  box-shadow:none !important;
+  background:transparent !important;
+}
+/* Footer sits on the same white surface without its own edge or shadow. */
+html body #quizNavigation.show,
+html body #quizNavigation.show.solutionReviewNavigation,
+html body #quizNavigation.desktopSolutionNavigation.show{
+  left:var(--po-frame-left,0px) !important;
+  width:var(--po-frame-width,100%) !important;
+  max-width:none !important;
+  transform:none !important;
+  right:auto !important;
+  bottom:0 !important;
+  border:none !important;
+  border-top:0 !important;
+  box-shadow:none !important;
+  background:#fff !important;
+  padding:8px 15px max(8px,env(safe-area-inset-bottom)) !important;
+}
+@media(max-width:640px){
+  html body #quizNavigation.show,
+  html body #quizNavigation.show.solutionReviewNavigation,
+  html body #quizNavigation.desktopSolutionNavigation.show{
+    width:var(--po-frame-width,100%) !important;
+    padding-left:14px !important;
+    padding-right:14px !important;
+  }
+}
+</style>
+<script>
+/* Match the fixed footer to the question frame on all viewports. */
+(function(){
+  function syncFrame(){
+    const frame=document.getElementById('questionsWrap');
+    if(!frame) return;
+    const r=frame.getBoundingClientRect();
+    const root=document.documentElement.style;
+    root.setProperty('--po-frame-top',Math.max(0,Math.round(r.top))+'px');
+    root.setProperty('--po-frame-left',Math.round(r.left+1)+'px');
+    root.setProperty('--po-frame-width',Math.max(0,Math.round(r.width-2))+'px');
+  }
+  document.addEventListener('DOMContentLoaded',syncFrame);
+  window.addEventListener('load',syncFrame);
+  window.addEventListener('resize',syncFrame,{passive:true});
+})();
+</script>
+<style>
+/* Final footer frame correction:
+   keep the vertical side borders running down beside the fixed navigation,
+   but do not show any horizontal divider above the buttons. */
+html body #quizNavigation.show,
+html body #quizNavigation.show.solutionReviewNavigation,
+html body #quizNavigation.desktopSolutionNavigation.show,
+html body .examPaper .desktopWorkingsPager{
+  border-top:0 !important;
+  border-bottom:0 !important;
+  border-left:1px solid #e2e6eb !important;
+  border-right:1px solid #e2e6eb !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  background:#fff !important;
+  box-sizing:border-box !important;
+}
+</style>
+
+<style>
+/* Same supplied arrow for both question navigation controls. */
+html body #prevQuestionBtn img{transform:rotate(180deg) !important;}
+html body #nextQuestionBtn img{transform:none !important;}
+</style>
+
+<style>
+/* Remove the two grey vertical strokes beside the anchored navigation.
+   Keep the same positions, buttons, icon rotations and no top divider. */
+html body #questionsWrap.paperShell{
+  border-left:0 !important;
+  border-right:0 !important;
+}
+html body #quizNavigation.show,
+html body #quizNavigation.show.solutionReviewNavigation,
+html body #quizNavigation.desktopSolutionNavigation.show,
+html body .examPaper .desktopWorkingsPager{
+  border-left:0 !important;
+  border-right:0 !important;
+  border-top:0 !important;
+  box-shadow:none !important;
+}
+</style>
+
+<style>
+/* Match the subtle/invisible sides: no pronounced top or bottom edge.
+   Do not change the fixed navigation or existing question content. */
+html body #questionsWrap.paperShell{
+  border-top:0 !important;
+  border-bottom:0 !important;
+  box-shadow:none !important;
+}
+html body #quizNavigation.show,
+html body #quizNavigation.show.solutionReviewNavigation,
+html body #quizNavigation.desktopSolutionNavigation.show,
+html body .examPaper .desktopWorkingsPager{
+  border-bottom:0 !important;
+  border-top:0 !important;
+  box-shadow:none !important;
+}
+</style>
+
+<style>
+/* Practice Online — approved full-width question layout.
+   Numbering is presentation-only: underlying labels and answer IDs remain intact. */
+html body .examPaper .q[data-scorable="1"] .qHead{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto !important;
+  column-gap:12px !important;
+  row-gap:5px !important;
+  align-items:start !important;
+  width:100% !important;
+}
+html body .examPaper .q[data-scorable="1"] .qTitle{
+  display:contents !important;
+}
+html body .examPaper .q[data-scorable="1"] .qNo.wholeQuestionNo{
+  display:none !important;
+}
+html body .examPaper .q[data-scorable="1"] .qNo.subQuestionNo{
+  display:block !important;
+  grid-column:1 !important;
+  grid-row:1 !important;
+  width:auto !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  align-self:start !important;
+  font:700 14px/1.5 "Times New Roman",Times,serif !important;
+}
+html body .examPaper .q[data-scorable="1"] .qText{
+  display:block !important;
+  grid-column:1 !important;
+  grid-row:1 !important;
+  width:100% !important;
+  min-width:0 !important;
+  margin:0 !important;
+  overflow-wrap:break-word !important;
+  word-break:normal !important;
+  text-align:left !important;
+}
+html body .examPaper .q[data-scorable="1"] .qNo.subQuestionNo + .qText{
+  grid-column:1 / -1 !important;
+  grid-row:2 !important;
+}
+html body .examPaper .q[data-scorable="1"] .marksMeta{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  align-self:start !important;
+  justify-self:end !important;
+  margin:0 !important;
+  white-space:nowrap !important;
+}
+/* Section labels such as 1.1 stay visible above their full-width body. */
+html body .examPaper .qSectionStem{
+  display:block !important;
+  width:100% !important;
+}
+html body .examPaper .qSectionLeft{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:stretch !important;
+  gap:5px !important;
+  min-width:0 !important;
+}
+html body .examPaper .qSectionNo{
+  display:block !important;
+  width:auto !important;
+  min-width:0 !important;
+  margin:0 !important;
+}
+html body .examPaper .qSectionText{
+  display:block !important;
+  min-width:0 !important;
+  width:100% !important;
+}
+/* Use the same body inset for text answers and multiple-choice choices.
+   Solution geometry and MathJax fraction sizing deliberately remain untouched. */
+html body .examPaper .q[data-scorable="1"] .opt,
+html body .examPaper .q[data-scorable="1"] .textAnswer,
+html body .examPaper .q[data-scorable="1"] .hint{
+  margin-left:0 !important;
+}
+html body .examPaper .q[data-scorable="1"] .opt{
+  padding-left:0 !important;
+}
+html body .examPaper .q[data-scorable="1"] .textAnswer{
+  width:min(100%,400px) !important;
+  max-width:100% !important;
+}
+@media(max-width:640px){
+  html body .examPaper .q[data-scorable="1"] .qHead{
+    grid-template-columns:minmax(0,1fr) auto !important;
+    column-gap:8px !important;
+  }
+  html body .examPaper .q[data-scorable="1"] .textAnswer{
+    width:100% !important;
+  }
+}
+</style>
+
+<style>
+/* Align approved Solution blocks with full-width question content.
+   Remove the obsolete number-column inset, including on narrow phones. */
+html body .examPaper .q[data-scorable="1"] .solutionHolder{
+  display:block !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  margin-left:0 !important;
+  padding-left:0 !important;
+  box-sizing:border-box !important;
+}
+html body .examPaper .q[data-scorable="1"] .solutionHolder.hidden{
+  display:none !important;
+}
+html body .examPaper .q[data-scorable="1"] .solutionHolder .solutionBox,
+html body .examPaper .q[data-scorable="1"] .solutionBox{
+  display:block !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  margin-left:0 !important;
+  margin-right:0 !important;
+  box-sizing:border-box !important;
+}
+@media(max-width:640px){
+  html body .examPaper .q[data-scorable="1"] .solutionHolder .solutionBox,
+  html body .examPaper .q[data-scorable="1"] .solutionBox{
+    padding-left:17px !important;
+    padding-right:17px !important;
+  }
+}
+</style>
+
+<style>
+/* Align the answer prompt and MathLive keyboard/field together, without
+   reducing the approved full-width Solution box or changing its MathJax. */
+html body .examPaper .q[data-scorable="1"] .enterAnswerLabel,
+html body .examPaper .q[data-scorable="1"] .typedAnswerBlock{
+  width:calc(100% - 28px) !important;
+  max-width:calc(100% - 28px) !important;
+  min-width:0 !important;
+  margin-left:28px !important;
+  margin-right:0 !important;
+  box-sizing:border-box !important;
+}
+@media(max-width:640px){
+  html body .examPaper .q[data-scorable="1"] .enterAnswerLabel,
+  html body .examPaper .q[data-scorable="1"] .typedAnswerBlock{
+    width:calc(100% - 30px) !important;
+    max-width:calc(100% - 30px) !important;
+    margin-left:30px !important;
+    margin-right:0 !important;
+  }
+  html body .examPaper .q[data-scorable="1"] .typedAnswerBlock .typedFields,
+  html body .examPaper .q[data-scorable="1"] .typedAnswerBlock .typedFieldItem,
+  html body .examPaper .q[data-scorable="1"] .typedAnswerBlock .typedAnswerRow{
+    min-width:0 !important;
+    max-width:100% !important;
+  }
+}
+</style>
+
+
+<style>
+/* CLEAN LEARNER QUESTIONS — the existing "Question X of Y" progress bar
+   supplies the question position. Hide visual numbering only: do not change
+   question data, IDs, order, assessment structure, or marking. */
+html body .examPaper .qMainHeading,
+html body .examPaper .qSectionNo,
+html body .examPaper .qNo,
+html body .examPaper .qNo.subQuestionNo{
+  display:none !important;
+}
+
+/* Recover space previously reserved for the number and keep marks right. */
+html body .examPaper .q[data-scorable="1"] .qHead,
+html body .examPaper .q[data-scorable="1"] .qTitle{
+  grid-template-columns:minmax(0,1fr) auto !important;
+  column-gap:10px !important;
+}
+html body .examPaper .q[data-scorable="1"] .qText,
+html body .examPaper .q[data-scorable="1"] .qNo.subQuestionNo + .qText{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  min-width:0 !important;
+  width:100% !important;
+}
+html body .examPaper .q[data-scorable="1"] .marksMeta{
+  grid-column:2 !important;
+  grid-row:1 !important;
+}
+html body .examPaper .qSectionStem,
+html body .examPaper .qSectionLeft,
+html body .examPaper .qSectionText{
+  min-width:0 !important;
+}
+html body .examPaper .qSectionStem{
+  margin-top:8px !important;
+}
+/* Keep the answer editor/keyboard and the approved Solution box intact. */
+</style>
+
+
+<style>
+/* Final numbering override: earlier highly-specific rules could keep labels
+   visible and superimpose a number over the first word. */
+html body .examPaper .q[data-scorable="1"] .qNo.subQuestionNo,
+html body .examPaper .q[data-scorable="1"] .qNo.wholeQuestionNo,
+html body .examPaper .q[data-scorable="1"] .qNo,
+html body .examPaper .qSectionStem .qSectionNo,
+html body .examPaper .qMainHeading{
+  display:none !important;
+}
+html body .examPaper .q[data-scorable="1"] .qNo.subQuestionNo + .qText,
+html body .examPaper .q[data-scorable="1"] .qTitle .qText,
+html body .examPaper .q[data-scorable="1"] .qText{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  margin-left:0 !important;
+  padding-left:0 !important;
 }
 </style>
