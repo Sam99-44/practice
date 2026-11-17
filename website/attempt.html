@@ -1,3 +1,7 @@
+
+
+
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -10757,43 +10761,9 @@ function inlineQuizLoadingHtml(){
   }
 
 function shouldUseMathLive(q){
-  const mode = String(q?.textAnswerMode || "exact")
-    .toLowerCase()
-    .trim();
-
-  const answer = String(
-    q?.correctText ??
-    q?.answer ??
-    q?.correctAnswer ??
-    ""
-  ).trim();
-
-  // Multi-field typed answers always use MathLive.
-  if (questionUsesSeveralTypedFields(q)) return true;
-
-  // Existing maths modes.
-  if (
-    mode === "expression" ||
-    mode === "number_tolerance" ||
-    mode === "unordered"
-  ) {
-    return true;
-  }
-
-  // Pure numbers: 5, -8, 3.14, 1,000, etc.
-  if (/^-?[\d\s,]+(\.\d+)?$/.test(answer)) {
-    return true;
-  }
-
-  // LaTeX / MathJax.
-  if (
-    /\\frac|\\sqrt|\\sin|\\cos|\\tan|\\log|\\ln|\\pi|\\theta|\\alpha|\\beta|\$|\^|_/.test(answer)
-  ) {
-    return true;
-  }
-
-  // Everything else uses a normal HTML textbox.
-  return false;
+  // This helper is called only by the typed-answer renderer (TYPE: text).
+  // Always use the existing mathematics keyboard, regardless of answer format.
+  return true;
 }
 
 function getTypedInputId(qIndex, key, fieldIndex, multiple){
