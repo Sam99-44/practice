@@ -38,10 +38,12 @@ window.addEventListener("load", () => {
 });
 
     window.MathJax = {
+      loader: { load: ['[tex]/color', '[tex]/cancel', '[tex]/bbox', '[tex]/enclose', '[tex]/extpfeil', '[tex]/mathtools', '[tex]/amscd', '[tex]/boldsymbol', '[tex]/textmacros', 'ui/safe'] },
       tex: {
         inlineMath: [["$", "$"], ["\\(", "\\)"]],
         displayMath: [["\\[", "\\]"]],
-        processEscapes: true
+        processEscapes: true,
+        packages: { "[+]": ['color', 'cancel', 'bbox', 'enclose', 'extpfeil', 'mathtools', 'amscd', 'boldsymbol', 'textmacros'] }
       },
       svg: { fontCache: "global" },
       options: { renderActions: { addMenu: [] } }
@@ -209,7 +211,7 @@ body.submitted-state .solutionBox{display:none!important;}
     .optText mjx-mfrac mjx-line,
     .hintText mjx-mfrac mjx-line,
     .noteBox mjx-mfrac mjx-line{
-      stroke-width:1.05 !important;
+      
     }
 
     .topbar{
@@ -1884,7 +1886,7 @@ mjx-container[jax="SVG"]{
   margin:0 3px !important;
   max-width:100% !important;
   text-align:left !important;
-  color:#000 !important;
+  
   opacity:1 !important;
   font-weight:900 !important;
 }
@@ -1892,14 +1894,14 @@ mjx-container[jax="SVG"]{
 /* MathJax SVG colours: respect each SVG element's own fill/stroke.
    Forcing every element black fills the hollow frame of \boxed{...}. */
 mjx-container[jax="SVG"] svg{
-  color:#000;
+  
 }
 
 /* FRACTION BARS */
 mjx-container[jax="SVG"] line,
 mjx-container[jax="SVG"] mjx-line{
-  stroke:#000 !important;
-  stroke-width:2 !important;
+  
+  
 }
 
 /* DISPLAY EQUATIONS */
@@ -1985,7 +1987,7 @@ mjx-container[jax="SVG"] mjx-line{
 /* keep fractions visible but not huge */
 mjx-container[jax="SVG"] line,
 mjx-container[jax="SVG"] mjx-line{
-  stroke-width:1.8 !important;
+  
 }
 
 
@@ -2210,7 +2212,7 @@ mjx-container[jax="SVG"] mjx-line{
   padding:0 !important;
   top:0 !important;
   vertical-align:middle !important;
-  color:#000 !important;
+  
   opacity:1 !important;
 }
 
@@ -5453,7 +5455,7 @@ mjx-container[jax="SVG"] svg{
 .paperMeta mjx-container[jax="SVG"]{
   font-size:1em !important;
   font-weight:400 !important;
-  color:#111827 !important;
+  
   opacity:1 !important;
 }
 
@@ -5464,7 +5466,7 @@ mjx-container[jax="SVG"] svg{
 .optText mjx-container[jax="SVG"] svg *,
 .hintText mjx-container[jax="SVG"] svg *,
 .paperMeta mjx-container[jax="SVG"] svg *{
-  stroke-width:0 !important;
+  
 }
 
 /* Keep the fraction bar visible without thickening variables */
@@ -5480,8 +5482,8 @@ mjx-container[jax="SVG"] svg{
 .optText mjx-container[jax="SVG"] mjx-line,
 .hintText mjx-container[jax="SVG"] mjx-line,
 .paperMeta mjx-container[jax="SVG"] mjx-line{
-  stroke:#111827 !important;
-  stroke-width:1.2 !important;
+  
+  
 }
 
 /* Display equations may be slightly larger, but not bold */
@@ -5643,7 +5645,7 @@ mjx-container[jax="SVG"] svg{
 .examPaper .noteBox mjx-container[jax="SVG"] svg *,
 .examPaper .qSectionText mjx-container[jax="SVG"] svg *,
 .examPaper .optText mjx-container[jax="SVG"] svg *{
-  stroke-width:0 !important;
+  
 }
 
 .examPaper .qText mjx-container[jax="SVG"] line,
@@ -5654,8 +5656,8 @@ mjx-container[jax="SVG"] svg{
 .examPaper .noteBox mjx-container[jax="SVG"] mjx-line,
 .examPaper .qSectionText mjx-container[jax="SVG"] mjx-line,
 .examPaper .optText mjx-container[jax="SVG"] mjx-line{
-  stroke:#111827 !important;
-  stroke-width:1.2 !important;
+  
+  
 }
 
 @media(max-width:640px){
@@ -5709,7 +5711,7 @@ mjx-container[jax="SVG"] svg{
 
 /* Strong, consistent mathematical ink */
 .examPaper mjx-container[jax="SVG"]{
-  color:#000000 !important;
+  
   opacity:1 !important;
   filter:none !important;
 }
@@ -5721,10 +5723,10 @@ mjx-container[jax="SVG"] svg{
 .examPaper mjx-container[jax="SVG"] svg polygon,
 .examPaper mjx-container[jax="SVG"] svg circle,
 .examPaper mjx-container[jax="SVG"] svg ellipse{
-  fill:#000000 !important;
-  color:#000000 !important;
+  
+  
   opacity:1 !important;
-  stroke:none !important;
+  
 }
 
 /* Preserve MathJax's SVG rectangle attributes.
@@ -5733,11 +5735,11 @@ mjx-container[jax="SVG"] svg{
 
 .examPaper mjx-container[jax="SVG"] svg line,
 .examPaper mjx-container[jax="SVG"] mjx-line{
-  fill:none !important;
-  stroke:#000000 !important;
-  stroke-width:1.35 !important;
+  
+  
+  
   opacity:1 !important;
-  shape-rendering:crispEdges !important;
+  
 }
 
 /* Keep ordinary variables normal rather than artificially bold */
@@ -9504,19 +9506,13 @@ html body .section .sectionHead #timeText{
     <div class="timeText" id="timeText" style="display:none;" aria-label="Time remaining">00:00:00</div>
 
     <div id="topQuizControls" class="topQuizControls" aria-label="Previous or next quiz">
-          <button id="previousQuizTopBtn" class="topQuizSquareBtn prev" type="button" disabled title="Previous quiz">
-            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">
-        <span>Previous quiz</span>
-          </button>
+          <button id="previousQuizTopBtn" class="topQuizSquareBtn prev" type="button" disabled title="Previous quiz"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1793801997/next_wiwir5.svg" alt=""><span>Previous quiz</span></button>
 
       <button id="startQuizBtn" class="topQuizSquareBtn primary hidden" type="button" title="Assessment starts automatically" aria-hidden="true" tabindex="-1">
         <span>Start Quiz</span>
           </button>
 
-          <button id="nextQuizTopBtn" class="topQuizSquareBtn next" type="button" disabled title="Next quiz">
-            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1781560537/next_idnmjv.svg" alt="">
-        <span>Next quiz</span>
-          </button>
+          <button id="nextQuizTopBtn" class="topQuizSquareBtn next" type="button" disabled title="Next quiz"><span>Next quiz</span><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1793801997/next_wiwir5.svg" alt=""></button>
         </div>
       </div>
     </div>
@@ -9527,7 +9523,7 @@ html body .section .sectionHead #timeText{
       </div>
 
       <div class="solutionReviewReturnBar" id="solutionReviewReturnBar">
-        <button type="button" id="solutionReviewBackToQuizzes" aria-label="Back to quizzes">← Back to quizzes</button>
+        <button type="button" id="solutionReviewBackToQuizzes" aria-label="Back to quizzes"><img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1793801997/next_wiwir5.svg" alt=""><span>Back to quizzes</span></button>
       </div>
 
       <div id="simpleQuestionProgress" class="simpleQuestionProgress hidden" aria-label="Question progress">
@@ -12241,7 +12237,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <button type="button" id="completedBackToQuizzesBtn"
             style="height:34px;padding:0 14px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;color:#111827;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
-            Back to quizzes
+            <img src="https://res.cloudinary.com/dopoxadlr/image/upload/v1793801997/next_wiwir5.svg" alt=""><span>Back to quizzes</span>
           </button>
           <button type="button" id="completedRetryBtn"
             style="height:34px;padding:0 14px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;color:#111827;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
@@ -14720,13 +14716,132 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
     return converted;
   }
 
+function poSharedTextMathRows(raw){
+  let source=String(raw||'').replace(/\r/g,'').trim();
+  if(!source)return null;
+  const open=source.match(/\\begin\s*\{array\}\s*\{l\}/);
+  const close=source.match(/\\end\s*\{array\}/);
+  if(!open||!close)return null;
+  const before=source.slice(0,open.index).replace(/\\(?:displaystyle|textstyle)\b|\\\(|\\\[|\s/g,'');
+  const after=source.slice(close.index+close[0].length).replace(/\\\)|\\\]|\s/g,'');
+  if(before||after)return null;
+  const core=source.slice(open.index+open[0].length,close.index);
+  if(/\\begin|\\end|&/.test(core))return null;
+  const entries=core.split(/\\\\(?:\s*\[[^\]]*\])?/).map(x=>x.trim()).filter(Boolean);
+  if(entries.length<2)return null;
+  const rows=[];
+  for(const entry of entries){
+    const text=poSharedPlainTextToken(entry);
+    if(text!==null){rows.push({kind:'text',value:text});continue;}
+    // Calculations remain MathJax (no raw HTML, no mixed nested arrays).
+    if(/\\(?:begin|end|text|mathrm|operatorname)/.test(entry))return null;
+    rows.push({kind:'math',value:entry});
+  }
+  return rows;
+}
+function poSharedPlainTextToken(token){
+  const t=String(token||'').trim();
+  const m=t.match(/^\\(?:text|textnormal)\s*\{([\s\S]*)\}$/);
+  if(!m||/(?<!\\)[{}]|\\(?![{}%$&_#,;:! ])/.test(m[1]))return null;
+  return m[1].replace(/\\([{}%$&_#])/g,'$1').replace(/\\[,;:! ]/g,' ').replace(/\s+/g,' ').trim();
+}
+function poSharedInlineTextTokens(raw){
+  const source=String(raw||'').trim();
+  if(!source)return null;
+  const pattern=/\\\(\s*(?:\\displaystyle\s*)?\\(?:text|textnormal)\s*\{([^{}]*)\}\s*\\\)/g;
+  let remaining=source, pieces=[], match;
+  while((match=pattern.exec(source))){
+    if(source.slice(pieces.length?pieces[pieces.length-1].end:0,match.index).trim())return null;
+    const text=poSharedPlainTextToken('\\text{'+match[1]+'}');
+    if(text===null)return null;
+    pieces.push({end:pattern.lastIndex,value:text});
+  }
+  if(!pieces.length||source.slice(pieces[pieces.length-1].end).trim())return null;
+  return pieces.map(p=>p.value).join(' ').replace(/\s+/g,' ').trim();
+}
+function poSharedResponsiveTextSource(raw){
+  const inline=poSharedInlineTextTokens(raw);
+  if(inline!==null)return inline;
+  const rows=poSharedTextMathRows(raw);
+  if(rows&&rows.every(r=>r.kind==='text'))return rows.map(r=>r.value).join('\n');
+  return String(raw||'');
+}
+function poSharedSolutionRowsHtml(raw,escapeFn){
+  const rows=poSharedTextMathRows(raw);
+  if(!rows||!rows.some(r=>r.kind==='text')||!rows.some(r=>r.kind==='math'))return null;
+  const escape=typeof escapeFn==='function'?escapeFn:(v=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'));
+  return '<div class="poSharedSolutionRows">'+rows.map(row=>row.kind==='text'
+    ? '<div class="poSharedSolutionExplanation">'+escape(row.value)+'</div>'
+    : '<div class="poSharedSolutionFormula">\\(\\displaystyle '+escape(row.value)+'\\)</div>'
+  ).join('')+'</div>';
+}
+
+
+    function poPreserveSolution(value){
+      const raw = String(value || '').replace(/\r\n?/g, '\n').trim();
+      if (/\\[A-Za-z]+|\\[([]|\$|\[\[/.test(raw)) return raw;
+      return raw;
+    }
+    // Separate prose and standalone TeX without altering braces, commands or arrays.
+    function poRenderTeachingSolution(value){
+      const raw = poPreserveSolution(value);
+      if (!raw) return '';
+      const shared = poSharedSolutionRowsHtml(raw, escapeHtml);
+      if (shared !== null) return shared;
+      const visual = /\[\[\s*([A-Z_]+)\b[^\]]*\]\][\s\S]*?\[\[\s*\/\s*\1\s*\]\]/gi;
+      function prose(text){
+        return escapeHtml(text).replace(/\*\*\*([^*\n]+)\*\*\*/g,'<strong><em>$1</em></strong>').replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
+      }
+      function rows(text){
+        const pattern = /\\\[[\s\S]*?\\\]|\$\$[\s\S]*?\$\$|\\\([\s\S]*?\\\)|(?<!\\)\$(?:\\.|[^$\n])*?\$/g;
+        let out='', line='', cursor=0, m;
+        function flush(){
+          const content=line.trim(); line='';
+          if(!content)return;
+          const heading=/^(?:<strong>(?:<em>)?)?(Given|Required|Formula|Reason|Substitution|Calculations|Final Answer)\s*:(?:<\/em>)?(?:<\/strong>)?/i.exec(content);
+          if(heading){
+            const rest=content.slice(heading[0].length).trim();
+            out+='<div class="poTeachingHeading"><strong>'+heading[1]+':</strong>'+(rest?' '+rest:'')+'</div>';
+          }else out+='<div class="poTeachingProse">'+content+'</div>';
+        }
+        function addText(value){
+          const parts=value.split('\n');
+          parts.forEach((part,i)=>{if(i)flush();line+=prose(part);});
+        }
+        while ((m=pattern.exec(text)) !== null){
+          const start=m.index,end=pattern.lastIndex,token=m[0];
+          const before=text.slice(text.lastIndexOf('\n',start-1)+1,start);
+          const next=text.indexOf('\n',end),after=text.slice(end,next<0?text.length:next);
+          const display=token.startsWith('\\[')||token.startsWith('$$')||(!before.trim()&&!after.trim());
+          addText(text.slice(cursor,start));
+          if(display){
+            flush();
+            const body=token.startsWith('\\')||token.startsWith('$$')?token.slice(2,-2):token.slice(1,-1);
+            out+='<div class="poTeachingFormula"><span class="poTeachingMathInner">\\(\\displaystyle '+escapeHtml(body)+'\\)</span></div>';
+          }else line+=escapeHtml(token);
+          cursor=end;
+        }
+        addText(text.slice(cursor));flush();return out;
+      }
+      let result='', cursor=0, match;
+      while((match=visual.exec(raw)) !== null){
+        result+=rows(raw.slice(cursor,match.index));
+        result+=/\[\[\s*(?:FREQUENCY_TABLE|BOX_PLOT|BOX_WHISKER|FUNCTION_GRAPH|TRIG_GRAPH|HISTOGRAM|PIE_CHART|PIE|RULE_DIAGRAM|RULE|PATTERN|GEOMETRY|TABLE|GRAPH|VENN|TREE|CIRCLE)\b/i.test(match[0])?renderStructuredNote(match[0]):rows(match[0]);
+        cursor=visual.lastIndex;
+      }
+      const compact = (result + rows(raw.slice(cursor)))
+        .replace(/(?:[ \t]*\n)+[ \t]*(?=<div class="poTeachingFormula">)/g, '')
+        .replace(/(<div class="poTeachingFormula">[\s\S]*?<\/div>)(?:[ \t]*\n)+[ \t]*/g, '$1');
+      return '<div class="poTeachingSolution">'+compact+'</div>';
+    }
+
   function renderReviewStyleSolutionBox(a){
     const solRaw = String(a?.solution || "");
     if (!solRaw.trim()){
       return "";
     }
 
-    const sol = escapeHtml(solRaw);
+    const sol = poRenderTeachingSolution(solRaw);
 
     return `
       <div class="solutionBox" role="note" aria-label="Solution">
@@ -15126,7 +15241,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       return "";
     }
 
-    const sol = escapeHtml(solRaw);
+    const sol = poRenderTeachingSolution(solRaw);
 
     return `
       <div class="solutionBox" role="note" aria-label="Solution">
@@ -15154,7 +15269,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
         return;
       }
 
-      const sol = escapeHtml(solRaw);
+      const sol = poRenderTeachingSolution(solRaw);
 
       solutionWrap.innerHTML = `
         <div class="solutionBox" role="note" aria-label="Solution">
@@ -20836,7 +20951,6 @@ function formatSolutionHtml(solutionText){
       ${assessmentCode ? `<div class="paperTitle"><b>Assessment Code:</b> ${escapeHtml(assessmentCode)}</div>` : ``}
       ${topic ? `<div class="paperTitle"><b>Topic:</b> ${escapeHtml(topic)}</div>` : ``}
       <div class="paperTitle paperAssessmentTitle"><b>Title:</b> ${escapeHtml(title)}</div>
-      ${practiceLabel ? `<div class="paperTitle"><b>Practice:</b> ${escapeHtml(practiceLabel)}</div>` : ``}
 
       <div class="paperMetaRow">
         <div class="paperMetaLeft"><b>Questions:</b> ${questionCount}</div>
@@ -22341,4 +22455,92 @@ html body .examPaper .desktopWorkingsPager{
   z-index:1102 !important;
   box-sizing:border-box !important;
 }
+</style>
+<style>
+/* Approved Practice Online solution palette and teaching rows. */
+html body .examPaper .solutionBox,html body .examPaper .solutionHolder .solutionBox{background:#f5f6f8!important;border:1px solid #e2e5ea!important;color:#111827!important;}
+html body .examPaper .solutionBox .solutionTop,html body .examPaper .solutionBox .solutionTitle{color:#1b1648!important;font-size:14px!important;font-weight:700!important;font-style:italic!important;text-decoration:none!important;}
+html body .examPaper .solutionBox .solutionBody{background:transparent!important;color:#111827!important;font:14px/1.5 "Times New Roman",Times,serif!important;white-space:normal!important;}
+.poTeachingSolution,.poSharedSolutionRows{display:block!important;white-space:normal!important;min-width:0;max-width:100%;color:#111827;font:14px/1.5 "Times New Roman",Times,serif!important;text-align:left!important;}
+.poTeachingHeading{font:inherit!important;margin:0 0 8px!important;color:inherit;}
+.poTeachingHeading > strong:first-child{font-size:12px!important;font-weight:700;font-style:italic;color:#1b1648!important;}
+/* Approved light-grey solution palette; preserve layout and TeX colours. */
+.poTeachingProse,.poSharedSolutionExplanation{font:inherit!important;white-space:normal!important;overflow-wrap:break-word;text-align:left!important;margin:0 0 8px!important;}
+.poTeachingFormula,.poSharedSolutionFormula{display:block!important;overflow-x:auto!important;overflow-y:hidden!important;white-space:nowrap!important;min-width:0;max-width:100%;padding:2px 0!important;margin:4px 0 14px!important;font:inherit!important;line-height:1.4!important;text-align:left!important;}
+.poTeachingMathInner{display:inline-block;white-space:nowrap;}
+.poTeachingSolution > :last-child,.poSharedSolutionRows > :last-child{margin-bottom:0!important;}
+html body .examPaper .solutionBox .solutionBody :is(.poTeachingFormula,.poSharedSolutionFormula) mjx-container[jax="SVG"]{display:inline-block!important;position:static!important;top:auto!important;transform:none!important;text-align:left!important;margin:0!important;padding:0!important;font-size:1em!important;max-width:none!important;width:auto!important;line-height:1!important;vertical-align:middle!important;}
+html body .examPaper .solutionBox .solutionBody :is(.poTeachingFormula,.poSharedSolutionFormula) mjx-container[jax="SVG"] > svg{display:inline-block!important;max-width:none!important;height:auto!important;margin:0!important;vertical-align:middle!important;}
+@media(max-width:640px){.poTeachingFormula,.poSharedSolutionFormula{margin-bottom:12px!important;}}
+</style>
+
+<style>
+/* Approved peach header and orange divider - solution box only. */
+html body .examPaper .solutionBox,
+html body .examPaper .solutionHolder .solutionBox,
+html body .examPaper .q[data-scorable="1"] .solutionBox,
+html body .examPaper .q[data-scorable="1"] .solutionHolder .solutionBox{
+  padding:0 !important;
+  border-radius:6px !important;
+  background:#F5F6F8 !important;
+  border:1px solid #E2E5EA !important;
+}
+html body .examPaper .solutionBox > :is(.solutionTop,.solutionTitle){
+  background:#F8C5AC !important;
+  border-bottom:3px solid #F47732 !important;
+  border-radius:5px 5px 0 0 !important;
+  color:#1B1648 !important;
+  margin:0 !important;
+  padding:5px 12px !important;
+  font-size:14px !important;
+  line-height:1.3 !important;
+  font-weight:700 !important;
+  font-style:normal !important;
+  text-decoration:none !important;
+  box-sizing:border-box !important;
+}
+html body .examPaper .solutionBox > .solutionBody{
+  padding:15px 20px 20px 27px !important;
+}
+@media(max-width:640px){
+  html body .examPaper .solutionBox > .solutionBody{
+    padding:14px 17px 16px !important;
+  }
+}
+</style>
+
+<style>
+/* Consistent quiz navigation icons; preserve existing button behaviour. */
+html body .sectionHead #topQuizControls :is(#previousQuizTopBtn,#nextQuizTopBtn),
+html body :is(#solutionReviewBackToQuizzes,#completedBackToQuizzesBtn){
+  display:inline-flex !important;align-items:center !important;justify-content:center !important;gap:7px !important;
+  font-family:Arial,Helvetica,sans-serif !important;font-weight:600 !important;white-space:nowrap !important;
+}
+html body .sectionHead #topQuizControls :is(#previousQuizTopBtn,#nextQuizTopBtn) img,
+html body :is(#solutionReviewBackToQuizzes,#completedBackToQuizzesBtn) img{
+  display:block !important;width:14px !important;height:14px !important;flex:0 0 14px !important;object-fit:contain !important;
+  filter:brightness(0) saturate(100%) invert(10%) sepia(36%) saturate(2272%) hue-rotate(232deg) brightness(88%) contrast(103%) !important;
+}
+html body :is(#previousQuizTopBtn,#solutionReviewBackToQuizzes,#completedBackToQuizzesBtn) img{transform:rotate(180deg) !important;}
+html body #nextQuizTopBtn img{transform:none !important;}
+html body .sectionHead #topQuizControls :is(#previousQuizTopBtn,#nextQuizTopBtn):not(:disabled){color:#1b1648 !important;}
+html body .sectionHead #topQuizControls :is(#previousQuizTopBtn,#nextQuizTopBtn):disabled{color:#94a3b8 !important;}
+html body .sectionHead #topQuizControls :is(#previousQuizTopBtn,#nextQuizTopBtn):disabled img{filter:grayscale(1) opacity(.45) !important;}
+html body :is(#solutionReviewBackToQuizzes,#completedBackToQuizzesBtn){color:#1b1648 !important;background:#f5f6f8 !important;border:1px solid #e2e5ea !important;border-radius:4px !important;}
+html body :is(#solutionReviewBackToQuizzes,#completedBackToQuizzesBtn):hover{background:#e9edf3 !important;}
+</style>
+
+<style>
+/* Exact supplied chevron asset: no substitute arrows. */
+html body .sectionHead #topQuizControls :is(#previousQuizTopBtn,#nextQuizTopBtn) img,
+html body :is(#solutionReviewBackToQuizzes,#completedBackToQuizzesBtn) img{
+  width:11px !important;height:11px !important;flex:0 0 11px !important;
+  object-fit:contain !important;filter:none !important;margin:0 !important;
+}
+html body .sectionHead #topQuizControls #previousQuizTopBtn img,
+html body :is(#solutionReviewBackToQuizzes,#completedBackToQuizzesBtn) img{transform:rotate(180deg) !important;}
+html body .sectionHead #topQuizControls #nextQuizTopBtn img{transform:none !important;}
+html body .sectionHead #topQuizControls :is(#previousQuizTopBtn,#nextQuizTopBtn):disabled img{filter:none !important;opacity:.35 !important;}
+html body :is(#previousQuizTopBtn,#nextQuizTopBtn,#solutionReviewBackToQuizzes,#completedBackToQuizzesBtn)::before,
+html body :is(#previousQuizTopBtn,#nextQuizTopBtn,#solutionReviewBackToQuizzes,#completedBackToQuizzesBtn)::after{content:none !important;display:none !important;}
 </style>
