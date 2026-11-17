@@ -1,21 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -9330,6 +9312,111 @@ html body .examPaper .q[data-scorable="1"] .qHead .marksMeta{
   display:none !important;
 }
 </style>
+
+<style>
+/* Production solution review: explicit exit, visible only after See solution. */
+.solutionReviewReturnBar{display:none;}
+body.solution-review-active .solutionReviewReturnBar{
+  display:flex;
+  justify-content:flex-start;
+  max-width:960px;
+  margin:4px auto 12px;
+}
+.solutionReviewReturnBar button{
+  min-height:34px;
+  padding:7px 12px;
+  border:1px solid #d9dee7;
+  border-radius:4px;
+  background:#f3f3f3;
+  color:#1b1648;
+  font:600 12px Arial,Helvetica,sans-serif;
+  cursor:pointer;
+}
+.solutionReviewReturnBar button:hover{background:#e9edf3;}
+</style>
+
+<style>
+/* One stable timer/navigation alignment for active quizzes, solution review,
+   and the completed assessment view. Match the assessment frame rather than
+   allowing individual screen content to change the toolbar's left edge. */
+html body .section .sectionHead{
+  width:min(100%, 820px) !important;
+  max-width:820px !important;
+  margin:14px auto 10px !important;
+  padding:0 !important;
+  display:flex !important;
+  justify-content:flex-start !important;
+  align-items:center !important;
+  box-sizing:border-box !important;
+}
+html body .section .sectionHead .metaRight{
+  width:100% !important;
+  min-width:0 !important;
+  margin:0 !important;
+  display:flex !important;
+  flex-flow:row nowrap !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:14px !important;
+}
+html body .section .sectionHead #timeText{
+  flex:0 0 140px !important;
+  width:140px !important;
+  min-width:140px !important;
+  margin:0 !important;
+  text-align:center !important;
+  justify-content:center !important;
+}
+html body .section .sectionHead #topQuizControls{
+  flex:0 1 auto !important;
+  margin:0 !important;
+  min-width:0 !important;
+  justify-content:flex-start !important;
+}
+@media(max-width:640px){
+  html body .section .sectionHead{
+    width:100% !important;
+    max-width:100% !important;
+  }
+  html body .section .sectionHead .metaRight{
+    gap:8px !important;
+  }
+  html body .section .sectionHead #timeText{
+    flex:0 0 112px !important;
+    width:112px !important;
+    min-width:112px !important;
+  }
+  html body .section .sectionHead #topQuizControls{
+    gap:8px !important;
+    flex-wrap:nowrap !important;
+  }
+}
+</style>
+
+<style>
+/* Compact countdown only; keep its aligned left edge and adjacent quiz controls. */
+html body .section .sectionHead #timeText{
+  flex:0 0 120px !important;
+  width:120px !important;
+  min-width:120px !important;
+  height:36px !important;
+  min-height:36px !important;
+  padding:0 8px !important;
+  font-size:12px !important;
+  justify-content:center !important;
+  text-align:center !important;
+}
+@media(max-width:640px){
+  html body .section .sectionHead #timeText{
+    flex-basis:102px !important;
+    width:102px !important;
+    min-width:102px !important;
+    height:34px !important;
+    min-height:34px !important;
+    font-size:11px !important;
+  }
+}
+</style>
 </head>
 
 <body class="assessment-loading">
@@ -9437,6 +9524,10 @@ html body .examPaper .q[data-scorable="1"] .qHead .marksMeta{
     <div class="sectionBody">
       <div id="statusArea" class="statusArea">
         <div id="statusBox" class="statusBox loading"></div>
+      </div>
+
+      <div class="solutionReviewReturnBar" id="solutionReviewReturnBar">
+        <button type="button" id="solutionReviewBackToQuizzes" aria-label="Back to quizzes">← Back to quizzes</button>
       </div>
 
       <div id="simpleQuestionProgress" class="simpleQuestionProgress hidden" aria-label="Question progress">
@@ -12171,6 +12262,14 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
       document.body.appendChild(panel);
     }
 
+    const solutionReturnBtn = document.getElementById("solutionReviewBackToQuizzes");
+    if (solutionReturnBtn && !solutionReturnBtn.dataset.bound) {
+      solutionReturnBtn.dataset.bound = "1";
+      solutionReturnBtn.addEventListener("click", () => {
+        window.location.href = "learning-content.html#quizzes";
+      });
+    }
+
     const backToQuizzesBtn = panel.querySelector("#completedBackToQuizzesBtn");
     backToQuizzesBtn?.addEventListener("click", () => {
       window.location.href = "learning-content.html#quizzes";
@@ -12186,6 +12285,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
 
     const seeSolutionBtn = panel.querySelector("#completedSeeSolutionBtn");
     seeSolutionBtn?.addEventListener("click", () => {
+      document.body.classList.add("solution-review-active");
       hideCompletedAssessmentState();
       setCompletedFollowupView(false);
 
@@ -12231,6 +12331,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   }
 
   function showCompletedAssessmentState(){
+    document.body.classList.remove("solution-review-active");
     const panel = ensureCompletedAssessmentState();
     if (!panel) return;
 
@@ -14534,6 +14635,7 @@ function getTypedInputId(qIndex, key, fieldIndex, multiple){
   }
 
   function startPracticeMode(){
+    document.body.classList.remove("solution-review-active");
     if (!quizData) return;
 
     const activeConflict = conflictingActiveQuiz();
@@ -20689,6 +20791,20 @@ function formatSolutionHtml(solutionText){
     }, 0);
   }
 
+  // Practice classification: display only; legacy difficulty remains untouched.
+  function attemptPracticeClassificationLabel(quiz){
+    const contentType = String(quiz?.contentType || quiz?.assessmentType || quiz?.type || "quiz")
+      .trim().toLowerCase().replace(/[\s_-]+/g, "");
+    if (contentType !== "quiz" && contentType !== "quizzes") return "";
+    const category = String(quiz?.practiceCategory || "").trim().toLowerCase();
+    if (category === "exam_style") return "Exam-Style Practice";
+    const level = String(quiz?.practiceLevel || "").trim().toLowerCase();
+    const resolved = level === "foundation" || level === "advanced"
+      ? level
+      : String(quiz?.difficulty || "").trim().toLowerCase() === "easy" ? "foundation" : "advanced";
+    return "Textbook Practice — " + (resolved === "foundation" ? "Foundation" : "Advanced");
+  }
+
   function buildPaperMeta(quiz){
   const topic = cleanSpaces(
     quiz?.topic ||
@@ -20707,6 +20823,8 @@ function formatSolutionHtml(solutionText){
     ""
   ).toUpperCase();
 
+  const practiceLabel = attemptPracticeClassificationLabel(quiz);
+
   const totalMarks = computeOverallTotalMarks(quiz?.questions || []);
 
   const questionCount = (quiz?.questions || []).filter(q => {
@@ -20718,6 +20836,7 @@ function formatSolutionHtml(solutionText){
       ${assessmentCode ? `<div class="paperTitle"><b>Assessment Code:</b> ${escapeHtml(assessmentCode)}</div>` : ``}
       ${topic ? `<div class="paperTitle"><b>Topic:</b> ${escapeHtml(topic)}</div>` : ``}
       <div class="paperTitle paperAssessmentTitle"><b>Title:</b> ${escapeHtml(title)}</div>
+      ${practiceLabel ? `<div class="paperTitle"><b>Practice:</b> ${escapeHtml(practiceLabel)}</div>` : ``}
 
       <div class="paperMetaRow">
         <div class="paperMetaLeft"><b>Questions:</b> ${questionCount}</div>
@@ -21464,6 +21583,179 @@ html body .examPaper .desktopWorkingsPager{
   document.addEventListener('DOMContentLoaded', fitPaper);
 })();
 </script>
+
+<style>
+/* Align the timer/navigation row to the currently displayed assessment frame
+   in active quiz, completed result, and solution-review states. */
+html body .section .sectionHead{
+  max-width:none !important;
+  box-sizing:border-box !important;
+  justify-content:flex-start !important;
+}
+html body .section .sectionHead .metaRight{
+  justify-content:flex-start !important;
+}
+</style>
+<script>
+/* Keep the timer on the same left edge as the visible paper/results panel.
+   The frame can be hidden, inserted, or resized during the assessment flow. */
+(function(){
+  let scheduled=false;
+  function alignToolbar(){
+    scheduled=false;
+    const head=document.querySelector('.section .sectionHead');
+    const completed=document.getElementById('completedAssessmentState');
+    const frame=document.getElementById('questionsWrap');
+    if(!head)return;
+    const isVisible=el=>el && getComputedStyle(el).display!=='none'
+      && el.getClientRects().length>0;
+    const anchor=isVisible(completed)?completed:isVisible(frame)?frame:null;
+    if(!anchor)return;
+    // Reset any previous positioning before measuring, so repeated updates
+    // do not accumulate horizontal offsets.
+    head.style.setProperty('margin-left','0px','important');
+    head.style.setProperty('margin-right','0px','important');
+    head.style.setProperty('transform','none','important');
+    const target=anchor.getBoundingClientRect();
+    const initial=head.getBoundingClientRect();
+    const shift=Math.round(target.left-initial.left);
+    head.style.setProperty('transform',`translateX(${shift}px)`,'important');
+    head.style.setProperty('width',Math.round(target.width)+'px','important');
+    head.style.setProperty('max-width','none','important');
+  }
+  function schedule(){
+    if(scheduled)return;
+    scheduled=true;
+    requestAnimationFrame(alignToolbar);
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    schedule();
+    const body=document.querySelector('.section .sectionBody');
+    if(body && window.MutationObserver){
+      const observer=new MutationObserver(schedule);
+      observer.observe(body,{childList:true,subtree:true,attributes:true,
+        attributeFilter:['style','class','hidden']});
+    }
+    if(window.ResizeObserver){
+      const ro=new ResizeObserver(schedule);
+      const frame=document.getElementById('questionsWrap');
+      if(frame)ro.observe(frame);
+      const panel=document.getElementById('completedAssessmentState');
+      if(panel)ro.observe(panel);
+    }
+  });
+  window.addEventListener('load',schedule);
+  window.addEventListener('resize',schedule,{passive:true});
+  document.addEventListener('click',()=>requestAnimationFrame(schedule),true);
+})();
+</script>
+
+<style>
+/* Close button attached to MathLive's actual keyboard plate, desktop and mobile. */
+#poMathKeyboardClose{
+  position:fixed !important;
+  top:0;
+  left:0;
+  width:34px;
+  height:30px;
+  padding:0;
+  border:1px solid #b6c2d1;
+  border-radius:5px;
+  background:#fff;
+  color:#102a56;
+  font:700 22px/1 Arial,Helvetica,sans-serif;
+  box-shadow:0 1px 3px rgba(15,23,42,.12);
+  z-index:2147483000 !important;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+#poMathKeyboardClose.po-visible{display:flex !important;}
+</style>
+<script>
+/* Position the close button using MathLive's documented keyboard boundingRect,
+   not an estimated phone keyboard height. Supports desktop and mobile. */
+(function(){
+  let button;
+  let observedKeyboard=null;
+  let recentlyFocusedField=null;
+
+  function keyboardBounds(){
+    const kb=window.mathVirtualKeyboard;
+    if(!kb || kb.visible!==true)return null;
+    // The keyboard host itself can have a zero-sized rectangle. MathLive
+    // exposes the actual visible plate via boundingRect.
+    const r=kb.boundingRect;
+    if(r && r.width>100 && r.height>80)return r;
+    const plate=kb.element?.querySelector?.('.MLK__plate') ||
+      document.querySelector('math-virtual-keyboard')?.shadowRoot?.querySelector?.('.MLK__plate');
+    const alternative=plate?.getBoundingClientRect?.();
+    return alternative?.width>100 && alternative?.height>80 ? alternative:null;
+  }
+
+  function sync(){
+    if(!button)return;
+    const r=keyboardBounds();
+    button.classList.toggle('po-visible',!!r);
+    if(!r)return;
+    // Keep the control INSIDE the actual keyboard's top-right corner.
+    const x=Math.round(Math.max(4,Math.min(window.innerWidth-38,r.right-40)));
+    const y=Math.round(Math.max(4,Math.min(window.innerHeight-34,r.top+5)));
+    button.style.left=x+'px';
+    button.style.top=y+'px';
+  }
+
+  function closeKeyboard(e){
+    e.preventDefault();
+    e.stopPropagation();
+    button.classList.remove('po-visible');
+    try{window.mathVirtualKeyboard?.hide?.();}catch(_){}
+    const focused=document.activeElement;
+    const field=focused?.matches?.('math-field.mathAnswerField') ? focused:recentlyFocusedField;
+    try{field?.blur?.();}catch(_){}
+    sync();
+  }
+
+  function bindKeyboardEvents(){
+    const kb=window.mathVirtualKeyboard;
+    if(!kb || kb===observedKeyboard)return;
+    observedKeyboard=kb;
+    kb.addEventListener?.('geometrychange',sync);
+    kb.addEventListener?.('virtual-keyboard-toggle',sync);
+    sync();
+  }
+
+  function init(){
+    if(document.getElementById('poMathKeyboardClose'))return;
+    button=document.createElement('button');
+    button.type='button';
+    button.id='poMathKeyboardClose';
+    button.textContent='×';
+    button.setAttribute('aria-label','Close maths keyboard');
+    button.title='Close keyboard';
+    button.addEventListener('pointerdown',e=>e.preventDefault());
+    button.addEventListener('click',closeKeyboard);
+    document.body.appendChild(button);
+    document.addEventListener('focusin',e=>{
+      const path=e.composedPath?.()||[];
+      const f=path.find(n=>n?.matches?.('math-field.mathAnswerField'));
+      if(f)recentlyFocusedField=f;
+      requestAnimationFrame(sync);
+    },true);
+    document.addEventListener('click',()=>requestAnimationFrame(sync),true);
+    window.addEventListener('resize',sync,{passive:true});
+    window.visualViewport?.addEventListener('resize',sync,{passive:true});
+    window.addEventListener('scroll',sync,{passive:true});
+    bindKeyboardEvents();
+    // MathLive may load asynchronously. Poll only for keyboard state/geometry.
+    setInterval(()=>{bindKeyboardEvents();sync();},180);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
+  else init();
+})();
+</script>
 </body>
 </html>
 
@@ -22000,5 +22292,53 @@ html body .examPaper .q[data-scorable="1"] .qText{
   grid-row:1 !important;
   margin-left:0 !important;
   padding-left:0 !important;
+}
+</style>
+<style>
+/* Extend the white footer surface over the green solution edges.
+   Preserve the existing positions of the navigation buttons. */
+html body #quizNavigation.show,
+html body #quizNavigation.show.solutionReviewNavigation,
+html body #quizNavigation.desktopSolutionNavigation.show{
+  left:calc(var(--po-frame-left, 0px) - 12px) !important;
+  width:calc(var(--po-frame-width, 100%) + 24px) !important;
+  padding-left:27px !important;
+  padding-right:27px !important;
+  background:#fff !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+@media(max-width:640px){
+  html body #quizNavigation.show,
+  html body #quizNavigation.show.solutionReviewNavigation,
+  html body #quizNavigation.desktopSolutionNavigation.show{
+    left:max(0px, calc(var(--po-frame-left, 0px) - 12px)) !important;
+    width:min(100vw, calc(var(--po-frame-width, 100%) + 24px)) !important;
+    padding-left:26px !important;
+    padding-right:26px !important;
+  }
+}
+</style>
+
+<style>
+/* Solution-review footer: full white viewport backdrop, retaining the
+   question-frame alignment of Back and Next. This removes green rounded
+   corners peeking around the footer without changing the Solution block. */
+html body .examPaper .desktopWorkingsPager{
+  position:fixed !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:0 !important;
+  transform:none !important;
+  width:100% !important;
+  max-width:none !important;
+  min-height:54px !important;
+  margin:0 !important;
+  padding:8px max(16px, calc(100vw - var(--po-frame-left, 0px) - var(--po-frame-width, 100vw) + 16px)) max(8px, env(safe-area-inset-bottom)) max(16px, calc(var(--po-frame-left, 0px) + 16px)) !important;
+  background:#fff !important;
+  border:0 !important;
+  box-shadow:none !important;
+  z-index:1102 !important;
+  box-sizing:border-box !important;
 }
 </style>
