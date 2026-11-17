@@ -1,9 +1,3 @@
-
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3679,6 +3673,125 @@ body > .draftManager{
     margin:3px 0 0;
   }
 }
+
+.qcard .prevQ .poResponsiveProse {display:block;white-space:normal;line-height:1.6;}
+.qcard .prevQ .poResponsiveIntroduction {display:block;white-space:normal;}
+.qcard .prevQ .poResponsivePrompt {display:block;margin-top:8px;white-space:normal;}
+/* ===== RESPONSIVE PRACTICE ONLINE ADMIN / LEARNER PREVIEWS =====
+   Identical natural-language paragraphs on wide and narrow screens.
+   Do not flatten MathJax structures or alter quiz-editor source values. */
+.attemptPaperPreview, #paperPreviewContent,
+.attemptPaperPreview .examPaper, #paperPreviewContent .examPaper,
+.attemptPaperPreview .qHead, #paperPreviewContent .qHead,
+.attemptPaperPreview .qTextPaper, #paperPreviewContent .qTextPaper,
+.previewBox, .qcard, .qcard .prevQ { min-width:0; max-width:100%; }
+.attemptPaperPreview .qTextPaper, #paperPreviewContent .qTextPaper {
+  white-space:normal!important;
+  overflow-wrap:break-word!important;
+  word-break:normal!important;
+  line-height:1.7!important;
+}
+.attemptPaperPreview .poResponsiveProse,
+#paperPreviewContent .poResponsiveProse {
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  white-space:normal!important;
+  overflow-wrap:break-word!important;
+  word-break:normal!important;
+  font:inherit!important;
+}
+.attemptPaperPreview .poResponsiveIntroduction,
+.attemptPaperPreview .poResponsivePrompt,
+#paperPreviewContent .poResponsiveIntroduction,
+#paperPreviewContent .poResponsivePrompt {
+  display:block!important;
+  white-space:normal!important;
+  margin:0!important;
+  padding:0!important;
+  font:inherit!important;
+  overflow-wrap:break-word!important;
+}
+.attemptPaperPreview .poResponsivePrompt,
+#paperPreviewContent .poResponsivePrompt { margin-top:10px!important; }
+/* Linked image diagrams scale down without overflow. */
+.attemptPaperPreview .qImageWrap,
+#paperPreviewContent .qImageWrap {max-width:100%!important;min-width:0!important;}
+.attemptPaperPreview .qImageWrap img,
+#paperPreviewContent .qImageWrap img {height:auto!important;max-width:100%!important;object-fit:contain!important;}
+/* Keep mathematical notation at full readable size; scroll only its own region. */
+.attemptPaperPreview .qTextPaper mjx-container[display="true"],
+#paperPreviewContent .qTextPaper mjx-container[display="true"] {max-width:100%;overflow-x:auto;overflow-y:hidden;}
+@media(max-width:700px){
+  .attemptPaperPreview, #paperPreviewContent {padding:10px!important;max-width:100%!important;}
+  .attemptPaperPreview .examPaper, #paperPreviewContent .examPaper {
+    width:100%!important;max-width:100%!important;
+    padding:14px 10px 20px!important;
+  }
+  .attemptPaperPreview .qTextPaper,
+  #paperPreviewContent .qTextPaper,
+  .attemptPaperPreview .optTextPaper,
+  #paperPreviewContent .optTextPaper {line-height:1.7!important;overflow-wrap:break-word!important;}
+  .attemptPaperPreview .qHead, #paperPreviewContent .qHead {
+    grid-template-columns:minmax(0,1fr) auto!important;
+    column-gap:8px!important;
+  }
+  .attemptPaperPreview .qTitle, #paperPreviewContent .qTitle {
+    grid-template-columns:40px minmax(0,1fr)!important;
+    column-gap:8px!important;
+  }
+  .attemptPaperPreview .qNo, #paperPreviewContent .qNo {width:40px!important;min-width:40px!important;}
+  .attemptPaperPreview .optPaper, #paperPreviewContent .optPaper {
+    padding-left:48px!important;
+    grid-template-columns:18px minmax(0,1fr)!important;
+  }
+  .attemptPaperPreview .textAnswerPaper, #paperPreviewContent .textAnswerPaper {
+    width:calc(100% - 48px)!important;max-width:calc(100% - 48px)!important;
+    min-width:0!important;margin-left:48px!important;
+  }
+  .attemptPaperPreview .qImageWrap, #paperPreviewContent .qImageWrap {margin-left:0!important;}
+  .attemptPaperPreview .qimg, #paperPreviewContent .qimg {margin-left:auto!important;margin-right:auto!important;max-width:100%!important;}
+  /* Native TXT graphs stay readable and swipe independently of the page. */
+  .attemptPaperPreview .noteGraphBlock .generatedNoteGraphWrap,
+  #paperPreviewContent .noteGraphBlock .generatedNoteGraphWrap,
+  .attemptPaperPreview .notePatternBlock .generatedNoteGraphWrap,
+  #paperPreviewContent .notePatternBlock .generatedNoteGraphWrap,
+  .attemptPaperPreview .noteRuleBlock .generatedNoteGraphWrap,
+  #paperPreviewContent .noteRuleBlock .generatedNoteGraphWrap {
+    display:block!important;
+    max-width:100%!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    -webkit-overflow-scrolling:touch;
+  }
+  .attemptPaperPreview .noteGraphBlock .generatedNoteGraph,
+  #paperPreviewContent .noteGraphBlock .generatedNoteGraph,
+  .attemptPaperPreview .notePatternBlock .generatedNoteGraph,
+  #paperPreviewContent .notePatternBlock .generatedNoteGraph,
+  .attemptPaperPreview .noteRuleBlock .generatedNoteGraph,
+  #paperPreviewContent .noteRuleBlock .generatedNoteGraph {
+    width: max(100%, 540px)!important;
+    min-width:540px!important;
+    max-width:none!important;
+    height:auto!important;
+  }
+}
+
+
+/* Responsive MathJax prose and worked solutions: no compressed math arrays. */
+.poResponsiveProse,.poResponsiveIntroduction,.poResponsivePrompt {min-width:0;max-width:100%;overflow-wrap:normal;word-break:normal;white-space:normal;}
+.poSharedSolutionRows {display:grid;gap:10px;min-width:0;max-width:100%;font-size:14px;line-height:1.6;text-align:left;}
+.poSharedSolutionExplanation {display:block;min-width:0;max-width:100%;white-space:normal;overflow-wrap:break-word;line-height:1.65;font-family:"Times New Roman",Times,serif;font-size:14px;text-align:left;}
+.poSharedSolutionFormula {display:block;min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;white-space:nowrap;font-family:"Times New Roman",Times,serif;font-size:16px;line-height:1.55;text-align:left;padding:2px 0 4px;}
+.poSharedSolutionFormula mjx-container {display:inline-block!important;font-size:1em!important;max-width:none!important;margin:0!important;vertical-align:middle!important;}
+.poSharedSolutionFormula mjx-container svg {max-width:none!important;height:auto!important;}
+@media(max-width:700px){
+ .poSharedSolutionRows{gap:9px;}
+ .poSharedSolutionFormula{font-size:16px;}
+ .poSharedSolutionExplanation{font-size:14px;}
+}
+
 </style>
 
 <style>
@@ -4552,6 +4665,50 @@ html body .previewBox.prevNote.paperBox .noteSectionBody {
   word-break:normal !important;
 }
 </style>
+
+<style>
+/* Editor controls apply only to NOTE cards containing native graph blocks. */
+
+/* Select, rename and precisely position graph labels. */
+.poGraphEditCanvas .poMovableGraphLabel{pointer-events:all;user-select:none;}
+.poGraphEditCanvas .poMovableGraphLabel.poGraphSelected{stroke:#fde68a!important;stroke-width:7px!important;stroke-linejoin:round;}
+.poGraphSelectedLabel[hidden]{display:none!important;}
+.poGraphSelectedLabel{margin-top:12px;padding:12px;border:1px solid #d4bd60;border-radius:8px;background:#fffdf5;font:12px/1.5 Arial,Helvetica,sans-serif;}
+.poGraphSelectionTitle{font-weight:800;color:#1b1648;margin-bottom:8px;}
+.poGraphLabelKind{color:#64748b;font-weight:400;margin-left:8px;}
+.poGraphSelectionFields{display:grid;grid-template-columns:minmax(100px,2fr) minmax(90px,1fr) minmax(90px,1fr);gap:9px;align-items:end;}
+.poGraphSelectionFields label{display:block;color:#1b1648;font:700 12px Arial,Helvetica,sans-serif;}
+.poGraphSelectionFields input{display:block;width:100%!important;min-height:36px!important;padding:6px 8px!important;margin-top:4px!important;background:#fff!important;}
+.poGraphSelectionActions{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;}
+.poGraphSelectionActions button{min-width:40px!important;min-height:36px!important;padding:6px 10px!important;background:#fff!important;border:1px solid #cbd5e1!important;color:#1b1648!important;}
+.poGraphSelectionActions .poGraphSaveLabel{background:#1b1648!important;color:#fff!important;border-color:#1b1648!important;margin-left:auto;}
+.poGraphSelectionActions .poGraphRemoveLabel{background:#fff!important;color:#b91c1c!important;border:1px solid #fca5a5!important;}
+@media(max-width:620px){.poGraphSelectionFields{grid-template-columns:1fr 1fr;}.poGraphSelectionFields label:first-child{grid-column:1/-1;}}
+
+.poGraphEditorSlot{margin:12px 0 4px;padding:12px;border:1px solid #dfe5ec;border-radius:8px;background:#fff;}
+.poGraphEditorSlot .poGraphEditToggle{background:#1b1648!important;color:#fff!important;border:1px solid #1b1648!important;}
+.poGraphEditor[hidden]{display:none!important;}
+.poGraphEditor{margin-top:10px;}
+.poGraphEditToolbar{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;}
+.poGraphEditToolbar button{background:#fff!important;color:#1b1648!important;border:1px solid #cbd5e1!important;min-width:42px!important;}
+.poGraphEditorHelp{font-size:12px;line-height:1.5;color:#475569;}
+.poGraphEditCanvas{width:100%;overflow:auto;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px;touch-action:pan-y;}
+.poGraphEditCanvas .noteVisualBlock{margin:0!important;}
+.poGraphEditCanvas svg.generatedNoteGraph{width:100%;height:auto;display:block;max-width:100%;}
+.poGraphEditCanvas .poMovableGraphLabel{cursor:grab!important;touch-action:none;paint-order:normal;stroke:none!important;stroke-width:0!important;}
+.poGraphEditCanvas .poMovableGraphLabel:active{cursor:grabbing!important;}
+
+/* Equation editing and independently draggable equation annotations. */
+.poGraphEquationTools{margin:12px 0;padding:12px;border:1px solid #dfe5ec;border-radius:8px;background:#f8fafc;}
+.poGraphEquationTools h4{font:800 13px Arial,Helvetica,sans-serif;color:#1b1648;margin:0 0 8px;}
+.poGraphEquationTools label{display:block;font:700 12px Arial,Helvetica,sans-serif;color:#1b1648;}
+.poGraphEquationTools input,.poGraphEquationTools select{width:100%!important;min-height:36px!important;margin:5px 0 8px!important;padding:7px 9px!important;background:#fff!important;font:13px Arial,Helvetica,sans-serif!important;}
+.poGraphEquationTools .poGraphEquationActions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+.poGraphEquationTools button{background:#fff!important;color:#1b1648!important;border:1px solid #cbd5e1!important;min-height:36px!important;}
+.poGraphEquationTools button.poGraphSaveSeries{background:#1b1648!important;border-color:#1b1648!important;color:#fff!important;}
+.poGraphEquationTools .poGraphEquationMessage{font-size:12px;color:#475569;margin-top:7px;min-height:16px;}
+.poGraphEditCanvas .poMovableGraphLabel.poGraphSelected{stroke:#fde68a!important;stroke-width:4px!important;stroke-linejoin:round;paint-order:stroke!important;}
+</style>
 </head>
 
 <body>
@@ -4612,6 +4769,16 @@ html body .previewBox.prevNote.paperBox .noteSectionBody {
             <span>Batch Upload</span>
           </button>
         </div>
+      </div>
+    </div>
+
+    <div class="workflowUploadOption" id="pasteTxtWorkflow" style="margin-top:14px;padding:14px;border:1px solid #dfe5ec;border-radius:8px;background:#fff;">
+      <div class="workflowUploadLabel">Alternative method — Paste assessment TXT</div>
+      <p class="muted tiny" style="margin:7px 0 10px;">Copy the complete assessment text, including its metadata and questions, and paste it here. No local file is needed.</p>
+      <textarea id="pasteAssessmentTxt" rows="9" spellcheck="false" placeholder="TITLE: ...&#10;GRADE: ...&#10;SUBJECT: ...&#10;CONTENT_TYPE: Quiz&#10;...&#10;QUESTION: ..." aria-label="Paste complete assessment TXT" style="width:100%;min-height:190px;font-family:Consolas,monospace;font-size:13px;white-space:pre-wrap;"></textarea>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center;">
+        <button class="smallbtn uploadActionBtn" id="pasteTxtLoadBtn" type="button">Paste &amp; Auto Fill</button>
+        <button class="smallbtn" id="pasteTxtClearBtn" type="button">Clear pasted text</button>
       </div>
     </div>
 
@@ -4753,6 +4920,23 @@ html body .previewBox.prevNote.paperBox .noteSectionBody {
       </div>
 
       <div>
+        <label for="practiceCategory">Practice Category</label>
+        <select id="practiceCategory">
+          <option value="">Automatic (existing difficulty)</option>
+          <option value="textbook">Textbook Practice</option>
+          <option value="exam_style">Exam-Style Practice</option>
+        </select>
+        <div id="practiceCategoryHelp" class="tiny muted" aria-live="polite"></div>
+      </div>
+      <div id="practiceLevelWrap">
+        <label for="practiceLevel">Practice Level</label>
+        <select id="practiceLevel">
+          <option value="">Automatic (existing difficulty)</option>
+          <option value="foundation">Foundation</option>
+          <option value="advanced">Advanced</option>
+        </select>
+      </div>
+      <div>
         <label>Paper</label>
         <select id="paper">
           <option value="paper1" selected>Paper 1</option>
@@ -4850,6 +5034,8 @@ html body .previewBox.prevNote.paperBox .noteSectionBody {
       <button class="btn btn2" id="saveDefaultsBtn" type="button">Save Metadata Defaults</button>
       <button class="btn btn2" id="applyDefaultsBtn" type="button">Apply Defaults</button>
       <button class="btn btn2" id="cloneQuizBtn" type="button">Clone as New Draft</button>
+      <button class="btn btn2" id="copyCompleteQuizTxtBtn" type="button" title="Copy the whole quiz, including image links and native diagram schema">Copy Quiz TXT</button>
+      <button class="btn btn2" id="downloadCompleteQuizTxtBtn" type="button" title="Download a reusable TXT file with image URLs and diagrams">Download Quiz TXT</button>
     </div>
   </div>
 
@@ -4910,6 +5096,32 @@ html body .previewBox.prevNote.paperBox .noteSectionBody {
     const contentTypeHelp = document.getElementById("contentTypeHelp");
     const accessLevelEl = document.getElementById("accessLevel");
     const difficultyEl = document.getElementById("difficulty");
+    const practiceCategoryEl = document.getElementById("practiceCategory");
+    const practiceLevelEl = document.getElementById("practiceLevel");
+    function practiceFields(category, level, difficulty) {
+      const c = String(category ?? "").trim().toLowerCase();
+      const l = String(level ?? "").trim().toLowerCase();
+      if (c && !["textbook", "exam_style"].includes(c)) throw new Error("Invalid PRACTICE_CATEGORY: " + c);
+      if (l && !["foundation", "advanced"].includes(l)) throw new Error("Invalid PRACTICE_LEVEL: " + l);
+      if (c === "exam_style") return { practiceCategory: c, practiceLevel: null };
+      if (!c && !l) return {};
+      return { practiceCategory: "textbook", practiceLevel: l || (normalizeDifficulty(difficulty) === "easy" ? "foundation" : "advanced") };
+    }
+    function syncPracticeFields() {
+      const exam = practiceCategoryEl.value === "exam_style";
+      practiceLevelEl.disabled = exam;
+      if (exam) practiceLevelEl.value = "";
+      document.getElementById("practiceLevelWrap").hidden = exam;
+      const effective = exam ? "Exam-Style Practice" : "Textbook Practice — " + ((practiceLevelEl.value || (normalizeDifficulty(difficultyEl.value) === "easy" ? "foundation" : "advanced")) === "foundation" ? "Foundation" : "Advanced");
+      document.getElementById("practiceCategoryHelp").textContent = effective;
+    }
+    function setPracticeFields(category, level) {
+      practiceCategoryEl.value = category || "";
+      practiceLevelEl.value = level || "";
+      syncPracticeFields();
+    }
+    [practiceCategoryEl, practiceLevelEl, difficultyEl].forEach(el => el.addEventListener("change", syncPracticeFields));
+    syncPracticeFields();
     const paperEl = document.getElementById("paper");
 
     const publishModeEl = document.getElementById("publishMode");
@@ -5784,6 +5996,10 @@ function escapeHtml(str){
         .trim();
 
       if (!solRaw) return "";
+      const sharedRows = poSharedSolutionRowsHtml(solRaw, escapeHtml);
+      if(sharedRows !== null){
+        return `<div class="solutionBox" role="note" aria-label="Solution"><div class="solutionTop">Solution:</div><div class="solutionBody">${sharedRows}</div></div>`;
+      }
 
       /*
         REVIEW.HTML MATCH:
@@ -5832,6 +6048,117 @@ function escapeHtml(str){
       if (m) return { kind: "question", label: m[1], body: cleanSpaces(m[2] || "") };
       return { kind: "plain", label: "", body: text };
     }
+
+/* ===== PRACTICE ONLINE: SHARED RESPONSIVE MATHJAX TEXT ADAPTER =====
+   Only unwraps plain language in \text{...}. Equations stay in MathJax.
+   Original question/solution source is never changed. */
+function poSharedTextMathRows(raw){
+  let source=String(raw||'').replace(/\r/g,'').trim();
+  if(!source)return null;
+  const open=source.match(/\\begin\s*\{array\}\s*\{l\}/);
+  const close=source.match(/\\end\s*\{array\}/);
+  if(!open||!close)return null;
+  const before=source.slice(0,open.index).replace(/\\(?:displaystyle|textstyle)\b|\\\(|\\\[|\s/g,'');
+  const after=source.slice(close.index+close[0].length).replace(/\\\)|\\\]|\s/g,'');
+  if(before||after)return null;
+  const core=source.slice(open.index+open[0].length,close.index);
+  if(/\\begin|\\end|&/.test(core))return null;
+  const entries=core.split(/\\\\(?:\s*\[[^\]]*\])?/).map(x=>x.trim()).filter(Boolean);
+  if(entries.length<2)return null;
+  const rows=[];
+  for(const entry of entries){
+    const text=poSharedPlainTextToken(entry);
+    if(text!==null){rows.push({kind:'text',value:text});continue;}
+    // Calculations remain MathJax (no raw HTML, no mixed nested arrays).
+    if(/\\(?:begin|end|text|mathrm|operatorname)/.test(entry))return null;
+    rows.push({kind:'math',value:entry});
+  }
+  return rows;
+}
+function poSharedPlainTextToken(token){
+  const t=String(token||'').trim();
+  const m=t.match(/^\\(?:text|textnormal)\s*\{([\s\S]*)\}$/);
+  if(!m||/(?<!\\)[{}]|\\(?![{}%$&_#,;:! ])/.test(m[1]))return null;
+  return m[1].replace(/\\([{}%$&_#])/g,'$1').replace(/\\[,;:! ]/g,' ').replace(/\s+/g,' ').trim();
+}
+function poSharedInlineTextTokens(raw){
+  const source=String(raw||'').trim();
+  if(!source)return null;
+  const pattern=/\\\(\s*(?:\\displaystyle\s*)?\\(?:text|textnormal)\s*\{([^{}]*)\}\s*\\\)/g;
+  let remaining=source, pieces=[], match;
+  while((match=pattern.exec(source))){
+    if(source.slice(pieces.length?pieces[pieces.length-1].end:0,match.index).trim())return null;
+    const text=poSharedPlainTextToken('\\text{'+match[1]+'}');
+    if(text===null)return null;
+    pieces.push({end:pattern.lastIndex,value:text});
+  }
+  if(!pieces.length||source.slice(pieces[pieces.length-1].end).trim())return null;
+  return pieces.map(p=>p.value).join(' ').replace(/\s+/g,' ').trim();
+}
+function poSharedResponsiveTextSource(raw){
+  const inline=poSharedInlineTextTokens(raw);
+  if(inline!==null)return inline;
+  const rows=poSharedTextMathRows(raw);
+  if(rows&&rows.every(r=>r.kind==='text'))return rows.map(r=>r.value).join('\n');
+  return String(raw||'');
+}
+function poSharedSolutionRowsHtml(raw,escapeFn){
+  const rows=poSharedTextMathRows(raw);
+  if(!rows||!rows.some(r=>r.kind==='text')||!rows.some(r=>r.kind==='math'))return null;
+  const escape=typeof escapeFn==='function'?escapeFn:(v=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'));
+  return '<div class="poSharedSolutionRows">'+rows.map(row=>row.kind==='text'
+    ? '<div class="poSharedSolutionExplanation">'+escape(row.value)+'</div>'
+    : '<div class="poSharedSolutionFormula">\\(\\displaystyle '+escape(row.value)+'\\)</div>'
+  ).join('')+'</div>';
+}
+
+  function poAdminResponsiveProseRows(rawText){
+    let source=poSharedResponsiveTextSource(rawText).replace(/\r/g,'').trim();
+    if(!source) return null;
+    source=source.replace(/^\s*(?:QUESTION\s+\d+|\d+(?:\.\d+)*\.?)\s+(?=[A-Za-z\\])/i,'').trim();
+    let lines=[];
+    const arrayMarker=source.match(/\\begin\s*\{array\}\s*\{[lcr]+\}/);
+    if(arrayMarker){
+      const endMarker=source.match(/\\end\s*\{array\}/);
+      if(!endMarker) return null;
+      const prefix=source.slice(0,arrayMarker.index).replace(/\\(?:displaystyle|textstyle)\b|\\\(|\\\[|\s/g,'');
+      const suffix=source.slice(endMarker.index+endMarker[0].length).replace(/\\\)|\\\]|\s/g,'');
+      if(prefix || suffix) return null;
+      const content=source.slice(arrayMarker.index+arrayMarker[0].length,endMarker.index);
+      if(/\\begin|\\end|\&|\\(?:frac|dfrac|sqrt|times|div|cdot|left|right)|[=<>≤≥±×÷√^]/.test(content))return null;
+      const entries=content.split(/\\\\(?:\s*\[[^\]]*\])?/).map(x=>x.trim()).filter(Boolean);
+      if(entries.length < 2) return null;
+      for(let entry of entries){
+        // Entire rows may be wrapped in either text or textnormal; never
+        // flatten mixed mathematical rows, even if the first row is prose.
+        const m=entry.match(/^\\(?:text|textnormal|mathrm)\s*\{([\s\S]*)\}$/);
+        if(!m || /(?<!\\)[{}]|\\(?![{}%$&_#,;:! ])/.test(m[1]))return null;
+        lines.push(m[1].replace(/\\([{}%$&_#])/g,'$1').replace(/\\[,;:! ]/g,' ').replace(/\s+/g,' ').trim());
+      }
+    }else{
+      if(/\\(?:begin|end|frac|dfrac|sqrt|angle|triangle|overline|left|right|text|displaystyle)|\\\(|\\\[|\$|<[^>]+>|\[\[|[=<>≤≥±×÷√^]|^\s*[•*\-]\s/m.test(source))return null;
+      lines=source.split(/\n|\\n/).map(x=>x.trim()).filter(Boolean);
+    }
+    if(!lines.length) return null;
+    // Split on a sentence ending followed by a space, not on decimals.
+    // Intentional blank paragraphs, list markers and maths are never joined.
+    const sentences=[];
+    for(const line of lines){
+      if(!line || /[=<>≤≥±×÷√^]|\\|^\s*(?:\d+[.)]|[•*-])\s+|\b(?:sin|cos|tan|log)\s*\(/i.test(line))return null;
+      for(const part of line.split(/(?<=[.!?])\s+(?=[A-Z])/)){
+        const cleaned=part.trim();
+        if(cleaned)sentences.push(cleaned);
+      }
+    }
+    if(sentences.length<2 || sentences.some(x=>x.length>480))return null;
+    const last=sentences[sentences.length-1];
+    if(!/\?$/.test(last))return null;
+    const intro=sentences.slice(0,-1);
+    if(!intro.every(x=>/[.!]$/.test(x)))return null;
+    if(intro.some(x=>/^\d+[.)]\s|^\s*(?:step|answer|solution|given)\s*:/i.test(x)))return null;
+    return {introduction:intro.join(' '),prompt:last};
+  }
+
     function renderQuestionHeadPreview(rawText, points, fallbackNo){
       const fullText = cleanMultiline(
         String(rawText || "")
@@ -5870,7 +6197,13 @@ function escapeHtml(str){
       });
       flushBullets();
 
-      return `<div class="qHead"><div class="qTitle"><span class="qNo">${escapeHtml(label)}</span><span class="qTextPaper"><span>${renderMixedMathPreview(body || firstLine)}</span>${continuationHtml ? `<span class="questionContinuationPaper">${continuationHtml}</span>` : ""}</span></div><div class="marksMetaPaper"><div class="marksBox">${String(points).trim()}</div></div></div>`;
+      // The same flow logic as Attempt Assessment. Only natural-language prose
+      // is joined; mathematical rows, numbered lists and structured arrays stay intact.
+      const prose = poAdminResponsiveProseRows(rawText);
+      const questionContent = prose
+        ? `<span class="poResponsiveProse"><span class="poResponsiveIntroduction">${escapeHtml(prose.introduction)}</span><span class="poResponsivePrompt">${escapeHtml(prose.prompt)}</span></span>`
+        : `<span>${renderMixedMathPreview(body || firstLine)}</span>${continuationHtml ? `<span class="questionContinuationPaper">${continuationHtml}</span>` : ""}`;
+      return `<div class="qHead"><div class="qTitle"><span class="qNo">${escapeHtml(label)}</span><span class="qTextPaper">${questionContent}</span></div><div class="marksMetaPaper"><div class="marksBox">${String(points).trim()}</div></div></div>`;
     }
     function renderStructuredNoteTextPreview(rawText){
       const raw = String(rawText || "").replace(/\r/g, "").trim();
@@ -6464,7 +6797,7 @@ function escapeHtml(str){
             '<text x="' + x.toFixed(2) +
             '" y="' + (isAngularLineGraph ? angularTickLabelY.toFixed(2) : (margin.top + plotHeight + 22)) +
             '" text-anchor="middle" font-size="11" fill="#475569"' +
-            (isAngularLineGraph ? ' style="paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round"' : '') + '>' +
+            (isAngularLineGraph ? ' style="paint-order:normal;stroke:none"' : '') + '>' +
             escapeHtml(formatGraphDisplayNumber(value) + (isAngularLineGraph ? "°" : "")) +
             "</text>"
           );
@@ -6584,7 +6917,7 @@ function escapeHtml(str){
         '<text x="' + (isAngularLineGraph ? (margin.left + plotWidth + 12) : (margin.left + plotWidth / 2)).toFixed(2) +
         '" y="' + (isAngularLineGraph ? (horizontalAxisY - 7).toFixed(2) : (height - 14)) +
         '" text-anchor="middle" font-size="' + (isAngularLineGraph ? 13 : 12) + '" font-weight="400" fill="#111827"' +
-        (isAngularLineGraph ? ' font-family="Times New Roman, Times, serif" font-style="italic" style="paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round"' : '') + '>' +
+        (isAngularLineGraph ? ' font-family="Times New Roman, Times, serif" font-style="italic" style="paint-order:normal;stroke:none"' : '') + '>' +
         escapeHtml(isAngularLineGraph ? "x" : xLabel) +
         "</text>"
       );
@@ -6592,7 +6925,7 @@ function escapeHtml(str){
       if (isAngularLineGraph) {
         svgParts.push(
           '<text x="' + (verticalAxisX + 10).toFixed(2) + '" y="' + (margin.top - 7) +
-          '" text-anchor="middle" font-size="13" font-weight="400" fill="#111827" font-family="Times New Roman, Times, serif" font-style="italic" style="paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round">y</text>'
+          '" text-anchor="middle" font-size="13" font-weight="400" fill="#111827" font-family="Times New Roman, Times, serif" font-style="italic" style="paint-order:normal;stroke:none">y</text>'
         );
       } else {
         svgParts.push(
@@ -7403,7 +7736,7 @@ function escapeHtml(str){
           svg.push('<line x1="' + x.toFixed(2) + '" y1="' + margin.top + '" x2="' + x.toFixed(2) + '" y2="' + (margin.top + plotHeight) + '" stroke="' + (minimalTheme ? "#d1d5db" : "#e2e8f0") + '" stroke-width=".75" vector-effect="non-scaling-stroke" />');
         }
         if (showTicks) {
-          svg.push('<text x="' + x.toFixed(2) + '" y="' + (isAngularGraph ? angularTickLabelY.toFixed(2) : (margin.top + plotHeight + 19)) + '" text-anchor="middle" font-size="9.2" fill="#475569"' + (isAngularGraph ? ' style="paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round"' : '') + '>' + escapeHtml(formatNoteGraphNumber(xValue) + (isAngularGraph ? "°" : "")) + '</text>');
+          svg.push('<text x="' + x.toFixed(2) + '" y="' + (isAngularGraph ? angularTickLabelY.toFixed(2) : (margin.top + plotHeight + 19)) + '" text-anchor="middle" font-size="9.2" fill="#475569"' + (isAngularGraph ? ' style="paint-order:normal;stroke:none"' : '') + '>' + escapeHtml(formatNoteGraphNumber(xValue) + (isAngularGraph ? "°" : "")) + '</text>');
         }
       });
 
@@ -7429,9 +7762,9 @@ function escapeHtml(str){
         svg.push('<line x1="' + x1.toFixed(2) + '" y1="' + y1.toFixed(2) + '" x2="' + x2.toFixed(2) + '" y2="' + y2.toFixed(2) + '" stroke="' + escapeHtml(minimalTheme ? "#4b5563" : (guide.colour || "#64748b")) + '" stroke-width="' + Number(guide.width || (minimalTheme ? 1 : 1.2)) + '" vector-effect="non-scaling-stroke" stroke-dasharray="' + escapeHtml(guide.dash || "6 5") + '" />');
         if (guide.label) {
           const isVertical = Math.abs(guide.x1 - guide.x2) < 1e-12;
-          const labelX = isVertical ? x2 + 9 : x2 - 8;
-          const labelY = isVertical ? (y1 + y2) / 2 - 7 : y2 - 8;
-          svg.push('<text x="' + labelX.toFixed(2) + '" y="' + labelY.toFixed(2) + '" text-anchor="' + (isVertical ? "start" : "end") + '" font-size="10" font-weight="400" fill="#475569" style="paint-order:stroke;stroke:#fff;stroke-width:3.5px">' + escapeHtml(noteSvgLabel(guide.label)) + '</text>');
+          const labelX = (isVertical ? x2 + 9 : x2 - 8) + (Number.isFinite(guide.dx) ? guide.dx : 0);
+          const labelY = (isVertical ? (y1 + y2) / 2 - 7 : y2 - 8) + (Number.isFinite(guide.dy) ? guide.dy : 0);
+          svg.push('<text x="' + labelX.toFixed(2) + '" y="' + labelY.toFixed(2) + '" text-anchor="' + (isVertical ? "start" : "end") + '" font-size="10" font-weight="400" fill="#475569" style="paint-order:normal;stroke:none">' + escapeHtml(noteSvgLabel(guide.label)) + '</text>');
         }
       });
 
@@ -7466,7 +7799,7 @@ function escapeHtml(str){
         if (point.x < xMin || point.x > xMax || point.y < yMin || point.y > yMax) return;
         const x = toX(point.x);
         const y = toY(point.y);
-        if (!isAngularGraph) svg.push('<circle cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) + '" r="3.6" fill="' + (minimalTheme ? "#111827" : "#111827") + '" stroke="#fff" stroke-width="1" />');
+        if (!isAngularGraph) svg.push('<circle cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) + '" r="3.6" fill="' + (minimalTheme ? "#111827" : "#111827") + '" stroke="#111827" stroke-width="0.7" />');
         if (point.label) {
           const labelText = noteSvgLabel(point.label);
           const labelWidth = Math.max(18, Math.min(170, labelText.length * 7.1));
@@ -7524,7 +7857,7 @@ function escapeHtml(str){
             candidates.find(insidePlot) ||
             candidates[0];
           occupiedPointLabels.push(selected.box);
-          svg.push('<text x="' + selected.x.toFixed(2) + '" y="' + selected.y.toFixed(2) + '" text-anchor="' + selected.anchor + '" font-size="11.5" font-weight="400" font-family="Times New Roman, Times, serif" fill="' + (minimalTheme ? "#111827" : "#111827") + '" style="paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round">' + escapeHtml(labelText) + '</text>');
+          svg.push('<text x="' + selected.x.toFixed(2) + '" y="' + selected.y.toFixed(2) + '" text-anchor="' + selected.anchor + '" font-size="11.5" font-weight="400" font-family="Times New Roman, Times, serif" fill="' + (minimalTheme ? "#111827" : "#111827") + '" style="paint-order:normal;stroke:none">' + escapeHtml(labelText) + '</text>');
         }
       });
 
@@ -7535,15 +7868,15 @@ function escapeHtml(str){
         const labelY = toY(label.y) + (Number.isFinite(label.dy) ? label.dy : 0);
         const labelText = noteSvgLabel(label.text || "");
         const labelFontStyle = /^[a-z]$/i.test(labelText) ? ' font-style="italic"' : '';
-        svg.push('<text x="' + labelX.toFixed(2) + '" y="' + labelY.toFixed(2) + '" text-anchor="' + escapeHtml(label.anchor || "middle") + '" font-size="11.5" font-weight="400" font-family="Times New Roman, Times, serif"' + labelFontStyle + ' fill="' + escapeHtml(minimalTheme ? "#111827" : (label.colour || "#111827")) + '" style="paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round">' + escapeHtml(labelText) + '</text>');
+        svg.push('<text x="' + labelX.toFixed(2) + '" y="' + labelY.toFixed(2) + '" text-anchor="' + escapeHtml(label.anchor || "middle") + '" font-size="11.5" font-weight="400" font-family="Times New Roman, Times, serif"' + labelFontStyle + ' fill="' + escapeHtml(minimalTheme ? "#111827" : (label.colour || "#111827")) + '" style="paint-order:normal;stroke:none">' + escapeHtml(labelText) + '</text>');
       });
 
       if (options.showAxisLabels !== false) {
         const xAxisLabel = noteSvgLabel(options.xLabel || "");
         const yAxisLabel = noteSvgLabel(options.yLabel || "");
         if (isAngularGraph) {
-          svg.push('<text x="' + (margin.left + plotWidth + 12).toFixed(2) + '" y="' + (axisY - 7).toFixed(2) + '" text-anchor="middle" font-size="13" font-weight="400" font-family="Times New Roman, Times, serif" font-style="italic" style="paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round">x</text>');
-          svg.push('<text x="' + (axisX + 10).toFixed(2) + '" y="' + (margin.top - 7) + '" text-anchor="middle" font-size="13" font-weight="400" font-family="Times New Roman, Times, serif" font-style="italic" style="paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round">y</text>');
+          svg.push('<text x="' + (margin.left + plotWidth + 12).toFixed(2) + '" y="' + (axisY - 7).toFixed(2) + '" text-anchor="middle" font-size="13" font-weight="400" font-family="Times New Roman, Times, serif" font-style="italic" style="paint-order:normal;stroke:none">x</text>');
+          svg.push('<text x="' + (axisX + 10).toFixed(2) + '" y="' + (margin.top - 7) + '" text-anchor="middle" font-size="13" font-weight="400" font-family="Times New Roman, Times, serif" font-style="italic" style="paint-order:normal;stroke:none">y</text>');
         } else {
           if (xAxisLabel) svg.push('<text x="' + (margin.left + plotWidth / 2).toFixed(2) + '" y="' + (height - 14) + '" text-anchor="middle" font-size="10" font-weight="400">' + escapeHtml(xAxisLabel) + '</text>');
           if (yAxisLabel) svg.push('<text x="18" y="' + (margin.top + plotHeight / 2).toFixed(2) + '" text-anchor="middle" font-size="10" font-weight="400" transform="rotate(-90 18 ' + (margin.top + plotHeight / 2).toFixed(2) + ')">' + escapeHtml(yAxisLabel) + '</text>');
@@ -7632,13 +7965,25 @@ function escapeHtml(str){
         let match = line.match(/^HLINE\s+([^|]+)(?:\|\s*(.*))?$/i);
         if (match) {
           const y = parseNoteGraphNumber(match[1]);
-          if (y !== null) guides.push({ x1: xMin, y1: y, x2: xMax, y2: y, label: noteSvgLabel(match[2] || ""), dash: "7 5", colour: "#64748b" });
+          if (y !== null) {
+            const fields = String(match[2] || "").split("|").map(v => v.trim());
+            guides.push({ x1: xMin, y1: y, x2: xMax, y2: y, label: noteSvgLabel(fields[0] || ""),
+              dx: fields.length > 1 ? parseNoteGraphNumber(fields[1]) : null,
+              dy: fields.length > 2 ? parseNoteGraphNumber(fields[2]) : null,
+              dash: "7 5", colour: "#64748b" });
+          }
           return;
         }
         match = line.match(/^VLINE\s+([^|]+)(?:\|\s*(.*))?$/i);
         if (match) {
           const x = parseNoteGraphNumber(match[1]);
-          if (x !== null) guides.push({ x1: x, y1: yMin, x2: x, y2: yMax, label: noteSvgLabel(match[2] || ""), dash: "7 5", colour: "#64748b" });
+          if (x !== null) {
+            const fields = String(match[2] || "").split("|").map(v => v.trim());
+            guides.push({ x1: x, y1: yMin, x2: x, y2: yMax, label: noteSvgLabel(fields[0] || ""),
+              dx: fields.length > 1 ? parseNoteGraphNumber(fields[1]) : null,
+              dy: fields.length > 2 ? parseNoteGraphNumber(fields[2]) : null,
+              dash: "7 5", colour: "#64748b" });
+          }
           return;
         }
         match = line.match(/^SEGMENT\s+([^|]+)\|\s*([^|]+)\|\s*([^|]+)\|\s*([^|]+)(?:\|\s*(.*))?$/i);
@@ -10913,6 +11258,40 @@ function escapeHtml(str){
       }
     });
 
+    // Second input method: use precisely the same parser and form-loading flow as a .txt upload.
+    const pasteTxtLoadBtn = document.getElementById("pasteTxtLoadBtn");
+    const pasteTxtClearBtn = document.getElementById("pasteTxtClearBtn");
+    const pasteAssessmentTxt = document.getElementById("pasteAssessmentTxt");
+    pasteTxtLoadBtn.addEventListener("click", () => {
+      const pastedText = pasteAssessmentTxt.value;
+      if (!pastedText.trim()) {
+        setMsg("Paste the assessment TXT content first.", "error");
+        pasteAssessmentTxt.focus();
+        return;
+      }
+      pasteTxtLoadBtn.disabled = true;
+      try {
+        setMsg("Reading pasted assessment and filling the editor...", "muted");
+        clearParseErrors();
+        const parsed = parseAssessmentFile(pastedText, "Pasted assessment.txt");
+        fillAssessmentForm(parsed);
+        if (assessmentCodeEl) assessmentCodeEl.value = "Assigned automatically when saved";
+        setMsg("Assessment pasted successfully. Review the questions and answers below, then save or publish as usual.", "ok");
+        openLearnerReviewAfterLoad();
+      } catch (err) {
+        if (Array.isArray(err.parseErrors) && err.parseErrors.length) {
+          showParseErrors(err.parseErrors, "Please fix these pasted .txt issues");
+        }
+        setMsg(err.message || "Could not parse the pasted assessment.", "error");
+      } finally {
+        pasteTxtLoadBtn.disabled = false;
+      }
+    });
+    pasteTxtClearBtn.addEventListener("click", () => {
+      pasteAssessmentTxt.value = "";
+      pasteAssessmentTxt.focus();
+    });
+
     batchUploadBtn.addEventListener("click", async () => {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -11071,6 +11450,8 @@ function escapeHtml(str){
       timeLimitEl,
       contentTypeEl,
       difficultyEl,
+      practiceCategoryEl,
+      practiceLevelEl,
       paperEl,
       instructionsEl,
       learningObjectivesEl,
@@ -11161,6 +11542,8 @@ function escapeHtml(str){
     function formatSolutionPreviewHtml(solution){
       const normalized = normalizeDbeSolutionText(solution);
       if (!normalized) return "(Solution/workings preview)";
+      const sharedRows = poSharedSolutionRowsHtml(solution, escapeHtml);
+      if(sharedRows !== null)return sharedRows;
       return normalized;
     }
 
@@ -11232,6 +11615,7 @@ function escapeHtml(str){
         }
         if (role === "information") renderUrlImagePreview(card);
         else card.querySelector(".noteImagePreviewWrap")?.classList.add("hide");
+        ensurePoGraphEditor(card);
         return;
       }
 
@@ -11259,7 +11643,17 @@ function escapeHtml(str){
       if (label) fullQuestionText = `${label} ${fullQuestionText}`;
       if (marksMeta) fullQuestionText += `\n${marksMeta}`;
 
-      setPreviewText(card.querySelector(".prevQ"), fullQuestionText || "(Question preview)");
+      const liveQuestion = card.querySelector(".prevQ");
+      const liveProse = poAdminResponsiveProseRows(qText);
+      if (liveQuestion && liveProse) {
+        liveQuestion.innerHTML =
+          (label ? `<strong>${escapeHtml(label)}</strong> ` : "") +
+          `<span class="poResponsiveProse"><span class="poResponsiveIntroduction">${escapeHtml(liveProse.introduction)}</span>` +
+          `<span class="poResponsivePrompt">${escapeHtml(liveProse.prompt)}</span></span>` +
+          (marksMeta ? `<div class="marksMeta">${escapeHtml(marksMeta)}</div>` : "");
+      } else {
+        setPreviewText(liveQuestion, fullQuestionText || "(Question preview)");
+      }
       setPreviewText(card.querySelector(".prevHint"), hint || "(Hint preview)");
       setPreviewText(card.querySelector(".prevSol"), sol || "(Solution/workings preview)");
 
@@ -11642,6 +12036,8 @@ function escapeHtml(str){
           case "TIME":
           case "TIME_LIMIT_MINUTES": meta.timeLimitMinutes = Number(value.trim() || 10); break;
           case "DIFFICULTY": meta.difficulty = value.trim(); break;
+          case "PRACTICE_CATEGORY": meta.practiceCategory = value.trim(); break;
+          case "PRACTICE_LEVEL": meta.practiceLevel = value.trim(); break;
           case "PAPER": meta.paper = value.trim(); break;
           case "ACCESS_LEVEL":
           case "QUIZ_ACCESS":
@@ -12100,6 +12496,7 @@ function escapeHtml(str){
           title: String(meta.title || "").trim(),
           timeLimitMinutes: Number(meta.timeLimitMinutes || 10),
           difficulty: normalizeDifficulty(meta.difficulty),
+          ...practiceFields(meta.practiceCategory, meta.practiceLevel, meta.difficulty),
           paper: normalizePaper(meta.paper),
           contentType: normalizeContentType(meta.contentType),
           accessLevel: normalizeAccessLevel(meta.accessLevel),
@@ -12266,6 +12663,7 @@ function escapeHtml(str){
       if (meta.title) titleEl.value=meta.title||""; subjectEl.value=meta.subject||"Mathematics";termEl.value=String(meta.term||1);chapterEl.value=String(meta.chapter||1);subtopicEl.value=meta.subtopic||"";curriculumEl.value=meta.curriculum||"CAPS";languageEl.value=meta.language||"English";versionEl.value=meta.version||"1.0";keywordsEl.value=(meta.keywords||[]).join(", ");learningObjectivesEl.value=(meta.learningObjectives||[]).join("\n");
       timeLimitEl.value = Number.isFinite(Number(meta.timeLimitMinutes)) ? String(meta.timeLimitMinutes) : "10";
       difficultyEl.value = normalizeDifficulty(meta.difficulty);
+      setPracticeFields(meta.practiceCategory, meta.practiceLevel);
       paperEl.value = normalizePaper(meta.paper);
       contentTypeEl.value = normalizeContentType(meta.contentType);
       accessLevelEl.value = normalizeAccessLevel(meta.accessLevel);
@@ -12609,6 +13007,7 @@ function escapeHtml(str){
         timeLimitMinutes,
         instructions,assessmentInstructions:instructions,
         difficulty,
+        ...practiceFields(meta.practiceCategory, meta.practiceLevel, difficulty),
         accessLevel,
         accessLevelLabel: accessLevelLabel(accessLevel),
         isPremium: accessLevel === "premium",
@@ -12984,6 +13383,7 @@ function escapeHtml(str){
         timeLimitMinutes,
         instructions,
         difficulty,
+        ...practiceFields(practiceCategoryEl.value, practiceLevelEl.value, difficulty),
         accessLevel,
         accessLevelLabel: accessLevelLabel(accessLevel),
         isPremium: accessLevel === "premium",
@@ -13176,7 +13576,7 @@ function escapeHtml(str){
           term:quiz?.term || 1, chapter:quiz?.chapter || 1, topic:quiz?.topic || "", subtopic:quiz?.subtopic || "",
           curriculum:quiz?.curriculum || "CAPS", language:quiz?.language || "English", version:quiz?.version || "1.0",
           keywords:Array.isArray(quiz?.keywords)?quiz.keywords:[], learningObjectives:Array.isArray(quiz?.learningObjectives)?quiz.learningObjectives:[],
-          timeLimitMinutes:quiz?.timeLimitMinutes || quiz?.timeLimit || 10, difficulty:quiz?.difficulty || "moderate",
+          timeLimitMinutes:quiz?.timeLimitMinutes || quiz?.timeLimit || 10, difficulty:quiz?.difficulty || "moderate", practiceCategory:quiz?.practiceCategory, practiceLevel:quiz?.practiceLevel,
           paper:quiz?.paper || "paper1", contentType:quiz?.contentType || "quiz", accessLevel:quiz?.accessLevel || "standard",
           instructions:quiz?.instructions || quiz?.assessmentInstructions || "", publishMode:quiz?.publishAt ? "schedule" : "draft",
           publishAt:toDatetimeLocal(quiz?.publishAt), availableFrom:toDatetimeLocal(quiz?.availableFrom), availableUntil:toDatetimeLocal(quiz?.availableUntil),
@@ -13194,7 +13594,7 @@ function escapeHtml(str){
           subject:subjectEl.value, term:termEl.value, chapter:chapterEl.value, subtopic:subtopicEl.value,
           curriculum:curriculumEl.value, language:languageEl.value, version:versionEl.value, keywords:keywordsEl.value,
           assessmentCode:assessmentCodeEl?.value || "", contentType:contentTypeEl.value, accessLevel:accessLevelEl.value,
-          difficulty:difficultyEl.value, paper:paperEl.value, publishMode:publishModeEl.value, publishAt:publishAtEl.value,
+          difficulty:difficultyEl.value, practiceCategory:practiceCategoryEl.value, practiceLevel:practiceLevelEl.value, paper:paperEl.value, publishMode:publishModeEl.value, publishAt:publishAtEl.value,
           availableFrom:availableFromEl.value, availableUntil:availableUntilEl.value, marksReleaseAt:marksReleaseAtEl.value, sendPublishEmail:sendPublishEmailEl.checked,
           instructions:instructionsEl.value, learningObjectives:learningObjectivesEl.value
         }, cards
@@ -13208,7 +13608,7 @@ function escapeHtml(str){
       assign(gradeEl,f.grade);assign(topicEl,f.topic);assign(timeLimitEl,f.timeLimit);assign(titleEl,f.title);
       assign(subjectEl,f.subject);assign(termEl,f.term);assign(chapterEl,f.chapter);assign(subtopicEl,f.subtopic);
       assign(curriculumEl,f.curriculum);assign(languageEl,f.language);assign(versionEl,f.version);assign(keywordsEl,f.keywords);
-      assign(contentTypeEl,f.contentType);assign(accessLevelEl,f.accessLevel);assign(difficultyEl,f.difficulty);assign(paperEl,f.paper);
+      assign(contentTypeEl,f.contentType);assign(accessLevelEl,f.accessLevel);assign(difficultyEl,f.difficulty);setPracticeFields(f.practiceCategory,f.practiceLevel);assign(paperEl,f.paper);
       assign(publishModeEl,f.publishMode);assign(publishAtEl,f.publishAt);assign(availableFromEl,f.availableFrom);assign(availableUntilEl,f.availableUntil);assign(marksReleaseAtEl,f.marksReleaseAt);
       assign(instructionsEl,f.instructions);assign(learningObjectivesEl,f.learningObjectives);
       if (assessmentCodeEl) assessmentCodeEl.value=f.assessmentCode || "Assigned automatically when saved";
@@ -13383,6 +13783,8 @@ function escapeHtml(str){
         version: versionEl.value || "1.0",
         timeLimit: timeLimitEl.value || "10",
         difficulty: difficultyEl.value || "moderate",
+        practiceCategory: practiceCategoryEl.value,
+        practiceLevel: practiceLevelEl.value,
         paper: paperEl.value || "paper1",
         contentType: contentTypeEl.value || "quiz",
         accessLevel: accessLevelEl.value || "standard",
@@ -13406,6 +13808,7 @@ function escapeHtml(str){
       if (values.version != null) versionEl.value = values.version;
       if (values.timeLimit != null) timeLimitEl.value = String(values.timeLimit);
       if (values.difficulty != null) difficultyEl.value = values.difficulty;
+      setPracticeFields(values.practiceCategory, values.practiceLevel);
       if (values.paper != null) paperEl.value = values.paper;
       if (values.contentType != null) contentTypeEl.value = values.contentType;
       if (values.accessLevel != null) accessLevelEl.value = values.accessLevel;
@@ -13423,6 +13826,138 @@ function escapeHtml(str){
       setMsg("Metadata defaults saved on this device.", "ok");
     });
     applyDefaultsBtn?.addEventListener("click", () => applyMetadataDefaults(true));
+
+    /* Whole-assessment TXT export: the IMAGE_URL fields and the original
+       [[FUNCTION_GRAPH]] / other diagram schemas stay with their NOTE blocks.
+       The exported text can be passed to the existing Paste & Auto Fill parser
+       or saved as a .txt file and uploaded later. No database fetch is needed. */
+    function poExportCompleteQuizTxt() {
+      const line = (key, value) => `${key}: ${String(value ?? "").replace(/\r/g, "").trim()}`;
+      const lines = [
+        line("TITLE", titleEl.value),
+        line("GRADE", gradeEl.value),
+        line("SUBJECT", subjectEl.value || "Mathematics"),
+        line("CONTENT_TYPE", contentTypeEl.value || "quiz"),
+        line("TOPIC", topicEl.value),
+        line("TIME_LIMIT", timeLimitEl.value || "10"),
+        line("DIFFICULTY", difficultyEl.value || "moderate"),
+        ...Object.entries(practiceFields(practiceCategoryEl.value, practiceLevelEl.value, difficultyEl.value)).map(([key,value]) => line(key === "practiceCategory" ? "PRACTICE_CATEGORY" : "PRACTICE_LEVEL", value)),
+        line("PAPER", paperEl.value || "paper1"),
+        line("ACCESS_LEVEL", accessLevelEl.value || "standard"),
+        line("ACCESS_FEE", accessLevelEl.value === "premium" ? "1" : "0"),
+        line("SEND_EMAIL", sendPublishEmailEl.checked ? "true" : "false"),
+        line("TERM", termEl.value || "1"),
+        line("CHAPTER", chapterEl.value || "1"),
+        line("CURRICULUM", curriculumEl.value || "CAPS"),
+        line("LANGUAGE", languageEl.value || "English"),
+        line("VERSION", versionEl.value || "1.0"),
+        line("SCHEMA", "practice-online-txt-v1"),
+      ];
+      if (subtopicEl.value.trim()) lines.push(line("SUBTOPIC", subtopicEl.value));
+      if (keywordsEl.value.trim()) lines.push(line("KEYWORDS", keywordsEl.value));
+      if (learningObjectivesEl.value.trim()) lines.push(line("LEARNING_OBJECTIVES", learningObjectivesEl.value.replace(/\n/g," | ")));
+      if (instructionsEl.value.trim()) lines.push(line("INSTRUCTIONS", instructionsEl.value));
+      if (availableFromEl.value) lines.push(line("AVAILABLE_FROM", availableFromEl.value));
+      if (availableUntilEl.value) lines.push(line("AVAILABLE_UNTIL", availableUntilEl.value));
+      if (marksReleaseAtEl.value) lines.push(line("MARKS_RELEASE_AT", marksReleaseAtEl.value));
+      // Do not export the old quiz ID/code: a re-upload must be a new assessment.
+      const cards = Array.from(questionsWrap.querySelectorAll('.qcard'));
+      if (!cards.length) throw new Error('There are no question blocks to copy.');
+      let groupNumber = 0;
+      for (const card of cards) {
+        const b = snapshotBlock(card);
+        if (!b) continue;
+        const type = b.type;
+        lines.push('');
+        if (type === 'group') {
+          ++groupNumber;
+          const label = String(card.querySelector('.cardLabel')?.textContent || '');
+          const found = label.match(/\b(\d+)\b/);
+          lines.push('NOTE: QUESTION ' + (found ? found[1] : groupNumber));
+          continue;
+        }
+        if (type === 'section') {
+          const sectionName = String(card.querySelector('.cardLabel')?.textContent || '').trim();
+          lines.push('NOTE: ' + [sectionName, b.text || ''].filter(Boolean).join(' '));
+          continue;
+        }
+        if (type === 'note') {
+          lines.push('NOTE: ' + String(b.text || '').replace(/\r/g, '').trim());
+          if (b.noteRole) lines.push(line('NOTE_TYPE', b.noteRole));
+          if (b.imageUrl) lines.push(line('IMAGE_URL', b.imageUrl));
+          continue;
+        }
+        lines.push(line('QUESTION', b.question || ''));
+        lines.push(line('TYPE', type));
+        if (b.imageUrl) lines.push(line('IMAGE_URL', b.imageUrl));
+        if (b.hint) lines.push(line('HINT', b.hint));
+        if (b.instruction) lines.push(line('INSTRUCTION', b.instruction));
+        if (b.answerPrefix) lines.push(line('ANSWER_PREFIX', b.answerPrefix));
+        if (b.answerSuffix) lines.push(line('ANSWER_SUFFIX', b.answerSuffix));
+        if (type === 'text') {
+          if (b.textAnswerMode) lines.push(line('ANSWER_MODE', b.textAnswerMode));
+          if (b.numberTolerance && b.textAnswerMode === 'number_tolerance') lines.push(line('NUMBER_TOLERANCE', b.numberTolerance));
+          if (Array.isArray(b.answerFields) && b.answerFields.length) {
+            for (const f of b.answerFields) {
+              lines.push(line('ANSWER_FIELD', [f.key || '', f.prefix || '', f.suffix || ''].join(' | ')));
+            }
+            lines.push(line('ANSWER', b.answerFields.map(f => `${f.key}=${f.correctAnswer}`).join('|')));
+          } else lines.push(line('ANSWER', b.correctText || ''));
+        } else if (type === 'mcq') {
+          const options = b.options || [];
+          options.forEach((value, index) => {
+            if (String(value).trim()) lines.push(String.fromCharCode(65 + index) + '. ' + value);
+          });
+          lines.push(line('ANSWER', (b.correctIndexes || []).map(i => String.fromCharCode(65 + i)).join(',')));
+        } else if (type === 'dropdown') {
+          (b.options || []).forEach((value, index) => lines.push(String.fromCharCode(65 + index) + '. ' + value));
+          lines.push(line('DROPDOWN_PLACEHOLDER', b.dropdownPlaceholder || 'Select an answer'));
+          lines.push(line('ANSWER', b.correctText || ''));
+        } else if (type === 'fill') {
+          lines.push(line('PARTIAL_MARKS', b.allowPartialMarks ? 'true' : 'false'));
+          lines.push(line('ANSWER', (b.fillAnswers || []).join('|')));
+        }
+        lines.push(line('POINTS', b.points || 1));
+        lines.push('SOLUTION:');
+        if (b.solution) lines.push(String(b.solution).replace(/\r/g,'').trim());
+      }
+      return lines.join('\n').trim() + '\n';
+    }
+
+    const poCopyCompleteQuizBtn = document.getElementById('copyCompleteQuizTxtBtn');
+    const poDownloadCompleteQuizBtn = document.getElementById('downloadCompleteQuizTxtBtn');
+    poCopyCompleteQuizBtn?.addEventListener('click', async () => {
+      try {
+        const txt = poExportCompleteQuizTxt();
+        if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(txt);
+        else {
+          const input = document.createElement('textarea');
+          input.value = txt;
+          document.body.appendChild(input);
+          input.select();
+          const copied = document.execCommand('copy');
+          input.remove();
+          if (!copied) throw new Error('Clipboard is unavailable; use Download Quiz TXT instead.');
+        }
+        setMsg('Whole quiz copied with image URLs, graph/diagram schema, questions and answers. Paste it into Paste & Auto Fill to restore it.', 'ok');
+      } catch (error) { setMsg(error.message || 'Could not copy the quiz. Try Download Quiz TXT.', 'error'); }
+    });
+    poDownloadCompleteQuizBtn?.addEventListener('click', () => {
+      try {
+        const txt = poExportCompleteQuizTxt();
+        const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        const slug = (titleEl.value || 'practice-online-quiz').trim().replace(/[^a-z0-9_-]+/gi,'_').slice(0,90);
+        anchor.href = url;
+        anchor.download = slug + '.txt';
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        setMsg('Quiz TXT downloaded, including all existing image URLs and native diagram schemas.', 'ok');
+      } catch (error) { setMsg(error.message || 'Could not download the quiz TXT.', 'error'); }
+    });
 
     cloneQuizBtn?.addEventListener("click", () => {
       const originalTitle = cleanSpaces(titleEl.value || "Assessment");
@@ -13446,6 +13981,7 @@ function escapeHtml(str){
       topicEl.value = "";
       timeLimitEl.value = "10";
       difficultyEl.value = "moderate";
+      setPracticeFields("", "");
       paperEl.value = "paper1";
       instructionsEl.value = "";
       publishModeEl.value = "draft";
@@ -13588,6 +14124,502 @@ function escapeHtml(str){
         publishBtn.disabled = !canPublish;
       }
     });
+
+    /* GRAPH POSITIONING FOR UPLOADED TXT NOTES
+       Only modifies the NOTE text of FUNCTION_GRAPH / TRIG_GRAPH blocks.
+       The existing parser, marking, save and export flows remain unchanged. */
+
+    function poGraphNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
+    }
+    function poGraphFmt(value) {
+      return String(Number(value.toFixed(3)));
+    }
+    function poGraphParts(card) {
+      const field = card.querySelector('.noteText');
+      const source = field?.value || '';
+      const match = /\[\[\s*(FUNCTION_GRAPH|TRIG_GRAPH)\b([^\]]*)\]\]([\s\S]*?)\[\[\s*\/\s*\1\s*\]\]/i.exec(source);
+      if (!field || !match) return null;
+      const attrs = readNoteVisualAttributes(match[2] || '');
+      const trig = match[1].toUpperCase() === 'TRIG_GRAPH';
+      const xmin = poGraphNumber(attrs.xmin) ?? (trig ? 0 : -5);
+      const xmax = poGraphNumber(attrs.xmax) ?? (trig ? 360 : 5);
+      const ymin = poGraphNumber(attrs.ymin) ?? (trig ? -2 : -6);
+      const ymax = poGraphNumber(attrs.ymax) ?? (trig ? 2 : 10);
+      return { field, source, match, attrs, xmin, xmax, ymin, ymax };
+    }
+    function poGraphUpdateView(card, command) {
+      const p = poGraphParts(card);
+      if (!p) return;
+      let { xmin, xmax, ymin, ymax } = p;
+      const xspan = xmax - xmin, yspan = ymax - ymin;
+      if (!(xspan > 0 && yspan > 0)) return;
+      if (command === 'left') { xmin -= xspan * .10; xmax -= xspan * .10; }
+      if (command === 'right') { xmin += xspan * .10; xmax += xspan * .10; }
+      if (command === 'up') { ymin += yspan * .10; ymax += yspan * .10; }
+      if (command === 'down') { ymin -= yspan * .10; ymax -= yspan * .10; }
+      if (command === 'zoom-in' || command === 'zoom-out') {
+        const factor = command === 'zoom-in' ? .8 : 1.25;
+        const midx = (xmin + xmax) / 2, midy = (ymin + ymax) / 2;
+        xmin = midx - xspan * factor / 2;
+        xmax = midx + xspan * factor / 2;
+        ymin = midy - yspan * factor / 2;
+        ymax = midy + yspan * factor / 2;
+      }
+      const next = { xmin, xmax, ymin, ymax };
+      let header = p.match[0].slice(0, p.match[0].indexOf(']]') + 2);
+      for (const [name, val] of Object.entries(next)) {
+        const attrRx = new RegExp("\\b" + name + "\\s*=\\s*(?:\"[^\"]*\"|'[^']*'|[^\\s\\]]+)", "i");
+        const replacement = name + '="' + poGraphFmt(val) + '"';
+        header = attrRx.test(header) ? header.replace(attrRx, replacement) : header.replace(/\]\]$/, ' ' + replacement + ']]');
+      }
+      const updatedBlock = header + p.match[0].slice(p.match[0].indexOf(']]') + 2);
+      p.field.value = p.source.slice(0, p.match.index) + updatedBlock + p.source.slice(p.match.index + p.match[0].length);
+      p.field.dispatchEvent(new Event('input', { bubbles: true }));
+      renderCardPreview(card);
+    }
+
+    /* Keep all graph changes inside the original NOTE's FUNCTION_GRAPH block. */
+    function poGraphReplaceBody(card, transform) {
+      const p = poGraphParts(card);
+      if (!p) return false;
+      const oldBlock = p.match[0];
+      const openingEnd = oldBlock.indexOf(']]') + 2;
+      const closingStart = oldBlock.lastIndexOf('[[');
+      const lines = p.match[3].split(/\r?\n/);
+      const next = transform(lines, p);
+      if (next === false) return false;
+      const rebuilt = oldBlock.slice(0, openingEnd) + lines.join('\n') + oldBlock.slice(closingStart);
+      p.field.value = p.source.slice(0, p.match.index) + rebuilt + p.source.slice(p.match.index + oldBlock.length);
+      p.field.dispatchEvent(new Event('input', {bubbles:true}));
+      renderCardPreview(card);
+      return true;
+    }
+    function poGraphCurrentSeries(card) {
+      const p = poGraphParts(card);
+      if (!p || p.match[1].toUpperCase() !== 'FUNCTION_GRAPH') return [];
+      return p.match[3].split(/\r?\n/).map((raw, i) => ({raw:raw.trim(), i}))
+        .filter(row => /^SERIES\s+/i.test(row.raw));
+    }
+    function poGraphRefreshSeriesControl(card) {
+      const panel = card.querySelector('.poGraphEditor');
+      const select = panel?.querySelector('.poGraphSeriesChoice');
+      const input = panel?.querySelector('.poGraphSeriesDefinition');
+      if (!select || !input) return;
+      const current = select.value;
+      const rows = poGraphCurrentSeries(card);
+      select.replaceChildren();
+      rows.forEach(row => {
+        const opt = document.createElement('option');
+        opt.value = String(row.i);
+        opt.textContent = row.raw.split('|')[0].trim();
+        select.appendChild(opt);
+      });
+      const selected = rows.some(r => String(r.i) === current) ? current : (rows[0] ? String(rows[0].i) : '');
+      select.value = selected;
+      input.value = rows.find(r => String(r.i) === selected)?.raw || '';
+      panel.querySelector('.poGraphSeriesEditor').hidden = !rows.length;
+    }
+    function poGraphSaveSeriesDefinition(card) {
+      const panel = card.querySelector('.poGraphEditor');
+      const select = panel.querySelector('.poGraphSeriesChoice');
+      const input = panel.querySelector('.poGraphSeriesDefinition');
+      const message = panel.querySelector('.poGraphSeriesMessage');
+      const index = Number(select.value);
+      const raw = input.value.trim();
+      const match = /^SERIES\s+([^|\n]+)\s*\|\s*(linear|quadratic|cubic|exponential|hyperbola)\s*(?:\|\s*(.*))?$/i.exec(raw);
+      if (!match || !Number.isInteger(index)) {
+        message.textContent = 'Use SERIES f | quadratic | a=-1 | b=-4 | c=5 (or another supported graph type).';
+        return;
+      }
+      const type = match[2].toLowerCase();
+      const allowed = new Set(['a','b','c','d','m','p','q','color','colour','width']);
+      const coefficients = (match[3]||'').split('|').map(v=>v.trim()).filter(Boolean);
+      for (const item of coefficients) {
+        const m = /^([a-z]+)\s*=\s*([^\s|]+)$/i.exec(item);
+        if (!m || !allowed.has(m[1].toLowerCase()) || ((m[1].toLowerCase()!=='color' && m[1].toLowerCase()!=='colour') && !Number.isFinite(Number(m[2])))) {
+          message.textContent = 'Each coefficient must be a valid number, for example a=-1 or c=5.';
+          return;
+        }
+      }
+      const saved = poGraphReplaceBody(card, lines => {
+        if (!/^\s*SERIES\s+/i.test(lines[index]||'')) return false;
+        lines[index] = raw;
+      });
+      message.textContent = saved ? 'Graph equation updated. Check the questions and solutions if you changed the mathematics.' : 'Could not update this series.';
+    }
+    function poGraphAddEquationLabel(card) {
+      const panel = card.querySelector('.poGraphEditor');
+      const input = panel.querySelector('.poGraphNewEquationText');
+      const message = panel.querySelector('.poGraphAddEquationMessage');
+      const labelText = input.value.trim();
+      if (!labelText || /[|\r\n]/.test(labelText)) {
+        message.textContent = 'Enter a label such as f(x)=-x²-4x+5 (without the | character).';
+        return;
+      }
+      const added = poGraphReplaceBody(card, (lines, p) => {
+        const x = (p.xmin + p.xmax)/2;
+        const y = p.ymax - (p.ymax-p.ymin)*.14;
+        const entry = 'LABEL ' + poGraphFmt(x) + ' | ' + poGraphFmt(y) + ' | ' + labelText + ' | middle | 0 | 0';
+        let end = lines.length;
+        while(end > 0 && !lines[end-1].trim()) end--;
+        lines.splice(end,0,entry);
+      });
+      message.textContent = added ? 'Equation label added. Click it in the graph to drag or edit it.' : 'Could not add the label.';
+      if (added) input.value = '';
+    }
+    function poGraphEditorPoints(p, svg) {
+      const lines = p.match[3].split(/\r?\n/);
+      const taken = new Set();
+      const bounds = { x0:72, y0:24, w:660, h:314 };
+      const entries = [];
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        const kind = /^(POINT|LABEL|HLINE|VLINE)\s+/i.exec(line)?.[1]?.toUpperCase();
+        if (!kind) continue;
+        const parts = line.replace(/^(POINT|LABEL|HLINE|VLINE)\s+/i, '').split('|').map(x => x.trim());
+        let px, py, label;
+        if (kind === 'HLINE' || kind === 'VLINE') {
+          const value = parseNoteGraphNumber(parts[0]);
+          if (value === null) continue;
+          label = noteSvgLabel(parts[1] || '');
+          if (!label) continue;
+          const lineX = kind === 'VLINE' ? bounds.x0 + (value-p.xmin)/(p.xmax-p.xmin)*bounds.w : bounds.x0 + bounds.w;
+          const lineY = kind === 'HLINE' ? bounds.y0 + (p.ymax-value)/(p.ymax-p.ymin)*bounds.h : bounds.y0 + bounds.h;
+          // Must match the default guide-label anchor in drawNoteGraph.
+          px = kind === 'VLINE' ? lineX + 9 : lineX - 8;
+          py = kind === 'VLINE' ? bounds.y0 + bounds.h / 2 - 7 : lineY - 8;
+        } else {
+          const x = parseNoteGraphNumber(parts[0]), y = parseNoteGraphNumber(parts[1]);
+          if (x === null || y === null) continue;
+          label = noteSvgLabel(parts[2] || '');
+          if (!label) continue;
+          px = bounds.x0 + (x-p.xmin)/(p.xmax-p.xmin)*bounds.w;
+          py = bounds.y0 + (p.ymax-y)/(p.ymax-p.ymin)*bounds.h;
+        }
+        const candidates = [...svg.querySelectorAll('text')].filter(el => el.textContent.trim() === label && !taken.has(el));
+        if (!candidates.length) continue;
+        candidates.sort((a,b) => {
+          const dist = el => Math.hypot(Number(el.getAttribute('x')) - px, Number(el.getAttribute('y')) - py);
+          return dist(a) - dist(b);
+        });
+        const el = candidates[0];
+        taken.add(el);
+        el.classList.add('poMovableGraphLabel');
+        el.dataset.poGraphLine = String(i);
+        el.dataset.poGraphKind = kind;
+        el.dataset.poGraphPointX = String(px);
+        el.dataset.poGraphPointY = String(py);
+        entries.push({ el, lineIndex:i, kind, px, py });
+      }
+      return entries;
+    }
+    function poGraphSaveDraggedLabel(card, el, endX, endY, newText, skipRefresh = false) {
+      const p = poGraphParts(card);
+      if (!p) return;
+      const lines = p.match[3].split(/\r?\n/);
+      const idx = Number(el.dataset.poGraphLine);
+      const raw = lines[idx];
+      if (!raw) return;
+      const kind = el.dataset.poGraphKind;
+      const prefix = /^\s*/.exec(raw)?.[0] || '';
+      const parts = raw.trim().replace(/^(POINT|LABEL|HLINE|VLINE)\s+/i,'').split('|').map(v=>v.trim());
+      const isGuide = kind === 'HLINE' || kind === 'VLINE';
+      if (newText !== undefined) {
+        const cleaned = String(newText).trim().replace(/[|\r\n]/g, '');
+        if (!cleaned) return;
+        parts[isGuide ? 1 : 2] = cleaned;
+      }
+      if (isGuide) {
+        // Only the guide label's offset changes; its asymptote value stays fixed.
+        while (parts.length < 4) parts.push('');
+        parts[2] = poGraphFmt(endX - Number(el.dataset.poGraphPointX));
+        parts[3] = poGraphFmt(endY - Number(el.dataset.poGraphPointY));
+      } else {
+        while (parts.length < 6) parts.push('');
+        if (kind === 'LABEL' && !parts[3]) parts[3] = 'middle';
+        // Offsets are SVG pixels: the POINT's mathematical coordinates never change.
+        parts[4] = poGraphFmt(endX - Number(el.dataset.poGraphPointX));
+        parts[5] = poGraphFmt(endY - Number(el.dataset.poGraphPointY));
+      }
+      lines[idx] = prefix + kind + ' ' + parts.join(' | ');
+      const oldBlock = p.match[0];
+      const openingEnd = oldBlock.indexOf(']]') + 2;
+      const closingStart = oldBlock.lastIndexOf('[[');
+      const rebuilt = oldBlock.slice(0, openingEnd) + lines.join('\n') + oldBlock.slice(closingStart);
+      p.field.value = p.source.slice(0,p.match.index) + rebuilt + p.source.slice(p.match.index + oldBlock.length);
+      if (!skipRefresh) {
+        p.field.dispatchEvent(new Event('input', { bubbles:true }));
+        renderCardPreview(card);
+        poGraphEditorRefresh(card);
+      }
+      return true;
+    }
+    /* Remove only selected displayed text. Keep point dots and guide lines. */
+    function poGraphRemoveSelectedLabel(card) {
+      const label = poGraphCurrentSelected(card);
+      if (!label) return;
+      const selectedLine = Number(label.dataset.poGraphLine);
+      const kind = label.dataset.poGraphKind;
+      const removed = poGraphReplaceBody(card, lines => {
+        const raw = lines[selectedLine];
+        if (!raw || !new RegExp('^\\s*' + kind + '\\s+', 'i').test(raw)) return false;
+        if (kind === 'LABEL') {
+          // A free-standing LABEL has no physical point or curve to preserve.
+          lines.splice(selectedLine, 1);
+          return;
+        }
+        const prefix = /^\s*/.exec(raw)?.[0] || '';
+        const parts = raw.trim().replace(/^(POINT|HLINE|VLINE)\s+/i, '').split('|').map(value => value.trim());
+        if (kind === 'POINT') {
+          // Preserve x and y, but remove the point's displayed name.
+          while (parts.length < 3) parts.push('');
+          parts[2] = '';
+        } else if (kind === 'HLINE' || kind === 'VLINE') {
+          // Preserve the asymptote's value, but remove its caption.
+          while (parts.length < 2) parts.push('');
+          parts[1] = '';
+        } else return false;
+        lines[selectedLine] = prefix + kind + ' ' + parts.join(' | ');
+      });
+      if (removed) {
+        const panel = card.querySelector('.poGraphEditor');
+        if (panel) {
+          panel.dataset.poSelectedLine = '';
+          const controls = panel.querySelector('.poGraphSelectedLabel');
+          if (controls) controls.hidden = true;
+        }
+        poGraphEditorRefresh(card);
+      }
+    }
+    function poGraphSelectLabel(card, label) {
+      const panel = card.querySelector('.poGraphEditor');
+      if (!panel) return;
+      const selected = panel.querySelector('.poGraphSelectedLabel');
+      panel.querySelectorAll('.poMovableGraphLabel').forEach(el => {
+        const isSelected = el === label;
+        el.classList.toggle('poGraphSelected', isSelected);
+        el.setAttribute('aria-pressed', String(isSelected));
+      });
+      if (!label) {
+        panel.dataset.poSelectedLine = '';
+        selected.hidden = true;
+        return;
+      }
+      panel.dataset.poSelectedLine = label.dataset.poGraphLine;
+      selected.hidden = false;
+      selected.querySelector('.poGraphLabelName').value = label.textContent.trim();
+      selected.dataset.poOriginalName = label.textContent.trim();
+      selected.querySelector('.poGraphLabelKind').textContent = label.dataset.poGraphKind === 'POINT'
+        ? 'Point label (the point stays fixed — you can type U(1;2))'
+        : (label.dataset.poGraphKind === 'HLINE' || label.dataset.poGraphKind === 'VLINE')
+          ? 'Asymptote label (the dashed line stays fixed)' : 'Function/text label';
+      selected.querySelector('.poGraphLabelDx').value = poGraphFmt(Number(label.getAttribute('x')) - Number(label.dataset.poGraphPointX));
+      selected.querySelector('.poGraphLabelDy').value = poGraphFmt(Number(label.getAttribute('y')) - Number(label.dataset.poGraphPointY));
+    }
+    function poGraphCurrentSelected(card) {
+      const panel = card.querySelector('.poGraphEditor');
+      const id = panel?.dataset.poSelectedLine;
+      if (id === undefined || id === '') return null;
+      return [...panel.querySelectorAll('.poMovableGraphLabel')]
+        .find(el => el.dataset.poGraphLine === id) || null;
+    }
+    function poGraphEditorRefresh(card) {
+      const root = card.querySelector('.poGraphEditCanvas');
+      const panel = root?.closest('.poGraphEditor');
+      if (!root || panel?.hidden) return;
+      const p = poGraphParts(card);
+      if (!p) return;
+      root.innerHTML = renderAdminNotePreview(p.match[0]);
+      const svg = root.querySelector('svg.generatedNoteGraph');
+      if (!svg) return;
+      poGraphEditorPoints(p, svg);
+      root.querySelectorAll('.poMovableGraphLabel').forEach(el => {
+        el.setAttribute('tabindex','0');
+        el.setAttribute('role','button');
+        el.setAttribute('aria-label', 'Select and move label ' + el.textContent.trim());
+      });
+      poGraphSelectLabel(card, poGraphCurrentSelected(card));
+      poGraphRefreshSeriesControl(card);
+    }
+    function ensurePoGraphEditor(card) {
+      const p = poGraphParts(card);
+      let bar = card.querySelector('.poGraphEditorSlot');
+      if (!p) { bar?.remove(); return; }
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.className = 'poGraphEditorSlot';
+        bar.innerHTML = `
+          <button type="button" class="poGraphEditToggle">Position graph &amp; labels</button>
+          <div class="poGraphEditor" hidden>
+            <p class="poGraphEditorHelp">Click any label (including <strong>V</strong>, <strong>x = −2</strong> or <strong>y = 1</strong>) to select it. Drag the selected text to move it without moving its mathematical point or asymptote. Click <strong>Edit label</strong> to rename it (for example <strong>U(1;2)</strong> or <strong>f(x)=-x²-4x+5</strong>), preview the new text, and click <strong>Save label</strong>. Use the arrows for precise placement.</p>
+            <div class="poGraphEditToolbar">
+              <button type="button" data-po-pan="left" aria-label="Pan graph left">←</button>
+              <button type="button" data-po-pan="right" aria-label="Pan graph right">→</button>
+              <button type="button" data-po-pan="up" aria-label="Pan graph up">↑</button>
+              <button type="button" data-po-pan="down" aria-label="Pan graph down">↓</button>
+              <button type="button" data-po-pan="zoom-in">Zoom +</button>
+              <button type="button" data-po-pan="zoom-out">Zoom −</button>
+            </div>
+            <div class="poGraphEquationTools poGraphSeriesEditor">
+              <h4>Edit the equation that draws the curve</h4>
+              <label>Choose function <select class="poGraphSeriesChoice" aria-label="Choose graph function"></select></label>
+              <label>Series definition <input type="text" class="poGraphSeriesDefinition" aria-label="Edit graph equation" spellcheck="false" placeholder="SERIES f | quadratic | a=-1 | b=-4 | c=5"></label>
+              <div class="poGraphEquationActions"><button type="button" class="poGraphSaveSeries">Update graph equation</button></div>
+              <div class="poGraphEquationMessage poGraphSeriesMessage">Changing coefficients redraws the curve. Check any related question answers.</div>
+            </div>
+            <div class="poGraphEquationTools">
+              <h4>Add movable equation or text to the graph</h4>
+              <label>Text shown on graph <input type="text" class="poGraphNewEquationText" maxlength="120" aria-label="New draggable equation label" placeholder="f(x)=-x²-4x+5"></label>
+              <div class="poGraphEquationActions"><button type="button" class="poGraphAddEquation">Add draggable equation label</button></div>
+              <div class="poGraphEquationMessage poGraphAddEquationMessage">Click and drag the new text on the graph; it does not change the curve.</div>
+            </div>
+            <div class="poGraphEditCanvas"></div>
+            <div class="poGraphSelectedLabel" hidden>
+              <div class="poGraphSelectionTitle">Selected label <span class="poGraphLabelKind"></span></div>
+              <div class="poGraphSelectionFields">
+                <label>Label text <input type="text" class="poGraphLabelName" aria-label="Edit selected graph label" maxlength="120" placeholder="U(1;2) or f(x)=-x²-4x+5"></label>
+                <label>Horizontal offset <input type="number" class="poGraphLabelDx" step="1" aria-label="Horizontal label offset"></label>
+                <label>Vertical offset <input type="number" class="poGraphLabelDy" step="1" aria-label="Vertical label offset"></label>
+              </div>
+              <div class="poGraphSelectionActions">
+                <button type="button" data-po-nudge="left" aria-label="Move selected label left">←</button>
+                <button type="button" data-po-nudge="up" aria-label="Move selected label up">↑</button>
+                <button type="button" data-po-nudge="down" aria-label="Move selected label down">↓</button>
+                <button type="button" data-po-nudge="right" aria-label="Move selected label right">→</button>
+                <button type="button" class="poGraphEditLabel" aria-label="Edit selected graph label">Edit label</button>
+                <button type="button" class="poGraphSaveLabel">Save label</button>
+                <button type="button" class="poGraphRemoveLabel" aria-label="Remove selected graph label">Remove label</button>
+              </div>
+              <div class="poGraphEditorHelp">Removing a point label keeps the dot; removing an asymptote label keeps the dashed line. Only the displayed label is removed from the NOTE instructions.</div>
+            </div>
+          </div>`;
+        card.appendChild(bar);
+        const panel = bar.querySelector('.poGraphEditor');
+        bar.querySelector('.poGraphEditToggle').addEventListener('click', () => {
+          panel.hidden = !panel.hidden;
+          bar.querySelector('.poGraphEditToggle').textContent = panel.hidden ? 'Position graph & labels' : 'Close graph positioning';
+          if (!panel.hidden) poGraphEditorRefresh(card);
+        });
+        bar.querySelectorAll('[data-po-pan]').forEach(btn => btn.addEventListener('click', () => poGraphUpdateView(card, btn.dataset.poPan)));
+        panel.querySelector('.poGraphSeriesChoice').addEventListener('change', () => poGraphRefreshSeriesControl(card));
+        panel.querySelector('.poGraphSaveSeries').addEventListener('click', () => poGraphSaveSeriesDefinition(card));
+        panel.querySelector('.poGraphAddEquation').addEventListener('click', () => poGraphAddEquationLabel(card));
+        const canvas = bar.querySelector('.poGraphEditCanvas');
+        const saveInputs = () => {
+          const label = poGraphCurrentSelected(card);
+          if (!label) return;
+          const name = panel.querySelector('.poGraphLabelName').value.trim();
+          const dx = Number(panel.querySelector('.poGraphLabelDx').value);
+          const dy = Number(panel.querySelector('.poGraphLabelDy').value);
+          if (!name || !Number.isFinite(dx) || !Number.isFinite(dy)) return;
+          poGraphSaveDraggedLabel(card, label,
+            Number(label.dataset.poGraphPointX) + dx,
+            Number(label.dataset.poGraphPointY) + dy, name);
+        };
+        const labelNameInput = panel.querySelector('.poGraphLabelName');
+        panel.querySelector('.poGraphEditLabel').addEventListener('click', () => {
+          const label = poGraphCurrentSelected(card);
+          if (!label) return;
+          labelNameInput.focus();
+          labelNameInput.select();
+        });
+        // Keep the uploaded NOTE text synchronized as the administrator types.
+        // Refresh the full preview only when Save is clicked or the input loses focus,
+        // so redrawing the graph cannot interrupt typing or reset the text field.
+        labelNameInput.addEventListener('input', () => {
+          const label = poGraphCurrentSelected(card);
+          if (!label) return;
+          const typed = labelNameInput.value;
+          label.textContent = typed;
+          if (!typed.trim() || /[|\r\n]/.test(typed)) return;
+          const dx = Number(panel.querySelector('.poGraphLabelDx').value);
+          const dy = Number(panel.querySelector('.poGraphLabelDy').value);
+          if (!Number.isFinite(dx) || !Number.isFinite(dy)) return;
+          poGraphSaveDraggedLabel(card, label,
+            Number(label.dataset.poGraphPointX) + dx,
+            Number(label.dataset.poGraphPointY) + dy, typed, true);
+        });
+        labelNameInput.addEventListener('change', () => {
+          if (labelNameInput.value.trim()) saveInputs();
+        });
+        panel.querySelector('.poGraphSaveLabel').addEventListener('click', saveInputs);
+        panel.querySelector('.poGraphRemoveLabel').addEventListener('click', () => poGraphRemoveSelectedLabel(card));
+        labelNameInput.addEventListener('keydown', e => {
+          if (e.key === 'Enter') { e.preventDefault(); saveInputs(); }
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            const label = poGraphCurrentSelected(card);
+            const original = panel.querySelector('.poGraphSelectedLabel').dataset.poOriginalName || '';
+            labelNameInput.value = original;
+            if (label) label.textContent = original;
+            labelNameInput.blur();
+          }
+        });
+        panel.querySelectorAll('[data-po-nudge]').forEach(btn => btn.addEventListener('click', () => {
+          const label = poGraphCurrentSelected(card);
+          if (!label) return;
+          const x = Number(label.getAttribute('x'));
+          const y = Number(label.getAttribute('y'));
+          const direction = btn.dataset.poNudge;
+          poGraphSaveDraggedLabel(card, label,
+            x + (direction === 'left' ? -5 : direction === 'right' ? 5 : 0),
+            y + (direction === 'up' ? -5 : direction === 'down' ? 5 : 0),
+            panel.querySelector('.poGraphLabelName').value);
+        }));
+        let drag = null;
+        canvas.addEventListener('pointerdown', event => {
+          const label = event.target.closest('text.poMovableGraphLabel');
+          if (!label) return;
+          poGraphSelectLabel(card, label);
+          const svg = label.closest('svg');
+          if (!svg) return;
+          const rect = svg.getBoundingClientRect();
+          if (!(rect.width && rect.height)) return;
+          const vb = svg.viewBox.baseVal;
+          drag = {label, pointerId:event.pointerId, x:event.clientX, y:event.clientY,
+            startX:Number(label.getAttribute('x')), startY:Number(label.getAttribute('y')),
+            scaleX:vb.width/rect.width, scaleY:vb.height/rect.height, moved:false};
+          label.setPointerCapture(event.pointerId);
+          event.preventDefault();
+          event.stopPropagation();
+        });
+        canvas.addEventListener('pointermove', event => {
+          if (!drag || drag.pointerId !== event.pointerId) return;
+          const deltaX = (event.clientX - drag.x)*drag.scaleX;
+          const deltaY = (event.clientY - drag.y)*drag.scaleY;
+          if (Math.abs(deltaX) + Math.abs(deltaY) > 2) drag.moved = true;
+          if (!drag.moved) return;
+          drag.label.setAttribute('x', poGraphFmt(drag.startX + deltaX));
+          drag.label.setAttribute('y', poGraphFmt(drag.startY + deltaY));
+          event.preventDefault();
+        });
+        const finish = event => {
+          if (!drag || drag.pointerId !== event.pointerId) return;
+          const current = drag;
+          drag=null;
+          if (current.moved) {
+            poGraphSaveDraggedLabel(card, current.label,
+              Number(current.label.getAttribute('x')), Number(current.label.getAttribute('y')),
+              panel.querySelector('.poGraphLabelName').value);
+          }
+          event.preventDefault();
+        };
+        canvas.addEventListener('pointerup',finish);
+        canvas.addEventListener('pointercancel',() => { drag=null; poGraphEditorRefresh(card); });
+        canvas.addEventListener('keydown', event => {
+          const label = event.target.closest('text.poMovableGraphLabel');
+          if (!label) return;
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            poGraphSelectLabel(card, label);
+            panel.querySelector('.poGraphLabelName').focus();
+          }
+        });
+      }
+      poGraphEditorRefresh(card);
+    }
   </script>
 
   <script>
