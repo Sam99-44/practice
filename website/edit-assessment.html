@@ -1,3 +1,7 @@
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1978,6 +1982,7 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
         <label>Difficulty</label>
         <select id="difficultyFilter">
           <option value="">All difficulty levels</option>
+          <option value="foundation">Foundation</option><option value="advanced">Advanced</option><option value="exam_style">Exam-Style Practice</option>
           <option value="easy">Easy</option>
           <option value="moderate">Moderate</option>
           <option value="hard">Hard</option>
@@ -2047,8 +2052,17 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
           <select id="bulkAssessmentField" aria-label="Property to change">
             <option value="">Choose a property</option>
             <option value="difficulty">Difficulty</option>
+            <option value="practiceCategory">Practice Category</option>
+            <option value="practiceLevel">Practice Level</option>
             <option value="term">Term</option>
+            <option value="titleTopic">Title and Topic (same text)</option>
+            <option value="title">Title only</option>
+            <option value="topic">Topic only</option>
+            <option value="timeLimitMinutes">Time Limit (minutes)</option>
+            <option value="accessLevel">Quiz Access</option>
           </select>
+          <input id="bulkAssessmentText" type="text" aria-label="New title or topic" placeholder="Enter new title or topic" style="display:none;flex:1 1 180px;min-width:160px;margin:0">
+          <input id="bulkAssessmentMinutes" type="number" min="1" max="180" step="1" aria-label="New time limit in minutes" placeholder="Minutes (1–180)" style="display:none;flex:1 1 180px;min-width:160px;margin:0">
           <select id="bulkAssessmentValue" aria-label="New value" disabled>
             <option value="">Choose a value</option>
           </select>
@@ -2123,6 +2137,14 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
 
       </div>
 
+      <div>
+        <label for="practiceCategory">Practice Category</label>
+        <select id="practiceCategory"><option value="textbook">Textbook Practice</option><option value="exam_style">Exam-Style Practice</option></select>
+      </div>
+      <div id="practiceLevelWrap">
+        <label for="practiceLevel">Practice Level</label>
+        <select id="practiceLevel"><option value="foundation">Foundation</option><option value="advanced">Advanced</option></select>
+      </div>
       <div>
         <label>Paper</label>
         <select id="paper">
@@ -2367,6 +2389,27 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
     const timeLimitEl = document.getElementById("timeLimit");
     const titleEl = document.getElementById("title");
     const difficultyEl = document.getElementById("difficulty");
+    const practiceCategoryEl = document.getElementById("practiceCategory");
+    const practiceLevelEl = document.getElementById("practiceLevel");
+    function practiceClassification(meta = {}) {
+      const category = meta.practiceCategory === "exam_style" ? "exam_style" : "textbook";
+      return {practiceCategory:category, practiceLevel:category === "exam_style" ? null : (["foundation","advanced"].includes(meta.practiceLevel) ? meta.practiceLevel : normalizeDifficulty(meta.difficulty)==="easy" ? "foundation" : "advanced")};
+    }
+    function syncPracticeLevelUI(){
+      const exam = practiceCategoryEl.value === "exam_style";
+      document.getElementById("practiceLevelWrap").classList.toggle("hide", exam);
+      practiceLevelEl.disabled=exam;
+    }
+    function loadPracticeClassification(meta){
+      const c=practiceClassification(meta);
+      practiceCategoryEl.value=c.practiceCategory;
+      practiceLevelEl.value=c.practiceLevel || (normalizeDifficulty(meta.difficulty)==="easy" ? "foundation" : "advanced");
+      syncPracticeLevelUI();
+    }
+    function currentPracticeClassification(){return practiceClassification({practiceCategory:practiceCategoryEl.value,practiceLevel:practiceLevelEl.value,difficulty:difficultyEl.value});}
+    function practiceClassificationLabel(q){const c=practiceClassification(q);return c.practiceCategory==="exam_style" ? "Exam-Style Practice" : c.practiceLevel==="foundation" ? "Foundation" : "Advanced";}
+    practiceCategoryEl.addEventListener("change",syncPracticeLevelUI);
+
     const paperEl = document.getElementById("paper");
     const assessmentCodeEl = document.getElementById("assessmentCode");
     const accessLevelEl = document.getElementById("accessLevel");
@@ -2458,6 +2501,8 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
     const deleteCheckedAssessmentsBtn = document.getElementById("deleteCheckedAssessmentsBtn");
     const bulkAssessmentField = document.getElementById("bulkAssessmentField");
     const bulkAssessmentValue = document.getElementById("bulkAssessmentValue");
+    const bulkAssessmentText = document.getElementById("bulkAssessmentText");
+    const bulkAssessmentMinutes = document.getElementById("bulkAssessmentMinutes");
     const applyAssessmentBulkBtn = document.getElementById("applyAssessmentBulkBtn");
     const assessmentBulkStatus = document.getElementById("assessmentBulkStatus");
     const toggleFreezeBtn = document.getElementById("toggleFreezeBtn");
@@ -2995,7 +3040,7 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
       return {
         meta:{
           grade:simpleValue(gradeEl.value), subject:simpleValue(subjectEl.value), contentType:normalizeAssessmentContentType(currentContentType), topic:simpleValue(topicEl.value), title:simpleValue(titleEl.value),
-          timeLimit:simpleValue(timeLimitEl.value), difficulty:simpleValue(difficultyEl.value), paper:simpleValue(paperEl.value),
+          timeLimit:simpleValue(timeLimitEl.value), difficulty:simpleValue(difficultyEl.value), ...currentPracticeClassification(), paper:simpleValue(paperEl.value),
           accessLevel:simpleValue(accessLevelEl.value), accessFee:simpleValue(accessFeeEl.value), instructions:simpleValue(instructionsEl.value),
           publishMode:simpleValue(publishModeEl.value), publishAt:simpleValue(publishAtEl.value),
           availableFrom:simpleValue(availableFromEl.value), availableUntil:simpleValue(availableUntilEl.value), marksReleaseAt:simpleValue(marksReleaseAtEl.value), sendEmail:!!sendPublishEmailEl.checked
@@ -3090,7 +3135,7 @@ body:not([data-assessment-workflow="override"]) #overrideWorkflowPanel{
     function getChangesMade(){
       if (!originalEditorSnapshot) return [];
       const current=captureEditorState(); const changes=[];
-      const names={grade:"Grade",subject:"Subject",contentType:"Content type",topic:"Topic",title:"Assessment title",timeLimit:"Time limit",difficulty:"Difficulty",paper:"Paper",accessLevel:"Access level",accessFee:"Access fee",instructions:"Instructions",publishMode:"Publish option",publishAt:"Publish date",availableFrom:"Available from",availableUntil:"Available until",marksReleaseAt:"Marks release date",sendEmail:"Publish email"};
+      const names={grade:"Grade",subject:"Subject",contentType:"Content type",topic:"Topic",title:"Assessment title",timeLimit:"Time limit",difficulty:"Difficulty",practiceCategory:"Practice Category",practiceLevel:"Practice Level",paper:"Paper",accessLevel:"Access level",accessFee:"Access fee",instructions:"Instructions",publishMode:"Publish option",publishAt:"Publish date",availableFrom:"Available from",availableUntil:"Available until",marksReleaseAt:"Marks release date",sendEmail:"Publish email"};
       Object.keys(names).forEach(key=>{
         const before=originalEditorSnapshot.meta[key]; const after=current.meta[key];
         if (JSON.stringify(before)!==JSON.stringify(after)) changes.push(`${names[key]} changed${String(before)!=="" || String(after)!=="" ? ` (${String(before || "empty")} → ${String(after || "empty")})` : ""}.`);
@@ -8452,6 +8497,8 @@ function escapeHtml(str){
           case "TIME":
           case "TIME_LIMIT_MINUTES": meta.timeLimitMinutes = Number(value.trim() || 10); break;
           case "DIFFICULTY": meta.difficulty = value.trim(); break;
+          case "PRACTICE_CATEGORY": meta.practiceCategory = value.trim().toLowerCase() || null; break;
+          case "PRACTICE_LEVEL": meta.practiceLevel = value.trim().toLowerCase() || null; break;
           case "PAPER": meta.paper = value.trim(); break;
           case "ACCESS_LEVEL": meta.accessLevel = normalizeQuizAccessLevel(value); break;
           case "ACCESS_FEE": meta.accessFee = Math.max(0, Number(value) || 0); break;
@@ -8734,6 +8781,7 @@ function escapeHtml(str){
           title: String(meta.title || "").trim(),
           timeLimitMinutes: Number(meta.timeLimitMinutes || 10),
           difficulty: normalizeDifficulty(meta.difficulty),
+          ...practiceClassification(meta),
           paper: normalizePaper(meta.paper),
           accessLevel: normalizeQuizAccessLevel(meta.accessLevel),
           accessFee: Math.max(0, Number(meta.accessFee) || 0),
@@ -8832,6 +8880,7 @@ function escapeHtml(str){
       if (meta.title) titleEl.value = meta.title || "";
       timeLimitEl.value = Number.isFinite(Number(meta.timeLimitMinutes)) ? String(meta.timeLimitMinutes) : "10";
       difficultyEl.value = normalizeDifficulty(meta.difficulty);
+      loadPracticeClassification(meta);
       paperEl.value = normalizePaper(meta.paper);
       assessmentCodeEl.value = meta.assessmentCode || "Generated automatically when saved";
       accessLevelEl.value = normalizeQuizAccessLevel(meta.accessLevel);
@@ -8978,6 +9027,7 @@ function escapeHtml(str){
         timeLimitMinutes,
         instructions,
         difficulty,
+        ...practiceClassification(meta),
         questions,
         publishNow,
         publishAt: finalPublishAt,
@@ -9008,6 +9058,9 @@ function escapeHtml(str){
       lines.push(`TOPIC: ${cleanSpaces(meta.topic || "")}`);
       lines.push(`TIME_LIMIT: ${cleanSpaces(meta.timeLimitMinutes || "10")}`);
       lines.push(`DIFFICULTY: ${normalizeDifficulty(meta.difficulty)}`);
+      const classification = practiceClassification(meta);
+      lines.push(`PRACTICE_CATEGORY: ${classification.practiceCategory}`);
+      lines.push(`PRACTICE_LEVEL: ${classification.practiceLevel || ""}`);
       lines.push(`PAPER: ${normalizePaper(meta.paper)}`);
       lines.push(`ACCESS_LEVEL: ${normalizeQuizAccessLevel(meta.accessLevel)}`);
       lines.push(`ACCESS_FEE: ${normalizeQuizAccessLevel(meta.accessLevel) === "premium" ? Math.max(0, Number(meta.accessFee) || 0) : 0}`);
@@ -9210,6 +9263,10 @@ function escapeHtml(str){
     function stageOverrideText(raw, sourceName){
       resetStagedOverride();
       const parsed = parseAssessmentFile(raw, sourceName);
+      // Legacy replacement TXT files must not reset an existing classification.
+      if (!/^\s*PRACTICE_CATEGORY\s*:/im.test(raw) && !/^\s*PRACTICE_LEVEL\s*:/im.test(raw)) {
+        Object.assign(parsed.meta, practiceClassification(overrideTargetQuiz || {}));
+      }
       const payload = buildPayloadFromParsedAssessment(parsed);
       stagedOverrideParsed = parsed;
       stagedOverridePayload = payload;
@@ -9612,6 +9669,7 @@ function escapeHtml(str){
         timeLimitMinutes,
         instructions,
         difficulty,
+        ...currentPracticeClassification(),
         questions,
         publishNow,
         publishAt,
@@ -9656,6 +9714,7 @@ function escapeHtml(str){
       topicEl.value = "";
       timeLimitEl.value = "10";
       difficultyEl.value = "moderate";
+      loadPracticeClassification({difficulty:"moderate"});
       paperEl.value = "paper1";
       assessmentCodeEl.value = "Generated automatically when saved";
       accessLevelEl.value = "standard";
@@ -9967,6 +10026,7 @@ function escapeHtml(str){
           title: quiz?.title || "",
           timeLimitMinutes: Number(quiz?.timeLimitMinutes || 10),
           difficulty: normalizeDifficulty(quiz?.difficulty),
+          ...practiceClassification(quiz || {}),
           paper: normalizePaper(quiz?.paper),
           assessmentCode: quiz?.assessmentCode || "",
           accessLevel: normalizeQuizAccessLevel(quiz?.accessLevel),
@@ -10122,7 +10182,11 @@ function escapeHtml(str){
         deleteCheckedAssessmentsBtn.textContent=checked.length?`Remove checked (${checked.length})`:"Remove checked";
       }
       if(applyAssessmentBulkBtn){
-        applyAssessmentBulkBtn.disabled = !checked.length || !bulkAssessmentField?.value || !bulkAssessmentValue?.value;
+        const field = bulkAssessmentField?.value;
+        const value = ["title", "topic", "titleTopic"].includes(field) ? bulkAssessmentText?.value.trim()
+          : field === "timeLimitMinutes" ? bulkAssessmentMinutes?.value.trim() : bulkAssessmentValue?.value;
+        const valid = field === "timeLimitMinutes" ? /^\d+$/.test(value || "") && Number(value) >= 1 && Number(value) <= 180 : !!value;
+        applyAssessmentBulkBtn.disabled = !checked.length || !field || !valid;
         applyAssessmentBulkBtn.textContent = `Apply to checked (${checked.length})`;
       }
       if(assessmentSelectAllCheckbox){
@@ -10189,6 +10253,7 @@ function escapeHtml(str){
           contentTypeLabel(q.contentType),
           q.grade?`Grade ${q.grade}`:"",
           q.topic||"",
+          practiceClassificationLabel(q),
           q.difficulty||"",
           formatAssessmentCreatedDate(q) ? `Created ${formatAssessmentCreatedDate(q)}` : "",
           q.term ? `Term ${String(q.term).replace(/^term\s*/i, "")}` : "",
@@ -10209,54 +10274,113 @@ function escapeHtml(str){
       updateAssessmentDropdownButtonText();
     }
 
-    // Bulk edits reuse each full assessment payload, preserving questions and metadata.
-    // The backend must accept `term` for term changes to persist.
-    bulkAssessmentField?.addEventListener("change",()=>{
-      const field=bulkAssessmentField.value;
-      const values=field==="difficulty"?[["easy","Easy"],["moderate","Moderate"],["hard","Hard"]]:
-        field==="term"?[["1","Term 1"],["2","Term 2"],["3","Term 3"],["4","Term 4"]]:[];
-      bulkAssessmentValue.innerHTML='<option value="">Choose a value</option>'+
+    // Bulk updates are applied to each full saved assessment. Only selected metadata changes.
+    function refreshAssessmentBulkField(){
+      const field = bulkAssessmentField?.value || "";
+      const isText = ["title", "topic", "titleTopic"].includes(field);
+      const isMinutes = field === "timeLimitMinutes";
+      const isSelect = ["difficulty", "term", "accessLevel", "practiceCategory", "practiceLevel"].includes(field);
+      bulkAssessmentText.style.display = isText ? "" : "none";
+      bulkAssessmentMinutes.style.display = isMinutes ? "" : "none";
+      bulkAssessmentValue.style.display = isSelect ? "" : "none";
+      if(isText) bulkAssessmentText.placeholder = field === "titleTopic" ? "New Title and Topic (identical)" : (field === "title" ? "New assessment title" : "New topic");
+      const values = field === "difficulty" ? [["easy","Easy"],["moderate","Moderate"],["hard","Hard"]] :
+        field === "practiceCategory" ? [["textbook","Textbook Practice"],["exam_style","Exam-Style Practice"]] :
+        field === "practiceLevel" ? [["foundation","Foundation"],["advanced","Advanced"]] :
+        field === "term" ? [["1","Term 1"],["2","Term 2"],["3","Term 3"],["4","Term 4"]] :
+        field === "accessLevel" ? [["standard","Standard (Free)"],["premium","Premium (Paid)"]] : [];
+      bulkAssessmentValue.innerHTML = '<option value="">Choose a value</option>' +
         values.map(([value,label])=>`<option value="${value}">${label}</option>`).join("");
-      bulkAssessmentValue.disabled=!values.length;
+      bulkAssessmentValue.disabled = !isSelect;
       syncAssessmentCheckboxControls();
-    });
+    }
+    bulkAssessmentField?.addEventListener("change",refreshAssessmentBulkField);
     bulkAssessmentValue?.addEventListener("change",syncAssessmentCheckboxControls);
+    bulkAssessmentText?.addEventListener("input",syncAssessmentCheckboxControls);
+    bulkAssessmentMinutes?.addEventListener("input",syncAssessmentCheckboxControls);
+    refreshAssessmentBulkField();
+
     applyAssessmentBulkBtn?.addEventListener("click",async()=>{
-      const ids=checkedAssessmentIds();
-      const field=bulkAssessmentField.value;
-      const value=bulkAssessmentValue.value;
-      if(!ids.length || !["difficulty","term"].includes(field) || !value) return;
-      const label=field==="term"?`Term ${value}`:value;
-      if(!confirm(`Change ${field} to ${label} for ${ids.length} checked assessments?\n\nThis saves each assessment immediately.`))return;
-      const token=localStorage.getItem("token");
-      if(!token)return logout();
-      applyAssessmentBulkBtn.disabled=true;
-      let saved=0; const failures=[];
+      const ids = checkedAssessmentIds();
+      const field = bulkAssessmentField.value;
+      const value = ["title","topic","titleTopic"].includes(field) ? bulkAssessmentText.value.trim() :
+        field === "timeLimitMinutes" ? bulkAssessmentMinutes.value.trim() : bulkAssessmentValue.value;
+      const allowed = ["difficulty","term","titleTopic","title","topic","timeLimitMinutes","accessLevel","practiceCategory","practiceLevel"];
+      if(!ids.length || !allowed.includes(field) || !value) return;
+      if(field === "timeLimitMinutes" && (!/^\d+$/.test(value) || Number(value)<1 || Number(value)>180)){
+        assessmentBulkStatus.textContent = "Time Limit must be a whole number from 1 to 180 minutes.";
+        return;
+      }
+      if (["practiceCategory","practiceLevel"].includes(field)) {
+        const label = bulkAssessmentValue.selectedOptions[0]?.textContent || value;
+        if (currentQuiz?._id && ids.includes(String(currentQuiz._id)) && originalEditorSnapshot && !sameState(captureEditorState(),originalEditorSnapshot)) {
+          return setMsg("Commit or discard the open assessment's changes before bulk classification.","error");
+        }
+        const note = field === "practiceLevel" ? "\nSelecting a level moves any Exam-Style assessments to Textbook Practice." : value === "exam_style" ? "\nPractice Level will be cleared." : "\nExisting textbook levels will be retained; other levels use the original difficulty.";
+        if (!confirm(`Set ${label} for ${ids.length} selected assessments?${note}`)) return;
+        const token = localStorage.getItem("token");
+        if (!token) return logout();
+        applyAssessmentBulkBtn.disabled=true;
+        try {
+          const res=await fetch(`${API}/api/quizzes/bulk-classification`, {method:"PATCH",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({ids,[field]:value})});
+          if(res.status===401)return logout();
+          const data=await res.json().catch(()=>({}));
+          if(!res.ok)throw new Error(data.message || `Update failed (${res.status})`);
+          for(const item of data.assessments || []){
+            const old=allQuizzes.find(q=>String(q._id)===String(item._id));
+            updateQuizInMemory({...old,...item});
+            broadcastAssessmentUpdate("saved",{...old,...item});
+          }
+          if(currentQuiz?._id && ids.includes(String(currentQuiz._id))){
+            loadPracticeClassification(currentQuiz);
+            if(originalEditorSnapshot)Object.assign(originalEditorSnapshot.meta,currentPracticeClassification());
+            updateChangeReview();
+          }
+          renderAssessmentDropdown();
+          const msg=`Classification updated for ${data.matchedCount ?? 0} of ${ids.length} assessments.`;
+          assessmentBulkStatus.textContent=msg;
+          setMsg(msg, data.matchedCount===ids.length?"ok":"error");
+          if(data.matchedCount===ids.length)showAssessmentSavedPopup(msg);
+        }catch(error){assessmentBulkStatus.textContent=error.message;setMsg(error.message,"error");}
+        finally{syncAssessmentCheckboxControls();}
+        return;
+      }
+      const updates = field === "titleTopic" ? {title:value,topic:value} :
+        field === "timeLimitMinutes" ? {timeLimitMinutes:Number(value)} : {[field]:value};
+      const description = field === "titleTopic" ? "Title and Topic" :
+        field === "timeLimitMinutes" ? "Time Limit" : field === "accessLevel" ? "Quiz Access" : field;
+      if(!confirm(`Change ${description} to ${value} for ${ids.length} checked assessments?\n\nThis will save each assessment immediately.`)) return;
+      const token = localStorage.getItem("token");
+      if(!token) return logout();
+      applyAssessmentBulkBtn.disabled = true;
+      let saved = 0;
+      const failures = [];
       for(const id of ids){
         try{
-          const get=await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`,{headers:{Authorization:`Bearer ${token}`}});
+          const get = await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`,{headers:{Authorization:`Bearer ${token}`}});
           if(get.status===401)return logout();
           if(!get.ok)throw new Error(`Read failed (${get.status})`);
           const raw=await get.json();
           const quiz=raw?.quiz||raw?.assessment||raw?.data||raw;
           if(!quiz || !Array.isArray(quiz.questions))throw new Error("Missing assessment questions");
-          const payload={...quiz,[field]:value};
+          const payload={...quiz,...updates};
+          // Free access should not retain a previous premium fee.
+          if(field==="accessLevel" && value==="standard")payload.accessFee=0;
           const put=await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`,{
             method:"PUT",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},
             body:JSON.stringify(payload)
           });
           if(put.status===401)return logout();
           if(!put.ok){const err=await put.json().catch(()=>({}));throw new Error(err.message||`Save failed (${put.status})`);}
-          const response=await put.json().catch(()=>({}));
-          const savedQuiz=response?.quiz||response?.assessment||response?.data||response;
-          const verified=await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`,{
-            headers:{Authorization:`Bearer ${token}`}
-          });
+          const verified=await fetch(`${API}/api/quizzes/${encodeURIComponent(id)}`,{headers:{Authorization:`Bearer ${token}`}});
+          if(verified.status===401)return logout();
           if(!verified.ok)throw new Error("Could not verify saved change");
           const verifiedRaw=await verified.json();
           const verifiedQuiz=verifiedRaw?.quiz||verifiedRaw?.assessment||verifiedRaw?.data||verifiedRaw;
-          if(String(verifiedQuiz?.[field]??"").toLowerCase()!==String(value).toLowerCase())
-            throw new Error(`Server did not retain ${field}; backend schema may need this field`);
+          for(const [key,expected] of Object.entries(updates)){
+            if(String(verifiedQuiz?.[key]??"").trim().toLowerCase() !== String(expected).trim().toLowerCase())
+              throw new Error(`Server did not retain ${key}; backend schema may need this field`);
+          }
           updateQuizInMemory({...quiz,...payload,...verifiedQuiz});
           broadcastAssessmentUpdate("saved",{...quiz,...payload,...verifiedQuiz});
           saved++;
@@ -10265,13 +10389,20 @@ function escapeHtml(str){
       await loadAssessmentList();
       if(currentQuiz?._id && ids.includes(String(currentQuiz._id))){
         const updated=allQuizzes.find(q=>String(q._id)===String(currentQuiz._id));
-        if(updated)currentQuiz={...currentQuiz,...updated};
-        if(field==="difficulty")difficultyEl.value=normalizeDifficulty(currentQuiz.difficulty);
+        if(updated){
+          currentQuiz={...currentQuiz,...updated};
+          if("title" in updates)titleEl.value=currentQuiz.title||"";
+          if("topic" in updates)topicEl.value=currentQuiz.topic||"";
+          if("timeLimitMinutes" in updates)timeLimitEl.value=String(currentQuiz.timeLimitMinutes||10);
+          if("accessLevel" in updates){accessLevelEl.value=normalizeQuizAccessLevel(currentQuiz.accessLevel);updateAccessUI();}
+          if("difficulty" in updates)difficultyEl.value=normalizeDifficulty(currentQuiz.difficulty);
+        }
       }
-      assessmentBulkStatus.textContent=`Updated ${saved} of ${ids.length} assessments.`+(failures.length?` ${failures.length} failed. Check server support and console.`:"");
+      assessmentBulkStatus.textContent=`Updated ${saved} of ${ids.length} assessments.`+
+        (failures.length?` ${failures.length} failed. Check the console for details.`:"");
       if(failures.length)console.error("Bulk assessment update errors",failures);
       setMsg(assessmentBulkStatus.textContent,failures.length?"error":"ok");
-      if(saved === ids.length && !failures.length) showAssessmentSavedPopup(`${saved} assessment${saved===1?"":"s"} updated successfully.`);
+      if(saved === ids.length && !failures.length)showAssessmentSavedPopup(`${saved} assessment${saved===1?"":"s"} updated successfully.`);
       syncAssessmentCheckboxControls();
     });
 
@@ -10347,7 +10478,7 @@ function escapeHtml(str){
             String(q.contentType || "quiz") === contentType;
           const difficultyOk =
             !difficulty ||
-            String(q.difficulty || "").toLowerCase() === difficulty;
+            (difficulty === "exam_style" ? practiceClassification(q).practiceCategory === "exam_style" : ["foundation","advanced"].includes(difficulty) ? practiceClassification(q).practiceLevel === difficulty : String(q.difficulty || "").toLowerCase() === difficulty);
           const codeOk =
             !code ||
             String(q.assessmentCode || "").toLowerCase().includes(code);
@@ -10393,6 +10524,7 @@ function escapeHtml(str){
           const label = [
             `${assessmentCode}${contentTypeLabel(q.contentType)}`,
             `Grade ${q.grade || ""}`,
+            escapeHtml(practiceClassificationLabel(q)),
             escapeHtml(q.difficulty || "Moderate"),
             escapeHtml(q.topic || "General"),
             escapeHtml(q.title || "Assessment"),
@@ -10420,7 +10552,7 @@ function escapeHtml(str){
       renderAssessmentCheckboxDropdown(filtered);
     }
 
-    [gradeEl,subjectEl,topicEl,timeLimitEl,titleEl,difficultyEl,paperEl,accessLevelEl,accessFeeEl,publishModeEl,publishAtEl,availableFromEl,availableUntilEl,marksReleaseAtEl,sendPublishEmailEl,instructionsEl].forEach(el=>{
+    [gradeEl,subjectEl,topicEl,timeLimitEl,titleEl,difficultyEl,practiceCategoryEl,practiceLevelEl,paperEl,accessLevelEl,accessFeeEl,publishModeEl,publishAtEl,availableFromEl,availableUntilEl,marksReleaseAtEl,sendPublishEmailEl,instructionsEl].forEach(el=>{
       el?.addEventListener("input", ()=>setTimeout(updateChangeReview,0));
       el?.addEventListener("change", ()=>setTimeout(updateChangeReview,0));
     });
