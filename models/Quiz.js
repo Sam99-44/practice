@@ -1,3 +1,7 @@
+
+
+
+
 // models/Quiz.js
 
 import mongoose from "mongoose";
@@ -429,6 +433,21 @@ String, default: undefined, trim: true, uppercase: true, index: true, },
       default: "moderate",
       trim: true,
       index: true,
+    },
+
+    // Optional classification; legacy difficulty remains unchanged.
+    practiceCategory: {
+      type: String,
+      enum: ["textbook", "exam_style", null],
+      default: null,
+      trim: true,
+    },
+
+    practiceLevel: {
+      type: String,
+      enum: ["foundation", "advanced", null],
+      default: null,
+      trim: true,
     },
 
     timeLimitMinutes: {
