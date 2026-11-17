@@ -1,3 +1,161 @@
+Updated server.js (.txt)
+Complete backend source code
+Download
+
+
+server.js (.js)
+Ready to replace your existing backend file
+Download
+
+2. Changes implemented
+- Support for practiceCategory and practiceLevel.
+- Creating, retrieving and editing assessment classifications.
+- Automatic classification for older uploads using the existing difficulty field.
+- A dedicated Bulk Edit API to update selected assessments without resaving their questions.
+- Automatic clearing of Practice Level when Exam-Style Practice is selected.
+The existing difficulty field, assessment codes, questions, marking logic, payments and authentication code have been retained.
+3. New classification structure
+Practice category	Practice level	Existing assessments
+Textbook Practice	Foundation	75
+Textbook Practice	Advanced	469
+Exam-Style Practice	Not applicable	0
+Total		544
+
+4. Implementation progress
+Update Quiz.js
+
+Backfill MongoDB database
+
+Verify all 544 assessments
+
+Update server.js
+
+Update Admin Quiz HTML
+
+Update Edit Assessment HTML
+
+Update Learner Practice HTML
+
+Update Attempt Assessment HTML
+
+
+50% completed
+
+
+
+Validation: JavaScript syntax checks and all 14 classification logic tests passed. Live API testing is still required after deployment.
+
+Replace your existing server.js and deploy it together with the updated models/Quiz.js.
+
+Our next step is Admin Quiz HTML.
+
+
+
+
+
+Server_Updated_Practice_Classification.txtDocumentserver.jsCode
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Thinking effortMedium
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      Server Updated Practice Classification
+
+
+
+ 
+
+
 // server.js (FULL UPDATED - COPY & PASTE)
 import express from "express";
 import mongoose from "mongoose";
@@ -878,6 +1036,50 @@ function normalizeDifficulty(v) {
   const d = String(v || "").toLowerCase().trim();
   if (d === "easy" || d === "moderate" || d === "hard") return d;
   return "moderate";
+}
+
+// Practice classification is independent of the legacy difficulty field.
+const practiceClassificationKeys = ["practiceCategory", "practiceLevel"];
+function hasPracticeClassification(input = {}) {
+  return practiceClassificationKeys.some(key => Object.prototype.hasOwnProperty.call(input, key));
+}
+
+function readPracticeClassification(quiz = {}) {
+  const fallback = normalizeDifficulty(quiz.difficulty) === "easy" ? "foundation" : "advanced";
+  if (quiz.practiceCategory === "exam_style") {
+    return { practiceCategory: "exam_style", practiceLevel: null };
+  }
+  return {
+    practiceCategory: "textbook",
+    practiceLevel: ["foundation", "advanced"].includes(quiz.practiceLevel) ? quiz.practiceLevel : fallback,
+  };
+}
+
+function resolvePracticeClassification(input = {}, current = {}) {
+  const has = key => Object.prototype.hasOwnProperty.call(input, key);
+  const read = (key, allowed) => {
+    const raw = input[key];
+    if (raw == null || raw === "") return null;
+    if (typeof raw !== "string" || !allowed.includes(raw.trim().toLowerCase())) {
+      throw new Error(`Invalid ${key}. Allowed values: ${allowed.join(", ")}, or null.`);
+    }
+    return raw.trim().toLowerCase();
+  };
+  const prior = readPracticeClassification(current);
+  const fallback = normalizeDifficulty(current.difficulty) === "easy" ? "foundation" : "advanced";
+  const suppliedCategory = has("practiceCategory") ? read("practiceCategory", ["textbook", "exam_style"]) : undefined;
+  const suppliedLevel = has("practiceLevel") ? read("practiceLevel", ["foundation", "advanced"]) : undefined;
+  let category = suppliedCategory === undefined ? prior.practiceCategory : (suppliedCategory || "textbook");
+  // Setting a textbook level alone moves an exam-style assessment to textbook.
+  if (suppliedCategory === undefined && suppliedLevel != null) category = "textbook";
+  if (category === "exam_style") return { practiceCategory: category, practiceLevel: null };
+  let level = suppliedLevel === undefined ? (suppliedCategory === null ? fallback : prior.practiceLevel) : suppliedLevel;
+  return { practiceCategory: category, practiceLevel: level || fallback };
+}
+
+function quizWithPracticeClassification(quiz) {
+  const data = typeof quiz?.toJSON === "function" ? quiz.toJSON() : quiz;
+  return { ...data, ...readPracticeClassification(data) };
 }
 
 function normalizePaper(v) {
@@ -5021,7 +5223,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
     const quizzes = await Quiz.find(filter)
       .sort({ createdAt: -1 })
       .select(
-        "assessmentCode grade subject curriculum language term chapter title topic subtopic version keywords contentType audience isForAllLearners accessLevel isPremium requiresPayment accessFee paper difficulty questions timeLimitMinutes instructions assessmentInstructions learningObjectives isFrozen availableFrom availableUntil marksReleaseAt createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
+        "assessmentCode grade subject curriculum language term chapter title topic subtopic version keywords contentType audience isForAllLearners accessLevel isPremium requiresPayment accessFee paper difficulty practiceCategory practiceLevel questions timeLimitMinutes instructions assessmentInstructions learningObjectives isFrozen availableFrom availableUntil marksReleaseAt createdAt updatedAt frozenAt isPublished publishedAt publishAt sendPublishEmail"
       )
       .lean();
 
@@ -5033,7 +5235,7 @@ app.get("/api/quizzes", authRequired, async (req, res) => {
       count: quizzes.length,
     });
 
-    return res.json(quizzes);
+    return res.json(quizzes.map(quizWithPracticeClassification));
   } catch (e) {
     console.error("GET /api/quizzes error:", e.message);
 
@@ -5052,7 +5254,7 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
     if (!u) return res.status(401).json({ message: "User not found" });
 
     if (canManageQuizzes(u.role) || isPrivilegedRole(u.role)) {
-      return res.json(quiz);
+      return res.json(quizWithPracticeClassification(quiz));
     }
 
     const normalizedContentType = normalizeAssessmentContentType(quiz.contentType);
@@ -5093,7 +5295,7 @@ app.get("/api/quizzes/:id", authRequired, async (req, res) => {
       });
     }
 
-    return res.json(quiz);
+    return res.json(quizWithPracticeClassification(quiz));
   } catch {
     return res.status(500).json({ message: "Server error" });
   }
@@ -5221,6 +5423,13 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
       assessmentInstructions || instructions || ""
     ).trim();
 
+    let classification;
+    try {
+      classification = resolvePracticeClassification(req.body, { difficulty: normalizeDifficulty(difficulty) });
+    } catch (error) {
+      return res.status(400).json({ message: error.message });
+    }
+
     const quizPayload = {
       grade: g,
       subject: finalSubject,
@@ -5245,6 +5454,7 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
           ? Math.max(0, Number(accessFee) || 0)
           : 0,
       difficulty: normalizeDifficulty(difficulty),
+      ...classification,
       timeLimitMinutes: Number(timeLimitMinutes) || 10,
       questions: normalizedQuestions,
       instructions: finalAssessmentInstructions,
@@ -5300,6 +5510,7 @@ app.post("/api/quizzes", authRequired, quizManagerOnly, async (req, res) => {
       assessmentSequence: generatedCode.assessmentSequence,
       assessmentCounterKey: generatedCode.assessmentCounterKey,
       subject: quiz.subject,
+      ...readPracticeClassification(quiz),
       marksReleaseAt: quiz.marksReleaseAt,
       accessLevel: quiz.accessLevel,
       isPublished: quiz.isPublished,
@@ -5325,6 +5536,19 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
     const quiz = await Quiz.findById(req.params.id);
     if (!quiz) {
       return res.status(404).json({ message: "Assessment not found." });
+    }
+
+    // Classification-only edit: do not rewrite or validate unrelated legacy questions.
+    if (hasPracticeClassification(req.body) && Object.keys(req.body).every(key => practiceClassificationKeys.includes(key))) {
+      let classification;
+      try {
+        classification = resolvePracticeClassification(req.body, quiz);
+      } catch (error) {
+        return res.status(400).json({ message: error.message });
+      }
+      const updated = await Quiz.findByIdAndUpdate(quiz._id, { $set: classification }, { new: true, runValidators: true });
+      if (!updated) return res.status(404).json({ message: "Assessment not found." });
+      return res.json(quizWithPracticeClassification(updated));
     }
 
     const originalGrade = quiz.grade;
@@ -5527,6 +5751,16 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
       }
     }
 
+    if (hasPracticeClassification(req.body)) {
+      try {
+        const classification = resolvePracticeClassification(req.body, quiz);
+        quiz.practiceCategory = classification.practiceCategory;
+        quiz.practiceLevel = classification.practiceLevel;
+      } catch (error) {
+        return res.status(400).json({ message: error.message });
+      }
+    }
+
     if (
       quiz.availableFrom &&
       quiz.availableUntil &&
@@ -5582,10 +5816,50 @@ app.put("/api/quizzes/:id", authRequired, quizManagerOnly, async (req, res) => {
     } else {
       await quiz.save();
     }
-    return res.json(quiz);
+    return res.json(quizWithPracticeClassification(quiz));
   } catch (e) {
     console.error("PUT /api/quizzes/:id error:", e.message);
     return res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ------------------ BULK PRACTICE CLASSIFICATION ------------------ */
+// Only explicitly selected IDs are updated. No question arrays are loaded or saved.
+app.patch("/api/quizzes/bulk-classification", authRequired, quizManagerOnly, async (req, res) => {
+  try {
+    const input = req.body || {};
+    if (!Array.isArray(input.ids) || input.ids.length === 0 || input.ids.length > 1000 ||
+        input.ids.some(id => typeof id !== "string" || !/^[a-f0-9]{24}$/i.test(id))) {
+      return res.status(400).json({ message: "Provide 1–1000 valid assessment IDs." });
+    }
+    if (!hasPracticeClassification(input) || Object.keys(input).some(key => key !== "ids" && !practiceClassificationKeys.includes(key))) {
+      return res.status(400).json({ message: "Provide only ids, practiceCategory and/or practiceLevel." });
+    }
+    const ids = [...new Set(input.ids.map(id => id.toLowerCase()))];
+    const quizzes = await Quiz.find({ _id: { $in: ids } })
+      .select("_id difficulty practiceCategory practiceLevel").lean();
+    if (quizzes.length !== ids.length) {
+      return res.status(404).json({ message: "One or more selected assessments no longer exist. No updates were made." });
+    }
+    let updates;
+    try {
+      updates = quizzes.map(quiz => ({ _id: quiz._id, ...resolvePracticeClassification(input, quiz) }));
+    } catch (error) {
+      return res.status(400).json({ message: error.message });
+    }
+    const result = await Quiz.bulkWrite(updates.map(({ _id, ...classification }) => ({
+      updateOne: { filter: { _id }, update: { $set: classification }, upsert: false }
+    })), { ordered: true });
+    return res.json({
+      message: `Classification updated for ${result.matchedCount} of ${ids.length} selected assessments.`,
+      requestedCount: ids.length,
+      matchedCount: result.matchedCount,
+      modifiedCount: result.modifiedCount,
+      assessments: updates,
+    });
+  } catch (error) {
+    console.error("PATCH /api/quizzes/bulk-classification error:", error.message);
+    return res.status(500).json({ message: "Bulk classification update failed. Refresh the assessments to verify which changes were saved before retrying." });
   }
 });
 
@@ -5629,7 +5903,7 @@ app.patch("/api/quizzes/:id/publish", authRequired, quizManagerOnly, async (req,
       message: publishNow
         ? "Assessment published successfully."
         : "Assessment scheduled for publishing.",
-      quiz,
+      quiz: quizWithPracticeClassification(quiz),
     });
   } catch (e) {
     console.error("PATCH /api/quizzes/:id/publish error:", e.message);
