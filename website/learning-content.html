@@ -1,6 +1,3 @@
-
-
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -5139,12 +5136,14 @@ textarea{
       </div>
 
       <div class="control-field">
-        <label for="modeFilter">Level</label>
+        <label for="modeFilter">Practice type</label>
         <select id="modeFilter">
-          <option value="all">All modes</option>
-          <option value="easy">Easy</option>
-          <option value="moderate">Medium</option>
-          <option value="hard">Hard</option>
+          <option value="all">All practice</option>
+          <optgroup label="Textbook Practice">
+            <option value="foundation">Foundation</option>
+            <option value="advanced">Advanced</option>
+          </optgroup>
+          <option value="exam_style">Exam-Style Practice</option>
         </select>
       </div>
 
@@ -5589,7 +5588,7 @@ let filterTimer = null;
 let lastRenderedGroups = [];
 let manualExpand = false;
 
-const QUIZ_CACHE_KEY = "learner_quizzes_v8_achievement_cards_cache";
+const QUIZ_CACHE_KEY = "learner_quizzes_v9_practice_classification_cache";
 const QUIZ_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
 
 if(logoutBtn){
@@ -5792,6 +5791,13 @@ function normalizePortalContentType(value){
   return raw;
 }
 
+function resolvePracticeClassification(q){
+  if(String(q.practiceCategory || "").trim().toLowerCase() === "exam_style") return "exam_style";
+  const level = String(q.practiceLevel || "").trim().toLowerCase();
+  if(level === "foundation" || level === "advanced") return level;
+  return String(q.difficulty || "").trim().toLowerCase() === "easy" ? "foundation" : "advanced";
+}
+
 function preprocessQuizzes(rawQuizzes){
   return rawQuizzes.map(q => {
     const createdTime = q.createdAt ? new Date(q.createdAt).getTime() : 0;
@@ -5804,6 +5810,7 @@ function preprocessQuizzes(rawQuizzes){
       _topicLower: String(q.topic || "").toLowerCase(),
       _paperLower: String(q.paper || "").toLowerCase(),
       _difficultyLower: String(q.difficulty || "").toLowerCase(),
+      _practiceType: resolvePracticeClassification(q),
       _assessmentCode: String(q.assessmentCode || q.quizCode || q.examCode || q.code || "").trim().toUpperCase(),
       _assessmentCodeLower: String(q.assessmentCode || q.quizCode || q.examCode || q.code || "").trim().toLowerCase(),
       _accessLevel: String(q.accessLevel || (q.isPremium ? "premium" : "standard")).toLowerCase() === "premium" ? "premium" : "standard",
@@ -5905,7 +5912,7 @@ function apply(){
   const selectedPeriod = periodFilter.value;
   const selectedAccess = accessFilter.value;
   const selectedMode = modeFilter ? modeFilter.value : "all";
-  const selectedDiff = selectedMode === "all" ? diff : selectedMode;
+  const selectedDiff = selectedMode;
 
   const filteredGroups = groupedByTopic
     .map(group => {
@@ -5913,7 +5920,7 @@ function apply(){
         const matchesSearch = !q || x._titleLower.includes(q) || x._topicLower.includes(q) || x._assessmentCodeLower.includes(q);
         const matchesTopic = selectedTopic === "all" || x._topic === selectedTopic;
         const matchesPaper = selectedPaper === "all" || x._paperLower === selectedPaper;
-        const matchesDiff = selectedDiff === "all" || x._difficultyLower === selectedDiff;
+        const matchesDiff = selectedDiff === "all" || x._practiceType === selectedDiff;
         const matchesAccess = selectedAccess === "all" || x._accessLevel === selectedAccess;
         const matchesPeriod = isWithinPeriod(x._timeValue, selectedPeriod);
         return matchesSearch && matchesTopic && matchesPaper && matchesDiff && matchesAccess && matchesPeriod;
@@ -5960,9 +5967,9 @@ function buildAssessmentCard(q, i){
   const isLocked = Boolean(q._locked);
   const code = q._assessmentCode || `QUIZ-${i + 1}`;
   const paper = q._paperLower === "paper2" ? "Paper 2" : "Paper 1";
-  const difficulty = q.difficulty
-    ? String(q.difficulty).charAt(0).toUpperCase() + String(q.difficulty).slice(1)
-    : "Moderate";
+  const difficulty = q._contentType === "quiz"
+    ? ({foundation:"Foundation", advanced:"Advanced", exam_style:"Exam-Style Practice"})[q._practiceType || resolvePracticeClassification(q)]
+    : (q.difficulty ? String(q.difficulty).charAt(0).toUpperCase() + String(q.difficulty).slice(1) : "Moderate");
   const questionCount = getQuestionCount(q);
   const bestScore = getBestScore(result);
   const achievement = getAchievement(bestScore);
@@ -5988,7 +5995,7 @@ function buildAssessmentCard(q, i){
         <span class="meta-chip">${escapeHtml(String(q.timeLimitMinutes || 10))} Minutes</span>
       </div>
 
-      <div class="assessment-topic-line">${escapeHtml(q._topic || q.topic || "General")}</div>
+      <div class="assessment-topic-line">${escapeHtml(q._contentType === "quiz" ? (String(q.title || "").trim() || q._topic || q.topic || "General") : (q._topic || q.topic || "General"))}</div>
 
       <div class="assessment-rating">
         <div class="quiz-rating-top ${hasRatings ? "" : "empty"}">
@@ -6099,16 +6106,20 @@ function render(groups){
   renderToken += 1;
 
   const flat = groups.flatMap(group => group.quizzes || []);
-  if(!flat.length){
-    quizListEl.innerHTML = `<div class="empty">No assessments found.</div>`;
-    return;
-  }
-
-  quizListEl.innerHTML = `
-    <div class="embedded-assessment-grid">
-      ${flat.map((q, i) => buildAssessmentCard(q, i)).join("")}
-    </div>
-  `;
+  const selected = modeFilter ? modeFilter.value : "all";
+  const filtered = searchEl.value.trim() || topicFilter.value !== "all" || paperFilter.value !== "all" || periodFilter.value !== "all" || accessFilter.value !== "all";
+  const levelSection = (key, label, description) => {
+    const items = flat.filter(q => q._practiceType === key);
+    if(selected !== "all" && selected !== key) return "";
+    if(filtered && !items.length && selected === "all") return "";
+    return `<section class="practice-level practice-${key}">
+      <h3 class="practice-level-title">${label}</h3><p class="practice-description">${description}</p>
+      ${items.length ? `<div class="embedded-assessment-grid">${items.map((q,i) => buildAssessmentCard(q,i)).join("")}</div>` : `<div class="empty">${filtered ? "No matching assessments found." : "No assessments available yet."}</div>`}
+    </section>`;
+  };
+  const textbook = levelSection("foundation", "Foundation", "Basic concepts, fundamental skills and routine calculations.") + levelSection("advanced", "Advanced", "Complex calculations, mathematical reasoning and problem-solving.");
+  const exam = levelSection("exam_style", "Exam-Style Practice", "Examination-standard questions covering various levels of difficulty.");
+  quizListEl.innerHTML = (textbook ? `<section class="practice-category"><h2 class="practice-category-title">Textbook Practice</h2>${textbook}</section>` : "") + (exam ? `<section class="practice-category practice-exam">${exam}</section>` : "") || `<div class="empty">No assessments found.</div>`;
 }
 
 function expandRemainingTopicsNow(){}
@@ -7410,6 +7421,21 @@ if(portalResultsListEl){
 }
 </style>
 
+<style>
+/* Practice classification: local to learner quizzes only */
+#quizzesPanel .practice-category{margin:0 0 24px;min-width:0;border:1px solid #dfe4ec;border-radius:10px;padding:16px;background:#fff}
+#quizzesPanel .practice-category-title{font-size:18px;font-weight:700;color:var(--nav);margin:0 0 16px}
+#quizzesPanel .practice-level{min-width:0;margin:0 0 20px}
+#quizzesPanel .practice-level:last-child{margin-bottom:0}
+#quizzesPanel .practice-level+.practice-level{border-top:1px solid #e2e8f0;padding-top:18px}
+#quizzesPanel .practice-level-title{font-size:15px;font-weight:700;margin:0 0 5px;color:var(--nav)}
+#quizzesPanel .practice-foundation .practice-level-title{color:#15803d}
+#quizzesPanel .practice-advanced .practice-level-title{color:#a16207}
+#quizzesPanel .practice-exam .practice-level-title{font-size:18px}
+#quizzesPanel .practice-description{font-size:12px;color:#475569;line-height:1.5;margin:0 0 12px}
+#quizzesPanel .practice-level .embedded-assessment-grid{min-width:0; margin-top:0}
+@media(max-width:640px){#quizzesPanel .practice-category{padding:12px}#quizzesPanel .practice-level .embedded-assessment-grid{grid-template-columns:minmax(0,1fr)!important}}
+</style>
 </body>
 </html>
 <style>
