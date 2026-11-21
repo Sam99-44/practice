@@ -5602,6 +5602,52 @@ body.poFocusMode #uploadWorkflowSection .poPasteCollapsed > summary {
   display:flex!important; align-items:center!important; justify-content:space-between!important; gap:8px!important;
 }
 </style>
+<style id="poBottomPublishCode20261121">
+/* Compact footer actions with readable labels, and a green verified quiz code. */
+#poPreviewOnlyStudio .previewPublishArea,.previewPublishArea{display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:flex-end!important;gap:10px!important;max-width:1040px!important;margin:12px auto 0!important;padding:8px 0!important;border:0!important;background:transparent!important}
+#poPreviewOnlyStudio .previewPublishActions,.previewPublishActions{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:7px!important;width:auto!important;margin-left:0!important}
+#poPreviewOnlyStudio .previewPublishActions #saveBtn,#poPreviewOnlyStudio .previewPublishActions #publishBtn,.previewPublishActions #saveBtn,.previewPublishActions #publishBtn{display:inline-flex!important;align-items:center!important;gap:6px!important;justify-content:center!important;width:auto!important;min-width:82px!important;max-width:none!important;height:29px!important;min-height:29px!important;padding:4px 9px!important;border:1px solid #c5cbd5!important;border-radius:3px!important;background:#fff!important;color:#111827!important;font:normal 11px Arial,sans-serif!important;box-shadow:none!important}
+.previewPublishActions .poActionSvg{width:14px!important;height:14px!important;flex:0 0 14px!important;object-fit:contain!important}
+.previewPublishActions #saveBtn img{filter:none!important}
+.poPublishedCode[hidden]{display:none!important}
+.poPublishedCode{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-right:auto;font:normal 12px Arial,sans-serif;color:#111827}
+.poPublishedCodeLabel{font-weight:400;color:#374151}
+.poPublishedCodeValue{color:#16803d;font-weight:700;letter-spacing:.015em;user-select:all}
+.poCopyCode{display:inline-flex;align-items:center;gap:5px;min-width:auto!important;height:27px!important;min-height:27px!important;padding:3px 7px!important;border:1px solid #c5cbd5!important;border-radius:3px!important;background:#fff!important;color:#111827!important;font:normal 11px Arial,sans-serif!important;cursor:pointer}
+.poCopyCode:hover{background:#f4f5f7!important}
+@media(max-width:640px){.poPublishedCode{width:100%;margin-right:0}.previewPublishActions{margin-left:auto!important}}
+</style>
+
+<style id="poFastSavePublish20261121">
+/* Visible only once assessment content has been loaded or entered. */
+body:not(.poQuizLoaded) #poPreviewOnlyStudio .previewPublishActions,
+body:not(.poQuizLoaded) .previewPublishActions{display:none!important}
+body.poQuizLoaded .previewPublishActions,
+body.poQuizLoaded #poPreviewOnlyStudio .previewPublishActions{display:flex!important}
+#poPreviewOnlyStudio .previewPublishActions #saveBtn,
+.previewPublishActions #saveBtn{
+  background:#16803d!important;border:1px solid #16803d!important;color:#fff!important;
+  height:29px!important;min-height:29px!important;min-width:86px!important;
+  padding:4px 11px!important;border-radius:3px!important;opacity:1;
+}
+#poPreviewOnlyStudio .previewPublishActions #publishBtn,
+.previewPublishActions #publishBtn{
+  background:#1767b1!important;border:1px solid #1767b1!important;color:#fff!important;
+  height:29px!important;min-height:29px!important;min-width:90px!important;
+  padding:4px 11px!important;border-radius:3px!important;
+}
+#poPreviewOnlyStudio .previewPublishActions #saveBtn:hover:not(:disabled),
+.previewPublishActions #saveBtn:hover:not(:disabled){background:#11652f!important;border-color:#11652f!important}
+#poPreviewOnlyStudio .previewPublishActions #publishBtn:hover:not(:disabled),
+.previewPublishActions #publishBtn:hover:not(:disabled){background:#11528d!important;border-color:#11528d!important}
+.previewPublishActions #saveBtn .poActionSvg,
+.previewPublishActions #publishBtn .poActionSvg{
+  filter:brightness(0) invert(1)!important;width:14px!important;height:14px!important;
+}
+.previewPublishActions button:disabled{opacity:.55!important;cursor:not-allowed!important}
+.previewPublishActions button span{color:#fff!important;font-weight:500!important}
+.poPublishedCodeValue{color:#16803d!important}
+</style>
 </head>
 
 <body class="poFocusMode" data-po-panel="upload">
@@ -5709,9 +5755,14 @@ body.poFocusMode #uploadWorkflowSection .poPasteCollapsed > summary {
     </div>
     <div id="fullLearnerPreview" class="attemptPaperPreview"></div>
     <div class="previewPublishArea">
+      <div class="poPublishedCode" id="poPublishedCode" hidden aria-live="polite">
+        <span class="poPublishedCodeLabel">Published quiz code</span>
+        <span class="poPublishedCodeValue" id="poPublishedCodeValue"></span>
+        <button type="button" class="poCopyCode" id="poCopyPublishedCode" title="Copy quiz code" aria-label="Copy published quiz code"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="1"/><path d="M16 8V3H3v14h5"/></svg><span>Copy</span></button>
+      </div>
       <div class="previewPublishActions">
-        <button class="btn" id="saveBtn" disabled type="button" title="Save assessment" aria-label="Save assessment"><img class="poActionSvg" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1795182158/save_emutcz.svg" alt="" aria-hidden="true" loading="eager" decoding="async"></button>
-        <button class="btn btn2" id="publishBtn" disabled type="button" title="Publish assessment" aria-label="Publish assessment"><img class="poActionSvg" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1795182246/publish_exnlxt.svg" alt="" aria-hidden="true" loading="eager" decoding="async"></button>
+        <button class="btn" id="saveBtn" disabled type="button" title="Save assessment" aria-label="Save assessment"><img class="poActionSvg" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1795182158/save_emutcz.svg" alt="" aria-hidden="true" loading="eager" decoding="async"><span>Save</span></button>
+        <button class="btn btn2" id="publishBtn" disabled type="button" title="Publish assessment" aria-label="Publish assessment"><img class="poActionSvg" src="https://res.cloudinary.com/dopoxadlr/image/upload/v1795182246/publish_exnlxt.svg" alt="" aria-hidden="true" loading="eager" decoding="async"><span>Publish</span></button>
       </div>
     </div>
     <div class="msg muted previewPublishFeedback" id="previewPublishFeedback" aria-live="polite"></div>
@@ -6186,6 +6237,28 @@ body.poFocusMode #uploadWorkflowSection .poPasteCollapsed > summary {
     const topicEl = document.getElementById("topic");
     const timeLimitEl = document.getElementById("timeLimit");
     const titleEl = document.getElementById("title");
+    // The default two empty QUESTION headings do not count as a loaded assessment.
+    // This reflects imports, existing quizzes, restored drafts and manual entry.
+    let poActionVisibilityQueued=false;
+    function poUpdateLoadedActions(){
+      const hasMetadata=Boolean(titleEl?.value?.trim() && topicEl?.value?.trim());
+      const hasQuestions=Boolean(document.querySelector('#questionsWrap .qcard:not([data-type="group"])'));
+      const isExisting=Boolean(typeof currentEditingQuizId!=='undefined' && currentEditingQuizId);
+      document.body.classList.toggle('poQuizLoaded',hasMetadata || hasQuestions || isExisting);
+    }
+    function poQueueLoadedActions(){
+      if(poActionVisibilityQueued)return;
+      poActionVisibilityQueued=true;
+      requestAnimationFrame(()=>{poActionVisibilityQueued=false;poUpdateLoadedActions();});
+    }
+    [titleEl,topicEl,gradeEl].forEach(el=>{
+      el?.addEventListener('input',poQueueLoadedActions);
+      el?.addEventListener('change',poQueueLoadedActions);
+    });
+    const poObserveQuestions=document.getElementById('questionsWrap');
+    if(poObserveQuestions)new MutationObserver(poQueueLoadedActions).observe(poObserveQuestions,{childList:true});
+    poQueueLoadedActions();
+
     const subjectEl=document.getElementById("subject"),termEl=document.getElementById("term"),chapterEl=document.getElementById("chapter"),subtopicEl=document.getElementById("subtopic"),curriculumEl=document.getElementById("curriculum"),languageEl=document.getElementById("language"),versionEl=document.getElementById("version"),keywordsEl=document.getElementById("keywords");
     if (!subjectEl.value) subjectEl.value = "Mathematics";
     const assessmentCodeEl = document.getElementById("assessmentCode");
@@ -6271,7 +6344,7 @@ body.poFocusMode #uploadWorkflowSection .poPasteCollapsed > summary {
       const msg=el.querySelector('#poUploadProgressText');
       if(msg)msg.textContent=label;
     }
-    const poYieldUpload=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const poYieldUpload=()=>new Promise(resolve=>requestAnimationFrame(resolve));
 
     function setMsg(text, type="muted"){
       const value = String(text || "");
@@ -6286,6 +6359,7 @@ body.poFocusMode #uploadWorkflowSection .poPasteCollapsed > summary {
     }
 
     function openLearnerReviewAfterLoad(){
+      poQueueLoadedActions();
       // Keep the full preview available on demand, but never force it open after import.
       window.setTimeout(() => {
         window.poAdminShowPanel?.("blocks");
@@ -14968,6 +15042,7 @@ function poSharedSolutionRowsHtml(raw,escapeFn){
     const poSetFeedback=(message)=>{if(poEqFeedback) poEqFeedback.textContent=message||'';};
     const poDescribeQuiz=q=>`${readAssessmentCode(q)||'No code'} — ${q?.title||'Untitled quiz'}`;
     const poShowCurrent=()=>{
+      poQueueLoadedActions();
       const active=!!(currentEditingQuizId&&poOriginalQuiz);
       poEqCurrent?.classList.toggle('is-loaded',active);
       if(poOverrideButton) poOverrideButton.disabled=!active;
@@ -15583,6 +15658,7 @@ function poSharedSolutionRowsHtml(raw,escapeFn){
     });
 
     function resetFormAfterSave(){
+      document.body.classList.remove('poQuizLoaded');
       titleEl.value = "";
       gradeEl.value = "";
       topicEl.value = "";
@@ -15625,6 +15701,38 @@ function poSharedSolutionRowsHtml(raw,escapeFn){
       }
     }
 
+    // The code is shown only after the server confirms an immediate publication.
+    const poPublishedCodeBox = document.getElementById('poPublishedCode');
+    const poPublishedCodeValue = document.getElementById('poPublishedCodeValue');
+    const poCopyPublishedCode = document.getElementById('poCopyPublishedCode');
+    function poShowPublishedCode(code){
+      const value=String(code||'').trim();
+      if (!poPublishedCodeBox || !poPublishedCodeValue) return;
+      poPublishedCodeValue.textContent=value;
+      poPublishedCodeBox.hidden=!value;
+    }
+    poCopyPublishedCode?.addEventListener('click', async ()=>{
+      const code=poPublishedCodeValue?.textContent?.trim();
+      if (!code) return;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(code);
+        } else {
+          const field=document.createElement('textarea');
+          field.value=code;field.setAttribute('readonly','');
+          field.style.position='fixed';field.style.opacity='0';
+          document.body.appendChild(field);field.select();
+          const copied=document.execCommand('copy');field.remove();
+          if (!copied) throw new Error('Clipboard is unavailable');
+        }
+        const label=poCopyPublishedCode.querySelector('span');
+        if(label)label.textContent='Copied';
+        poCopyPublishedCode.title='Quiz code copied';
+      } catch(e){
+        window.prompt('Copy quiz code:',code);
+      }
+    });
+
     saveBtn.addEventListener("click", async () => {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -15654,7 +15762,7 @@ function poSharedSolutionRowsHtml(raw,escapeFn){
           currentEditingAssessmentCode = assignedCode;
           localStorage.setItem("practiceOnlineQuizChangedAt", String(Date.now()));
           saveLocalAutosave();
-          await refreshDraftAssessmentList(false);
+          void refreshDraftAssessmentList(false);
           setMsg(`Assessment ${assignedCode} saved as draft. It remains open for editing, publishing, or scheduling.`, "ok");
         } else {
           setMsg("Error: " + (data?.message || "Could not save assessment"), "error");
@@ -15669,6 +15777,7 @@ function poSharedSolutionRowsHtml(raw,escapeFn){
     });
 
     publishBtn.addEventListener("click", async () => {
+      poShowPublishedCode('');
       const token = localStorage.getItem("token");
       if (!token) {
         setMsg("You are not logged in. The page is still open, but publishing cannot continue until you log in again.", "error");
@@ -15702,6 +15811,8 @@ function poSharedSolutionRowsHtml(raw,escapeFn){
         if (res?.ok) {
           const assignedCode = await resolveSavedAssessmentCode(data, token);
           if (!assignedCode) throw new Error("Assessment published, but the server did not return its unique code.");
+          if (mode === "now") poShowPublishedCode(assignedCode);
+          else poShowPublishedCode('');
 
           captureSavedIdentity(data);
           if (assessmentCodeEl) assessmentCodeEl.value = assignedCode;
@@ -15727,7 +15838,7 @@ function poSharedSolutionRowsHtml(raw,escapeFn){
           localStorage.removeItem(LOCAL_AUTOSAVE_KEY);
           currentEditingQuizId = "";
           currentEditingAssessmentCode = "";
-          await refreshDraftAssessmentList(false);
+          void refreshDraftAssessmentList(false);
           resetFormAfterSave();
           if (assessmentCodeEl) assessmentCodeEl.value = assignedCode;
         } else {
