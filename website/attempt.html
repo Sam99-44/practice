@@ -1,10 +1,7 @@
-
-
-
-
 <!doctype html>
 <html lang="en">
 <head>
+  <link id="po-sidebar-inter-font" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/mathlive@0.110.0/+esm" crossorigin>
 
 
@@ -9423,6 +9420,86 @@ html body .section .sectionHead #timeText{
   }
 }
 </style>
+
+<style id="po-attempt-sidebar-style">
+/* Learner dashboard sidebar, scoped to quiz-attempt navigation only. */
+:root{
+ --po-sidebar-width:238px;
+ --po-sidebar-surface:#f1f2f4;
+ --po-sidebar-ink:#111827;
+ --po-sidebar-active:#dfe9f7;
+ --po-sidebar-orange:#f4a580;
+ --po-sidebar-arrow-base:#183b52;
+}
+.po-attempt-sidebar{
+ position:fixed;top:78px;left:0;bottom:0;width:var(--po-sidebar-width);
+ background:var(--po-sidebar-surface);color:var(--po-sidebar-ink);
+ z-index:800;overflow-y:auto;overscroll-behavior:contain;
+ font-family:Arial,Helvetica,sans-serif;font-size:12px;
+ scrollbar-width:thin;scrollbar-color:#c6ced8 transparent;
+ border-right:1px solid #d8dde5;
+}
+.po-attempt-menu{padding:18px 12px 20px;min-height:100%;display:flex;flex-direction:column;gap:3px;}
+.po-aside-group{min-width:0;}
+.po-aside-heading{min-height:45px;display:flex;align-items:center;gap:4px;border-radius:8px;padding:0 5px 0 10px;position:relative;background:transparent;}
+.po-aside-heading.po-aside-current{background:var(--po-sidebar-active);}
+.po-aside-heading.po-aside-current::after{
+ content:"";position:absolute;bottom:7px;left:10px;width:43px;height:3px;
+ background:#f47732;border-radius:2px;pointer-events:none;
+}
+.po-aside-heading>a{display:flex;align-items:center;flex:1;min-width:0;min-height:45px;color:var(--po-sidebar-ink);text-decoration:none;font-weight:600;font-size:12px;}
+.po-aside-heading>a:hover{color:var(--po-sidebar-ink);}
+/* Two-tone arrow: fine navy bar exactly follows the orange triangle base. */
+.po-aside-toggle{
+ flex:none;display:block;position:relative;width:29px;height:30px;padding:0;
+ background:transparent;border:0;border-radius:3px;cursor:pointer;
+ color:transparent;font-size:0;line-height:0;
+ transform:rotate(0deg);transition:transform .14s ease;
+}
+.po-aside-toggle::before{
+ content:"";position:absolute;left:6px;top:8px;width:2px;height:14px;
+ background:var(--po-sidebar-arrow-base);
+}
+.po-aside-toggle::after{
+ content:"";position:absolute;left:8px;top:8px;width:13px;height:14px;
+ background:var(--po-sidebar-orange);
+ clip-path:polygon(0 0,100% 50%,0 100%);
+}
+.po-aside-group.expanded .po-aside-toggle{transform:rotate(90deg);}
+.po-aside-toggle:hover{background:transparent;}
+.po-aside-toggle:focus-visible{outline:2px solid #6b8fb5;outline-offset:1px;}
+.po-aside-children{padding:2px 0 9px;display:flex;flex-direction:column;gap:2px;}
+.po-aside-children[hidden]{display:none!important;}
+.po-aside-children>a{
+ display:block;padding:9px 13px;margin:0;min-height:32px;border-radius:0;
+ background:transparent;color:var(--po-sidebar-ink);text-decoration:none;
+ font-size:11px;font-weight:400;line-height:1.3;
+}
+.po-aside-children>a:hover{background:#e8edf3;color:#111827;}
+/* Submenus do not get a second active badge or blue highlight. */
+.po-aside-children>a.po-aside-active,
+.po-aside-children>a[aria-current="page"]{background:transparent;color:#111827;font-weight:500;}
+.po-aside-footer{border-top:1px solid #d4dae3;margin-top:auto;padding-top:12px;}
+.po-aside-footer button{
+ display:block;width:100%;min-height:34px;padding:8px 10px;border:0;
+ color:var(--po-sidebar-ink);background:transparent;text-align:left;
+ font:600 12px Arial,Helvetica,sans-serif;cursor:pointer;
+}
+.po-aside-footer button:hover{background:#e8edf3;}
+.po-attempt-mobile-toggle{display:none;}
+/* Keep the exam's layout and functionality intact. */
+body>.wrap{margin:0 0 0 var(--po-sidebar-width)!important;width:calc(100% - var(--po-sidebar-width))!important;max-width:none!important;padding:14px 24px 26px!important;box-sizing:border-box!important;}
+body>.wrap>.section{width:100%!important;max-width:1080px!important;margin:0 auto!important;}
+@media(min-width:1000px){body>.wrap{padding-left:38px!important;padding-right:38px!important;}}
+@media(max-width:760px){
+ .po-attempt-sidebar{position:relative;top:auto;left:auto;bottom:auto;width:100%;height:auto;max-height:none;z-index:20;overflow:visible;border-right:0;border-bottom:1px solid #d8dde5;}
+ .po-attempt-mobile-toggle{width:100%;min-height:44px;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;color:#111827;background:var(--po-sidebar-surface);border:0;font:600 13px Arial,Helvetica,sans-serif;cursor:pointer;}
+ .po-attempt-menu{display:none;padding:10px 12px 16px;min-height:auto;max-height:65vh;overflow-y:auto;}
+ .po-attempt-sidebar.mobile-open .po-attempt-menu{display:flex;}
+ body>.wrap{width:100%!important;margin:0!important;padding:10px 12px 20px!important;}
+ body>.wrap>.section{width:100%!important;max-width:none!important;}
+}
+</style>
 </head>
 
 <body class="assessment-loading">
@@ -9501,6 +9578,44 @@ html body .section .sectionHead #timeText{
     </div>
   </div>
 </header>
+
+
+<!-- Practice Online learner sidebar — navigation only; quiz engine unchanged -->
+<aside class="po-attempt-sidebar" id="poAttemptSidebar" aria-label="Learner navigation">
+  <button type="button" class="po-attempt-mobile-toggle" id="poAttemptMobileToggle" aria-expanded="false" aria-controls="poAttemptMenu">Navigation <span aria-hidden="true">⌄</span></button>
+  <nav id="poAttemptMenu" class="po-attempt-menu">
+    <section class="po-aside-group" data-group="profile">
+      <div class="po-aside-heading"><a href="learning-content.html#profile">Profile</a><button type="button" class="po-aside-toggle" aria-label="Expand Profile" aria-expanded="false" aria-controls="po-aside-profile">⌄</button></div>
+      <div id="po-aside-profile" class="po-aside-children" hidden><a href="learning-content.html#profile">My Profile</a></div>
+    </section>
+    <section class="po-aside-group expanded" data-group="quizzes">
+      <div class="po-aside-heading po-aside-current"><a href="learning-content.html#quizzes">Quizzes</a><button type="button" class="po-aside-toggle" aria-label="Collapse Quizzes" aria-expanded="true" aria-controls="po-aside-quizzes">⌄</button></div>
+      <div id="po-aside-quizzes" class="po-aside-children">
+        <a href="learning-content.html?practice=all#quizzes" data-practice="all">All Practice</a>
+        <a href="learning-content.html?practice=foundation#quizzes" data-practice="foundation">Foundation</a>
+        <a href="learning-content.html?practice=advanced#quizzes" data-practice="advanced">Advanced</a>
+        <a href="learning-content.html?practice=exam_style#quizzes" data-practice="exam_style">Exam-Style Practice</a>
+      </div>
+    </section>
+    <section class="po-aside-group" data-group="grade-challenge">
+      <div class="po-aside-heading"><a href="learning-content.html#grade-challenge">Grade Challenge</a><button type="button" class="po-aside-toggle" aria-label="Expand Grade Challenge" aria-expanded="false" aria-controls="po-aside-challenge">⌄</button></div>
+      <div id="po-aside-challenge" class="po-aside-children" hidden><a href="learning-content.html#grade-challenge">Available Challenges</a></div>
+    </section>
+    <section class="po-aside-group" data-group="results">
+      <div class="po-aside-heading"><a href="learning-content.html#results">Results</a><button type="button" class="po-aside-toggle" aria-label="Expand Results" aria-expanded="false" aria-controls="po-aside-results">⌄</button></div>
+      <div id="po-aside-results" class="po-aside-children" hidden><a href="learning-content.html#results">All Results</a></div>
+    </section>
+    <section class="po-aside-group" data-group="announcements">
+      <div class="po-aside-heading"><a href="learning-content.html#announcements">Announcement</a><button type="button" class="po-aside-toggle" aria-label="Expand Announcement" aria-expanded="false" aria-controls="po-aside-announcements">⌄</button></div>
+      <div id="po-aside-announcements" class="po-aside-children" hidden><a href="learning-content.html#announcements">All Announcements</a></div>
+    </section>
+    <section class="po-aside-group" data-group="support">
+      <div class="po-aside-heading"><a href="learning-content.html#support">Support</a><button type="button" class="po-aside-toggle" aria-label="Expand Support" aria-expanded="false" aria-controls="po-aside-support">⌄</button></div>
+      <div id="po-aside-support" class="po-aside-children" hidden><a href="learning-content.html#support">Contact Support</a></div>
+    </section>
+    <div class="po-aside-footer"><button type="button" id="poAsideSignOut">Sign Out</button></div>
+  </nav>
+</aside>
 
 <div class="wrap">
   <div class="section">
@@ -10761,9 +10876,43 @@ function inlineQuizLoadingHtml(){
   }
 
 function shouldUseMathLive(q){
-  // This helper is called only by the typed-answer renderer (TYPE: text).
-  // Always use the existing mathematics keyboard, regardless of answer format.
-  return true;
+  const mode = String(q?.textAnswerMode || "exact")
+    .toLowerCase()
+    .trim();
+
+  const answer = String(
+    q?.correctText ??
+    q?.answer ??
+    q?.correctAnswer ??
+    ""
+  ).trim();
+
+  // Multi-field typed answers always use MathLive.
+  if (questionUsesSeveralTypedFields(q)) return true;
+
+  // Existing maths modes.
+  if (
+    mode === "expression" ||
+    mode === "number_tolerance" ||
+    mode === "unordered"
+  ) {
+    return true;
+  }
+
+  // Pure numbers: 5, -8, 3.14, 1,000, etc.
+  if (/^-?[\d\s,]+(\.\d+)?$/.test(answer)) {
+    return true;
+  }
+
+  // LaTeX / MathJax.
+  if (
+    /\\frac|\\sqrt|\\sin|\\cos|\\tan|\\log|\\ln|\\pi|\\theta|\\alpha|\\beta|\$|\^|_/.test(answer)
+  ) {
+    return true;
+  }
+
+  // Everything else uses a normal HTML textbox.
+  return false;
 }
 
 function getTypedInputId(qIndex, key, fieldIndex, multiple){
@@ -21840,7 +21989,226 @@ html body .section .sectionHead .metaRight{
   else init();
 })();
 </script>
+
+<script id="po-attempt-sidebar-behaviour">
+(function(){
+  function init(){
+    const aside=document.getElementById('poAttemptSidebar');
+    if(!aside) return;
+    // Match the practice selection the learner made on Learning Content.
+    const KEY='po_practice_selection_v1';
+    const allowed=new Set(['all','foundation','advanced','exam_style']);
+    const account=()=>localStorage.getItem('username')||'learner';
+    let chosen='';
+    try{chosen=sessionStorage.getItem(KEY+':'+account())||'';}catch(_){}
+    const qp=new URLSearchParams(location.search);
+    const fromUrl=qp.get('practice');
+    if(allowed.has(fromUrl))chosen=fromUrl;
+    // A direct quiz link can still use its level if no Learning Content selection exists.
+    if(!allowed.has(chosen)){
+      const level=String(qp.get('practiceLevel')||qp.get('level')||'').toLowerCase();
+      if(allowed.has(level))chosen=level;
+    }
+    if(!allowed.has(chosen))chosen='all';
+    const quizGroup=aside.querySelector('[data-group="quizzes"]');
+    const quizPanel=document.getElementById('po-aside-quizzes');
+    if(quizGroup&&quizPanel){quizGroup.classList.add('expanded');quizPanel.hidden=false;}
+    aside.querySelectorAll('.po-aside-children a[data-practice]').forEach(function(link){
+      const selected=link.dataset.practice===chosen;
+      link.classList.toggle('po-aside-selected',selected);
+      if(selected)link.setAttribute('aria-current','true');else link.removeAttribute('aria-current');
+      link.addEventListener('click',function(){
+        try{sessionStorage.setItem(KEY+':'+account(),link.dataset.practice);}catch(_){}
+      });
+    });
+    aside.querySelectorAll('.po-aside-toggle').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        const group=btn.closest('.po-aside-group');
+        const panel=document.getElementById(btn.getAttribute('aria-controls'));
+        const isOpen=group.classList.toggle('expanded');
+        if(panel) panel.hidden=!isOpen;
+        btn.setAttribute('aria-expanded',String(isOpen));
+        btn.setAttribute('aria-label',(isOpen?'Collapse ':'Expand ')+(group.querySelector('.po-aside-heading>a')?.textContent||'section'));
+      });
+    });
+    const mobile=document.getElementById('poAttemptMobileToggle');
+    if(mobile) mobile.addEventListener('click',function(){
+      const open=aside.classList.toggle('mobile-open');
+      mobile.setAttribute('aria-expanded',String(open));
+    });
+    const signOut=document.getElementById('poAsideSignOut');
+    if(signOut) signOut.addEventListener('click',function(){
+      const existing=document.getElementById('logoutBtn');
+      if(existing){existing.click();return;}
+      location.href='learning-content.html';
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>
+
+<style id="po-attempt-sidebar-dashboard-consistency-final">
+/* Match Learning Content navigation typography, rhythm and surfaces. */
+:root{
+  --po-sidebar-width:220px;
+  --po-sidebar-surface:#f1f2f4;
+  --po-sidebar-active:#dfe9f7;
+  --po-sidebar-orange:#f4a580;
+  --po-sidebar-arrow-base:#183b52;
+}
+html body .po-attempt-sidebar{
+  width:var(--po-sidebar-width)!important;
+  background:var(--po-sidebar-surface)!important;
+  border-right:1px solid #d9dee7!important;
+  height:calc(100vh - 78px)!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  font-family:"Inter",Arial,sans-serif!important;
+  font-size:12px!important;
+  font-weight:400!important;
+  line-height:1.45!important;
+  -webkit-font-smoothing:antialiased;
+}
+html body .po-attempt-sidebar .po-attempt-menu{
+  display:flex!important;
+  flex-direction:column!important;
+  min-height:0!important;
+  padding:12px 11px 22px 15px!important;
+  gap:3px!important;
+}
+html body .po-attempt-sidebar .po-aside-group{margin:0!important;padding:0!important;}
+html body .po-attempt-sidebar .po-aside-heading{
+  display:flex!important;
+  align-items:center!important;
+  gap:4px!important;
+  min-height:46px!important;height:46px!important;
+  padding:0 5px 0 10px!important;
+  border:0!important;border-radius:7px!important;
+  background:transparent!important;
+}
+html body .po-attempt-sidebar .po-aside-heading.po-aside-current{
+  background:var(--po-sidebar-active)!important;
+}
+html body .po-attempt-sidebar .po-aside-heading.po-aside-current::after{
+  left:10px!important;bottom:8px!important;width:44px!important;height:3px!important;
+  border-radius:2px!important;background:#f47732!important;
+}
+html body .po-attempt-sidebar .po-aside-heading>a,
+html body .po-attempt-sidebar .po-aside-heading>a:hover{
+  display:flex!important;align-items:center!important;
+  min-height:46px!important;height:46px!important;
+  flex:1!important;min-width:0!important;
+  font-family:"Inter",Arial,sans-serif!important;
+  font-size:12px!important;font-weight:600!important;
+  line-height:20px!important;letter-spacing:0!important;
+  color:#111111!important;text-decoration:none!important;
+}
+html body .po-attempt-sidebar .po-aside-toggle{
+  display:block!important;flex:0 0 27px!important;width:27px!important;height:29px!important;
+  background:transparent!important;border:0!important;border-radius:0!important;
+  padding:0!important;
+}
+html body .po-attempt-sidebar .po-aside-toggle::before{
+  left:5px!important;top:7px!important;width:2px!important;height:15px!important;
+  background:var(--po-sidebar-arrow-base)!important;
+}
+html body .po-attempt-sidebar .po-aside-toggle::after{
+  left:7px!important;top:7px!important;width:13px!important;height:15px!important;
+  background:var(--po-sidebar-orange)!important;
+  clip-path:polygon(0 0,100% 50%,0 100%)!important;
+}
+html body .po-attempt-sidebar .po-aside-group.expanded .po-aside-toggle{transform:rotate(90deg)!important;}
+html body .po-attempt-sidebar .po-aside-group:not(.expanded) .po-aside-toggle{transform:rotate(0deg)!important;}
+html body .po-attempt-sidebar .po-aside-children{
+  display:flex!important;flex-direction:column!important;
+  padding:2px 0 7px!important;gap:0!important;
+}
+html body .po-attempt-sidebar .po-aside-children[hidden]{display:none!important;}
+html body .po-attempt-sidebar .po-aside-children>a,
+html body .po-attempt-sidebar .po-aside-children>a:hover{
+  display:flex!important;align-items:center!important;
+  min-height:36px!important;height:36px!important;
+  padding:0 16px!important;margin:0!important;
+  border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;
+  font-family:"Inter",Arial,sans-serif!important;
+  font-size:11px!important;font-weight:400!important;
+  line-height:18px!important;letter-spacing:0!important;
+  color:#111111!important;text-decoration:none!important;
+}
+html body .po-attempt-sidebar .po-aside-children>a:first-child{
+  font-weight:600!important;
+}
+html body .po-attempt-sidebar .po-aside-children>a:hover{
+  background:#e7edf5!important;
+}
+html body .po-attempt-sidebar .po-aside-footer{
+  margin:16px 0 0!important;padding:10px 0 0!important;
+  border-top:1px solid #d4dae3!important;flex-shrink:0!important;
+}
+html body .po-attempt-sidebar .po-aside-footer button{
+  min-height:32px!important;width:100%!important;
+  padding:7px 10px!important;background:transparent!important;
+  border:0!important;border-radius:0!important;
+  color:#111111!important;text-align:left!important;
+  font-family:"Inter",Arial,sans-serif!important;
+  font-size:12px!important;font-weight:600!important;line-height:1.3!important;
+}
+@media(max-width:760px){
+  html body .po-attempt-sidebar{
+    position:relative!important;top:auto!important;
+    height:auto!important;width:100%!important;overflow:visible!important;
+  }
+  html body .po-attempt-sidebar .po-attempt-menu{
+    display:none!important;padding:10px 12px 16px!important;
+  }
+  html body .po-attempt-sidebar.mobile-open .po-attempt-menu{display:flex!important;}
+}
+</style>
+
+
+<style id="po-attempt-practice-selection-matched">
+/* The submenu selection mirrors the Learning Content practice filter. */
+html body .po-attempt-sidebar .po-aside-children>a:first-child{font-weight:400!important;}
+html body .po-attempt-sidebar .po-aside-children>a.po-aside-selected,
+html body .po-attempt-sidebar .po-aside-children>a[aria-current="true"]{
+  font-weight:600!important;color:#111111!important;background:transparent!important;
+}
+</style>
+
 </body>
+
+<style id="po-compact-next-sidebar-orange">
+/* Match the compact learner-card controls and the sidebar triangle colour.
+   Preserve the red final-submission state for clarity and safety. */
+html body #nextQuestionBtn:not(.submit-final),
+html body .examPaper .desktopWorkingsPager .desktopWorkingsNext {
+  width:auto !important;
+  min-width:58px !important;
+  height:27px !important;
+  min-height:27px !important;
+  padding:0 10px !important;
+  border:1px solid #F4A680 !important;
+  border-radius:4px !important;
+  background:#F4A680 !important;
+  color:#1b1648 !important;
+  font:600 11px Inter,Arial,Helvetica,sans-serif !important;
+  gap:5px !important;
+  box-shadow:none !important;
+}
+html body #nextQuestionBtn:not(.submit-final):hover,
+html body .examPaper .desktopWorkingsPager .desktopWorkingsNext:hover {
+  background:#eda075 !important;
+  border-color:#eda075 !important;
+}
+html body #nextQuestionBtn:not(.submit-final) img {
+  width:11px !important;
+  height:11px !important;
+  filter:brightness(0) saturate(100%) invert(11%) sepia(25%) saturate(2376%) hue-rotate(209deg) brightness(87%) contrast(95%) !important;
+}
+/* Mobile uses the same small button, without changing navigation layout. */
+</style>
+
 </html>
 
 
@@ -22513,4 +22881,61 @@ html body .sectionHead #topQuizControls #nextQuizTopBtn img{transform:none !impo
 html body .sectionHead #topQuizControls :is(#previousQuizTopBtn,#nextQuizTopBtn):disabled img{filter:none !important;opacity:.35 !important;}
 html body :is(#previousQuizTopBtn,#nextQuizTopBtn,#solutionReviewBackToQuizzes,#completedBackToQuizzesBtn)::before,
 html body :is(#previousQuizTopBtn,#nextQuizTopBtn,#solutionReviewBackToQuizzes,#completedBackToQuizzesBtn)::after{content:none !important;display:none !important;}
+</style>
+
+<style id="po-question-navigation-consistent">
+/* Previous and Next use the same compact controls and sidebar-arrow palette. */
+html body #prevQuestionBtn,
+html body #nextQuestionBtn:not(.submit-final),
+html body .examPaper .desktopWorkingsPager .desktopWorkingsBack,
+html body .examPaper .desktopWorkingsPager .desktopWorkingsNext {
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:5px !important;
+  width:auto !important;
+  min-width:60px !important;
+  height:27px !important;
+  min-height:27px !important;
+  padding:0 10px !important;
+  border:1px solid #F4A680 !important;
+  border-radius:4px !important;
+  background:#F4A680 !important;
+  color:#1b1648 !important;
+  font:600 11px/1 Inter,Arial,Helvetica,sans-serif !important;
+  box-shadow:none !important;
+  white-space:nowrap !important;
+}
+html body #prevQuestionBtn:hover:not(:disabled),
+html body #nextQuestionBtn:hover:not(:disabled):not(.submit-final),
+html body .examPaper .desktopWorkingsPager .desktopWorkingsBack:hover:not(:disabled),
+html body .examPaper .desktopWorkingsPager .desktopWorkingsNext:hover:not(:disabled) {
+  background:#EDA075 !important;
+  border-color:#EDA075 !important;
+}
+html body #prevQuestionBtn img,
+html body #nextQuestionBtn:not(.submit-final) img,
+html body .examPaper .desktopWorkingsPager .desktopWorkingsBack img,
+html body .examPaper .desktopWorkingsPager .desktopWorkingsNext img {
+  width:11px !important;
+  height:11px !important;
+  flex:0 0 11px !important;
+  filter:brightness(0) saturate(100%) invert(11%) sepia(25%) saturate(2376%) hue-rotate(209deg) brightness(87%) contrast(95%) !important;
+}
+html body #prevQuestionBtn img,
+html body .examPaper .desktopWorkingsPager .desktopWorkingsBack img {transform:rotate(180deg) !important;}
+html body #nextQuestionBtn img,
+html body .examPaper .desktopWorkingsPager .desktopWorkingsNext img {transform:none !important;}
+html body #prevQuestionBtn:disabled,
+html body #nextQuestionBtn:disabled,
+html body .examPaper .desktopWorkingsPager button:disabled {
+  opacity:.45 !important;
+  cursor:not-allowed !important;
+}
+/* Preserve the red final-submit state. */
+html body #nextQuestionBtn.submit-final {
+  background:#dc2626 !important;
+  border-color:#dc2626 !important;
+  color:#fff !important;
+}
 </style>
