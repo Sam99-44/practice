@@ -1,7 +1,3 @@
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,6 +52,9 @@ main{max-width:1040px;padding:22px clamp(18px,4vw,54px) 30px}
 #generate:after{content:'';position:absolute;right:12px;top:50%;width:6px;height:6px;border-top:1px solid currentColor;border-right:1px solid currentColor;transform:translateY(-50%) rotate(45deg)}
 #solution{margin-top:18px}
 footer{margin-top:28px}
+#retryPractice{margin-top:14px;background:#211b48;color:#fff}
+#practiceError{padding:8px 0 14px}
+#practiceError p{margin:0 0 8px;color:#475569;font-size:14px}
 @media(max-width:800px){main{padding:20px 18px 24px}#number{margin-bottom:26px}.question{font-size:19px}}
 </style>
 </head>
@@ -65,7 +64,8 @@ footer{margin-top:28px}
 <h1>Dynamic Practice</h1><p class="muted" id="meta">Connecting to Practice Online…</p>
 <section class="panel selectors" id="selection"><label>Grade<select id="grade"><option value="8">Grade 8</option><option value="10" selected>Grade 10</option></select></label><label>Topic<select id="topic"></select></label><label>Subtopic<select id="skill"></select></label><label>Practice level<select id="level"><option value="foundation">Foundation</option><option value="advanced">Advanced</option></select></label></section>
 <section class="panel" id="practice"><p class="muted" id="number">Question</p><p id="instruction"></p><div id="question" class="question" aria-live="polite">Loading question…</div>
-<form id="answerForm"><label for="learner">Your answer</label><input id="learner" placeholder="e.g. (x-2)(x-3)" maxlength="160" autocomplete="off" spellcheck="false" disabled>
+<div id="practiceError" hidden><p id="errorMessage">We couldn't load your practice questions. Please try again.</p><button type="button" id="retryPractice">Try Again</button></div>
+<form id="answerForm" hidden><label for="learner">Your answer</label><input id="learner" placeholder="e.g. (x-2)(x-3)" maxlength="160" autocomplete="off" spellcheck="false" disabled>
 <div id="preview" class="answer-preview" aria-live="polite" hidden></div>
 <div id="keyboard" class="keyboard" aria-label="Mathematical keyboard"></div>
 <p class="muted" id="tries">Two valid attempts allowed.</p><p id="hintText" class="answer-preview" hidden></p>
@@ -87,32 +87,53 @@ let current=null,result=null,busy=false,number=0,pending=null,tries=0;
 let previewTimer, mathQueue=Promise.resolve();
 function render(node){const job=mathQueue.catch(()=>{}).then(async()=>{if(!window.MathJax?.startup?.promise)throw new Error('MathJax could not load. Check your internet connection.');await MathJax.startup.promise;await MathJax.typesetPromise([node]);});mathQueue=job;return job;}
 function clearMath(node){if(window.MathJax?.typesetClear)MathJax.typesetClear([node]);node.replaceChildren();}
+function showPracticeError(message){
+  current=null;result=null;
+  $('answerForm').hidden=true;
+  $('practiceError').hidden=false;
+  $('errorMessage').textContent=message||"We couldn't load your practice questions. Please try again.";
+  $('solution').hidden=true;
+  $('instruction').textContent='';
+  $('number').textContent='Question';
+  $('question').textContent='';
+}
+function showPracticeQuestion(){
+  $('practiceError').hidden=true;
+  $('answerForm').hidden=false;
+}
 function status(message,error=false){$('status').textContent=message;$('status').classList.toggle('error',error);}
 function lock(value){busy=value;for(const id of ['grade','topic','skill','level'])$(id).disabled=!ready||busy||!!pending; $('submit').hidden=!!result; $('hint').hidden=!!result;const editable=!busy&&!!current&&!result&&!pending;$('generate').disabled=!ready||busy||!!pending;$('learner').disabled=!editable;$('submit').disabled=busy||!current||!!result;$('hint').disabled=busy||!current||!!result||!!pending;$('solutionButton').disabled=busy||!result;for(const k of $('keyboard').children)k.disabled=!editable;}
 async function request(url,options={}){
   const token=localStorage.getItem('token');
   if(!token){signIn();throw new Error('Sign in to Practice Online first.');}
-  const r=await fetch(API+url,{...options,cache:'no-store',headers:{...options.headers,Authorization:`Bearer ${token}`}});
+  let r;
+  try{r=await fetch(API+url,{...options,cache:'no-store',headers:{...options.headers,Authorization:`Bearer ${token}`}});}
+  catch{throw new Error('Cannot connect to the Practice Online service. Check your connection and try again.');}
   const data=await r.json().catch(()=>null);
   if(r.status===401){const serviceError=data?.detail==='Unauthorized service request.'; if(!serviceError){$('signInLink').hidden=false;} throw Object.assign(new Error(serviceError?'Dynamic Practice service authentication failed. Please contact support.':'Your session could not be verified. Sign in again using the existing Practice Online login.'),{status:401});}
-  if(!r.ok){const e=new Error(typeof data?.detail==='string'?data.detail:typeof data?.message==='string'?data.message:'API returned HTTP '+r.status);e.status=r.status;throw e;}
+  if(!r.ok){const message=r.status===503?'Dynamic Practice is temporarily unavailable (HTTP 503). Please try again shortly.':typeof data?.detail==='string'?data.detail:typeof data?.message==='string'?data.message:'API returned HTTP '+r.status;const e=new Error(message);e.status=r.status;throw e;}
   if(!data)throw new Error('Invalid response from Practice Online API.');
   return data;
 }
 function preview(){clearTimeout(previewTimer);previewTimer=setTimeout(async()=>{await mathQueue.catch(()=>{});const node=$('preview');const value=$('learner').value.trim();clearMath(node);node.hidden=!value;if(!value)return;const clean=value.replace(/−/g,'-').replace(/²/g,'^2').replace(/×/g,'*');if(!/^[0-9xX()+*/^\-\s]+$/.test(clean)){node.textContent=value;return;}if(/^[+-]?\d+\/\d+$/.test(clean)){const [a,b]=clean.split('/');node.textContent='\\(\\frac{'+a+'}{'+b+'}\\)';}else node.textContent='\\('+clean.replace(/\*/g,'\\cdot ').replace(/\^([0-9]+)/g,'^{$1}')+'\\)';try{await render(node);}catch{node.textContent=value;}},120);}
 for(const key of ['x','²','(',')','+','−','×','/','1','2','3','4','5','6','7','8','9','0','⌫','Clear']){const btn=document.createElement('button');btn.type='button';btn.textContent=key;btn.addEventListener('click',()=>{const input=$('learner');let s=input.selectionStart,e=input.selectionEnd;if(key==='Clear'){input.value='';}else if(key==='⌫'){input.setRangeText('',s===e?Math.max(0,s-1):s,e,'end');}else{input.setRangeText(key,s,e,'end');}input.focus();preview();});$('keyboard').append(btn);}
 $('learner').addEventListener('input',preview);
-async function generate(){if(!ready||busy||pending)return;lock(true);current=null;result=null;tries=0;status('Generating question…');$('solution').hidden=true;$('solutionButton').textContent='See solution';$('comparison').hidden=true;$('hintText').hidden=true;$('learner').value='';preview();$('tries').textContent='Two valid attempts allowed.';$('submit').textContent='Submit answer';$('generate').textContent='Skip question';await mathQueue.catch(()=>{});clearMath($('question'));clearMath($('steps'));clearMath($('comparison'));try{const data=await request('/api/dynamic-practice/generate?'+new URLSearchParams({grade:$('grade').value,topic:$('topic').value,level:$('level').value,skill:$('skill').value}),{cache:'no-store'});if(!data.question_id||!data.question_mathjax)throw new Error('Unexpected API response.');$('meta').textContent=`Grade ${data.grade} · ${data.subject} · ${data.subtopic||data.topic} · ${data.practice_level==='advanced'?'Advanced':'Foundation'}`; $('learner').placeholder=data.answer_kind==='factor'?'e.g. (x-2)(x-3)':data.answer_kind==='fraction'?'e.g. 3/4':'Enter a number'; for(const key of $('keyboard').children){key.hidden=data.answer_kind==='factor'?key.textContent==='/':data.answer_kind==='fraction'?['x','²','(',')','×'].includes(key.textContent):!['−','1','2','3','4','5','6','7','8','9','0','⌫','Clear'].includes(key.textContent);}$('instruction').textContent=data.instruction;$('question').textContent=data.question_mathjax;await render($('question'));current=data;$('number').textContent='Question '+(++number);status('Enter your answer.');}catch(e){status(e.message,true);$('question').textContent='Unable to load question.';}finally{lock(false);if(current)$('learner').focus();}}
+async function generate(){if(!ready||busy||pending)return;lock(true);$('practiceError').hidden=true;$('answerForm').hidden=true;current=null;result=null;tries=0;status('Generating question…');$('solution').hidden=true;$('solutionButton').textContent='See solution';$('comparison').hidden=true;$('hintText').hidden=true;$('learner').value='';preview();$('tries').textContent='Two valid attempts allowed.';$('submit').textContent='Submit answer';$('generate').textContent='Skip question';await mathQueue.catch(()=>{});clearMath($('question'));clearMath($('steps'));clearMath($('comparison'));try{const data=await request('/api/dynamic-practice/generate?'+new URLSearchParams({grade:$('grade').value,topic:$('topic').value,level:$('level').value,skill:$('skill').value}),{cache:'no-store'});if(!data.question_id||!data.question_mathjax)throw new Error('Unexpected API response.');$('meta').textContent=`Grade ${data.grade} · ${data.subject} · ${data.subtopic||data.topic} · ${data.practice_level==='advanced'?'Advanced':'Foundation'}`; $('learner').placeholder=data.answer_kind==='factor'?'e.g. (x-2)(x-3)':data.answer_kind==='fraction'?'e.g. 3/4':'Enter a number'; for(const key of $('keyboard').children){key.hidden=data.answer_kind==='factor'?key.textContent==='/':data.answer_kind==='fraction'?['x','²','(',')','×'].includes(key.textContent):!['−','1','2','3','4','5','6','7','8','9','0','⌫','Clear'].includes(key.textContent);}$('instruction').textContent=data.instruction;$('question').textContent=data.question_mathjax;await render($('question'));current=data;$('number').textContent='Question '+(++number);showPracticeQuestion();status('Enter your answer.');}catch(e){status(e.message,true);showPracticeError("We couldn't load your practice questions. Please try again.");}finally{lock(false);if(current)$('learner').focus();}}
 async function submit(e){e.preventDefault();if(busy||!current||result)return;const answer=pending?.answer??$('learner').value.trim();if(!answer){status('Enter your answer first.',true);return;}pending=pending??{question_id:current.question_id,answer,request_id:crypto.randomUUID()};lock(true);status('Checking your answer…');try{const data=await request('/api/dynamic-practice/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(pending)});pending=null;tries=data.tries;$('tries').textContent=data.complete?'Question complete.':`${data.remaining} valid attempt(s) remaining.`;status(data.message,data.status!=='correct');if(!data.complete){$('submit').textContent=data.status==='invalid'&&!tries?'Submit answer':'Try again';return;}result=data;$('generate').textContent='Next';$('comparison').hidden=false;await mathQueue.catch(()=>{});clearMath($('comparison'));$('comparison').textContent='Correct answer: '+data.answer_mathjax;await render($('comparison'));}catch(e){status(e.message,true);if(e.status===404||e.status===409){current=null;pending=null;}else if([400,401,403,422].includes(e.status)){pending=null;}else if(pending){$('submit').textContent='Retry submission';}}finally{lock(false);if(current&&!result&&!pending)$('learner').focus();}}
 async function hint(){if(busy||!current||result||pending)return;lock(true);try{const data=await request('/api/dynamic-practice/hint/'+encodeURIComponent(current.question_id));$('hintText').textContent=data.hint;$('hintText').hidden=false;}catch(e){status(e.message,true);}finally{lock(false);}}
 async function toggleSolution(){if(!result||busy)return;if(!$('solution').hidden){$('solution').hidden=true;$('solutionButton').textContent='See solution';return;}lock(true);try{await mathQueue.catch(()=>{});clearMath($('steps'));for(const section of result.solution){const heading=document.createElement('h3');heading.textContent=section.heading;$('steps').append(heading);for(const content of section.content){const line=document.createElement('div');line.className='solution-line';line.textContent=content;$('steps').append(line);}}$('solution').hidden=false;await render($('steps'));$('solutionButton').textContent='Hide solution';}catch(e){status(e.message,true);}finally{lock(false);}}
-$('generate').addEventListener('click',generate);$('hint').addEventListener('click',hint);$('solutionButton').addEventListener('click',toggleSolution);$('answerForm').addEventListener('submit',submit);function fillSkills(){ $('skill').replaceChildren(...['Mixed Practice',...(skills[$('topic').value]||[])].map(t=>new Option(t,t))); }
+$('retryPractice').addEventListener('click',()=>ready?generate():initialise());$('generate').addEventListener('click',generate);$('hint').addEventListener('click',hint);$('solutionButton').addEventListener('click',toggleSolution);$('answerForm').addEventListener('submit',submit);function fillSkills(){ $('skill').replaceChildren(...['Mixed Practice',...(skills[$('topic').value]||[])].map(t=>new Option(t,t))); }
 function fillTopics(){ $('topic').replaceChildren(...(topics[$('grade').value]||[]).map(t=>new Option(t,t)));fillSkills(); }
 function changeSelection(){if(!ready||busy||pending)return;number=0;generate();}
 $('grade').addEventListener('change',()=>{fillTopics();changeSelection();});$('topic').addEventListener('change',()=>{fillSkills();changeSelection();});$('skill').addEventListener('change',changeSelection);$('level').addEventListener('change',changeSelection);
 async function initialise(){
+  ready=false;current=null;pending=null;result=null;
+  $('practiceError').hidden=true;$('answerForm').hidden=true;
+  $('retryPractice').disabled=true;
+  $('meta').textContent='Connecting to Practice Online…';
+  status('Connecting to Practice Online…');
   lock(true);
-  if(location.protocol==='file:'){status('Open this page with VS Code Live Server, not as a file.',true);$('question').textContent='Practice unavailable.';return;}
+  if(location.protocol==='file:'){status('Open this page with VS Code Live Server, not as a file.',true);showPracticeError('Open this page with VS Code Live Server, not as a file.');$('retryPractice').disabled=false;lock(false);return;}
   try{
     const profile=await request('/api/profile/me');
     const role=String(profile.role||'').toLowerCase();
@@ -126,8 +147,8 @@ async function initialise(){
     $('grade').replaceChildren(...grades.map(g=>new Option('Grade '+g,g)));
     $('grade').value=grades.includes(String(profile.grade))?String(profile.grade):grades.includes('10')?'10':grades[0];
     fillTopics();ready=true;
-  }catch(e){status(e.message,true);$('meta').textContent='Practice unavailable';$('question').textContent='Unable to start practice.';}
-  finally{lock(false);}
+  }catch(e){status(e.message,true);$('meta').textContent='Practice unavailable';showPracticeError("We couldn't start Dynamic Practice. Please try again.");}
+  finally{$('retryPractice').disabled=false;lock(false);}
   if(ready)await generate();
 }
 lock(true);window.addEventListener('load',initialise);
