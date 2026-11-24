@@ -1,11 +1,3 @@
-
-
-
-
-
-
-
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -5219,7 +5211,7 @@ textarea{
 <main class="wrap">
 <section class="portal-shell">
   <aside class="sidebar po-disclosure-sidebar" aria-label="Learner navigation"><button type="button" class="po-mobile-navigation" aria-controls="po-nav-sections" aria-expanded="false"><span>Navigation</span><span class="po-mobile-current">Quizzes</span><span class="po-mobile-arrow" aria-hidden="true"></span></button><div id="po-nav-sections" class="po-nav-sections"><div class="po-nav-section" data-nav-section="profile"><div class="po-nav-row"><button class="nav-btn" type="button" data-portal-tab="profile" data-route="learning-content.html#profile"><span>Profile</span></button><button type="button" class="po-nav-disclosure" aria-label="Expand or collapse Profile" aria-controls="po-nav-profile" aria-expanded="false"><span aria-hidden="true"></span></button></div><div class="po-nav-children" id="po-nav-profile" hidden><button type="button" class="po-subnav" data-nav-action="scroll" data-nav-value=".profile-sections .profile-section-block:first-child">Personal Information</button><button type="button" class="po-subnav" data-nav-action="scroll" data-nav-value=".profile-sections .profile-section-block:nth-child(2)">Account Information</button></div></div>
-<div class="po-nav-section" data-nav-section="quizzes"><div class="po-nav-row"><button class="nav-btn active" type="button" data-portal-tab="quizzes" data-route="learning-content.html#quizzes"><span>Quizzes</span></button><button type="button" class="po-nav-disclosure" aria-label="Expand or collapse Quizzes" aria-controls="po-nav-quizzes" aria-expanded="true"><span aria-hidden="true"></span></button></div><div class="po-nav-children" id="po-nav-quizzes"><button type="button" class="po-subnav" data-nav-action="modeFilter" data-nav-value="all">All Practice</button><button type="button" class="po-subnav" data-nav-action="modeFilter" data-nav-value="foundation">Foundation</button><button type="button" class="po-subnav" data-nav-action="modeFilter" data-nav-value="advanced">Advanced</button><button type="button" class="po-subnav" data-nav-action="modeFilter" data-nav-value="exam_style">Exam-Style Practice</button></div></div>
+<div class="po-nav-section" data-nav-section="quizzes"><div class="po-nav-row"><button class="nav-btn active" type="button" data-portal-tab="quizzes" data-route="learning-content.html#quizzes"><span>Quizzes</span></button><button type="button" class="po-nav-disclosure" aria-label="Expand or collapse Quizzes" aria-controls="po-nav-quizzes" aria-expanded="true"><span aria-hidden="true"></span></button></div><div class="po-nav-children" id="po-nav-quizzes"><button type="button" class="po-subnav" data-nav-action="modeFilter" data-nav-value="all">All Practice</button><button type="button" class="po-subnav" data-nav-action="modeFilter" data-nav-value="foundation">Foundation</button><button type="button" class="po-subnav" data-nav-action="modeFilter" data-nav-value="advanced">Advanced</button><button type="button" class="po-subnav" data-nav-action="modeFilter" data-nav-value="exam_style">Exam-Style Practice</button><div id="poDynamicPracticeNav" hidden><a class="po-subnav" href="dynamic-practice.html">Dynamic Practice</a></div></div></div>
 <div class="po-nav-section" data-nav-section="grade-challenge"><div class="po-nav-row"><button class="nav-btn" type="button" data-portal-tab="grade-challenge" data-route="learning-content.html#grade-challenge"><span>Grade Challenge</span></button><button type="button" class="po-nav-disclosure" aria-label="Expand or collapse Grade Challenge" aria-controls="po-nav-grade-challenge" aria-expanded="false"><span aria-hidden="true"></span></button></div><div class="po-nav-children" id="po-nav-grade-challenge" hidden><button type="button" class="po-subnav" data-nav-action="scroll" data-nav-value="#grade-challengePanel">Available Challenges</button></div></div>
 <div class="po-nav-section" data-nav-section="results"><div class="po-nav-row"><button class="nav-btn" type="button" data-portal-tab="results" data-route="learning-content.html#results"><span>Results</span></button><button type="button" class="po-nav-disclosure" aria-label="Expand or collapse Results" aria-controls="po-nav-results" aria-expanded="false"><span aria-hidden="true"></span></button></div><div class="po-nav-children" id="po-nav-results" hidden><button type="button" class="po-subnav" data-nav-action="portalResultsTimeFilter" data-nav-value="all">All Results</button><button type="button" class="po-subnav" data-nav-action="portalResultsTimeFilter" data-nav-value="week">This Week</button><button type="button" class="po-subnav" data-nav-action="portalResultsTimeFilter" data-nav-value="month">This Month</button></div></div>
 <div class="po-nav-section" data-nav-section="announcements"><div class="po-nav-row"><button class="nav-btn" type="button" data-portal-tab="announcements" data-route="learning-content.html#announcements"><span>Announcement</span></button><button type="button" class="po-nav-disclosure" aria-label="Expand or collapse Announcement" aria-controls="po-nav-announcements" aria-expanded="false"><span aria-hidden="true"></span></button></div><div class="po-nav-children" id="po-nav-announcements" hidden><button type="button" class="po-subnav" data-nav-action="scroll" data-nav-value="#announcementsPanel">All Announcements</button></div></div>
@@ -5575,6 +5567,13 @@ const menuToggleBtn=document.getElementById("menuToggleBtn"),menuDropdown=docume
     if(redirectIncompleteLearnerToSetup(authUser)) return;
 
     saveAndRenderUser(authUser);
+
+    // Local Dynamic Practice pilot: verified administrators, testers and learners in local preview.
+    const dynamicNav = document.getElementById("poDynamicPracticeNav");
+    if(dynamicNav){
+      dynamicNav.hidden = !(["localhost", "127.0.0.1"].includes(location.hostname) &&
+        ["admin", "tester", "learner"].includes(String(authUser.role || "").trim().toLowerCase()));
+    }
 
     /*
      * Load the profile endpoint afterward for any display-specific fields.
@@ -7754,7 +7753,7 @@ if(portalResultsListEl){
     const toggle=group.querySelector('.po-nav-disclosure');
     toggle.addEventListener('click',()=>setOpen(group,toggle.getAttribute('aria-expanded')!=='true'));
     parent.addEventListener('click',()=>{setOpen(group,true);syncActive();setMobile(false);});
-    group.querySelectorAll('.po-subnav').forEach(b=>b.addEventListener('click',()=>{
+    group.querySelectorAll('button.po-subnav').forEach(b=>b.addEventListener('click',()=>{
       parent.click();
       if(b.dataset.navAction==='scroll'){
         const target=document.querySelector(b.dataset.navValue);
