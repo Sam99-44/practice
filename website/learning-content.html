@@ -5568,11 +5568,12 @@ const menuToggleBtn=document.getElementById("menuToggleBtn"),menuDropdown=docume
 
     saveAndRenderUser(authUser);
 
-    // Local Dynamic Practice pilot: verified administrators, testers and learners in local preview.
+    // Dynamic Practice is available to signed-in administrators, testers and learners
+    // on both the production website and local preview. Authentication is verified above.
     const dynamicNav = document.getElementById("poDynamicPracticeNav");
     if(dynamicNav){
-      dynamicNav.hidden = !(["localhost", "127.0.0.1"].includes(location.hostname) &&
-        ["admin", "tester", "learner"].includes(String(authUser.role || "").trim().toLowerCase()));
+      const role = String(authUser.role || "").trim().toLowerCase();
+      dynamicNav.hidden = !["admin", "tester", "learner"].includes(role);
     }
 
     /*
