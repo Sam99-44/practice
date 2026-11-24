@@ -37,6 +37,7 @@ import requestQuoteRoutes from "./routes/requestQuote.js";
 import Employee from "./models/Employee.js";
 import tasksRoutes from "./routes/tasks.js";
 import createInternalReviewRoutes from "./routes/internalReviews.js";
+import createDynamicPracticeRoutes from "./routes/dynamicPractice.js";
 
 import helmet from "helmet";
 import mongoSanitize from "express-mongo-sanitize";
@@ -8864,6 +8865,7 @@ app.use("/api/support", supportRoutes);
 app.use("/api/request-quote", requestQuoteRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/tasks", tasksRoutes);
+app.use("/api/dynamic-practice", createDynamicPracticeRoutes(authRequired, adminOnly));
 
 /* ------------------ SUPPORT MODEL ------------------ */
 const SupportRequestSchema = new mongoose.Schema(
