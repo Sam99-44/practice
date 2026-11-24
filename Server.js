@@ -1,3 +1,7 @@
+
+
+
+
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -8865,7 +8869,28 @@ app.use("/api/support", supportRoutes);
 app.use("/api/request-quote", requestQuoteRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/tasks", tasksRoutes);
-app.use("/api/dynamic-practice", createDynamicPracticeRoutes(authRequired, adminOnly));
+// Dynamic Practice is available to signed-in learners, testers and admins.
+// Keep the shared adminOnly middleware unchanged for administrative routes.
+async function dynamicPracticeUserOnly(req, res, next) {
+  try {
+    const user = await User.findById(req.user.userId).select("role");
+    if (!user) {
+      return res.status(401).json({ message: "User account not found" });
+    }
+
+    const role = String(user.role || "").trim().toLowerCase();
+    if (!["admin", "tester", "learner"].includes(role)) {
+      return res.status(403).json({ message: "Dynamic Practice access denied" });
+    }
+
+    return next();
+  } catch (error) {
+    console.error("Dynamic Practice authentication error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+app.use("/api/dynamic-practice", createDynamicPracticeRoutes(authRequired, dynamicPracticeUserOnly));
 
 /* ------------------ SUPPORT MODEL ------------------ */
 const SupportRequestSchema = new mongoose.Schema(
