@@ -95,17 +95,18 @@ export default function createDynamicPracticeRoutes(authRequired, _adminOnly) {
   router.get("/catalog", (req, res) => forward(req, res, "catalog"));
   router.get("/skills", (req, res) => forward(req, res, "skills"));
   router.get("/generate", (req, res) => {
-    const { grade, topic, level, skill } = req.query;
+    const { grade, topic, level, skill, question_type = "auto" } = req.query;
     if (
       ![grade, topic, level, skill].every(
         (v) => typeof v === "string" && v.length <= 80
       ) ||
       !["8", "10"].includes(grade) ||
-      !["foundation", "advanced"].includes(level)
+      !["foundation", "advanced"].includes(level) ||
+      !["auto", "mcq", "text"].includes(question_type)
     ) {
       return res.status(400).json({ message: "Invalid practice selection." });
     }
-    return forward(req, res, "generate", { grade, topic, level, skill });
+    return forward(req, res, "generate", { grade, topic, level, skill, question_type });
   });
 
   const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
