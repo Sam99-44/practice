@@ -1,4 +1,4 @@
-import os
+mport os
 import re
 import hmac
 import time
@@ -13,7 +13,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from engines import mathjax
-from engines import whole_numbers, integers, common_fractions, factorisation
+from engines import factorisation
+from engines.grade_08.term_01 import questions as grade8_term1
 from engines.marking import mark_answer
 
 app = FastAPI(
@@ -64,19 +65,10 @@ class Submission(BaseModel):
     request_id: str = Field(min_length=1, max_length=80)
 
 
-CATALOG = {8: ['Whole Numbers', 'Integers', 'Common Fractions'], 10: ['Factorisation']}
-SKILLS = {
-    'Whole Numbers': ['BODMAS', 'HCF', 'LCM'],
-    'Integers': ['Combined Operations', 'Addition and Subtraction', 'Missing Values'],
-    'Common Fractions': ['Addition and Subtraction', 'Multiplying Fractions', 'Dividing Fractions', 'Combined Operations'],
-    'Factorisation': ['Trinomials', 'Difference of Two Squares'],
-}
-ENGINES = {
-    'Whole Numbers': whole_numbers,
-    'Integers': integers,
-    'Common Fractions': common_fractions,
-    'Factorisation': factorisation,
-}
+# Grade 8 Term 1 is controlled by the official ATP topic/subtopic list.
+CATALOG = {8: list(grade8_term1.TOPICS), 10: ['Factorisation']}
+SKILLS = {'Factorisation': ['Trinomials', 'Difference of Two Squares'], **grade8_term1.TOPICS}
+ENGINES = {'Factorisation': factorisation, **{name: grade8_term1 for name in grade8_term1.TOPICS}}
 
 
 @app.get('/api/mathematics/catalog')
@@ -106,9 +98,13 @@ def generate_question(
         raise HTTPException(400, 'Choose a supported subtopic.')
 
     selected = choice(SKILLS[topic]) if skill == 'Mixed Practice' else skill
-    # Grade 10 Factorisation supports an explicitly requested MCQ/text format.
-    # Other subjects retain their original generator signature until MCQs are added there.
-    if topic == 'Factorisation':
+    # Grade 8 Term 1 uses its own grade/term package; Grade 10 remains in engines/factorisation.py.
+    if topic in grade8_term1.TOPICS:
+        requested_type = None if question_type == 'auto' else question_type
+        q, instruction, kind, value, private, hint = grade8_term1.generate(
+            level, selected, question_type=requested_type, topic=topic
+        )
+    elif topic == 'Factorisation':
         requested_type = None if question_type == 'auto' else question_type
         q, instruction, kind, value, private, hint = ENGINES[topic].generate(
             level, selected, question_type=requested_type
