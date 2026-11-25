@@ -1,10 +1,15 @@
+"""Grade 8 Term 1 ATP topic generator — typed answers and six-option MCQs.
+
+All question values are created on demand; answer keys remain server-side.
+Designed for Practice Online's existing generate(level, skill, question_type, topic) API.
+"""
 from random import randint, choice, sample, shuffle
 from fractions import Fraction
 from math import gcd, lcm, isqrt
 from ... import mathjax, sections
 
 TOPICS = {
- 'Whole Numbers': ['Properties of Whole Numbers','Prime Factors','HCF','LCM','Ratio and Rate','Financial Problems'],
+ 'Whole Numbers': ['Introduction','Ordering and comparing whole numbers','Properties of whole numbers','Calculations using whole numbers','Multiples and factors','Solving problems with whole numbers','Working with money: Budgets, savings, discount, interest and exchange rates'],
  'Integers': ['Counting and Ordering','Addition and Subtraction','Multiplication and Division','Combined Operations','Properties of Integers','Word Problems'],
  'Common Fractions': ['Addition and Subtraction','Multiplying Fractions','Dividing Fractions','Fractions of Whole Numbers','Squares and Roots','Percentages','Equivalent Forms','Word Problems'],
  'Decimal Fractions': ['Ordering and Comparing','Rounding Off','Adding and Subtracting Decimals','Multiplying Decimals','Dividing Decimals','Equivalent Forms','Word Problems'],
@@ -32,7 +37,73 @@ def make(q, answer, explanation, formula='None.', hint='Identify the operation n
 def build(topic,skill,advanced):
  a,b=randint(2,20),randint(2,15)
  if topic=='Whole Numbers':
-  if skill=='Properties of Whole Numbers':
+  if skill=='Introduction':
+   # Place value and expanded notation, suitable for the start of the chapter.
+   digit=randint(2,8)
+   if advanced:
+    thousands,hundreds,tens=randint(1,9),randint(1,9),randint(0,9)
+    n=thousands*1000+hundreds*100+tens*10+digit
+    q=rf'\text{{In the number }}{n}\text{{, find the value of the digit }}{hundreds}\text{{ in the hundreds place.}}'
+    return make(q,hundreds*100,'A digit in the hundreds place is worth hundreds times 100.','None.','Multiply the hundreds digit by 100.',instruction='Use place value:')
+   h,t=randint(1,9),randint(0,9)
+   n=h*100+t*10+digit
+   q=rf'{h}\times100+{t}\times10+{digit}'
+   return make(q,n,'Use the hundreds, tens and units to build the whole number.',r'100h+10t+u','Add the place-value parts.',instruction='Write the whole number:')
+  if skill=='Ordering and comparing whole numbers':
+   a,b,c=sample(range(101,1000),3) if not advanced else sample(range(1001,10000),3)
+   q=rf'{a};\ {b};\ {c}'
+   if advanced:
+    return make(q,min(a,b,c),'Compare the highest place-value digits first. The smallest number comes first.','None.','Compare thousands, then hundreds, tens and units.',instruction='Write the smallest whole number:')
+   return make(q,max(a,b,c),'Compare the hundreds first, then the tens and units.','None.','Start with the largest place-value position.',instruction='Write the greatest whole number:')
+  if skill=='Calculations using whole numbers':
+   a,b,c=randint(10,65),randint(2,12),randint(2,9)
+   if advanced:
+    q=rf'{a}+{b}\times {c}'
+    return make(q,a+b*c,'Use BODMAS. Multiply before adding.','None.','Do the multiplication before the addition.')
+   q=rf'({a}+{b})\times {c}'
+   return make(q,(a+b)*c,'Calculate inside the brackets first, then multiply.','None.','The brackets come first in BODMAS.')
+  if skill=='Multiples and factors':
+   mode=choice(['HCF','LCM','prime'])
+   if mode in ('HCF','LCM'):
+    d=randint(2,8); a,b=randint(2,10)*d,randint(2,12)*d
+    answer=gcd(a,b) if mode=='HCF' else lcm(a,b)
+    q=rf'{a};\ {b}'
+    return make(q,answer,f'Find the {"highest common factor" if mode=="HCF" else "lowest common multiple"} of {a} and {b}.','None.','List prime factors or multiples to compare.',instruction=f'Find the {mode}:')
+   primes=[2,3,5,7,11,13,17,19]
+   n=choice(primes)*choice([2,3,5,7])
+   q=rf'{n}'
+   return make(q,min(p for p in primes if n%p==0),'A prime factor divides the number exactly and has only two factors.','None.','Test the smallest prime numbers first.',instruction='Find the smallest prime factor:')
+  if skill=='Solving problems with whole numbers':
+   if advanced:
+    groups=randint(3,9); each=randint(12,35); removed=randint(5,groups*each//2)
+    q=rf'\text{{A school has {groups} boxes of {each} books. It gives away {removed} books. How many books remain?}}'
+    return make(q,groups*each-removed,'Multiply boxes by books per box, then subtract the books given away.','None.','Find the total before subtracting.',instruction='Solve the word problem:')
+   groups=randint(3,10); each=randint(12,28)
+   q=rf'\text{{There are {groups} boxes with {each} pencils in each box. How many pencils are there?}}'
+   return make(q,groups*each,'Multiply the number of boxes by the pencils in each box.','None.','Use multiplication for equal groups.',instruction='Solve the word problem:')
+  if skill=='Working with money: Budgets, savings, discount, interest and exchange rates':
+   mode=choice(['discount','savings','interest','exchange','budget']) if advanced else choice(['discount','savings','budget'])
+   amount=randint(5,25)*40
+   if mode=='discount':
+    rate=choice([5,10,15,20,25]); discount=Fraction(amount*rate,100)
+    q=rf'\text{{An item costs R{amount}. It is discounted by {rate}\%. Find the sale price in rand.}}'
+    return make(q,amount-discount,'Convert the percentage to a fraction of 100, calculate the discount, then subtract it.',r'\text{Sale price}=\text{price}-\text{discount}','Find the discount amount before subtracting.',instruction='Solve the money problem:')
+   if mode=='savings':
+    weeks=randint(3,12); per_week=randint(10,60)
+    q=rf'\text{{A learner saves R{per_week} each week for {weeks} weeks. How much is saved?}}'
+    return make(q,weeks*per_week,'Multiply the weekly savings by the number of weeks.','None.','Use equal groups to calculate the savings.',instruction='Solve the savings problem:')
+   if mode=='interest':
+    rate=choice([5,10,15,20]); interest=Fraction(amount*rate,100)
+    q=rf'\text{{Find the simple interest on R{amount} at {rate}\% per year for 1 year.}}'
+    return make(q,interest,'Calculate the yearly percentage of the original amount.',r'I=\dfrac{P\times r\times t}{100}','Use the original amount and the yearly rate.',instruction='Solve the interest problem:')
+   if mode=='exchange':
+    rate=choice([15,17,18,20]); dollars=randint(3,18)
+    q=rf'\text{{In this question, 1 US dollar = R{rate}. How many rand equal {dollars} US dollars?}}'
+    return make(q,rate*dollars,'Multiply the dollars by the rand-per-dollar rate given in the question.','None.','Use the exchange rate stated in the question.',instruction='Solve the exchange-rate problem:')
+   cost=randint(8,23)*10; budget=cost+randint(5,20)*10
+   q=rf'\text{{A learner has R{budget} and spends R{cost}. How much money is left?}}'
+   return make(q,budget-cost,'Subtract the money spent from the original budget.','None.','The remaining amount is the budget minus spending.',instruction='Solve the budget problem:')
+  if skill=='Properties of whole numbers':
    a,b,c=randint(2,28),randint(3,20),randint(2,12)
    q=rf'{a}\times({b}+{c})'
    return make(q,a*(b+c),'Use the distributive property or calculate inside the brackets first.',r'a(b+c)=ab+ac','Multiply by both numbers inside the brackets.')
@@ -185,7 +256,5 @@ def generate(level,skill,question_type=None,topic=None):
   options=[{'value':'ABCDEF'[i],'mathjax':mathjax(render(v))} for i,v in enumerate(selections)]
   private['mcq_options']=options
   private['correct_choice']='ABCDEF'[selections.index(value)]
-  kind='mcq'
- return q,instruction,kind,value,private,hint
   kind='mcq'
  return q,instruction,kind,value,private,hint
