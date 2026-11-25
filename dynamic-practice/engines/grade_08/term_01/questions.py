@@ -1,7 +1,7 @@
 from random import randint, choice, sample, shuffle
 from fractions import Fraction
 from math import gcd, lcm, isqrt
-from . import mathjax, sections
+from ... import mathjax, sections
 
 TOPICS = {
  'Whole Numbers': ['Properties of Whole Numbers','Prime Factors','HCF','LCM','Ratio and Rate','Financial Problems'],
@@ -185,5 +185,7 @@ def generate(level,skill,question_type=None,topic=None):
   options=[{'value':'ABCDEF'[i],'mathjax':mathjax(render(v))} for i,v in enumerate(selections)]
   private['mcq_options']=options
   private['correct_choice']='ABCDEF'[selections.index(value)]
+  kind='mcq'
+ return q,instruction,kind,value,private,hint
   kind='mcq'
  return q,instruction,kind,value,private,hint
