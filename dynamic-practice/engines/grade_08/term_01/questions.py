@@ -6,10 +6,11 @@ Designed for Practice Online's existing generate(level, skill, question_type, to
 from random import randint, choice, sample, shuffle
 from fractions import Fraction
 from math import gcd, lcm, isqrt
+from threading import Lock
 from ... import mathjax, sections
 
 TOPICS = {
- 'Whole Numbers': ['Introduction','Ordering and comparing whole numbers','Properties of whole numbers','Calculations using whole numbers','Multiples and factors','Solving problems with whole numbers','Working with money: Budgets, savings, discount, interest and exchange rates'],
+ 'Whole Numbers': ['Introduction','Ordering and comparing whole numbers','Properties of whole numbers','Calculations using whole numbers','Multiples and factors','Ratio and rate','Solving problems with whole numbers','Working with money: Budgets, savings, discount, interest and exchange rates'],
  'Integers': ['Counting and Ordering','Addition and Subtraction','Multiplication and Division','Combined Operations','Properties of Integers','Word Problems'],
  'Common Fractions': ['Addition and Subtraction','Multiplying Fractions','Dividing Fractions','Fractions of Whole Numbers','Squares and Roots','Percentages','Equivalent Forms','Word Problems'],
  'Decimal Fractions': ['Ordering and Comparing','Rounding Off','Adding and Subtracting Decimals','Multiplying Decimals','Dividing Decimals','Equivalent Forms','Word Problems'],
@@ -34,9 +35,150 @@ def make(q, answer, explanation, formula='None.', hint='Identify the operation n
  steps=[explanation, mathjax(calculation or rf'{q}={tex(answer)}')]
  return q,instruction,kind,answer,formula,explanation,steps,hint,display
 
+
+# Each level cycles through a shuffled set of *different mathematical tasks*.
+# This avoids repeating a template within a short practice run in a single worker.
+# For guaranteed per-session variety across multiple workers/restarts, the API must
+# eventually pass a session ID and maintain a session-scoped question plan.
+_RATIO_MODES = {
+ 'foundation': [
+  'simplify', 'increase', 'decrease', 'share_two', 'missing_part',
+  'unit_rate', 'distance', 'time', 'equivalent_ratio',
+  'recipe_scale', 'fractional_share', 'compare_rates',
+ ],
+ 'advanced': [
+  'reverse_increase', 'reverse_decrease', 'share_three', 'known_share',
+  'combined_ratio', 'rate_total', 'fractional_share', 'compare_rates',
+  'two_stage_rate', 'ratio_transfer', 'share_difference', 'combined_journey',
+  'ratio_after_loss', 'mixture_fraction',
+ ],
+}
+_ratio_lock = Lock()
+_ratio_decks = {'foundation': [], 'advanced': []}
+
+def _next_ratio_mode(advanced):
+ level = 'advanced' if advanced else 'foundation'
+ with _ratio_lock:
+  if not _ratio_decks[level]:
+   _ratio_decks[level] = list(_RATIO_MODES[level])
+   shuffle(_ratio_decks[level])
+  return _ratio_decks[level].pop()
+
+def ratio_rate(advanced):
+ """Different ratio/rate reasoning tasks, not just replacement values."""
+ mode = _next_ratio_mode(advanced)
+ if mode=='simplify':
+  a,b=sample(range(2,12),2)
+  while gcd(a,b)!=1: a,b=sample(range(2,12),2)
+  common=randint(2,12)
+  q=rf'{a*common}:{b*common}'
+  return make(q,a,'Divide both parts of the ratio by their highest common factor.',r'a:b=\dfrac{a}{d}:\dfrac{b}{d}',f'The same positive number divides both parts.',instruction='Simplify the ratio fully. Enter the first part of the simplified ratio:',calculation=rf'{a*common}:{b*common}={a}:{b}')
+ if mode in ('increase','decrease'):
+  oldpart=randint(2,8)
+  newpart=oldpart+randint(1,6) if mode=='increase' else randint(1,oldpart-1)
+  onepart=randint(3,20); original=oldpart*onepart; result=newpart*onepart
+  q=rf'\text{{A quantity of {original} is changed in the ratio {newpart}:{oldpart} (new:old). Find the new quantity.}}'
+  return make(q,result,f'The old quantity represents {oldpart} parts. One part is {original} divided by {oldpart}; the new quantity represents {newpart} parts.',r'\text{New}=\text{Old}\times\dfrac{\text{new ratio part}}{\text{old ratio part}}','Identify how many parts represent the old quantity.',instruction='Solve the ratio problem:',calculation=rf'{original}\times\dfrac{{{newpart}}}{{{oldpart}}}={result}')
+ if mode=='share_two':
+  a,b=sample(range(2,10),2); part=randint(3,20); total=(a+b)*part
+  q=rf'\text{{Two teams share {total} points in the ratio {a}:{b}. How many points does the first team receive?}}'
+  return make(q,a*part,f'There are {a+b} parts altogether. Each part is worth {part} points. The first team receives {a} parts.',r'\text{Share}=\dfrac{\text{person parts}}{\text{total parts}}\times\text{whole}','Add both ratio parts before finding one share.',instruction='Solve the sharing problem:',calculation=rf'\dfrac{{{a}}}{{{a+b}}}\times {total}={a*part}')
+ if mode=='missing_part':
+  a,b=sample(range(2,10),2); part=randint(3,16); known=a*part
+  q=rf'\text{{At a sports day, the ratio of red to blue flags is {a}:{b}. There are {known} red flags. How many blue flags are there?}}'
+  return make(q,b*part,f'{a} parts correspond to {known} flags, so one part is {part}. Blue flags account for {b} parts.',r'\text{Unknown}=\dfrac{\text{unknown parts}}{\text{known parts}}\times\text{known}','Use the known number of red flags to find one part.',instruction='Solve the ratio problem:',calculation=rf'\dfrac{{{b}}}{{{a}}}\times {known}={b*part}')
+ if mode=='unit_rate':
+  rate=randint(6,35); minutes=randint(3,11); quantity=rate*minutes
+  q=rf'\text{{A machine fills {quantity} bottles in {minutes} minutes at a constant rate. How many bottles does it fill per minute?}}'
+  return make(q,rate,'Divide the total number of bottles by the number of minutes.',r'\text{Rate}=\dfrac{\text{quantity}}{\text{time}}','Calculate the amount for one minute.',instruction='Calculate the rate:',calculation=rf'{quantity}\div {minutes}={rate}')
+ if mode=='distance':
+  speed=choice([30,40,45,50,60,70,80,90]); hours=randint(2,8)
+  q=rf'\text{{A bus travels at {speed} km/h for {hours} hours. How many kilometres does it travel?}}'
+  return make(q,speed*hours,'At a constant speed, multiply speed by time.',r'\text{Distance}=\text{speed}\times\text{time}','Distance depends on the speed and the time travelled.',instruction='Calculate the distance:',calculation=rf'{speed}\times {hours}={speed*hours}')
+ if mode=='time':
+  speed=choice([30,40,50,60,80]); hours=randint(2,9); distance=speed*hours
+  q=rf'\text{{A cyclist covers {distance} km at a constant rate of {speed} km/h. How many hours does the journey take?}}'
+  return make(q,hours,'Divide the total distance by the distance covered in one hour.',r'\text{Time}=\dfrac{\text{distance}}{\text{speed}}','Use the distance travelled in each hour.',instruction='Calculate the time:',calculation=rf'{distance}\div {speed}={hours}')
+ if mode in ('reverse_increase','reverse_decrease'):
+  oldpart=randint(2,8); newpart=oldpart+randint(1,5) if mode=='reverse_increase' else randint(1,oldpart-1)
+  onepart=randint(4,18); new_amount=newpart*onepart; old_amount=oldpart*onepart
+  q=rf'\text{{After a quantity changes in the ratio {newpart}:{oldpart} (new:old), it becomes {new_amount}. Find the original quantity.}}'
+  return make(q,old_amount,f'The new quantity represents {newpart} parts. One part is {new_amount} divided by {newpart}; the original amount is {oldpart} parts.',r'\text{Old}=\text{New}\times\dfrac{\text{old parts}}{\text{new parts}}','Work backwards using the ratio of the new amount to the original.',instruction='Find the original quantity:',calculation=rf'{new_amount}\times\dfrac{{{oldpart}}}{{{newpart}}}={old_amount}')
+ if mode=='share_three':
+  a,b,c=sample(range(2,10),3); part=randint(4,18); total=(a+b+c)*part
+  q=rf'\text{{Three friends divide R{total} in the ratio {a}:{b}:{c}. How many rand does the second friend receive?}}'
+  return make(q,b*part,f'The ratio has {a+b+c} parts in total. One part is R{part}, so the second friend receives {b} parts.',r'\text{Share}=\dfrac{\text{share parts}}{\text{total parts}}\times\text{whole}','Add all three ratio parts before dividing.',instruction='Solve the money-sharing problem:',calculation=rf'\dfrac{{{b}}}{{{a+b+c}}}\times {total}={b*part}')
+ if mode=='known_share':
+  a,b=sample(range(2,12),2); part=randint(4,18); known=a*part
+  q=rf'\text{{A school has boys and girls in the ratio {a}:{b}. If there are {known} boys, how many learners are there altogether?}}'
+  return make(q,(a+b)*part,f'The boys represent {a} parts, worth {part} learners per part. Both groups together represent {a+b} parts.',r'\text{Total}=\dfrac{\text{all parts}}{\text{known parts}}\times\text{known quantity}','Find the value of one part using the number of boys.',instruction='Find the total:',calculation=rf'\dfrac{{{a+b}}}{{{a}}}\times {known}={(a+b)*part}')
+ if mode=='combined_ratio':
+  a,b=sample(range(2,9),2); part=randint(5,18); total=(a+b)*part
+  q=rf'\text{{In a class, learners choosing art and music are in the ratio {a}:{b}. There are {total} learners. How many more choose the more popular option?}}'
+  return make(q,abs(a-b)*part,f'Each part represents {part} learners; the difference is {abs(a-b)} parts.',r'\text{Difference}=\dfrac{|a-b|}{a+b}\times\text{total}','Find the number represented by one ratio part.',instruction='Find the difference:',calculation=rf'\dfrac{{{abs(a-b)}}}{{{a+b}}}\times {total}={abs(a-b)*part}')
+ if mode=='remaining_quantity':
+  a,b=sample(range(2,10),2); part=randint(5,17); first=a*part; second=b*part
+  q=rf'\text{{Boxes of apples and oranges are in the ratio {a}:{b}. There are {first} apple boxes. After {randint(1,3)} more apple boxes arrive, how many orange boxes were there originally?}}'
+  return make(q,second,f'The ratio describes the original quantities, before any extra boxes arrive. {a} parts represent {first} apple boxes, so one part represents {part}.','None.','Ignore the later delivery when working with the original ratio.',instruction='Solve the ratio problem:',calculation=rf'\dfrac{{{b}}}{{{a}}}\times {first}={second}')
+ if mode=='rate_total':
+  machines=randint(2,5); per_machine=randint(7,24); minutes=randint(3,8)
+  q=rf'\text{{Each of {machines} machines packs {per_machine} items per minute. All machines run for {minutes} minutes. How many items are packed altogether?}}'
+  ans=machines*per_machine*minutes
+  return make(q,ans,f'One machine packs {per_machine*minutes} items in {minutes} minutes. Multiply by {machines} machines.',r'\text{Total}=\text{machines}\times\text{rate}\times\text{time}','Find how many items one machine packs in the whole time.',instruction='Solve the rate problem:',calculation=rf'{machines}\times {per_machine}\times {minutes}={ans}')
+ if mode=='fractional_share':
+  a,b,c=sample(range(2,9),3); total=a+b+c; f=Fraction(b,total)
+  q=rf'\text{{Three workers share earnings in the ratio {a}:{b}:{c}. What fraction of the total earnings belongs to the second worker?}}'
+  return make(q,f,f'There are {total} parts altogether. The second worker receives {b} of these parts.',r'\text{Fraction}=\dfrac{\text{worker parts}}{\text{total parts}}','Add the three parts and simplify the fraction.',instruction='Give your answer as a simplified fraction:',calculation=rf'\dfrac{{{b}}}{{{total}}}={tex(f)}')
+ if mode=='equivalent_ratio':
+  a,b=sample(range(2,10),2); factor=randint(2,9)
+  q=rf'\text{{The ratio of yellow beads to purple beads is {a}:{b}. A second bag keeps the same ratio and has {a*factor} yellow beads. How many purple beads must it have?}}'
+  return make(q,b*factor,f'The yellow part grew from {a} to {a*factor}, a scale factor of {factor}. Apply that same factor to the purple part.',r'\text{Equivalent ratios multiply both parts by the same number.}','Find the scale factor for the yellow beads.',instruction='Complete the equivalent ratio:',calculation=rf'{a}:{b}={a*factor}:{b*factor}')
+ if mode=='recipe_scale':
+  flour,cups=sample(range(2,8),2); batches=randint(2,7)
+  q=rf'\text{{A bread recipe uses {flour} cups of flour for every {cups} cups of milk. A larger batch uses {flour*batches} cups of flour. How many cups of milk are needed?}}'
+  return make(q,cups*batches,f'The flour amount is {batches} times the original recipe, so multiply the milk amount by {batches} too.','None.','Scale both ingredients by the same factor.',instruction='Solve the recipe problem:',calculation=rf'{cups}\times {batches}={cups*batches}')
+ if mode=='compare_rates':
+  rate_a=randint(6,15); rate_b=rate_a+randint(2,8)
+  minutes_a=randint(2,5); minutes_b=randint(2,5)
+  q=rf'\text{{Machine A makes {rate_a*minutes_a} parts in {minutes_a} minutes. Machine B makes {rate_b*minutes_b} parts in {minutes_b} minutes. How many more parts per minute does the faster machine make?}}'
+  return make(q,rate_b-rate_a,f'Machine A makes {rate_a} parts each minute, and B makes {rate_b}. Compare their unit rates.',r'\text{Unit rate}=\dfrac{\text{total}}{\text{time}}','First find the number of parts each machine makes in one minute.',instruction='Compare the rates:',calculation=rf'\dfrac{{{rate_b*minutes_b}}}{{{minutes_b}}}-\dfrac{{{rate_a*minutes_a}}}{{{minutes_a}}}={rate_b-rate_a}')
+ if mode=='two_stage_rate':
+  rate=randint(8,24); hours1=randint(2,5); hours2=randint(2,5); removed=randint(3,rate)
+  q=rf'\text{{A water tank receives {rate} litres per hour for {hours1} hours in the morning and {hours2} hours in the afternoon. Then {removed} litres are used. How many litres remain from the daily supply?}}'
+  ans=rate*(hours1+hours2)-removed
+  return make(q,ans,f'The tank fills for {hours1+hours2} hours altogether. Work out all the water received, then subtract {removed} litres.',r'\text{Remaining}=\text{rate}\times\text{total time}-\text{used}','Combine both filling periods before subtracting the water used.',instruction='Solve the two-stage rate problem:',calculation=rf'{rate}\times({hours1}+{hours2})-{removed}={ans}')
+ if mode=='ratio_transfer':
+  a,b=sample(range(3,10),2); part=randint(5,14); moved=randint(2,min(a*part-1,12))
+  q=rf'\text{{Two classes initially have {a*part} and {b*part} library books, in the ratio {a}:{b}. Class A gives {moved} books to Class B. How many books does Class B now have?}}'
+  ans=b*part+moved
+  return make(q,ans,f'Class B starts with {b*part} books and receives {moved} more. The transfer does not change the total.',r'\text{New B}=\text{Original B}+\text{transferred}','Work with the actual transfer after identifying B’s original books.',instruction='Find the new number of books:',calculation=rf'{b*part}+{moved}={ans}')
+ if mode=='share_difference':
+  a,b=sample(range(2,12),2); part=randint(3,16); difference=abs(a-b)*part
+  q=rf'\text{{Two friends share a prize in the ratio {a}:{b}. The larger share exceeds the smaller by R{difference}. Find the total prize in rand.}}'
+  ans=(a+b)*part
+  return make(q,ans,f'The difference between the shares is {abs(a-b)} parts, so each part is R{part}. Both shares total {a+b} parts.',r'\text{Whole}=\dfrac{\text{difference}}{\text{difference in parts}}\times\text{total parts}','The difference in money corresponds to the difference in ratio parts.',instruction='Work backwards from the difference:',calculation=rf'\dfrac{{{difference}}}{{{abs(a-b)}}}\times({a}+{b})={ans}')
+ if mode=='combined_journey':
+  s1=choice([30,40,50,60,70]); s2=choice([v for v in [40,50,60,70,80] if v!=s1]); h1=randint(2,4); h2=randint(2,4)
+  q=rf'\text{{A delivery van travels at {s1} km/h for {h1} hours, then at {s2} km/h for {h2} hours. What total distance does it travel?}}'
+  ans=s1*h1+s2*h2
+  return make(q,ans,f'Find the distance of each stage separately, then add them.',r'\text{Total distance}=s_1t_1+s_2t_2','Do not multiply the total time by only one of the speeds.',instruction='Calculate the total distance:',calculation=rf'{s1}\times {h1}+{s2}\times {h2}={ans}')
+ if mode=='ratio_after_loss':
+  a,b=sample(range(3,10),2); part=randint(4,12); lost=randint(2,b*part-1)
+  q=rf'\text{{A school stores {a*part} blue balls and {b*part} red balls in the ratio {a}:{b}. After {lost} red balls are lost, how many balls remain altogether?}}'
+  ans=(a+b)*part-lost
+  return make(q,ans,f'First total the original balls, then subtract the {lost} that were lost.',r'\text{Remaining}=\text{Original total}-\text{lost}','The ratio describes the starting quantities, not the ratio after the loss.',instruction='Find the remaining number:',calculation=rf'{a*part}+{b*part}-{lost}={ans}')
+ if mode=='mixture_fraction':
+  a,b,c=sample(range(2,10),3); total=a+b+c
+  q=rf'\text{{A drink is made from water, juice and syrup in the ratio {a}:{b}:{c}. What fraction of the drink is NOT water? Give the fraction in simplest form.}}'
+  ans=Fraction(b+c,total)
+  return make(q,ans,f'There are {total} parts altogether. Juice and syrup together account for {b+c} parts.',r'\text{Fraction not water}=\dfrac{\text{juice+syrup parts}}{\text{all parts}}','Combine the non-water parts before making the fraction.',instruction='Find the simplified fraction:',calculation=rf'\dfrac{{{b}+{c}}}{{{total}}}={tex(ans)}')
+ raise ValueError(f'Unsupported ratio-and-rate question mode: {mode}')
+
 def build(topic,skill,advanced):
  a,b=randint(2,20),randint(2,15)
  if topic=='Whole Numbers':
+  if skill=='Ratio and rate':
+   return ratio_rate(advanced)
   if skill=='Introduction':
    # Place value and expanded notation, suitable for the start of the chapter.
    digit=randint(2,8)
